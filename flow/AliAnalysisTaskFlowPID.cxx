@@ -21,14 +21,16 @@
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
  */
 
-#include "TChain.h"
-#include "TH1F.h"
-#include "TList.h"
 #include "AliAnalysisTask.h"
 #include "AliAnalysisManager.h"
+#include "AliAODInputHandler.h"
+#include "TChain.h"
+#include "TH1D.h"
+#include "TList.h"
 #include "AliAODEvent.h"
 #include "AliESDEvent.h"
-#include "AliAODInputHandler.h"
+#include "AliAODTrack.h"
+#include "AliVTrack.h"
 #include "AliAnalysisTaskFlowPID.h"
 
 #include "AliLog.h" 
@@ -41,17 +43,25 @@ ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
+  fTrack(0),
   fOutputList(0),
   fOutputListQA(0),
-  fHistPt(0),
-  fQAPVz(0),
-  fQANumTracks(0),
-  fEventCounter(0),
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
-  fPVtxCutZ(0),
+  fPVtxCutZ(10),
   fCentEdgeLow(0),
-  fCentEdgeUp(0)
+  fCentEdgeUp(0),
+  fTrackEtaMax(0.8),
+  fTrackPtMax(10),
+  fTrackPtMin(0.2),
+  fNumTPCclsMin(70),
+  fTrackFilterBit(128),
+  fEventCounter(0),
+  fEventMult(0),
+  fTracksPt(0),
+  fTracksEta(0),
+  fQAPVz(0),
+  fQANumTracks(0)
 {
 	  // default constructor, don't allocate memory here!
     // this is used by root for IO purposes, it needs to remain empty
@@ -59,17 +69,25 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 //_____________________________________________________________________________
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTaskSE(name),
   fAOD(0),
+  fTrack(0),
   fOutputList(0),
   fOutputListQA(0),
-  fHistPt(0),
-  fEventCounter(0),
-  fQAPVz(0),
-  fQANumTracks(0),
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
-  fPVtxCutZ(0),
+  fPVtxCutZ(10),
   fCentEdgeLow(0),
-  fCentEdgeUp(0)
+  fCentEdgeUp(0),
+  fTrackEtaMax(0.8),
+  fTrackPtMax(10),
+  fTrackPtMin(0.2),
+  fNumTPCclsMin(70),
+  fTrackFilterBit(128),
+  fEventCounter(0),
+  fEventMult(0),
+  fTracksPt(0),
+  fTracksEta(0),
+  fQAPVz(0),
+  fQANumTracks(0)
 {
   // constructor
   DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
@@ -105,17 +123,20 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputListQA->SetOwner(kTRUE);
 
 	// main output
+	fEventMult = new TH1D("fEventMult","Event multiplicity (selected)",100,0,1000);
+	fOutputList->Add(fEventMult);
+	fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected)", 100, 0, 10);    
+	fOutputList->Add(fTracksPt);          
+	fTracksEta = new TH1D("fTracksEta", "Tracks #it{#eta} (selected)", 300, -1.5, 1.5);    
+	fOutputList->Add(fTracksEta);          
+	
+	// QA output
 	Int_t iNEventCounterBins = 3;
 	TString sEventCounterLabel[] = {"Input","AOD OK","Selected"};
 	fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
 	for(Int_t i = 0; i < iNEventCounterBins; i++)
 		fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
-	fOutputList->Add(fEventCounter);
-
-	fHistPt = new TH1F("fHistPt", "fHistPt", 100, 0, 10);    
-	fOutputList->Add(fHistPt);          
-	
-	// QA output
+	fOutputListQA->Add(fEventCounter);
 	fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}",100,-50,50);
 	fOutputListQA->Add(fQAPVz);
 	fQANumTracks = new TH1D("fQANumTracks","QA: Number of AOD tracks",100,0,1000);
@@ -158,13 +179,21 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 	
 	// only events passing selection criteria defined @ IsEventSelected()
 
-  Int_t iTracks(fAOD->GetNumberOfTracks());           
+	const Int_t iTracks(fAOD->GetNumberOfTracks());           
+  fEventMult->Fill(iTracks);
+  
+  // loop over all tracks
   for(Int_t i(0); i < iTracks; i++) 
   {                 
-      AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
-      if(!track) continue;                            
-      fHistPt->Fill(track->Pt());                     
-  }                                                   
+      fTrack = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
+      if(!fTrack) continue;
+      
+      if(!IsTrackSelected(fTrack)) continue;
+      fTracksPt->Fill(fTrack->Pt());                     
+      fTracksEta->Fill(fTrack->Eta());                     
+      
+  }  	// end of loop over all tracks
+
   PostData(1, fOutputList);	// stream the results the analysis of this event to the output manager which will take care of writing it to a file
   PostData(2, fOutputListQA);
 }
@@ -255,6 +284,38 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 	}
 
  	return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
+{
+	// track selection procedure
+
+	if(!track)
+	{
+		return kFALSE;
+	}
+
+	if( !track->TestFilterBit(fTrackFilterBit) )
+	{
+		return kFALSE;	
+	}
+
+	if(track->GetTPCNcls() < fNumTPCclsMin)
+	{
+		return kFALSE;
+	}
+
+	if(TMath::Abs(track->Eta()) > fTrackEtaMax)
+	{
+		return kFALSE;
+	}
+
+	if( (track->Pt() > fTrackPtMax) || (track->Pt() < fTrackPtMin) )
+	{
+		return kFALSE;
+	}
+
+	return kTRUE;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::EventQA(const AliAODEvent* event)

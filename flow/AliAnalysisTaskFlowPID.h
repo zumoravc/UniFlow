@@ -18,27 +18,41 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         virtual void            UserExec(Option_t* option);
         virtual void            Terminate(Option_t* option);
 
-        void										SetAODAnalysis(Bool_t aodAnalysis) { fAODAnalysis = aodAnalysis; }
+        void										SetAODAnalysis(Bool_t aod) { fAODAnalysis = aod; }
         void										SetPbPbAnalysis(Bool_t pbpb) { fPbPb = pbpb; }
-        void										SetPVtxZ(Double_t dPVtxCutZ) { fPVtxCutZ = dPVtxCutZ; }
-        void										SetCentEdgeLow(Double_t dCentLow) { fCentEdgeLow = dCentLow; }
-        void										SetCentEdgeUp(Double_t dCentHigh) { fCentEdgeUp = dCentHigh; }
+        void										SetCentEdgeLow(Double_t cent) { fCentEdgeLow = cent; }
+        void										SetCentEdgeUp(Double_t cent) { fCentEdgeUp = cent; }
+        void										SetPVtxZ(Double_t z) { fPVtxCutZ = z; }
+        void										SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
+        void										SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
+        void										SetTrackPtMin(Double_t pt) { fTrackPtMin = pt; }
+        void										SetNumTPCclsMin(UShort_t tpcCls) { fNumTPCclsMin = tpcCls; }
+        void										SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
     private:
         Bool_t IsEventSelected(const AliAODEvent* event);
-        void EventQA(const AliAODEvent* event);
+				Bool_t IsTrackSelected(const AliAODTrack* track);
+       	void EventQA(const AliAODEvent* event);
         
-        AliAODEvent*            fAOD;           //! input event
         TList*                  fOutputList;    //! main output list
         TList*									fOutputListQA;	//! QA output list
+        AliAODEvent*            fAOD;           //! input event
+        AliAODTrack*						fTrack;					//! AOD track
 
         Bool_t									fAODAnalysis;		//! is AOD analysis?
         Bool_t									fPbPb;					//! is PbPb analysis?
         Double_t 								fCentEdgeLow;		//! centrality low edge
         Double_t 								fCentEdgeUp;		//! centrality upper edge
         Double_t 								fPVtxCutZ; 			//! PV z cut
+        Double_t 								fTrackEtaMax; 	//! Maximum pseudorapidity range
+        Double_t								fTrackPtMax;		//! Maximal track pT
+        Double_t								fTrackPtMin;		//! Manimal track pT
+        UShort_t								fNumTPCclsMin;	//! Minimal number of TPC clusters used for track reconstruction
+        UInt_t									fTrackFilterBit;//! Required track filter bit 
         
         //std histos
-        TH1F*                   fHistPt;        //! dummy histogram
+        TH1D*										fEventMult;			 //! selected events multiplicity distribution
+        TH1D*                   fTracksPt;       //! selected tracks pT distribution
+        TH1D*                   fTracksEta;      //! selected tracks eta distribution
 
         // QA histos
         TH1D* 									fEventCounter;  //! event rejection tracker
