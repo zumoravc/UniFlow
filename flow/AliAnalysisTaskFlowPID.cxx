@@ -26,11 +26,13 @@
 #include "AliAODInputHandler.h"
 #include "TChain.h"
 #include "TH1D.h"
+#include "TProfile.h"
 #include "TList.h"
 #include "AliAODEvent.h"
 #include "AliESDEvent.h"
 #include "AliAODTrack.h"
 #include "AliVTrack.h"
+#include "TComplex.h"
 #include "AliAnalysisTaskFlowPID.h"
 
 #include "AliLog.h" 
@@ -44,6 +46,9 @@ ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
   fTrack(0),
+  fQvec(0),
+  fArrTracksSelected("AliAODTrack",5000),
+  fLocalEventCounter(0),
   fOutputList(0),
   fOutputListQA(0),
   fAODAnalysis(kTRUE),
@@ -58,10 +63,17 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTrackFilterBit(128),
   fEventCounter(0),
   fEventMult(0),
+  fMultTracksSelected(0),
   fTracksPt(0),
   fTracksEta(0),
+  fTracksPhi(0),
+  fRefCor2(0),
   fQAPVz(0),
-  fQANumTracks(0)
+  fQANumTracks(0),
+  fQATrackPt(0),
+  fQATrackEta(0),
+  fQATrackPhi(0),
+  fQATrackFilterMap(0)
 {
 	  // default constructor, don't allocate memory here!
     // this is used by root for IO purposes, it needs to remain empty
@@ -70,6 +82,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTaskSE(name),
   fAOD(0),
   fTrack(0),
+  fQvec(0),
+  fArrTracksSelected("AliAODTrack",5000),
+  fLocalEventCounter(0),
   fOutputList(0),
   fOutputListQA(0),
   fAODAnalysis(kTRUE),
@@ -84,10 +99,17 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTrackFilterBit(128),
   fEventCounter(0),
   fEventMult(0),
+  fMultTracksSelected(0),
   fTracksPt(0),
   fTracksEta(0),
+  fTracksPhi(0),
+  fRefCor2(0),
   fQAPVz(0),
-  fQANumTracks(0)
+  fQANumTracks(0),
+  fQATrackPt(0),
+  fQATrackEta(0),
+  fQATrackPhi(0),
+  fQATrackFilterMap(0)
 {
   // constructor
   DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
@@ -123,13 +145,19 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputListQA->SetOwner(kTRUE);
 
 	// main output
-	fEventMult = new TH1D("fEventMult","Event multiplicity (selected)",100,0,1000);
+	fEventMult = new TH1D("fEventMult","Event multiplicity (selected)",100,0,5000);
 	fOutputList->Add(fEventMult);
+	fMultTracksSelected = new TH1D("fMultTracksSelected","Multiplicity of selected tracks",100,0,5000);
+	fOutputList->Add(fMultTracksSelected);
 	fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected)", 100, 0, 10);    
 	fOutputList->Add(fTracksPt);          
 	fTracksEta = new TH1D("fTracksEta", "Tracks #it{#eta} (selected)", 300, -1.5, 1.5);    
 	fOutputList->Add(fTracksEta);          
-	
+	fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected)", 360, 0., TMath::TwoPi());    
+	fOutputList->Add(fTracksPhi);          
+	fRefCor2 = new TProfile("fRefCor2","#LT#LT2#GT#GT (ref. flow)",1,0,1);
+	fOutputList->Add(fRefCor2);
+
 	// QA output
 	Int_t iNEventCounterBins = 3;
 	TString sEventCounterLabel[] = {"Input","AOD OK","Selected"};
@@ -139,8 +167,16 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputListQA->Add(fEventCounter);
 	fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}",100,-50,50);
 	fOutputListQA->Add(fQAPVz);
-	fQANumTracks = new TH1D("fQANumTracks","QA: Number of AOD tracks",100,0,1000);
+	fQANumTracks = new TH1D("fQANumTracks","QA: Number of AOD tracks",1000,0,10000);
 	fOutputListQA->Add(fQANumTracks);
+	fQATrackPt = new TH1D("fQATrackPt","QA: Track #it{p}_{T} (all)",100,0,10);
+	fOutputListQA->Add(fQATrackPt);
+	fQATrackEta = new TH1D("fQATrackEta","QA: Track #it{#eta} (all)",300,-1.5,1.5);
+	fOutputListQA->Add(fQATrackEta);
+	fQATrackPhi = new TH1D("fQATrackPhi","QA: Track #it{#varphi} (all)",300,0,TMath::TwoPi());
+	fOutputListQA->Add(fQATrackPhi);
+	fQATrackFilterMap = new TH1D("fQATrackFilterMap","QA: Tracks filter map (all)",1000,0,1000);
+	fOutputListQA->Add(fQATrackFilterMap);
 
 	PostData(1, fOutputList);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
 	PostData(2, fOutputListQA);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
@@ -149,6 +185,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 {
   // this function is called once for each event
+	//if(fLocalEventCounter > 0) return; // just for debugging purposes: stops after first selected event
 
 	fEventCounter->Fill(0); // input event
 
@@ -176,12 +213,15 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 	}
 
   fEventCounter->Fill(2); // event selected
-	
 	// only events passing selection criteria defined @ IsEventSelected()
+
+  fArrTracksSelected.Clear("C");
+  //printf("Array:pre-Enties: %d\n",fArrTracksSelected.GetEntries());
 
 	const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
   
+  Int_t iNumTracksSelected = 0;
   // loop over all tracks
   for(Int_t i(0); i < iTracks; i++) 
   {                 
@@ -189,10 +229,53 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(!fTrack) continue;
       
       if(!IsTrackSelected(fTrack)) continue;
-      fTracksPt->Fill(fTrack->Pt());                     
-      fTracksEta->Fill(fTrack->Eta());                     
+      // only selected tracks
+
+      //cloning the track to TClonesArray of selected tracks
+      new(fArrTracksSelected[iNumTracksSelected]) AliAODTrack(*fTrack);
+      iNumTracksSelected++;
       
+      fTracksPt->Fill(fTrack->Pt());                     
+      fTracksEta->Fill(fTrack->Eta());   
+      fTracksPhi->Fill(fTrack->Phi());   
   }  	// end of loop over all tracks
+
+  // input tracks fileter and stored in fArrTracksSelected array
+  if(iNumTracksSelected == 0) return; // 0 tracks selected in this event
+	fLocalEventCounter++;
+
+  fMultTracksSelected->Fill(iNumTracksSelected);
+
+  // estimating flow vector Q for 2-part correlations
+  fQvec = TComplex(0,0,kFALSE);
+  AliAODTrack* track1 = NULL;
+  AliAODTrack* track2 = NULL;
+  Double_t dPhiTrack1 = 0;
+  Double_t dPhiTrack2 = 0;
+
+  const Int_t iHarmonic = 2; // harmonic component (=n)
+
+  // loop over selected (filtered) tracks in given event
+  for(Int_t i = 0; i < iNumTracksSelected; i++)
+  {
+  	track1 = static_cast<AliAODTrack*>(fArrTracksSelected.At(i));
+  	dPhiTrack1 = track1->Phi();
+
+  	for(Int_t j = 0; j < iNumTracksSelected; j++)
+  	{
+  		track2 = static_cast<AliAODTrack*>(fArrTracksSelected.At(j));
+  		dPhiTrack2 = track2->Phi();
+
+  		fQvec += TComplex(TMath::Cos(iHarmonic*(dPhiTrack1-dPhiTrack2)),TMath::Sin(iHarmonic*(dPhiTrack1-dPhiTrack2)),kFALSE);
+  	}
+  	//printf("Re(Q): %f // Phi1: %f // Phi 2:%f \n",fQvec.Re(), dPhiTrack1, dPhiTrack2 );
+  }
+
+  Double_t dWeight = iNumTracksSelected*(iNumTracksSelected-1);
+  Double_t dNom = (fQvec.Re() - iNumTracksSelected)/dWeight;
+  
+  // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  fRefCor2->Fill(0.5, dNom, dWeight); 
 
   PostData(1, fOutputList);	// stream the results the analysis of this event to the output manager which will take care of writing it to a file
   PostData(2, fOutputListQA);
@@ -226,7 +309,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   	return kFALSE;
   }
 
-  Int_t iNContrib = aodVtx->GetNContributors();
+ Int_t iNContrib = aodVtx->GetNContributors();
   if(iNContrib <= 0) 
   {	
   	if(fDebug > 0)
@@ -281,6 +364,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 	if(fPbPb)
 	{
 		// not implemented yet
+		// centrality solving issue?
 	}
 
  	return kTRUE;
@@ -327,9 +411,23 @@ void AliAnalysisTaskFlowPID::EventQA(const AliAODEvent* event)
 
 	fQAPVz->Fill(dVtxZ);
 
-	const Double_t dNumAODTracks = event->GetNumberOfTracks();
-	fQANumTracks->Fill(dNumAODTracks);
 
+	// tracks QA procedure
+	const Int_t iNumAODTracks = event->GetNumberOfTracks();
+	fQANumTracks->Fill(iNumAODTracks);
+
+
+	const AliAODTrack* track = NULL;
+	for(Int_t i = 0; i < iNumAODTracks; i++)
+	{
+		track = static_cast<AliAODTrack*>(event->GetTrack(i));
+		if(!track) continue;
+
+		fQATrackPt->Fill(track->Pt());
+		fQATrackEta->Fill(track->Eta());
+		fQATrackPhi->Fill(track->Phi());
+		fQATrackFilterMap->Fill(track->GetFilterMap());
+	}
 
 	return; 
 }

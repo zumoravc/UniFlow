@@ -37,6 +37,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*									fOutputListQA;	//! QA output list
         AliAODEvent*            fAOD;           //! input event
         AliAODTrack*						fTrack;					//! AOD track
+        TComplex								fQvec;					//! complex flow vector Q
+        TClonesArray						fArrTracksSelected;	//! Container for selected / filtered tracks in given event
+        Int_t										fLocalEventCounter; //! Event counter for debug purposes
 
         Bool_t									fAODAnalysis;		//! is AOD analysis?
         Bool_t									fPbPb;					//! is PbPb analysis?
@@ -51,13 +54,20 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
         //std histos
         TH1D*										fEventMult;			 //! selected events multiplicity distribution
+        TH1D*										fMultTracksSelected; //! multiplicity of selected tracks
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
+        TH1D* 									fTracksPhi;			 //! selected trakcks phi distribution
+        TProfile*								fRefCor2;			 	 //! event averaged 2-particle correlation for reference flow
 
         // QA histos
         TH1D* 									fEventCounter;  //! event rejection tracker
         TH1D* 									fQAPVz;					//! PV z distance distribution
         TH1D*										fQANumTracks;		//! number of AOD tracks distribution
+        TH1D*										fQATrackPt;			//! pT dist of all tracks
+        TH1D*										fQATrackEta;		//! eta dist of all tracks
+        TH1D*										fQATrackPhi;		//! phi dist of all tracks
+        TH1D*										fQATrackFilterMap;//! filter bit of all tracks
 
 
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
