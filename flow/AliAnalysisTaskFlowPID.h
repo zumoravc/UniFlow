@@ -39,6 +39,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAODEvent*            fAOD;           //! input event
         AliAODTrack*						fTrack;					//! AOD track
         TComplex								fQvec;					//! complex flow vector Q
+        TComplex								fQvecTest;					//! complex flow vector Q
         TComplex								fPOIvec;				//! complex flow vector p for POI particles
         TComplex								fRFPvec;				//! complex flow vector Q for RFP particles
         TClonesArray						fArrTracksSelected;	//! Container for selected / filtered tracks in given event
@@ -66,6 +67,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected trakcks phi distribution
         TProfile*								fRefCor2;			 	 //! event averaged 2-particle correlation for reference flow <<2>>
+        TProfile*								fRefCor2Test;			 	 //! event averaged 2-particle correlation for reference flow <<2>>
         TProfile*								fDiffCor2;			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
 
