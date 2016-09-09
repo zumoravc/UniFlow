@@ -38,7 +38,10 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*									fOutputListQA;	//! QA output list
         AliAODEvent*            fAOD;           //! input event
         AliAODTrack*						fTrack;					//! AOD track
-        TComplex								fQvec;					//! complex flow vector Q
+        TComplex								fQvec2;					//! complex flow vector Q (n = 2)
+        TComplex								fQvec3;					//! complex flow vector Q (n = 3)
+        TComplex								fQvec4;					//! complex flow vector Q (n = 4)
+        TComplex								fQvec5;					//! complex flow vector Q (n = 5)
         TComplex								fPOIvec;				//! complex flow vector p for POI particles
         TComplex								fRFPvec;				//! complex flow vector Q for RFP particles
         TClonesArray						fArrTracksSelected;	//! Container for selected / filtered tracks in given event
@@ -65,8 +68,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected trakcks phi distribution
-        TProfile*								fRefCor2;			 	 //! event averaged 2-particle correlation for reference flow <<2>>
-        TProfile*								fDiffCor2;			 //! event averaged 2-particle correlation for differential flow <<2'>>
+        TProfile*								fRefCorTwo2;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*								fRefCorTwo3;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v3
+        TProfile*								fRefCorTwo4;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v4
+        TProfile*								fRefCorTwo5;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*								fDiffCorTwo;			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
 
         // QA histos
