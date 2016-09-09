@@ -48,7 +48,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fAOD(0),
   fTrack(0),
   fQvec(0),
-  fQvecTest(0),
   fPOIvec(0),
   fRFPvec(0),
   fArrTracksSelected("AliAODTrack",5000),
@@ -76,7 +75,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTracksEta(0),
   fTracksPhi(0),
   fRefCor2(0),
-  fRefCor2Test(0),
   fDiffCor2(0),
   fQAPVz(0),
   fQANumTracks(0),
@@ -93,7 +91,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fAOD(0),
   fTrack(0),
   fQvec(0),
-  fQvecTest(0),
   fPOIvec(0),
   fRFPvec(0),
   fArrTracksSelected("AliAODTrack",5000),
@@ -121,7 +118,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTracksEta(0),
   fTracksPhi(0),
   fRefCor2(0),
-  fRefCor2Test(0),
   fDiffCor2(0),
   fQAPVz(0),
   fQANumTracks(0),
@@ -181,9 +177,6 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fRefCor2 = new TProfile("fRefCor2","#LT#LT2#GT#GT (ref. flow)",10,-0.5,9.5);
 	fRefCor2->Sumw2();
 	fOutputList->Add(fRefCor2);
-	fRefCor2Test = new TProfile("fRefCor2Test","#LT#LT2#GT#GT (ref. flow)",10,-0.5,9.5);
-	fRefCor2Test->Sumw2();
-	fOutputList->Add(fRefCor2Test);
 	fDiffCor2 = new TProfile("fDiffCor2","#LT#LT2'#GT#GT (diff. flow)",1,0,1);
 	fDiffCor2->Sumw2();
 	fOutputList->Add(fDiffCor2);
@@ -279,7 +272,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 	
 	// estimating flow vectors for 2-part correlations
   fQvec = TComplex(0,0,kFALSE); 
-  fQvecTest = TComplex(0,0,kFALSE); 
   fPOIvec = TComplex(0,0,kFALSE);
   fRFPvec = TComplex(0,0,kFALSE);
 
@@ -297,7 +289,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   {
   	track1 = static_cast<AliAODTrack*>(fArrTracksSelected.At(i));
   	dPhiTrack1 = track1->Phi();
-		fQvecTest += TComplex(TMath::Cos(iHarmonic*(dPhiTrack1)),TMath::Sin(iHarmonic*(dPhiTrack1)),kFALSE);
+		fQvec += TComplex(TMath::Cos(iHarmonic*(dPhiTrack1)),TMath::Sin(iHarmonic*(dPhiTrack1)),kFALSE);
   
 /*
   	if( (track1->Pt() > 1) && (track1->Pt() < 2) )
@@ -306,6 +298,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   		fPOIvec += TComplex(TMath::Cos(iHarmonic*dPhiTrack1), TMath::Sin(iHarmonic*dPhiTrack1));
   	}
 */
+  	/*
   	for(Int_t j = 0; j < iNumTracksSelected; j++)
   	{
   		track2 = static_cast<AliAODTrack*>(fArrTracksSelected.At(j));
@@ -317,24 +310,16 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   		//fRFPvec += TComplex(TMath::Cos(iHarmonic*dPhiTrack2), TMath::Sin(iHarmonic*dPhiTrack2));
   	}
+  	*/
   	//printf("Re(Q): %f // Phi1: %f // Phi 2:%f \n",fQvec.Re(), dPhiTrack1, dPhiTrack2 );
   }
 
   // Reference Flow
   Double_t dWeight = iNumTracksSelected*(iNumTracksSelected-1);
-  Double_t dNom = (fQvec.Re() - iNumTracksSelected)/dWeight;
-  fRefCor2->Fill(fCent, dNom, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
-	//printf("Ref: %f / weight: %f \n", dNom, dWeight);
-
-
-  //printf("Orig: %f(%f) //",dNom, dWeight);
-
-  dNom = (fQvecTest*(TComplex::Conjugate(fQvecTest))).Re();
+  Double_t dNom = (fQvec*(TComplex::Conjugate(fQvec))).Re();
   dNom = (dNom - iNumTracksSelected) / dWeight;
-  fRefCor2Test->Fill(fCent, dNom, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
-  
-  //printf("Test: %f(%f)\n",dNom, dWeight);
-
+  fRefCor2->Fill(fCent, dNom, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+ 
 
 /*
   // differential flow 
