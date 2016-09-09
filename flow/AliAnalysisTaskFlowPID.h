@@ -32,17 +32,22 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t IsEventSelected(const AliAODEvent* event);
 				Bool_t IsTrackSelected(const AliAODTrack* track);
        	void EventQA(const AliAODEvent* event);
+       	Short_t GetCentrCode(AliVEvent* ev);
         
         TList*                  fOutputList;    //! main output list
         TList*									fOutputListQA;	//! QA output list
         AliAODEvent*            fAOD;           //! input event
         AliAODTrack*						fTrack;					//! AOD track
         TComplex								fQvec;					//! complex flow vector Q
+        TComplex								fPOIvec;				//! complex flow vector p for POI particles
+        TComplex								fRFPvec;				//! complex flow vector Q for RFP particles
         TClonesArray						fArrTracksSelected;	//! Container for selected / filtered tracks in given event
         Int_t										fLocalEventCounter; //! Event counter for debug purposes
+        Short_t									fCent;					//! event centrality bin indicator
 
         Bool_t									fAODAnalysis;		//! is AOD analysis?
         Bool_t									fPbPb;					//! is PbPb analysis?
+				Bool_t       						fLHC10h;             // flag to LHC10h data?
         Double_t 								fCentEdgeLow;		//! centrality low edge
         Double_t 								fCentEdgeUp;		//! centrality upper edge
         Double_t 								fPVtxCutZ; 			//! PV z cut
@@ -54,19 +59,23 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
         //std histos
         TH1D*										fEventMult;			 //! selected events multiplicity distribution
-        TH1D*										fMultTracksSelected; //! multiplicity of selected tracks
+        TH1D*   					      fCentralityDis;     //! event centrality distribution
+        TH2D*							      fCentSPDvsV0M;      //! V0M vs SPD
+        TH1D*										fMultTracksSelected; //! multiplicity of selected tracks in a given event
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected trakcks phi distribution
-        TProfile*								fRefCor2;			 	 //! event averaged 2-particle correlation for reference flow
+        TProfile*								fRefCor2;			 	 //! event averaged 2-particle correlation for reference flow <<2>>
+        TProfile*								fDiffCor2;			 //! event averaged 2-particle correlation for differential flow <<2'>>
+
 
         // QA histos
         TH1D* 									fEventCounter;  //! event rejection tracker
         TH1D* 									fQAPVz;					//! PV z distance distribution
         TH1D*										fQANumTracks;		//! number of AOD tracks distribution
-        TH1D*										fQATrackPt;			//! pT dist of all tracks
-        TH1D*										fQATrackEta;		//! eta dist of all tracks
-        TH1D*										fQATrackPhi;		//! phi dist of all tracks
+        TH1D*										fQATrackPt;			//! pT dist of all tracks in all events
+        TH1D*										fQATrackEta;		//! eta dist of all tracks in all events
+        TH1D*										fQATrackPhi;		//! phi dist of all tracks in all events
         TH1D*										fQATrackFilterMap;//! filter bit of all tracks
 
 

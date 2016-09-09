@@ -31,6 +31,7 @@
 #include "AliAODEvent.h"
 #include "AliESDEvent.h"
 #include "AliAODTrack.h"
+#include "AliMultSelection.h"
 #include "AliVTrack.h"
 #include "TComplex.h"
 #include "AliAnalysisTaskFlowPID.h"
@@ -47,12 +48,16 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fAOD(0),
   fTrack(0),
   fQvec(0),
+  fPOIvec(0),
+  fRFPvec(0),
   fArrTracksSelected("AliAODTrack",5000),
   fLocalEventCounter(0),
+  fCent(0),
   fOutputList(0),
   fOutputListQA(0),
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
+  fLHC10h(kTRUE),
   fPVtxCutZ(10),
   fCentEdgeLow(0),
   fCentEdgeUp(0),
@@ -63,11 +68,14 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTrackFilterBit(128),
   fEventCounter(0),
   fEventMult(0),
+  fCentralityDis(0),
+  fCentSPDvsV0M(0),
   fMultTracksSelected(0),
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
   fRefCor2(0),
+  fDiffCor2(0),
   fQAPVz(0),
   fQANumTracks(0),
   fQATrackPt(0),
@@ -83,12 +91,16 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fAOD(0),
   fTrack(0),
   fQvec(0),
+  fPOIvec(0),
+  fRFPvec(0),
   fArrTracksSelected("AliAODTrack",5000),
   fLocalEventCounter(0),
+  fCent(0),
   fOutputList(0),
   fOutputListQA(0),
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
+  fLHC10h(kTRUE),
   fPVtxCutZ(10),
   fCentEdgeLow(0),
   fCentEdgeUp(0),
@@ -99,11 +111,14 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTrackFilterBit(128),
   fEventCounter(0),
   fEventMult(0),
+  fCentralityDis(0),
+  fCentSPDvsV0M(0),
   fMultTracksSelected(0),
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
   fRefCor2(0),
+  fDiffCor2(0),
   fQAPVz(0),
   fQANumTracks(0),
   fQATrackPt(0),
@@ -147,6 +162,10 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	// main output
 	fEventMult = new TH1D("fEventMult","Event multiplicity (selected)",100,0,5000);
 	fOutputList->Add(fEventMult);
+	fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality; Counts", 100, 0, 100);
+  fOutputList->Add(fCentralityDis);
+	fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
+  fOutputList->Add(fCentSPDvsV0M);
 	fMultTracksSelected = new TH1D("fMultTracksSelected","Multiplicity of selected tracks",100,0,5000);
 	fOutputList->Add(fMultTracksSelected);
 	fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected)", 100, 0, 10);    
@@ -155,8 +174,12 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputList->Add(fTracksEta);          
 	fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected)", 360, 0., TMath::TwoPi());    
 	fOutputList->Add(fTracksPhi);          
-	fRefCor2 = new TProfile("fRefCor2","#LT#LT2#GT#GT (ref. flow)",1,0,1);
+	fRefCor2 = new TProfile("fRefCor2","#LT#LT2#GT#GT (ref. flow)",10,-0.5,9.5);
+	fRefCor2->Sumw2();
 	fOutputList->Add(fRefCor2);
+	fDiffCor2 = new TProfile("fDiffCor2","#LT#LT2'#GT#GT (diff. flow)",1,0,1);
+	fDiffCor2->Sumw2();
+	fOutputList->Add(fDiffCor2);
 
 	// QA output
 	Int_t iNEventCounterBins = 3;
@@ -211,6 +234,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 	{
 		return;
 	}
+	fCent = GetCentrCode(fAOD);
 
   fEventCounter->Fill(2); // event selected
 	// only events passing selection criteria defined @ IsEventSelected()
@@ -245,9 +269,14 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 	fLocalEventCounter++;
 
   fMultTracksSelected->Fill(iNumTracksSelected);
+	
+	// estimating flow vectors for 2-part correlations
+  fQvec = TComplex(0,0,kFALSE); 
+  fPOIvec = TComplex(0,0,kFALSE);
+  fRFPvec = TComplex(0,0,kFALSE);
 
-  // estimating flow vector Q for 2-part correlations
-  fQvec = TComplex(0,0,kFALSE);
+  Int_t iCounterPOI = 0;
+
   AliAODTrack* track1 = NULL;
   AliAODTrack* track2 = NULL;
   Double_t dPhiTrack1 = 0;
@@ -261,21 +290,39 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   	track1 = static_cast<AliAODTrack*>(fArrTracksSelected.At(i));
   	dPhiTrack1 = track1->Phi();
 
+/*
+  	if( (track1->Pt() > 1) && (track1->Pt() < 2) )
+  	{
+  		iCounterPOI++;
+  		fPOIvec += TComplex(TMath::Cos(iHarmonic*dPhiTrack1), TMath::Sin(iHarmonic*dPhiTrack1));
+  	}
+*/
   	for(Int_t j = 0; j < iNumTracksSelected; j++)
   	{
   		track2 = static_cast<AliAODTrack*>(fArrTracksSelected.At(j));
   		dPhiTrack2 = track2->Phi();
 
   		fQvec += TComplex(TMath::Cos(iHarmonic*(dPhiTrack1-dPhiTrack2)),TMath::Sin(iHarmonic*(dPhiTrack1-dPhiTrack2)),kFALSE);
+  		//fRFPvec += TComplex(TMath::Cos(iHarmonic*dPhiTrack2), TMath::Sin(iHarmonic*dPhiTrack2));
   	}
   	//printf("Re(Q): %f // Phi1: %f // Phi 2:%f \n",fQvec.Re(), dPhiTrack1, dPhiTrack2 );
   }
 
+  // Reference Flow
   Double_t dWeight = iNumTracksSelected*(iNumTracksSelected-1);
   Double_t dNom = (fQvec.Re() - iNumTracksSelected)/dWeight;
-  
-  // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
-  fRefCor2->Fill(0.5, dNom, dWeight); 
+  fRefCor2->Fill(fCent, dNom, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+	//printf("Ref: %f / weight: %f \n", dNom, dWeight);
+/*
+  // differential flow 
+	Double_t dotProduct = (fPOIvec*(TComplex::Conjugate(fRFPvec))).Re(); // Re() of Tcom*Tcom <=> dot product of TComplex
+	dWeight = iCounterPOI*(iNumTracksSelected-1);
+	dNom = (dotProduct - iCounterPOI) / dWeight;
+	
+	printf("Diff: %f / product %f / weight: %f \n", dNom,dotProduct, dWeight);
+	fDiffCor2->Fill(0.5,dNom,dWeight);
+*/
+
 
   PostData(1, fOutputList);	// stream the results the analysis of this event to the output manager which will take care of writing it to a file
   PostData(2, fOutputListQA);
@@ -432,3 +479,68 @@ void AliAnalysisTaskFlowPID::EventQA(const AliAODEvent* event)
 	return; 
 }
 
+//_____________________________________________________________________________
+Short_t AliAnalysisTaskFlowPID::GetCentrCode(AliVEvent* ev)
+{
+    Short_t centrCode = -1;
+    Float_t lPercentile = 0;
+    Float_t V0M_Cent = 0, SPD_Cent = 0;
+    
+    if (fAODAnalysis){
+        AliAODEvent* aod = (AliAODEvent*)ev;
+        AliMultSelection* MultSelection = 0;
+        MultSelection = (AliMultSelection * ) aod->FindListObject("MultSelection");
+        if(!MultSelection){
+            lPercentile = -100;
+        }
+        else{
+            if (fCent == 0)
+                lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
+            
+            if (fCent == 1)
+                lPercentile = MultSelection->GetMultiplicityPercentile("CL0");
+            
+            if (fCent == 2)
+                lPercentile = MultSelection->GetMultiplicityPercentile("CL1");
+            
+            V0M_Cent = MultSelection->GetMultiplicityPercentile("V0M");
+            SPD_Cent = MultSelection->GetMultiplicityPercentile("CL1");
+            
+        }
+    }
+
+    //cout << "lPercentile=" << lPercentile << endl;
+    
+    fCentralityDis->Fill(lPercentile);
+    fCentSPDvsV0M->Fill(V0M_Cent, V0M_Cent);
+    
+
+  if (fLHC10h) {
+	
+      if (lPercentile <= 80 && lPercentile > 0 && TMath::Abs(V0M_Cent - SPD_Cent) < 5){
+        
+      if ((lPercentile > 0) && (lPercentile <= 5.0) && (TMath::Abs(V0M_Cent - SPD_Cent) < 1))
+          centrCode = 0;
+      else if ((lPercentile > 5.0) && (lPercentile <= 10.0) && (TMath::Abs(V0M_Cent - SPD_Cent) < 1))
+          centrCode = 1;
+      else if ((lPercentile > 10.0) && (lPercentile <= 20.0))
+          centrCode = 2;
+      else if ((lPercentile > 20.0) && (lPercentile <= 30.0))
+          centrCode = 3;
+      else if ((lPercentile > 30.0) && (lPercentile <= 40.0))
+          centrCode = 4;
+      else if ((lPercentile > 40.0) && (lPercentile <= 50.0))
+          centrCode = 5;
+      else if ((lPercentile > 50.0) && (lPercentile <= 60.0))
+          centrCode = 6;
+      else if ((lPercentile > 60.0) && (lPercentile <= 70.0))
+          centrCode = 7;
+      else if ((lPercentile > 70.0) && (lPercentile <= 80.0))
+          centrCode = 8;
+      else if ((lPercentile > 80.0) && (lPercentile <= 90.0))
+          centrCode = 9;
+ 
+    }   
+  }
+  return centrCode;
+}
