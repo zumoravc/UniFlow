@@ -251,8 +251,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputList->Add(fDiffCorTwo);
 
 	// QA output
-	Int_t iNEventCounterBins = 3;
-	TString sEventCounterLabel[] = {"Input","AOD OK","Selected"};
+	Int_t iNEventCounterBins = 4;
+	TString sEventCounterLabel[] = {"Input","AOD OK","Selected (me)","Selected (Katka)"};
 	fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
 	for(Int_t i = 0; i < iNEventCounterBins; i++)
 		fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
@@ -298,14 +298,33 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   // basic event QA
   EventQA(fAOD);
 
+
+  if(!IsEventSelectedKatarina(fAOD))
+  {
+    return;
+  }
+  fEventCounter->Fill(3);
+  
+
+
+  //my original event selection commented
   // event selection
   if(!IsEventSelected(fAOD))
-	{
-		return;
+  {
+    return;
   }
-
   fEventCounter->Fill(2); // event selected
+  
+
+  //if(IsEventSelected(fAOD));
+  //  fEventCounter->Fill(2);
+
+
+
   // only events passing selection criteria defined @ IsEventSelected()
+
+  //printf("Exiting event loop; No physics: just testing purposes\n");
+  return; 
 
   fArrTracksSelected.Clear("C");
   //printf("Array:pre-Enties: %d\n",fArrTracksSelected.GetEntries());
@@ -767,3 +786,160 @@ Short_t AliAnalysisTaskFlowPID::GetCentrCode(AliVEvent* ev)
   }
   return centrCode;
 }
+
+Bool_t AliAnalysisTaskFlowPID::IsEventSelectedKatarina(const AliAODEvent* event)
+{
+  Float_t zvtx = GetVertex(fAOD);
+  
+  if(zvtx< -990)
+  {
+    //fVtx->Fill(0);
+    return kFALSE;
+  }
+  else 
+  {
+    //fVtx->Fill(1);
+    //fVtxBeforeCuts->Fill(zvtx);
+    if (TMath::Abs(zvtx) < fPVtxCutZ) 
+    {
+      //fMultCorBeforeCuts->Fill(GetGlobalMult(fAOD), GetTPCMult(fAOD));
+
+    
+      Short_t isPileup = fAOD->IsPileupFromSPD(3);
+      if (isPileup != 0)
+        return kFALSE;
+                  
+      //if (fAOD->GetHeader()->GetRefMultiplicityComb08() < 0)
+      //    return;
+      
+      //New cut from Ruben for pileup hybrid
+      if (plpMV(fAOD))
+          return kFALSE;
+    
+                
+                
+      //fMultCorAfterCuts->Fill(GetGlobalMult(fAOD), GetTPCMult(fAOD));
+      Short_t cenAOD  = GetCentrCode(fAOD);
+      //Short_t cenAOD  = 1;
+      //cout << cenAOD << endl;
+            
+      if (cenAOD >= 0){
+        //fVtxAfterCuts->Fill(zvtx);
+        return kTRUE;
+      }
+    }
+  }
+  return kFALSE;
+}
+
+Float_t AliAnalysisTaskFlowPID::GetVertex(AliVEvent* ev) const
+{
+
+  Float_t vtxz = -999.;
+
+  if (1){
+
+    AliAODEvent* aod = (AliAODEvent*)ev;
+      
+      
+      const AliAODVertex* trkVtx = aod->GetPrimaryVertex();
+      if (!trkVtx || trkVtx->GetNContributors()<=0)
+          return vtxz;
+      TString vtxTtl = trkVtx->GetTitle();
+      if (!vtxTtl.Contains("VertexerTracks"))
+          return vtxz;
+      
+      // comment out on Nov 30,2015 for a test of vertex cut
+      const AliAODVertex* spdVtx = aod->GetPrimaryVertexSPD();
+      if (!spdVtx || spdVtx->GetNContributors()<=0)
+          return vtxz;
+      if (TMath::Abs(spdVtx->GetZ() - trkVtx->GetZ())>0.5)
+          return vtxz;
+      
+      vtxz = trkVtx->GetZ();
+
+      
+      
+  }
+  
+  return vtxz;
+}
+
+Bool_t AliAnalysisTaskFlowPID::plpMV(const AliVEvent *event)
+{
+        // check for multi-vertexer pile-up
+        const AliAODEvent *aod = (const AliAODEvent*)event;
+        const AliESDEvent *esd = (const AliESDEvent*)event;
+        //
+        const int    kMinPlpContrib = 5;
+        const double kMaxPlpChi2 = 5.0;
+        const double kMinWDist = 15;
+        //
+        if (!aod && !esd) {
+            printf("Event is neither of AOD nor ESD\n");
+            exit(1);
+        }
+        //
+        const AliVVertex* vtPrm = 0;
+        const AliVVertex* vtPlp = 0;
+        int nPlp = 0;
+        //
+        if (aod) {
+            if ( !(nPlp=aod->GetNumberOfPileupVerticesTracks()) ) return kFALSE;
+            vtPrm = aod->GetPrimaryVertex();
+            if (vtPrm == aod->GetPrimaryVertexSPD()) return kTRUE; // there are pile-up vertices but no primary
+        }
+        else {
+            if ( !(nPlp=esd->GetNumberOfPileupVerticesTracks())) return kFALSE;
+            vtPrm = esd->GetPrimaryVertexTracks();
+            if (((AliESDVertex*)vtPrm)->GetStatus()!=1) return kTRUE; // there are pile-up vertices but no primary
+        }
+        
+        //int bcPrim = vtPrm->GetBC();
+        //
+        for (int ipl=0;ipl<nPlp;ipl++) {
+            vtPlp = aod ? (const AliVVertex*)aod->GetPileupVertexTracks(ipl) : (const AliVVertex*)esd->GetPileupVertexTracks(ipl);
+            //
+            if (vtPlp->GetNContributors() < kMinPlpContrib) continue;
+            if (vtPlp->GetChi2perNDF() > kMaxPlpChi2) continue;
+            //  int bcPlp = vtPlp->GetBC();
+            //  if (bcPlp!=AliVTrack::kTOFBCNA && TMath::Abs(bcPlp-bcPrim)>2) return kTRUE; // pile-up from other BC
+            //
+            double wDst = GetWDist(vtPrm,vtPlp);
+            if (wDst<kMinWDist) continue;
+            //
+            return kTRUE; // pile-up: well separated vertices
+        }
+        //
+        return kFALSE;
+        //
+}
+//_____________________________________________________________________________
+Double_t AliAnalysisTaskFlowPID::GetWDist(const AliVVertex* v0, const AliVVertex* v1)    {
+        
+        // calculate sqrt of weighted distance to other vertex
+        if (!v0 || !v1) {
+            printf("One of vertices is not valid\n");
+            return 0;
+        }
+        static TMatrixDSym vVb(3);
+        double dist = -1;
+        double dx = v0->GetX()-v1->GetX();
+        double dy = v0->GetY()-v1->GetY();
+        double dz = v0->GetZ()-v1->GetZ();
+        double cov0[6],cov1[6];
+        v0->GetCovarianceMatrix(cov0);
+        v1->GetCovarianceMatrix(cov1);
+        vVb(0,0) = cov0[0]+cov1[0];
+        vVb(1,1) = cov0[2]+cov1[2];
+        vVb(2,2) = cov0[5]+cov1[5];
+        vVb(1,0) = vVb(0,1) = cov0[1]+cov1[1];
+        vVb(0,2) = vVb(1,2) = vVb(2,0) = vVb(2,1) = 0.;
+        vVb.InvertFast();
+        if (!vVb.IsValid()) {printf("Singular Matrix\n"); return dist;}
+        dist = vVb(0,0)*dx*dx + vVb(1,1)*dy*dy + vVb(2,2)*dz*dz
+        +    2*vVb(0,1)*dx*dy + 2*vVb(0,2)*dx*dz + 2*vVb(1,2)*dy*dz;
+        return dist>0 ? TMath::Sqrt(dist) : -1;
+        
+}
+    
