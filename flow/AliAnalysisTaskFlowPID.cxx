@@ -47,6 +47,7 @@ ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
   fTrack(0),
+  fQvec(0),
   fQvec2(0),
   fQvec3(0),
   fQvec4(0),
@@ -61,6 +62,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
+  fCentFlag(0),
   fPVtxCutZ(10),
   fCentEdgeLow(0),
   fCentEdgeUp(0),
@@ -77,6 +79,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
+  fRefCor(0),
   fRefCorTwo2(0),
   fRefCorTwo3(0),
   fRefCorTwo4(0),
@@ -96,6 +99,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTaskSE(name),
   fAOD(0),
   fTrack(0),
+  fQvec(0),
   fQvec2(0),
   fQvec3(0),
   fQvec4(0),
@@ -110,6 +114,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
+  fCentFlag(0),
   fPVtxCutZ(10),
   fCentEdgeLow(0),
   fCentEdgeUp(0),
@@ -126,6 +131,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
+  fRefCor(0),
   fRefCorTwo2(0),
   fRefCorTwo3(0),
   fRefCorTwo4(0),
@@ -186,8 +192,11 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputList->Add(fTracksEta);          
 	fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected)", 360, 0., TMath::TwoPi());    
 	fOutputList->Add(fTracksPhi);          
-	fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT (ref. flow) v2",10,-0.5,9.5);
-	fRefCorTwo2->Sumw2();
+  fRefCor = new TProfile("fRefCor","TEST #LT#LT2#GT#GT (ref. flow) v2",10,-0.5,9.5);
+	fRefCor->Sumw2();
+  fOutputList->Add(fRefCor);
+  fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT (ref. flow) v2",10,-0.5,9.5);
+  fRefCorTwo2->Sumw2();
 	fOutputList->Add(fRefCorTwo2);
 	fRefCorTwo3 = new TProfile("fRefCorTwo3","#LT#LT2#GT#GT (ref. flow) v3",10,-0.5,9.5);
 	fRefCorTwo3->Sumw2();
@@ -255,7 +264,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 	{
 		return;
 	}
-	fCent = GetCentrCode(fAOD);
 
   fEventCounter->Fill(2); // event selected
 	// only events passing selection criteria defined @ IsEventSelected()
@@ -292,6 +300,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fMultTracksSelected->Fill(iNumTracksSelected);
 	
 	// estimating flow vectors for 2-part correlations
+  fQvec = TComplex(0,0,kFALSE); 
   fQvec2 = TComplex(0,0,kFALSE); 
   fQvec3 = TComplex(0,0,kFALSE); 
   fQvec4 = TComplex(0,0,kFALSE); 
@@ -312,9 +321,9 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   	track1 = static_cast<AliAODTrack*>(fArrTracksSelected.At(i));
   	dPhiTrack1 = track1->Phi();
 		fQvec2 += TComplex(TMath::Cos(2*(dPhiTrack1)),TMath::Sin(2*(dPhiTrack1)),kFALSE);
-		fQvec3 += TComplex(TMath::Cos(3*(dPhiTrack1)),TMath::Sin(3*(dPhiTrack1)),kFALSE);
-		fQvec4 += TComplex(TMath::Cos(4*(dPhiTrack1)),TMath::Sin(4*(dPhiTrack1)),kFALSE);
-		fQvec5 += TComplex(TMath::Cos(5*(dPhiTrack1)),TMath::Sin(5*(dPhiTrack1)),kFALSE);
+		//fQvec3 += TComplex(TMath::Cos(3*(dPhiTrack1)),TMath::Sin(3*(dPhiTrack1)),kFALSE);
+		//fQvec4 += TComplex(TMath::Cos(4*(dPhiTrack1)),TMath::Sin(4*(dPhiTrack1)),kFALSE);
+		//fQvec5 += TComplex(TMath::Cos(5*(dPhiTrack1)),TMath::Sin(5*(dPhiTrack1)),kFALSE);
   
 /*
   	if( (track1->Pt() > 1) && (track1->Pt() < 2) )
@@ -323,19 +332,19 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   		fPOIvec += TComplex(TMath::Cos(iHarmonic*dPhiTrack1), TMath::Sin(iHarmonic*dPhiTrack1));
   	}
 */
-  	/*
+  	
   	for(Int_t j = 0; j < iNumTracksSelected; j++)
   	{
   		track2 = static_cast<AliAODTrack*>(fArrTracksSelected.At(j));
   		dPhiTrack2 = track2->Phi();
 
-  		fQvec += TComplex(TMath::Cos(iHarmonic*(dPhiTrack1-dPhiTrack2)),TMath::Sin(iHarmonic*(dPhiTrack1-dPhiTrack2)),kFALSE);
+  		fQvec += TComplex(TMath::Cos(2*(dPhiTrack1-dPhiTrack2)),TMath::Sin(2*(dPhiTrack1-dPhiTrack2)),kFALSE);
   		
 
 
   		//fRFPvec += TComplex(TMath::Cos(iHarmonic*dPhiTrack2), TMath::Sin(iHarmonic*dPhiTrack2));
   	}
-  	*/
+  	
   	//printf("Re(Q): %f // Phi1: %f // Phi 2:%f \n",fQvec.Re(), dPhiTrack1, dPhiTrack2 );
   }
 
@@ -343,12 +352,22 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   Double_t dAmp = 0;
   Double_t dVal = 0;
   Double_t dWeight = 0;
-  
+
   dWeight = iNumTracksSelected*(iNumTracksSelected-1);
+
+  dAmp = fQvec.Re();
+  dVal = (dAmp - iNumTracksSelected)/dWeight;
+
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCor->Fill(fCent,dVal,dWeight);
+
   dAmp = (fQvec2*(TComplex::Conjugate(fQvec2))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  fRefCorTwo2->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCorTwo2->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
 
+/*
 	dAmp = (fQvec3*(TComplex::Conjugate(fQvec3))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
   fRefCorTwo3->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
@@ -360,7 +379,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   dAmp = (fQvec5*(TComplex::Conjugate(fQvec5))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
   fRefCorTwo5->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
-
+*/
 
 /*
   // differential flow 
@@ -460,7 +479,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 	if(fPbPb)
 	{
 		// not implemented yet
-		// centrality solving issue?
+		fCent = GetCentrCode(fAOD);
 	}
 
  	return kTRUE;
@@ -543,13 +562,13 @@ Short_t AliAnalysisTaskFlowPID::GetCentrCode(AliVEvent* ev)
             lPercentile = -100;
         }
         else{
-            if (fCent == 0)
+            if (fCentFlag == 0)
                 lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
             
-            if (fCent == 1)
+            if (fCentFlag == 1)
                 lPercentile = MultSelection->GetMultiplicityPercentile("CL0");
             
-            if (fCent == 2)
+            if (fCentFlag == 2)
                 lPercentile = MultSelection->GetMultiplicityPercentile("CL1");
             
             V0M_Cent = MultSelection->GetMultiplicityPercentile("V0M");

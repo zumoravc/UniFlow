@@ -38,6 +38,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*									fOutputListQA;	//! QA output list
         AliAODEvent*            fAOD;           //! input event
         AliAODTrack*						fTrack;					//! AOD track
+        TComplex								fQvec;					//! complex flow vector Q (n = 2)
         TComplex								fQvec2;					//! complex flow vector Q (n = 2)
         TComplex								fQvec3;					//! complex flow vector Q (n = 3)
         TComplex								fQvec4;					//! complex flow vector Q (n = 4)
@@ -51,6 +52,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t									fAODAnalysis;		//! is AOD analysis?
         Bool_t									fPbPb;					//! is PbPb analysis?
 				Bool_t       						fLHC10h;             // flag to LHC10h data?
+				Short_t									fCentFlag;			//! centrality flag
         Double_t 								fCentEdgeLow;		//! centrality low edge
         Double_t 								fCentEdgeUp;		//! centrality upper edge
         Double_t 								fPVtxCutZ; 			//! PV z cut
@@ -68,6 +70,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected trakcks phi distribution
+        TProfile*								fRefCor;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo2;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo3;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v3
         TProfile*								fRefCorTwo4;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v4
