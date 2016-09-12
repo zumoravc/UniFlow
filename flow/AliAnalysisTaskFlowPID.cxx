@@ -47,11 +47,19 @@ ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
   fTrack(0),
-  fQvec(0),
+  //fQvec(0),
   fQvec2(0),
   fQvec3(0),
   fQvec4(0),
   fQvec5(0),
+  fQvec2Gap00P(0),
+  fQvec2Gap04P(0),
+  fQvec2Gap08P(0),
+  fQvec2Gap10P(0),
+  fQvec2Gap00N(0),
+  fQvec2Gap04N(0),
+  fQvec2Gap08N(0),
+  fQvec2Gap10N(0),
   fPOIvec(0),
   fRFPvec(0),
   fArrTracksSelected("AliAODTrack",5000),
@@ -79,11 +87,15 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
-  fRefCor(0),
+  //fRefCor(0),
   fRefCorTwo2(0),
   fRefCorTwo3(0),
   fRefCorTwo4(0),
   fRefCorTwo5(0),
+  fRefCorTwo2Gap00(0),
+  fRefCorTwo2Gap04(0),
+  fRefCorTwo2Gap08(0),
+  fRefCorTwo2Gap10(0),
   fDiffCorTwo(0),
   fQAPVz(0),
   fQANumTracks(0),
@@ -99,11 +111,19 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTaskSE(name),
   fAOD(0),
   fTrack(0),
-  fQvec(0),
+  //fQvec(0),
   fQvec2(0),
   fQvec3(0),
   fQvec4(0),
   fQvec5(0),
+  fQvec2Gap00P(0),
+  fQvec2Gap04P(0),
+  fQvec2Gap08P(0),
+  fQvec2Gap10P(0),
+  fQvec2Gap00N(0),
+  fQvec2Gap04N(0),
+  fQvec2Gap08N(0),
+  fQvec2Gap10N(0),
   fPOIvec(0),
   fRFPvec(0),
   fArrTracksSelected("AliAODTrack",5000),
@@ -131,11 +151,15 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
-  fRefCor(0),
+  //fRefCor(0),
   fRefCorTwo2(0),
   fRefCorTwo3(0),
   fRefCorTwo4(0),
   fRefCorTwo5(0),
+  fRefCorTwo2Gap00(0),
+  fRefCorTwo2Gap04(0),
+  fRefCorTwo2Gap08(0),
+  fRefCorTwo2Gap10(0),
   fDiffCorTwo(0),
   fQAPVz(0),
   fQANumTracks(0),
@@ -192,9 +216,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputList->Add(fTracksEta);          
 	fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected)", 360, 0., TMath::TwoPi());    
 	fOutputList->Add(fTracksPhi);          
-  fRefCor = new TProfile("fRefCor","TEST #LT#LT2#GT#GT (ref. flow) v2",10,-0.5,9.5);
-	fRefCor->Sumw2();
-  fOutputList->Add(fRefCor);
+  //fRefCor = new TProfile("fRefCor","TEST #LT#LT2#GT#GT (ref. flow) v2",10,-0.5,9.5);
+	//fRefCor->Sumw2();
+  //fOutputList->Add(fRefCor);
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT (ref. flow) v2",10,-0.5,9.5);
   fRefCorTwo2->Sumw2();
 	fOutputList->Add(fRefCorTwo2);
@@ -207,7 +231,22 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fRefCorTwo5 = new TProfile("fRefCorTwo5","#LT#LT2#GT#GT (ref. flow) v5",10,-0.5,9.5);
 	fRefCorTwo5->Sumw2();
 	fOutputList->Add(fRefCorTwo5);
-	fDiffCorTwo = new TProfile("fDiffCorTwo","#LT#LT2'#GT#GT (diff. flow)",1,0,1);
+
+  fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2Gap00","#LT#LT2#GT#GT (ref. flow) v2 Gap00",10,-0.5,9.5);
+  fRefCorTwo2Gap00->Sumw2();
+  fOutputList->Add(fRefCorTwo2Gap00);
+  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2Gap04","#LT#LT2#GT#GT (ref. flow) v2 Gap04",10,-0.5,9.5);
+  fRefCorTwo2Gap04->Sumw2();
+  fOutputList->Add(fRefCorTwo2Gap04);
+  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2Gap08","#LT#LT2#GT#GT (ref. flow) v2 Gap08",10,-0.5,9.5);
+  fRefCorTwo2Gap08->Sumw2();
+  fOutputList->Add(fRefCorTwo2Gap08);
+  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2Gap10","#LT#LT2#GT#GT (ref. flow) v2 Gap10",10,-0.5,9.5);
+  fRefCorTwo2Gap10->Sumw2();
+  fOutputList->Add(fRefCorTwo2Gap10);
+  
+
+  fDiffCorTwo = new TProfile("fDiffCorTwo","#LT#LT2'#GT#GT (diff. flow)",1,0,1);
 	fDiffCorTwo->Sumw2();
 	fOutputList->Add(fDiffCorTwo);
 
@@ -263,48 +302,44 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   if(!IsEventSelected(fAOD))
 	{
 		return;
-	}
+  }
 
   fEventCounter->Fill(2); // event selected
-	// only events passing selection criteria defined @ IsEventSelected()
+  // only events passing selection criteria defined @ IsEventSelected()
 
   fArrTracksSelected.Clear("C");
   //printf("Array:pre-Enties: %d\n",fArrTracksSelected.GetEntries());
 
-	const Int_t iTracks(fAOD->GetNumberOfTracks());           
+  const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
   
   Int_t iNumTracksSelected = 0;
-  // loop over all tracks
-  for(Int_t i(0); i < iTracks; i++) 
-  {                 
-      fTrack = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
-      if(!fTrack) continue;
-      
-      if(!IsTrackSelected(fTrack)) continue;
-      // only selected tracks
-
-      //cloning the track to TClonesArray of selected tracks
-      new(fArrTracksSelected[iNumTracksSelected]) AliAODTrack(*fTrack);
-      iNumTracksSelected++;
-      
-      fTracksPt->Fill(fTrack->Pt());                     
-      fTracksEta->Fill(fTrack->Eta());   
-      fTracksPhi->Fill(fTrack->Phi());   
-  }  	// end of loop over all tracks
-
-  // input tracks fileter and stored in fArrTracksSelected array
-  if(iNumTracksSelected == 0) return; // 0 tracks selected in this event
-	fLocalEventCounter++;
-
-  fMultTracksSelected->Fill(iNumTracksSelected);
-	
+  Int_t iNumGap00P = 0;
+  Int_t iNumGap00N = 0;
+  Int_t iNumGap04P = 0;
+  Int_t iNumGap04N = 0;
+  Int_t iNumGap08P = 0;
+  Int_t iNumGap08N = 0;
+  Int_t iNumGap10P = 0;
+  Int_t iNumGap10N = 0;
+  
+  
 	// estimating flow vectors for 2-part correlations
-  fQvec = TComplex(0,0,kFALSE); 
+  //fQvec = TComplex(0,0,kFALSE); 
   fQvec2 = TComplex(0,0,kFALSE); 
   fQvec3 = TComplex(0,0,kFALSE); 
   fQvec4 = TComplex(0,0,kFALSE); 
   fQvec5 = TComplex(0,0,kFALSE); 
+
+  fQvec2Gap00P = TComplex(0,0,kFALSE);
+  fQvec2Gap04P = TComplex(0,0,kFALSE);
+  fQvec2Gap08P = TComplex(0,0,kFALSE);
+  fQvec2Gap10P = TComplex(0,0,kFALSE);
+  fQvec2Gap00N = TComplex(0,0,kFALSE);
+  fQvec2Gap04N = TComplex(0,0,kFALSE);
+  fQvec2Gap08N = TComplex(0,0,kFALSE);
+  fQvec2Gap10N = TComplex(0,0,kFALSE);
+
   fPOIvec = TComplex(0,0,kFALSE);
   fRFPvec = TComplex(0,0,kFALSE);
 
@@ -315,24 +350,107 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   Double_t dPhiTrack1 = 0;
   Double_t dPhiTrack2 = 0;
 
+  // loop over all tracks
+  for(Int_t i(0); i < iTracks; i++) 
+  {                 
+      fTrack = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
+      if(!fTrack) continue;
+      
+      if(!IsTrackSelected(fTrack)) continue;
+      // only selected tracks
+      iNumTracksSelected++;
+
+      fTracksPt->Fill(fTrack->Pt());                     
+      fTracksEta->Fill(fTrack->Eta());   
+      fTracksPhi->Fill(fTrack->Phi());   
+
+      fQvec2 += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec3 += TComplex(TMath::Cos(3*(fTrack->Phi())),TMath::Sin(3*(fTrack->Phi())),kFALSE);
+      fQvec4 += TComplex(TMath::Cos(4*(fTrack->Phi())),TMath::Sin(4*(fTrack->Phi())),kFALSE);
+		  fQvec5 += TComplex(TMath::Cos(5*(fTrack->Phi())),TMath::Sin(5*(fTrack->Phi())),kFALSE);
+
+      // eta gap
+      Double_t dTrackEta = fTrack->Eta();
+
+      if(dTrackEta > 0.)
+      {
+        fQvec2Gap00P += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumGap00P++;
+      }
+
+      if(dTrackEta < 0.)
+      {
+        fQvec2Gap00N += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumGap00N++;
+      }
+      
+      if(dTrackEta > 0.2)
+      {
+        fQvec2Gap04P += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumGap04P++;
+      }
+
+      if(dTrackEta < -0.2)
+      {
+        fQvec2Gap04N += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumGap04N++;
+      }
+      
+      if(dTrackEta > 0.4)
+      {
+        fQvec2Gap08P += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumGap08P++;
+      }
+
+      if(dTrackEta < -0.4)
+      {
+        fQvec2Gap08N += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumGap08N++;
+      }
+      
+      if(dTrackEta > 0.5)
+      {
+        fQvec2Gap10P += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumGap10P++;
+      }
+
+      if(dTrackEta < -0.5)
+      {
+        fQvec2Gap10N += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumGap10N++;
+      }
+      
+
+      //cloning the track to TClonesArray of selected tracks
+      //new(fArrTracksSelected[iNumTracksSelected]) AliAODTrack(*fTrack);
+      
+  }   // end of loop over all tracks
+
+  // input tracks fileter and stored in fArrTracksSelected array
+  if(iNumTracksSelected == 0) return; // 0 tracks selected in this event
+  fLocalEventCounter++;
+
+  fMultTracksSelected->Fill(iNumTracksSelected);
+  
+  /*
   // loop over selected (filtered) tracks in given event
   for(Int_t i = 0; i < iNumTracksSelected; i++)
   {
-  	track1 = static_cast<AliAODTrack*>(fArrTracksSelected.At(i));
-  	dPhiTrack1 = track1->Phi();
-		fQvec2 += TComplex(TMath::Cos(2*(dPhiTrack1)),TMath::Sin(2*(dPhiTrack1)),kFALSE);
+    track1 = static_cast<AliAODTrack*>(fArrTracksSelected.At(i));
+    dPhiTrack1 = track1->Phi();
 		//fQvec3 += TComplex(TMath::Cos(3*(dPhiTrack1)),TMath::Sin(3*(dPhiTrack1)),kFALSE);
 		//fQvec4 += TComplex(TMath::Cos(4*(dPhiTrack1)),TMath::Sin(4*(dPhiTrack1)),kFALSE);
 		//fQvec5 += TComplex(TMath::Cos(5*(dPhiTrack1)),TMath::Sin(5*(dPhiTrack1)),kFALSE);
   
-/*
+
   	if( (track1->Pt() > 1) && (track1->Pt() < 2) )
   	{
   		iCounterPOI++;
   		fPOIvec += TComplex(TMath::Cos(iHarmonic*dPhiTrack1), TMath::Sin(iHarmonic*dPhiTrack1));
   	}
-*/
-  	
+
+ 
+
   	for(Int_t j = 0; j < iNumTracksSelected; j++)
   	{
   		track2 = static_cast<AliAODTrack*>(fArrTracksSelected.At(j));
@@ -347,6 +465,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   	
   	//printf("Re(Q): %f // Phi1: %f // Phi 2:%f \n",fQvec.Re(), dPhiTrack1, dPhiTrack2 );
   }
+  */
 
   // Reference Flow
   Double_t dAmp = 0;
@@ -355,32 +474,66 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   dWeight = iNumTracksSelected*(iNumTracksSelected-1);
 
+/*
   dAmp = fQvec.Re();
   dVal = (dAmp - iNumTracksSelected)/dWeight;
 
   if(dVal == dVal && dWeight == dWeight)
     fRefCor->Fill(fCent,dVal,dWeight);
-
+*/
   dAmp = (fQvec2*(TComplex::Conjugate(fQvec2))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
   
+  //printf("Val: %f // weight: %f", dVal, dWeight);
   if(dVal == dVal && dWeight == dWeight)
+  {
     fRefCorTwo2->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+    //printf(" FILLED\n");
+  }
 
-/*
+
 	dAmp = (fQvec3*(TComplex::Conjugate(fQvec3))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  fRefCorTwo3->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
-	
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCorTwo3->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+
+
 	dAmp = (fQvec4*(TComplex::Conjugate(fQvec4))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  fRefCorTwo4->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCorTwo4->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dAmp = (fQvec5*(TComplex::Conjugate(fQvec5))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  fRefCorTwo5->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
-*/
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCorTwo5->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
 
+  // eta gap
+
+  dWeight = iNumGap00P*iNumGap00N;
+  dAmp = (fQvec2Gap00P*(TComplex::Conjugate(fQvec2Gap00N))).Re();
+  dVal = (dAmp) / dWeight;
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCorTwo2Gap00->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+
+  dWeight = iNumGap04P*iNumGap04N;
+  dAmp = (fQvec2Gap04P*(TComplex::Conjugate(fQvec2Gap04N))).Re();
+  dVal = (dAmp) / dWeight;
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCorTwo2Gap04->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  
+  dWeight = iNumGap08P*iNumGap08N;
+  dAmp = (fQvec2Gap08P*(TComplex::Conjugate(fQvec2Gap08N))).Re();
+  dVal = (dAmp) / dWeight;
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCorTwo2Gap08->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  
+  dWeight = iNumGap10P*iNumGap10N;
+  dAmp = (fQvec2Gap10P*(TComplex::Conjugate(fQvec2Gap10N))).Re();
+  dVal = (dAmp) / dWeight;
+  if(dVal == dVal && dWeight == dWeight)
+    fRefCorTwo2Gap10->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  
 /*
   // differential flow 
 	Double_t dotProduct = (fPOIvec*(TComplex::Conjugate(fRFPvec))).Re(); // Re() of Tcom*Tcom <=> dot product of TComplex

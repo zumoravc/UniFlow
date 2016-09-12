@@ -38,11 +38,19 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*									fOutputListQA;	//! QA output list
         AliAODEvent*            fAOD;           //! input event
         AliAODTrack*						fTrack;					//! AOD track
-        TComplex								fQvec;					//! complex flow vector Q (n = 2)
+        //TComplex								fQvec;					//! complex flow vector Q (n = 2)
         TComplex								fQvec2;					//! complex flow vector Q (n = 2)
         TComplex								fQvec3;					//! complex flow vector Q (n = 3)
         TComplex								fQvec4;					//! complex flow vector Q (n = 4)
         TComplex								fQvec5;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap00P;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap00N;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap04P;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap04N;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap08P;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap08N;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap10P;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap10N;					//! complex flow vector Q (n = 5)
         TComplex								fPOIvec;				//! complex flow vector p for POI particles
         TComplex								fRFPvec;				//! complex flow vector Q for RFP particles
         TClonesArray						fArrTracksSelected;	//! Container for selected / filtered tracks in given event
@@ -70,11 +78,16 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected trakcks phi distribution
-        TProfile*								fRefCor;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
+        //TProfile*								fRefCor;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo2;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo3;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v3
         TProfile*								fRefCorTwo4;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v4
         TProfile*								fRefCorTwo5;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*								fRefCorTwo2Gap00;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*								fRefCorTwo2Gap04;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*								fRefCorTwo2Gap08;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*								fRefCorTwo2Gap10;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
+
         TProfile*								fDiffCorTwo;			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
 
