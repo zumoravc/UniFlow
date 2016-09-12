@@ -485,7 +485,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   dVal = (dAmp - iNumTracksSelected) / dWeight;
   
   //printf("Val: %f // weight: %f", dVal, dWeight);
-  if(dVal == dVal && dWeight == dWeight)
+  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCent != -1) )
   {
     fRefCorTwo2->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
     //printf(" FILLED\n");
@@ -494,18 +494,18 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
 	dAmp = (fQvec3*(TComplex::Conjugate(fQvec3))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  if(dVal == dVal && dWeight == dWeight)
+  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCent != -1) )
     fRefCorTwo3->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
 
 
 	dAmp = (fQvec4*(TComplex::Conjugate(fQvec4))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  if(dVal == dVal && dWeight == dWeight)
+  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCent != -1) )
     fRefCorTwo4->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dAmp = (fQvec5*(TComplex::Conjugate(fQvec5))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  if(dVal == dVal && dWeight == dWeight)
+  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCent != -1) )
     fRefCorTwo5->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
 
   // eta gap
@@ -513,25 +513,25 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   dWeight = iNumGap00P*iNumGap00N;
   dAmp = (fQvec2Gap00P*(TComplex::Conjugate(fQvec2Gap00N))).Re();
   dVal = (dAmp) / dWeight;
-  if(dVal == dVal && dWeight == dWeight)
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCent != -1) )
     fRefCorTwo2Gap00->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
 
   dWeight = iNumGap04P*iNumGap04N;
   dAmp = (fQvec2Gap04P*(TComplex::Conjugate(fQvec2Gap04N))).Re();
   dVal = (dAmp) / dWeight;
-  if(dVal == dVal && dWeight == dWeight)
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCent != -1) )
     fRefCorTwo2Gap04->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dWeight = iNumGap08P*iNumGap08N;
   dAmp = (fQvec2Gap08P*(TComplex::Conjugate(fQvec2Gap08N))).Re();
   dVal = (dAmp) / dWeight;
-  if(dVal == dVal && dWeight == dWeight)
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCent != -1) )
     fRefCorTwo2Gap08->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dWeight = iNumGap10P*iNumGap10N;
   dAmp = (fQvec2Gap10P*(TComplex::Conjugate(fQvec2Gap10N))).Re();
   dVal = (dAmp) / dWeight;
-  if(dVal == dVal && dWeight == dWeight)
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCent != -1) )
     fRefCorTwo2Gap10->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
 /*
@@ -577,7 +577,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   	return kFALSE;
   }
 
- Int_t iNContrib = aodVtx->GetNContributors();
+  Int_t iNContrib = aodVtx->GetNContributors();
   if(iNContrib <= 0) 
   {	
   	if(fDebug > 0)
@@ -633,6 +633,8 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 	{
 		// not implemented yet
 		fCent = GetCentrCode(fAOD);
+    if (fCent < 0)
+      return kFALSE;
 	}
 
  	return kTRUE;
