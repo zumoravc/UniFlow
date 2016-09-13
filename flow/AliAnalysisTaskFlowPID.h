@@ -20,8 +20,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
         void										SetAODAnalysis(Bool_t aod) { fAODAnalysis = aod; }
         void										SetPbPbAnalysis(Bool_t pbpb) { fPbPb = pbpb; }
-        void										SetCentEdgeLow(Double_t cent) { fCentEdgeLow = cent; }
-        void										SetCentEdgeUp(Double_t cent) { fCentEdgeUp = cent; }
         void										SetPVtxZ(Double_t z) { fPVtxCutZ = z; }
         void										SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void										SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
@@ -45,7 +43,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*									fOutputListQA;	//! QA output list
         AliAODEvent*            fAOD;           //! input event
         AliAODTrack*						fTrack;					//! AOD track
-        //TComplex								fQvec;					//! complex flow vector Q (n = 2)
         TComplex								fQvec2;					//! complex flow vector Q (n = 2)
         TComplex								fQvec3;					//! complex flow vector Q (n = 3)
         TComplex								fQvec4;					//! complex flow vector Q (n = 4)
@@ -60,7 +57,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TComplex								fQvec2Gap10N;					//! complex flow vector Q (n = 5)
         TComplex								fPOIvec;				//! complex flow vector p for POI particles
         TComplex								fRFPvec;				//! complex flow vector Q for RFP particles
-        TClonesArray						fArrTracksSelected;	//! Container for selected / filtered tracks in given event
         Int_t										fLocalEventCounter; //! Event counter for debug purposes
         Short_t									fCent;					//! event centrality bin indicator
 
@@ -68,8 +64,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t									fPbPb;					//! is PbPb analysis?
 				Bool_t       						fLHC10h;             // flag to LHC10h data?
 				Short_t									fCentFlag;			//! centrality flag
-        Double_t 								fCentEdgeLow;		//! centrality low edge
-        Double_t 								fCentEdgeUp;		//! centrality upper edge
         Double_t 								fPVtxCutZ; 			//! PV z cut
         Double_t 								fTrackEtaMax; 	//! Maximum pseudorapidity range
         Double_t								fTrackPtMax;		//! Maximal track pT
@@ -85,7 +79,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected trakcks phi distribution
-        //TProfile*								fRefCor;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo2;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo3;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v3
         TProfile*								fRefCorTwo4;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v4
