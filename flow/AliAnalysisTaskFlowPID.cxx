@@ -238,8 +238,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputList->Add(fDiffCorTwo);
 
 	// QA output
-	Int_t iNEventCounterBins = 4;
-	TString sEventCounterLabel[] = {"Input","AOD OK","Selected (me)","Selected (Katka)"};
+	Int_t iNEventCounterBins = 8;
+	TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","Selected"};
 	fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
 	for(Int_t i = 0; i < iNEventCounterBins; i++)
 		fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
@@ -290,7 +290,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   {
     return;
   }
-  fEventCounter->Fill(2); // event selected
+  fEventCounter->Fill(7); // event selected
 
   // only events passing selection criteria defined @ IsEventSelected()
 
@@ -309,7 +309,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   
   
 	// estimating flow vectors for 2-part correlations
-  //fQvec = TComplex(0,0,kFALSE); 
   fQvec2 = TComplex(0,0,kFALSE); 
   fQvec3 = TComplex(0,0,kFALSE); 
   fQvec4 = TComplex(0,0,kFALSE); 
@@ -487,10 +486,12 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   if( event->IsPileupFromSPD(3) ) //min contributors ???  	
 	{
 		if(fDebug) ::Info("IsEventSelected","Event rejected: SPD pile up");
-		return kFALSE;
-	}
+    return kFALSE;
+  }
+  
+  fEventCounter->Fill(2);
 
-  	// consider including plpMV pileup code from Katarina?
+  // consider including plpMV pileup code from Katarina?
  
   // Primary vertex criteria
   const AliAODVertex* aodVtx = event->GetPrimaryVertex();
@@ -519,6 +520,8 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   	return kFALSE;
   }
 
+  fEventCounter->Fill(3);
+
   const AliAODVertex* spdVtx = event->GetPrimaryVertexSPD();
   if(!spdVtx)
   {
@@ -544,12 +547,16 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   	return kFALSE;
   }	
 
+  fEventCounter->Fill(4);
+
   if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
 	{
 		if(fDebug) 
 			::Info("IsEventSelected","Event rejected: PV z-distance cut");
   	return kFALSE;
 	}
+
+  fEventCounter->Fill(5);
 
 	// centrality rejection
 	
@@ -560,6 +567,8 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
     if (fCent < 0)
       return kFALSE;
 	}
+  
+  fEventCounter->Fill(6);
 
  	return kTRUE;
 }
