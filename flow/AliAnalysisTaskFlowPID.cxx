@@ -297,6 +297,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
   
+  // track counters in different regions
   Int_t iNumTracksSelected = 0;
   Int_t iNumGap00P = 0;
   Int_t iNumGap00N = 0;
@@ -307,13 +308,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   Int_t iNumGap10P = 0;
   Int_t iNumGap10N = 0;
   
-  
 	// estimating flow vectors for 2-part correlations
   fQvec2 = TComplex(0,0,kFALSE); 
   fQvec3 = TComplex(0,0,kFALSE); 
   fQvec4 = TComplex(0,0,kFALSE); 
   fQvec5 = TComplex(0,0,kFALSE); 
 
+  // <2> eta gap 
   fQvec2Gap00P = TComplex(0,0,kFALSE);
   fQvec2Gap04P = TComplex(0,0,kFALSE);
   fQvec2Gap08P = TComplex(0,0,kFALSE);
@@ -700,85 +701,7 @@ Short_t AliAnalysisTaskFlowPID::GetCentrCode(AliVEvent* ev)
   }
   return centrCode;
 }
-
-Bool_t AliAnalysisTaskFlowPID::IsEventSelectedKatarina(const AliAODEvent* event)
-{
-  Float_t zvtx = GetVertex(fAOD);
-  
-  if(zvtx< -990)
-  {
-    //fVtx->Fill(0);
-    return kFALSE;
-  }
-  else 
-  {
-    //fVtx->Fill(1);
-    //fVtxBeforeCuts->Fill(zvtx);
-    if (TMath::Abs(zvtx) < fPVtxCutZ) 
-    {
-      //fMultCorBeforeCuts->Fill(GetGlobalMult(fAOD), GetTPCMult(fAOD));
-
-    
-      Short_t isPileup = fAOD->IsPileupFromSPD(3);
-      if (isPileup != 0)
-        return kFALSE;
-                  
-      //if (fAOD->GetHeader()->GetRefMultiplicityComb08() < 0)
-      //    return;
-      
-      //New cut from Ruben for pileup hybrid
-      if (plpMV(fAOD))
-          return kFALSE;
-    
-                
-                
-      //fMultCorAfterCuts->Fill(GetGlobalMult(fAOD), GetTPCMult(fAOD));
-      Short_t cenAOD  = GetCentrCode(fAOD);
-      //Short_t cenAOD  = 1;
-      //cout << cenAOD << endl;
-            
-      if (cenAOD >= 0){
-        //fVtxAfterCuts->Fill(zvtx);
-        return kTRUE;
-      }
-    }
-  }
-  return kFALSE;
-}
-
-Float_t AliAnalysisTaskFlowPID::GetVertex(AliVEvent* ev) const
-{
-
-  Float_t vtxz = -999.;
-
-  if (1){
-
-    AliAODEvent* aod = (AliAODEvent*)ev;
-      
-      
-      const AliAODVertex* trkVtx = aod->GetPrimaryVertex();
-      if (!trkVtx || trkVtx->GetNContributors()<=0)
-          return vtxz;
-      TString vtxTtl = trkVtx->GetTitle();
-      if (!vtxTtl.Contains("VertexerTracks"))
-          return vtxz;
-      
-      // comment out on Nov 30,2015 for a test of vertex cut
-      const AliAODVertex* spdVtx = aod->GetPrimaryVertexSPD();
-      if (!spdVtx || spdVtx->GetNContributors()<=0)
-          return vtxz;
-      if (TMath::Abs(spdVtx->GetZ() - trkVtx->GetZ())>0.5)
-          return vtxz;
-      
-      vtxz = trkVtx->GetZ();
-
-      
-      
-  }
-  
-  return vtxz;
-}
-
+//_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::plpMV(const AliVEvent *event)
 {
         // check for multi-vertexer pile-up

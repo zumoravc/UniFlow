@@ -31,12 +31,10 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				Bool_t IsTrackSelected(const AliAODTrack* track);
        	void EventQA(const AliAODEvent* event);
        	Short_t GetCentrCode(AliVEvent* ev);
-        
-			  virtual Float_t GetVertex(AliVEvent* ev) const;
-        Double_t GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
+    
+			  Double_t GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
         Bool_t plpMV(const AliVEvent *event);
-        Bool_t IsEventSelectedKatarina(const AliAODEvent* event);
-  
+        
 
 
         TList*                  fOutputList;    //! main output list
