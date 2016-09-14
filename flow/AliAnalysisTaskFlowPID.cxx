@@ -135,7 +135,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCentFlag(0),
   fPVtxCutZ(10),
   fTrackEtaMax(0.8),
-  fTrackPtMax(10),
+  fTrackPtMax(5),
   fTrackPtMin(0.2),
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
