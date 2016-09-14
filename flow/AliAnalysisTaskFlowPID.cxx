@@ -312,7 +312,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   // QA output
   Int_t iNEventCounterBins = 8;
-  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 1 selected tracks"};
+  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 2 selected tracks"};
   fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
   for(Int_t i = 0; i < iNEventCounterBins; i++)
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
@@ -525,9 +525,9 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     }    
   }   // end of loop over all tracks
 
-  if(iNumTracksSelected < 1) return; // 0 tracks selected in this event
+  if(iNumTracksSelected < 2) return; // 0 tracks selected in this event
 
-  // events with at least one selected track
+  // events with at least two selected track
   fEventCounter->Fill(7); 
   fCentralityDis->Fill(fCentPercentile);
   fMultTracksSelected->Fill(iNumTracksSelected);
