@@ -38,15 +38,22 @@
 
 #include "AliLog.h" 
 
-class AliAnalysisTaskFlowPID;    // your analysis class
-
-using namespace std;            // std namespace: so you can do things like 'cout'
+class AliAnalysisTaskFlowPID;    
 
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
+
+Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.,1.,2.,3.,4.};
+Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
   fTrack(0),
+  fTrackPt(0),
+  fTrackEta(0),
+  fTrackPhi(0),
+  fCentBinIndex(0),
+  fCentPercentile(0),
+  fPtBinIndex(0),
   fQvec2(0),
   fQvec3(0),
   fQvec4(0),
@@ -59,10 +66,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fQvec2Gap04N(0),
   fQvec2Gap08N(0),
   fQvec2Gap10N(0),
-  fPOIvec(0),
-  fRFPvec(0),
-  fLocalEventCounter(0),
-  fCent(0),
   fOutputList(0),
   fOutputListQA(0),
   fAODAnalysis(kTRUE),
@@ -75,6 +78,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTrackPtMin(0.2),
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
+  fDiffFlow(kTRUE),
   fEventCounter(0),
   fEventMult(0),
   fCentralityDis(0),
@@ -91,7 +95,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fRefCorTwo2Gap04(0),
   fRefCorTwo2Gap08(0),
   fRefCorTwo2Gap10(0),
-  fDiffCorTwo(0),
   fQAPVz(0),
   fQANumTracks(0),
   fQATrackPt(0),
@@ -99,13 +102,19 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fQATrackPhi(0),
   fQATrackFilterMap(0)
 {
-	  // default constructor, don't allocate memory here!
-    // this is used by root for IO purposes, it needs to remain empty
+  // default constructor, don't allocate memory here!
+  // this is used by root for IO purposes, it needs to remain empty
 }
 //_____________________________________________________________________________
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTaskSE(name),
   fAOD(0),
   fTrack(0),
+  fTrackPt(0),
+  fTrackEta(0),
+  fTrackPhi(0),
+  fCentBinIndex(0),
+  fCentPercentile(0),
+  fPtBinIndex(0),
   fQvec2(0),
   fQvec3(0),
   fQvec4(0),
@@ -118,12 +127,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fQvec2Gap04N(0),
   fQvec2Gap08N(0),
   fQvec2Gap10N(0),
-  fPOIvec(0),
-  fRFPvec(0),
-  fLocalEventCounter(0),
-  fCent(0),
-  fOutputList(0),
-  fOutputListQA(0),
+  
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
@@ -134,6 +138,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTrackPtMin(0.2),
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
+  fDiffFlow(kTRUE),
+
+  fOutputList(0),
+  fOutputListQA(0),
   fEventCounter(0),
   fEventMult(0),
   fCentralityDis(0),
@@ -150,7 +158,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fRefCorTwo2Gap04(0),
   fRefCorTwo2Gap08(0),
   fRefCorTwo2Gap10(0),
-  fDiffCorTwo(0),
   fQAPVz(0),
   fQANumTracks(0),
   fQATrackPt(0),
@@ -159,6 +166,18 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fQATrackFilterMap(0)
 {
   // constructor
+
+  for(Int_t i = 0; i < fNumPtBins; i++)
+  {
+     fPvec2[i] = 0;
+  }
+
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    fDiffCorTwo[i] = 0;
+  }
+  
+
   DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
                                       // this chain is created by the analysis manager, so no need to worry about it, 
                                       // it does its work automatically
@@ -192,9 +211,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputListQA->SetOwner(kTRUE);
 
 	// main output
-	fEventMult = new TH1D("fEventMult","Event multiplicity (selected)",100,0,5000);
+	fEventMult = new TH1D("fEventMult","Event multiplicity (selected events)",100,0,10000);
 	fOutputList->Add(fEventMult);
-	fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality; Counts", 100, 0, 100);
+	fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality; Counts", fNumCentBins,fCentBinEdges);
   fOutputList->Add(fCentralityDis);
 	fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
   fOutputList->Add(fCentSPDvsV0M);
@@ -206,36 +225,42 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputList->Add(fTracksEta);          
 	fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected)", 360, 0., TMath::TwoPi());    
 	fOutputList->Add(fTracksPhi);          
-  fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT (ref. flow) v2",10,-0.5,9.5);
+  fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT (ref. flow) v2",fNumCentBins,fCentBinEdges);
   fRefCorTwo2->Sumw2();
 	fOutputList->Add(fRefCorTwo2);
-	fRefCorTwo3 = new TProfile("fRefCorTwo3","#LT#LT2#GT#GT (ref. flow) v3",10,-0.5,9.5);
+	fRefCorTwo3 = new TProfile("fRefCorTwo3","#LT#LT2#GT#GT (ref. flow) v3",fNumCentBins,fCentBinEdges);
 	fRefCorTwo3->Sumw2();
 	fOutputList->Add(fRefCorTwo3);
-	fRefCorTwo4 = new TProfile("fRefCorTwo4","#LT#LT2#GT#GT (ref. flow) v4",10,-0.5,9.5);
+	fRefCorTwo4 = new TProfile("fRefCorTwo4","#LT#LT2#GT#GT (ref. flow) v4",fNumCentBins,fCentBinEdges);
 	fRefCorTwo4->Sumw2();
 	fOutputList->Add(fRefCorTwo4);
-	fRefCorTwo5 = new TProfile("fRefCorTwo5","#LT#LT2#GT#GT (ref. flow) v5",10,-0.5,9.5);
+	fRefCorTwo5 = new TProfile("fRefCorTwo5","#LT#LT2#GT#GT (ref. flow) v5",fNumCentBins,fCentBinEdges);
 	fRefCorTwo5->Sumw2();
 	fOutputList->Add(fRefCorTwo5);
 
-  fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2Gap00","#LT#LT2#GT#GT (ref. flow) v2 Gap00",10,-0.5,9.5);
+  fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2Gap00","#LT#LT2#GT#GT (ref. flow) v2 Gap00",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap00->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap00);
-  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2Gap04","#LT#LT2#GT#GT (ref. flow) v2 Gap04",10,-0.5,9.5);
+  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2Gap04","#LT#LT2#GT#GT (ref. flow) v2 Gap04",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap04->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap04);
-  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2Gap08","#LT#LT2#GT#GT (ref. flow) v2 Gap08",10,-0.5,9.5);
+  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2Gap08","#LT#LT2#GT#GT (ref. flow) v2 Gap08",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap08->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap08);
-  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2Gap10","#LT#LT2#GT#GT (ref. flow) v2 Gap10",10,-0.5,9.5);
+  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2Gap10","#LT#LT2#GT#GT (ref. flow) v2 Gap10",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap10->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap10);
   
-
-  fDiffCorTwo = new TProfile("fDiffCorTwo","#LT#LT2'#GT#GT (diff. flow)",1,0,1);
-	fDiffCorTwo->Sumw2();
-	fOutputList->Add(fDiffCorTwo);
+  if(fDiffFlow) // do differential flow switch
+  {
+    for(Int_t i = 0; i < fNumCentBins; i++)
+    {
+      fDiffCorTwo[i] = new TProfile(Form("fDiffCorTwo%d",i),Form("#LT#LT2'#GT#GT (diff. flow) centbin %d",i),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo[i]->Sumw2();
+      fOutputList->Add(fDiffCorTwo[i]);
+    }
+  }
+  
 
 	// QA output
 	Int_t iNEventCounterBins = 8;
@@ -264,7 +289,6 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 {
   // this function is called once for each event
-	//if(fLocalEventCounter > 0) return; // just for debugging purposes: stops after first selected event
 
 	fEventCounter->Fill(0); // input event
 
@@ -291,6 +315,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     return;
   }
   fEventCounter->Fill(7); // event selected
+  fCentralityDis->Fill(fCentPercentile);
 
   // only events passing selection criteria defined @ IsEventSelected()
 
@@ -308,13 +333,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   Int_t iNumGap10P = 0;
   Int_t iNumGap10N = 0;
   
-	// estimating flow vectors for 2-part correlations
+	// estimating flow vectors for <2> with no eta gap (diff harmonics)
   fQvec2 = TComplex(0,0,kFALSE); 
   fQvec3 = TComplex(0,0,kFALSE); 
   fQvec4 = TComplex(0,0,kFALSE); 
   fQvec5 = TComplex(0,0,kFALSE); 
 
-  // <2> eta gap 
+  // <2> eta gap and n = 2
   fQvec2Gap00P = TComplex(0,0,kFALSE);
   fQvec2Gap04P = TComplex(0,0,kFALSE);
   fQvec2Gap08P = TComplex(0,0,kFALSE);
@@ -324,10 +349,14 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fQvec2Gap08N = TComplex(0,0,kFALSE);
   fQvec2Gap10N = TComplex(0,0,kFALSE);
 
-  fPOIvec = TComplex(0,0,kFALSE);
-  fRFPvec = TComplex(0,0,kFALSE);
+  // diff flow
+  Short_t iPtBinIndex = 0;
+  Int_t iNumP[fNumPtBins] = {0};
 
-  Int_t iCounterPOI = 0;
+  for(Int_t i(0); i < fNumPtBins; i++)
+  {
+    fPvec2[i] = TComplex(0,0,kFALSE);
+  }
 
   // loop over all tracks
   for(Int_t i(0); i < iTracks; i++) 
@@ -339,14 +368,29 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     // only selected tracks
     iNumTracksSelected++;
 
-    fTracksPt->Fill(fTrack->Pt());                     
-    fTracksEta->Fill(fTrack->Eta());   
-    fTracksPhi->Fill(fTrack->Phi());   
+    fTrackPt = fTrack->Pt();
+    fTrackEta = fTrack->Eta();
+    fTrackPhi = fTrack->Phi();
+
+    fTracksPt->Fill(fTrackPt);                     
+    fTracksEta->Fill(fTrackEta);   
+    fTracksPhi->Fill(fTrackPhi);   
 
     fQvec2 += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
     fQvec3 += TComplex(TMath::Cos(3*(fTrack->Phi())),TMath::Sin(3*(fTrack->Phi())),kFALSE);
     fQvec4 += TComplex(TMath::Cos(4*(fTrack->Phi())),TMath::Sin(4*(fTrack->Phi())),kFALSE);
 	  fQvec5 += TComplex(TMath::Cos(5*(fTrack->Phi())),TMath::Sin(5*(fTrack->Phi())),kFALSE);
+
+    if(fDiffFlow) // do differential flow switch
+    {
+      iPtBinIndex = GetPtBinIndex(fTrack->Pt());
+      if(iPtBinIndex != -1)
+      {
+        fPvec2[iPtBinIndex] += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+        iNumP[iPtBinIndex]++;
+      }
+    }
+
 
     // eta gap
     Double_t dTrackEta = fTrack->Eta();
@@ -401,8 +445,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   }   // end of loop over all tracks
 
   if(iNumTracksSelected == 0) return; // 0 tracks selected in this event
-  fLocalEventCounter++;
-
+  
   fMultTracksSelected->Fill(iNumTracksSelected);
   
   // Reference Flow
@@ -414,60 +457,63 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   dAmp = (fQvec2*(TComplex::Conjugate(fQvec2))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCent != -1) )
-    fRefCorTwo2->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCentPercentile > 0) )
+    fRefCorTwo2->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dAmp = (fQvec3*(TComplex::Conjugate(fQvec3))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCent != -1) )
-    fRefCorTwo3->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCentPercentile > 0) )
+    fRefCorTwo3->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
 
 	dAmp = (fQvec4*(TComplex::Conjugate(fQvec4))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCent != -1) )
-    fRefCorTwo4->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCentPercentile > 0) )
+    fRefCorTwo4->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dAmp = (fQvec5*(TComplex::Conjugate(fQvec5))).Re();
   dVal = (dAmp - iNumTracksSelected) / dWeight;
-  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCent != -1) )
-    fRefCorTwo5->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCentPercentile > 0) )
+    fRefCorTwo5->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
 
   // ref flow with eta gap
 
   dWeight = iNumGap00P*iNumGap00N;
   dAmp = (fQvec2Gap00P*(TComplex::Conjugate(fQvec2Gap00N))).Re();
   dVal = (dAmp) / dWeight;
-  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCent != -1) )
-    fRefCorTwo2Gap00->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCentPercentile > 0) )
+    fRefCorTwo2Gap00->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
 
   dWeight = iNumGap04P*iNumGap04N;
   dAmp = (fQvec2Gap04P*(TComplex::Conjugate(fQvec2Gap04N))).Re();
   dVal = (dAmp) / dWeight;
-  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCent != -1) )
-    fRefCorTwo2Gap04->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCentPercentile > 0) )
+    fRefCorTwo2Gap04->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dWeight = iNumGap08P*iNumGap08N;
   dAmp = (fQvec2Gap08P*(TComplex::Conjugate(fQvec2Gap08N))).Re();
   dVal = (dAmp) / dWeight;
-  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCent != -1) )
-    fRefCorTwo2Gap08->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCentPercentile > 0) )
+    fRefCorTwo2Gap08->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dWeight = iNumGap10P*iNumGap10N;
   dAmp = (fQvec2Gap10P*(TComplex::Conjugate(fQvec2Gap10N))).Re();
   dVal = (dAmp) / dWeight;
-  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCent != -1) )
-    fRefCorTwo2Gap10->Fill(fCent, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCentPercentile > 0) )
+    fRefCorTwo2Gap10->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
-/*
-  // differential flow 
-	Double_t dotProduct = (fPOIvec*(TComplex::Conjugate(fRFPvec))).Re(); // Re() of Tcom*Tcom <=> dot product of TComplex
-	dWeight = iCounterPOI*(iNumTracksSelected-1);
-	dNom = (dotProduct - iCounterPOI) / dWeight;
-	
-	printf("Diff: %f / product %f / weight: %f \n", dNom,dotProduct, dWeight);
-	fDiffCor2->Fill(0.5,dNom,dWeight);
-*/
 
+  // differential flow 
+  if(fDiffFlow) // do a differential flow switch
+  {
+    for(Int_t i(0); i < fNumPtBins; i++)
+    {
+      dWeight = iNumP[i]*(iNumTracksSelected-1);
+      dAmp = (fPvec2[i]*(TComplex::Conjugate(fQvec2))).Re();
+      dVal = (dAmp - iNumP[i]) / dWeight;
+      if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCentBinIndex > 0) )
+        fDiffCorTwo[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2 ,dVal, dWeight);  
+    }
+  }
 
   PostData(1, fOutputList);	// stream the results the analysis of this event to the output manager which will take care of writing it to a file
   PostData(2, fOutputListQA);
@@ -564,8 +610,8 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 	if(fPbPb)
 	{
 		// not implemented yet
-		fCent = GetCentrCode(fAOD);
-    if (fCent < 0)
+		EstimateCentrality(fAOD);
+    if (fCentBinIndex < 0 || fCentBinIndex > fNumCentBins || fCentPercentile < 0 || fCentPercentile > 80)
       return kFALSE;
 	}
   
@@ -637,11 +683,11 @@ void AliAnalysisTaskFlowPID::EventQA(const AliAODEvent* event)
 }
 
 //_____________________________________________________________________________
-Short_t AliAnalysisTaskFlowPID::GetCentrCode(AliVEvent* ev)
+void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)
 {
   Short_t centrCode = -1;
-  Float_t lPercentile = 0;
-  Float_t V0M_Cent = 0, SPD_Cent = 0;
+  Float_t lPercentile = -100;
+  Float_t V0M_Cent = -100, SPD_Cent = -100;
   
   if (fAODAnalysis)
   {
@@ -669,11 +715,44 @@ Short_t AliAnalysisTaskFlowPID::GetCentrCode(AliVEvent* ev)
     }
   }
 
-  //cout << "lPercentile=" << lPercentile << endl;
-  
-  fCentralityDis->Fill(lPercentile);
   fCentSPDvsV0M->Fill(V0M_Cent, SPD_Cent);
+  
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    if( (lPercentile > fCentBinEdges[i]) && (lPercentile <= fCentBinEdges[i+1]) )
+      centrCode = i;
+  }
+  
+  fCentPercentile = lPercentile;
+  fCentBinIndex = centrCode;
 
+  if(fLHC10h)
+  {
+    if( !( (fCentPercentile <= 80) && (fCentPercentile > 0) ) || !(TMath::Abs(V0M_Cent - SPD_Cent) < 5) )
+    {
+      fCentPercentile = -100.;
+      fCentBinIndex = -1;
+      return;      
+    }
+
+    if( (fCentBinIndex == 0) && !(TMath::Abs(V0M_Cent - SPD_Cent) < 1) ) // 10h check for 0-5% centrality
+    {
+      fCentPercentile = -100.;
+      fCentBinIndex = -1;
+      return;
+    }
+
+    if( (fCentBinIndex == 1) && !(TMath::Abs(V0M_Cent - SPD_Cent) < 1) ) // 10h check for 5-10% centrality
+    {
+      fCentPercentile = -100.;
+      fCentBinIndex = -1;
+      return;
+    }
+  }
+  
+  return;
+
+  /*
   if (fLHC10h) {
       if (lPercentile <= 80 && lPercentile > 0 && TMath::Abs(V0M_Cent - SPD_Cent) < 5)
       {  
@@ -700,6 +779,7 @@ Short_t AliAnalysisTaskFlowPID::GetCentrCode(AliVEvent* ev)
     }   
   }
   return centrCode;
+  */
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::plpMV(const AliVEvent *event)
@@ -779,4 +859,14 @@ Double_t AliAnalysisTaskFlowPID::GetWDist(const AliVVertex* v0, const AliVVertex
         return dist>0 ? TMath::Sqrt(dist) : -1;
         
 }
-    
+//_____________________________________________________________________________
+Short_t AliAnalysisTaskFlowPID::GetPtBinIndex(const Double_t dPt)
+{
+  for(Int_t i(0); i < fNumPtBins; i++)
+  {
+    if( (dPt >= fPtBinEdges[i]) && (dPt < fPtBinEdges[i+1]) )
+      return i;
+  }
+
+  return -1;
+}
