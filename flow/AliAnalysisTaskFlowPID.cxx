@@ -199,22 +199,23 @@ AliAnalysisTaskFlowPID::~AliAnalysisTaskFlowPID()
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 {
-	// create output objects
-	// this function is called ONCE at the start of your analysis (RUNTIME)
-	// here you create the histograms that you want to use 
-	// the histograms are in this case added to a TList, this list is in the end saved to an output file
+  // create output objects
+  // this function is called ONCE at the start of your analysis (RUNTIME)
+  // here you create the histograms that you want to use 
+  // the histograms are in this case added to a TList, this list is in the end saved to an output file
 
-	fOutputList = new TList();          // this is a list which will contain all of your histograms at the end of the analysis, the contents of this list are written to the output file
-	fOutputList->SetOwner(kTRUE);       // memory stuff: the list is owner of all objects it contains and will delete them if requested (dont worry about this now)
+  fOutputList = new TList();          // this is a list which will contain all of your histograms at the end of the analysis, the contents of this list are written to the output file
+  fOutputList->SetOwner(kTRUE);       // memory stuff: the list is owner of all objects it contains and will delete them if requested (dont worry about this now)
 
-	fOutputListQA = new TList();
-	fOutputListQA->SetOwner(kTRUE);
+  fOutputListQA = new TList();
+  fOutputListQA->SetOwner(kTRUE);
 
-	// main output
-	fEventMult = new TH1D("fEventMult","Event multiplicity; tracks;",100,0,10000);
-	fOutputList->Add(fEventMult);
-	fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality;", fNumCentBins,fCentBinEdges);
+  // main output
+  fEventMult = new TH1D("fEventMult","Track multiplicity (all tracks in selected events); tracks;",100,0,10000);
+  fOutputList->Add(fEventMult);
+  fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality;", fNumCentBins,fCentBinEdges);
   fOutputList->Add(fCentralityDis);
+	fMultTracksSelected = new TH1D("fMultTracksSelected","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
   fOutputList->Add(fMultTracksSelected);
   fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected); #it{p}^{track}_{T} (GeV/#it{c});", 100, 0, 10);    
   fOutputList->Add(fTracksPt);          
@@ -261,16 +262,15 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   // QA output
   Int_t iNEventCounterBins = 8;
-  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","Selected"};
+  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 1 selected tracks"};
   fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
   for(Int_t i = 0; i < iNEventCounterBins; i++)
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
   fOutputListQA->Add(fEventCounter);
   fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}; #it{z} (cm);",100,-50,50);
   fOutputListQA->Add(fQAPVz);
-	fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
+  fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
   fOutputListQA->Add(fCentSPDvsV0M);
-	fMultTracksSelected = new TH1D("fMultTracksSelected","Multiplicity of selected tracks; tracks;",100,0,5000);
   fQANumTracks = new TH1D("fQANumTracks","QA: Number of AOD tracks; tracks;",100,0,10000);
   fOutputListQA->Add(fQANumTracks);
   fQATrackPt = new TH1D("fQATrackPt","QA: Track #it{p}_{T} (all); #it{p}^{track}_{T} (GeV/#it{c});",100,0,10);
@@ -314,11 +314,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   {
     return;
   }
-  fEventCounter->Fill(7); // event selected
-  fCentralityDis->Fill(fCentPercentile);
-
   // only events passing selection criteria defined @ IsEventSelected()
-
+  
   const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
   
@@ -365,6 +362,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     if(!fTrack) continue;
     
     if(!IsTrackSelected(fTrack)) continue;
+    
     // only selected tracks
     iNumTracksSelected++;
 
@@ -444,10 +442,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     }    
   }   // end of loop over all tracks
 
-  if(iNumTracksSelected == 0) return; // 0 tracks selected in this event
-  
+  if(iNumTracksSelected < 1) return; // 0 tracks selected in this event
+
+  // events with at least one selected track
+  fEventCounter->Fill(7); 
+  fCentralityDis->Fill(fCentPercentile);
   fMultTracksSelected->Fill(iNumTracksSelected);
-  
+
   // Reference Flow
   Double_t dAmp = 0;
   Double_t dVal = 0;
