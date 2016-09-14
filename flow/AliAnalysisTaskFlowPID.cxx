@@ -211,43 +211,40 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutputListQA->SetOwner(kTRUE);
 
 	// main output
-	fEventMult = new TH1D("fEventMult","Event multiplicity (selected events)",100,0,10000);
+	fEventMult = new TH1D("fEventMult","Event multiplicity; tracks;",100,0,10000);
 	fOutputList->Add(fEventMult);
-	fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality; Counts", fNumCentBins,fCentBinEdges);
+	fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality;", fNumCentBins,fCentBinEdges);
   fOutputList->Add(fCentralityDis);
-	fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
-  fOutputList->Add(fCentSPDvsV0M);
-	fMultTracksSelected = new TH1D("fMultTracksSelected","Multiplicity of selected tracks",100,0,5000);
-	fOutputList->Add(fMultTracksSelected);
-	fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected)", 100, 0, 10);    
-	fOutputList->Add(fTracksPt);          
-	fTracksEta = new TH1D("fTracksEta", "Tracks #it{#eta} (selected)", 300, -1.5, 1.5);    
-	fOutputList->Add(fTracksEta);          
-	fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected)", 360, 0., TMath::TwoPi());    
-	fOutputList->Add(fTracksPhi);          
-  fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT (ref. flow) v2",fNumCentBins,fCentBinEdges);
+  fOutputList->Add(fMultTracksSelected);
+  fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected); #it{p}^{track}_{T} (GeV/#it{c});", 100, 0, 10);    
+  fOutputList->Add(fTracksPt);          
+  fTracksEta = new TH1D("fTracksEta", "Tracks #it{#eta} (selected); #it{#eta}^{track};", 300, -1.5, 1.5);    
+  fOutputList->Add(fTracksEta);          
+  fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected); #it{#varphi}^{track};", 360, 0., TMath::TwoPi());    
+  fOutputList->Add(fTracksPhi);          
+  fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2->Sumw2();
-	fOutputList->Add(fRefCorTwo2);
-	fRefCorTwo3 = new TProfile("fRefCorTwo3","#LT#LT2#GT#GT (ref. flow) v3",fNumCentBins,fCentBinEdges);
-	fRefCorTwo3->Sumw2();
-	fOutputList->Add(fRefCorTwo3);
-	fRefCorTwo4 = new TProfile("fRefCorTwo4","#LT#LT2#GT#GT (ref. flow) v4",fNumCentBins,fCentBinEdges);
-	fRefCorTwo4->Sumw2();
-	fOutputList->Add(fRefCorTwo4);
-	fRefCorTwo5 = new TProfile("fRefCorTwo5","#LT#LT2#GT#GT (ref. flow) v5",fNumCentBins,fCentBinEdges);
-	fRefCorTwo5->Sumw2();
-	fOutputList->Add(fRefCorTwo5);
+  fOutputList->Add(fRefCorTwo2);
+  fRefCorTwo3 = new TProfile("fRefCorTwo3","#LT#LT2#GT#GT_{3} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo3->Sumw2();
+  fOutputList->Add(fRefCorTwo3);
+  fRefCorTwo4 = new TProfile("fRefCorTwo4","#LT#LT2#GT#GT_{4} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo4->Sumw2();
+  fOutputList->Add(fRefCorTwo4);
+  fRefCorTwo5 = new TProfile("fRefCorTwo5","#LT#LT2#GT#GT_{5} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo5->Sumw2();
+  fOutputList->Add(fRefCorTwo5);
 
-  fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2Gap00","#LT#LT2#GT#GT (ref. flow) v2 Gap00",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2Gap00","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap00->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap00);
-  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2Gap04","#LT#LT2#GT#GT (ref. flow) v2 Gap04",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2Gap04","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.2} (ref. flow); centrality",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap04->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap04);
-  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2Gap08","#LT#LT2#GT#GT (ref. flow) v2 Gap08",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2Gap08","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.4} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap08->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap08);
-  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2Gap10","#LT#LT2#GT#GT (ref. flow) v2 Gap10",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2Gap10","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.5} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap10->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap10);
   
@@ -255,31 +252,34 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   {
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
-      fDiffCorTwo[i] = new TProfile(Form("fDiffCorTwo%d",i),Form("#LT#LT2'#GT#GT (diff. flow) centbin %d",i),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo[i] = new TProfile(Form("fDiffCorTwoCent%d",i),Form("#LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo[i]->Sumw2();
       fOutputList->Add(fDiffCorTwo[i]);
     }
   }
   
 
-	// QA output
-	Int_t iNEventCounterBins = 8;
-	TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","Selected"};
-	fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
-	for(Int_t i = 0; i < iNEventCounterBins; i++)
-		fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
-	fOutputListQA->Add(fEventCounter);
-	fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}",100,-50,50);
-	fOutputListQA->Add(fQAPVz);
-	fQANumTracks = new TH1D("fQANumTracks","QA: Number of AOD tracks",1000,0,10000);
-	fOutputListQA->Add(fQANumTracks);
-	fQATrackPt = new TH1D("fQATrackPt","QA: Track #it{p}_{T} (all)",100,0,10);
-	fOutputListQA->Add(fQATrackPt);
-	fQATrackEta = new TH1D("fQATrackEta","QA: Track #it{#eta} (all)",300,-1.5,1.5);
-	fOutputListQA->Add(fQATrackEta);
-	fQATrackPhi = new TH1D("fQATrackPhi","QA: Track #it{#varphi} (all)",300,0,TMath::TwoPi());
-	fOutputListQA->Add(fQATrackPhi);
-	fQATrackFilterMap = new TH1D("fQATrackFilterMap","QA: Tracks filter map (all)",1000,0,1000);
+  // QA output
+  Int_t iNEventCounterBins = 8;
+  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","Selected"};
+  fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
+  for(Int_t i = 0; i < iNEventCounterBins; i++)
+    fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
+  fOutputListQA->Add(fEventCounter);
+  fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}; #it{z} (cm);",100,-50,50);
+  fOutputListQA->Add(fQAPVz);
+	fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
+  fOutputListQA->Add(fCentSPDvsV0M);
+	fMultTracksSelected = new TH1D("fMultTracksSelected","Multiplicity of selected tracks; tracks;",100,0,5000);
+  fQANumTracks = new TH1D("fQANumTracks","QA: Number of AOD tracks; tracks;",100,0,10000);
+  fOutputListQA->Add(fQANumTracks);
+  fQATrackPt = new TH1D("fQATrackPt","QA: Track #it{p}_{T} (all); #it{p}^{track}_{T} (GeV/#it{c});",100,0,10);
+  fOutputListQA->Add(fQATrackPt);
+  fQATrackEta = new TH1D("fQATrackEta","QA: Track #it{#eta} (all); #it{#eta}^{track};",300,-1.5,1.5);
+  fOutputListQA->Add(fQATrackEta);
+  fQATrackPhi = new TH1D("fQATrackPhi","QA: Track #it{#varphi} (all); #it{#varphi}^{track};",300,0,TMath::TwoPi());
+  fOutputListQA->Add(fQATrackPhi);
+	fQATrackFilterMap = new TH1D("fQATrackFilterMap","QA: Tracks filter map (all); filter bit;",1000,0,1000);
 	fOutputListQA->Add(fQATrackFilterMap);
 
 	PostData(1, fOutputList);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
