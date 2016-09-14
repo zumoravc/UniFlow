@@ -70,15 +70,20 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TComplex								fQvec3;					//! complex flow vector Q (n = 3)
         TComplex								fQvec4;					//! complex flow vector Q (n = 4)
         TComplex								fQvec5;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap00P;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap00N;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap04P;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap04N;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap08P;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap08N;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap10P;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap10N;					//! complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap00P;					//! complex flow vector Q (n = 5) with eta gap
+        TComplex								fQvec2Gap00N;					//! complex flow vector Q (n = 5) with eta gap
+        TComplex								fQvec2Gap04P;					//! complex flow vector Q (n = 5) with eta gap
+        TComplex								fQvec2Gap04N;					//! complex flow vector Q (n = 5) with eta gap
+        TComplex								fQvec2Gap08P;					//! complex flow vector Q (n = 5) with eta gap
+        TComplex								fQvec2Gap08N;					//! complex flow vector Q (n = 5) with eta gap
+        TComplex								fQvec2Gap10P;					//! complex flow vector Q (n = 5) with eta gap
+        TComplex								fQvec2Gap10N;					//! complex flow vector Q (n = 5) with eta gap
         TComplex								fPvec2[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow 
+        TComplex								fPvec2Gap00P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
+        TComplex								fPvec2Gap04P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
+        TComplex								fPvec2Gap08P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
+        TComplex								fPvec2Gap10P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
+        TComplex								fPvec3[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow 
         
         
         TList*                  fOutputList;    //! main output list
@@ -89,9 +94,10 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*   					      fCentralityDis;     //! event centrality distribution
         TH2D*							      fCentSPDvsV0M;      //! V0M vs SPD
         TH1D*										fMultTracksSelected; //! multiplicity of selected tracks in a given event
+        TH2D*										fTracksPtCent;		//! selected tracks pT vs event centrality
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
-        TH1D* 									fTracksPhi;			 //! selected trakcks phi distribution
+        TH1D* 									fTracksPhi;			 //! selected tracks phi distribution
         TProfile*								fRefCorTwo2;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo3;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v3
         TProfile*								fRefCorTwo4;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v4
@@ -100,7 +106,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile*								fRefCorTwo2Gap04;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap08;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap10;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-				TProfile*								fDiffCorTwo[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+				TProfile*								fDiffCorTwo2[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+				TProfile*								fDiffCorTwo2Gap00[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+				TProfile*								fDiffCorTwo2Gap04[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+				TProfile*								fDiffCorTwo2Gap08[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+				TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+				TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
 
         // QA histos

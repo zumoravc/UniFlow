@@ -84,6 +84,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
   fMultTracksSelected(0),
+  fTracksPtCent(0),
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
@@ -147,6 +148,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCentralityDis(0),
   fCentSPDvsV0M(0),
   fMultTracksSelected(0),
+  fTracksPtCent(0),
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
@@ -170,11 +172,21 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   for(Int_t i = 0; i < fNumPtBins; i++)
   {
      fPvec2[i] = 0;
+     fPvec2Gap00P[i] = 0;
+     fPvec2Gap04P[i] = 0;
+     fPvec2Gap08P[i] = 0;
+     fPvec2Gap10P[i] = 0;
+     fPvec3[i] = 0;
   }
 
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fDiffCorTwo[i] = 0;
+    fDiffCorTwo2[i] = 0;
+    fDiffCorTwo2Gap00[i] = 0;
+    fDiffCorTwo2Gap04[i] = 0;
+    fDiffCorTwo2Gap08[i] = 0;
+    fDiffCorTwo2Gap10[i] = 0;
+    fDiffCorTwo3[i] = 0;
   }
   
 
@@ -215,8 +227,10 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutputList->Add(fEventMult);
   fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality;", fNumCentBins,fCentBinEdges);
   fOutputList->Add(fCentralityDis);
-	fMultTracksSelected = new TH1D("fMultTracksSelected","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
+  fMultTracksSelected = new TH1D("fMultTracksSelected","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
   fOutputList->Add(fMultTracksSelected);
+  fTracksPtCent = new TH2D("fTracksPtCent", "Tracks #it{p}_{T} vs. centrality (selected); #it{p}^{track}_{T} (GeV/#it{c}); centrality;", fNumPtBins,fPtBinEdges,fNumCentBins,fCentBinEdges);    
+  fOutputList->Add(fTracksPtCent);          
   fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected); #it{p}^{track}_{T} (GeV/#it{c});", 100, 0, 10);    
   fOutputList->Add(fTracksPt);          
   fTracksEta = new TH1D("fTracksEta", "Tracks #it{#eta} (selected); #it{#eta}^{track};", 300, -1.5, 1.5);    
@@ -236,16 +250,16 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fRefCorTwo5->Sumw2();
   fOutputList->Add(fRefCorTwo5);
 
-  fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2Gap00","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2_Gap00","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap00->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap00);
-  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2Gap04","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.2} (ref. flow); centrality",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2_Gap04","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.2} (ref. flow); centrality",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap04->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap04);
-  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2Gap08","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.4} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2_Gap08","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.4} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap08->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap08);
-  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2Gap10","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.5} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2_Gap10","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.5} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap10->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap10);
   
@@ -253,10 +267,46 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   {
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
-      fDiffCorTwo[i] = new TProfile(Form("fDiffCorTwoCent%d",i),Form("#LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
-      fDiffCorTwo[i]->Sumw2();
-      fOutputList->Add(fDiffCorTwo[i]);
+      fDiffCorTwo2[i] = new TProfile(Form("fDiffCorTwo2_Cent%d",i),Form("#LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo2[i]->Sumw2();
+      fOutputList->Add(fDiffCorTwo2[i]);
     }
+    
+    for(Int_t i = 0; i < fNumCentBins; i++)
+    {
+      fDiffCorTwo2Gap00[i] = new TProfile(Form("fDiffCorTwo2_Gap00_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0} Cent %g-%g%% |#it{#eta}^{POI}|>0 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo2Gap00[i]->Sumw2();
+      fOutputList->Add(fDiffCorTwo2Gap00[i]);
+    }
+
+    for(Int_t i = 0; i < fNumCentBins; i++)
+    {
+      fDiffCorTwo2Gap04[i] = new TProfile(Form("fDiffCorTwo2_Gap04_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.2} Cent %g-%g%% #it{#eta}^{POI}>0.2 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo2Gap04[i]->Sumw2();
+      fOutputList->Add(fDiffCorTwo2Gap04[i]);
+    }
+
+    for(Int_t i = 0; i < fNumCentBins; i++)
+    {
+      fDiffCorTwo2Gap08[i] = new TProfile(Form("fDiffCorTwo2_Gap08_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.4} Cent %g-%g%% #it{#eta}^{POI}>0.4 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo2Gap08[i]->Sumw2();
+      fOutputList->Add(fDiffCorTwo2Gap08[i]);
+    }
+
+    for(Int_t i = 0; i < fNumCentBins; i++)
+    {
+      fDiffCorTwo2Gap10[i] = new TProfile(Form("fDiffCorTwo2_Gap10_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.5} Cent %g-%g%% #it{#eta}^{POI}>0.5 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo2Gap10[i]->Sumw2();
+      fOutputList->Add(fDiffCorTwo2Gap10[i]);
+    }
+
+    for(Int_t i = 0; i < fNumCentBins; i++)
+    {
+      fDiffCorTwo3[i] = new TProfile(Form("fDiffCorTwo3_Cent%d",i),Form("#LT#LT2'#GT#GT_{3} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo3[i]->Sumw2();
+      fOutputList->Add(fDiffCorTwo3[i]);
+    }
+    
   }
   
 
@@ -347,12 +397,20 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fQvec2Gap10N = TComplex(0,0,kFALSE);
 
   // diff flow
-  Short_t iPtBinIndex = 0;
-  Int_t iNumP[fNumPtBins] = {0};
+  Int_t iNumP2[fNumPtBins] = {0};
+  Int_t iNumP2Gap00P[fNumPtBins] = {0};
+  Int_t iNumP2Gap04P[fNumPtBins] = {0};
+  Int_t iNumP2Gap08P[fNumPtBins] = {0};
+  Int_t iNumP2Gap10P[fNumPtBins] = {0};
 
   for(Int_t i(0); i < fNumPtBins; i++)
   {
     fPvec2[i] = TComplex(0,0,kFALSE);
+    fPvec2Gap00P[i] = TComplex(0,0,kFALSE);
+    fPvec2Gap04P[i] = TComplex(0,0,kFALSE);
+    fPvec2Gap08P[i] = TComplex(0,0,kFALSE);
+    fPvec2Gap10P[i] = TComplex(0,0,kFALSE);
+    fPvec3[i] = TComplex(0,0,kFALSE);
   }
 
   // loop over all tracks
@@ -366,78 +424,103 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     // only selected tracks
     iNumTracksSelected++;
 
-    fTrackPt = fTrack->Pt();
     fTrackEta = fTrack->Eta();
     fTrackPhi = fTrack->Phi();
+    fTrackPt = fTrack->Pt();
+    fPtBinIndex = GetPtBinIndex(fTrackPt);
 
+    fTracksPtCent->Fill(fTrackPt,fCentPercentile);
     fTracksPt->Fill(fTrackPt);                     
     fTracksEta->Fill(fTrackEta);   
     fTracksPhi->Fill(fTrackPhi);   
 
-    fQvec2 += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
-    fQvec3 += TComplex(TMath::Cos(3*(fTrack->Phi())),TMath::Sin(3*(fTrack->Phi())),kFALSE);
-    fQvec4 += TComplex(TMath::Cos(4*(fTrack->Phi())),TMath::Sin(4*(fTrack->Phi())),kFALSE);
-	  fQvec5 += TComplex(TMath::Cos(5*(fTrack->Phi())),TMath::Sin(5*(fTrack->Phi())),kFALSE);
+    fQvec2 += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
+    fQvec3 += TComplex(TMath::Cos(3*fTrackPhi),TMath::Sin(3*fTrackPhi),kFALSE);
+    fQvec4 += TComplex(TMath::Cos(4*fTrackPhi),TMath::Sin(4*fTrackPhi),kFALSE);
+	  fQvec5 += TComplex(TMath::Cos(5*fTrackPhi),TMath::Sin(5*fTrackPhi),kFALSE);
 
     if(fDiffFlow) // do differential flow switch
     {
-      iPtBinIndex = GetPtBinIndex(fTrack->Pt());
-      if(iPtBinIndex != -1)
+      if(fPtBinIndex != -1)
       {
-        fPvec2[iPtBinIndex] += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
-        iNumP[iPtBinIndex]++;
+        iNumP2[fPtBinIndex]++;
+
+        fPvec2[fPtBinIndex] += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
+        fPvec3[fPtBinIndex] += TComplex(TMath::Cos(3*fTrackPhi),TMath::Sin(3*fTrackPhi),kFALSE);
+
+        if(fTrackEta > 0.)
+        {
+          fPvec2Gap00P[fPtBinIndex] += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
+          iNumP2Gap00P[fPtBinIndex]++;
+        }
+        
+        if(fTrackEta > 0.2)
+        {
+          fPvec2Gap04P[fPtBinIndex] += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
+          iNumP2Gap04P[fPtBinIndex]++;
+        }
+        
+        if(fTrackEta > 0.4)
+        {
+          fPvec2Gap08P[fPtBinIndex] += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
+          iNumP2Gap08P[fPtBinIndex]++;
+        }
+
+        if(fTrackEta > 0.5)
+        {
+          fPvec2Gap10P[fPtBinIndex] += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
+          iNumP2Gap10P[fPtBinIndex]++;
+        }
+
       }
     }
 
-
     // eta gap
-    Double_t dTrackEta = fTrack->Eta();
-
-    if(dTrackEta > 0.)
+    if(fTrackEta > 0.)
     {
-      fQvec2Gap00P += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec2Gap00P += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
       iNumGap00P++;
     }
 
-    if(dTrackEta < 0.)
+    if(fTrackEta < 0.)
     {
-      fQvec2Gap00N += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec2Gap00N += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
       iNumGap00N++;
     }
     
-    if(dTrackEta > 0.2)
+    if(fTrackEta > 0.2)
     {
-      fQvec2Gap04P += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec2Gap04P += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);;
       iNumGap04P++;
     }
 
-    if(dTrackEta < -0.2)
+    if(fTrackEta < -0.2)
     {
-      fQvec2Gap04N += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec2Gap04N += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
       iNumGap04N++;
     }
     
-    if(dTrackEta > 0.4)
+    if(fTrackEta > 0.4)
     {
-      fQvec2Gap08P += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec2Gap08P += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
       iNumGap08P++;
     }
 
-    if(dTrackEta < -0.4)
+    if(fTrackEta < -0.4)
     {
-      fQvec2Gap08N += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec2Gap08N += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);;
       iNumGap08N++;
     }
     
-    if(dTrackEta > 0.5)
+    if(fTrackEta > 0.5)
     {
-      fQvec2Gap10P += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec2Gap10P += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);;
       iNumGap10P++;
     }
 
-    if(dTrackEta < -0.5)
+    if(fTrackEta < -0.5)
     {
-      fQvec2Gap10N += TComplex(TMath::Cos(2*(fTrack->Phi())),TMath::Sin(2*(fTrack->Phi())),kFALSE);
+      fQvec2Gap10N += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
       iNumGap10N++;
     }    
   }   // end of loop over all tracks
@@ -508,11 +591,43 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   {
     for(Int_t i(0); i < fNumPtBins; i++)
     {
-      dWeight = iNumP[i]*(iNumTracksSelected-1);
+      dWeight = iNumP2[i]*(iNumTracksSelected-1);
       dAmp = (fPvec2[i]*(TComplex::Conjugate(fQvec2))).Re();
-      dVal = (dAmp - iNumP[i]) / dWeight;
-      if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCentBinIndex > 0) )
-        fDiffCorTwo[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2 ,dVal, dWeight);  
+      dVal = (dAmp - iNumP2[i]) / dWeight;
+      if( TMath::Abs(dVal < 1) && (dWeight > 1))
+        fDiffCorTwo2[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2 ,dVal, dWeight);
+      //else // test for not filling
+        //printf("DiffFlow[%d] not filled: pT: %g dVal: %g dWeight: %g NumOfPart: %d dAmp: %g \n",fCentBinIndex,(fPtBinEdges[i+1] + fPtBinEdges[i])/2, dVal,dWeight, iNumP2[i],dAmp);  
+
+      dWeight = iNumP2[i]*(iNumTracksSelected-1);
+      dAmp = (fPvec3[i]*(TComplex::Conjugate(fQvec3))).Re();
+      dVal = (dAmp - iNumP2[i]) / dWeight;
+      if( TMath::Abs(dVal < 1) && (dWeight > 1))
+        fDiffCorTwo3[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2 ,dVal, dWeight);
+
+      dWeight = iNumP2Gap00P[i]*(iNumGap00N);
+      dAmp = (fPvec2Gap00P[i]*(TComplex::Conjugate(fQvec2Gap00N))).Re();
+      dVal = dAmp / dWeight;
+      if(TMath::Abs(dVal< 1) && (dWeight > 0))
+        fDiffCorTwo2Gap00[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, dVal,dWeight);
+
+      dWeight = iNumP2Gap04P[i]*(iNumGap04N);
+      dAmp = (fPvec2Gap04P[i]*(TComplex::Conjugate(fQvec2Gap04N))).Re();
+      dVal = dAmp / dWeight;
+      if(TMath::Abs(dVal< 1) && (dWeight > 0))
+        fDiffCorTwo2Gap04[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, dVal,dWeight);     
+
+      dWeight = iNumP2Gap08P[i]*(iNumGap08N);
+      dAmp = (fPvec2Gap08P[i]*(TComplex::Conjugate(fQvec2Gap08N))).Re();
+      dVal = dAmp / dWeight;
+      if(TMath::Abs(dVal< 1) && (dWeight > 0))
+        fDiffCorTwo2Gap08[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, dVal,dWeight);     
+
+      dWeight = iNumP2Gap10P[i]*(iNumGap10N);
+      dAmp = (fPvec2Gap10P[i]*(TComplex::Conjugate(fQvec2Gap10N))).Re();
+      dVal = dAmp / dWeight;
+      if(TMath::Abs(dVal< 1) && (dWeight > 0))
+        fDiffCorTwo2Gap10[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, dVal,dWeight);     
     }
   }
 
