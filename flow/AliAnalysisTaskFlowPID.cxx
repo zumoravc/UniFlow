@@ -253,13 +253,13 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2_Gap00","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap00->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap00);
-  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2_Gap04","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.2} (ref. flow); centrality",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2_Gap04","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.4} (ref. flow); centrality",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap04->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap04);
-  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2_Gap08","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.4} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2_Gap08","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.8} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap08->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap08);
-  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2_Gap10","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.5} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2_Gap10","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 1} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap10->Sumw2();
   fOutputList->Add(fRefCorTwo2Gap10);
   
@@ -281,21 +281,21 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
-      fDiffCorTwo2Gap04[i] = new TProfile(Form("fDiffCorTwo2_Gap04_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.2} Cent %g-%g%% #it{#eta}^{POI}>0.2 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo2Gap04[i] = new TProfile(Form("fDiffCorTwo2_Gap04_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.4} Cent %g-%g%% #it{#eta}^{POI}>0.2 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo2Gap04[i]->Sumw2();
       fOutputList->Add(fDiffCorTwo2Gap04[i]);
     }
 
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
-      fDiffCorTwo2Gap08[i] = new TProfile(Form("fDiffCorTwo2_Gap08_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.4} Cent %g-%g%% #it{#eta}^{POI}>0.4 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo2Gap08[i] = new TProfile(Form("fDiffCorTwo2_Gap08_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.8} Cent %g-%g%% #it{#eta}^{POI}>0.4 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo2Gap08[i]->Sumw2();
       fOutputList->Add(fDiffCorTwo2Gap08[i]);
     }
 
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
-      fDiffCorTwo2Gap10[i] = new TProfile(Form("fDiffCorTwo2_Gap10_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.5} Cent %g-%g%% #it{#eta}^{POI}>0.5 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+      fDiffCorTwo2Gap10[i] = new TProfile(Form("fDiffCorTwo2_Gap10_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 1} Cent %g-%g%% #it{#eta}^{POI}>0.5 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo2Gap10[i]->Sumw2();
       fOutputList->Add(fDiffCorTwo2Gap10[i]);
     }
