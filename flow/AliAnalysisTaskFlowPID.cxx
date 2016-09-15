@@ -31,6 +31,7 @@
 #include "AliAODEvent.h"
 #include "AliESDEvent.h"
 #include "AliAODTrack.h"
+#include "AliAODv0.h"
 #include "AliMultSelection.h"
 #include "AliVTrack.h"
 #include "TComplex.h"
@@ -42,7 +43,7 @@ class AliAnalysisTaskFlowPID;
 
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
-Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.,1.,2.,3.,4.};
+Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0};
 Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
@@ -51,6 +52,15 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTrackPt(0),
   fTrackEta(0),
   fTrackPhi(0),
+  fNumV0s(0),
+  fV0(0),
+  fV0candK0s(0),
+  fV0candLambda(0),
+  fV0candALambda(0),
+  fV0MinMassK0s(0),
+  fV0MaxMassK0s(0),
+  fV0MinMassLambda(0),
+  fV0MaxMassLambda(0),
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
@@ -79,7 +89,18 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
   fDiffFlow(kTRUE),
+  fPID(kFALSE),
+  fCutV0onFly(0),
+  fCutV0rejectKinks(kTRUE),
+  fCutV0refitTPC(kTRUE),
+  fCutV0MinCPALambda(0),
+  fCutV0MinCPAK0s(0),
+  fCutV0MaxDCAtoPV(0),
+  fCutV0MaxDCADaughters(0),
+  fCutV0MaxDecayRadius(0),
   fEventCounter(0),
+  fV0sCounter(0),
+  fV0sMult(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -113,6 +134,15 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTrackPt(0),
   fTrackEta(0),
   fTrackPhi(0),
+  fNumV0s(0),
+  fV0(0),
+  fV0candK0s(0),
+  fV0candLambda(0),
+  fV0candALambda(0),
+  fV0MinMassK0s(0),
+  fV0MaxMassK0s(0),
+  fV0MinMassLambda(0),
+  fV0MaxMassLambda(0),
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
@@ -140,10 +170,21 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
   fDiffFlow(kTRUE),
+  fPID(kFALSE),  
+  fCutV0onFly(0),
+  fCutV0rejectKinks(kTRUE),
+  fCutV0refitTPC(kTRUE),
+  fCutV0MinCPALambda(0),
+  fCutV0MinCPAK0s(0),
+  fCutV0MaxDCAtoPV(0),
+  fCutV0MaxDCADaughters(0),
+  fCutV0MaxDecayRadius(0),
 
   fOutputList(0),
   fOutputListQA(0),
   fEventCounter(0),
+  fV0sCounter(0),
+  fV0sMult(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -237,6 +278,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutputList->Add(fTracksEta);          
   fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected); #it{#varphi}^{track};", 360, 0., TMath::TwoPi());    
   fOutputList->Add(fTracksPhi);          
+  fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",100,0,100);
+  fOutputList->Add(fV0sMult);
+  
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2->Sumw2();
   fOutputList->Add(fRefCorTwo2);
@@ -311,12 +355,20 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   
 
   // QA output
-  Int_t iNEventCounterBins = 8;
-  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 2 selected tracks"};
+  Int_t iNEventCounterBins = 9;
+  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 2 selected tracks","At least 1 V0 candidate"};
   fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
   for(Int_t i = 0; i < iNEventCounterBins; i++)
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
   fOutputListQA->Add(fEventCounter);
+  
+  Int_t iNV0sCounterBins = 2;
+  TString sV0sCounterLabel[] = {"Input","Selected"};
+  fV0sCounter = new TH1D("fV0sCounter","V0s counter",iNV0sCounterBins,0,iNV0sCounterBins);
+  for(Int_t i = 0; i < iNV0sCounterBins; i++)
+    fV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
+  fOutputListQA->Add(fV0sCounter);
+  
   fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}; #it{z} (cm);",100,-50,50);
   fOutputListQA->Add(fQAPVz);
   fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
@@ -531,6 +583,46 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fEventCounter->Fill(7); 
   fCentralityDis->Fill(fCentPercentile);
   fMultTracksSelected->Fill(iNumTracksSelected);
+
+  
+  // check and select V0s candidates
+  fNumV0s = fAOD->GetNumberOfV0s();
+  if(fNumV0s > 0)
+    fEventCounter->Fill(8); // number of events with at least 1 V0 candidate
+  
+  if(fPID && (fNumV0s > 0) ) // do a PID? (so far V0s only)
+  { 
+    fV0sMult->Fill(fNumV0s);
+
+    // loop over V0 candidates
+    for(Int_t iV0(0); iV0 < fNumV0s; iV0++)
+    {
+      fV0 = fAOD->GetV0(iV0);
+      if(!fV0)
+        continue;
+
+      fV0sCounter->Fill(0);
+
+      // initial setting for V0 selection
+      fV0candK0s = kTRUE;
+      fV0candLambda = kTRUE;
+      fV0candALambda = kTRUE;
+
+      if(!IsV0Selected(fV0))
+        continue;
+
+      // selected V0 candidates
+      fV0sCounter->Fill(1);
+      
+    }
+
+
+
+
+  }
+
+
+  // CALCULATING flow
 
   // Reference Flow
   Double_t dAmp = 0;
@@ -767,6 +859,171 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 
 	return kTRUE;
 }
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
+{ 
+  // invalid V0 pointer
+  if(!v0) 
+    return kFALSE;
+
+  // reconstruction method: online (on-the-fly) OR offline
+  if(v0->GetOnFlyStatus() != fCutV0onFly)
+    return kFALSE;
+
+  // number of findable clusters, Number of crossed TPC rows, ratio? V0 pseudorapidity
+  //if(!IsTrackSelected(v0))
+    //return kFALSE;
+
+  // daughter track check
+  const AliAODTrack* trackDaughterPos = (AliAODTrack*) v0->GetDaughter(0);
+  const AliAODTrack* trackDaughterNeg = (AliAODTrack*) v0->GetDaughter(1);
+
+  // invalid daughter track pointers
+  if(!trackDaughterPos || !trackDaughterNeg) 
+    return kFALSE;
+
+  // ordinary track selection -> not needed -> V0 passing it instead?
+  //if(!IsTrackSelected(trackDaughterNeg) || !IsTrackSelected(trackDaughterPos) )
+  //  return kFALSE;
+
+  // charge of daugters
+  if( trackDaughterPos->Charge() == trackDaughterNeg->Charge() ) // same charge
+    return kFALSE;
+
+  if( (trackDaughterPos->Charge() != 1) || (trackDaughterNeg->Charge() != -1) ) // expected charge
+    return kFALSE;
+
+  // TPC refit
+  if( fCutV0refitTPC && ( !trackDaughterPos->IsOn(AliAODTrack::kTPCrefit) || !trackDaughterNeg->IsOn(AliAODTrack::kTPCrefit) ) )
+    return kFALSE;
+
+  // Kinks
+  const AliAODVertex* prodVtxDaughterPos = (AliAODVertex*) trackDaughterPos->GetProdVertex(); // production vertex of the positive daughter track
+  const AliAODVertex* prodVtxDaughterNeg = (AliAODVertex*) trackDaughterNeg->GetProdVertex(); // production vertex of the negative daughter track
+  if( fCutV0rejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) )
+    return kFALSE;
+
+  // Daughters DCA to PV 
+  Double_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
+  Double_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
+  if(fCutV0MaxDCAtoPV > 0. && ( dDCAPosToPV > fCutV0MaxDCAtoPV || dDCANegToPV > fCutV0MaxDCAtoPV ) )
+    return kFALSE;
+
+  // Daughter DCA among themselves
+  Double_t dDCA = TMath::Abs(v0->DcaV0Daughters());
+  if(fCutV0MaxDCADaughters > 0. && dDCA > fCutV0MaxDCADaughters)
+    return kFALSE;
+
+  // radius of decay vertex in transverse plane
+  Double_t dSecVtxCoor[3] = {0};
+  v0->GetSecondaryVtx(dSecVtxCoor);  
+  Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
+  if( fCutV0MaxDecayRadius > 0. && dDecayRadius > fCutV0MaxDecayRadius )
+    return kFALSE;
+
+  // is V0 either K0s or (A)Lambda candidate
+  fV0candK0s = IsV0aK0s(v0);
+  fV0candLambda = IsV0aLambda(v0);
+  fV0candALambda = IsV0aALambda(v0);
+
+  if( !fV0candK0s && !fV0candLambda && !fV0candALambda)
+    return kFALSE; // V0 is neither K0s nor (A)Lambda candidate
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
+{
+  if(!v0)
+    return kFALSE;
+
+  // inv. mass window
+  Double_t dMass = v0->MassK0Short();
+  if( dMass < fV0MinMassK0s || dMass >= fV0MaxMassK0s )
+    return kFALSE;
+
+  AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
+
+  // CPA
+  Double_t dCPA = v0->CosPointingAngle(primVtx);
+  if( fCutV0MinCPAK0s > 0. && dCPA < fCutV0MinCPAK0s )
+    return kFALSE;
+
+  // proper life-time
+  /*
+  Double_t dPropLife; 
+  if( fCutV0MaxLifeK0s > 0. && || dPropLife > fCutV0MaxLifeK0s )
+    return kFALSE;
+  */
+  
+  // Armenteros-Podolaski plot
+  Double_t dPtArm = v0->PtArmV0();
+  Double_t dAlpha = v0->AlphaV0();
+  if( dPtArm < TMath::Abs(0.2 * dAlpha) )
+    return kFALSE;
+
+  // cross-contamination
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
+{
+  if(!v0)
+    return kFALSE;
+
+  // inv. mass window
+  Double_t dMass = v0->MassLambda();
+  if( dMass < fV0MinMassLambda || dMass >= fV0MaxMassLambda )
+    return kFALSE;
+
+  AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
+
+  // CPA
+  Double_t dCPA = v0->CosPointingAngle(primVtx);
+  if( fCutV0MinCPALambda > 0. && dCPA < fCutV0MinCPALambda )
+    return kFALSE;
+
+  // proper life-time
+  /*
+  Double_t dPropLife; 
+  if( fCutV0MaxLifeK0s > 0. && || dPropLife > fCutV0MaxLifeK0s )
+    return kFALSE;
+  */
+  
+  // cross-contamination
+
+  return kTRUE;
+}              
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsV0aALambda(const AliAODv0* v0)
+{
+  if(!v0)
+    return kFALSE;
+
+  // inv. mass window
+  Double_t dMass = v0->MassAntiLambda();
+  if( dMass < fV0MinMassLambda || dMass >= fV0MaxMassLambda )
+    return kFALSE;
+
+  AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
+
+  // CPA
+  Double_t dCPA = v0->CosPointingAngle(primVtx);
+  if( fCutV0MinCPALambda > 0. && dCPA < fCutV0MinCPALambda )
+    return kFALSE;
+
+  // proper life-time
+  /*
+  Double_t dPropLife; 
+  if( fCutV0MaxLifeK0s > 0. && || dPropLife > fCutV0MaxLifeK0s )
+    return kFALSE;
+  */
+  
+  // cross-contamination
+
+  return kTRUE;
+}              
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::EventQA(const AliAODEvent* event)
 {
