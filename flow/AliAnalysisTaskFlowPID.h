@@ -123,6 +123,15 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D* 									fTracksPhi;			 //! selected tracks phi distribution
         TH1D* 									fTracksCharge;			 //! selected tracks charge distribution
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
+        TH1D*										fV0sPt;					//! selected V0s pT distribution
+        TH1D*										fV0sEta;					//! selected V0s eta distribution
+        TH1D*										fV0sPhi;					//! selected V0s phi distribution
+        TH1D*										fV0sInvMassK0s;		//! selected K0s inv. mass distribution
+        TH1D*										fV0sInvMassLambda;		//! selected Lambda candidates inv. mass distribution
+        TH1D*										fV0sInvMassALambda;		//! selected ALambda candidates inv. mass distribution
+        TH3D*							fV0sK0s;							//! selected K0s distribution (InvMass, pT, cent)
+        TH3D*							fV0sLambda;							//! selected K0s distribution (InvMass, pT, cent)
+        TH3D*							fV0sALambda;							//! selected K0s distribution (InvMass, pT, cent)
         TProfile*								fRefCorTwo2;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo3;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v3
         TProfile*								fRefCorTwo4;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v4

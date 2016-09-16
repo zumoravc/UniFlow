@@ -1,4 +1,5 @@
 /**************************************************************************
+/**************************************************************************
  * Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
  *                                                                        *
  * Author: The ALICE Off-line Project.                                    *
@@ -26,6 +27,7 @@
 #include "AliAODInputHandler.h"
 #include "TChain.h"
 #include "TH1D.h"
+#include "TH3D.h"
 #include "TProfile.h"
 #include "TList.h"
 #include "AliAODEvent.h"
@@ -57,10 +59,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fV0candK0s(0),
   fV0candLambda(0),
   fV0candALambda(0),
-  fV0MinMassK0s(0),
-  fV0MaxMassK0s(0),
-  fV0MinMassLambda(0),
-  fV0MaxMassLambda(0),
+  fV0MinMassK0s(0.35),
+  fV0MaxMassK0s(0.65),
+  fV0MinMassLambda(1.05),
+  fV0MaxMassLambda(1.25),
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
@@ -89,18 +91,27 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
   fDiffFlow(kTRUE),
-  fPID(kFALSE),
+  fPID(kTRUE),
   fCutV0onFly(0),
   fCutV0rejectKinks(kTRUE),
   fCutV0refitTPC(kTRUE),
-  fCutV0MinCPALambda(0),
-  fCutV0MinCPAK0s(0),
+  fCutV0MinCPALambda(0.998),
+  fCutV0MinCPAK0s(0.995),
   fCutV0MaxDCAtoPV(0),
-  fCutV0MaxDCADaughters(0),
-  fCutV0MaxDecayRadius(0),
+  fCutV0MaxDCADaughters(1),
+  fCutV0MaxDecayRadius(100),
   fEventCounter(0),
   fV0sCounter(0),
   fV0sMult(0),
+  fV0sPt(0),
+  fV0sEta(0),
+  fV0sPhi(0),
+  fV0sInvMassK0s(0),
+  fV0sInvMassLambda(0),
+  fV0sInvMassALambda(0),
+  fV0sK0s(0),
+  fV0sLambda(0),
+  fV0sALambda(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -141,10 +152,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fV0candK0s(0),
   fV0candLambda(0),
   fV0candALambda(0),
-  fV0MinMassK0s(0),
-  fV0MaxMassK0s(0),
-  fV0MinMassLambda(0),
-  fV0MaxMassLambda(0),
+  fV0MinMassK0s(0.35),
+  fV0MaxMassK0s(0.65),
+  fV0MinMassLambda(1.05),
+  fV0MaxMassLambda(1.25),
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
@@ -172,21 +183,30 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
   fDiffFlow(kTRUE),
-  fPID(kFALSE),  
+  fPID(kTRUE),  
   fCutV0onFly(0),
   fCutV0rejectKinks(kTRUE),
   fCutV0refitTPC(kTRUE),
-  fCutV0MinCPALambda(0),
-  fCutV0MinCPAK0s(0),
+  fCutV0MinCPALambda(0.998),
+  fCutV0MinCPAK0s(0.995),
   fCutV0MaxDCAtoPV(0),
-  fCutV0MaxDCADaughters(0),
-  fCutV0MaxDecayRadius(0),
+  fCutV0MaxDCADaughters(1),
+  fCutV0MaxDecayRadius(100),
 
   fOutputList(0),
   fOutputListQA(0),
   fEventCounter(0),
   fV0sCounter(0),
   fV0sMult(0),
+  fV0sPt(0),
+  fV0sEta(0),
+  fV0sPhi(0),
+  fV0sInvMassK0s(0),
+  fV0sInvMassLambda(0),
+  fV0sInvMassALambda(0),
+  fV0sK0s(0),
+  fV0sLambda(0),
+  fV0sALambda(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -281,12 +301,27 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutputList->Add(fTracksEta);          
   fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected); #it{#varphi}^{track};", 360, 0., TMath::TwoPi());    
   fOutputList->Add(fTracksPhi);          
-  
   fTracksCharge = new TH1D("fTracksCharge", "Track charge (selected); charge^{track};", 3,-1.5,1.5);    
   fOutputList->Add(fTracksCharge);          
   fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",100,0,100);
   fOutputList->Add(fV0sMult);
+  fV0sPt = new TH1D("fV0sPt", "V0s #it{p}_{T} (selected); #it{p}^{V0}_{T} (GeV/#it{c});", 100, 0, 10);    
+  fOutputList->Add(fV0sPt);          
+  fV0sEta = new TH1D("fV0sEta", "V0s #it{#eta} (selected); #it{#eta}^{V0};", 300, -1.5, 1.5);    
+  fOutputList->Add(fV0sEta);          
+  fV0sPhi = new TH1D("fV0sPhi", "V0s #it{#varphi} (selected); #it{#varphi}^{V0};", 360, 0., TMath::TwoPi());    
+  fOutputList->Add(fV0sPhi);
+  fV0sInvMassK0s = new TH1D("fV0sInvMassK0s","K^{0}_{S} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 300,fV0MinMassK0s,fV0MaxMassK0s);          
+  fOutputList->Add(fV0sInvMassK0s);
+  fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassLambda,fV0MaxMassLambda);          
+  fOutputList->Add(fV0sInvMassLambda);
+  fV0sInvMassALambda = new TH1D("fV0sInvMassALambda","#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassLambda,fV0MaxMassLambda);          
+  fOutputList->Add(fV0sInvMassALambda);
   
+  Double_t dMassK0sEdges[] = {fV0MinMassK0s,fV0MaxMassK0s};
+  fV0sK0s = new TH3D("fV0sK0s","K^{0}_{S} candidates dist; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c}); centrality;", 30, dMassK0sEdges, fNumPtBins, fPtBinEdges,fNumCentBins,fCentBinEdges);
+  fOutputList->Add(fV0sK0s);
+
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2->Sumw2();
   fOutputList->Add(fRefCorTwo2);
@@ -368,8 +403,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
   fOutputListQA->Add(fEventCounter);
   
-  Int_t iNV0sCounterBins = 2;
-  TString sV0sCounterLabel[] = {"Input","Selected"};
+  Int_t iNV0sCounterBins = 11;
+  TString sV0sCounterLabel[] = {"Input","Reco. method","V0 acceptance (#it{#eta},#it{p}_{T})","Daughters charge","TPC refit","Kink","DCA to PV","Daughters DCA","Decay radius","K^{0}_{S}/#Lambda/#bar{#Lambda}","Selected"};
   fV0sCounter = new TH1D("fV0sCounter","V0s counter",iNV0sCounterBins,0,iNV0sCounterBins);
   for(Int_t i = 0; i < iNV0sCounterBins; i++)
     fV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
@@ -593,6 +628,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   
   // check and select V0s candidates
+  Int_t iNumV0sSelected = 0;
   fNumV0s = fAOD->GetNumberOfV0s();
   if(fNumV0s > 0)
     fEventCounter->Fill(8); // number of events with at least 1 V0 candidate
@@ -608,8 +644,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(!fV0)
         continue;
 
-      fV0sCounter->Fill(0);
-
       // initial setting for V0 selection
       fV0candK0s = kTRUE;
       fV0candLambda = kTRUE;
@@ -618,14 +652,33 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(!IsV0Selected(fV0))
         continue;
 
+      fV0sCounter->Fill(10);
+
       // selected V0 candidates
-      fV0sCounter->Fill(1);
+      fV0sPt->Fill(fV0->Pt());
+      fV0sEta->Fill(fV0->Eta());
+      fV0sPhi->Fill(fV0->Phi());
+
       
+      if(fV0candK0s)
+      {
+        fV0sInvMassK0s->Fill(fV0->MassK0Short());
+        //fV0sK0s->Fill(fV0->MassK0Short(), fV0->Pt(), fCentPercentile);
+      }
+
+      if(fV0candLambda)
+      {
+        fV0sInvMassLambda->Fill(fV0->MassLambda());
+      }
+
+      if(fV0candALambda)
+      {
+        fV0sInvMassALambda->Fill(fV0->MassAntiLambda());
+      }
     }
 
-
-
-
+    if(iNumV0sSelected > 0)
+      fEventCounter->Fill(8); // number of events with at least 1 V0 candidate selected
   }
 
 
@@ -870,63 +923,119 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
 { 
   // invalid V0 pointer
-  if(!v0) 
+  if(!v0)
+  {
+    //::Warning("IsV0Selected","Invalid pointer to V0!");
     return kFALSE;
-
-  // reconstruction method: online (on-the-fly) OR offline
-  if(v0->GetOnFlyStatus() != fCutV0onFly)
-    return kFALSE;
-
-  // number of findable clusters, Number of crossed TPC rows, ratio? V0 pseudorapidity
-  //if(!IsTrackSelected(v0))
-    //return kFALSE;
+  }
 
   // daughter track check
   const AliAODTrack* trackDaughterPos = (AliAODTrack*) v0->GetDaughter(0);
   const AliAODTrack* trackDaughterNeg = (AliAODTrack*) v0->GetDaughter(1);
 
   // invalid daughter track pointers
-  if(!trackDaughterPos || !trackDaughterNeg) 
+  if(!trackDaughterPos || !trackDaughterNeg)
+  {
+    //::Warning("IsV0Selected","Invalid pointer to V0 daughters!");
     return kFALSE;
+  }
+  fV0sCounter->Fill(0);
+
+  // reconstruction method: online (on-the-fly) OR offline
+  if(v0->GetOnFlyStatus() != fCutV0onFly)
+  {
+    //::Warning("IsV0Selected","Wrong reconstruction method!");
+    return kFALSE;
+  }
+  fV0sCounter->Fill(1);
+
+  /*
+  // number of findable clusters, Number of crossed TPC rows, ratio? V0 pseudorapidity
+  if(!IsTrackSelected(v0))
+    return kFALSE;
+  */
 
   // ordinary track selection -> not needed -> V0 passing it instead?
   //if(!IsTrackSelected(trackDaughterNeg) || !IsTrackSelected(trackDaughterPos) )
-  //  return kFALSE;
+    //return kFALSE;
+
+  /*
+  if( !v0->TestFilterBit(fTrackFilterBit) )
+  {
+    return kFALSE;  
+  }
+  */
+
+  if(TMath::Abs(v0->Eta()) > fTrackEtaMax)
+  {
+    return kFALSE;
+  }
+
+  if( (v0->Pt() > fTrackPtMax) || (v0->Pt() < fTrackPtMin) )
+  {
+    return kFALSE;
+  }
+
+  fV0sCounter->Fill(2);
 
   // charge of daugters
   if( trackDaughterPos->Charge() == trackDaughterNeg->Charge() ) // same charge
     return kFALSE;
 
   if( (trackDaughterPos->Charge() != 1) || (trackDaughterNeg->Charge() != -1) ) // expected charge
+  {
+    //::Warning("IsV0Selected","Bad charge!");
     return kFALSE;
+  }
+  fV0sCounter->Fill(3);
 
   // TPC refit
   if( fCutV0refitTPC && ( !trackDaughterPos->IsOn(AliAODTrack::kTPCrefit) || !trackDaughterNeg->IsOn(AliAODTrack::kTPCrefit) ) )
+  {
+    //::Warning("IsV0Selected","TPC refit rejection!");
     return kFALSE;
+  }
+  fV0sCounter->Fill(4);
 
   // Kinks
   const AliAODVertex* prodVtxDaughterPos = (AliAODVertex*) trackDaughterPos->GetProdVertex(); // production vertex of the positive daughter track
   const AliAODVertex* prodVtxDaughterNeg = (AliAODVertex*) trackDaughterNeg->GetProdVertex(); // production vertex of the negative daughter track
   if( fCutV0rejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) )
+  {
+    //::Warning("IsV0Selected","Kink rejection!");
     return kFALSE;
+  }
+  fV0sCounter->Fill(5);
 
   // Daughters DCA to PV 
   Double_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
   Double_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
   if(fCutV0MaxDCAtoPV > 0. && ( dDCAPosToPV > fCutV0MaxDCAtoPV || dDCANegToPV > fCutV0MaxDCAtoPV ) )
+  {
+    //::Warning("IsV0Selected","Wrong daughters DCA to PV!");
     return kFALSE;
+  }
+  fV0sCounter->Fill(6);
 
   // Daughter DCA among themselves
   Double_t dDCA = TMath::Abs(v0->DcaV0Daughters());
   if(fCutV0MaxDCADaughters > 0. && dDCA > fCutV0MaxDCADaughters)
+  {
+    //::Warning("IsV0Selected","Invalid daughters DCA!");
     return kFALSE;
+  }
+  fV0sCounter->Fill(7);
 
   // radius of decay vertex in transverse plane
   Double_t dSecVtxCoor[3] = {0};
   v0->GetSecondaryVtx(dSecVtxCoor);  
   Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
   if( fCutV0MaxDecayRadius > 0. && dDecayRadius > fCutV0MaxDecayRadius )
+  {
+    //::Warning("IsV0Selected","Invalid vertex decay radius!");
     return kFALSE;
+  }
+  fV0sCounter->Fill(8);
 
   // is V0 either K0s or (A)Lambda candidate
   fV0candK0s = IsV0aK0s(v0);
@@ -934,7 +1043,12 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   fV0candALambda = IsV0aALambda(v0);
 
   if( !fV0candK0s && !fV0candLambda && !fV0candALambda)
+  {
+    //::Warning("IsV0Selected","V0 is not K0s nor (A)Lambda!");
     return kFALSE; // V0 is neither K0s nor (A)Lambda candidate
+  }
+
+  fV0sCounter->Fill(9);
 
   return kTRUE;
 }
@@ -942,11 +1056,14 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
 Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
 {
   if(!v0)
+  {
+    ::Warning("IsV0aK0s","Invalid V0 pointer!");
     return kFALSE;
+  }
 
   // inv. mass window
   Double_t dMass = v0->MassK0Short();
-  if( dMass < fV0MinMassK0s || dMass >= fV0MaxMassK0s )
+  if( dMass < fV0MinMassK0s || dMass > fV0MaxMassK0s )
     return kFALSE;
 
   AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
