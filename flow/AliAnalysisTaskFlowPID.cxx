@@ -109,6 +109,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
+  fTracksCharge(0),
   fRefCorTwo2(0),
   fRefCorTwo3(0),
   fRefCorTwo4(0),
@@ -134,6 +135,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTrackPt(0),
   fTrackEta(0),
   fTrackPhi(0),
+
   fNumV0s(0),
   fV0(0),
   fV0candK0s(0),
@@ -193,6 +195,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTracksPt(0),
   fTracksEta(0),
   fTracksPhi(0),
+  fTracksCharge(0),
   fRefCorTwo2(0),
   fRefCorTwo3(0),
   fRefCorTwo4(0),
@@ -278,6 +281,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutputList->Add(fTracksEta);          
   fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected); #it{#varphi}^{track};", 360, 0., TMath::TwoPi());    
   fOutputList->Add(fTracksPhi);          
+  
+  fTracksCharge = new TH1D("fTracksCharge", "Track charge (selected); charge^{track};", 3,-1.5,1.5);    
+  fOutputList->Add(fTracksCharge);          
   fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",100,0,100);
   fOutputList->Add(fV0sMult);
   
@@ -484,7 +490,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     fTracksPtCent->Fill(fTrackPt,fCentPercentile);
     fTracksPt->Fill(fTrackPt);                     
     fTracksEta->Fill(fTrackEta);   
-    fTracksPhi->Fill(fTrackPhi);   
+    fTracksPhi->Fill(fTrackPhi);
+    fTracksCharge->Fill(fTrack->Charge());   
 
     fQvec2 += TComplex(TMath::Cos(2*fTrackPhi),TMath::Sin(2*fTrackPhi),kFALSE);
     fQvec3 += TComplex(TMath::Cos(3*fTrackPhi),TMath::Sin(3*fTrackPhi),kFALSE);
