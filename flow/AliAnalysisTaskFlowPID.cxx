@@ -78,8 +78,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fQvec2Gap04N(0),
   fQvec2Gap08N(0),
   fQvec2Gap10N(0),
-  fOutputList(0),
-  fOutputListQA(0),
+  fOutList(0),
+  fOutListV0s(0),
+  fOutListQA(0),
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
@@ -193,8 +194,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutV0MaxDCADaughters(1),
   fCutV0MaxDecayRadius(100),
 
-  fOutputList(0),
-  fOutputListQA(0),
+  fOutList(0),
+  fOutListV0s(0),
+  fOutListQA(0),
   fEventCounter(0),
   fV0sCounter(0),
   fV0sMult(0),
@@ -261,15 +263,27 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
                                       // you can add more output objects by calling DefineOutput(2, classname::Class())
                                       // if you add more output objects, make sure to call PostData for all of them, and to
                                       // make changes to your AddTask macro!
-  DefineOutput(2, TList::Class());	
+  DefineOutput(2, TList::Class());  
+  
+  DefineOutput(3, TList::Class());	
 }
 //_____________________________________________________________________________
 AliAnalysisTaskFlowPID::~AliAnalysisTaskFlowPID()
 {
   // destructor
-  if(fOutputList) 
+  if(fOutList) 
   {
-      delete fOutputList;     // at the end of your task, it is deleted from memory by calling this function
+      delete fOutList;     // at the end of your task, it is deleted from memory by calling this function
+  }
+
+  if(fOutListV0s)
+  {
+    delete fOutListV0s;
+  }
+
+  if(fOutListQA)
+  {
+    delete fOutListQA;
   }
 }
 //_____________________________________________________________________________
@@ -280,73 +294,77 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   // here you create the histograms that you want to use 
   // the histograms are in this case added to a TList, this list is in the end saved to an output file
 
-  fOutputList = new TList();          // this is a list which will contain all of your histograms at the end of the analysis, the contents of this list are written to the output file
-  fOutputList->SetOwner(kTRUE);       // memory stuff: the list is owner of all objects it contains and will delete them if requested (dont worry about this now)
+  fOutList = new TList();          // this is a list which will contain all of your histograms at the end of the analysis, the contents of this list are written to the output file
+  fOutList->SetOwner(kTRUE);       // memory stuff: the list is owner of all objects it contains and will delete them if requested (dont worry about this now)
 
-  fOutputListQA = new TList();
-  fOutputListQA->SetOwner(kTRUE);
+  fOutListV0s = new TList();
+  fOutListV0s->SetOwner(kTRUE);
+
+  fOutListQA = new TList();
+  fOutListQA->SetOwner(kTRUE);
 
   // main output
   fEventMult = new TH1D("fEventMult","Track multiplicity (all tracks in selected events); tracks;",100,0,10000);
-  fOutputList->Add(fEventMult);
+  fOutList->Add(fEventMult);
   fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality;", fNumCentBins,fCentBinEdges);
-  fOutputList->Add(fCentralityDis);
+  fOutList->Add(fCentralityDis);
   fMultTracksSelected = new TH1D("fMultTracksSelected","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
-  fOutputList->Add(fMultTracksSelected);
+  fOutList->Add(fMultTracksSelected);
   fTracksPtCent = new TH2D("fTracksPtCent", "Tracks #it{p}_{T} vs. centrality (selected); #it{p}^{track}_{T} (GeV/#it{c}); centrality;", fNumPtBins,fPtBinEdges,fNumCentBins,fCentBinEdges);    
-  fOutputList->Add(fTracksPtCent);          
+  fOutList->Add(fTracksPtCent);          
   fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected); #it{p}^{track}_{T} (GeV/#it{c});", 100, 0, 10);    
-  fOutputList->Add(fTracksPt);          
+  fOutList->Add(fTracksPt);          
   fTracksEta = new TH1D("fTracksEta", "Tracks #it{#eta} (selected); #it{#eta}^{track};", 300, -1.5, 1.5);    
-  fOutputList->Add(fTracksEta);          
+  fOutList->Add(fTracksEta);          
   fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected); #it{#varphi}^{track};", 360, 0., TMath::TwoPi());    
-  fOutputList->Add(fTracksPhi);          
+  fOutList->Add(fTracksPhi);          
   fTracksCharge = new TH1D("fTracksCharge", "Track charge (selected); charge^{track};", 3,-1.5,1.5);    
-  fOutputList->Add(fTracksCharge);          
+  fOutList->Add(fTracksCharge);          
+  
   fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",100,0,100);
-  fOutputList->Add(fV0sMult);
+  fOutListV0s->Add(fV0sMult);
   fV0sPt = new TH1D("fV0sPt", "V0s #it{p}_{T} (selected); #it{p}^{V0}_{T} (GeV/#it{c});", 100, 0, 10);    
-  fOutputList->Add(fV0sPt);          
+  fOutListV0s->Add(fV0sPt);          
   fV0sEta = new TH1D("fV0sEta", "V0s #it{#eta} (selected); #it{#eta}^{V0};", 300, -1.5, 1.5);    
-  fOutputList->Add(fV0sEta);          
+  fOutListV0s->Add(fV0sEta);          
   fV0sPhi = new TH1D("fV0sPhi", "V0s #it{#varphi} (selected); #it{#varphi}^{V0};", 360, 0., TMath::TwoPi());    
-  fOutputList->Add(fV0sPhi);
+  fOutListV0s->Add(fV0sPhi);
   fV0sInvMassK0s = new TH1D("fV0sInvMassK0s","K^{0}_{S} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 300,fV0MinMassK0s,fV0MaxMassK0s);          
-  fOutputList->Add(fV0sInvMassK0s);
+  fOutListV0s->Add(fV0sInvMassK0s);
   fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassLambda,fV0MaxMassLambda);          
-  fOutputList->Add(fV0sInvMassLambda);
+  fOutListV0s->Add(fV0sInvMassLambda);
   fV0sInvMassALambda = new TH1D("fV0sInvMassALambda","#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassLambda,fV0MaxMassLambda);          
-  fOutputList->Add(fV0sInvMassALambda);
+  fOutListV0s->Add(fV0sInvMassALambda);
   
   Double_t dMassK0sEdges[] = {fV0MinMassK0s,fV0MaxMassK0s};
   fV0sK0s = new TH3D("fV0sK0s","K^{0}_{S} candidates dist; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c}); centrality;", 30, dMassK0sEdges, fNumPtBins, fPtBinEdges,fNumCentBins,fCentBinEdges);
-  fOutputList->Add(fV0sK0s);
+  fOutListV0s->Add(fV0sK0s);
 
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2->Sumw2();
-  fOutputList->Add(fRefCorTwo2);
+  fOutList->Add(fRefCorTwo2);
   fRefCorTwo3 = new TProfile("fRefCorTwo3","#LT#LT2#GT#GT_{3} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo3->Sumw2();
-  fOutputList->Add(fRefCorTwo3);
+  fOutList->Add(fRefCorTwo3);
   fRefCorTwo4 = new TProfile("fRefCorTwo4","#LT#LT2#GT#GT_{4} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo4->Sumw2();
-  fOutputList->Add(fRefCorTwo4);
+  fOutList->Add(fRefCorTwo4);
   fRefCorTwo5 = new TProfile("fRefCorTwo5","#LT#LT2#GT#GT_{5} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo5->Sumw2();
-  fOutputList->Add(fRefCorTwo5);
+  fOutList->Add(fRefCorTwo5);
 
   fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2_Gap00","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap00->Sumw2();
-  fOutputList->Add(fRefCorTwo2Gap00);
+  fOutList->Add(fRefCorTwo2Gap00);
   fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2_Gap04","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.4} (ref. flow); centrality",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap04->Sumw2();
-  fOutputList->Add(fRefCorTwo2Gap04);
+  fOutList->Add(fRefCorTwo2Gap04);
   fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2_Gap08","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.8} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap08->Sumw2();
-  fOutputList->Add(fRefCorTwo2Gap08);
+  fOutList->Add(fRefCorTwo2Gap08);
   fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2_Gap10","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 1} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap10->Sumw2();
-  fOutputList->Add(fRefCorTwo2Gap10);
+  fOutList->Add(fRefCorTwo2Gap10);
   
   if(fDiffFlow) // do differential flow switch
   {
@@ -354,42 +372,42 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     {
       fDiffCorTwo2[i] = new TProfile(Form("fDiffCorTwo2_Cent%d",i),Form("#LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo2[i]->Sumw2();
-      fOutputList->Add(fDiffCorTwo2[i]);
+      fOutList->Add(fDiffCorTwo2[i]);
     }
     
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
       fDiffCorTwo2Gap00[i] = new TProfile(Form("fDiffCorTwo2_Gap00_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0} Cent %g-%g%% |#it{#eta}^{POI}|>0 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo2Gap00[i]->Sumw2();
-      fOutputList->Add(fDiffCorTwo2Gap00[i]);
+      fOutList->Add(fDiffCorTwo2Gap00[i]);
     }
 
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
       fDiffCorTwo2Gap04[i] = new TProfile(Form("fDiffCorTwo2_Gap04_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.4} Cent %g-%g%% #it{#eta}^{POI}>0.2 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo2Gap04[i]->Sumw2();
-      fOutputList->Add(fDiffCorTwo2Gap04[i]);
+      fOutList->Add(fDiffCorTwo2Gap04[i]);
     }
 
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
       fDiffCorTwo2Gap08[i] = new TProfile(Form("fDiffCorTwo2_Gap08_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.8} Cent %g-%g%% #it{#eta}^{POI}>0.4 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo2Gap08[i]->Sumw2();
-      fOutputList->Add(fDiffCorTwo2Gap08[i]);
+      fOutList->Add(fDiffCorTwo2Gap08[i]);
     }
 
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
       fDiffCorTwo2Gap10[i] = new TProfile(Form("fDiffCorTwo2_Gap10_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 1} Cent %g-%g%% #it{#eta}^{POI}>0.5 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo2Gap10[i]->Sumw2();
-      fOutputList->Add(fDiffCorTwo2Gap10[i]);
+      fOutList->Add(fDiffCorTwo2Gap10[i]);
     }
 
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
       fDiffCorTwo3[i] = new TProfile(Form("fDiffCorTwo3_Cent%d",i),Form("#LT#LT2'#GT#GT_{3} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
       fDiffCorTwo3[i]->Sumw2();
-      fOutputList->Add(fDiffCorTwo3[i]);
+      fOutList->Add(fDiffCorTwo3[i]);
     }
     
   }
@@ -401,32 +419,33 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
   for(Int_t i = 0; i < iNEventCounterBins; i++)
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
-  fOutputListQA->Add(fEventCounter);
+  fOutListQA->Add(fEventCounter);
   
   Int_t iNV0sCounterBins = 11;
   TString sV0sCounterLabel[] = {"Input","Reco. method","V0 acceptance (#it{#eta},#it{p}_{T})","Daughters charge","TPC refit","Kink","DCA to PV","Daughters DCA","Decay radius","K^{0}_{S}/#Lambda/#bar{#Lambda}","Selected"};
   fV0sCounter = new TH1D("fV0sCounter","V0s counter",iNV0sCounterBins,0,iNV0sCounterBins);
   for(Int_t i = 0; i < iNV0sCounterBins; i++)
     fV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
-  fOutputListQA->Add(fV0sCounter);
+  fOutListV0s->Add(fV0sCounter);
   
   fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}; #it{z} (cm);",100,-50,50);
-  fOutputListQA->Add(fQAPVz);
+  fOutListQA->Add(fQAPVz);
   fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
-  fOutputListQA->Add(fCentSPDvsV0M);
+  fOutListQA->Add(fCentSPDvsV0M);
   fQANumTracks = new TH1D("fQANumTracks","QA: Number of AOD tracks; tracks;",100,0,10000);
-  fOutputListQA->Add(fQANumTracks);
+  fOutListQA->Add(fQANumTracks);
   fQATrackPt = new TH1D("fQATrackPt","QA: Track #it{p}_{T} (all); #it{p}^{track}_{T} (GeV/#it{c});",100,0,10);
-  fOutputListQA->Add(fQATrackPt);
+  fOutListQA->Add(fQATrackPt);
   fQATrackEta = new TH1D("fQATrackEta","QA: Track #it{#eta} (all); #it{#eta}^{track};",300,-1.5,1.5);
-  fOutputListQA->Add(fQATrackEta);
+  fOutListQA->Add(fQATrackEta);
   fQATrackPhi = new TH1D("fQATrackPhi","QA: Track #it{#varphi} (all); #it{#varphi}^{track};",300,0,TMath::TwoPi());
-  fOutputListQA->Add(fQATrackPhi);
+  fOutListQA->Add(fQATrackPhi);
 	fQATrackFilterMap = new TH1D("fQATrackFilterMap","QA: Tracks filter map (all); filter bit;",1000,0,1000);
-	fOutputListQA->Add(fQATrackFilterMap);
+	fOutListQA->Add(fQATrackFilterMap);
 
-	PostData(1, fOutputList);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
-	PostData(2, fOutputListQA);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
+  PostData(1, fOutList);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
+	PostData(2, fOutListV0s);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
+	PostData(3, fOutListQA);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::UserExec(Option_t *)
@@ -783,8 +802,9 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     }
   }
 
-  PostData(1, fOutputList);	// stream the results the analysis of this event to the output manager which will take care of writing it to a file
-  PostData(2, fOutputListQA);
+  PostData(1, fOutList);  // stream the results the analysis of this event to the output manager which will take care of writing it to a file
+  PostData(2, fOutListV0s);
+  PostData(3, fOutListQA);
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::Terminate(Option_t *)

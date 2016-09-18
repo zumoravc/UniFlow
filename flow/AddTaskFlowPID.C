@@ -20,7 +20,8 @@ AliAnalysisTaskFlowPID* AddTaskFlowPID(TString name = "name")
 
   mgr->AddTask(task); // add your task to the manager
   mgr->ConnectInput(task,0,mgr->GetCommonInputContainer()); // your task needs input: here we connect the manager to your task
-  mgr->ConnectOutput(task,1,mgr->CreateContainer("FlowPID", TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
-  mgr->ConnectOutput(task,2,mgr->CreateContainer("QA", TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
+  mgr->ConnectOutput(task,1,mgr->CreateContainer("Tracks", TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
+  mgr->ConnectOutput(task,2,mgr->CreateContainer("V0s", TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
+  mgr->ConnectOutput(task,3,mgr->CreateContainer("QA", TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
   return task;
 }

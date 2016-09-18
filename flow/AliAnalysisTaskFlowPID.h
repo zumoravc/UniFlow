@@ -109,8 +109,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TComplex								fPvec3[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow 
         
         
-        TList*                  fOutputList;    //! main output list
-        TList*									fOutputListQA;	//! QA output list
+        TList*                  fOutList;    //! main output list
+        TList*                  fOutListV0s;    //! main output list
+        TList*									fOutListQA;	//! QA output list
 
         //std histos
         TH1D*										fEventMult;			 //! selected events multiplicity distribution
