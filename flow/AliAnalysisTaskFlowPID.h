@@ -123,16 +123,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected tracks phi distribution
         TH1D* 									fTracksCharge;			 //! selected tracks charge distribution
-        TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
-        TH1D*										fV0sPt;					//! selected V0s pT distribution
-        TH1D*										fV0sEta;					//! selected V0s eta distribution
-        TH1D*										fV0sPhi;					//! selected V0s phi distribution
-        TH1D*										fV0sInvMassK0s;		//! selected K0s inv. mass distribution
-        TH1D*										fV0sInvMassLambda;		//! selected Lambda candidates inv. mass distribution
-        TH1D*										fV0sInvMassALambda;		//! selected ALambda candidates inv. mass distribution
-        TH3D*							fV0sK0s;							//! selected K0s distribution (InvMass, pT, cent)
-        TH3D*							fV0sLambda;							//! selected K0s distribution (InvMass, pT, cent)
-        TH3D*							fV0sALambda;							//! selected K0s distribution (InvMass, pT, cent)
         TProfile*								fRefCorTwo2;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*								fRefCorTwo3;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v3
         TProfile*								fRefCorTwo4;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v4
@@ -148,6 +138,17 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 				TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
+				// V0s histos
+        TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
+        TH1D*										fV0sPt;					//! selected V0s pT distribution
+        TH1D*										fV0sEta;					//! selected V0s eta distribution
+        TH1D*										fV0sPhi;					//! selected V0s phi distribution
+        TH1D*										fV0sInvMassK0s;		//! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassLambda;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassALambda;		//! selected ALambda candidates inv. mass distribution (pT & cent integrated)
+        TH2D*										fV0sK0s[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
+        TH2D*										fV0sLambda[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
+        TH2D*										fV0sALambda[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
 
         // QA histos
         TH1D* 									fEventCounter;  //! event rejection tracker

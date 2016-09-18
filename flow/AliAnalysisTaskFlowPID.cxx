@@ -110,9 +110,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fV0sInvMassK0s(0),
   fV0sInvMassLambda(0),
   fV0sInvMassALambda(0),
-  fV0sK0s(0),
-  fV0sLambda(0),
-  fV0sALambda(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -206,9 +203,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fV0sInvMassK0s(0),
   fV0sInvMassLambda(0),
   fV0sInvMassALambda(0),
-  fV0sK0s(0),
-  fV0sLambda(0),
-  fV0sALambda(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -253,6 +247,11 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fDiffCorTwo2Gap08[i] = 0;
     fDiffCorTwo2Gap10[i] = 0;
     fDiffCorTwo3[i] = 0;
+
+    fV0sK0s[i] = 0;
+    fV0sLambda[i] = 0;
+    fV0sALambda[i] = 0;
+
   }
   
 
@@ -321,6 +320,14 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fTracksCharge = new TH1D("fTracksCharge", "Track charge (selected); charge^{track};", 3,-1.5,1.5);    
   fOutList->Add(fTracksCharge);          
   
+  // V0s histos
+  Int_t iNV0sCounterBins = 11;
+  TString sV0sCounterLabel[] = {"Input","Reco. method","V0 acceptance (#it{#eta},#it{p}_{T})","Daughters charge","TPC refit","Kink","DCA to PV","Daughters DCA","Decay radius","K^{0}_{S}/#Lambda/#bar{#Lambda}","Selected"};
+  fV0sCounter = new TH1D("fV0sCounter","V0s counter",iNV0sCounterBins,0,iNV0sCounterBins);
+  for(Int_t i = 0; i < iNV0sCounterBins; i++)
+    fV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
+  fOutListV0s->Add(fV0sCounter);
+
   fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",100,0,100);
   fOutListV0s->Add(fV0sMult);
   fV0sPt = new TH1D("fV0sPt", "V0s #it{p}_{T} (selected); #it{p}^{V0}_{T} (GeV/#it{c});", 100, 0, 10);    
@@ -335,10 +342,23 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListV0s->Add(fV0sInvMassLambda);
   fV0sInvMassALambda = new TH1D("fV0sInvMassALambda","#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassLambda,fV0MaxMassLambda);          
   fOutListV0s->Add(fV0sInvMassALambda);
-  
-  Double_t dMassK0sEdges[] = {fV0MinMassK0s,fV0MaxMassK0s};
-  fV0sK0s = new TH3D("fV0sK0s","K^{0}_{S} candidates dist; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c}); centrality;", 30, dMassK0sEdges, fNumPtBins, fPtBinEdges,fNumCentBins,fCentBinEdges);
-  fOutListV0s->Add(fV0sK0s);
+
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    fV0sK0s[i] = new TH2D(Form("fV0sK0s_Cent%d",i),Form("K^{0}_{S} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassK0s, fV0MaxMassK0s, fNumPtBins, fPtBinEdges);
+    fOutListV0s->Add(fV0sK0s[i]);
+  }
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    fV0sLambda[i] = new TH2D(Form("fV0sLambda_Cent%d",i),Form("#Lambda candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
+    fOutListV0s->Add(fV0sLambda[i]);
+  }
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    fV0sALambda[i] = new TH2D(Form("fV0sALambda_Cent%d",i),Form("#bar{#Lambda} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
+    fOutListV0s->Add(fV0sALambda[i]);
+  }
+
 
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2->Sumw2();
@@ -420,14 +440,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   for(Int_t i = 0; i < iNEventCounterBins; i++)
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
   fOutListQA->Add(fEventCounter);
-  
-  Int_t iNV0sCounterBins = 11;
-  TString sV0sCounterLabel[] = {"Input","Reco. method","V0 acceptance (#it{#eta},#it{p}_{T})","Daughters charge","TPC refit","Kink","DCA to PV","Daughters DCA","Decay radius","K^{0}_{S}/#Lambda/#bar{#Lambda}","Selected"};
-  fV0sCounter = new TH1D("fV0sCounter","V0s counter",iNV0sCounterBins,0,iNV0sCounterBins);
-  for(Int_t i = 0; i < iNV0sCounterBins; i++)
-    fV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
-  fOutListV0s->Add(fV0sCounter);
-  
+    
   fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}; #it{z} (cm);",100,-50,50);
   fOutListQA->Add(fQAPVz);
   fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
@@ -682,17 +695,19 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(fV0candK0s)
       {
         fV0sInvMassK0s->Fill(fV0->MassK0Short());
-        //fV0sK0s->Fill(fV0->MassK0Short(), fV0->Pt(), fCentPercentile);
+        fV0sK0s[fCentBinIndex]->Fill(fV0->MassK0Short(), fV0->Pt());
       }
 
       if(fV0candLambda)
       {
         fV0sInvMassLambda->Fill(fV0->MassLambda());
+        fV0sLambda[fCentBinIndex]->Fill(fV0->MassLambda(), fV0->Pt());
       }
 
       if(fV0candALambda)
       {
         fV0sInvMassALambda->Fill(fV0->MassAntiLambda());
+        fV0sALambda[fCentBinIndex]->Fill(fV0->MassAntiLambda(), fV0->Pt());
       }
     }
 
