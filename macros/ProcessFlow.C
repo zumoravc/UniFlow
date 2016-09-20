@@ -9,6 +9,7 @@ void ProcessFlow()
 	TString sOutput = "~/NBI/Codes/results/TPConly";
 	TString sOutputFormat = "png";
 	Bool_t bKatarinaDiff = kTRUE;
+	Bool_t bYouRef = kTRUE;
 	
 
 	gROOT->LoadMacro("~/NBI/Codes/macros/func/CompareHistos.C");
@@ -155,13 +156,46 @@ void ProcessFlow()
 
 	// ===== My v2 done !!! =====
 
+	// ===== You ref flow comparison =====
+	if(bYouRef)
+	{
+		TString sInputYou = "~/NBI/Codes/results/You";
+
+		TFile* fYouRef = new TFile(Form("%s/Analysis_vn_2468.root",sInputYou.Data()),"READ");
+		fYouRef->cd();
+
+		// loading
+		TH1D* hYouRefTwo2 = (TH1D*) gDirectory->Get("fv22NoGap")->Clone("fYouRefTwo2");
+		TH1D* hYouRefTwo2_Gap00 = (TH1D*) gDirectory->Get("fv22Gap00")->Clone("fYouRefTwo2_Gap00");
+		TH1D* hYouRefTwo2_Gap04 = (TH1D*) gDirectory->Get("fv22Gap04")->Clone("fYouRefTwo2_Gap04");
+		TH1D* hYouRefTwo2_Gap08 = (TH1D*) gDirectory->Get("fv22Gap08")->Clone("fYouRefTwo2_Gap08");
+		TH1D* hYouRefTwo2_Gap10 = (TH1D*) gDirectory->Get("fv22Gap10")->Clone("fYouRefTwo2_Gap10");
+
+		// making ratios
+		TCanvas* cTemp;
+		cTemp = CompareRatio(hRefFlowTwo2,hYouRefTwo2);
+		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo2.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+
+		cTemp = CompareRatio(hRefFlowTwo2_Gap00,hYouRefTwo2_Gap00);
+		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo2_Gap00.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+		
+		cTemp = CompareRatio(hRefFlowTwo2_Gap04,hYouRefTwo2_Gap04);
+		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo2_Gap04.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+
+		cTemp = CompareRatio(hRefFlowTwo2_Gap08,hYouRefTwo2_Gap08);
+		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo2_Gap08.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+
+		cTemp = CompareRatio(hRefFlowTwo2_Gap10,hYouRefTwo2_Gap10);
+		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo2_Gap10.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+	}
+
 	// ===== Katarina comparison =====
 	if(bKatarinaDiff)
 	{
 		TString sInputKatarina = "~/NBI/Codes/results/Katarina";
 
-		TFile* sInputKatarinaDiff = new TFile(Form("%s/OutFileV2_TPConly_hist.root",sInputKatarina.Data()),"READ");
-		sInputKatarinaDiff->cd();
+		TFile* fInputKatarinaDiff = new TFile(Form("%s/OutFileV2_TPConly_hist.root",sInputKatarina.Data()),"READ");
+		fInputKatarinaDiff->cd();
 
 		// loading
 		TH1D* hKatarinaDiffFlowTwo2[iNumCentBins];
@@ -178,29 +212,23 @@ void ProcessFlow()
 			hKatarinaDiffFlowTwo2_Gap10[i] = (TH1D*) gDirectory->Get(Form("HChd22GapQMReX_cent%d",i))->Clone(Form("hKatarinaDiffFlowTwo2_Gap10_Cent%d",i));
 		}
 
-		TH1D* hRatioKatarinaMeDiffFlowTwo2[iNumCentBins];
-		TH1D* hRatioKatarinaMeDiffFlowTwo2_Gap00[iNumCentBins];
-		TH1D* hRatioKatarinaMeDiffFlowTwo2_Gap04[iNumCentBins];
-		TH1D* hRatioKatarinaMeDiffFlowTwo2_Gap08[iNumCentBins];
-		TH1D* hRatioKatarinaMeDiffFlowTwo2_Gap10[iNumCentBins];
 		TCanvas* cTemp;
 		for(Int_t i(0); i < iNumCentBins; i++)
 		{
 			cTemp = CompareRatio(hDiffFlowTwo2[i],hKatarinaDiffFlowTwo2[i]);
-			cTemp->Print(Form("%s/CompKatarina/RatioMeKatarina_DiffTwo2_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			cTemp->Print(Form("%s/CompKatarinaDiff/RatioMeKatarina_DiffTwo2_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 			
 			cTemp = CompareRatio(hDiffFlowTwo2_Gap00[i],hKatarinaDiffFlowTwo2_Gap00[i]);
-			cTemp->Print(Form("%s/CompKatarina/RatioMeKatarina_DiffTwo2_Gap00_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			cTemp->Print(Form("%s/CompKatarinaDiff/RatioMeKatarina_DiffTwo2_Gap00_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 			
 			cTemp = CompareRatio(hDiffFlowTwo2_Gap04[i],hKatarinaDiffFlowTwo2_Gap04[i]);
-			cTemp->Print(Form("%s/CompKatarina/RatioMeKatarina_DiffTwo2_Gap04_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			cTemp->Print(Form("%s/CompKatarinaDiff/RatioMeKatarina_DiffTwo2_Gap04_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 			
 			cTemp = CompareRatio(hDiffFlowTwo2_Gap08[i],hKatarinaDiffFlowTwo2_Gap08[i]);
-			cTemp->Print(Form("%s/CompKatarina/RatioMeKatarina_DiffTwo2_Gap08_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			cTemp->Print(Form("%s/CompKatarinaDiff/RatioMeKatarina_DiffTwo2_Gap08_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 			
 			cTemp = CompareRatio(hDiffFlowTwo2_Gap10[i],hKatarinaDiffFlowTwo2_Gap10[i]);
-			cTemp->Print(Form("%s/CompKatarina/RatioMeKatarina_DiffTwo2_Gap10_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-			
+			cTemp->Print(Form("%s/CompKatarinaDiff/RatioMeKatarina_DiffTwo2_Gap10_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 		}
 	}	
 
