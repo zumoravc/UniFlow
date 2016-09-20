@@ -346,19 +346,21 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     fV0sK0s[i] = new TH2D(Form("fV0sK0s_Cent%d",i),Form("K^{0}_{S} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassK0s, fV0MaxMassK0s, fNumPtBins, fPtBinEdges);
+    fV0sK0s[i]->Sumw2();
     fOutListV0s->Add(fV0sK0s[i]);
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     fV0sLambda[i] = new TH2D(Form("fV0sLambda_Cent%d",i),Form("#Lambda candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
+    fV0sLambda[i]->Sumw2();
     fOutListV0s->Add(fV0sLambda[i]);
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     fV0sALambda[i] = new TH2D(Form("fV0sALambda_Cent%d",i),Form("#bar{#Lambda} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
+    fV0sALambda[i]->Sumw2();
     fOutListV0s->Add(fV0sALambda[i]);
   }
-
 
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2->Sumw2();
