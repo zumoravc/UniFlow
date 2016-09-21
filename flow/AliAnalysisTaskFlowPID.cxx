@@ -29,6 +29,7 @@
 #include "TH1D.h"
 #include "TH3D.h"
 #include "TProfile.h"
+#include "TProfile2D.h"
 #include "TList.h"
 #include "AliAODEvent.h"
 #include "AliESDEvent.h"
@@ -45,8 +46,11 @@ class AliAnalysisTaskFlowPID;
 
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
-Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0};
+//Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0}; // You, Katarina binning
+Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6}; // PID flow v2 JHEP paper
 Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
+Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
+Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.095,1.11,1.115,1.112,1.1125,1.13,1.145,1.16};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
@@ -59,10 +63,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fV0candK0s(0),
   fV0candLambda(0),
   fV0candALambda(0),
-  fV0MinMassK0s(0.35),
-  fV0MaxMassK0s(0.65),
-  fV0MinMassLambda(1.05),
-  fV0MaxMassLambda(1.25),
+  fV0MinMassK0s(0.4),
+  fV0MaxMassK0s(0.6),
+  fV0MinMassLambda(1.08),
+  fV0MaxMassLambda(1.16),
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
@@ -150,10 +154,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fV0candK0s(0),
   fV0candLambda(0),
   fV0candALambda(0),
-  fV0MinMassK0s(0.35),
-  fV0MaxMassK0s(0.65),
-  fV0MinMassLambda(1.05),
-  fV0MaxMassLambda(1.25),
+  fV0MinMassK0s(0.4),
+  fV0MaxMassK0s(0.6),
+  fV0MinMassLambda(1.08),
+  fV0MaxMassLambda(1.16),
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
@@ -252,6 +256,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fV0sLambda[i] = 0;
     fV0sALambda[i] = 0;
 
+    fV0sDiffTwo2_K0s[i] = 0;
+    fV0sDiffTwo2_Lambda[i] = 0;
   }
   
 
@@ -336,30 +342,42 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListV0s->Add(fV0sEta);          
   fV0sPhi = new TH1D("fV0sPhi", "V0s #it{#varphi} (selected); #it{#varphi}^{V0};", 360, 0., TMath::TwoPi());    
   fOutListV0s->Add(fV0sPhi);
-  fV0sInvMassK0s = new TH1D("fV0sInvMassK0s","K^{0}_{S} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 300,fV0MinMassK0s,fV0MaxMassK0s);          
+  fV0sInvMassK0s = new TH1D("fV0sInvMassK0s","K^{0}_{S} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassK0s,fV0MaxMassK0s);          
   fOutListV0s->Add(fV0sInvMassK0s);
-  fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassLambda,fV0MaxMassLambda);          
+  fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 80,fV0MinMassLambda,fV0MaxMassLambda);          
   fOutListV0s->Add(fV0sInvMassLambda);
-  fV0sInvMassALambda = new TH1D("fV0sInvMassALambda","#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassLambda,fV0MaxMassLambda);          
+  fV0sInvMassALambda = new TH1D("fV0sInvMassALambda","#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 80,fV0MinMassLambda,fV0MaxMassLambda);          
   fOutListV0s->Add(fV0sInvMassALambda);
 
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sK0s[i] = new TH2D(Form("fV0sK0s_Cent%d",i),Form("K^{0}_{S} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassK0s, fV0MaxMassK0s, fNumPtBins, fPtBinEdges);
+    fV0sK0s[i] = new TH2D(Form("fV0sK0s_Cent%d",i),Form("K^{0}_{S} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 200, fV0MinMassK0s, fV0MaxMassK0s, fNumPtBins, fPtBinEdges);
     fV0sK0s[i]->Sumw2();
     fOutListV0s->Add(fV0sK0s[i]);
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sLambda[i] = new TH2D(Form("fV0sLambda_Cent%d",i),Form("#Lambda candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
+    fV0sLambda[i] = new TH2D(Form("fV0sLambda_Cent%d",i),Form("#Lambda candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 80, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
     fV0sLambda[i]->Sumw2();
     fOutListV0s->Add(fV0sLambda[i]);
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sALambda[i] = new TH2D(Form("fV0sALambda_Cent%d",i),Form("#bar{#Lambda} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 30, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
+    fV0sALambda[i] = new TH2D(Form("fV0sALambda_Cent%d",i),Form("#bar{#Lambda} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 80, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
     fV0sALambda[i]->Sumw2();
     fOutListV0s->Add(fV0sALambda[i]);
+  }
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    fV0sDiffTwo2_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+    fV0sDiffTwo2_K0s[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2_K0s[i]);
+  }
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    fV0sDiffTwo2_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+    fV0sDiffTwo2_Lambda[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2_Lambda[i]);
   }
 
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);

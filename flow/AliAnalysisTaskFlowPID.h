@@ -28,22 +28,26 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void										SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
         void										SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
        
-        const static Int_t 			fNumPtBins = 12;			//! number of pT bins used for pT-differential flow
+        const static Int_t 			    fNumPtBins = 10;			//! number of pT bins used for pT-differential flow
         static Double_t					fPtBinEdges[fNumPtBins+1];				//! pointer for array of pT bin edges
-        const static Int_t 			fNumCentBins = 9;			//! number of centrality bins used for pT-differential flow (so far independently of reference flow)
+        const static Int_t              fNumMinvFlowBinsK0s = 12;  //! number of inv. mass bin for differential flow plots (K0s)
+        static Double_t                 fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
+        const static Int_t              fNumMinvFlowBinsLambda = 8;  //! number of inv. mass bin for differential flow plots ((A)Lambda)
+        static Double_t                 fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
+        const static Int_t 			    fNumCentBins = 9;			//! number of centrality bins used for pT-differential flow (so far independently of reference flow)
         static Double_t					fCentBinEdges[fNumCentBins+1];				//! pointer for array of pT bin edges
 
     private:
         Bool_t IsEventSelected(const AliAODEvent* event);
-				Bool_t IsTrackSelected(const AliAODTrack* track);
-				Bool_t IsV0aK0s(const AliAODv0* v0);
-				Bool_t IsV0aLambda(const AliAODv0* v0);
-				Bool_t IsV0aALambda(const AliAODv0* v0);
-				Bool_t IsV0Selected(const AliAODv0* v0);
-				void EventQA(const AliAODEvent* event);
+		Bool_t IsTrackSelected(const AliAODTrack* track);
+		Bool_t IsV0aK0s(const AliAODv0* v0);
+		Bool_t IsV0aLambda(const AliAODv0* v0);
+		Bool_t IsV0aALambda(const AliAODv0* v0);
+		Bool_t IsV0Selected(const AliAODv0* v0);
+		void EventQA(const AliAODEvent* event);
        	void EstimateCentrality(AliVEvent* ev);
     
-			  Double_t GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
+	    Double_t GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
         Bool_t plpMV(const AliVEvent *event);
 
         Short_t GetPtBinIndex(const Double_t dPt);
@@ -51,8 +55,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         //cuts & selection
         Bool_t									fAODAnalysis;		//! is AOD analysis?
         Bool_t									fPbPb;					//! is PbPb analysis?
-				Bool_t       						fLHC10h;             // flag to LHC10h data?
-				Short_t									fCentFlag;			//! centrality flag
+		Bool_t       						    fLHC10h;             // flag to LHC10h data?
+		Short_t									fCentFlag;			//! centrality flag
         Double_t 								fPVtxCutZ; 			//! PV z cut
         Double_t 								fTrackEtaMax; 	//! Maximum pseudorapidity range
         Double_t								fTrackPtMax;		//! Maximal track pT
@@ -61,19 +65,19 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         UInt_t									fTrackFilterBit;//! Required track filter bit 
         Bool_t 									fDiffFlow;			//! Do differential flow ? (or reference only)
         Bool_t 									fPID;						//! Do PID (so far V0s) ? 
-				//cuts & selection: V0 reconstruction
-				Bool_t 									fCutV0onFly;		//! V0 reconstruction method: is On-the-fly? (or offline)
-				Bool_t									fCutV0refitTPC; //! Check TPC refit of V0 daughters ?
-				Bool_t									fCutV0rejectKinks; //! Reject Kink V0 daughter tracks ?
-				Double_t								fCutV0MinCPAK0s;	//! min cosine of pointing angle of K0s candidate to PV
-				Double_t								fCutV0MinCPALambda;	//! min cosine of pointing angle of K0s candidate to PV
-				Double_t								fCutV0MaxDCAtoPV;	//! max DCA of V0 daughter to PV
-				Double_t								fCutV0MaxDCADaughters;	//! max DCA of V0 daughters among themselves
-				Double_t								fCutV0MaxDecayRadius; //! max distance between PV and secondary vertex in transverse plane
+		//cuts & selection: V0 reconstruction
+		Bool_t 									fCutV0onFly;		//! V0 reconstruction method: is On-the-fly? (or offline)
+		Bool_t									fCutV0refitTPC; //! Check TPC refit of V0 daughters ?
+		Bool_t									fCutV0rejectKinks; //! Reject Kink V0 daughter tracks ?
+		Double_t								fCutV0MinCPAK0s;	//! min cosine of pointing angle of K0s candidate to PV
+		Double_t								fCutV0MinCPALambda;	//! min cosine of pointing angle of K0s candidate to PV
+		Double_t								fCutV0MaxDCAtoPV;	//! max DCA of V0 daughter to PV
+		Double_t								fCutV0MaxDCADaughters;	//! max DCA of V0 daughters among themselves
+		Double_t								fCutV0MaxDecayRadius; //! max distance between PV and secondary vertex in transverse plane
 
         // members
-        AliAODEvent*            fAOD;           //! input event
-        AliAODTrack*						fTrack;					//! AOD track
+        AliAODEvent*                            fAOD;           //! input event
+        AliAODTrack*						    fTrack;					//! AOD track
         Double_t 								fTrackPt;				//! track pT
         Double_t 								fTrackPhi;				//! track phi
         Double_t 								fTrackEta;				//! track eta
@@ -111,14 +115,14 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
         TList*                  fOutList;    //! main output list
         TList*                  fOutListV0s;    //! main output list
-        TList*									fOutListQA;	//! QA output list
+        TList*                  fOutListQA;	//! QA output list
 
         //std histos
-        TH1D*										fEventMult;			 //! selected events multiplicity distribution
-        TH1D*   					      fCentralityDis;     //! event centrality distribution
-        TH2D*							      fCentSPDvsV0M;      //! V0M vs SPD
-        TH1D*										fMultTracksSelected; //! multiplicity of selected tracks in a given event
-        TH2D*										fTracksPtCent;		//! selected tracks pT vs event centrality
+        TH1D*									fEventMult;			 //! selected events multiplicity distribution
+        TH1D*   					            fCentralityDis;     //! event centrality distribution
+        TH2D*							        fCentSPDvsV0M;      //! V0M vs SPD
+        TH1D*									fMultTracksSelected; //! multiplicity of selected tracks in a given event
+        TH2D*									fTracksPtCent;		//! selected tracks pT vs event centrality
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected tracks phi distribution
@@ -131,12 +135,14 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile*								fRefCorTwo2Gap04;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap08;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap10;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-				TProfile*								fDiffCorTwo2[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo2Gap00[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo2Gap04[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo2Gap08[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+		TProfile*								fDiffCorTwo2[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+		TProfile*								fDiffCorTwo2Gap00[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+		TProfile*								fDiffCorTwo2Gap04[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+		TProfile*								fDiffCorTwo2Gap08[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+		TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+		TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+        TProfile2D*                             fV0sDiffTwo2_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*                             fV0sDiffTwo2_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
