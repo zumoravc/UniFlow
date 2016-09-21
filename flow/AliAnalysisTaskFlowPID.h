@@ -51,6 +51,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t plpMV(const AliVEvent *event);
 
         Short_t GetPtBinIndex(const Double_t dPt);
+        Short_t GetMinvFlowBinIndexK0s(const Double_t dMass);
+        Short_t GetMinvFlowBinIndexLambda(const Double_t dMass);
 
         //cuts & selection
         Bool_t									fAODAnalysis;		//! is AOD analysis?
@@ -92,26 +94,33 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t 								fV0MinMassLambda;		//! Upper limit of Lambda inv. mass window
         Short_t									fCentBinIndex;					//! event centrality bin index indicator
         Float_t									fCentPercentile;					//! event centrality bin index indicator
-        Short_t									fPtBinIndex;		//! track pT bin index indicator
+        Short_t                                 fPtBinIndex;        //! track pT bin index indicator
+        Short_t									fMinvFlowBinIndex;		//! track pT bin index indicator
         TComplex								fQvec2;					//! complex flow vector Q (n = 2)
         TComplex								fQvec3;					//! complex flow vector Q (n = 3)
         TComplex								fQvec4;					//! complex flow vector Q (n = 4)
         TComplex								fQvec5;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap00P;					//! complex flow vector Q (n = 5) with eta gap
-        TComplex								fQvec2Gap00N;					//! complex flow vector Q (n = 5) with eta gap
-        TComplex								fQvec2Gap04P;					//! complex flow vector Q (n = 5) with eta gap
-        TComplex								fQvec2Gap04N;					//! complex flow vector Q (n = 5) with eta gap
-        TComplex								fQvec2Gap08P;					//! complex flow vector Q (n = 5) with eta gap
-        TComplex								fQvec2Gap08N;					//! complex flow vector Q (n = 5) with eta gap
-        TComplex								fQvec2Gap10P;					//! complex flow vector Q (n = 5) with eta gap
-        TComplex								fQvec2Gap10N;					//! complex flow vector Q (n = 5) with eta gap
+        TComplex								fQvec2Gap00P;					//! complex flow vector Q (n = 2) with eta gap
+        TComplex								fQvec2Gap00N;					//! complex flow vector Q (n = 2) with eta gap
+        TComplex                                fQvec2Gap04P;                   //! complex flow vector Q (n = 2) with eta gap
+        TComplex                                fQvec2Gap04N;                   //! complex flow vector Q (n = 2) with eta gap
+        TComplex                                fQvec2Gap08P;                   //! complex flow vector Q (n = 2) with eta gap
+        TComplex                                fQvec2Gap08N;                   //! complex flow vector Q (n = 2) with eta gap
+        TComplex								fQvec2Gap09P;					//! complex flow vector Q (n = 2) with eta gap
+        TComplex								fQvec2Gap09N;					//! complex flow vector Q (n = 2) with eta gap
+        TComplex                                fQvec2Gap10P;                   //! complex flow vector Q (n = 2) with eta gap
+        TComplex								fQvec2Gap10N;					//! complex flow vector Q (n = 2) with eta gap
         TComplex								fPvec2[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow 
         TComplex								fPvec2Gap00P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
         TComplex								fPvec2Gap04P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
         TComplex								fPvec2Gap08P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
         TComplex								fPvec2Gap10P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
         TComplex								fPvec3[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow 
-        
+
+        TComplex                                fVvec2Gap09P_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
+        TComplex                                fVvec2Gap09N_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
+        TComplex                                fVvec2Gap09P_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
+        TComplex                                fVvec2Gap09N_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
         
         TList*                  fOutList;    //! main output list
         TList*                  fOutListV0s;    //! main output list
@@ -141,9 +150,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		TProfile*								fDiffCorTwo2Gap08[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 		TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 		TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-        
-        TProfile2D*                             fV0sDiffTwo2Gap09_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-        TProfile2D*                             fV0sDiffTwo2Gap09_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+
+        TProfile2D*                             fV0sDiffTwo2Gap09P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*                             fV0sDiffTwo2Gap09P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
