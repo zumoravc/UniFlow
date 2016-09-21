@@ -28,7 +28,7 @@ TCanvas* CompareHistos(
 	
 	//lList->ls();
 
-	TLegend* tLeg = new TLegend(0.5,0.6,0.7,0.8);
+	TLegend* tLeg = new TLegend(0.3,0.5,0.5,0.8);
 	tLeg->SetBorderSize(0);
 
 	TCanvas* cCan = new TCanvas();

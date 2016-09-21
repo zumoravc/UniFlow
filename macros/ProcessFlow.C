@@ -166,6 +166,9 @@ void ProcessFlow()
 
 		// loading
 		TH1D* hYouRefTwo2 = (TH1D*) gDirectory->Get("fv22NoGap")->Clone("fYouRefTwo2");
+		TH1D* hYouRefTwo3 = (TH1D*) gDirectory->Get("fv32NoGap")->Clone("fYouRefTwo3");
+		TH1D* hYouRefTwo4 = (TH1D*) gDirectory->Get("fv42NoGap")->Clone("fYouRefTwo4");
+
 		TH1D* hYouRefTwo2_Gap00 = (TH1D*) gDirectory->Get("fv22Gap00")->Clone("fYouRefTwo2_Gap00");
 		TH1D* hYouRefTwo2_Gap04 = (TH1D*) gDirectory->Get("fv22Gap04")->Clone("fYouRefTwo2_Gap04");
 		TH1D* hYouRefTwo2_Gap08 = (TH1D*) gDirectory->Get("fv22Gap08")->Clone("fYouRefTwo2_Gap08");
@@ -175,6 +178,12 @@ void ProcessFlow()
 		TCanvas* cTemp;
 		cTemp = CompareRatio(hRefFlowTwo2,hYouRefTwo2);
 		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo2.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+
+		cTemp = CompareRatio(hRefFlowTwo3,hYouRefTwo3);
+		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo3.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+		
+		cTemp = CompareRatio(hRefFlowTwo4,hYouRefTwo4);
+		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo4.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
 
 		cTemp = CompareRatio(hRefFlowTwo2_Gap00,hYouRefTwo2_Gap00);
 		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo2_Gap00.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
@@ -187,6 +196,44 @@ void ProcessFlow()
 
 		cTemp = CompareRatio(hRefFlowTwo2_Gap10,hYouRefTwo2_Gap10);
 		cTemp->Print(Form("%s/CompYouRef/RatioMeYou_RefTwo2_Gap10.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+		
+		// You pt diff flow comparison
+		TFile* fInputYouDiff2 = new TFile("~/NBI/Codes/results/You/Analysis_v2pt.root","READ");
+		fInputYouDiff2->cd();
+
+		TH1D* hYouDiffFlowTwo2[iNumCentBins];
+		TH1D* hYouDiffFlowTwo2_Gap00[iNumCentBins];
+		TH1D* hYouDiffFlowTwo2_Gap04[iNumCentBins];
+		TH1D* hYouDiffFlowTwo2_Gap08[iNumCentBins];
+		TH1D* hYouDiffFlowTwo2_Gap10[iNumCentBins];
+		for(Int_t i(0); i < iNumCentBins; i++)
+		{
+			hYouDiffFlowTwo2[i] = (TH1D*) gDirectory->Get(Form("hisv22NoGap_cent%d",i))->Clone(Form("hYouDiffFlowTwo2_Cent%d",i));
+			hYouDiffFlowTwo2_Gap00[i] = (TH1D*) gDirectory->Get(Form("hisv22Gap00_cent%d",i))->Clone(Form("hYouDiffFlowTwo2_Gap00_Cent%d",i));
+			hYouDiffFlowTwo2_Gap04[i] = (TH1D*) gDirectory->Get(Form("hisv22Gap04_cent%d",i))->Clone(Form("hYouDiffFlowTwo2_Gap04_Cent%d",i));
+			hYouDiffFlowTwo2_Gap08[i] = (TH1D*) gDirectory->Get(Form("hisv22Gap08_cent%d",i))->Clone(Form("hYouDiffFlowTwo2_Gap08_Cent%d",i));
+			hYouDiffFlowTwo2_Gap10[i] = (TH1D*) gDirectory->Get(Form("hisv22Gap10_cent%d",i))->Clone(Form("hYouDiffFlowTwo2_Gap10_Cent%d",i));
+		}
+
+		TCanvas* cTemp;
+		for(Int_t i(0); i < iNumCentBins; i++)
+		{
+			cTemp = CompareRatio(hDiffFlowTwo2[i], hYouDiffFlowTwo2[i]);
+			cTemp->Print(Form("%s/CompYouDiff/RatioMeYou_DiffTwo2_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			
+			cTemp = CompareRatio(hDiffFlowTwo2_Gap00[i], hYouDiffFlowTwo2_Gap00[i]);
+			cTemp->Print(Form("%s/CompYouDiff/RatioMeYou_DiffTwo2_Gap00_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			
+			cTemp = CompareRatio(hDiffFlowTwo2_Gap04[i], hYouDiffFlowTwo2_Gap04[i]);
+			cTemp->Print(Form("%s/CompYouDiff/RatioMeYou_DiffTwo2_Gap04_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			
+			cTemp = CompareRatio(hDiffFlowTwo2_Gap08[i], hYouDiffFlowTwo2_Gap08[i]);
+			cTemp->Print(Form("%s/CompYouDiff/RatioMeYou_DiffTwo2_Gap08_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			
+			cTemp = CompareRatio(hDiffFlowTwo2_Gap10[i], hYouDiffFlowTwo2_Gap10[i]);
+			cTemp->Print(Form("%s/CompYouDiff/RatioMeYou_DiffTwo2_Gap10_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+		}
+
 	}
 
 	// ===== Katarina comparison =====
@@ -231,12 +278,7 @@ void ProcessFlow()
 			cTemp->Print(Form("%s/CompKatarinaDiff/RatioMeKatarina_DiffTwo2_Gap10_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 		}
 	}	
-
-
-
-
-
-
+	
 	return;
 }
 

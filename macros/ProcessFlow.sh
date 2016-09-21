@@ -1,13 +1,14 @@
 #!/bin/bash
 
-outDir="~/NBI/Codes/results/TPConly"
+outDir="/home/vojtech/NBI/Codes/results/TPConly"
 
-macroPath="~/NBI/Codes/macros"
+macroPath="/home/vojtech/NBI/Codes/macros"
 
 mkdir -pv ${outDir}
 mkdir -pv ${outDir}/CompYouRef
+mkdir -pv ${outDir}/CompYouDiff
 mkdir -pv ${outDir}/CompKatarinaDiff
 
-alienv load AliPhysics/latest
+#alienv enter AliPhysics/latest
 
 root -l -b -q ${macroPath}/ProcessFlow.C

@@ -1,6 +1,6 @@
 TCanvas* CompareRatio(TH1D* fNom, TH1D* fDenom)
 {
-	TString sLabel[2] = {"Me","Other"};
+	TString sLabel[] = {"Me","Other"};
 
 	TList* list = new TList();
 	list->Add(fNom);
