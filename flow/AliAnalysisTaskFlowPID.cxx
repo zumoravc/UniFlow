@@ -256,8 +256,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fV0sLambda[i] = 0;
     fV0sALambda[i] = 0;
 
-    fV0sDiffTwo2_K0s[i] = 0;
-    fV0sDiffTwo2_Lambda[i] = 0;
+    fV0sDiffTwo2Gap09_K0s[i] = 0;
+    fV0sDiffTwo2Gap09_Lambda[i] = 0;
   }
   
 
@@ -369,15 +369,15 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sDiffTwo2_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
-    fV0sDiffTwo2_K0s[i]->Sumw2();
-    fOutListV0s->Add(fV0sDiffTwo2_K0s[i]);
+    fV0sDiffTwo2Gap09_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+    fV0sDiffTwo2Gap09_K0s[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2Gap09_K0s[i]);
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sDiffTwo2_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
-    fV0sDiffTwo2_Lambda[i]->Sumw2();
-    fOutListV0s->Add(fV0sDiffTwo2_Lambda[i]);
+    fV0sDiffTwo2Gap09_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+    fV0sDiffTwo2Gap09_Lambda[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2Gap09_Lambda[i]);
   }
 
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);

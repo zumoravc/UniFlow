@@ -141,8 +141,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		TProfile*								fDiffCorTwo2Gap08[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 		TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 		TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-        TProfile2D*                             fV0sDiffTwo2_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-        TProfile2D*                             fV0sDiffTwo2_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+        
+        TProfile2D*                             fV0sDiffTwo2Gap09_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*                             fV0sDiffTwo2Gap09_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
