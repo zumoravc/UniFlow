@@ -32,7 +32,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t					fPtBinEdges[fNumPtBins+1];				//! pointer for array of pT bin edges
         const static Int_t              fNumMinvFlowBinsK0s = 12;  //! number of inv. mass bin for differential flow plots (K0s)
         static Double_t                 fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
-        const static Int_t              fNumMinvFlowBinsLambda = 8;  //! number of inv. mass bin for differential flow plots ((A)Lambda)
+        const static Int_t              fNumMinvFlowBinsLambda = 10;  //! number of inv. mass bin for differential flow plots ((A)Lambda)
         static Double_t                 fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
         const static Int_t 			    fNumCentBins = 9;			//! number of centrality bins used for pT-differential flow (so far independently of reference flow)
         static Double_t					fCentBinEdges[fNumCentBins+1];				//! pointer for array of pT bin edges
@@ -42,7 +42,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		Bool_t IsTrackSelected(const AliAODTrack* track);
 		Bool_t IsV0aK0s(const AliAODv0* v0);
 		Bool_t IsV0aLambda(const AliAODv0* v0);
-		Bool_t IsV0aALambda(const AliAODv0* v0);
 		Bool_t IsV0Selected(const AliAODv0* v0);
 		void EventQA(const AliAODEvent* event);
        	void EstimateCentrality(AliVEvent* ev);
@@ -71,12 +70,18 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		Bool_t 									fCutV0onFly;		//! V0 reconstruction method: is On-the-fly? (or offline)
 		Bool_t									fCutV0refitTPC; //! Check TPC refit of V0 daughters ?
 		Bool_t									fCutV0rejectKinks; //! Reject Kink V0 daughter tracks ?
-		Double_t								fCutV0MinCPAK0s;	//! min cosine of pointing angle of K0s candidate to PV
-		Double_t								fCutV0MinCPALambda;	//! min cosine of pointing angle of K0s candidate to PV
-		Double_t								fCutV0MaxDCAtoPV;	//! max DCA of V0 daughter to PV
+		Double_t                                fCutV0MinDCAtoPV;   //! min DCA of V0 daughter to PV
+        Double_t								fCutV0MaxDCAtoPV;	//! max DCA of V0 daughter to PV
 		Double_t								fCutV0MaxDCADaughters;	//! max DCA of V0 daughters among themselves
+        Double_t                                fCutV0MinDecayRadius; //! min distance between PV and secondary vertex in transverse plane
 		Double_t								fCutV0MaxDecayRadius; //! max distance between PV and secondary vertex in transverse plane
-
+        Double_t                                fCutV0DaughterPtMin; //! minimum pT of V0 daughters
+        Double_t                                fCutV0DaughterEtaMax; //! max value of Eta of V0 daughters
+        Double_t                                fCutV0MotherRapMax; //! max rapidity value of V0 mother
+        Double_t                                fCutV0MinCPAK0s;    //! min cosine of pointing angle of K0s candidate to PV
+        Double_t                                fCutV0MinCPALambda; //! min cosine of pointing angle of K0s candidate to PV
+        Double_t                                fCutV0NumTauK0sMax; //! max number of c*tau (K0s)
+        Double_t                                fCutV0NumTauLambdaMax; //! max number of c*tau ((A)Lambda)
         // members
         AliAODEvent*                            fAOD;           //! input event
         AliAODTrack*						    fTrack;					//! AOD track
@@ -87,7 +92,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAODv0*			 					fV0;					//! V0 candidate
         Bool_t 									fV0candK0s;		//! Is V0 a K0s candidate ?
         Bool_t 									fV0candLambda;		//! Is V0 a Lambda or Anti-Lambda (ALambda) candidate ?
-        Bool_t 									fV0candALambda;		//! Is V0 a Lambda or Anti-Lambda (ALambda) candidate ?
         Double_t 								fV0MaxMassK0s;		//! Upper limit of K0s inv. mass window
         Double_t 								fV0MinMassK0s;		//! Lower limit of K0s inv. mass window
         Double_t 								fV0MaxMassLambda;		//! Upper limit of Lambda inv. mass window
@@ -153,7 +157,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
         TProfile2D*                             fV0sDiffTwo2Gap09P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*                             fV0sDiffTwo2Gap09N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
         TProfile2D*                             fV0sDiffTwo2Gap09P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+        TProfile2D*                             fV0sDiffTwo2Gap09N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
@@ -162,11 +168,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fV0sPhi;					//! selected V0s phi distribution
         TH1D*										fV0sInvMassK0s;		//! selected K0s inv. mass distribution (pT & cent integrated)
         TH1D*										fV0sInvMassLambda;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
-        TH1D*										fV0sInvMassALambda;		//! selected ALambda candidates inv. mass distribution (pT & cent integrated)
-        TH2D*										fV0sK0s[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        TH2D*										fV0sLambda[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        TH2D*										fV0sALambda[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-
+        TH2D*										fV0sK0sGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
+        TH2D*										fV0sLambdaGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         // QA histos
         TH1D* 									fEventCounter;  //! event rejection tracker
         TH1D*										fV0sCounter;		//! V0s counter

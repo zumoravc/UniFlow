@@ -21,6 +21,8 @@
  *
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
  */
+#include <TDatabasePDG.h>
+#include <TPDGCode.h>
 
 #include "AliAnalysisTask.h"
 #include "AliAnalysisManager.h"
@@ -50,7 +52,7 @@ ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6}; // PID flow v2 JHEP paper
 Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
-Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.095,1.11,1.115,1.112,1.1125,1.13,1.145,1.16};
+Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.13,1.14,1.15,1.16};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
@@ -62,11 +64,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fV0(0),
   fV0candK0s(0),
   fV0candLambda(0),
-  fV0candALambda(0),
-  fV0MinMassK0s(0.4),
-  fV0MaxMassK0s(0.6),
-  fV0MinMassLambda(1.08),
-  fV0MaxMassLambda(1.16),
+  fV0MinMassK0s(fMinvFlowBinEdgesK0s[0]),
+  fV0MaxMassK0s(fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s]),
+  fV0MinMassLambda(fMinvFlowBinEdgesLambda[0]),
+  fV0MaxMassLambda(fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda]),
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
@@ -104,10 +105,18 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCutV0rejectKinks(kTRUE),
   fCutV0refitTPC(kTRUE),
   fCutV0MinCPALambda(0.998),
-  fCutV0MinCPAK0s(0.995),
-  fCutV0MaxDCAtoPV(0),
-  fCutV0MaxDCADaughters(1),
-  fCutV0MaxDecayRadius(100),
+  fCutV0MinCPAK0s(0.998),
+  fCutV0MinDCAtoPV(0.1),
+  fCutV0MaxDCAtoPV(0.),
+  fCutV0MaxDCADaughters(0.5),
+  fCutV0MinDecayRadius(5.),
+  fCutV0MaxDecayRadius(0.),
+  fCutV0DaughterPtMin(0.1),
+  fCutV0DaughterEtaMax(0.8),
+  fCutV0MotherRapMax(0.5),
+  fCutV0NumTauK0sMax(3.),
+  fCutV0NumTauLambdaMax(3.),
+
   fEventCounter(0),
   fV0sCounter(0),
   fV0sMult(0),
@@ -116,7 +125,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fV0sPhi(0),
   fV0sInvMassK0s(0),
   fV0sInvMassLambda(0),
-  fV0sInvMassALambda(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -157,11 +165,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fV0(0),
   fV0candK0s(0),
   fV0candLambda(0),
-  fV0candALambda(0),
-  fV0MinMassK0s(0.4),
-  fV0MaxMassK0s(0.6),
-  fV0MinMassLambda(1.08),
-  fV0MaxMassLambda(1.16),
+  fV0MinMassK0s(fMinvFlowBinEdgesK0s[0]),
+  fV0MaxMassK0s(fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s]),
+  fV0MinMassLambda(fMinvFlowBinEdgesLambda[0]),
+  fV0MaxMassLambda(fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda]),
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
@@ -197,10 +204,17 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutV0rejectKinks(kTRUE),
   fCutV0refitTPC(kTRUE),
   fCutV0MinCPALambda(0.998),
-  fCutV0MinCPAK0s(0.995),
+  fCutV0MinCPAK0s(0.998),
+  fCutV0MinDCAtoPV(0.1),
   fCutV0MaxDCAtoPV(0),
-  fCutV0MaxDCADaughters(1),
-  fCutV0MaxDecayRadius(100),
+  fCutV0MaxDCADaughters(0.5),
+  fCutV0MinDecayRadius(5),
+  fCutV0MaxDecayRadius(0.),
+  fCutV0DaughterPtMin(0.1),
+  fCutV0DaughterEtaMax(0.8),
+  fCutV0MotherRapMax(0.5),
+  fCutV0NumTauK0sMax(3.),
+  fCutV0NumTauLambdaMax(3.),
 
   fOutList(0),
   fOutListV0s(0),
@@ -213,7 +227,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fV0sPhi(0),
   fV0sInvMassK0s(0),
   fV0sInvMassLambda(0),
-  fV0sInvMassALambda(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -272,9 +285,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fDiffCorTwo2Gap10[i] = 0;
     fDiffCorTwo3[i] = 0;
 
-    fV0sK0s[i] = 0;
-    fV0sLambda[i] = 0;
-    fV0sALambda[i] = 0;
+    fV0sK0sGap09[i] = 0;
+    fV0sLambdaGap09[i] = 0;
 
     fV0sDiffTwo2Gap09P_K0s[i] = 0;
     fV0sDiffTwo2Gap09P_Lambda[i] = 0;
@@ -364,40 +376,40 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListV0s->Add(fV0sPhi);
   fV0sInvMassK0s = new TH1D("fV0sInvMassK0s","K^{0}_{S} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassK0s,fV0MaxMassK0s);          
   fOutListV0s->Add(fV0sInvMassK0s);
-  fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 80,fV0MinMassLambda,fV0MaxMassLambda);          
+  fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda+#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 80,fV0MinMassLambda,fV0MaxMassLambda);          
   fOutListV0s->Add(fV0sInvMassLambda);
-  fV0sInvMassALambda = new TH1D("fV0sInvMassALambda","#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 80,fV0MinMassLambda,fV0MaxMassLambda);          
-  fOutListV0s->Add(fV0sInvMassALambda);
-
+  
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sK0s[i] = new TH2D(Form("fV0sK0s_Cent%d",i),Form("K^{0}_{S} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 200, fV0MinMassK0s, fV0MaxMassK0s, fNumPtBins, fPtBinEdges);
-    fV0sK0s[i]->Sumw2();
-    fOutListV0s->Add(fV0sK0s[i]);
+    fV0sK0sGap09[i] = new TH2D(Form("fV0sK0s_Gap09_Cent%d",i),Form("K^{0}_{S} candidates |#Delta#it{#eta}| > 0.9 Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassK0s, fV0MaxMassK0s);
+    fV0sK0sGap09[i]->Sumw2();
+    fOutListV0s->Add(fV0sK0sGap09[i]);
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sLambda[i] = new TH2D(Form("fV0sLambda_Cent%d",i),Form("#Lambda candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 80, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
-    fV0sLambda[i]->Sumw2();
-    fOutListV0s->Add(fV0sLambda[i]);
+    fV0sLambdaGap09[i] = new TH2D(Form("fV0sLambda_Gap09_Cent%d",i),Form("#Lambda+#bar{#Lambda} candidates |#Delta#it{#eta}| > 0.9 Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fCentBinEdges[i],fCentBinEdges[i+1]), fNumPtBins, fPtBinEdges, 80, fV0MinMassLambda, fV0MaxMassLambda);
+    fV0sLambdaGap09[i]->Sumw2();
+    fOutListV0s->Add(fV0sLambdaGap09[i]);
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sALambda[i] = new TH2D(Form("fV0sALambda_Cent%d",i),Form("#bar{#Lambda} candidates Cent %g-%g%%; #it{m}^{V0}_{inv} (GeV/#it{c}^{2}); #it{p}^{V0}_{T} (GeV/#it{c});",fCentBinEdges[i],fCentBinEdges[i+1]), 80, fV0MinMassLambda, fV0MaxMassLambda, fNumPtBins, fPtBinEdges);
-    fV0sALambda[i]->Sumw2();
-    fOutListV0s->Add(fV0sALambda[i]);
-  }
-  for(Int_t i(0); i < fNumCentBins; i++)
-  {
-    fV0sDiffTwo2Gap09P_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+    fV0sDiffTwo2Gap09P_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09P_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9, #Delta#it{#eta}^{POI} > 0.45} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
     fV0sDiffTwo2Gap09P_K0s[i]->Sumw2();
     fOutListV0s->Add(fV0sDiffTwo2Gap09P_K0s[i]);
+
+    fV0sDiffTwo2Gap09N_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09N_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9, #Delta#it{#eta}^{POI} < -0.45} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+    fV0sDiffTwo2Gap09N_K0s[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2Gap09N_K0s[i]);
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sDiffTwo2Gap09P_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+    fV0sDiffTwo2Gap09P_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09P_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9, #Delta#it{#eta}^{POI} > 0.45} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
     fV0sDiffTwo2Gap09P_Lambda[i]->Sumw2();
     fOutListV0s->Add(fV0sDiffTwo2Gap09P_Lambda[i]);
+
+    fV0sDiffTwo2Gap09N_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09N_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9, #Delta#it{#eta}^{POI} < -0.45} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+    fV0sDiffTwo2Gap09N_Lambda[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2Gap09N_Lambda[i]);
   }
 
   fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
@@ -754,8 +766,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       // initial setting for V0 selection
       fV0candK0s = kTRUE;
       fV0candLambda = kTRUE;
-      fV0candALambda = kTRUE;
-
+      
       if(!IsV0Selected(fV0))
         continue;
 
@@ -770,10 +781,10 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(fV0candK0s)
       {
         fV0sInvMassK0s->Fill(fV0->MassK0Short());
-        fV0sK0s[fCentBinIndex]->Fill(fV0->MassK0Short(), fV0->Pt());
 
         if( (fV0->Eta()) > 0.45 )
         {
+          fV0sK0sGap09[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassK0Short());
           fMinvFlowBinIndex = GetMinvFlowBinIndexK0s(fV0->MassK0Short());
           fVvec2Gap09P_K0s[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
           iNumV2Gap09P_K0s[fPtBinIndex][fMinvFlowBinIndex]++;
@@ -781,6 +792,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
         if( (fV0->Eta()) < -0.45 )
         {
+          fV0sK0sGap09[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassK0Short());
           fMinvFlowBinIndex = GetMinvFlowBinIndexK0s(fV0->MassK0Short());
           fVvec2Gap09N_K0s[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
           iNumV2Gap09N_K0s[fPtBinIndex][fMinvFlowBinIndex]++;
@@ -790,10 +802,10 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(fV0candLambda)
       {
         fV0sInvMassLambda->Fill(fV0->MassLambda());
-        fV0sLambda[fCentBinIndex]->Fill(fV0->MassLambda(), fV0->Pt());
 
         if( (fV0->Eta()) > 0.45 )
         {
+          fV0sLambdaGap09[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassLambda());
           fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(fV0->MassLambda());
           fVvec2Gap09P_Lambda[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
           iNumV2Gap09P_Lambda[fPtBinIndex][fMinvFlowBinIndex]++;
@@ -801,16 +813,11 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
         if( (fV0->Eta()) < -0.45 )
         {
+          fV0sLambdaGap09[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassLambda());
           fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(fV0->MassLambda());
           fVvec2Gap09N_Lambda[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
           iNumV2Gap09N_Lambda[fPtBinIndex][fMinvFlowBinIndex]++;
         }
-      }
-
-      if(fV0candALambda)
-      {
-        fV0sInvMassALambda->Fill(fV0->MassAntiLambda());
-        fV0sALambda[fCentBinIndex]->Fill(fV0->MassAntiLambda(), fV0->Pt());
       }
     }
 
@@ -936,6 +943,12 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
           dVal = dAmp / dWeight;
           if( TMath::Abs(dVal < 1) && (dWeight > 0))
             fV0sDiffTwo2Gap09P_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
+          
+          dWeight = iNumV2Gap09N_K0s[i][j]*(iNumGap09P);
+          dAmp = (fVvec2Gap09N_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap09P))).Re();
+          dVal = dAmp / dWeight;
+          if( TMath::Abs(dVal < 1) && (dWeight > 0))
+            fV0sDiffTwo2Gap09N_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
         }
 
         for(Int_t j(0); j < fNumMinvFlowBinsLambda; j++)
@@ -945,6 +958,12 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
           dVal = dAmp / dWeight;
           if( TMath::Abs(dVal < 1) && (dWeight > 0))
             fV0sDiffTwo2Gap09P_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
+          
+          dWeight = iNumV2Gap09N_Lambda[i][j]*(iNumGap09P);
+          dAmp = (fVvec2Gap09N_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap09P))).Re();
+          dVal = dAmp / dWeight;
+          if( TMath::Abs(dVal < 1) && (dWeight > 0))
+            fV0sDiffTwo2Gap09N_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
         }
       }
     }
@@ -1110,6 +1129,16 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   }
   fV0sCounter->Fill(0);
 
+  if( (trackDaughterNeg->Pt() < fCutV0DaughterPtMin) || (trackDaughterPos->Pt() < fCutV0DaughterPtMin) )
+  {
+    return kFALSE;
+  }
+
+  if( (trackDaughterNeg->Eta() > fCutV0DaughterEtaMax) || (trackDaughterPos->Eta() > fCutV0DaughterEtaMax) )
+  {
+    return kFALSE;
+  }
+
   // reconstruction method: online (on-the-fly) OR offline
   if(v0->GetOnFlyStatus() != fCutV0onFly)
   {
@@ -1134,11 +1163,6 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     return kFALSE;  
   }
   */
-
-  if(TMath::Abs(v0->Eta()) > fTrackEtaMax)
-  {
-    return kFALSE;
-  }
 
   if( (v0->Pt() > fTrackPtMax) || (v0->Pt() < fTrackPtMin) )
   {
@@ -1179,6 +1203,11 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   // Daughters DCA to PV 
   Double_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
   Double_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
+  if(fCutV0MinDCAtoPV > 0. && ( dDCAPosToPV < fCutV0MinDCAtoPV || dDCANegToPV < fCutV0MinDCAtoPV ) )
+  {
+    //::Warning("IsV0Selected","Wrong daughters DCA to PV!");
+    return kFALSE;
+  }
   if(fCutV0MaxDCAtoPV > 0. && ( dDCAPosToPV > fCutV0MaxDCAtoPV || dDCANegToPV > fCutV0MaxDCAtoPV ) )
   {
     //::Warning("IsV0Selected","Wrong daughters DCA to PV!");
@@ -1199,7 +1228,12 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   Double_t dSecVtxCoor[3] = {0};
   v0->GetSecondaryVtx(dSecVtxCoor);  
   Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
-  if( fCutV0MaxDecayRadius > 0. && dDecayRadius > fCutV0MaxDecayRadius )
+  if( fCutV0MinDecayRadius > 0. && (dDecayRadius < fCutV0MinDecayRadius) )
+  {
+    //::Warning("IsV0Selected","Invalid vertex decay radius!");
+    return kFALSE;
+  }
+  if( fCutV0MaxDecayRadius > 0. && (dDecayRadius > fCutV0MaxDecayRadius) )
   {
     //::Warning("IsV0Selected","Invalid vertex decay radius!");
     return kFALSE;
@@ -1209,9 +1243,8 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   // is V0 either K0s or (A)Lambda candidate
   fV0candK0s = IsV0aK0s(v0);
   fV0candLambda = IsV0aLambda(v0);
-  fV0candALambda = IsV0aALambda(v0);
 
-  if( !fV0candK0s && !fV0candLambda && !fV0candALambda)
+  if( !fV0candK0s && !fV0candLambda )
   {
     //::Warning("IsV0Selected","V0 is not K0s nor (A)Lambda!");
     return kFALSE; // V0 is neither K0s nor (A)Lambda candidate
@@ -1235,6 +1268,11 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
   if( dMass < fV0MinMassK0s || dMass > fV0MaxMassK0s )
     return kFALSE;
 
+  if(fCutV0MotherRapMax > 0. && ( TMath::Abs(v0->RapK0Short()) > fCutV0MotherRapMax ) )
+  {
+    return kFALSE;
+  }
+
   AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
 
   // CPA
@@ -1243,11 +1281,28 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
     return kFALSE;
 
   // proper life-time
-  /*
-  Double_t dPropLife; 
-  if( fCutV0MaxLifeK0s > 0. && || dPropLife > fCutV0MaxLifeK0s )
-    return kFALSE;
-  */
+  
+  if( fCutV0NumTauK0sMax > 0. )
+  {
+    Double_t dPrimVtxCoor[3] = {0}; // primary vertex position {x,y,z}
+    Double_t dSecVtxCoor[3] = {0}; // secondary vertex position {x,y,z}
+    Double_t dDecayCoor[3] = {0}; // decay vector coor {xyz}
+    primVtx->GetXYZ(dPrimVtxCoor);
+    v0->GetSecondaryVtx(dSecVtxCoor);
+
+    for(Int_t i(0); i < 2; i++)
+    {
+      dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
+    }
+
+    Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
+
+    Double_t dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    if( dPropLife > (fCutV0NumTauK0sMax * 2.68) )
+    {
+      return kFALSE;
+    }
+  }  
   
   // Armenteros-Podolaski plot
   Double_t dPtArm = v0->PtArmV0();
@@ -1266,9 +1321,16 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
     return kFALSE;
 
   // inv. mass window
-  Double_t dMass = v0->MassLambda();
-  if( dMass < fV0MinMassLambda || dMass >= fV0MaxMassLambda )
+  Double_t dMassLambda = v0->MassLambda();
+  Double_t dMassALambda = v0->MassAntiLambda();
+
+  if( (dMassLambda < fV0MinMassLambda || dMassLambda > fV0MaxMassLambda) && (dMassALambda < fV0MinMassLambda || dMassALambda > fV0MaxMassLambda) )
     return kFALSE;
+
+  if(fCutV0MotherRapMax > 0. && ( TMath::Abs(v0->RapLambda()) > fCutV0MotherRapMax ) )
+  {
+    return kFALSE;
+  }
 
   AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
 
@@ -1278,40 +1340,27 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
     return kFALSE;
 
   // proper life-time
-  /*
-  Double_t dPropLife; 
-  if( fCutV0MaxLifeK0s > 0. && || dPropLife > fCutV0MaxLifeK0s )
-    return kFALSE;
-  */
-  
-  // cross-contamination
+  if( fCutV0NumTauLambdaMax > 0. )
+  {
+    Double_t dPrimVtxCoor[3] = {0}; // primary vertex position {x,y,z}
+    Double_t dSecVtxCoor[3] = {0}; // secondary vertex position {x,y,z}
+    Double_t dDecayCoor[3] = {0}; // decay vector coor {xyz}
+    primVtx->GetXYZ(dPrimVtxCoor);
+    v0->GetSecondaryVtx(dSecVtxCoor);
 
-  return kTRUE;
-}              
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskFlowPID::IsV0aALambda(const AliAODv0* v0)
-{
-  if(!v0)
-    return kFALSE;
+    for(Int_t i(0); i < 2; i++)
+    {
+      dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
+    }
 
-  // inv. mass window
-  Double_t dMass = v0->MassAntiLambda();
-  if( dMass < fV0MinMassLambda || dMass >= fV0MaxMassLambda )
-    return kFALSE;
+    Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
 
-  AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
-
-  // CPA
-  Double_t dCPA = v0->CosPointingAngle(primVtx);
-  if( fCutV0MinCPALambda > 0. && dCPA < fCutV0MinCPALambda )
-    return kFALSE;
-
-  // proper life-time
-  /*
-  Double_t dPropLife; 
-  if( fCutV0MaxLifeK0s > 0. && || dPropLife > fCutV0MaxLifeK0s )
-    return kFALSE;
-  */
+    Double_t dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    if( dPropLife > (fCutV0NumTauLambdaMax * 7.89) )
+    {
+      return kFALSE;
+    }
+  }  
   
   // cross-contamination
 
