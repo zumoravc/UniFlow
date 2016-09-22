@@ -133,6 +133,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fRefCorTwo2Gap00(0),
   fRefCorTwo2Gap04(0),
   fRefCorTwo2Gap08(0),
+  fRefCorTwo2Gap09(0),
   fRefCorTwo2Gap10(0),
   fQAPVz(0),
   fQANumTracks(0),
@@ -229,6 +230,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fRefCorTwo2Gap00(0),
   fRefCorTwo2Gap04(0),
   fRefCorTwo2Gap08(0),
+  fRefCorTwo2Gap09(0),
   fRefCorTwo2Gap10(0),
   fQAPVz(0),
   fQANumTracks(0),
@@ -420,6 +422,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2_Gap08","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.8} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap08->Sumw2();
   fOutList->Add(fRefCorTwo2Gap08);
+  fRefCorTwo2Gap09 = new TProfile("fRefCorTwo2_Gap09","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.9} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
+  fRefCorTwo2Gap09->Sumw2();
+  fOutList->Add(fRefCorTwo2Gap09);
   fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2_Gap10","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 1} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
   fRefCorTwo2Gap10->Sumw2();
   fOutList->Add(fRefCorTwo2Gap10);
@@ -862,6 +867,12 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   dVal = (dAmp) / dWeight;
   if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCentPercentile > 0) )
     fRefCorTwo2Gap08->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
+  
+  dWeight = iNumGap09P*iNumGap09N;
+  dAmp = (fQvec2Gap09P*(TComplex::Conjugate(fQvec2Gap09N))).Re();
+  dVal = (dAmp) / dWeight;
+  if( TMath::Abs(dVal < 1) && (dWeight > 0) && (fCentPercentile > 0) )
+    fRefCorTwo2Gap09->Fill(fCentPercentile, dVal, dWeight); // ! Fill always just VALUE and WEIGHT separately (not like value*weight) ->see testProfile
   
   dWeight = iNumGap10P*iNumGap10N;
   dAmp = (fQvec2Gap10P*(TComplex::Conjugate(fQvec2Gap10N))).Re();

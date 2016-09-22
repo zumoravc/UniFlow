@@ -142,7 +142,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile*								fRefCorTwo5;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap00;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap04;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-        TProfile*								fRefCorTwo2Gap08;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*                               fRefCorTwo2Gap08;                //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*								fRefCorTwo2Gap09;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap10;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
 		TProfile*								fDiffCorTwo2[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 		TProfile*								fDiffCorTwo2Gap00[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
