@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = kFALSE; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     //TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     //Bool_t bMergeViaJDL = kTRUE;
     Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "flow/t5";
+    TString sWorkDir = "V0s/3";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
