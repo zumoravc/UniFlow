@@ -1,8 +1,9 @@
 void ProcessV0s()
 {
-	TString sInput = "~/NBI/Codes/results/V0s/3/merge/AnalysisResults_merged.root";
-	TString sOutput = "~/NBI/Codes/results/V0s/3";
-	TString sOutputFormat = "png";
+	const TString sInput = "~/NBI/Codes/results/V0s/3/merge/AnalysisResults_merged.root";
+	const TString sOutput = "~/NBI/Codes/results/V0s/3";
+	const TString sOutputFormat = "png";
+	const TString sEtaGap = "Gap09";
  
 	const Int_t iNumPtBins = 10; // pT bins
 	const Int_t iNumCentBins = 9; // centrality bins
@@ -25,8 +26,8 @@ void ProcessV0s()
 	TList* lInputV0s = (TList*) gDirectory->Get("V0s");
 
 	// reference 
-	TProfile* pRefCorTwo2_Gap09 = (TProfile*) lInputTracks->FindObject("fRefCorTwo2_Gap09")->Clone("pRefCorTwo2_Gap09"); 
-	TH1D* hRefCorTwo2_Gap09 = (TH1D*) pRefCorTwo2_Gap09->ProjectionX()->Clone("hRefCorTwo2_Gap09");
+	TProfile* pRefCorTwo2_Gap09 = (TProfile*) (lInputTracks->FindObject(Form("fRefCorTwo2_%s",sEtaGap.Data())) )->Clone(Form("pRefCorTwo2_%s",sEtaGap.Data())); 
+	TH1D* hRefCorTwo2_Gap09 = (TH1D*) pRefCorTwo2_Gap09->ProjectionX()->Clone(Form("hRefCorTwo2_%s",sEtaGap.Data()));
 	
 	// V0s 
 	TProfile2D* p2V0sDiffTwo2_Gap09P_K0s[iNumCentBins];
@@ -39,14 +40,14 @@ void ProcessV0s()
 	
 	for(Int_t i(0); i < iNumCentBins; i++)
 	{
-		h2InvMass_Gap09_K0s[i] = (TH2D*) lInputV0s->FindObject(Form("fV0sK0s_Gap09_Cent%d",i))->Clone(Form("h2InvMass_Gap09_K0s_Cent%d",i));
-		h2InvMass_Gap09_Lambda[i] = (TH2D*) lInputV0s->FindObject(Form("fV0sLambda_Gap09_Cent%d",i))->Clone(Form("h2InvMass_Gap09_Lambda_Cent%d",i));
+		h2InvMass_Gap09_K0s[i] = (TH2D*) (lInputV0s->FindObject(Form("fV0sK0s_%s_Cent%d",sEtaGap.Data(),i)))->Clone(Form("h2InvMass_%s_K0s_Cent%d",sEtaGap.Data(),i));
+		h2InvMass_Gap09_Lambda[i] = (TH2D*) (lInputV0s->FindObject(Form("fV0sLambda_%s_Cent%d",sEtaGap.Data(),i)))->Clone(Form("h2InvMass_%s_Lambda_Cent%d",sEtaGap.Data(),i));
 
-		p2V0sDiffTwo2_Gap09P_K0s[i] = (TProfile2D*) lInputV0s->FindObject(Form("fV0sDiffTwo2_Gap09P_K0s_Cent%d",i))->Clone(Form("p2V0sDiffTwo2_Gap09P_K0s_Cent%d",i));
-		p2V0sDiffTwo2_Gap09N_K0s[i] = (TProfile2D*) lInputV0s->FindObject(Form("fV0sDiffTwo2_Gap09N_K0s_Cent%d",i))->Clone(Form("p2V0sDiffTwo2_Gap09N_K0s_Cent%d",i));
+		p2V0sDiffTwo2_Gap09P_K0s[i] = (TProfile2D*) (lInputV0s->FindObject(Form("fV0sDiffTwo2_%sP_K0s_Cent%d",sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwo2_%sP_K0s_Cent%d",sEtaGap.Data(),i));
+		p2V0sDiffTwo2_Gap09N_K0s[i] = (TProfile2D*) (lInputV0s->FindObject(Form("fV0sDiffTwo2_%sN_K0s_Cent%d",sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwo2_%sN_K0s_Cent%d",sEtaGap.Data(),i));
 	
-		p2V0sDiffTwo2_Gap09P_Lambda[i] = (TProfile2D*) lInputV0s->FindObject(Form("fV0sDiffTwo2_Gap09P_Lambda_Cent%d",i))->Clone(Form("p2V0sDiffTwo2_Gap09P_Lambda_Cent%d",i));
-		p2V0sDiffTwo2_Gap09N_Lambda[i] = (TProfile2D*) lInputV0s->FindObject(Form("fV0sDiffTwo2_Gap09N_Lambda_Cent%d",i))->Clone(Form("p2V0sDiffTwo2_Gap09N_Lambda_Cent%d",i));
+		p2V0sDiffTwo2_Gap09P_Lambda[i] = (TProfile2D*) (lInputV0s->FindObject(Form("fV0sDiffTwo2_%sP_Lambda_Cent%d",sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwo2_%sP_Lambda_Cent%d",sEtaGap.Data(),i));
+		p2V0sDiffTwo2_Gap09N_Lambda[i] = (TProfile2D*) (lInputV0s->FindObject(Form("fV0sDiffTwo2_%sN_Lambda_Cent%d",sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwo2_%sN_Lambda_Cent%d",sEtaGap.Data(),i));
 	}
 
 	// ===== Making projections ======
@@ -147,10 +148,10 @@ void ProcessV0s()
 			hFlowMass_Pos_Lambda[i][j]->Divide(fUnity,dRefFlow);
 			hFlowMass_Neg_Lambda[i][j]->Divide(fUnity,dRefFlow);
 
-			hFlowMass_Pos_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #it{v}_{2,|#it{#Delta#eta}|>0.9} |#it{#eta}^{POI}|>0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
-			hFlowMass_Neg_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #it{v}_{2,|#it{#Delta#eta}|>0.9} |#it{#eta}^{POI}|<-0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
-			hFlowMass_Pos_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #it{v}_{2,|#it{#Delta#eta}|>0.9} |#it{#eta}^{POI}|>0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
-			hFlowMass_Neg_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #it{v}_{2,|#it{#Delta#eta}|>0.9} |#it{#eta}^{POI}|<-0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hFlowMass_Pos_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #it{v}_{2} %s |#it{#eta}^{POI}|>0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",sEtaGap.Data(),fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hFlowMass_Neg_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #it{v}_{2} %s |#it{#eta}^{POI}|<-0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",sEtaGap.Data(),fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hFlowMass_Pos_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #it{v}_{2} %s |#it{#eta}^{POI}|>0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",sEtaGap.Data(),fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hFlowMass_Neg_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #it{v}_{2} %s |#it{#eta}^{POI}|<-0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",sEtaGap.Data(),fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
 			
 			hFlowMass_Pos_K0s[i][j]->Draw();
 			cTemp->Print(Form("%s/FlowMassK0s/FlowMass_Pos_K0s_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
@@ -172,7 +173,7 @@ void ProcessV0s()
 			hFlowMass_K0s[i][j] = (TH1D*) hFlowMass_Pos_K0s[i][j]->Clone(Form("hFlowMass_K0s_Cent%d_pt%d",i,j));
 			hFlowMass_K0s[i][j]->Add(hFlowMass_Neg_K0s[i][j]);
 			hFlowMass_K0s[i][j]->Divide(fUnity,2);
-			hFlowMass_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #it{v}_{2,|#it{#Delta#eta}|>0.9} %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hFlowMass_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #it{v}_{2} %s %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",sEtaGap.Data(),fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
 			hFlowMass_K0s[i][j]->Draw();
 			cTemp->Print(Form("%s/FlowMassK0s/FlowMass_K0s_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
 			lFlowMass_K0s->Add(hFlowMass_K0s[i][j]);
@@ -180,13 +181,13 @@ void ProcessV0s()
 			hFlowMass_Lambda[i][j] = (TH1D*) hFlowMass_Pos_Lambda[i][j]->Clone(Form("hFlowMass_Lambda_Cent%d_pt%d",i,j));
 			hFlowMass_Lambda[i][j]->Add(hFlowMass_Neg_Lambda[i][j]);
 			hFlowMass_Lambda[i][j]->Divide(fUnity,2);
-			hFlowMass_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #it{v}_{2,|#it{#Delta#eta}|>0.9} %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hFlowMass_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #it{v}_{2} %s %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",sEtaGap.Data(),fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
 			hFlowMass_Lambda[i][j]->Draw();
 			cTemp->Print(Form("%s/FlowMassLambda/FlowMass_Lambda_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
 			lFlowMass_Lambda->Add(hFlowMass_Lambda[i][j]);
 		}
 	}
-	
+
 	// ===== Saving output ======
 	fOutput->cd();
 	lInvMass_K0s->Write("lInvMass_K0s",TObject::kSingleKey);
