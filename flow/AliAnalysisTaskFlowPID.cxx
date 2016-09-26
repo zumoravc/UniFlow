@@ -102,18 +102,19 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fDiffFlow(kTRUE),
   fPID(kTRUE),
   fCutV0onFly(0),
-  fCutV0rejectKinks(kTRUE),
+  fCutV0rejectKinks(kFALSE),
   fCutV0refitTPC(kTRUE),
   fCutV0MinCPALambda(0.998),
   fCutV0MinCPAK0s(0.998),
   fCutV0MinDCAtoPV(0.1),
   fCutV0MaxDCAtoPV(0.),
-  fCutV0MaxDCADaughters(0.5),
+  fCutV0MaxDCADaughters(1.),
   fCutV0MinDecayRadius(5.),
   fCutV0MaxDecayRadius(0.),
   fCutV0DaughterPtMin(0.1),
   fCutV0DaughterEtaMax(0.8),
-  fCutV0MotherRapMax(0.5),
+  fCutV0MotherEtaMax(0.8),
+  fCutV0MotherRapMax(0.0),
   fCutV0NumTauK0sMax(3.),
   fCutV0NumTauLambdaMax(3.),
 
@@ -201,18 +202,19 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fDiffFlow(kTRUE),
   fPID(kTRUE),  
   fCutV0onFly(0),
-  fCutV0rejectKinks(kTRUE),
+  fCutV0rejectKinks(kFALSE),
   fCutV0refitTPC(kTRUE),
   fCutV0MinCPALambda(0.998),
   fCutV0MinCPAK0s(0.998),
   fCutV0MinDCAtoPV(0.1),
   fCutV0MaxDCAtoPV(0),
-  fCutV0MaxDCADaughters(0.5),
+  fCutV0MaxDCADaughters(1.),
   fCutV0MinDecayRadius(5),
   fCutV0MaxDecayRadius(0.),
   fCutV0DaughterPtMin(0.1),
   fCutV0DaughterEtaMax(0.8),
-  fCutV0MotherRapMax(0.5),
+  fCutV0MotherEtaMax(0.8),
+  fCutV0MotherRapMax(0.0),
   fCutV0NumTauK0sMax(3.),
   fCutV0NumTauLambdaMax(3.),
 
@@ -265,12 +267,16 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
 
     for(Int_t j(0); j < fNumMinvFlowBinsK0s; j++)
     {
+      fVvec2Gap00P_K0s[i][j] = 0;
+      fVvec2Gap00N_K0s[i][j] = 0;
       fVvec2Gap09P_K0s[i][j] = 0;
       fVvec2Gap09N_K0s[i][j] = 0;
     }
 
     for(Int_t j(0); j < fNumMinvFlowBinsLambda; j++)
     {
+      fVvec2Gap00P_Lambda[i][j] = 0;
+      fVvec2Gap00N_Lambda[i][j] = 0;
       fVvec2Gap09P_Lambda[i][j] = 0;
       fVvec2Gap09N_Lambda[i][j] = 0;
     }
@@ -285,11 +291,19 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fDiffCorTwo2Gap10[i] = 0;
     fDiffCorTwo3[i] = 0;
 
+    fV0sK0sGap00[i] = 0;
     fV0sK0sGap09[i] = 0;
+    fV0sLambdaGap00[i] = 0;
     fV0sLambdaGap09[i] = 0;
 
+    fV0sDiffTwo2Gap00P_K0s[i] = 0;
+    fV0sDiffTwo2Gap00N_K0s[i] = 0;
+    fV0sDiffTwo2Gap00P_Lambda[i] = 0;
+    fV0sDiffTwo2Gap00N_Lambda[i] = 0;
     fV0sDiffTwo2Gap09P_K0s[i] = 0;
+    fV0sDiffTwo2Gap09N_K0s[i] = 0;
     fV0sDiffTwo2Gap09P_Lambda[i] = 0;
+    fV0sDiffTwo2Gap09N_Lambda[i] = 0;
   }
   
 
@@ -381,10 +395,22 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   
   for(Int_t i(0); i < fNumCentBins; i++)
   {
+    fV0sK0sGap00[i] = new TH2D(Form("fV0sK0s_Gap00_Cent%d",i),Form("K^{0}_{S} candidates |#Delta#it{#eta}| > 0 Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassK0s, fV0MaxMassK0s);
+    fV0sK0sGap00[i]->Sumw2();
+    fOutListV0s->Add(fV0sK0sGap00[i]);
+  }
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
     fV0sK0sGap09[i] = new TH2D(Form("fV0sK0s_Gap09_Cent%d",i),Form("K^{0}_{S} candidates |#Delta#it{#eta}| > 0.9 Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassK0s, fV0MaxMassK0s);
     fV0sK0sGap09[i]->Sumw2();
     fOutListV0s->Add(fV0sK0sGap09[i]);
   }
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    fV0sLambdaGap00[i] = new TH2D(Form("fV0sLambda_Gap00_Cent%d",i),Form("#Lambda+#bar{#Lambda} candidates |#Delta#it{#eta}| > 0 Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fCentBinEdges[i],fCentBinEdges[i+1]), fNumPtBins, fPtBinEdges, 80, fV0MinMassLambda, fV0MaxMassLambda);
+    fV0sLambdaGap00[i]->Sumw2();
+    fOutListV0s->Add(fV0sLambdaGap00[i]);
+  } 
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     fV0sLambdaGap09[i] = new TH2D(Form("fV0sLambda_Gap09_Cent%d",i),Form("#Lambda+#bar{#Lambda} candidates |#Delta#it{#eta}| > 0.9 Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fCentBinEdges[i],fCentBinEdges[i+1]), fNumPtBins, fPtBinEdges, 80, fV0MinMassLambda, fV0MaxMassLambda);
@@ -393,7 +419,17 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sDiffTwo2Gap09P_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09P_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9, #Delta#it{#eta}^{POI} > 0.45} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+    fV0sDiffTwo2Gap00P_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap00P_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0, #Delta#it{#eta}^{POI} > 0.} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+    fV0sDiffTwo2Gap00P_K0s[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2Gap00P_K0s[i]);
+
+    fV0sDiffTwo2Gap00N_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap00N_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0, #Delta#it{#eta}^{POI} < 0.} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+    fV0sDiffTwo2Gap00N_K0s[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2Gap00N_K0s[i]);
+  }
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+		fV0sDiffTwo2Gap09P_K0s[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09P_K0s_Cent%d",i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9, #Delta#it{#eta}^{POI} > 0.45} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
     fV0sDiffTwo2Gap09P_K0s[i]->Sumw2();
     fOutListV0s->Add(fV0sDiffTwo2Gap09P_K0s[i]);
 
@@ -403,7 +439,17 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    fV0sDiffTwo2Gap09P_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09P_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9, #Delta#it{#eta}^{POI} > 0.45} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+    fV0sDiffTwo2Gap00P_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap00P_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0, #Delta#it{#eta}^{POI} > 0} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+    fV0sDiffTwo2Gap00P_Lambda[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2Gap00P_Lambda[i]);
+		
+		fV0sDiffTwo2Gap00N_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap00N_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0, #Delta#it{#eta}^{POI} < 0} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+    fV0sDiffTwo2Gap00N_Lambda[i]->Sumw2();
+    fOutListV0s->Add(fV0sDiffTwo2Gap00N_Lambda[i]);
+  }
+	for(Int_t i(0); i < fNumCentBins; i++)
+  {
+		fV0sDiffTwo2Gap09P_Lambda[i] = new TProfile2D(Form("fV0sDiffTwo2_Gap09P_Lambda_Cent%d",i), Form("#Lambda + #bar{#Lambda} #LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.9, #Delta#it{#eta}^{POI} > 0.45} Cent %g-%g%% (diff. flow); #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
     fV0sDiffTwo2Gap09P_Lambda[i]->Sumw2();
     fOutListV0s->Add(fV0sDiffTwo2Gap09P_Lambda[i]);
 
@@ -586,8 +632,12 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   Int_t iNumP2Gap04P[fNumPtBins] = {0};
   Int_t iNumP2Gap08P[fNumPtBins] = {0};
   Int_t iNumP2Gap10P[fNumPtBins] = {0};
+  Int_t iNumV2Gap00P_K0s[fNumPtBins][fNumMinvFlowBinsK0s] = {0};
+  Int_t iNumV2Gap00N_K0s[fNumPtBins][fNumMinvFlowBinsK0s] = {0};
   Int_t iNumV2Gap09P_K0s[fNumPtBins][fNumMinvFlowBinsK0s] = {0};
   Int_t iNumV2Gap09N_K0s[fNumPtBins][fNumMinvFlowBinsK0s] = {0};
+  Int_t iNumV2Gap00P_Lambda[fNumPtBins][fNumMinvFlowBinsLambda] = {0};
+  Int_t iNumV2Gap00N_Lambda[fNumPtBins][fNumMinvFlowBinsLambda] = {0};
   Int_t iNumV2Gap09P_Lambda[fNumPtBins][fNumMinvFlowBinsLambda] = {0};
   Int_t iNumV2Gap09N_Lambda[fNumPtBins][fNumMinvFlowBinsLambda] = {0};
 
@@ -602,12 +652,16 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
     for(Int_t j(0); j < fNumMinvFlowBinsK0s; j++)
     {
+      fVvec2Gap00P_K0s[i][j] = TComplex(0,0,kFALSE);
+      fVvec2Gap00N_K0s[i][j] = TComplex(0,0,kFALSE);
       fVvec2Gap09P_K0s[i][j] = TComplex(0,0,kFALSE);
       fVvec2Gap09N_K0s[i][j] = TComplex(0,0,kFALSE);
     }
 
     for(Int_t j(0); j < fNumMinvFlowBinsLambda; j++)
     {
+      fVvec2Gap00P_Lambda[i][j] = TComplex(0,0,kFALSE);
+      fVvec2Gap00N_Lambda[i][j] = TComplex(0,0,kFALSE);
       fVvec2Gap09P_Lambda[i][j] = TComplex(0,0,kFALSE);
       fVvec2Gap09N_Lambda[i][j] = TComplex(0,0,kFALSE);
     }
@@ -781,6 +835,22 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(fV0candK0s)
       {
         fV0sInvMassK0s->Fill(fV0->MassK0Short());
+				
+				if( (fV0->Eta()) > 0. )
+        {
+          fV0sK0sGap00[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassK0Short());
+          fMinvFlowBinIndex = GetMinvFlowBinIndexK0s(fV0->MassK0Short());
+          fVvec2Gap00P_K0s[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
+          iNumV2Gap00P_K0s[fPtBinIndex][fMinvFlowBinIndex]++;
+        }
+
+        if( (fV0->Eta()) < 0. )
+        {
+          fV0sK0sGap00[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassK0Short());
+          fMinvFlowBinIndex = GetMinvFlowBinIndexK0s(fV0->MassK0Short());
+          fVvec2Gap00N_K0s[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
+          iNumV2Gap00N_K0s[fPtBinIndex][fMinvFlowBinIndex]++;
+        }
 
         if( (fV0->Eta()) > 0.45 )
         {
@@ -802,6 +872,22 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(fV0candLambda)
       {
         fV0sInvMassLambda->Fill(fV0->MassLambda());
+
+        if( (fV0->Eta()) > 0. )
+        {
+          fV0sLambdaGap00[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassLambda());
+          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(fV0->MassLambda());
+          fVvec2Gap00P_Lambda[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
+          iNumV2Gap00P_Lambda[fPtBinIndex][fMinvFlowBinIndex]++;
+        }
+
+        if( (fV0->Eta()) < 0. )
+        {
+          fV0sLambdaGap00[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassLambda());
+          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(fV0->MassLambda());
+          fVvec2Gap00N_Lambda[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
+          iNumV2Gap00N_Lambda[fPtBinIndex][fMinvFlowBinIndex]++;
+        }
 
         if( (fV0->Eta()) > 0.45 )
         {
@@ -938,6 +1024,18 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       {
         for(Int_t j(0); j < fNumMinvFlowBinsK0s; j++)
         {
+          dWeight = iNumV2Gap00P_K0s[i][j]*(iNumGap00N);
+          dAmp = (fVvec2Gap00P_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap00N))).Re();
+          dVal = dAmp / dWeight;
+          if( TMath::Abs(dVal < 1) && (dWeight > 0))
+            fV0sDiffTwo2Gap00P_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
+          
+          dWeight = iNumV2Gap00N_K0s[i][j]*(iNumGap00P);
+          dAmp = (fVvec2Gap00N_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap00P))).Re();
+          dVal = dAmp / dWeight;
+          if( TMath::Abs(dVal < 1) && (dWeight > 0))
+            fV0sDiffTwo2Gap00N_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
+          
           dWeight = iNumV2Gap09P_K0s[i][j]*(iNumGap09N);
           dAmp = (fVvec2Gap09P_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap09N))).Re();
           dVal = dAmp / dWeight;
@@ -953,7 +1051,18 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
         for(Int_t j(0); j < fNumMinvFlowBinsLambda; j++)
         {
-          dWeight = iNumV2Gap09P_Lambda[i][j]*(iNumGap09N);
+          dWeight = iNumV2Gap00P_Lambda[i][j]*(iNumGap00N);
+          dAmp = (fVvec2Gap00P_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap00N))).Re();
+          dVal = dAmp / dWeight;
+          if( TMath::Abs(dVal < 1) && (dWeight > 0))
+            fV0sDiffTwo2Gap00P_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
+          
+          dWeight = iNumV2Gap00N_Lambda[i][j]*(iNumGap00P);
+          dAmp = (fVvec2Gap00N_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap00P))).Re();
+          dVal = dAmp / dWeight;
+          if( TMath::Abs(dVal < 1) && (dWeight > 0))
+            fV0sDiffTwo2Gap00N_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);          dWeight = iNumV2Gap09P_Lambda[i][j]*(iNumGap09N);
+          
           dAmp = (fVvec2Gap09P_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap09N))).Re();
           dVal = dAmp / dWeight;
           if( TMath::Abs(dVal < 1) && (dWeight > 0))
@@ -1163,6 +1272,10 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     return kFALSE;  
   }
   */
+  if(fCutV0MotherEtaMax > 0. && ( TMath::Abs(v0->Eta()) > fCutV0MotherEtaMax ) )
+  {
+    return kFALSE;
+  }
 
   if( (v0->Pt() > fTrackPtMax) || (v0->Pt() < fTrackPtMin) )
   {

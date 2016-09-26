@@ -77,6 +77,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		Double_t								fCutV0MaxDecayRadius; //! max distance between PV and secondary vertex in transverse plane
         Double_t                                fCutV0DaughterPtMin; //! minimum pT of V0 daughters
         Double_t                                fCutV0DaughterEtaMax; //! max value of Eta of V0 daughters
+        Double_t                                fCutV0MotherEtaMax; //! max eta value of V0 mother
         Double_t                                fCutV0MotherRapMax; //! max rapidity value of V0 mother
         Double_t                                fCutV0MinCPAK0s;    //! min cosine of pointing angle of K0s candidate to PV
         Double_t                                fCutV0MinCPALambda; //! min cosine of pointing angle of K0s candidate to PV
@@ -121,8 +122,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TComplex								fPvec2Gap10P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
         TComplex								fPvec3[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow 
 
+        TComplex                                fVvec2Gap00P_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
+        TComplex                                fVvec2Gap00N_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
         TComplex                                fVvec2Gap09P_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
         TComplex                                fVvec2Gap09N_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
+        TComplex                                fVvec2Gap00P_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
+        TComplex                                fVvec2Gap00N_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
         TComplex                                fVvec2Gap09P_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
         TComplex                                fVvec2Gap09N_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
         
@@ -156,8 +161,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 		TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
+        TProfile2D*                             fV0sDiffTwo2Gap00P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*                             fV0sDiffTwo2Gap00N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
         TProfile2D*                             fV0sDiffTwo2Gap09P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
         TProfile2D*                             fV0sDiffTwo2Gap09N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*                             fV0sDiffTwo2Gap00P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+        TProfile2D*                             fV0sDiffTwo2Gap00N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
         TProfile2D*                             fV0sDiffTwo2Gap09P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
         TProfile2D*                             fV0sDiffTwo2Gap09N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
@@ -168,7 +177,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fV0sPhi;					//! selected V0s phi distribution
         TH1D*										fV0sInvMassK0s;		//! selected K0s inv. mass distribution (pT & cent integrated)
         TH1D*										fV0sInvMassLambda;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH2D*										fV0sK0sGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sK0sGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
+        TH2D*										fV0sLambdaGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         // QA histos
         TH1D* 									fEventCounter;  //! event rejection tracker

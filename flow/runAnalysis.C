@@ -1,15 +1,15 @@
 void runAnalysis()
 {
     Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
-    Bool_t gridTest = kFALSE; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
+    Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
-    //TString sGridMode = "full";
-    TString sGridMode = "terminate";
+    TString sGridMode = "full";
+    //TString sGridMode = "terminate";
     
-    //Bool_t bMergeViaJDL = kTRUE;
-    Bool_t bMergeViaJDL = kFALSE;
+    Bool_t bMergeViaJDL = kTRUE;
+    //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/3";
+    TString sWorkDir = "V0s/5_plusplus";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -41,7 +41,7 @@ void runAnalysis()
     gROOT->LoadMacro("AliAnalysisTaskFlowPID.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskFlowPID.C"); // load the addtask macro
     
-    AliAnalysisTaskFlowPID *taskFlowPID = AddTaskFlowPID(); // create an instance of your analysis task
+    AliAnalysisTaskFlowPID *taskFlowPID = AddTaskFlowPID("flowPID"); // create an instance of your analysis task
     taskFlowPID->SetPVtxZ(10.);
 
     if (!mgr->InitAnalysis()) return;
@@ -52,7 +52,7 @@ void runAnalysis()
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
-        chain->Add("~/NBI/Codes/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0012/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
+        chain->Add("~/NBI/Codes/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
         // if we want to run on grid, we create and configure the plugin
@@ -73,27 +73,30 @@ void runAnalysis()
         alienHandler->SetRunPrefix("000");
         // runnumber
         
-        Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595, 137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
-        for (Int_t i = 10; i < 25 ; i++)
+        //..45 runs
+        Int_t runNumber[] = {139510,   139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871, 138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
+        //..46 runs
+        //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595, 137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
+        Int_t iNumRuns = sizeof(runNumber) / sizeof(runNumber[0]);
+        
+        for (Int_t i = 0; i < iNumRuns; i++)
         {
             //if (i == sizeof(runArray) / sizeof(runArray[1])) break;
             alienHandler->AddRunNumber(runNumber[i]);
         }
+        
 
-
+        alienHandler->SetMasterResubmitThreshold(90);
         // number of files per subjob
-        alienHandler->SetSplitMaxInputFileNumber(100);
+        alienHandler->SetSplitMaxInputFileNumber(800);
         alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
-        alienHandler->SetTTL(20000);
+        alienHandler->SetTTL(30000);
         alienHandler->SetJDLName("FlowPID.jdl");
-
+        alienHandler->SetPrice(1);    
         alienHandler->SetOutputToRunNo(kTRUE);
         alienHandler->SetKeepLogs(kTRUE);
-        // merging: run with kTRUE to merge on grid
-        // after re-running the jobs in SetRunMode("terminate") 
-        // (see below) mode, set SetMergeViaJDL(kFALSE) 
-        // to collect final results
+
         alienHandler->SetMaxMergeStages(1);
         alienHandler->SetMergeViaJDL(bMergeViaJDL);
         
