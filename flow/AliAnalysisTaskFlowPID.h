@@ -54,7 +54,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t					fPtBinEdges[fNumPtBins+1];				//! pointer for array of pT bin edges
         const static Int_t      fNumMinvFlowBinsK0s = 12;  //! number of inv. mass bin for differential flow plots (K0s)
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
-        const static Int_t      fNumMinvFlowBinsLambda = 10;  //! number of inv. mass bin for differential flow plots ((A)Lambda)
+        const static Int_t      fNumMinvFlowBinsLambda = 9;  //! number of inv. mass bin for differential flow plots ((A)Lambda)
         static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
         const static Int_t 			fNumCentBins = 9;			//! number of centrality bins used for pT-differential flow (so far independently of reference flow)
         static Double_t					fCentBinEdges[fNumCentBins+1];				//! pointer for array of pT bin edges
