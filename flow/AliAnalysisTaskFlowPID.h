@@ -17,17 +17,38 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         virtual void            UserCreateOutputObjects();
         virtual void            UserExec(Option_t* option);
         virtual void            Terminate(Option_t* option);
-
+        // event & tracks setters
         void										SetAODAnalysis(Bool_t aod) { fAODAnalysis = aod; }
         void										SetPbPbAnalysis(Bool_t pbpb) { fPbPb = pbpb; }
-        void										SetPVtxZ(Double_t z) { fPVtxCutZ = z; }
+        void										SetPeriod10h(Bool_t period) { fLHC10h = period; }
+        void										SetCentFlag(Short_t flag) { fCentFlag = flag; }
+        void										SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
         void										SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void										SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
         void										SetTrackPtMin(Double_t pt) { fTrackPtMin = pt; }
         void										SetNumTPCclsMin(UShort_t tpcCls) { fNumTPCclsMin = tpcCls; }
         void										SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
         void										SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
-       
+        void										SetPID(Bool_t pid) { fPID = pid; }
+				// V0s setters
+        void										SetV0sOnFly(Bool_t onFly) { fCutV0onFly = onFly; }
+        void										SetV0sTPCRefit(Bool_t refit) { fCutV0refitTPC = refit; }
+        void										SetV0sRejectKinks(Bool_t reject) { fCutV0rejectKinks = reject; }
+        void										SetV0sDCAPVMin(Double_t dca) { fCutV0MinDCAtoPV = dca; }
+        void										SetV0sDCAPVMax(Double_t dca) { fCutV0MaxDCAtoPV = dca; }
+        void										SetV0sDCADaughtersMax(Double_t dca) { fCutV0MaxDCADaughters = dca; }
+        void										SetV0sDecayRadiusMin(Double_t radius) { fCutV0MinDecayRadius = radius; }
+        void										SetV0sDecayRadiusMax(Double_t radius) { fCutV0MaxDecayRadius = radius; }
+        void										SetV0sDaughterPtMin(Double_t pt) { fCutV0DaughterPtMin = pt; }
+        void										SetV0sDaughterEtaMax(Double_t eta) { fCutV0DaughterEtaMax = eta; }
+        void										SetV0sMotherEtaMax(Double_t eta) { fCutV0MotherEtaMax = eta; }
+        void										SetV0sMotherRapMax(Double_t rap) { fCutV0MotherRapMax = rap; }
+        void										SetV0sK0sCPAMin(Double_t cpa) { fCutV0MinCPAK0s = cpa; }
+        void										SetV0sLambdaCPAMin(Double_t cpa) { fCutV0MinCPALambda = cpa; }
+        void										SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
+        void										SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0NumTauLambdaMax = nTau; }
+
+
         const static Int_t 			fNumPtBins = 10;			//! number of pT bins used for pT-differential flow
         static Double_t					fPtBinEdges[fNumPtBins+1];				//! pointer for array of pT bin edges
         const static Int_t      fNumMinvFlowBinsK0s = 12;  //! number of inv. mass bin for differential flow plots (K0s)
@@ -53,10 +74,10 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Short_t                 GetMinvFlowBinIndexK0s(const Double_t dMass);
         Short_t                 GetMinvFlowBinIndexLambda(const Double_t dMass);
 
-        //cuts & selection
+        //cuts & selection: event & track
         Bool_t									fAODAnalysis;		//! is AOD analysis?
         Bool_t									fPbPb;					//! is PbPb analysis?
-				Bool_t       						fLHC10h;             // flag to LHC10h data?
+				Bool_t       						fLHC10h;        //! flag to LHC10h data?
 				Short_t									fCentFlag;			//! centrality flag
         Double_t 								fPVtxCutZ; 			//! PV z cut
         Double_t 								fTrackEtaMax; 	//! Maximum pseudorapidity range
@@ -66,7 +87,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         UInt_t									fTrackFilterBit;//! Required track filter bit 
         Bool_t 									fDiffFlow;			//! Do differential flow ? (or reference only)
         Bool_t 									fPID;						//! Do PID (so far V0s) ? 
-		//cuts & selection: V0 reconstruction
+				//cuts & selection: V0 reconstruction
 				Bool_t 									fCutV0onFly;		//! V0 reconstruction method: is On-the-fly? (or offline)
 				Bool_t									fCutV0refitTPC; //! Check TPC refit of V0 daughters ?
 				Bool_t									fCutV0rejectKinks; //! Reject Kink V0 daughter tracks ?
