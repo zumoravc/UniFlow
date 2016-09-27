@@ -1,13 +1,13 @@
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
-    TString sGridMode = "full";
-    //TString sGridMode = "terminate";
+    //TString sGridMode = "full";
+    TString sGridMode = "terminate";
     
-    Bool_t bMergeViaJDL = kTRUE;
-    //Bool_t bMergeViaJDL = kFALSE;
+    //Bool_t bMergeViaJDL = kTRUE;
+    Bool_t bMergeViaJDL = kFALSE;
 
     TString sWorkDir = "V0s/5_plusplus";
     TString sOutDir = "outFlow";
@@ -38,11 +38,15 @@ void runAnalysis()
     gROOT->LoadMacro("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
     AliMultSelectionTask* taskMultSelection = AddTaskMultSelection(kFALSE); // user mode:
 
+    // PID response needed for V0s PID
+    gROOT->LoadMacro("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C");
+    AliAnalysisTaskPIDResponse* taskPIDResponse = AddTaskPIDResponse(kFALSE); // not MC
+
     gROOT->LoadMacro("AliAnalysisTaskFlowPID.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskFlowPID.C"); // load the addtask macro
     
-    AliAnalysisTaskFlowPID *taskFlowPID = AddTaskFlowPID("flowPID"); // create an instance of your analysis task
-    taskFlowPID->SetPVtxZ(10.);
+    AliAnalysisTaskFlowPID *taskFlowPID = AddTaskFlowPID("flowPIDV0"); // create an instance of your analysis task
+    taskFlowPID->SetPVtxZMax(10.);
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);

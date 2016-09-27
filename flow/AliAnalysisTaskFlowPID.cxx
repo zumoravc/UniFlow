@@ -24,9 +24,7 @@
 #include <TDatabasePDG.h>
 #include <TPDGCode.h>
 
-#include "AliAnalysisTask.h"
-#include "AliAnalysisManager.h"
-#include "AliAODInputHandler.h"
+
 #include "TChain.h"
 #include "TH1D.h"
 #include "TH3D.h"
@@ -37,13 +35,16 @@
 #include "AliESDEvent.h"
 #include "AliAODTrack.h"
 #include "AliAODv0.h"
-#include "AliMultSelection.h"
 #include "AliVTrack.h"
 #include "TComplex.h"
+
+#include "AliAnalysisTask.h"
+#include "AliAnalysisManager.h"
+#include "AliAODInputHandler.h"
+#include "AliMultSelection.h"
+#include "AliPIDResponse.h"
 #include "AliAnalysisTaskFlowPID.h"
-
 #include "AliLog.h" 
-
 class AliAnalysisTaskFlowPID;    
 
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
@@ -56,6 +57,7 @@ Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.1
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
+  fPIDResponse(0),
   fTrack(0),
   fTrackPt(0),
   fTrackEta(0),
@@ -117,6 +119,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCutV0MotherRapMax(0.0),
   fCutV0NumTauK0sMax(3.),
   fCutV0NumTauLambdaMax(3.),
+  fCutV0ProtonNumSigmaMax(0),
 
   fEventCounter(0),
   fV0sCounter(0),
@@ -157,6 +160,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 //_____________________________________________________________________________
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTaskSE(name),
   fAOD(0),
+  fPIDResponse(0),
   fTrack(0),
   fTrackPt(0),
   fTrackEta(0),
@@ -217,6 +221,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutV0MotherRapMax(0.0),
   fCutV0NumTauK0sMax(3.),
   fCutV0NumTauLambdaMax(3.),
+  fCutV0ProtonNumSigmaMax(0),
 
   fOutList(0),
   fOutListV0s(0),
@@ -567,6 +572,19 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   // this function is called once for each event
 
 	fEventCounter->Fill(0); // input event
+
+	// loading PID response for protons
+  if(fCutV0ProtonNumSigmaMax > 0.)
+  {
+  	AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+    AliInputEventHandler* inputHandler = (AliInputEventHandler*)mgr->GetInputEventHandler();
+    fPIDResponse = inputHandler->GetPIDResponse();
+    if(!fPIDResponse)
+    {
+    	::Error("UserExec","No PID response object found");
+    	return;
+    }
+  }
 
   if( !fAODAnalysis || dynamic_cast<AliESDEvent*>(InputEvent()) ) // ESD analysis
   {
@@ -1357,6 +1375,18 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   fV0candK0s = IsV0aK0s(v0);
   fV0candLambda = IsV0aLambda(v0);
 
+  // proton PID of Lambda Candidates
+  if( (fCutV0ProtonNumSigmaMax > 0.) && fPIDResponse && fV0candLambda )
+  {
+  	Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
+  	Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
+
+  	if((dSigmaProtNeg > fCutV0ProtonNumSigmaMax) || (dSigmaProtPos > fCutV0ProtonNumSigmaMax))
+  	{
+  		fV0candLambda = kFALSE;
+  	} 
+  }
+
   if( !fV0candK0s && !fV0candLambda )
   {
     //::Warning("IsV0Selected","V0 is not K0s nor (A)Lambda!");
@@ -1474,7 +1504,7 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
       return kFALSE;
     }
   }  
-  
+ 
   // cross-contamination
 
   return kTRUE;

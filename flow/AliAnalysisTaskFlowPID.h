@@ -47,6 +47,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void										SetV0sLambdaCPAMin(Double_t cpa) { fCutV0MinCPALambda = cpa; }
         void										SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
         void										SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0NumTauLambdaMax = nTau; }
+        void										SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
 
 
         const static Int_t 			fNumPtBins = 10;			//! number of pT bins used for pT-differential flow
@@ -102,10 +103,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t                fCutV0MotherRapMax; //! max rapidity value of V0 mother
         Double_t                fCutV0MinCPAK0s;    //! min cosine of pointing angle of K0s candidate to PV
         Double_t                fCutV0MinCPALambda; //! min cosine of pointing angle of K0s candidate to PV
-        Double_t                fCutV0NumTauK0sMax; //! max number of c*tau (K0s)
-        Double_t                fCutV0NumTauLambdaMax; //! max number of c*tau ((A)Lambda)
+        Double_t                fCutV0NumTauK0sMax; //! [tau] max number of c*tau (K0s)
+        Double_t                fCutV0NumTauLambdaMax; //! [tau] max number of c*tau ((A)Lambda)
+        Double_t								fCutV0ProtonNumSigmaMax;	//! [sigmaTPC] max number of TPC sigma for proton PID (Lambda candidates)
         // members
         AliAODEvent*            fAOD;           //! input event
+        AliPIDResponse*					fPIDResponse;		//! PID response
         AliAODTrack*						fTrack;					//! AOD track
         Double_t 								fTrackPt;				//! track pT
         Double_t 								fTrackPhi;				//! track phi
