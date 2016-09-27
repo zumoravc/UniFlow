@@ -1,9 +1,14 @@
-void ProcessV0s()
+void ProcessV0s(
+		const TString sInput = "~/NBI/Codes/results/V0s/5/plusplus/merge/AnalysisResults_merged.root",
+		const TString sOutput = "~/NBI/Codes/results/V0s/5/plusplus/plots",
+		const TString sOutputFormat = "png",
+		const TString sEtaGap = "Gap09"
+	)
 {
-	const TString sInput = "~/NBI/Codes/results/V0s/3/merge/AnalysisResults_merged.root";
-	const TString sOutput = "~/NBI/Codes/results/V0s/3";
-	const TString sOutputFormat = "png";
-	const TString sEtaGap = "Gap09";
+	//const TString sInput = "~/NBI/Codes/results/V0s/5/plusplus/merge/AnalysisResults_merged.root";
+	//const TString sOutput = "~/NBI/Codes/results/V0s/5/plusplus/plots";
+	//const TString sOutputFormat = "png";
+	//const TString sEtaGap = "Gap09";
  
 	const Int_t iNumPtBins = 10; // pT bins
 	const Int_t iNumCentBins = 9; // centrality bins
@@ -187,6 +192,48 @@ void ProcessV0s()
 			lFlowMass_Lambda->Add(hFlowMass_Lambda[i][j]);
 		}
 	}
+
+	// ===== Making comparison plots ======
+	TCanvas* cInvMassK0sPt = new TCanvas("cInvMassK0sPt","InvMassK0sPt",1800,1800);
+	cInvMassK0sPt->Divide(3,3);
+	TCanvas* cInvMassLambdaPt = new TCanvas("cInvMassLambdaPt","InvMassLambdaPt",1800,1800);
+	cInvMassLambdaPt->Divide(3,3);
+
+	TCanvas* cInvMassK0sCent = new TCanvas("cInvMassK0sCent","InvMassK0sCent",1800,1800);
+	cInvMassK0sCent->Divide(3,3);
+	TCanvas* cInvMassLambdaCent = new TCanvas("cInvMassLambdaCent","InvMassLambdaCent",1800,1800);
+	cInvMassLambdaCent->Divide(3,3);
+
+	// loop for all cent and fixed pT
+	for(Int_t j(0); j < iNumPtBins; j++) // pT
+	{
+		for(Int_t i(0); i < 9; i++) // cent
+		{
+			cInvMassK0sPt->cd(i+1);
+			hInvMass_K0s[i][j]->Draw();
+
+			cInvMassLambdaPt->cd(i+1);
+			hInvMass_Lambda[i][j]->Draw();
+		}
+		cInvMassK0sPt->Print(Form("%s/InvMass_K0s_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
+		cInvMassLambdaPt->Print(Form("%s/InvMass_Lambda_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
+	}
+	
+	// loop for all pT and fixed cent
+	for(Int_t i(0); i < iNumCentBins; i++) // cent
+	{
+	for(Int_t j(0); j < 9; j++) // pT
+		{
+			cInvMassK0sCent->cd(j+1);
+			hFlowMass_K0s[i][j]->Draw();
+
+			cInvMassLambdaCent->cd(j+1);
+			hFlowMass_Lambda[i][j]->Draw();
+		}
+		cInvMassK0sCent->Print(Form("%s/InvMass_K0s_allPt_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+		cInvMassLambdaCent->Print(Form("%s/InvMass_Lambda_allPt_Cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+	}
+	
 
 	// ===== Saving output ======
 	fOutput->cd();
