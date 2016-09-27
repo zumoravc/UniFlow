@@ -1,6 +1,7 @@
 #!/bin/bash
-
-outPath=~/NBI/Codes/results/V0s/5/plusplus/
+inPath=~/NBI/Codes/flow
+outPath=~/NBI/Codes/results/V0s/test_tag/plusplus_JDL
+mkdir -pv ${outPath}
 cd ${outPath}
 
 mkdir -pv plots
@@ -13,4 +14,4 @@ mkdir -pv plots/FlowMassLambda
 mkdir -pv plots/compInvMass/
 mkdir -pv plots/compFlowMass/
 
-root -l -b -q ~/NBI/Codes/macros/ProcessV0s.C\(\"${outPath}/merge/AnalysisResults_merged.root\",\"${outPath}/plots\"\)
+root -l -b -q ~/NBI/Codes/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/plots\",\"flowPID_JHEP\"\)

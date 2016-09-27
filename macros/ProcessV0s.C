@@ -1,6 +1,7 @@
 void ProcessV0s(
 		const TString sInput = "~/NBI/Codes/results/V0s/5/plusplus/merge/AnalysisResults_merged.root",
 		const TString sOutput = "~/NBI/Codes/results/V0s/5/plusplus/plots",
+		const TString sTag = "flowPID_JHEP",
 		const TString sOutputFormat = "png",
 		const TString sEtaGap = "Gap09"
 	)
@@ -23,12 +24,11 @@ void ProcessV0s(
 	TFile* fInput = new TFile(sInput.Data(),"READ");
 	TFile* fOutput = new TFile(Form("%s/V0sFlow.root",sOutput.Data()),"RECREATE");
 
-	fInput->cd("FlowPID");
-
+	fInput->cd(Form("FlowPID%s",sTag.Data()));
 
 	// ===== Loading input ===== 
-	TList* lInputTracks = (TList*) gDirectory->Get("Tracks");
-	TList* lInputV0s = (TList*) gDirectory->Get("V0s");
+	TList* lInputTracks = (TList*) gDirectory->Get(Form("Tracks_%s",sTag.Data()));
+	TList* lInputV0s = (TList*) gDirectory->Get(Form("V0s_%s",sTag.Data()));
 
 	// reference 
 	TProfile* pRefCorTwo2_Gap09 = (TProfile*) (lInputTracks->FindObject(Form("fRefCorTwo2_%s",sEtaGap.Data())) )->Clone(Form("pRefCorTwo2_%s",sEtaGap.Data())); 
