@@ -95,25 +95,25 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
   fCentFlag(0),
-  fPVtxCutZ(10),
-  fTrackEtaMax(0.8),
-  fTrackPtMax(10),
-  fTrackPtMin(0.2),
+  fPVtxCutZ(0),
+  fTrackEtaMax(0),
+  fTrackPtMax(0),
+  fTrackPtMin(0),
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
   fDiffFlow(kTRUE),
-  fPID(kTRUE),
+  fPID(kTRUE),  
   fCutV0onFly(0),
   fCutV0rejectKinks(kFALSE),
   fCutV0refitTPC(kTRUE),
-  fCutV0MinCPALambda(0.998),
-  fCutV0MinCPAK0s(0.998),
-  fCutV0MinDCAtoPV(0.1),
+  fCutV0MinCPALambda(0.),
+  fCutV0MinCPAK0s(0.),
+  fCutV0MinDCAtoPV(0.),
   fCutV0MaxDCAtoPV(0.),
-  fCutV0MaxDCADaughters(1.),
-  fCutV0MinDecayRadius(5.),
+  fCutV0MaxDCADaughters(0.),
+  fCutV0MinDecayRadius(0.),
   fCutV0MaxDecayRadius(0.),
-  fCutV0DaughterPtMin(0.1),
+  fCutV0DaughterPtMin(0.),
   fCutV0DaughterEtaMax(0.8),
   fCutV0MotherEtaMax(0.8),
   fCutV0MotherRapMax(0.0),
@@ -197,10 +197,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
   fCentFlag(0),
-  fPVtxCutZ(10),
-  fTrackEtaMax(0.8),
-  fTrackPtMax(5),
-  fTrackPtMin(0.2),
+  fPVtxCutZ(0),
+  fTrackEtaMax(0),
+  fTrackPtMax(0),
+  fTrackPtMin(0),
   fNumTPCclsMin(70),
   fTrackFilterBit(128),
   fDiffFlow(kTRUE),
@@ -208,14 +208,14 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutV0onFly(0),
   fCutV0rejectKinks(kFALSE),
   fCutV0refitTPC(kTRUE),
-  fCutV0MinCPALambda(0.998),
-  fCutV0MinCPAK0s(0.998),
-  fCutV0MinDCAtoPV(0.1),
-  fCutV0MaxDCAtoPV(0),
-  fCutV0MaxDCADaughters(1.),
-  fCutV0MinDecayRadius(5),
+  fCutV0MinCPALambda(0.),
+  fCutV0MinCPAK0s(0.),
+  fCutV0MinDCAtoPV(0.),
+  fCutV0MaxDCAtoPV(0.),
+  fCutV0MaxDCADaughters(0.),
+  fCutV0MinDecayRadius(0.),
   fCutV0MaxDecayRadius(0.),
-  fCutV0DaughterPtMin(0.1),
+  fCutV0DaughterPtMin(0.),
   fCutV0DaughterEtaMax(0.8),
   fCutV0MotherEtaMax(0.8),
   fCutV0MotherRapMax(0.0),
@@ -1256,7 +1256,7 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   }
   fV0sCounter->Fill(0);
 
-  if( (trackDaughterNeg->Pt() < fCutV0DaughterPtMin) || (trackDaughterPos->Pt() < fCutV0DaughterPtMin) )
+  if( (fCutV0DaughterPtMin > 0.) && ( (trackDaughterNeg->Pt() < fCutV0DaughterPtMin) || (trackDaughterPos->Pt() < fCutV0DaughterPtMin) ) )
   {
     return kFALSE;
   }
@@ -1295,7 +1295,7 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     return kFALSE;
   }
 
-  if( (v0->Pt() > fTrackPtMax) || (v0->Pt() < fTrackPtMin) )
+  if( ( fTrackPtMax > 0. && (v0->Pt() > fTrackPtMax) ) || ( fTrackPtMin > 0. && (v0->Pt() < fTrackPtMin) ) )
   {
     return kFALSE;
   }
