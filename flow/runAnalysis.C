@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -195,7 +195,7 @@ void runAnalysis()
 
         alienHandler->SetMasterResubmitThreshold(90);
         // number of files per subjob
-        alienHandler->SetSplitMaxInputFileNumber(800);
+        alienHandler->SetSplitMaxInputFileNumber(200);
         alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
         alienHandler->SetTTL(30000);
