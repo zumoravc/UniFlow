@@ -205,7 +205,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*										fV0sK0sGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        // QA histos
+        // QA histos // index 0: before / 1: after cuts
         TH1D* 									fEventCounter;  //! event rejection tracker
         TH1D*										fV0sCounter;		//! V0s counter
         TH1D* 									fQAPVz;					//! PV z distance distribution
@@ -214,6 +214,23 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fQATrackEta;		//! eta dist of all tracks in all events
         TH1D*										fQATrackPhi;		//! phi dist of all tracks in all events
         TH1D*										fQATrackFilterMap;//! filter bit of all tracks
+
+        TH1I*										fQAV0sRecoMethod[2];	//! offline/online V0 reconstruction method
+        TH1I*										fQAV0sTPCRefit[2];	//! TPC refit true/false
+        TH1I*										fQAV0sKinks[2];	//! V0 kinks true/false
+        TH1I*										fQAV0sDCAtoPV[2];	//! V0 DCA to PV
+        TH1I*										fQAV0sDCADaughters[2];	//! DCA between V0 daughters
+        TH1I*										fQAV0sDecayRadius[2];	//! Distance between PV and Secondary vertex in transverse plane
+        TH1I*										fQAV0sDaughterPt[2];	//! pT dist of V0 daughters
+        TH1I*										fQAV0sDaughterEta[2];	//! pseudorapidity dist of V0 daughters
+        TH1I*										fQAV0sMotherPt[2];	//! pT dist of V0s
+        TH1I*										fQAV0sMotherEta[2];	//! pseudorapidity dist of V0s
+        TH1I*										fQAV0sMotherRap[2];	//! rapidity dist of V0s
+        TH1I*										fQAV0sCPAK0s[2];	//! cosine of pointing angle of K0s candidates
+        TH1I*										fQAV0sCPALambda[2];	//! cosine of pointing angle of Lambda candidates
+        TH1I*										fQAV0sNumTauK0s[2];	//! number of c*tau of K0s candidates
+        TH1I*										fQAV0sNumTauLambda[2];	//! number of c*tau of Lambda candidates
+        TH1I*										fQAV0sNumSigmaProtonLambda[2];	//! number of TPC sigmas of proton (Lambda candidates)
 
 
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented

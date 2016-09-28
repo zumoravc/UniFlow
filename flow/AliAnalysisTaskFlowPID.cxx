@@ -88,9 +88,11 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fQvec2Gap08N(0),
   fQvec2Gap09N(0),
   fQvec2Gap10N(0),
+
   fOutList(0),
   fOutListV0s(0),
   fOutListQA(0),
+  
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
