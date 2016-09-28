@@ -53,7 +53,7 @@ ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6}; // PID flow v2 JHEP paper
 Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
-Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.13,1.14,1.15};
+Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.13,1.14,1.15,1.16};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
@@ -95,7 +95,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
   fCentFlag(0),
-  fPVtxCutZ(0),
+  fPVtxCutZ(0.),
   fTrackEtaMax(0),
   fTrackPtMax(0),
   fTrackPtMin(0),
@@ -197,7 +197,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
   fCentFlag(0),
-  fPVtxCutZ(0),
+  fPVtxCutZ(0.),
   fTrackEtaMax(0),
   fTrackPtMax(0),
   fTrackPtMin(0),
@@ -385,7 +385,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
   fOutListV0s->Add(fV0sCounter);
 
-  fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",100,0,100);
+  fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",200,0,1000);
   fOutListV0s->Add(fV0sMult);
   fV0sPt = new TH1D("fV0sPt", "V0s #it{p}_{T} (selected); #it{p}^{V0}_{T} (GeV/#it{c});", 100, 0, 10);    
   fOutListV0s->Add(fV0sPt);          
@@ -821,8 +821,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   // check and select V0s candidates
   Int_t iNumV0sSelected = 0;
   fNumV0s = fAOD->GetNumberOfV0s();
-  if(fNumV0s > 0)
-    fEventCounter->Fill(8); // number of events with at least 1 V0 candidate
+  //if(fNumV0s > 0)
+    //fEventCounter->Fill(8); // number of events with at least 1 V0 candidate
   
   if(fPID && (fNumV0s > 0) ) // do a PID? (so far V0s only)
   { 
@@ -841,6 +841,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       
       if(!IsV0Selected(fV0))
         continue;
+
+      iNumV0sSelected++;
 
       fV0sCounter->Fill(10);
 
