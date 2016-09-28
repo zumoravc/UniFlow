@@ -13,13 +13,13 @@
 // Name of the output files to be merged:
 TString outputFileName = "AnalysisResults.root";
 // Name of the merged, large statistics file:
-TString mergedFileName = "mergedAnalysisResults_new7.root";
+TString mergedFileName = "AnalysisResults.root";
 // Optionally set maximum number of files to be merged:
 Int_t maxNoOfFiles = -1; // -1 = ignore
 // For a large number of output files merging is done in cycles and this is the cycle period: 
 const Int_t cycle = 25;
 
-void mergeOutputOnGrid(const char* gridPath = "/alice/cern.ch/user/v/vpacik/flow/V0s/1/outFlow/0001377*")
+void mergeOutputOnGrid(const char* gridPath = "/alice/cern.ch/user/v/vpacik/V0s/3/outFlow/00013*/")
 {
  // Cross-check user settings before starting:
  CrossCheckUserSettings(); 
