@@ -66,6 +66,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				Bool_t                  IsV0aLambda(const AliAODv0* v0);
 				Bool_t                  IsV0Selected(const AliAODv0* v0);
 				void                    EventQA(const AliAODEvent* event);
+				void										V0sQA(const AliAODEvent* event);
        	void                    EstimateCentrality(AliVEvent* ev);
     
 	    	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
@@ -225,7 +226,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1I*										fQAV0sDaughterEta[2];	//! pseudorapidity dist of V0 daughters
         TH1I*										fQAV0sMotherPt[2];	//! pT dist of V0s
         TH1I*										fQAV0sMotherEta[2];	//! pseudorapidity dist of V0s
-        TH1I*										fQAV0sMotherRap[2];	//! rapidity dist of V0s
+        TH1I*										fQAV0sMotherRapK0s[2];	//! rapidity dist of V0s (K0s mass hypothesis)
+        TH1I*										fQAV0sMotherRapLambda[2];	//! rapidity dist of V0s (Lambda mass hypothesis)
         TH1I*										fQAV0sCPAK0s[2];	//! cosine of pointing angle of K0s candidates
         TH1I*										fQAV0sCPALambda[2];	//! cosine of pointing angle of Lambda candidates
         TH1I*										fQAV0sNumTauK0s[2];	//! number of c*tau of K0s candidates
