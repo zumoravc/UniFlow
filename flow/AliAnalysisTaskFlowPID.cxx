@@ -672,9 +672,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   }
   // only events passing selection criteria defined @ IsEventSelected()
   
-  // Filling QA histograms 'Before cuts' for V0s in selected events
-  V0sQA(fAOD);
-
   const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
   
@@ -899,6 +896,9 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       fV0 = fAOD->GetV0(iV0);
       if(!fV0)
         continue;
+
+      // Filling QA histograms 'Before cuts' for V0s in selected events
+		  V0sQA(fV0,0);
 
       // initial setting for V0 selection
       fV0candK0s = kTRUE;
@@ -1607,25 +1607,15 @@ void AliAnalysisTaskFlowPID::EventQA(const AliAODEvent* event)
 	return; 
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskFlowPID::V0sQA(const AliAODEvent* ev)
+void AliAnalysisTaskFlowPID::V0sQA(const AliAODv0* v0, const Short_t iQAindex)
 {
-	Int_t iQAindex = 0;
-
-	if(!ev)
-		return;
-
-	Int_t iNumV0s = ev->GetNumberOfV0s();
-	if(iNumV0s == 0)
-		return;
-
 	const Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
 	const Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
-	AliAODVertex* primVtx = ev->GetPrimaryVertex();
+	AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
   
 	Double_t dPrimVtxCoor[3] = {0};
 	primVtx->GetXYZ(dPrimVtxCoor);
 
-	AliAODv0* v0 = 0x0;
 	AliAODTrack* trackDaughter[2] = {0x0, 0x0};
 	AliAODVertex* prodVtxDaughter[2] = {0x0, 0x0};
 	Double_t dSecVtxCoor[3] = {0};
@@ -1633,59 +1623,52 @@ void AliAnalysisTaskFlowPID::V0sQA(const AliAODEvent* ev)
 	Double_t dDecayCoor[3] = {0};
 	Double_t dPropLife = 0;
 
-	for(Int_t iV0(0); iV0 < iNumV0s; iV0++)
+	// filling QA histos
+	
+	for(Int_t i(0); i < 2; i++) // daughters loop
 	{
-		v0 = ev->GetV0(iV0);
-		if(!v0)
-			return;
+		trackDaughter[i] = (AliAODTrack*) v0->GetDaughter(i);
+		if(!trackDaughter[i])
+			continue;
 
-		// filling QA histos
+		fQAV0sTPCRefit[iQAindex]->Fill(trackDaughter[i]->IsOn(AliAODTrack::kTPCrefit));	
+		fQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt());	
+		fQAV0sDaughterEta[iQAindex]->Fill(trackDaughter[i]->Eta());	
 		
-		for(Int_t i(0); i < 2; i++) // daughters loop
-		{
-			trackDaughter[i] = (AliAODTrack*) v0->GetDaughter(i);
-			if(!trackDaughter[i])
-				continue;
 
-			fQAV0sTPCRefit[iQAindex]->Fill(trackDaughter[i]->IsOn(AliAODTrack::kTPCrefit));	
-			fQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt());	
-			fQAV0sDaughterEta[iQAindex]->Fill(trackDaughter[i]->Eta());	
-			
+		// kinks
+		prodVtxDaughter[i] = (AliAODVertex*) trackDaughter[i]->GetProdVertex();
+		fQAV0sKinks[iQAindex]->Fill( (prodVtxDaughter[i]->GetType() == AliAODVertex::kKink) );	
+		// PID number of sigmas proton
 
-			// kinks
-			prodVtxDaughter[i] = (AliAODVertex*) trackDaughter[i]->GetProdVertex();
-			fQAV0sKinks[iQAindex]->Fill( (prodVtxDaughter[i]->GetType() == AliAODVertex::kKink) );	
-			// PID number of sigmas proton
-
-			if(fPIDResponse)
-				fQAV0sNumSigmaProtonLambda[iQAindex]->Fill(TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughter[i], AliPID::kProton)));
-		}
-
-  	fQAV0sRecoMethod[iQAindex]->Fill(v0->GetOnFlyStatus());	
-		fQAV0sMotherPt[iQAindex]->Fill(v0->Pt());	
-		fQAV0sMotherEta[iQAindex]->Fill(v0->Eta());	
-		fQAV0sMotherRapK0s[iQAindex]->Fill(v0->RapK0Short());
-		fQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
-		fQAV0sCPAK0s[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
-		fQAV0sCPALambda[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
-		fQAV0sDCADaughters[iQAindex]->Fill(TMath::Abs(v0->DcaV0Daughters()));			
-		fQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaPosToPrimVertex());	
-		fQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaNegToPrimVertex());	
-		//Decay radius
-  	v0->GetSecondaryVtx(dSecVtxCoor);  
-		dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
-		fQAV0sDecayRadius[iQAindex]->Fill(dDecayRadius);	
-		// proper life-time
-		for(Int_t i(0); i < 2; i++)
-    {
-      dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
-    }
-		dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
-		fQAV0sNumTauK0s[iQAindex]->Fill(dPropLife);	
-		
-		dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
-		fQAV0sNumTauLambda[iQAindex]->Fill(dPropLife);	
+		if(fPIDResponse)
+			fQAV0sNumSigmaProtonLambda[iQAindex]->Fill(TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughter[i], AliPID::kProton)));
 	}
+
+	fQAV0sRecoMethod[iQAindex]->Fill(v0->GetOnFlyStatus());	
+	fQAV0sMotherPt[iQAindex]->Fill(v0->Pt());	
+	fQAV0sMotherEta[iQAindex]->Fill(v0->Eta());	
+	fQAV0sMotherRapK0s[iQAindex]->Fill(v0->RapK0Short());
+	fQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
+	fQAV0sCPAK0s[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
+	fQAV0sCPALambda[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
+	fQAV0sDCADaughters[iQAindex]->Fill(TMath::Abs(v0->DcaV0Daughters()));			
+	fQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaPosToPrimVertex());	
+	fQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaNegToPrimVertex());	
+	//Decay radius
+	v0->GetSecondaryVtx(dSecVtxCoor);  
+	dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
+	fQAV0sDecayRadius[iQAindex]->Fill(dDecayRadius);	
+	// proper life-time
+	for(Int_t i(0); i < 2; i++)
+  {
+    dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
+  }
+	dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+	fQAV0sNumTauK0s[iQAindex]->Fill(dPropLife);	
+	
+	dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+	fQAV0sNumTauLambda[iQAindex]->Fill(dPropLife);	
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)

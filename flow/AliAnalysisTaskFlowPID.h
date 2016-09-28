@@ -66,7 +66,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				Bool_t                  IsV0aLambda(const AliAODv0* v0);
 				Bool_t                  IsV0Selected(const AliAODv0* v0);
 				void                    EventQA(const AliAODEvent* event);
-				void										V0sQA(const AliAODEvent* event);
+				void										V0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
     
 	    	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
