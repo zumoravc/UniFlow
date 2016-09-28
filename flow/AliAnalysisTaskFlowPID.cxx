@@ -92,7 +92,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fOutList(0),
   fOutListV0s(0),
   fOutListQA(0),
-  
+
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
@@ -312,7 +312,27 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fV0sDiffTwo2Gap09P_Lambda[i] = 0;
     fV0sDiffTwo2Gap09N_Lambda[i] = 0;
   }
-  
+
+  // QA plots
+  for (Int_t i(0); i < 2; i++)
+  {
+  	fQAV0sRecoMethod[i] = 0;	
+		fQAV0sTPCRefit[i] = 0;	
+		fQAV0sKinks[i] = 0;	
+		fQAV0sDCAtoPV[i] = 0;	
+		fQAV0sDCADaughters[i] = 0;	
+		fQAV0sDecayRadius[i] = 0;	
+		fQAV0sDaughterPt[i] = 0;	
+		fQAV0sDaughterEta[i] = 0;	
+		fQAV0sMotherPt[i] = 0;	
+		fQAV0sMotherEta[i] = 0;	
+		fQAV0sMotherRap[i] = 0;
+		fQAV0sCPAK0s[i] = 0;	
+		fQAV0sCPALambda[i] = 0;	
+		fQAV0sNumTauK0s[i] = 0;	
+		fQAV0sNumTauLambda[i] = 0;	
+		fQAV0sNumSigmaProtonLambda[i] = 0;
+  }
 
   DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
                                       // this chain is created by the analysis manager, so no need to worry about it, 
@@ -563,6 +583,43 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListQA->Add(fQATrackPhi);
 	fQATrackFilterMap = new TH1D("fQATrackFilterMap","QA: Tracks filter map (all); filter bit;",1000,0,1000);
 	fOutListQA->Add(fQATrackFilterMap);
+
+	TString sQAlabel[2] = {"Before","After"};
+	for(Int_t i(0); i < 2; i++)
+	{
+  	fQAV0sRecoMethod[i] = new TH1I(Form("fQAV0sRecoMethod_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Reconstruction method (%s cuts)",sQAlabel[i].Data()), 2,0,1);
+  	fOutListQA->Add(fQAV0sRecoMethod[i]);	
+		fQAV0sTPCRefit[i] = new TH1I(Form("fQAV0sTPCRefit_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: TPC refit (%s cuts)",sQAlabel[i].Data()), 2,0,1);
+  	fOutListQA->Add(fQAV0sTPCRefit[i]);	
+		fQAV0sKinks[i] = new TH1I(Form("fQAV0sKinks_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Kinks (%s cuts)",sQAlabel[i].Data()), 2,0,1);
+  	fOutListQA->Add(fQAV0sKinks[i]);	
+		fQAV0sDCAtoPV[i] = new TH1I(Form("fQAV0sDCAtoPV_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: DCA to PV (%s cuts)",sQAlabel[i].Data()), 100,0.,10.);	
+  	fOutListQA->Add(fQAV0sDCAtoPV[i]);	
+		fQAV0sDCADaughters[i] = new TH1I(Form("fQAV0sDCADaughters_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughters DCA (%s cuts)",sQAlabel[i].Data()), 100,0.,10.);	
+  	fOutListQA->Add(fQAV0sDCADaughters[i]);	
+		fQAV0sDecayRadius[i] = new TH1I(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts)",sQAlabel[i].Data()), 100,0.,1000.);	
+  	fOutListQA->Add(fQAV0sDecayRadius[i]);	
+		fQAV0sDaughterPt[i] = new TH1I(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts)",sQAlabel[i].Data()), 100,0.,50.);	
+  	fOutListQA->Add(fQAV0sDaughterPt[i]);	
+		fQAV0sDaughterEta[i] = new TH1I(Form("fQAV0sDaughterEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#eta} (%s cuts)",sQAlabel[i].Data()), 300,-1.5,1.5);	
+  	fOutListQA->Add(fQAV0sDaughterEta[i]);	
+		fQAV0sMotherPt[i] = new TH1I(Form("fQAV0sMotherPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{p}_{T} (%s cuts)",sQAlabel[i].Data()), 100,0.,50.);	
+  	fOutListQA->Add(fQAV0sMotherPt[i]);	
+		fQAV0sMotherEta[i] = new TH1I(Form("fQAV0sMotherEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#eta} (%s cuts)",sQAlabel[i].Data()), 300,-1.5,1.5);	
+  	fOutListQA->Add(fQAV0sMotherEta[i]);	
+		fQAV0sMotherRap[i] = new TH1I(Form("fQAV0sMotherRap_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (%s cuts)",sQAlabel[i].Data()), 300,-1.5,1.5);
+  	fOutListQA->Add(fQAV0sMotherRap[i]);	
+		fQAV0sCPAK0s[i] = new TH1I(Form("fQAV0sCPAK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: CPA (%s cuts)",sQAlabel[i].Data()), 100,0.,1.);	
+  	fOutListQA->Add(fQAV0sCPAK0s[i]);	
+		fQAV0sCPALambda[i] = new TH1I(Form("fQAV0sCPALambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda(#bar{#Lambda}): CPA (%s cuts)",sQAlabel[i].Data()), 100, 0.,1.);	
+  	fOutListQA->Add(fQAV0sCPALambda[i]);	
+		fQAV0sNumTauK0s[i] = new TH1I(Form("fQAV0sNumTauK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Number of #it{c#tau} (%s cuts)",sQAlabel[i].Data()), 5, 0.,5.);
+  	fOutListQA->Add(fQAV0sNumTauK0s[i]);	
+		fQAV0sNumTauLambda[i] = new TH1I(Form("fQAV0sNumTauLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda(#bar{#Lambda}): Number of #it{c#tau} (%s cuts)",sQAlabel[i].Data()), 5,0.,5.);
+  	fOutListQA->Add(fQAV0sNumTauLambda[i]);	
+		fQAV0sNumSigmaProtonLambda[i] = new TH1I(Form("fQAV0sNumSigmaProtonLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda(#bar{#Lambda}): Number of TPC #it{#sigma} (%s cuts)",sQAlabel[i].Data()), 5,0.,5.);
+  	fOutListQA->Add(fQAV0sNumSigmaProtonLambda[i]);	
+	}
 
   PostData(1, fOutList);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
 	PostData(2, fOutListV0s);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
