@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/6_plusplus";
+    TString sWorkDir = "V0s/7_plusplus_part1";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -51,7 +51,7 @@ void runAnalysis()
     taskFlowPID->SetPbPbAnalysis(kTRUE);
     taskFlowPID->SetPeriod10h(kTRUE);
     taskFlowPID->SetCentFlag(0);
-    taskFlowPID->SetPVtxZMax(10.);
+    taskFlowPID->SetPVtxZMax(10);
     taskFlowPID->SetTrackEtaMax(0.8);
     taskFlowPID->SetTrackPtMax(10.);
     taskFlowPID->SetTrackPtMin(0.1);
@@ -62,7 +62,7 @@ void runAnalysis()
     // V0 selection cuts
     taskFlowPID->SetV0sOnFly(kFALSE);
     taskFlowPID->SetV0sTPCRefit(kTRUE);
-    taskFlowPID->SetV0sRejectKinks(kFALSE);
+    taskFlowPID->SetV0sRejectKinks(kTRUE);
     taskFlowPID->SetV0sDCAPVMin(0.1);
     taskFlowPID->SetV0sDCAPVMax(0.);
     taskFlowPID->SetV0sDCADaughtersMax(0.5);
@@ -70,8 +70,8 @@ void runAnalysis()
     taskFlowPID->SetV0sDecayRadiusMax(100.);
     taskFlowPID->SetV0sDaughterPtMin(0.1);
     taskFlowPID->SetV0sDaughterEtaMax(0.8);
-    taskFlowPID->SetV0sMotherEtaMax(0.);
-    taskFlowPID->SetV0sMotherRapMax(0.8);
+    taskFlowPID->SetV0sMotherEtaMax(0.8);
+    taskFlowPID->SetV0sMotherRapMax(0.);
     taskFlowPID->SetV0sK0sCPAMin(0.998);
     taskFlowPID->SetV0sLambdaCPAMin(0.998);
     taskFlowPID->SetV0sK0sNumTauMax(3.);
@@ -129,7 +129,7 @@ void runAnalysis()
     // V0 selection cuts
     taskFlowPID_lose->SetV0sOnFly(kFALSE);
     taskFlowPID_lose->SetV0sTPCRefit(kTRUE);
-    taskFlowPID_lose->SetV0sRejectKinks(kFALSE);
+    taskFlowPID_lose->SetV0sRejectKinks(kTRUE);
     taskFlowPID_lose->SetV0sDCAPVMin(0.05);
     taskFlowPID_lose->SetV0sDCAPVMax(0.);
     taskFlowPID_lose->SetV0sDCADaughtersMax(1.);
@@ -137,12 +137,12 @@ void runAnalysis()
     taskFlowPID_lose->SetV0sDecayRadiusMax(100.);
     taskFlowPID_lose->SetV0sDaughterPtMin(0.1);
     taskFlowPID_lose->SetV0sDaughterEtaMax(0.8);
-    taskFlowPID_lose->SetV0sMotherEtaMax(0.);
-    taskFlowPID_lose->SetV0sMotherRapMax(0.8);
+    taskFlowPID_lose->SetV0sMotherEtaMax(0.8);
+    taskFlowPID_lose->SetV0sMotherRapMax(0.);
     taskFlowPID_lose->SetV0sK0sCPAMin(0.997);
     taskFlowPID_lose->SetV0sLambdaCPAMin(0.997);
-    taskFlowPID_lose->SetV0sK0sNumTauMax(3.);
-    taskFlowPID_lose->SetV0sLambdaNumTauMax(3.);
+    taskFlowPID_lose->SetV0sK0sNumTauMax(3.2);
+    taskFlowPID_lose->SetV0sLambdaNumTauMax(3.2);
     taskFlowPID_lose->SetV0sProtonNumSigmaMax(3.);
 
     if (!mgr->InitAnalysis()) return;
