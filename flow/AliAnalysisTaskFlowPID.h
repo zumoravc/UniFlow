@@ -210,14 +210,14 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*										fV0sLambdaGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         // QA histos // index 0: before / 1: after cuts
         TH1D* 									fEventCounter;  //! event rejection tracker
-        TH1D*										fV0sCounter;		//! V0s counter
         TH1D* 									fQAPVz;					//! PV z distance distribution
         TH1D*										fQANumTracks;		//! number of AOD tracks distribution
         TH1D*										fQATrackPt;			//! pT dist of all tracks in all events
         TH1D*										fQATrackEta;		//! eta dist of all tracks in all events
         TH1D*										fQATrackPhi;		//! phi dist of all tracks in all events
         TH1D*										fQATrackFilterMap;//! filter bit of all tracks
-
+        	// QA V0s
+        TH1D*										fQAV0sCounter;		//! V0s counter
         TH1I*										fQAV0sRecoMethod[2];	//! offline/online V0 reconstruction method
         TH1I*										fQAV0sTPCRefit[2];	//! TPC refit true/false
         TH1I*										fQAV0sKinks[2];	//! V0 kinks true/false

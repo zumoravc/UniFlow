@@ -125,7 +125,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCutV0ProtonNumSigmaMax(0),
 
   fEventCounter(0),
-  fV0sCounter(0),
+  fQAV0sCounter(0),
   fV0sMult(0),
   fV0sPt(0),
   fV0sEta(0),
@@ -231,7 +231,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fOutListV0s(0),
   fOutListQA(0),
   fEventCounter(0),
-  fV0sCounter(0),
+  fQAV0sCounter(0),
   fV0sMult(0),
   fV0sPt(0),
   fV0sEta(0),
@@ -405,12 +405,6 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutList->Add(fTracksCharge);          
   
   // V0s histos
-  Int_t iNV0sCounterBins = 11;
-  TString sV0sCounterLabel[] = {"Input","Reco. method","V0 acceptance (#it{#eta},#it{p}_{T})","Daughters charge","TPC refit","Kink","DCA to PV","Daughters DCA","Decay radius","K^{0}_{S}/#Lambda/#bar{#Lambda}","Selected"};
-  fV0sCounter = new TH1D("fV0sCounter","V0s counter",iNV0sCounterBins,0,iNV0sCounterBins);
-  for(Int_t i = 0; i < iNV0sCounterBins; i++)
-    fV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
-  fOutListV0s->Add(fV0sCounter);
 
   fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",200,0,1000);
   fOutListV0s->Add(fV0sMult);
@@ -573,7 +567,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   for(Int_t i = 0; i < iNEventCounterBins; i++)
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
   fOutListQA->Add(fEventCounter);
-    
+  
+
   fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}; #it{z} (cm);",100,-50,50);
   fOutListQA->Add(fQAPVz);
   fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
@@ -588,6 +583,14 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListQA->Add(fQATrackPhi);
 	fQATrackFilterMap = new TH1D("fQATrackFilterMap","QA: Tracks filter map (all); filter bit;",1000,0,1000);
 	fOutListQA->Add(fQATrackFilterMap);
+
+  // QA V0s output
+  Int_t iNV0sCounterBins = 14;
+  TString sV0sCounterLabel[] = {"Input","Daughters exists","Reco. method","Mother acceptance (#it{#eta},#it{p}_{T})","Decay radius","TPC refit","not Kink","Daughters charge","Daughter acceptance (#it{#eta},#it{p}_{T})","DCA to PV","Daughters DCA","Selected","K^{0}_{S}","#Lambda/#bar{#Lambda}",};
+  fQAV0sCounter = new TH1D("fQAV0sCounter","QA V^{0}_{S} counter",iNV0sCounterBins,0,iNV0sCounterBins);
+  for(Int_t i = 0; i < iNV0sCounterBins; i++)
+    fQAV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
+  fOutListQA->Add(fQAV0sCounter);
 
 	TString sQAlabel[2] = {"Before","After"};
 	for(Int_t i(0); i < 2; i++)
@@ -914,6 +917,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(!fV0)
         continue;
 
+      fQAV0sCounter->Fill(0);
+
 		  V0sQA(fV0,0); // Filling QA histograms 'Before cuts' for V0s in selected events
     
       if(!IsV0Selected(fV0))
@@ -921,7 +926,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
       iNumV0sSelected++;
 
-      fV0sCounter->Fill(10);
       V0sQA(fV0,1); // Filling QA histos after cuts
 
 
@@ -1317,7 +1321,9 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
-{  
+{ 
+	Short_t iCounterIndex = 1;
+
   // invalid V0 pointer
   if(!v0)
   {
@@ -1335,17 +1341,8 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     //::Warning("IsV0Selected","Invalid pointer to V0 daughters!");
     return kFALSE;
   }
-  fV0sCounter->Fill(0);
-
-  if( (fCutV0DaughterPtMin > 0.) && ( (trackDaughterNeg->Pt() < fCutV0DaughterPtMin) || (trackDaughterPos->Pt() < fCutV0DaughterPtMin) ) )
-  {
-    return kFALSE;
-  }
-
-  if( (TMath::Abs(trackDaughterNeg->Eta()) > fCutV0DaughterEtaMax) || (TMath::Abs(trackDaughterPos->Eta()) > fCutV0DaughterEtaMax) )
-  {
-    return kFALSE;
-  }
+  fQAV0sCounter->Fill(iCounterIndex); // daughter tracks exists
+  iCounterIndex++;
 
   // reconstruction method: online (on-the-fly) OR offline
   if(v0->GetOnFlyStatus() != fCutV0onFly)
@@ -1353,88 +1350,21 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     //::Warning("IsV0Selected","Wrong reconstruction method!");
     return kFALSE;
   }
-  fV0sCounter->Fill(1);
+  fQAV0sCounter->Fill(iCounterIndex); // reconstruction method
+  iCounterIndex++;
 
-  /*
-  // number of findable clusters, Number of crossed TPC rows, ratio? V0 pseudorapidity
-  if(!IsTrackSelected(v0))
-    return kFALSE;
-  */
-
-  // ordinary track selection -> not needed -> V0 passing it instead?
-  //if(!IsTrackSelected(trackDaughterNeg) || !IsTrackSelected(trackDaughterPos) )
-    //return kFALSE;
-
-  /*
-  if( !v0->TestFilterBit(fTrackFilterBit) )
-  {
-    return kFALSE;  
-  }
-  */
   if(fCutV0MotherEtaMax > 0. && ( TMath::Abs(v0->Eta()) > fCutV0MotherEtaMax ) )
   {
     return kFALSE;
   }
 
-  if( ( fTrackPtMax > 0. && (v0->Pt() > fTrackPtMax) ) || ( fTrackPtMin > 0. && (v0->Pt() < fTrackPtMin) ) )
+  if( (fTrackPtMax > 0. && (v0->Pt() > fTrackPtMax)) || (fTrackPtMin > 0. && (v0->Pt() < fTrackPtMin)) )
   {
     return kFALSE;
   }
 
-  fV0sCounter->Fill(2);
-
-  // charge of daugters
-  if( trackDaughterPos->Charge() == trackDaughterNeg->Charge() ) // same charge
-    return kFALSE;
-
-  if( (trackDaughterPos->Charge() != 1) || (trackDaughterNeg->Charge() != -1) ) // expected charge
-  {
-    //::Warning("IsV0Selected","Bad charge!");
-    return kFALSE;
-  }
-  fV0sCounter->Fill(3);
-
-  // TPC refit
-  if( fCutV0refitTPC && ( !trackDaughterPos->IsOn(AliAODTrack::kTPCrefit) || !trackDaughterNeg->IsOn(AliAODTrack::kTPCrefit) ) )
-  {
-    //::Warning("IsV0Selected","TPC refit rejection!");
-    return kFALSE;
-  }
-  fV0sCounter->Fill(4);
-
-  // Kinks
-  const AliAODVertex* prodVtxDaughterPos = (AliAODVertex*) trackDaughterPos->GetProdVertex(); // production vertex of the positive daughter track
-  const AliAODVertex* prodVtxDaughterNeg = (AliAODVertex*) trackDaughterNeg->GetProdVertex(); // production vertex of the negative daughter track
-  if( fCutV0rejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) )
-  {
-    //::Warning("IsV0Selected","Kink rejection!");
-    return kFALSE;
-  }
-  fV0sCounter->Fill(5);
-
-  // Daughters DCA to PV 
-  Double_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
-  Double_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
-  if(fCutV0MinDCAtoPV > 0. && ( dDCAPosToPV < fCutV0MinDCAtoPV || dDCANegToPV < fCutV0MinDCAtoPV ) )
-  {
-    //::Warning("IsV0Selected","Wrong daughters DCA to PV!");
-    return kFALSE;
-  }
-  if(fCutV0MaxDCAtoPV > 0. && ( dDCAPosToPV > fCutV0MaxDCAtoPV || dDCANegToPV > fCutV0MaxDCAtoPV ) )
-  {
-    //::Warning("IsV0Selected","Wrong daughters DCA to PV!");
-    return kFALSE;
-  }
-  fV0sCounter->Fill(6);
-
-  // Daughter DCA among themselves
-  Double_t dDCA = TMath::Abs(v0->DcaV0Daughters());
-  if(fCutV0MaxDCADaughters > 0. && dDCA > fCutV0MaxDCADaughters)
-  {
-    //::Warning("IsV0Selected","Invalid daughters DCA!");
-    return kFALSE;
-  }
-  fV0sCounter->Fill(7);
+  fQAV0sCounter->Fill(iCounterIndex); // mother acceptance pT, eta
+  iCounterIndex++;
 
   // radius of decay vertex in transverse plane
   Double_t dSecVtxCoor[3] = {0};
@@ -1450,7 +1380,79 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     //::Warning("IsV0Selected","Invalid vertex decay radius!");
     return kFALSE;
   }
-  fV0sCounter->Fill(8);
+  fQAV0sCounter->Fill(iCounterIndex); // decay radius
+  iCounterIndex++;
+
+	// TPC refit
+  if( fCutV0refitTPC && ( !trackDaughterPos->IsOn(AliAODTrack::kTPCrefit) || !trackDaughterNeg->IsOn(AliAODTrack::kTPCrefit) ) )
+  {
+    //::Warning("IsV0Selected","TPC refit rejection!");
+    return kFALSE;
+  }
+  fQAV0sCounter->Fill(iCounterIndex); // TPC refit
+  iCounterIndex++;
+
+  // Kinks
+  const AliAODVertex* prodVtxDaughterPos = (AliAODVertex*) trackDaughterPos->GetProdVertex(); // production vertex of the positive daughter track
+  const AliAODVertex* prodVtxDaughterNeg = (AliAODVertex*) trackDaughterNeg->GetProdVertex(); // production vertex of the negative daughter track
+  if( fCutV0rejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) )
+  {
+    //::Warning("IsV0Selected","Kink rejection!");
+    return kFALSE;
+  }
+  fQAV0sCounter->Fill(iCounterIndex); // kinks OK
+  iCounterIndex++;
+
+  // charge of daughters
+  if( trackDaughterPos->Charge() == trackDaughterNeg->Charge() ) // same charge
+    return kFALSE;
+
+  if( (trackDaughterPos->Charge() != 1) || (trackDaughterNeg->Charge() != -1) ) // expected charge
+  {
+    //::Warning("IsV0Selected","Bad charge!");
+    return kFALSE;
+  }
+  fQAV0sCounter->Fill(iCounterIndex); // daughter charge 
+  iCounterIndex++;
+  
+  if( fCutV0DaughterPtMin > 0. && ( (trackDaughterNeg->Pt() < fCutV0DaughterPtMin) || (trackDaughterPos->Pt() < fCutV0DaughterPtMin) ) )
+  {
+    return kFALSE;
+  }
+
+  if( fCutV0DaughterEtaMax > 0. && ( (TMath::Abs(trackDaughterNeg->Eta()) > fCutV0DaughterEtaMax) || (TMath::Abs(trackDaughterPos->Eta()) > fCutV0DaughterEtaMax) ) )
+  {
+    return kFALSE;
+  }
+  fQAV0sCounter->Fill(iCounterIndex); // daughters acceptance pT, eta
+  iCounterIndex++;
+
+
+  // Daughters DCA to PV 
+  Double_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
+  Double_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
+  if(fCutV0MinDCAtoPV > 0. && ( dDCAPosToPV < fCutV0MinDCAtoPV || dDCANegToPV < fCutV0MinDCAtoPV ) )
+  {
+    //::Warning("IsV0Selected","Wrong daughters DCA to PV!");
+    return kFALSE;
+  }
+  if(fCutV0MaxDCAtoPV > 0. && ( dDCAPosToPV > fCutV0MaxDCAtoPV || dDCANegToPV > fCutV0MaxDCAtoPV ) )
+  {
+    //::Warning("IsV0Selected","Wrong daughters DCA to PV!");
+    return kFALSE;
+  }
+  fQAV0sCounter->Fill(iCounterIndex); // daughters DCA to PV
+  iCounterIndex++;
+
+  // Daughter DCA among themselves
+  Double_t dDCA = TMath::Abs(v0->DcaV0Daughters());
+  if(fCutV0MaxDCADaughters > 0. && dDCA > fCutV0MaxDCADaughters)
+  {
+    //::Warning("IsV0Selected","Invalid daughters DCA!");
+    return kFALSE;
+  }
+  fQAV0sCounter->Fill(iCounterIndex); // DCA among daughters
+  iCounterIndex++;
 
   // is V0 either K0s or (A)Lambda candidate
   fV0candK0s = IsV0aK0s(v0);
@@ -1474,7 +1476,18 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     return kFALSE; // V0 is neither K0s nor (A)Lambda candidate
   }
 
-  fV0sCounter->Fill(9);
+  fQAV0sCounter->Fill(iCounterIndex); // Selected (K0s or Lambda candidates)
+  iCounterIndex++; 
+
+  if(fV0candK0s)
+		fQAV0sCounter->Fill(iCounterIndex); // K0s candidate
+  
+  iCounterIndex++; 
+
+  if(fV0candLambda)
+		fQAV0sCounter->Fill(iCounterIndex); // Lambda candidate
+  
+  iCounterIndex++; 
 
   return kTRUE;
 }
