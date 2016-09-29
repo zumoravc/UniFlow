@@ -590,8 +590,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutListQA->Add(fQATrackFilterMap);
 
   // QA V0s output
-  Int_t iNV0sCounterBins = 14;
-  TString sV0sCounterLabel[] = {"Input","Daughters exists","Reco. method","Mother acceptance (#it{#eta},#it{p}_{T})","Decay radius","TPC refit","not Kink","Daughters charge","Daughter acceptance (#it{#eta},#it{p}_{T})","DCA to PV","Daughters DCA","Selected","K^{0}_{S}","#Lambda/#bar{#Lambda}"};
+  Int_t iNV0sCounterBins = 15;
+  TString sV0sCounterLabel[] = {"Input","Daughters exists","Reco. method","Mother acceptance (#it{#eta},#it{p}_{T})","Decay radius","TPC refit","not Kink","Daughters charge","Daughter acceptance (#it{#eta},#it{p}_{T})","DCA to PV","Daughters DCA","Selected","K^{0}_{S}","#Lambda/#bar{#Lambda}","K0s && #Lambda/#bar{#Lambda}"};
   fQAV0sCounter = new TH1D("fQAV0sCounter","QA V^{0}_{S} counter",iNV0sCounterBins,0,iNV0sCounterBins);
   for(Int_t i = 0; i < iNV0sCounterBins; i++)
     fQAV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
@@ -1496,6 +1496,11 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
 		fQAV0sCounter->Fill(iCounterIndex); // Lambda candidate
   
   iCounterIndex++; 
+
+ 	if(fV0candK0s && fV0candLambda) 
+		fQAV0sCounter->Fill(iCounterIndex); // both K0s and Lambda candidates
+
+	iCounterIndex++;
 
   return kTRUE;
 }
