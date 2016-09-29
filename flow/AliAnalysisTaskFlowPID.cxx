@@ -125,7 +125,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCutV0ProtonNumSigmaMax(0),
 
   fEventCounter(0),
-  fQAV0sCounter(0),
   fV0sMult(0),
   fV0sPt(0),
   fV0sEta(0),
@@ -155,7 +154,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fQATrackPt(0),
   fQATrackEta(0),
   fQATrackPhi(0),
-  fQATrackFilterMap(0)
+  fQATrackFilterMap(0),
+  fQAV0sCounter(0),
+  fQAV0sCounterK0s(0),
+  fQAV0sCounterLambda(0)
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
@@ -231,7 +233,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fOutListV0s(0),
   fOutListQA(0),
   fEventCounter(0),
-  fQAV0sCounter(0),
+
   fV0sMult(0),
   fV0sPt(0),
   fV0sEta(0),
@@ -261,7 +263,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fQATrackPt(0),
   fQATrackEta(0),
   fQATrackPhi(0),
-  fQATrackFilterMap(0)
+  fQATrackFilterMap(0),
+  fQAV0sCounter(0),
+  fQAV0sCounterK0s(0),
+  fQAV0sCounterLambda(0)
 {
   // constructor
 
@@ -414,9 +419,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListV0s->Add(fV0sEta);          
   fV0sPhi = new TH1D("fV0sPhi", "V0s #it{#varphi} (selected); #it{#varphi}^{V0};", 360, 0., TMath::TwoPi());    
   fOutListV0s->Add(fV0sPhi);
-  fV0sInvMassK0s = new TH1D("fV0sInvMassK0s","K^{0}_{S} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 200,fV0MinMassK0s,fV0MaxMassK0s);          
+  fV0sInvMassK0s = new TH1D("fV0sInvMassK0s","K^{0}_{S} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
   fOutListV0s->Add(fV0sInvMassK0s);
-  fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda+#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^2);", 80,fV0MinMassLambda,fV0MaxMassLambda);          
+  fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda+#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 80,fV0MinMassLambda,fV0MaxMassLambda);          
   fOutListV0s->Add(fV0sInvMassLambda);
   
   for(Int_t i(0); i < fNumCentBins; i++)
@@ -586,11 +591,26 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   // QA V0s output
   Int_t iNV0sCounterBins = 14;
-  TString sV0sCounterLabel[] = {"Input","Daughters exists","Reco. method","Mother acceptance (#it{#eta},#it{p}_{T})","Decay radius","TPC refit","not Kink","Daughters charge","Daughter acceptance (#it{#eta},#it{p}_{T})","DCA to PV","Daughters DCA","Selected","K^{0}_{S}","#Lambda/#bar{#Lambda}",};
+  TString sV0sCounterLabel[] = {"Input","Daughters exists","Reco. method","Mother acceptance (#it{#eta},#it{p}_{T})","Decay radius","TPC refit","not Kink","Daughters charge","Daughter acceptance (#it{#eta},#it{p}_{T})","DCA to PV","Daughters DCA","Selected","K^{0}_{S}","#Lambda/#bar{#Lambda}"};
   fQAV0sCounter = new TH1D("fQAV0sCounter","QA V^{0}_{S} counter",iNV0sCounterBins,0,iNV0sCounterBins);
   for(Int_t i = 0; i < iNV0sCounterBins; i++)
     fQAV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
   fOutListQA->Add(fQAV0sCounter);
+
+	Int_t iNV0sCounterK0sBins = 7;
+  TString sV0sCounterK0sLabel[] = {"Input","Inv. Mass","Mother #it{y} acceptance","CPA","Life-time","Armenteros","Selected"};
+  fQAV0sCounterK0s = new TH1D("fQAV0sCounterK0s","QA K^{0}_{S} counter",iNV0sCounterK0sBins,0,iNV0sCounterK0sBins);
+  for(Int_t i = 0; i < iNV0sCounterK0sBins; i++)
+    fQAV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sCounterK0sLabel[i].Data() );
+  fOutListQA->Add(fQAV0sCounterK0s);
+
+	Int_t iNV0sCounterLambdaBins = 7;
+  TString sV0sCounterLambdaLabel[] = {"Input","Inv. Mass","Mother #it{y} acceptance","CPA","Life-time","proton PID","Selected"};
+  fQAV0sCounterLambda = new TH1D("fQAV0sCounterLambda","QA #Lambda/#bar{#Lambda} counter",iNV0sCounterLambdaBins,0,iNV0sCounterLambdaBins);
+  for(Int_t i = 0; i < iNV0sCounterLambdaBins; i++)
+    fQAV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sCounterLambdaLabel[i].Data() );
+  fOutListQA->Add(fQAV0sCounterLambda);
+
 
 	TString sQAlabel[2] = {"Before","After"};
 	for(Int_t i(0); i < 2; i++)
@@ -1458,18 +1478,6 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   fV0candK0s = IsV0aK0s(v0);
   fV0candLambda = IsV0aLambda(v0);
 
-  // proton PID of Lambda Candidates
-  if( (fCutV0ProtonNumSigmaMax > 0.) && fPIDResponse && fV0candLambda )
-  {
-  	Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
-  	Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
-
-  	if((dSigmaProtNeg > fCutV0ProtonNumSigmaMax) || (dSigmaProtPos > fCutV0ProtonNumSigmaMax))
-  	{
-  		fV0candLambda = kFALSE;
-  	} 
-  }
-
   if( !fV0candK0s && !fV0candLambda )
   {
     //::Warning("IsV0Selected","V0 is not K0s nor (A)Lambda!");
@@ -1494,21 +1502,33 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
 {
+	Short_t iCounterIndex = 0;
+
   if(!v0)
   {
     ::Warning("IsV0aK0s","Invalid V0 pointer!");
     return kFALSE;
   }
 
+  fQAV0sCounterK0s->Fill(iCounterIndex); // input
+  iCounterIndex++;
+
   // inv. mass window
   Double_t dMass = v0->MassK0Short();
   if( dMass < fV0MinMassK0s || dMass > fV0MaxMassK0s )
     return kFALSE;
 
+	fQAV0sCounterK0s->Fill(iCounterIndex); // Inv mass window
+  iCounterIndex++;
+
+
   if(fCutV0MotherRapMax > 0. && ( TMath::Abs(v0->RapK0Short()) > fCutV0MotherRapMax ) )
   {
     return kFALSE;
   }
+
+  fQAV0sCounterK0s->Fill(iCounterIndex); // V0 mother rapidity acceptance
+  iCounterIndex++;
 
   AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
 
@@ -1516,6 +1536,9 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
   Double_t dCPA = v0->CosPointingAngle(primVtx);
   if( fCutV0MinCPAK0s > 0. && dCPA < fCutV0MinCPAK0s )
     return kFALSE;
+
+  fQAV0sCounterK0s->Fill(iCounterIndex); // CPA
+  iCounterIndex++;
 
   // proper life-time
   
@@ -1540,6 +1563,10 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
       return kFALSE;
     }
   }  
+
+  fQAV0sCounterK0s->Fill(iCounterIndex); // Proper lifetime
+  iCounterIndex++;
+
   
   // Armenteros-Podolaski plot
   Double_t dPtArm = v0->PtArmV0();
@@ -1547,13 +1574,26 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
   if( dPtArm < (fCutV0K0sArmenterosAlphaMin * TMath::Abs(dAlpha)) )
     return kFALSE;
 
+  fQAV0sCounterK0s->Fill(iCounterIndex); // Armernteros Podolanski
+  iCounterIndex++;
+
+
   // cross-contamination
+
+  fQAV0sCounterK0s->Fill(iCounterIndex); // Selected
+  iCounterIndex++;
+
 
   return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
 {
+	Short_t iCounterIndex = 0;
+
+  fQAV0sCounterLambda->Fill(iCounterIndex); // input
+  iCounterIndex++;
+
   if(!v0)
     return kFALSE;
 
@@ -1564,10 +1604,16 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   if( (dMassLambda < fV0MinMassLambda || dMassLambda > fV0MaxMassLambda) && (dMassALambda < fV0MinMassLambda || dMassALambda > fV0MaxMassLambda) )
     return kFALSE;
 
+  fQAV0sCounterLambda->Fill(iCounterIndex); // Inv. mass window
+  iCounterIndex++;
+
   if(fCutV0MotherRapMax > 0. && ( TMath::Abs(v0->RapLambda()) > fCutV0MotherRapMax ) )
   {
     return kFALSE;
   }
+
+	fQAV0sCounterLambda->Fill(iCounterIndex); // V0 mother rapidity window
+  iCounterIndex++;
 
   AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
 
@@ -1575,6 +1621,9 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   Double_t dCPA = v0->CosPointingAngle(primVtx);
   if( fCutV0MinCPALambda > 0. && dCPA < fCutV0MinCPALambda )
     return kFALSE;
+
+	fQAV0sCounterLambda->Fill(iCounterIndex); // CPA
+  iCounterIndex++;
 
   // proper life-time
   if( fCutV0NumTauLambdaMax > 0. )
@@ -1599,7 +1648,32 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
     }
   }  
  
+  fQAV0sCounterLambda->Fill(iCounterIndex); // proper life-time
+  iCounterIndex++;
+
+ 	// proton PID of Lambda Candidates
+  if( (fCutV0ProtonNumSigmaMax > 0.) && fPIDResponse )
+  {
+  	const AliAODTrack* trackDaughterPos = (AliAODTrack*) v0->GetDaughter(0);
+  	const AliAODTrack* trackDaughterNeg = (AliAODTrack*) v0->GetDaughter(1);
+
+  	Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
+  	Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
+
+  	if((dSigmaProtNeg > fCutV0ProtonNumSigmaMax) || (dSigmaProtPos > fCutV0ProtonNumSigmaMax))
+  	{
+  		return kFALSE;
+  	} 
+  }
+
+	fQAV0sCounterLambda->Fill(iCounterIndex); // proton pid
+  iCounterIndex++;
+
+
   // cross-contamination
+
+	fQAV0sCounterLambda->Fill(iCounterIndex); // selected
+  iCounterIndex++;
 
   return kTRUE;
 }              

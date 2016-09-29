@@ -218,6 +218,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fQATrackFilterMap;//! filter bit of all tracks
         	// QA V0s
         TH1D*										fQAV0sCounter;		//! V0s counter
+        TH1D*										fQAV0sCounterK0s;		//! K0s counter
+        TH1D*										fQAV0sCounterLambda;		//! Lambda counter
         TH1I*										fQAV0sRecoMethod[2];	//! offline/online V0 reconstruction method
         TH1I*										fQAV0sTPCRefit[2];	//! TPC refit true/false
         TH1I*										fQAV0sKinks[2];	//! V0 kinks true/false
