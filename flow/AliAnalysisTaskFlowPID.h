@@ -47,6 +47,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void										SetV0sLambdaCPAMin(Double_t cpa) { fCutV0MinCPALambda = cpa; }
         void										SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
         void										SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0NumTauLambdaMax = nTau; }
+        void										SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0K0sArmenterosAlphaMin = alpha; }
         void										SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
 
 
@@ -81,11 +82,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t									fPbPb;					// is PbPb analysis?
 				Bool_t       						fLHC10h;        // flag to LHC10h data?
 				Short_t									fCentFlag;			// centrality flag
-        Double_t 								fPVtxCutZ; 			// PV z cut
-        Double_t 								fTrackEtaMax; 	// Maximum pseudorapidity range
-        Double_t								fTrackPtMax;		// Maximal track pT
-        Double_t								fTrackPtMin;		// Manimal track pT
-        UShort_t								fNumTPCclsMin;	// Minimal number of TPC clusters used for track reconstruction
+        Double_t 								fPVtxCutZ; 			// (cm) PV z cut
+        Double_t 								fTrackEtaMax; 	// () Maximum pseudorapidity range
+        Double_t								fTrackPtMax;		// (GeV/c) Maximal track pT
+        Double_t								fTrackPtMin;		// (GeV/c) Minimal track pT
+        UShort_t								fNumTPCclsMin;	// () Minimal number of TPC clusters used for track reconstruction
         UInt_t									fTrackFilterBit;// Required track filter bit 
         Bool_t 									fDiffFlow;			// Do differential flow ? (or reference only)
         Bool_t 									fPID;						// Do PID (so far V0s) ? 
@@ -93,20 +94,21 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				Bool_t 									fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
 				Bool_t									fCutV0refitTPC; // Check TPC refit of V0 daughters ?
 				Bool_t									fCutV0rejectKinks; // Reject Kink V0 daughter tracks ?
-				Double_t                fCutV0MinDCAtoPV;   // min DCA of V0 daughter to PV
-        Double_t								fCutV0MaxDCAtoPV;	// max DCA of V0 daughter to PV
-				Double_t								fCutV0MaxDCADaughters;	// max DCA of V0 daughters among themselves
-        Double_t                fCutV0MinDecayRadius; // min distance between PV and secondary vertex in transverse plane
-				Double_t								fCutV0MaxDecayRadius; // max distance between PV and secondary vertex in transverse plane
-        Double_t                fCutV0DaughterPtMin; // minimum pT of V0 daughters
-        Double_t                fCutV0DaughterEtaMax; // max value of Eta of V0 daughters
-        Double_t                fCutV0MotherEtaMax; // max eta value of V0 mother
-        Double_t                fCutV0MotherRapMax; // max rapidity value of V0 mother
-        Double_t                fCutV0MinCPAK0s;    // min cosine of pointing angle of K0s candidate to PV
-        Double_t                fCutV0MinCPALambda; // min cosine of pointing angle of K0s candidate to PV
-        Double_t                fCutV0NumTauK0sMax; // [tau] max number of c*tau (K0s)
-        Double_t                fCutV0NumTauLambdaMax; // [tau] max number of c*tau ((A)Lambda)
-        Double_t								fCutV0ProtonNumSigmaMax;	// [sigmaTPC] max number of TPC sigma for proton PID (Lambda candidates)
+				Double_t                fCutV0MinDCAtoPV;   // (cm) min DCA of V0 daughter to PV
+        Double_t								fCutV0MaxDCAtoPV;	// (cm) max DCA of V0 daughter to PV
+				Double_t								fCutV0MaxDCADaughters;	// (cm) max DCA of V0 daughters among themselves
+        Double_t                fCutV0MinDecayRadius; // (cm) min distance of secondary vertex from z-axis in transverse plane
+				Double_t								fCutV0MaxDecayRadius; // (cm) max distance of secondary vertex from z-axis in transverse plane
+        Double_t                fCutV0DaughterPtMin; // (GeV/c) minimum pT of V0 daughters
+        Double_t                fCutV0DaughterEtaMax; // () max value of Eta of V0 daughters
+        Double_t                fCutV0MotherEtaMax; // () max eta value of V0 mother
+        Double_t                fCutV0MotherRapMax; // () max rapidity value of V0 mother
+        Double_t                fCutV0MinCPAK0s;    // () min cosine of pointing angle of K0s candidate to PV
+        Double_t                fCutV0MinCPALambda; // () min cosine of pointing angle of K0s candidate to PV
+        Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
+        Double_t                fCutV0NumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
+        Double_t								fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
+        Double_t								fCutV0ProtonNumSigmaMax;	// (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
         // members
         AliAODEvent*            fAOD;           //! input event
         AliPIDResponse*					fPIDResponse;		//! PID response
@@ -232,6 +234,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1I*										fQAV0sCPALambda[2];	//! cosine of pointing angle of Lambda candidates
         TH1I*										fQAV0sNumTauK0s[2];	//! number of c*tau of K0s candidates
         TH1I*										fQAV0sNumTauLambda[2];	//! number of c*tau of Lambda candidates
+        TH2I*										fQAV0sArmenterosK0s[2];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2I*										fQAV0sArmenterosLambda[2];	//! Armenteros-Podolanski plot for K0s candidates
         TH1I*										fQAV0sNumSigmaProtonLambda[2];	//! number of TPC sigmas of proton (Lambda candidates)
 
 
