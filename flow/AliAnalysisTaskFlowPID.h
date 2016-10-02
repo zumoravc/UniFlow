@@ -203,8 +203,10 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fV0sPt;					//! selected V0s pT distribution
         TH1D*										fV0sEta;					//! selected V0s eta distribution
         TH1D*										fV0sPhi;					//! selected V0s phi distribution
-        TH1D*										fV0sInvMassK0s;		//! selected K0s inv. mass distribution (pT & cent integrated)
-        TH1D*										fV0sInvMassLambda;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH1D*                                       fV0sInvMassK0sGap00;        //! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassK0sGap09;		//! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*                                       fV0sInvMassLambdaGap00;     //! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassLambdaGap09;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
         TH2D*										fV0sK0sGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sK0sGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
