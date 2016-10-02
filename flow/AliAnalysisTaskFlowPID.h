@@ -63,8 +63,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 				Bool_t                  IsTrackSelected(const AliAODTrack* track);
-				Bool_t                  IsV0aK0s(const AliAODv0* v0);
-				Bool_t                  IsV0aLambda(const AliAODv0* v0);
+				void                  IsV0aK0s(const AliAODv0* v0);
+				void                 IsV0aLambda(const AliAODv0* v0);
 				Bool_t                  IsV0Selected(const AliAODv0* v0);
 				void                    EventQA(const AliAODEvent* event);
 				void										V0sQA(const AliAODv0* v0, const Short_t iQAindex);
@@ -118,8 +118,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t 								fTrackEta;				// track eta
         Int_t 									fNumV0s;					// number of V0s in given event
         AliAODv0*			 					fV0;					//! V0 candidate
-        Bool_t 									fV0candK0s;		// Is V0 a K0s candidate ?
-        Bool_t 									fV0candLambda;		// Is V0 a Lambda or Anti-Lambda (ALambda) candidate ?
+        Bool_t 									fV0candK0s;		// Is V0 a K0s candidate ? flag 
+        Bool_t                                  fV0candLambda;      // Is V0 a Lambda  candidate ? flag
+        Bool_t 									fV0candALambda;		// Is V0 a Anti-Lambda (ALambda) candidate ? flag
         Double_t 								fV0MaxMassK0s;		// Upper limit of K0s inv. mass window
         Double_t 								fV0MinMassK0s;		// Lower limit of K0s inv. mass window
         Double_t 								fV0MaxMassLambda;		// Upper limit of Lambda inv. mass window
