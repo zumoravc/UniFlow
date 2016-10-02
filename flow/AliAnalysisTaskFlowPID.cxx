@@ -1620,12 +1620,15 @@ void AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
 
   
   // Armenteros-Podolaski plot
-  Double_t dPtArm = v0->PtArmV0();
-  Double_t dAlpha = v0->AlphaV0();
-  if( dPtArm < (fCutV0K0sArmenterosAlphaMin * TMath::Abs(dAlpha)) )
+  if(fCutV0K0sArmenterosAlphaMin > 0.)
   {
-    fV0candK0s = kFALSE;
-    return;
+    Double_t dPtArm = v0->PtArmV0();
+    Double_t dAlpha = v0->AlphaV0();
+    if( dPtArm < (fCutV0K0sArmenterosAlphaMin * TMath::Abs(dAlpha)) )
+    {
+      fV0candK0s = kFALSE;
+      return;
+    }    
   }
 
   fQAV0sCounterK0s->Fill(iCounterIndex); // Armernteros Podolanski
