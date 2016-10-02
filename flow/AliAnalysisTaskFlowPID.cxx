@@ -127,9 +127,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 
   fEventCounter(0),
   fV0sMult(0),
-  fV0sPt(0),
-  fV0sEta(0),
-  fV0sPhi(0),
   fV0sInvMassK0sGap00(0),
   fV0sInvMassK0sGap09(0),
   fV0sInvMassLambdaGap00(0),
@@ -239,9 +236,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fEventCounter(0),
 
   fV0sMult(0),
-  fV0sPt(0),
-  fV0sEta(0),
-  fV0sPhi(0),
+
   fV0sInvMassK0sGap00(0),
   fV0sInvMassK0sGap09(0),
   fV0sInvMassLambdaGap00(0),
@@ -421,12 +416,6 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",200,0,1000);
   fOutListV0s->Add(fV0sMult);
-  fV0sPt = new TH1D("fV0sPt", "V0s #it{p}_{T} (selected); #it{p}^{V0}_{T} (GeV/#it{c});", 100, 0, 10);    
-  fOutListV0s->Add(fV0sPt);          
-  fV0sEta = new TH1D("fV0sEta", "V0s #it{#eta} (selected); #it{#eta}^{V0};", 400, -2, 2);    
-  fOutListV0s->Add(fV0sEta);          
-  fV0sPhi = new TH1D("fV0sPhi", "V0s #it{#varphi} (selected); #it{#varphi}^{V0};", 360, 0., TMath::TwoPi());    
-  fOutListV0s->Add(fV0sPhi);
   fV0sInvMassK0sGap00 = new TH1D("fV0sInvMassK0sGap00","K^{0}_{S} InvMass |#Delta#it{#eta}| > 0 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
   fOutListV0s->Add(fV0sInvMassK0sGap00);
   fV0sInvMassK0sGap09 = new TH1D("fV0sInvMassK0sGap09","K^{0}_{S} InvMass |#Delta#it{#eta}| > 0.9 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
@@ -968,9 +957,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       V0sQA(fV0,1); // Filling QA histos after cuts
 
       // selected V0 candidates
-      fV0sPt->Fill(fV0->Pt());
-      fV0sEta->Fill(fV0->Eta());
-      fV0sPhi->Fill(fV0->Phi());
       fPtBinIndex = GetPtBinIndex(fV0->Pt());
       
       if(fV0candK0s)

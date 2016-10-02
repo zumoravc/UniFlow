@@ -200,9 +200,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
-        TH1D*										fV0sPt;					//! selected V0s pT distribution
-        TH1D*										fV0sEta;					//! selected V0s eta distribution
-        TH1D*										fV0sPhi;					//! selected V0s phi distribution
         TH1D*                                       fV0sInvMassK0sGap00;        //! selected K0s inv. mass distribution (pT & cent integrated)
         TH1D*										fV0sInvMassK0sGap09;		//! selected K0s inv. mass distribution (pT & cent integrated)
         TH1D*                                       fV0sInvMassLambdaGap00;     //! selected Lambda candidates inv. mass distribution (pT & cent integrated)
