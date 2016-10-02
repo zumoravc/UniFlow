@@ -226,10 +226,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1I*										fQAV0sDCAtoPV[2];	//! V0 DCA to PV
         TH1I*										fQAV0sDCADaughters[2];	//! DCA between V0 daughters
         TH1I*										fQAV0sDecayRadius[2];	//! Distance between PV and Secondary vertex in transverse plane
-        TH1I*										fQAV0sDaughterPt[2];	//! pT dist of V0 daughters
+        TH1I*                                       fQAV0sDaughterPt[2];    //! pT dist of V0 daughters
+        TH1I*										fQAV0sDaughterPhi[2];	//! pT dist of V0 daughters
         TH1I*										fQAV0sDaughterEta[2];	//! pseudorapidity dist of V0 daughters
         TH1I*										fQAV0sMotherPt[2];	//! pT dist of V0s
-        TH1I*										fQAV0sMotherEta[2];	//! pseudorapidity dist of V0s
+        TH1I*										fQAV0sMotherPhi[2];	//! azimuthal dist of V0s
+        TH1I*                                       fQAV0sMotherEta[2]; //! pseudorapidity dist of V0s
         TH1I*                                       fQAV0sMotherRapK0s[2];  //! rapidity dist of V0s (K0s mass hypothesis)
         TH1I*                                       fQAV0sMotherRapLambda[2];   //! rapidity dist of V0s (Lambda mass hypothesis)
         TH1D*                                       fQAV0sInvMassK0s[2];    //! inv. mass dist of V0s (K0s mass hypothesis)
