@@ -634,7 +634,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   	fOutListQA->Add(fQAV0sDCAtoPV[i]);	
 		fQAV0sDCADaughters[i] = new TH1I(Form("fQAV0sDCADaughters_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: DCA among daughters (%s cuts); DCA^{daughters} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
   	fOutListQA->Add(fQAV0sDCADaughters[i]);	
-		fQAV0sDecayRadius[i] = new TH1I(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 100,0.,1000.);	
+		fQAV0sDecayRadius[i] = new TH1I(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 200,0.,500.);	
   	fOutListQA->Add(fQAV0sDecayRadius[i]);	
     fQAV0sDaughterPt[i] = new TH1I(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
     fOutListQA->Add(fQAV0sDaughterPt[i]);
@@ -668,7 +668,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 		fOutListQA->Add(fQAV0sArmenterosK0s[i]);
 		fQAV0sArmenterosLambda[i] = new TH2I(Form("fQAV0sArmenterosLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
 		fOutListQA->Add(fQAV0sArmenterosLambda[i]);
-		fQAV0sNumSigmaProtonLambda[i] = new TH1I(Form("fQAV0sNumSigmaProtonLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Number of TPC #it{#sigma} (%s cuts); proton PID (#sigma^{TPC})",sQAlabel[i].Data()), 5,0.,5.);
+		fQAV0sNumSigmaProtonLambda[i] = new TH1I(Form("fQAV0sNumSigmaProtonLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Number of TPC #it{#sigma} (%s cuts); proton PID (#sigma^{TPC})",sQAlabel[i].Data()), 100,0.,10);
   	fOutListQA->Add(fQAV0sNumSigmaProtonLambda[i]);	
 	}
 
