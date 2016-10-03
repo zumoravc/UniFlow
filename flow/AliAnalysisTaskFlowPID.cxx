@@ -352,7 +352,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
 		fQAV0sNumTauLambda[i] = 0;	
 		fQAV0sArmenterosK0s[i] = 0;
 		fQAV0sArmenterosLambda[i] = 0;
-		fQAV0sNumSigmaProtonLambda[i] = 0;
+		fQAV0sProtonNumSigmaPtLambda[i] = 0;
   }
 
   DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
@@ -599,8 +599,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	fOutListQA->Add(fQATrackFilterMap);
 
   // QA V0s output
-  Int_t iNV0sCounterBins = 15;
-  TString sV0sCounterLabel[] = {"Input","Daughters exists","Reco. method","Mother acceptance (#it{#eta},#it{p}_{T})","Decay radius","TPC refit","not Kink","Daughters charge","Daughter acceptance (#it{#eta},#it{p}_{T})","DCA to PV","Daughters DCA","Selected","K^{0}_{S}","#Lambda/#bar{#Lambda}","K0s && #Lambda/#bar{#Lambda}"};
+  Int_t iNV0sCounterBins = 18;
+  TString sV0sCounterLabel[] = {"Input","Daughters exists","Reco. method","Mother acceptance (#it{#eta},#it{p}_{T})","Decay radius","TPC refit","not Kink","Daughters charge","Daughter acceptance (#it{#eta},#it{p}_{T})","DCA to PV","Daughters DCA","Selected","K^{0}_{S}","#Lambda","#bar{#Lambda}","#Lambda && #bar{#Lambda}","K0s && (#Lambda || #bar{#Lambda})","K0s && #Lambda && #bar{#Lambda}"};
   fQAV0sCounter = new TH1D("fQAV0sCounter","QA V^{0}_{S} counter",iNV0sCounterBins,0,iNV0sCounterBins);
   for(Int_t i = 0; i < iNV0sCounterBins; i++)
     fQAV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
@@ -624,58 +624,59 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 	TString sQAlabel[2] = {"Before","After"};
 	for(Int_t i(0); i < 2; i++)
 	{
-  	fQAV0sRecoMethod[i] = new TH1I(Form("fQAV0sRecoMethod_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Reconstruction method (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
+  	fQAV0sRecoMethod[i] = new TH1D(Form("fQAV0sRecoMethod_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Reconstruction method (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
   	fQAV0sRecoMethod[i]->GetXaxis()->SetBinLabel(1, "offline");
   	fQAV0sRecoMethod[i]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
   	fOutListQA->Add(fQAV0sRecoMethod[i]);	
-		fQAV0sTPCRefit[i] = new TH1I(Form("fQAV0sTPCRefit_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: TPC refit (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
+		fQAV0sTPCRefit[i] = new TH1D(Form("fQAV0sTPCRefit_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: TPC refit (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
 		fQAV0sTPCRefit[i]->GetXaxis()->SetBinLabel(1, "not refit");
   	fQAV0sTPCRefit[i]->GetXaxis()->SetBinLabel(2, "refit");
   	fOutListQA->Add(fQAV0sTPCRefit[i]);	
-		fQAV0sKinks[i] = new TH1I(Form("fQAV0sKinks_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Kinks (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
+		fQAV0sKinks[i] = new TH1D(Form("fQAV0sKinks_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Kinks (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
 		fQAV0sKinks[i]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
   	fQAV0sKinks[i]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
   	fOutListQA->Add(fQAV0sKinks[i]);	
-		fQAV0sDCAtoPV[i] = new TH1I(Form("fQAV0sDCAtoPV_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter DCA to PV (%s cuts); daughter DCA^{PV} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
+		fQAV0sDCAtoPV[i] = new TH1D(Form("fQAV0sDCAtoPV_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter DCA to PV (%s cuts); daughter DCA^{PV} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
   	fOutListQA->Add(fQAV0sDCAtoPV[i]);	
-		fQAV0sDCADaughters[i] = new TH1I(Form("fQAV0sDCADaughters_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: DCA among daughters (%s cuts); DCA^{daughters} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
+		fQAV0sDCADaughters[i] = new TH1D(Form("fQAV0sDCADaughters_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: DCA among daughters (%s cuts); DCA^{daughters} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
   	fOutListQA->Add(fQAV0sDCADaughters[i]);	
-		fQAV0sDecayRadius[i] = new TH1I(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 200,0.,500.);	
+		fQAV0sDecayRadius[i] = new TH1D(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 200,0.,500.);	
   	fOutListQA->Add(fQAV0sDecayRadius[i]);	
-    fQAV0sDaughterPt[i] = new TH1I(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
+    fQAV0sDaughterPt[i] = new TH1D(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
     fOutListQA->Add(fQAV0sDaughterPt[i]);
-    fQAV0sDaughterPhi[i] = new TH1I(Form("fQAV0sDaughterPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#varphi} (%s cuts); #it{#varphi}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
+    fQAV0sDaughterPhi[i] = new TH1D(Form("fQAV0sDaughterPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#varphi} (%s cuts); #it{#varphi}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
     fOutListQA->Add(fQAV0sDaughterPhi[i]);   
-		fQAV0sDaughterEta[i] = new TH1I(Form("fQAV0sDaughterEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#eta} (%s cuts); #it{#eta}^{daugter}",sQAlabel[i].Data()), 400,-2,2);	
+		fQAV0sDaughterEta[i] = new TH1D(Form("fQAV0sDaughterEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#eta} (%s cuts); #it{#eta}^{daugter}",sQAlabel[i].Data()), 400,-2,2);	
     fOutListQA->Add(fQAV0sDaughterEta[i]);  
-    fQAV0sMotherPt[i] = new TH1I(Form("fQAV0sMotherPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{p}_{T} (%s cuts); #it{p}_{T}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
+    fQAV0sMotherPt[i] = new TH1D(Form("fQAV0sMotherPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{p}_{T} (%s cuts); #it{p}_{T}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
     fOutListQA->Add(fQAV0sMotherPt[i]); 
-    fQAV0sMotherPhi[i] = new TH1I(Form("fQAV0sMotherPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#varphi} (%s cuts); #it{#varphi}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
+    fQAV0sMotherPhi[i] = new TH1D(Form("fQAV0sMotherPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#varphi} (%s cuts); #it{#varphi}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
     fOutListQA->Add(fQAV0sMotherPhi[i]);  
-    fQAV0sMotherEta[i] = new TH1I(Form("fQAV0sMotherEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#eta} (%s cuts); #it{#eta}^{V0}",sQAlabel[i].Data()), 400,-2,2); 
+    fQAV0sMotherEta[i] = new TH1D(Form("fQAV0sMotherEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#eta} (%s cuts); #it{#eta}^{V0}",sQAlabel[i].Data()), 400,-2,2); 
     fOutListQA->Add(fQAV0sMotherEta[i]);  
-		fQAV0sMotherRapK0s[i] = new TH1I(Form("fQAV0sMotherRapK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo) (%s cuts); #it{y}^{V0,K0s}",sQAlabel[i].Data()), 400,-2,2);
+		fQAV0sMotherRapK0s[i] = new TH1D(Form("fQAV0sMotherRapK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo) (%s cuts); #it{y}^{V0,K0s}",sQAlabel[i].Data()), 400,-2,2);
   	fOutListQA->Add(fQAV0sMotherRapK0s[i]);
-  	fQAV0sMotherRapLambda[i] = new TH1I(Form("fQAV0sMotherRapLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo) (%s cuts); #it{y}^{V0,#Lambda}",sQAlabel[i].Data()),400,-2,2);
+  	fQAV0sMotherRapLambda[i] = new TH1D(Form("fQAV0sMotherRapLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo) (%s cuts); #it{y}^{V0,#Lambda}",sQAlabel[i].Data()),400,-2,2);
     fOutListQA->Add(fQAV0sMotherRapLambda[i]);     
     fQAV0sInvMassK0s[i] = new TH1D(Form("fQAV0sInvMassK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: InvMass (%s cuts); #it{m}_{inv} (GeV/#it{c}^{2});",sQAlabel[i].Data()), 200,fV0MinMassK0s,fV0MaxMassK0s);
     fOutListQA->Add(fQAV0sInvMassK0s[i]);  
     fQAV0sInvMassLambda[i] = new TH1D(Form("fQAV0sInvMassLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: InvMass (%s cuts); #it{m}_{inv} (GeV/#it{c}^{2});",sQAlabel[i].Data()), 80,fV0MinMassLambda,fV0MaxMassLambda);
   	fOutListQA->Add(fQAV0sInvMassLambda[i]);	
-    fQAV0sCPAK0s[i] = new TH1I(Form("fQAV0sCPAK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: CPA (%s cuts); CPA^{K0s}",sQAlabel[i].Data()), 100,0.9,1.);	
+    fQAV0sCPAK0s[i] = new TH1D(Form("fQAV0sCPAK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: CPA (%s cuts); CPA^{K0s}",sQAlabel[i].Data()), 100,0.9,1.);	
   	fOutListQA->Add(fQAV0sCPAK0s[i]);	
-		fQAV0sCPALambda[i] = new TH1I(Form("fQAV0sCPALambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA (%s cuts); CPA^{#Lambda}",sQAlabel[i].Data()), 100, 0.9,1.);	
+		fQAV0sCPALambda[i] = new TH1D(Form("fQAV0sCPALambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA (%s cuts); CPA^{#Lambda}",sQAlabel[i].Data()), 100, 0.9,1.);	
   	fOutListQA->Add(fQAV0sCPALambda[i]);	
-		fQAV0sNumTauK0s[i] = new TH1I(Form("fQAV0sNumTauK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Number of #it{c#tau} (%s cuts); #it{c#tau}^{K0s} (cm)",sQAlabel[i].Data()), 100, 0.,10.);
+		fQAV0sNumTauK0s[i] = new TH1D(Form("fQAV0sNumTauK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Number of #it{c#tau} (%s cuts); #it{c#tau}^{K0s} (cm)",sQAlabel[i].Data()), 100, 0.,10.);
   	fOutListQA->Add(fQAV0sNumTauK0s[i]);	
-		fQAV0sNumTauLambda[i] = new TH1I(Form("fQAV0sNumTauLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Number of #it{c#tau} (%s cuts); #it{c#tau}^{#Lambda} (cm)",sQAlabel[i].Data()), 300, 0.,30);
+		fQAV0sNumTauLambda[i] = new TH1D(Form("fQAV0sNumTauLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Number of #it{c#tau} (%s cuts); #it{c#tau}^{#Lambda} (cm)",sQAlabel[i].Data()), 300, 0.,30);
 		fOutListQA->Add(fQAV0sNumTauLambda[i]);
-		fQAV0sArmenterosK0s[i] = new TH2I(Form("fQAV0sArmenterosK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
+		fQAV0sArmenterosK0s[i] = new TH2D(Form("fQAV0sArmenterosK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
 		fOutListQA->Add(fQAV0sArmenterosK0s[i]);
-		fQAV0sArmenterosLambda[i] = new TH2I(Form("fQAV0sArmenterosLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
+		fQAV0sArmenterosLambda[i] = new TH2D(Form("fQAV0sArmenterosLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
 		fOutListQA->Add(fQAV0sArmenterosLambda[i]);
-		fQAV0sNumSigmaProtonLambda[i] = new TH1I(Form("fQAV0sNumSigmaProtonLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Number of TPC #it{#sigma} (%s cuts); proton PID (#sigma^{TPC})",sQAlabel[i].Data()), 100,0.,10);
-  	fOutListQA->Add(fQAV0sNumSigmaProtonLambda[i]);	
+		fQAV0sProtonNumSigmaPtLambda[i] = new TH2D(Form("fQAV0sProtonNumSigmaPtLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: (anti-)proton PID (%s cuts); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});",sQAlabel[i].Data()), 100,0.,10,100,0.,10.);
+  	fOutListQA->Add(fQAV0sProtonNumSigmaPtLambda[i]);	
+
 	}
 
   PostData(1, fOutList);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
@@ -1408,12 +1409,12 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     return kFALSE;
   }
 
-  if( fCutV0MotherPtMin > 0. && (v0->Pt() < fTrackPtMin) ) 
+  if( fCutV0MotherPtMin > 0. && (v0->Pt() < fCutV0MotherPtMin) ) 
   {
     return kFALSE;
   }
 
-  if( fCutV0MotherPtMax > 0. && (v0->Pt() > fTrackPtMax) )
+  if( fCutV0MotherPtMax > 0. && (v0->Pt() > fCutV0MotherPtMax) )
   {
     return kFALSE;
   }
@@ -1532,13 +1533,28 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   
   iCounterIndex++; 
 
-  if(fV0candLambda || fV0candALambda)
-		fQAV0sCounter->Fill(iCounterIndex); // (A)Lambda candidate
+  if(fV0candLambda)
+    fQAV0sCounter->Fill(iCounterIndex); // Lambda candidate
   
   iCounterIndex++; 
 
- 	if( (fV0candK0s && fV0candLambda) || (fV0candK0s && fV0candALambda)) 
-		fQAV0sCounter->Fill(iCounterIndex); // both K0s and (A)Lambda candidates
+  if(fV0candALambda)
+		fQAV0sCounter->Fill(iCounterIndex); // ALambda candidate
+  
+  iCounterIndex++; 
+
+  if(fV0candLambda && fV0candALambda)
+    fQAV0sCounter->Fill(iCounterIndex); // Lambda AND ALambda candidate
+  
+  iCounterIndex++; 
+
+  if(fV0candK0s && (fV0candLambda || fV0candALambda))
+    fQAV0sCounter->Fill(iCounterIndex); //  K0s AND (Lambda OR ALambda) candidates
+
+  iCounterIndex++;
+
+ 	if(fV0candK0s && fV0candLambda && fV0candALambda)
+		fQAV0sCounter->Fill(iCounterIndex); //  K0s AND Lambda AND ALambda candidates
 
 	iCounterIndex++;
 
@@ -1737,8 +1753,6 @@ void AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   	Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
   	Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
     
-
-
     if(fV0candLambda && (trackDaughterPos->Pt() < fCutV0ProtonPIDPtMax) && (dSigmaProtPos > fCutV0ProtonNumSigmaMax)) // positive daughter is not a proton (within TPC sigmas)
     {
       fV0candLambda = kFALSE;    
@@ -1829,10 +1843,7 @@ void AliAnalysisTaskFlowPID::V0sQA(const AliAODv0* v0, const Short_t iQAindex)
 		prodVtxDaughter[i] = (AliAODVertex*) trackDaughter[i]->GetProdVertex();
 		fQAV0sKinks[iQAindex]->Fill( (prodVtxDaughter[i]->GetType() == AliAODVertex::kKink) );	
 	}
-	/*
-	if(iQAindex == 0 && (prodVtxDaughter[0]->GetType() == AliAODVertex::kKink) == 1)
-		printf("TPCRefit %d / Reco: %d / Kinks: %d \n",trackDaughter[0]->IsOn(AliAODTrack::kTPCrefit),v0->GetOnFlyStatus(), (prodVtxDaughter[0]->GetType() == AliAODVertex::kKink));
-	*/
+
 	fQAV0sRecoMethod[iQAindex]->Fill(v0->GetOnFlyStatus());	
   fQAV0sMotherPt[iQAindex]->Fill(v0->Pt()); 
 	fQAV0sMotherPhi[iQAindex]->Fill(v0->Phi());	
@@ -1865,25 +1876,30 @@ void AliAnalysisTaskFlowPID::V0sQA(const AliAODv0* v0, const Short_t iQAindex)
 
 	if(fV0candLambda || fV0candALambda)
 	{
-    Double_t dMassLambda = 0;
     if(fV0candLambda)
-      dMassLambda = v0->MassLambda();
+    {
+      fQAV0sInvMassLambda[iQAindex]->Fill(v0->MassLambda());
+      if(fPIDResponse)
+      {
+        fQAV0sProtonNumSigmaPtLambda[iQAindex]->Fill(trackDaughter[0]->Pt(),TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughter[0], AliPID::kProton)));
+      }
+    }
+    
     if(fV0candALambda)
-      dMassLambda = v0->MassAntiLambda();
+    {
+      fQAV0sInvMassLambda[iQAindex]->Fill(v0->MassAntiLambda());
+      // PID number of sigmas proton
+      if(fPIDResponse)
+      {
+        fQAV0sProtonNumSigmaPtLambda[iQAindex]->Fill(trackDaughter[1]->Pt(),TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughter[1], AliPID::kProton)));
+      }
+    }
 
-		fQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
-    fQAV0sInvMassLambda[iQAindex]->Fill(dMassLambda);
+    fQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
 		fQAV0sCPALambda[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
 		dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
 		fQAV0sNumTauLambda[iQAindex]->Fill(dPropLife);	
 		fQAV0sArmenterosLambda[iQAindex]->Fill(v0->AlphaV0(),v0->PtArmV0());
-
-		// PID number of sigmas proton
-		if(fPIDResponse)
-		{
-			fQAV0sNumSigmaProtonLambda[iQAindex]->Fill(TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughter[0], AliPID::kProton)));
-			fQAV0sNumSigmaProtonLambda[iQAindex]->Fill(TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughter[1], AliPID::kProton)));
-		}
 	}
 }
 //_____________________________________________________________________________

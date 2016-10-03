@@ -70,7 +70,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				void                 IsV0aLambda(const AliAODv0* v0);
 				Bool_t                  IsV0Selected(const AliAODv0* v0);
 				void                    EventQA(const AliAODEvent* event);
-				void										V0sQA(const AliAODv0* v0, const Short_t iQAindex);
+				void            V0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
     
 	    	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
@@ -113,8 +113,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
         Double_t                fCutV0NumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
         Double_t								fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
-        Double_t                                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) !! both MUST be on !! max number of TPC sigma for proton PID (Lambda candidates)
-        Double_t								fCutV0ProtonPIDPtMax;	// (GeV/c) !! both MUST be on !! max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
+        Double_t                                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) --- both MUST be on --- max number of TPC sigma for proton PID (Lambda candidates)
+        Double_t								fCutV0ProtonPIDPtMax;	// (GeV/c) --- both MUST be on --- max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
         // members
         AliAODEvent*            fAOD;           //! input event
         AliPIDResponse*					fPIDResponse;		//! PID response
@@ -226,30 +226,30 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fQAV0sCounter;		//! V0s counter
         TH1D*										fQAV0sCounterK0s;		//! K0s counter
         TH1D*										fQAV0sCounterLambda;		//! Lambda counter
-        TH1I*										fQAV0sRecoMethod[2];	//! offline/online V0 reconstruction method
-        TH1I*										fQAV0sTPCRefit[2];	//! TPC refit true/false
-        TH1I*										fQAV0sKinks[2];	//! V0 kinks true/false
-        TH1I*										fQAV0sDCAtoPV[2];	//! V0 DCA to PV
-        TH1I*										fQAV0sDCADaughters[2];	//! DCA between V0 daughters
-        TH1I*										fQAV0sDecayRadius[2];	//! Distance between PV and Secondary vertex in transverse plane
-        TH1I*                                       fQAV0sDaughterPt[2];    //! pT dist of V0 daughters
-        TH1I*										fQAV0sDaughterPhi[2];	//! pT dist of V0 daughters
-        TH1I*										fQAV0sDaughterEta[2];	//! pseudorapidity dist of V0 daughters
-        TH1I*										fQAV0sMotherPt[2];	//! pT dist of V0s
-        TH1I*										fQAV0sMotherPhi[2];	//! azimuthal dist of V0s
-        TH1I*                                       fQAV0sMotherEta[2]; //! pseudorapidity dist of V0s
-        TH1I*                                       fQAV0sMotherRapK0s[2];  //! rapidity dist of V0s (K0s mass hypothesis)
-        TH1I*                                       fQAV0sMotherRapLambda[2];   //! rapidity dist of V0s (Lambda mass hypothesis)
+        TH1D*										fQAV0sRecoMethod[2];	//! offline/online V0 reconstruction method
+        TH1D*										fQAV0sTPCRefit[2];	//! TPC refit true/false
+        TH1D*										fQAV0sKinks[2];	//! V0 kinks true/false
+        TH1D*										fQAV0sDCAtoPV[2];	//! V0 DCA to PV
+        TH1D*										fQAV0sDCADaughters[2];	//! DCA between V0 daughters
+        TH1D*										fQAV0sDecayRadius[2];	//! Distance between PV and Secondary vertex in transverse plane
+        TH1D*                                       fQAV0sDaughterPt[2];    //! pT dist of V0 daughters
+        TH1D*										fQAV0sDaughterPhi[2];	//! pT dist of V0 daughters
+        TH1D*										fQAV0sDaughterEta[2];	//! pseudorapidity dist of V0 daughters
+        TH1D*										fQAV0sMotherPt[2];	//! pT dist of V0s
+        TH1D*										fQAV0sMotherPhi[2];	//! azimuthal dist of V0s
+        TH1D*                                       fQAV0sMotherEta[2]; //! pseudorapidity dist of V0s
+        TH1D*                                       fQAV0sMotherRapK0s[2];  //! rapidity dist of V0s (K0s mass hypothesis)
+        TH1D*                                       fQAV0sMotherRapLambda[2];   //! rapidity dist of V0s (Lambda mass hypothesis)
         TH1D*                                       fQAV0sInvMassK0s[2];    //! inv. mass dist of V0s (K0s mass hypothesis)
         TH1D*										fQAV0sInvMassLambda[2];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
-        TH1I*										fQAV0sCPAK0s[2];	//! cosine of pointing angle of K0s candidates
-        TH1I*										fQAV0sCPALambda[2];	//! cosine of pointing angle of Lambda candidates
-        TH1I*										fQAV0sNumTauK0s[2];	//! number of c*tau of K0s candidates
-        TH1I*										fQAV0sNumTauLambda[2];	//! number of c*tau of Lambda candidates
-        TH2I*										fQAV0sArmenterosK0s[2];	//! Armenteros-Podolanski plot for K0s candidates
-        TH2I*										fQAV0sArmenterosLambda[2];	//! Armenteros-Podolanski plot for K0s candidates
-        TH1I*										fQAV0sNumSigmaProtonLambda[2];	//! number of TPC sigmas of proton (Lambda candidates)
-
+        TH1D*										fQAV0sCPAK0s[2];	//! cosine of pointing angle of K0s candidates
+        TH1D*										fQAV0sCPALambda[2];	//! cosine of pointing angle of Lambda candidates
+        TH1D*										fQAV0sNumTauK0s[2];	//! number of c*tau of K0s candidates
+        TH1D*										fQAV0sNumTauLambda[2];	//! number of c*tau of Lambda candidates
+        TH2D*										fQAV0sArmenterosK0s[2];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2D*										fQAV0sArmenterosLambda[2];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2D*                                       fQAV0sProtonNumSigmaPtLambda[2];  //! number of TPC sigmas and pT of proton (Lambda candidates)
+        
 
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented

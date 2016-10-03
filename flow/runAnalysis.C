@@ -73,7 +73,7 @@ void runAnalysis()
     taskFlowPID->SetV0sMotherEtaMax(0.8);
     taskFlowPID->SetV0sMotherRapMax(0.);
     taskFlowPID->SetV0sMotherPtMin(0.2);
-    taskFlowPID->SetV0sMotherPtMax(6.);
+    taskFlowPID->SetV0sMotherPtMax(5.);
     taskFlowPID->SetV0sK0sCPAMin(0.998);
     taskFlowPID->SetV0sLambdaCPAMin(0.998);
     taskFlowPID->SetV0sK0sNumTauMax(3.);
@@ -109,14 +109,14 @@ void runAnalysis()
     taskFlowPID_lose->SetV0sDaughterEtaMax(0.8);
     taskFlowPID_lose->SetV0sMotherEtaMax(0.8);
     taskFlowPID_lose->SetV0sMotherRapMax(0.);
-    taskFlowPID->SetV0sMotherPtMin(0.2);
-    taskFlowPID->SetV0sMotherPtMax(6.);
+    taskFlowPID_lose->SetV0sMotherPtMin(0.2);
+    taskFlowPID_lose->SetV0sMotherPtMax(6.);
     taskFlowPID_lose->SetV0sK0sCPAMin(0.997);
     taskFlowPID_lose->SetV0sLambdaCPAMin(0.997);
     taskFlowPID_lose->SetV0sK0sArmenterosAlphaMin(0.2);
     taskFlowPID_lose->SetV0sK0sNumTauMax(3.2);
     taskFlowPID_lose->SetV0sLambdaNumTauMax(3.2);
-    taskFlowPID_lose->SetV0sProtonNumSigmaMax(3.);
+    taskFlowPID_lose->SetV0sProtonNumSigmaMax(5.);
     taskFlowPID_lose->SetV0sProtonPIDPtMax(1.2);
 
     if (!mgr->InitAnalysis()) return;
