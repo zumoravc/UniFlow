@@ -66,6 +66,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fV0(0),
   fV0candK0s(0),
   fV0candLambda(0),
+  fV0candALambda(0),
   fV0MinMassK0s(fMinvFlowBinEdgesK0s[0]),
   fV0MaxMassK0s(fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s]),
   fV0MinMassLambda(fMinvFlowBinEdgesLambda[0]),
@@ -126,11 +127,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 
   fEventCounter(0),
   fV0sMult(0),
-  fV0sPt(0),
-  fV0sEta(0),
-  fV0sPhi(0),
-  fV0sInvMassK0s(0),
-  fV0sInvMassLambda(0),
+  fV0sInvMassK0sGap00(0),
+  fV0sInvMassK0sGap09(0),
+  fV0sInvMassLambdaGap00(0),
+  fV0sInvMassLambdaGap09(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -175,6 +175,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fV0(0),
   fV0candK0s(0),
   fV0candLambda(0),
+  fV0candALambda(0),
   fV0MinMassK0s(fMinvFlowBinEdgesK0s[0]),
   fV0MaxMassK0s(fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s]),
   fV0MinMassLambda(fMinvFlowBinEdgesLambda[0]),
@@ -235,11 +236,11 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fEventCounter(0),
 
   fV0sMult(0),
-  fV0sPt(0),
-  fV0sEta(0),
-  fV0sPhi(0),
-  fV0sInvMassK0s(0),
-  fV0sInvMassLambda(0),
+
+  fV0sInvMassK0sGap00(0),
+  fV0sInvMassK0sGap09(0),
+  fV0sInvMassLambdaGap00(0),
+  fV0sInvMassLambdaGap09(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -329,12 +330,16 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
 		fQAV0sDCAtoPV[i] = 0;	
 		fQAV0sDCADaughters[i] = 0;	
 		fQAV0sDecayRadius[i] = 0;	
-		fQAV0sDaughterPt[i] = 0;	
+    fQAV0sDaughterPt[i] = 0;  
+		fQAV0sDaughterPhi[i] = 0;	
 		fQAV0sDaughterEta[i] = 0;	
-		fQAV0sMotherPt[i] = 0;	
+    fQAV0sMotherPt[i] = 0;  
+		fQAV0sMotherPhi[i] = 0;	
 		fQAV0sMotherEta[i] = 0;	
 		fQAV0sMotherRapK0s[i] = 0;
 		fQAV0sMotherRapLambda[i] = 0;
+    fQAV0sInvMassK0s[i] = 0;
+    fQAV0sInvMassLambda[i] = 0;
 		fQAV0sCPAK0s[i] = 0;	
 		fQAV0sCPALambda[i] = 0;	
 		fQAV0sNumTauK0s[i] = 0;	
@@ -413,16 +418,14 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",200,0,1000);
   fOutListV0s->Add(fV0sMult);
-  fV0sPt = new TH1D("fV0sPt", "V0s #it{p}_{T} (selected); #it{p}^{V0}_{T} (GeV/#it{c});", 100, 0, 10);    
-  fOutListV0s->Add(fV0sPt);          
-  fV0sEta = new TH1D("fV0sEta", "V0s #it{#eta} (selected); #it{#eta}^{V0};", 400, -2, 2);    
-  fOutListV0s->Add(fV0sEta);          
-  fV0sPhi = new TH1D("fV0sPhi", "V0s #it{#varphi} (selected); #it{#varphi}^{V0};", 360, 0., TMath::TwoPi());    
-  fOutListV0s->Add(fV0sPhi);
-  fV0sInvMassK0s = new TH1D("fV0sInvMassK0s","K^{0}_{S} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
-  fOutListV0s->Add(fV0sInvMassK0s);
-  fV0sInvMassLambda = new TH1D("fV0sInvMassLambda","#Lambda+#bar{#Lambda} InvMass (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 80,fV0MinMassLambda,fV0MaxMassLambda);          
-  fOutListV0s->Add(fV0sInvMassLambda);
+  fV0sInvMassK0sGap00 = new TH1D("fV0sInvMassK0sGap00","K^{0}_{S} InvMass |#Delta#it{#eta}| > 0 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
+  fOutListV0s->Add(fV0sInvMassK0sGap00);
+  fV0sInvMassK0sGap09 = new TH1D("fV0sInvMassK0sGap09","K^{0}_{S} InvMass |#Delta#it{#eta}| > 0.9 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
+  fOutListV0s->Add(fV0sInvMassK0sGap09);
+  fV0sInvMassLambdaGap00 = new TH1D("fV0sInvMassLambdaGap00","#Lambda+#bar{#Lambda} InvMass |#Delta#it{#eta}| > 0 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 80,fV0MinMassLambda,fV0MaxMassLambda);          
+  fOutListV0s->Add(fV0sInvMassLambdaGap00);
+  fV0sInvMassLambdaGap09 = new TH1D("fV0sInvMassLambdaGap09","#Lambda+#bar{#Lambda} InvMass |#Delta#it{#eta}| > 0.9 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 80,fV0MinMassLambda,fV0MaxMassLambda);          
+  fOutListV0s->Add(fV0sInvMassLambdaGap09);
   
   for(Int_t i(0); i < fNumCentBins; i++)
   {
@@ -631,21 +634,29 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   	fOutListQA->Add(fQAV0sDCAtoPV[i]);	
 		fQAV0sDCADaughters[i] = new TH1I(Form("fQAV0sDCADaughters_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: DCA among daughters (%s cuts); DCA^{daughters} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
   	fOutListQA->Add(fQAV0sDCADaughters[i]);	
-		fQAV0sDecayRadius[i] = new TH1I(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 100,0.,1000.);	
+		fQAV0sDecayRadius[i] = new TH1I(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 200,0.,500.);	
   	fOutListQA->Add(fQAV0sDecayRadius[i]);	
-		fQAV0sDaughterPt[i] = new TH1I(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);	
-  	fOutListQA->Add(fQAV0sDaughterPt[i]);	
+    fQAV0sDaughterPt[i] = new TH1I(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
+    fOutListQA->Add(fQAV0sDaughterPt[i]);
+    fQAV0sDaughterPhi[i] = new TH1I(Form("fQAV0sDaughterPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#varphi} (%s cuts); #it{#varphi}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
+    fOutListQA->Add(fQAV0sDaughterPhi[i]);   
 		fQAV0sDaughterEta[i] = new TH1I(Form("fQAV0sDaughterEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#eta} (%s cuts); #it{#eta}^{daugter}",sQAlabel[i].Data()), 400,-2,2);	
-  	fOutListQA->Add(fQAV0sDaughterEta[i]);	
-		fQAV0sMotherPt[i] = new TH1I(Form("fQAV0sMotherPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{p}_{T} (%s cuts); #it{p}_{T}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);	
-  	fOutListQA->Add(fQAV0sMotherPt[i]);	
-		fQAV0sMotherEta[i] = new TH1I(Form("fQAV0sMotherEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#eta} (%s cuts); #it{#eta}^{V0}",sQAlabel[i].Data()), 400,-2,2);	
-  	fOutListQA->Add(fQAV0sMotherEta[i]);	
+    fOutListQA->Add(fQAV0sDaughterEta[i]);  
+    fQAV0sMotherPt[i] = new TH1I(Form("fQAV0sMotherPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{p}_{T} (%s cuts); #it{p}_{T}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
+    fOutListQA->Add(fQAV0sMotherPt[i]); 
+    fQAV0sMotherPhi[i] = new TH1I(Form("fQAV0sMotherPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#varphi} (%s cuts); #it{#varphi}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
+    fOutListQA->Add(fQAV0sMotherPhi[i]);  
+    fQAV0sMotherEta[i] = new TH1I(Form("fQAV0sMotherEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#eta} (%s cuts); #it{#eta}^{V0}",sQAlabel[i].Data()), 400,-2,2); 
+    fOutListQA->Add(fQAV0sMotherEta[i]);  
 		fQAV0sMotherRapK0s[i] = new TH1I(Form("fQAV0sMotherRapK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo) (%s cuts); #it{y}^{V0,K0s}",sQAlabel[i].Data()), 400,-2,2);
   	fOutListQA->Add(fQAV0sMotherRapK0s[i]);
   	fQAV0sMotherRapLambda[i] = new TH1I(Form("fQAV0sMotherRapLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo) (%s cuts); #it{y}^{V0,#Lambda}",sQAlabel[i].Data()),400,-2,2);
-  	fOutListQA->Add(fQAV0sMotherRapLambda[i]);	
-		fQAV0sCPAK0s[i] = new TH1I(Form("fQAV0sCPAK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: CPA (%s cuts); CPA^{K0s}",sQAlabel[i].Data()), 100,0.9,1.);	
+    fOutListQA->Add(fQAV0sMotherRapLambda[i]);     
+    fQAV0sInvMassK0s[i] = new TH1D(Form("fQAV0sInvMassK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: InvMass (%s cuts); #it{m}_{inv} (GeV/#it{c}^{2});",sQAlabel[i].Data()), 200,fV0MinMassK0s,fV0MaxMassK0s);
+    fOutListQA->Add(fQAV0sInvMassK0s[i]);  
+    fQAV0sInvMassLambda[i] = new TH1D(Form("fQAV0sInvMassLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: InvMass (%s cuts); #it{m}_{inv} (GeV/#it{c}^{2});",sQAlabel[i].Data()), 80,fV0MinMassLambda,fV0MaxMassLambda);
+  	fOutListQA->Add(fQAV0sInvMassLambda[i]);	
+    fQAV0sCPAK0s[i] = new TH1I(Form("fQAV0sCPAK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: CPA (%s cuts); CPA^{K0s}",sQAlabel[i].Data()), 100,0.9,1.);	
   	fOutListQA->Add(fQAV0sCPAK0s[i]);	
 		fQAV0sCPALambda[i] = new TH1I(Form("fQAV0sCPALambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA (%s cuts); CPA^{#Lambda}",sQAlabel[i].Data()), 100, 0.9,1.);	
   	fOutListQA->Add(fQAV0sCPALambda[i]);	
@@ -657,7 +668,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 		fOutListQA->Add(fQAV0sArmenterosK0s[i]);
 		fQAV0sArmenterosLambda[i] = new TH2I(Form("fQAV0sArmenterosLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
 		fOutListQA->Add(fQAV0sArmenterosLambda[i]);
-		fQAV0sNumSigmaProtonLambda[i] = new TH1I(Form("fQAV0sNumSigmaProtonLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Number of TPC #it{#sigma} (%s cuts); proton PID (#sigma^{TPC})",sQAlabel[i].Data()), 5,0.,5.);
+		fQAV0sNumSigmaProtonLambda[i] = new TH1I(Form("fQAV0sNumSigmaProtonLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Number of TPC #it{#sigma} (%s cuts); proton PID (#sigma^{TPC})",sQAlabel[i].Data()), 100,0.,10);
   	fOutListQA->Add(fQAV0sNumSigmaProtonLambda[i]);	
 	}
 
@@ -932,6 +943,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     {
     	fV0candK0s = kTRUE;
     	fV0candLambda = kTRUE;
+      fV0candALambda = kTRUE;
 
       fV0 = fAOD->GetV0(iV0);
       if(!fV0)
@@ -944,23 +956,21 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(!IsV0Selected(fV0))
         continue;
 
+      // !!! after this point value of V0s flags (fV0cand...) should not be changed !!!
+
       iNumV0sSelected++;
 
       V0sQA(fV0,1); // Filling QA histos after cuts
 
-
       // selected V0 candidates
-      fV0sPt->Fill(fV0->Pt());
-      fV0sEta->Fill(fV0->Eta());
-      fV0sPhi->Fill(fV0->Phi());
       fPtBinIndex = GetPtBinIndex(fV0->Pt());
       
       if(fV0candK0s)
       {
-        fV0sInvMassK0s->Fill(fV0->MassK0Short());
-				
-				if( (fV0->Eta()) > 0. )
+        
+        if( (fV0->Eta()) > 0. )
         {
+          fV0sInvMassK0sGap00->Fill(fV0->MassK0Short());
           fV0sK0sGap00[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassK0Short());
           fMinvFlowBinIndex = GetMinvFlowBinIndexK0s(fV0->MassK0Short());
           fVvec2Gap00P_K0s[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
@@ -969,6 +979,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
         if( (fV0->Eta()) < 0. )
         {
+          fV0sInvMassK0sGap00->Fill(fV0->MassK0Short());
           fV0sK0sGap00[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassK0Short());
           fMinvFlowBinIndex = GetMinvFlowBinIndexK0s(fV0->MassK0Short());
           fVvec2Gap00N_K0s[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
@@ -977,6 +988,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
         if( (fV0->Eta()) > 0.45 )
         {
+          fV0sInvMassK0sGap09->Fill(fV0->MassK0Short());
           fV0sK0sGap09[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassK0Short());
           fMinvFlowBinIndex = GetMinvFlowBinIndexK0s(fV0->MassK0Short());
           fVvec2Gap09P_K0s[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
@@ -985,6 +997,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
         if( (fV0->Eta()) < -0.45 )
         {
+          fV0sInvMassK0sGap09->Fill(fV0->MassK0Short());
           fV0sK0sGap09[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassK0Short());
           fMinvFlowBinIndex = GetMinvFlowBinIndexK0s(fV0->MassK0Short());
           fVvec2Gap09N_K0s[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
@@ -992,38 +1005,49 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
         }
       }
 
-      if(fV0candLambda)
+      if(fV0candLambda || fV0candALambda)
       {
-        fV0sInvMassLambda->Fill(fV0->MassLambda());
+        Double_t dMassLambda = 0;
+        
+        if(fV0candLambda)
+          dMassLambda = fV0->MassLambda();
 
+        if(fV0candALambda)
+          dMassLambda = fV0->MassAntiLambda();
+
+        
         if( (fV0->Eta()) > 0. )
         {
-          fV0sLambdaGap00[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassLambda());
-          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(fV0->MassLambda());
+          fV0sInvMassLambdaGap00->Fill(dMassLambda);
+          fV0sLambdaGap00[fCentBinIndex]->Fill(fV0->Pt(),dMassLambda);
+          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(dMassLambda);
           fVvec2Gap00P_Lambda[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
           iNumV2Gap00P_Lambda[fPtBinIndex][fMinvFlowBinIndex]++;
         }
 
         if( (fV0->Eta()) < 0. )
         {
-          fV0sLambdaGap00[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassLambda());
-          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(fV0->MassLambda());
+          fV0sInvMassLambdaGap00->Fill(dMassLambda);
+          fV0sLambdaGap00[fCentBinIndex]->Fill(fV0->Pt(),dMassLambda);
+          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(dMassLambda);
           fVvec2Gap00N_Lambda[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
           iNumV2Gap00N_Lambda[fPtBinIndex][fMinvFlowBinIndex]++;
         }
 
         if( (fV0->Eta()) > 0.45 )
         {
-          fV0sLambdaGap09[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassLambda());
-          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(fV0->MassLambda());
+          fV0sInvMassLambdaGap09->Fill(dMassLambda);
+          fV0sLambdaGap09[fCentBinIndex]->Fill(fV0->Pt(),dMassLambda);
+          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(dMassLambda);
           fVvec2Gap09P_Lambda[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
           iNumV2Gap09P_Lambda[fPtBinIndex][fMinvFlowBinIndex]++;
         }
 
         if( (fV0->Eta()) < -0.45 )
         {
-          fV0sLambdaGap09[fCentBinIndex]->Fill(fV0->Pt(),fV0->MassLambda());
-          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(fV0->MassLambda());
+          fV0sInvMassLambdaGap09->Fill(dMassLambda);
+          fV0sLambdaGap09[fCentBinIndex]->Fill(fV0->Pt(),dMassLambda);
+          fMinvFlowBinIndex = GetMinvFlowBinIndexLambda(dMassLambda);
           fVvec2Gap09N_Lambda[fPtBinIndex][fMinvFlowBinIndex] += TComplex(TMath::Cos(2*(fV0->Phi())),TMath::Sin(2*(fV0->Phi())),kFALSE);
           iNumV2Gap09N_Lambda[fPtBinIndex][fMinvFlowBinIndex]++;
         }
@@ -1474,14 +1498,19 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   fQAV0sCounter->Fill(iCounterIndex); // DCA among daughters
   iCounterIndex++;
 
-  // is V0 either K0s or (A)Lambda candidate
-  fV0candK0s = IsV0aK0s(v0);
-  fV0candLambda = IsV0aLambda(v0);
+  // re-setting the flags (to be sure)
+  fV0candK0s = kTRUE;
+  fV0candLambda = kTRUE;
+  fV0candALambda = kTRUE;
 
-  if( !fV0candK0s && !fV0candLambda )
+  // is V0 either K0s or (A)Lambda candidate
+  IsV0aK0s(v0);
+  IsV0aLambda(v0);
+
+  if( !fV0candK0s && !fV0candLambda && !fV0candALambda)
   {
     //::Warning("IsV0Selected","V0 is not K0s nor (A)Lambda!");
-    return kFALSE; // V0 is neither K0s nor (A)Lambda candidate
+    return kFALSE; // V0 is neither K0s nor Lambda nor ALambda candidate
   }
 
   fQAV0sCounter->Fill(iCounterIndex); // Selected (K0s or Lambda candidates)
@@ -1492,28 +1521,29 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   
   iCounterIndex++; 
 
-  if(fV0candLambda)
-		fQAV0sCounter->Fill(iCounterIndex); // Lambda candidate
+  if(fV0candLambda || fV0candALambda)
+		fQAV0sCounter->Fill(iCounterIndex); // (A)Lambda candidate
   
   iCounterIndex++; 
 
- 	if(fV0candK0s && fV0candLambda) 
-		fQAV0sCounter->Fill(iCounterIndex); // both K0s and Lambda candidates
+ 	if( (fV0candK0s && fV0candLambda) || (fV0candK0s && fV0candALambda)) 
+		fQAV0sCounter->Fill(iCounterIndex); // both K0s and (A)Lambda candidates
 
 	iCounterIndex++;
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
+void AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
 {
 	Short_t iCounterIndex = 0;
 
   if(!v0)
   {
     ::Warning("IsV0aK0s","Invalid V0 pointer!");
-    return kFALSE;
-  }
+    fV0candK0s = kFALSE;
+    return;
+  } 
 
   fQAV0sCounterK0s->Fill(iCounterIndex); // input
   iCounterIndex++;
@@ -1521,7 +1551,10 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
   // inv. mass window
   Double_t dMass = v0->MassK0Short();
   if( dMass < fV0MinMassK0s || dMass > fV0MaxMassK0s )
-    return kFALSE;
+  {
+    fV0candK0s = kFALSE;
+    return;
+  }
 
 	fQAV0sCounterK0s->Fill(iCounterIndex); // Inv mass window
   iCounterIndex++;
@@ -1529,7 +1562,8 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
 
   if(fCutV0MotherRapMax > 0. && ( TMath::Abs(v0->RapK0Short()) > fCutV0MotherRapMax ) )
   {
-    return kFALSE;
+    fV0candK0s = kFALSE;
+    return;
   }
 
   fQAV0sCounterK0s->Fill(iCounterIndex); // V0 mother rapidity acceptance
@@ -1540,7 +1574,10 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
   // CPA
   Double_t dCPA = v0->CosPointingAngle(primVtx);
   if( fCutV0MinCPAK0s > 0. && dCPA < fCutV0MinCPAK0s )
-    return kFALSE;
+  {
+    fV0candK0s = kFALSE;
+    return;
+  }
 
   fQAV0sCounterK0s->Fill(iCounterIndex); // CPA
   iCounterIndex++;
@@ -1565,7 +1602,8 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
     Double_t dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     if( dPropLife > (fCutV0NumTauK0sMax * 2.68) )
     {
-      return kFALSE;
+      fV0candK0s = kFALSE;
+      return;
     }
   }  
 
@@ -1574,10 +1612,16 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
 
   
   // Armenteros-Podolaski plot
-  Double_t dPtArm = v0->PtArmV0();
-  Double_t dAlpha = v0->AlphaV0();
-  if( dPtArm < (fCutV0K0sArmenterosAlphaMin * TMath::Abs(dAlpha)) )
-    return kFALSE;
+  if(fCutV0K0sArmenterosAlphaMin > 0.)
+  {
+    Double_t dPtArm = v0->PtArmV0();
+    Double_t dAlpha = v0->AlphaV0();
+    if( dPtArm < (fCutV0K0sArmenterosAlphaMin * TMath::Abs(dAlpha)) )
+    {
+      fV0candK0s = kFALSE;
+      return;
+    }    
+  }
 
   fQAV0sCounterK0s->Fill(iCounterIndex); // Armernteros Podolanski
   iCounterIndex++;
@@ -1588,11 +1632,10 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
   fQAV0sCounterK0s->Fill(iCounterIndex); // Selected
   iCounterIndex++;
 
-
-  return kTRUE;
+  return;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
+void AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
 {
 	Short_t iCounterIndex = 0;
 
@@ -1600,21 +1643,33 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   iCounterIndex++;
 
   if(!v0)
-    return kFALSE;
+  {
+    fV0candLambda = kFALSE;
+    fV0candALambda = kFALSE;
+    return;
+  }
 
   // inv. mass window
   Double_t dMassLambda = v0->MassLambda();
   Double_t dMassALambda = v0->MassAntiLambda();
 
-  if( (dMassLambda < fV0MinMassLambda || dMassLambda > fV0MaxMassLambda) && (dMassALambda < fV0MinMassLambda || dMassALambda > fV0MaxMassLambda) )
-    return kFALSE;
+  if(dMassLambda < fV0MinMassLambda || dMassLambda > fV0MaxMassLambda)
+    fV0candLambda = kFALSE;
+
+  if(dMassALambda < fV0MinMassLambda || dMassALambda > fV0MaxMassLambda)
+    fV0candALambda = kFALSE;
+
+  if(!fV0candLambda && !fV0candALambda)
+    return;
 
   fQAV0sCounterLambda->Fill(iCounterIndex); // Inv. mass window
   iCounterIndex++;
 
   if(fCutV0MotherRapMax > 0. && ( TMath::Abs(v0->RapLambda()) > fCutV0MotherRapMax ) )
   {
-    return kFALSE;
+    fV0candLambda = kFALSE;
+    fV0candALambda = kFALSE;
+    return;
   }
 
 	fQAV0sCounterLambda->Fill(iCounterIndex); // V0 mother rapidity window
@@ -1625,7 +1680,11 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   // CPA
   Double_t dCPA = v0->CosPointingAngle(primVtx);
   if( fCutV0MinCPALambda > 0. && dCPA < fCutV0MinCPALambda )
-    return kFALSE;
+  {
+    fV0candLambda = kFALSE;
+    fV0candALambda = kFALSE;
+    return;
+  }
 
 	fQAV0sCounterLambda->Fill(iCounterIndex); // CPA
   iCounterIndex++;
@@ -1649,7 +1708,9 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
     Double_t dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     if( dPropLife > (fCutV0NumTauLambdaMax * 7.89) )
     {
-      return kFALSE;
+      fV0candLambda = kFALSE;
+      fV0candALambda = kFALSE;
+      return;
     }
   }  
  
@@ -1666,21 +1727,22 @@ Bool_t AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   	Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
 
   	if((dSigmaProtNeg > fCutV0ProtonNumSigmaMax) || (dSigmaProtPos > fCutV0ProtonNumSigmaMax))
-  	{
-  		return kFALSE;
-  	} 
+    {
+      fV0candLambda = kFALSE;
+      fV0candALambda = kFALSE;
+      return;
+    }
   }
 
 	fQAV0sCounterLambda->Fill(iCounterIndex); // proton pid
   iCounterIndex++;
-
 
   // cross-contamination
 
 	fQAV0sCounterLambda->Fill(iCounterIndex); // selected
   iCounterIndex++;
 
-  return kTRUE;
+  return;
 }              
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::EventQA(const AliAODEvent* event)
@@ -1738,7 +1800,8 @@ void AliAnalysisTaskFlowPID::V0sQA(const AliAODv0* v0, const Short_t iQAindex)
 			continue;
 
 		fQAV0sTPCRefit[iQAindex]->Fill(trackDaughter[i]->IsOn(AliAODTrack::kTPCrefit));	
-		fQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt());	
+    fQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt()); 
+		fQAV0sDaughterPhi[iQAindex]->Fill(trackDaughter[i]->Phi());	
 		fQAV0sDaughterEta[iQAindex]->Fill(trackDaughter[i]->Eta());	
 		
 		// kinks
@@ -1750,7 +1813,8 @@ void AliAnalysisTaskFlowPID::V0sQA(const AliAODv0* v0, const Short_t iQAindex)
 		printf("TPCRefit %d / Reco: %d / Kinks: %d \n",trackDaughter[0]->IsOn(AliAODTrack::kTPCrefit),v0->GetOnFlyStatus(), (prodVtxDaughter[0]->GetType() == AliAODVertex::kKink));
 	*/
 	fQAV0sRecoMethod[iQAindex]->Fill(v0->GetOnFlyStatus());	
-	fQAV0sMotherPt[iQAindex]->Fill(v0->Pt());	
+  fQAV0sMotherPt[iQAindex]->Fill(v0->Pt()); 
+	fQAV0sMotherPhi[iQAindex]->Fill(v0->Phi());	
 	fQAV0sMotherEta[iQAindex]->Fill(v0->Eta());	
 	fQAV0sDCADaughters[iQAindex]->Fill(TMath::Abs(v0->DcaV0Daughters()));			
 	fQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaPosToPrimVertex());	
@@ -1767,19 +1831,27 @@ void AliAnalysisTaskFlowPID::V0sQA(const AliAODv0* v0, const Short_t iQAindex)
     dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
   }
 
-	// Particle dependent cuts (K0s/Lambda)
+	// Particle dependent cuts (K0s/(A)Lambda)
 	if(fV0candK0s)
 	{
 		fQAV0sMotherRapK0s[iQAindex]->Fill(v0->RapK0Short());
-		fQAV0sCPAK0s[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
+		fQAV0sInvMassK0s[iQAindex]->Fill(v0->MassK0Short());
+    fQAV0sCPAK0s[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
 		dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
 		fQAV0sNumTauK0s[iQAindex]->Fill(dPropLife);	
 		fQAV0sArmenterosK0s[iQAindex]->Fill(v0->AlphaV0(),v0->PtArmV0());
 	}
 
-	if(fV0candLambda)
+	if(fV0candLambda || fV0candALambda)
 	{
+    Double_t dMassLambda = 0;
+    if(fV0candLambda)
+      dMassLambda = v0->MassLambda();
+    if(fV0candALambda)
+      dMassLambda = v0->MassAntiLambda();
+
 		fQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
+    fQAV0sInvMassLambda[iQAindex]->Fill(dMassLambda);
 		fQAV0sCPALambda[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
 		dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
 		fQAV0sNumTauLambda[iQAindex]->Fill(dPropLife);	

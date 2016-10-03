@@ -63,8 +63,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 				Bool_t                  IsTrackSelected(const AliAODTrack* track);
-				Bool_t                  IsV0aK0s(const AliAODv0* v0);
-				Bool_t                  IsV0aLambda(const AliAODv0* v0);
+				void                  IsV0aK0s(const AliAODv0* v0);
+				void                 IsV0aLambda(const AliAODv0* v0);
 				Bool_t                  IsV0Selected(const AliAODv0* v0);
 				void                    EventQA(const AliAODEvent* event);
 				void										V0sQA(const AliAODv0* v0, const Short_t iQAindex);
@@ -118,8 +118,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t 								fTrackEta;				// track eta
         Int_t 									fNumV0s;					// number of V0s in given event
         AliAODv0*			 					fV0;					//! V0 candidate
-        Bool_t 									fV0candK0s;		// Is V0 a K0s candidate ?
-        Bool_t 									fV0candLambda;		// Is V0 a Lambda or Anti-Lambda (ALambda) candidate ?
+        Bool_t 									fV0candK0s;		// Is V0 a K0s candidate ? flag 
+        Bool_t                                  fV0candLambda;      // Is V0 a Lambda  candidate ? flag
+        Bool_t 									fV0candALambda;		// Is V0 a Anti-Lambda (ALambda) candidate ? flag
         Double_t 								fV0MaxMassK0s;		// Upper limit of K0s inv. mass window
         Double_t 								fV0MinMassK0s;		// Lower limit of K0s inv. mass window
         Double_t 								fV0MaxMassLambda;		// Upper limit of Lambda inv. mass window
@@ -199,11 +200,10 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
-        TH1D*										fV0sPt;					//! selected V0s pT distribution
-        TH1D*										fV0sEta;					//! selected V0s eta distribution
-        TH1D*										fV0sPhi;					//! selected V0s phi distribution
-        TH1D*										fV0sInvMassK0s;		//! selected K0s inv. mass distribution (pT & cent integrated)
-        TH1D*										fV0sInvMassLambda;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH1D*                                       fV0sInvMassK0sGap00;        //! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassK0sGap09;		//! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*                                       fV0sInvMassLambdaGap00;     //! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassLambdaGap09;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
         TH2D*										fV0sK0sGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sK0sGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
@@ -226,12 +226,16 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1I*										fQAV0sDCAtoPV[2];	//! V0 DCA to PV
         TH1I*										fQAV0sDCADaughters[2];	//! DCA between V0 daughters
         TH1I*										fQAV0sDecayRadius[2];	//! Distance between PV and Secondary vertex in transverse plane
-        TH1I*										fQAV0sDaughterPt[2];	//! pT dist of V0 daughters
+        TH1I*                                       fQAV0sDaughterPt[2];    //! pT dist of V0 daughters
+        TH1I*										fQAV0sDaughterPhi[2];	//! pT dist of V0 daughters
         TH1I*										fQAV0sDaughterEta[2];	//! pseudorapidity dist of V0 daughters
         TH1I*										fQAV0sMotherPt[2];	//! pT dist of V0s
-        TH1I*										fQAV0sMotherEta[2];	//! pseudorapidity dist of V0s
-        TH1I*										fQAV0sMotherRapK0s[2];	//! rapidity dist of V0s (K0s mass hypothesis)
-        TH1I*										fQAV0sMotherRapLambda[2];	//! rapidity dist of V0s (Lambda mass hypothesis)
+        TH1I*										fQAV0sMotherPhi[2];	//! azimuthal dist of V0s
+        TH1I*                                       fQAV0sMotherEta[2]; //! pseudorapidity dist of V0s
+        TH1I*                                       fQAV0sMotherRapK0s[2];  //! rapidity dist of V0s (K0s mass hypothesis)
+        TH1I*                                       fQAV0sMotherRapLambda[2];   //! rapidity dist of V0s (Lambda mass hypothesis)
+        TH1D*                                       fQAV0sInvMassK0s[2];    //! inv. mass dist of V0s (K0s mass hypothesis)
+        TH1D*										fQAV0sInvMassLambda[2];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
         TH1I*										fQAV0sCPAK0s[2];	//! cosine of pointing angle of K0s candidates
         TH1I*										fQAV0sCPALambda[2];	//! cosine of pointing angle of Lambda candidates
         TH1I*										fQAV0sNumTauK0s[2];	//! number of c*tau of K0s candidates
