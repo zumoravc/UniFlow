@@ -21,7 +21,7 @@
 // Name of the output files to be merged (sitting in <subdir1>, <subdir2>, ...):
 TString outputFileName = "AnalysisResults.root";
 // Name of the merged, large statistics file (to be saved in <dir>):
-TString mergedFileName = "AnalysisResults_merged.root";
+TString mergedFileName = "AnalysisResults.root";
 // Optionally set maximum number of files to be merged:
 Int_t maxNoOfFiles = -1; // -1 = ignore
 // For a large number of output files merging is done in cycles and this is the cycle period: 
