@@ -13,7 +13,7 @@ AliAnalysisTaskFlowPID* AddTaskFlowPID(TString name = "name")
   if (!mgr->GetInputEventHandler())	return 0x0;
 
   TString fileName = AliAnalysisManager::GetCommonFileName();   // by default, a file is open for writing. here, we get the filename
-  fileName += Form(":FlowPID%s",name.Data());      // create a subfolder in the file
+  fileName += Form(":%s",name.Data());      // create a subfolder in the file
   
   AliAnalysisTaskFlowPID* task = new AliAnalysisTaskFlowPID(name.Data()); // now we create an instance of your task
   if(!task) return 0x0;
