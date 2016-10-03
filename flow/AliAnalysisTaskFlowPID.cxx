@@ -121,6 +121,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCutV0MotherEtaMax(0.),
   fCutV0MotherRapMax(0.),
   fCutV0NumTauK0sMax(0.),
+  fCutV0K0sArmenterosAlphaMin(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
 
@@ -225,6 +226,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutV0MotherEtaMax(0.),
   fCutV0MotherRapMax(0.),
   fCutV0NumTauK0sMax(0.),
+  fCutV0K0sArmenterosAlphaMin(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
 

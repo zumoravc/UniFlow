@@ -75,42 +75,9 @@ void runAnalysis()
     taskFlowPID->SetV0sK0sCPAMin(0.998);
     taskFlowPID->SetV0sLambdaCPAMin(0.998);
     taskFlowPID->SetV0sK0sNumTauMax(3.);
+    taskFlowPID->SetV0sK0sArmenterosAlphaMin(0.2);
     taskFlowPID->SetV0sLambdaNumTauMax(3.);
     taskFlowPID->SetV0sProtonNumSigmaMax(3.);
-    /*
-    AliAnalysisTaskFlowPID* taskFlowPID_noKinks = AddTaskFlowPID("flowPID_noKinks"); // JHEP + V0 analysis notes + kinks rejection
-    // tracks & event selection cuts
-    taskFlowPID_noKinks->SetAODAnalysis(kTRUE);
-    taskFlowPID_noKinks->SetPbPbAnalysis(kTRUE);
-    taskFlowPID_noKinks->SetPeriod10h(kTRUE);
-    taskFlowPID_noKinks->SetCentFlag(0);
-    taskFlowPID_noKinks->SetPVtxZMax(10.);
-    taskFlowPID_noKinks->SetTrackEtaMax(0.8);
-    taskFlowPID_noKinks->SetTrackPtMax(10.);
-    taskFlowPID_noKinks->SetTrackPtMin(0.1);
-    taskFlowPID_noKinks->SetNumTPCclsMin(70);
-    taskFlowPID_noKinks->SetTrackFilterBit(128);
-    taskFlowPID_noKinks->SetDiffFlow(kTRUE);
-    taskFlowPID_noKinks->SetPID(kTRUE);
-    // V0 selection cuts
-    taskFlowPID_noKinks->SetV0sOnFly(kFALSE);
-    taskFlowPID_noKinks->SetV0sTPCRefit(kTRUE);
-    taskFlowPID_noKinks->SetV0sRejectKinks(kTRUE);
-    taskFlowPID_noKinks->SetV0sDCAPVMin(0.1);
-    taskFlowPID_noKinks->SetV0sDCAPVMax(0.);
-    taskFlowPID_noKinks->SetV0sDCADaughtersMax(0.5);
-    taskFlowPID_noKinks->SetV0sDecayRadiusMin(5.);
-    taskFlowPID_noKinks->SetV0sDecayRadiusMax(100.);
-    taskFlowPID_noKinks->SetV0sDaughterPtMin(0.1);
-    taskFlowPID_noKinks->SetV0sDaughterEtaMax(0.8);
-    taskFlowPID_noKinks->SetV0sMotherEtaMax(0.);
-    taskFlowPID_noKinks->SetV0sMotherRapMax(0.8);
-    taskFlowPID_noKinks->SetV0sK0sCPAMin(0.998);
-    taskFlowPID_noKinks->SetV0sLambdaCPAMin(0.998);
-    taskFlowPID_noKinks->SetV0sK0sNumTauMax(3.);
-    taskFlowPID_noKinks->SetV0sLambdaNumTauMax(3.);
-    taskFlowPID_noKinks->SetV0sProtonNumSigmaMax(3.);
-    */
     
     AliAnalysisTaskFlowPID* taskFlowPID_lose = AddTaskFlowPID("flowPID_lose"); // loser than JHEP
     // tracks & event selection cuts
@@ -141,6 +108,7 @@ void runAnalysis()
     taskFlowPID_lose->SetV0sMotherRapMax(0.);
     taskFlowPID_lose->SetV0sK0sCPAMin(0.997);
     taskFlowPID_lose->SetV0sLambdaCPAMin(0.997);
+    taskFlowPID_lose->SetV0sK0sArmenterosAlphaMin(0.2);
     taskFlowPID_lose->SetV0sK0sNumTauMax(3.2);
     taskFlowPID_lose->SetV0sLambdaNumTauMax(3.2);
     taskFlowPID_lose->SetV0sProtonNumSigmaMax(3.);
