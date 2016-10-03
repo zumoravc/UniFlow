@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/6_plusplus";
+    TString sWorkDir = "V0s/9";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -51,67 +51,37 @@ void runAnalysis()
     taskFlowPID->SetPbPbAnalysis(kTRUE);
     taskFlowPID->SetPeriod10h(kTRUE);
     taskFlowPID->SetCentFlag(0);
-    taskFlowPID->SetPVtxZMax(10.);
+    taskFlowPID->SetPVtxZMax(10);
     taskFlowPID->SetTrackEtaMax(0.8);
     taskFlowPID->SetTrackPtMax(10.);
     taskFlowPID->SetTrackPtMin(0.1);
     taskFlowPID->SetNumTPCclsMin(70);
     taskFlowPID->SetTrackFilterBit(128);
-    taskFlowPID->SetDiffFlow(kTRUE);
+    taskFlowPID->SetDiffFlow(kFALSE);
     taskFlowPID->SetPID(kTRUE);
     // V0 selection cuts
     taskFlowPID->SetV0sOnFly(kFALSE);
     taskFlowPID->SetV0sTPCRefit(kTRUE);
-    taskFlowPID->SetV0sRejectKinks(kFALSE);
+    taskFlowPID->SetV0sRejectKinks(kTRUE);
     taskFlowPID->SetV0sDCAPVMin(0.1);
     taskFlowPID->SetV0sDCAPVMax(0.);
-    taskFlowPID->SetV0sDCADaughtersMax(0.5);
+    taskFlowPID->SetV0sDCADaughtersMax(1.);
     taskFlowPID->SetV0sDecayRadiusMin(5.);
-    taskFlowPID->SetV0sDecayRadiusMax(100.);
+    taskFlowPID->SetV0sDecayRadiusMax(0.);
     taskFlowPID->SetV0sDaughterPtMin(0.1);
     taskFlowPID->SetV0sDaughterEtaMax(0.8);
-    taskFlowPID->SetV0sMotherEtaMax(0.);
-    taskFlowPID->SetV0sMotherRapMax(0.8);
+    taskFlowPID->SetV0sMotherEtaMax(0.8);
+    taskFlowPID->SetV0sMotherRapMax(0.);
+    taskFlowPID->SetV0sMotherPtMin(0.2);
+    taskFlowPID->SetV0sMotherPtMax(5.);
     taskFlowPID->SetV0sK0sCPAMin(0.998);
     taskFlowPID->SetV0sLambdaCPAMin(0.998);
     taskFlowPID->SetV0sK0sNumTauMax(3.);
+    taskFlowPID->SetV0sK0sArmenterosAlphaMin(0.2);
     taskFlowPID->SetV0sLambdaNumTauMax(3.);
     taskFlowPID->SetV0sProtonNumSigmaMax(3.);
-    /*
-    AliAnalysisTaskFlowPID* taskFlowPID_noKinks = AddTaskFlowPID("flowPID_noKinks"); // JHEP + V0 analysis notes + kinks rejection
-    // tracks & event selection cuts
-    taskFlowPID_noKinks->SetAODAnalysis(kTRUE);
-    taskFlowPID_noKinks->SetPbPbAnalysis(kTRUE);
-    taskFlowPID_noKinks->SetPeriod10h(kTRUE);
-    taskFlowPID_noKinks->SetCentFlag(0);
-    taskFlowPID_noKinks->SetPVtxZMax(10.);
-    taskFlowPID_noKinks->SetTrackEtaMax(0.8);
-    taskFlowPID_noKinks->SetTrackPtMax(10.);
-    taskFlowPID_noKinks->SetTrackPtMin(0.1);
-    taskFlowPID_noKinks->SetNumTPCclsMin(70);
-    taskFlowPID_noKinks->SetTrackFilterBit(128);
-    taskFlowPID_noKinks->SetDiffFlow(kTRUE);
-    taskFlowPID_noKinks->SetPID(kTRUE);
-    // V0 selection cuts
-    taskFlowPID_noKinks->SetV0sOnFly(kFALSE);
-    taskFlowPID_noKinks->SetV0sTPCRefit(kTRUE);
-    taskFlowPID_noKinks->SetV0sRejectKinks(kTRUE);
-    taskFlowPID_noKinks->SetV0sDCAPVMin(0.1);
-    taskFlowPID_noKinks->SetV0sDCAPVMax(0.);
-    taskFlowPID_noKinks->SetV0sDCADaughtersMax(0.5);
-    taskFlowPID_noKinks->SetV0sDecayRadiusMin(5.);
-    taskFlowPID_noKinks->SetV0sDecayRadiusMax(100.);
-    taskFlowPID_noKinks->SetV0sDaughterPtMin(0.1);
-    taskFlowPID_noKinks->SetV0sDaughterEtaMax(0.8);
-    taskFlowPID_noKinks->SetV0sMotherEtaMax(0.);
-    taskFlowPID_noKinks->SetV0sMotherRapMax(0.8);
-    taskFlowPID_noKinks->SetV0sK0sCPAMin(0.998);
-    taskFlowPID_noKinks->SetV0sLambdaCPAMin(0.998);
-    taskFlowPID_noKinks->SetV0sK0sNumTauMax(3.);
-    taskFlowPID_noKinks->SetV0sLambdaNumTauMax(3.);
-    taskFlowPID_noKinks->SetV0sProtonNumSigmaMax(3.);
-    */
-
+    taskFlowPID->SetV0sProtonPIDPtMax(1.2);
+    
     AliAnalysisTaskFlowPID* taskFlowPID_lose = AddTaskFlowPID("flowPID_lose"); // loser than JHEP
     // tracks & event selection cuts
     taskFlowPID_lose->SetAODAnalysis(kTRUE);
@@ -124,12 +94,12 @@ void runAnalysis()
     taskFlowPID_lose->SetTrackPtMin(0.1);
     taskFlowPID_lose->SetNumTPCclsMin(70);
     taskFlowPID_lose->SetTrackFilterBit(128);
-    taskFlowPID_lose->SetDiffFlow(kTRUE);
+    taskFlowPID_lose->SetDiffFlow(kFALSE);
     taskFlowPID_lose->SetPID(kTRUE);
     // V0 selection cuts
     taskFlowPID_lose->SetV0sOnFly(kFALSE);
     taskFlowPID_lose->SetV0sTPCRefit(kTRUE);
-    taskFlowPID_lose->SetV0sRejectKinks(kFALSE);
+    taskFlowPID_lose->SetV0sRejectKinks(kTRUE);
     taskFlowPID_lose->SetV0sDCAPVMin(0.05);
     taskFlowPID_lose->SetV0sDCAPVMax(0.);
     taskFlowPID_lose->SetV0sDCADaughtersMax(1.);
@@ -137,13 +107,17 @@ void runAnalysis()
     taskFlowPID_lose->SetV0sDecayRadiusMax(100.);
     taskFlowPID_lose->SetV0sDaughterPtMin(0.1);
     taskFlowPID_lose->SetV0sDaughterEtaMax(0.8);
-    taskFlowPID_lose->SetV0sMotherEtaMax(0.);
-    taskFlowPID_lose->SetV0sMotherRapMax(0.8);
+    taskFlowPID_lose->SetV0sMotherEtaMax(0.8);
+    taskFlowPID_lose->SetV0sMotherRapMax(0.);
+    taskFlowPID_lose->SetV0sMotherPtMin(0.2);
+    taskFlowPID_lose->SetV0sMotherPtMax(6.);
     taskFlowPID_lose->SetV0sK0sCPAMin(0.997);
     taskFlowPID_lose->SetV0sLambdaCPAMin(0.997);
-    taskFlowPID_lose->SetV0sK0sNumTauMax(3.);
-    taskFlowPID_lose->SetV0sLambdaNumTauMax(3.);
-    taskFlowPID_lose->SetV0sProtonNumSigmaMax(3.);
+    taskFlowPID_lose->SetV0sK0sArmenterosAlphaMin(0.2);
+    taskFlowPID_lose->SetV0sK0sNumTauMax(3.2);
+    taskFlowPID_lose->SetV0sLambdaNumTauMax(3.2);
+    taskFlowPID_lose->SetV0sProtonNumSigmaMax(5.);
+    taskFlowPID_lose->SetV0sProtonPIDPtMax(1.2);
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);
@@ -195,7 +169,7 @@ void runAnalysis()
 
         alienHandler->SetMasterResubmitThreshold(90);
         // number of files per subjob
-        alienHandler->SetSplitMaxInputFileNumber(800);
+        alienHandler->SetSplitMaxInputFileNumber(200);
         alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
         alienHandler->SetTTL(30000);

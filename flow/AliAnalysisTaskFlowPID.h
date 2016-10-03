@@ -42,30 +42,35 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void										SetV0sDaughterPtMin(Double_t pt) { fCutV0DaughterPtMin = pt; }
         void										SetV0sDaughterEtaMax(Double_t eta) { fCutV0DaughterEtaMax = eta; }
         void										SetV0sMotherEtaMax(Double_t eta) { fCutV0MotherEtaMax = eta; }
-        void										SetV0sMotherRapMax(Double_t rap) { fCutV0MotherRapMax = rap; }
+        void                                        SetV0sMotherRapMax(Double_t rap) { fCutV0MotherRapMax = rap; }
+        void                                        SetV0sMotherPtMin(Double_t pt) { fCutV0MotherPtMin = pt; }
+        void										SetV0sMotherPtMax(Double_t pt) { fCutV0MotherPtMax = pt; }
         void										SetV0sK0sCPAMin(Double_t cpa) { fCutV0MinCPAK0s = cpa; }
         void										SetV0sLambdaCPAMin(Double_t cpa) { fCutV0MinCPALambda = cpa; }
         void										SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
         void										SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0NumTauLambdaMax = nTau; }
-        void										SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
+        void										SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0K0sArmenterosAlphaMin = alpha; }
+        void                                        SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
+        void										SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
 
-        const static Int_t 			fNumPtBins = 10;			//! number of pT bins used for pT-differential flow
-        static Double_t					fPtBinEdges[fNumPtBins+1];				//! pointer for array of pT bin edges
-        const static Int_t      fNumMinvFlowBinsK0s = 12;  //! number of inv. mass bin for differential flow plots (K0s)
+        const static Int_t 			fNumPtBins = 10;			// number of pT bins used for pT-differential flow
+        static Double_t					fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
+        const static Int_t      fNumMinvFlowBinsK0s = 12;  // number of inv. mass bin for differential flow plots (K0s)
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
-        const static Int_t      fNumMinvFlowBinsLambda = 10;  //! number of inv. mass bin for differential flow plots ((A)Lambda)
+        const static Int_t      fNumMinvFlowBinsLambda = 10;  // number of inv. mass bin for differential flow plots ((A)Lambda)
         static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
-        const static Int_t 			fNumCentBins = 9;			//! number of centrality bins used for pT-differential flow (so far independently of reference flow)
-        static Double_t					fCentBinEdges[fNumCentBins+1];				//! pointer for array of pT bin edges
+        const static Int_t 			fNumCentBins = 9;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
+        static Double_t					fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
 
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 				Bool_t                  IsTrackSelected(const AliAODTrack* track);
-				Bool_t                  IsV0aK0s(const AliAODv0* v0);
-				Bool_t                  IsV0aLambda(const AliAODv0* v0);
+				void                  IsV0aK0s(const AliAODv0* v0);
+				void                 IsV0aLambda(const AliAODv0* v0);
 				Bool_t                  IsV0Selected(const AliAODv0* v0);
 				void                    EventQA(const AliAODEvent* event);
+				void            V0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
     
 	    	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
@@ -76,75 +81,81 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Short_t                 GetMinvFlowBinIndexLambda(const Double_t dMass);
 
         //cuts & selection: event & track
-        Bool_t									fAODAnalysis;		//! is AOD analysis?
-        Bool_t									fPbPb;					//! is PbPb analysis?
-				Bool_t       						fLHC10h;        //! flag to LHC10h data?
-				Short_t									fCentFlag;			//! centrality flag
-        Double_t 								fPVtxCutZ; 			//! PV z cut
-        Double_t 								fTrackEtaMax; 	//! Maximum pseudorapidity range
-        Double_t								fTrackPtMax;		//! Maximal track pT
-        Double_t								fTrackPtMin;		//! Manimal track pT
-        UShort_t								fNumTPCclsMin;	//! Minimal number of TPC clusters used for track reconstruction
-        UInt_t									fTrackFilterBit;//! Required track filter bit 
-        Bool_t 									fDiffFlow;			//! Do differential flow ? (or reference only)
-        Bool_t 									fPID;						//! Do PID (so far V0s) ? 
+        Bool_t									fAODAnalysis;		// is AOD analysis?
+        Bool_t									fPbPb;					// is PbPb analysis?
+				Bool_t       						fLHC10h;        // flag to LHC10h data?
+				Short_t									fCentFlag;			// centrality flag
+        Double_t 								fPVtxCutZ; 			// (cm) PV z cut
+        Double_t 								fTrackEtaMax; 	// () Maximum pseudorapidity range
+        Double_t								fTrackPtMax;		// (GeV/c) Maximal track pT
+        Double_t								fTrackPtMin;		// (GeV/c) Minimal track pT
+        UShort_t								fNumTPCclsMin;	// () Minimal number of TPC clusters used for track reconstruction
+        UInt_t									fTrackFilterBit;// Required track filter bit 
+        Bool_t 									fDiffFlow;			// Do differential flow ? (or reference only)
+        Bool_t 									fPID;						// Do PID (so far V0s) ? 
 				//cuts & selection: V0 reconstruction
-				Bool_t 									fCutV0onFly;		//! V0 reconstruction method: is On-the-fly? (or offline)
-				Bool_t									fCutV0refitTPC; //! Check TPC refit of V0 daughters ?
-				Bool_t									fCutV0rejectKinks; //! Reject Kink V0 daughter tracks ?
-				Double_t                fCutV0MinDCAtoPV;   //! min DCA of V0 daughter to PV
-        Double_t								fCutV0MaxDCAtoPV;	//! max DCA of V0 daughter to PV
-				Double_t								fCutV0MaxDCADaughters;	//! max DCA of V0 daughters among themselves
-        Double_t                fCutV0MinDecayRadius; //! min distance between PV and secondary vertex in transverse plane
-				Double_t								fCutV0MaxDecayRadius; //! max distance between PV and secondary vertex in transverse plane
-        Double_t                fCutV0DaughterPtMin; //! minimum pT of V0 daughters
-        Double_t                fCutV0DaughterEtaMax; //! max value of Eta of V0 daughters
-        Double_t                fCutV0MotherEtaMax; //! max eta value of V0 mother
-        Double_t                fCutV0MotherRapMax; //! max rapidity value of V0 mother
-        Double_t                fCutV0MinCPAK0s;    //! min cosine of pointing angle of K0s candidate to PV
-        Double_t                fCutV0MinCPALambda; //! min cosine of pointing angle of K0s candidate to PV
-        Double_t                fCutV0NumTauK0sMax; //! [tau] max number of c*tau (K0s)
-        Double_t                fCutV0NumTauLambdaMax; //! [tau] max number of c*tau ((A)Lambda)
-        Double_t								fCutV0ProtonNumSigmaMax;	//! [sigmaTPC] max number of TPC sigma for proton PID (Lambda candidates)
+				Bool_t 									fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
+				Bool_t									fCutV0refitTPC; // Check TPC refit of V0 daughters ?
+				Bool_t									fCutV0rejectKinks; // Reject Kink V0 daughter tracks ?
+				Double_t                fCutV0MinDCAtoPV;   // (cm) min DCA of V0 daughter to PV
+        Double_t								fCutV0MaxDCAtoPV;	// (cm) max DCA of V0 daughter to PV
+				Double_t								fCutV0MaxDCADaughters;	// (cm) max DCA of V0 daughters among themselves
+        Double_t                fCutV0MinDecayRadius; // (cm) min distance of secondary vertex from z-axis in transverse plane
+				Double_t								fCutV0MaxDecayRadius; // (cm) max distance of secondary vertex from z-axis in transverse plane
+        Double_t                fCutV0DaughterPtMin; // (GeV/c) minimum pT of V0 daughters
+        Double_t                fCutV0DaughterEtaMax; // () max value of Eta of V0 daughters
+        Double_t                fCutV0MotherEtaMax; // () max eta value of V0 mother
+        Double_t                fCutV0MotherRapMax; // () max rapidity value of V0 mother
+        Double_t                fCutV0MotherPtMin; // () min transverse momentum value of V0 mother
+        Double_t                fCutV0MotherPtMax; // () max transverse momentum value of V0 mother
+        Double_t                fCutV0MinCPAK0s;    // () min cosine of pointing angle of K0s candidate to PV
+        Double_t                fCutV0MinCPALambda; // () min cosine of pointing angle of K0s candidate to PV
+        Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
+        Double_t                fCutV0NumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
+        Double_t								fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
+        Double_t                                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) --- both MUST be on --- max number of TPC sigma for proton PID (Lambda candidates)
+        Double_t								fCutV0ProtonPIDPtMax;	// (GeV/c) --- both MUST be on --- max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
         // members
         AliAODEvent*            fAOD;           //! input event
         AliPIDResponse*					fPIDResponse;		//! PID response
+        AliTPCPIDResponse               fTPCPIDResponse;       // TPC PID response
         AliAODTrack*						fTrack;					//! AOD track
-        Double_t 								fTrackPt;				//! track pT
-        Double_t 								fTrackPhi;				//! track phi
-        Double_t 								fTrackEta;				//! track eta
-        Int_t 									fNumV0s;					//! number of V0s in given event
+        Double_t 								fTrackPt;				// track pT
+        Double_t 								fTrackPhi;				// track phi
+        Double_t 								fTrackEta;				// track eta
+        Int_t 									fNumV0s;					// number of V0s in given event
         AliAODv0*			 					fV0;					//! V0 candidate
-        Bool_t 									fV0candK0s;		//! Is V0 a K0s candidate ?
-        Bool_t 									fV0candLambda;		//! Is V0 a Lambda or Anti-Lambda (ALambda) candidate ?
-        Double_t 								fV0MaxMassK0s;		//! Upper limit of K0s inv. mass window
-        Double_t 								fV0MinMassK0s;		//! Lower limit of K0s inv. mass window
-        Double_t 								fV0MaxMassLambda;		//! Upper limit of Lambda inv. mass window
-        Double_t 								fV0MinMassLambda;		//! Upper limit of Lambda inv. mass window
-        Short_t									fCentBinIndex;					//! event centrality bin index indicator
-        Float_t									fCentPercentile;					//! event centrality bin index indicator
-        Short_t                 fPtBinIndex;        //! track pT bin index indicator
-        Short_t									fMinvFlowBinIndex;		//! track pT bin index indicator
-        TComplex								fQvec2;					//! complex flow vector Q (n = 2)
-        TComplex								fQvec3;					//! complex flow vector Q (n = 3)
-        TComplex								fQvec4;					//! complex flow vector Q (n = 4)
-        TComplex								fQvec5;					//! complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap00P;					//! complex flow vector Q (n = 2) with eta gap
-        TComplex								fQvec2Gap00N;					//! complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap04P;                   //! complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap04N;                   //! complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap08P;                   //! complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap08N;                   //! complex flow vector Q (n = 2) with eta gap
-        TComplex								fQvec2Gap09P;					//! complex flow vector Q (n = 2) with eta gap
-        TComplex								fQvec2Gap09N;					//! complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap10P;                   //! complex flow vector Q (n = 2) with eta gap
-        TComplex								fQvec2Gap10N;					//! complex flow vector Q (n = 2) with eta gap
-        TComplex								fPvec2[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow 
-        TComplex								fPvec2Gap00P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
-        TComplex								fPvec2Gap04P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
-        TComplex								fPvec2Gap08P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
-        TComplex								fPvec2Gap10P[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow with eta gap
-        TComplex								fPvec3[fNumPtBins];	//! complex vector p (n = 2) for pT-differential flow 
+        Bool_t 									fV0candK0s;		// Is V0 a K0s candidate ? flag 
+        Bool_t                                  fV0candLambda;      // Is V0 a Lambda  candidate ? flag
+        Bool_t 									fV0candALambda;		// Is V0 a Anti-Lambda (ALambda) candidate ? flag
+        Double_t 								fV0MaxMassK0s;		// Upper limit of K0s inv. mass window
+        Double_t 								fV0MinMassK0s;		// Lower limit of K0s inv. mass window
+        Double_t 								fV0MaxMassLambda;		// Upper limit of Lambda inv. mass window
+        Double_t 								fV0MinMassLambda;		// Upper limit of Lambda inv. mass window
+        Short_t									fCentBinIndex;					// event centrality bin index indicator
+        Float_t									fCentPercentile;					// event centrality bin index indicator
+        Short_t                 fPtBinIndex;        // track pT bin index indicator
+        Short_t									fMinvFlowBinIndex;		// track pT bin index indicator
+        TComplex								fQvec2;					// complex flow vector Q (n = 2)
+        TComplex								fQvec3;					// complex flow vector Q (n = 3)
+        TComplex								fQvec4;					// complex flow vector Q (n = 4)
+        TComplex								fQvec5;					// complex flow vector Q (n = 5)
+        TComplex								fQvec2Gap00P;				// complex flow vector Q (n = 2) with eta gap
+        TComplex								fQvec2Gap00N;					// complex flow vector Q (n = 2) with eta gap
+        TComplex                fQvec2Gap04P;                   // complex flow vector Q (n = 2) with eta gap
+        TComplex                fQvec2Gap04N;                   // complex flow vector Q (n = 2) with eta gap
+        TComplex                fQvec2Gap08P;                   // complex flow vector Q (n = 2) with eta gap
+        TComplex                fQvec2Gap08N;                   // complex flow vector Q (n = 2) with eta gap
+        TComplex								fQvec2Gap09P;					// complex flow vector Q (n = 2) with eta gap
+        TComplex								fQvec2Gap09N;					// complex flow vector Q (n = 2) with eta gap
+        TComplex                fQvec2Gap10P;                   // complex flow vector Q (n = 2) with eta gap
+        TComplex								fQvec2Gap10N;					// complex flow vector Q (n = 2) with eta gap
+        TComplex								fPvec2[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow 
+        TComplex								fPvec2Gap00P[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow with eta gap
+        TComplex								fPvec2Gap04P[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow with eta gap
+        TComplex								fPvec2Gap08P[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow with eta gap
+        TComplex								fPvec2Gap10P[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow with eta gap
+        TComplex								fPvec3[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow 
 
         TComplex                fVvec2Gap00P_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
         TComplex                fVvec2Gap00N_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
@@ -196,30 +207,56 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
-        TH1D*										fV0sPt;					//! selected V0s pT distribution
-        TH1D*										fV0sEta;					//! selected V0s eta distribution
-        TH1D*										fV0sPhi;					//! selected V0s phi distribution
-        TH1D*										fV0sInvMassK0s;		//! selected K0s inv. mass distribution (pT & cent integrated)
-        TH1D*										fV0sInvMassLambda;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH1D*                                       fV0sInvMassK0sGap00;        //! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassK0sGap09;		//! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*                                       fV0sInvMassLambdaGap00;     //! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassLambdaGap09;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
         TH2D*										fV0sK0sGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sK0sGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        // QA histos
+        // QA histos // index 0: before / 1: after cuts
         TH1D* 									fEventCounter;  //! event rejection tracker
-        TH1D*										fV0sCounter;		//! V0s counter
         TH1D* 									fQAPVz;					//! PV z distance distribution
         TH1D*										fQANumTracks;		//! number of AOD tracks distribution
         TH1D*										fQATrackPt;			//! pT dist of all tracks in all events
         TH1D*										fQATrackEta;		//! eta dist of all tracks in all events
         TH1D*										fQATrackPhi;		//! phi dist of all tracks in all events
         TH1D*										fQATrackFilterMap;//! filter bit of all tracks
-
+        	// QA V0s
+        TH1D*										fQAV0sCounter;		//! V0s counter
+        TH1D*										fQAV0sCounterK0s;		//! K0s counter
+        TH1D*										fQAV0sCounterLambda;		//! Lambda counter
+        TH1D*										fQAV0sRecoMethod[2];	//! offline/online V0 reconstruction method
+        TH1D*										fQAV0sTPCRefit[2];	//! TPC refit true/false
+        TH1D*										fQAV0sKinks[2];	//! V0 kinks true/false
+        TH1D*										fQAV0sDCAtoPV[2];	//! V0 DCA to PV
+        TH1D*										fQAV0sDCADaughters[2];	//! DCA between V0 daughters
+        TH1D*										fQAV0sDecayRadius[2];	//! Distance between PV and Secondary vertex in transverse plane
+        TH1D*                                       fQAV0sDaughterPt[2];    //! pT dist of V0 daughters
+        TH1D*										fQAV0sDaughterPhi[2];	//! pT dist of V0 daughters
+        TH1D*                                       fQAV0sDaughterEta[2];   //! pseudorapidity dist of V0 daughters
+        TH2D*										fQAV0sDaughterTPCdEdxPt[2];	//! TPC dEdx vs pT of V0 daughters
+        TH1D*										fQAV0sMotherPt[2];	//! pT dist of V0s
+        TH1D*										fQAV0sMotherPhi[2];	//! azimuthal dist of V0s
+        TH1D*                                       fQAV0sMotherEta[2]; //! pseudorapidity dist of V0s
+        TH1D*                                       fQAV0sMotherRapK0s[2];  //! rapidity dist of V0s (K0s mass hypothesis)
+        TH1D*                                       fQAV0sMotherRapLambda[2];   //! rapidity dist of V0s (Lambda mass hypothesis)
+        TH1D*                                       fQAV0sInvMassK0s[2];    //! inv. mass dist of V0s (K0s mass hypothesis)
+        TH1D*										fQAV0sInvMassLambda[2];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
+        TH1D*										fQAV0sCPAK0s[2];	//! cosine of pointing angle of K0s candidates
+        TH1D*										fQAV0sCPALambda[2];	//! cosine of pointing angle of Lambda candidates
+        TH1D*										fQAV0sNumTauK0s[2];	//! number of c*tau of K0s candidates
+        TH1D*										fQAV0sNumTauLambda[2];	//! number of c*tau of Lambda candidates
+        TH2D*										fQAV0sArmenterosK0s[2];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2D*										fQAV0sArmenterosLambda[2];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2D*                                       fQAV0sProtonNumSigmaPtLambda[2];  //! number of TPC sigmas and pT of proton (Lambda candidates)
+        
 
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 1);
+        ClassDef(AliAnalysisTaskFlowPID, 3);
 };
 
 #endif
