@@ -42,7 +42,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void										SetV0sDaughterPtMin(Double_t pt) { fCutV0DaughterPtMin = pt; }
         void										SetV0sDaughterEtaMax(Double_t eta) { fCutV0DaughterEtaMax = eta; }
         void										SetV0sMotherEtaMax(Double_t eta) { fCutV0MotherEtaMax = eta; }
-        void										SetV0sMotherRapMax(Double_t rap) { fCutV0MotherRapMax = rap; }
+        void                                        SetV0sMotherRapMax(Double_t rap) { fCutV0MotherRapMax = rap; }
+        void                                        SetV0sMotherPtMin(Double_t pt) { fCutV0MotherPtMin = pt; }
+        void										SetV0sMotherPtMax(Double_t pt) { fCutV0MotherPtMax = pt; }
         void										SetV0sK0sCPAMin(Double_t cpa) { fCutV0MinCPAK0s = cpa; }
         void										SetV0sLambdaCPAMin(Double_t cpa) { fCutV0MinCPALambda = cpa; }
         void										SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
@@ -103,6 +105,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t                fCutV0DaughterEtaMax; // () max value of Eta of V0 daughters
         Double_t                fCutV0MotherEtaMax; // () max eta value of V0 mother
         Double_t                fCutV0MotherRapMax; // () max rapidity value of V0 mother
+        Double_t                fCutV0MotherPtMin; // () min transverse momentum value of V0 mother
+        Double_t                fCutV0MotherPtMax; // () max transverse momentum value of V0 mother
         Double_t                fCutV0MinCPAK0s;    // () min cosine of pointing angle of K0s candidate to PV
         Double_t                fCutV0MinCPALambda; // () min cosine of pointing angle of K0s candidate to PV
         Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
