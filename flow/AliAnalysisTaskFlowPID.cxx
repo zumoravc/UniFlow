@@ -1735,10 +1735,19 @@ void AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   	Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
   	Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
 
-  	if((dSigmaProtNeg > fCutV0ProtonNumSigmaMax) || (dSigmaProtPos > fCutV0ProtonNumSigmaMax))
+    
+    if(fV0candLambda && (dSigmaProtPos > fCutV0ProtonNumSigmaMax)) // positive daughter is not a proton (within TPC sigmas)
     {
-      fV0candLambda = kFALSE;
-      fV0candALambda = kFALSE;
+      fV0candLambda = kFALSE;    
+    }
+    
+    if(fV0candALambda && ( dSigmaProtNeg > fCutV0ProtonNumSigmaMax)) // negative daughter is not a proton (within TPC sigmas)
+    {
+      fV0candALambda = kFALSE;    
+    }
+
+    if(!fV0candLambda && !fV0candALambda)
+    {
       return;
     }
   }
