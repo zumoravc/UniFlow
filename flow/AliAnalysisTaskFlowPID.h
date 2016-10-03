@@ -50,7 +50,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void										SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
         void										SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0NumTauLambdaMax = nTau; }
         void										SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0K0sArmenterosAlphaMin = alpha; }
-        void										SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
+        void                                        SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
+        void										SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
 
         const static Int_t 			fNumPtBins = 10;			// number of pT bins used for pT-differential flow
@@ -112,7 +113,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
         Double_t                fCutV0NumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
         Double_t								fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
-        Double_t								fCutV0ProtonNumSigmaMax;	// (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
+        Double_t                                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) !! both MUST be on !! max number of TPC sigma for proton PID (Lambda candidates)
+        Double_t								fCutV0ProtonPIDPtMax;	// (GeV/c) !! both MUST be on !! max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
         // members
         AliAODEvent*            fAOD;           //! input event
         AliPIDResponse*					fPIDResponse;		//! PID response

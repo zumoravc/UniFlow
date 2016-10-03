@@ -80,6 +80,7 @@ void runAnalysis()
     taskFlowPID->SetV0sK0sArmenterosAlphaMin(0.2);
     taskFlowPID->SetV0sLambdaNumTauMax(3.);
     taskFlowPID->SetV0sProtonNumSigmaMax(3.);
+    taskFlowPID->SetV0sProtonPIDPtMax(1.2);
     
     AliAnalysisTaskFlowPID* taskFlowPID_lose = AddTaskFlowPID("flowPID_lose"); // loser than JHEP
     // tracks & event selection cuts
@@ -116,6 +117,7 @@ void runAnalysis()
     taskFlowPID_lose->SetV0sK0sNumTauMax(3.2);
     taskFlowPID_lose->SetV0sLambdaNumTauMax(3.2);
     taskFlowPID_lose->SetV0sProtonNumSigmaMax(3.);
+    taskFlowPID_lose->SetV0sProtonPIDPtMax(1.2);
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);

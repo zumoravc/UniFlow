@@ -126,6 +126,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCutV0K0sArmenterosAlphaMin(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
+  fCutV0ProtonPIDPtMax(0.),
 
   fEventCounter(0),
   fV0sMult(0),
@@ -233,6 +234,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutV0K0sArmenterosAlphaMin(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
+  fCutV0ProtonPIDPtMax(0.),
 
   fOutList(0),
   fOutListV0s(0),
@@ -688,7 +690,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 	fEventCounter->Fill(0); // input event
 
 	// loading PID response for protons
-  if(fCutV0ProtonNumSigmaMax > 0.)
+  if((fCutV0ProtonNumSigmaMax > 0.) && (fCutV0ProtonPIDPtMax > 0.))
   {
   	AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
     AliInputEventHandler* inputHandler = (AliInputEventHandler*)mgr->GetInputEventHandler();
@@ -1727,21 +1729,22 @@ void AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   iCounterIndex++;
 
  	// proton PID of Lambda Candidates
-  if( (fCutV0ProtonNumSigmaMax > 0.) && fPIDResponse )
+  if( (fCutV0ProtonNumSigmaMax > 0.) && (fCutV0ProtonPIDPtMax > 0.) && fPIDResponse )
   {
   	const AliAODTrack* trackDaughterPos = (AliAODTrack*) v0->GetDaughter(0);
   	const AliAODTrack* trackDaughterNeg = (AliAODTrack*) v0->GetDaughter(1);
 
   	Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
   	Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
-
     
-    if(fV0candLambda && (dSigmaProtPos > fCutV0ProtonNumSigmaMax)) // positive daughter is not a proton (within TPC sigmas)
+
+
+    if(fV0candLambda && (trackDaughterPos->Pt() < fCutV0ProtonPIDPtMax) && (dSigmaProtPos > fCutV0ProtonNumSigmaMax)) // positive daughter is not a proton (within TPC sigmas)
     {
       fV0candLambda = kFALSE;    
     }
     
-    if(fV0candALambda && ( dSigmaProtNeg > fCutV0ProtonNumSigmaMax)) // negative daughter is not a proton (within TPC sigmas)
+    if(fV0candALambda && (trackDaughterNeg->Pt() < fCutV0ProtonPIDPtMax) && (dSigmaProtNeg > fCutV0ProtonNumSigmaMax)) // negative daughter is not a proton (within TPC sigmas)
     {
       fV0candALambda = kFALSE;    
     }
