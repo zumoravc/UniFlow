@@ -118,6 +118,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         // members
         AliAODEvent*            fAOD;           //! input event
         AliPIDResponse*					fPIDResponse;		//! PID response
+        AliTPCPIDResponse               fTPCPIDResponse;       // TPC PID response
         AliAODTrack*						fTrack;					//! AOD track
         Double_t 								fTrackPt;				// track pT
         Double_t 								fTrackPhi;				// track phi
@@ -234,7 +235,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fQAV0sDecayRadius[2];	//! Distance between PV and Secondary vertex in transverse plane
         TH1D*                                       fQAV0sDaughterPt[2];    //! pT dist of V0 daughters
         TH1D*										fQAV0sDaughterPhi[2];	//! pT dist of V0 daughters
-        TH1D*										fQAV0sDaughterEta[2];	//! pseudorapidity dist of V0 daughters
+        TH1D*                                       fQAV0sDaughterEta[2];   //! pseudorapidity dist of V0 daughters
+        TH2D*										fQAV0sDaughterTPCdEdxPt[2];	//! TPC dEdx vs pT of V0 daughters
         TH1D*										fQAV0sMotherPt[2];	//! pT dist of V0s
         TH1D*										fQAV0sMotherPhi[2];	//! azimuthal dist of V0s
         TH1D*                                       fQAV0sMotherEta[2]; //! pseudorapidity dist of V0s
