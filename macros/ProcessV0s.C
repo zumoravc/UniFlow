@@ -2,8 +2,8 @@ void ProcessV0s(
 		const TString sInput = "~/NBI/Codes/results/V0s/5/plusplus/merge/AnalysisResults_merged.root",
 		const TString sOutput = "~/NBI/Codes/results/V0s/5/plusplus/plots",
 		const TString sTag = "_JHEP",
-		const TString sOutputFormat = "png",
-		const TString sEtaGap = "Gap09"
+		const TString sEtaGap = "Gap09",
+		const TString sOutputFormat = "png"
 	)
 {
 	//const TString sInput = "~/NBI/Codes/results/V0s/5/plusplus/merge/AnalysisResults_merged.root";
@@ -17,7 +17,7 @@ void ProcessV0s(
 	Double_t fPtBinEdges[] = {0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6}; 
 	Double_t fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
-  	// =======================================
+	// =======================================
 	gROOT->LoadMacro("~/NBI/Codes/macros/func/CompareRatio.C");
 	gROOT->LoadMacro("~/NBI/Codes/macros/func/CompareHistos.C");
 
