@@ -1,24 +1,29 @@
 #!/bin/bash
-inPath=~/NBI/Codes/results/V0s/8/plusplus_part1/merge
-outPath=~/NBI/Codes/results/V0s/8/plusplus_part1
+inPath=~/NBI/Codes/results/V0s/8/merge/plusplus/
+outPath=~/NBI/Codes/results/V0s/8/
+tag=lose
+
+
+# =================================================
 
 mkdir -pv ${outPath}
 cd ${outPath}
 
-mkdir -pv plots
+plotsDir=plots_${tag}
+mkdir -pv ${plotsDir}
 # ProcessV0s.C requirements
-mkdir -pv plots/InvMassK0s
-mkdir -pv plots/InvMassLambda
-mkdir -pv plots/CummMassK0s
-mkdir -pv plots/CummMassLambda
-mkdir -pv plots/FlowMassK0s
-mkdir -pv plots/FlowMassLambda
-mkdir -pv plots/compInvMass/
-mkdir -pv plots/compFlowMass/
+mkdir -pv ${plotsDir}/InvMassK0s
+mkdir -pv ${plotsDir}/InvMassLambda
+mkdir -pv ${plotsDir}/CummMassK0s
+mkdir -pv ${plotsDir}/CummMassLambda
+mkdir -pv ${plotsDir}/FlowMassK0s
+mkdir -pv ${plotsDir}/FlowMassLambda
+mkdir -pv ${plotsDir}/compInvMass/
+mkdir -pv ${plotsDir}/compFlowMass/
 
 # V0sExtractFlow.C requirements
-mkdir -pv plots/fitK0s/
-mkdir -pv plots/fitLambda/
+mkdir -pv ${plotsDir}/fitK0s/
+mkdir -pv ${plotsDir}/fitLambda/
 
-#root -l -b -q ~/NBI/Codes/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults_merged.root\",\"${outPath}/plots\",\"flowPID_JHEP\",\"Gap00\",\"png\"\)
-root -l -b -q ~/NBI/Codes/macros/V0sExtractFlow.C\(\"${outPath}/plots/V0sFlow.root\",\"${outPath}/plots\",\"flowPID_JHEP\",\"Gap00\",\"png\"\)
+root -l -b -q ~/NBI/Codes/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_lose\",\"Gap00\",\"png\"\)
+root -l -b -q ~/NBI/Codes/macros/V0sExtractFlow.C\(\"${outPath}/${plotsDir}/V0sFlow.root\",\"${outPath}/${plotsDir}\",\"flowPID_lose\",\"Gap00\",\"png\"\)

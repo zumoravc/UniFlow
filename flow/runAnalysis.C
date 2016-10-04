@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/9";
+    TString sWorkDir = "V0s/10";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -57,7 +57,7 @@ void runAnalysis()
     taskFlowPID->SetTrackPtMin(0.1);
     taskFlowPID->SetNumTPCclsMin(70);
     taskFlowPID->SetTrackFilterBit(128);
-    taskFlowPID->SetDiffFlow(kFALSE);
+    taskFlowPID->SetDiffFlow(kTRUE);
     taskFlowPID->SetPID(kTRUE);
     // V0 selection cuts
     taskFlowPID->SetV0sOnFly(kFALSE);
@@ -104,20 +104,59 @@ void runAnalysis()
     taskFlowPID_lose->SetV0sDCAPVMax(0.);
     taskFlowPID_lose->SetV0sDCADaughtersMax(1.);
     taskFlowPID_lose->SetV0sDecayRadiusMin(3.);
-    taskFlowPID_lose->SetV0sDecayRadiusMax(100.);
+    taskFlowPID_lose->SetV0sDecayRadiusMax(0.);
     taskFlowPID_lose->SetV0sDaughterPtMin(0.1);
     taskFlowPID_lose->SetV0sDaughterEtaMax(0.8);
     taskFlowPID_lose->SetV0sMotherEtaMax(0.8);
     taskFlowPID_lose->SetV0sMotherRapMax(0.);
     taskFlowPID_lose->SetV0sMotherPtMin(0.2);
-    taskFlowPID_lose->SetV0sMotherPtMax(6.);
-    taskFlowPID_lose->SetV0sK0sCPAMin(0.997);
-    taskFlowPID_lose->SetV0sLambdaCPAMin(0.997);
+    taskFlowPID_lose->SetV0sMotherPtMax(5.);
+    taskFlowPID_lose->SetV0sK0sCPAMin(0.996);
+    taskFlowPID_lose->SetV0sLambdaCPAMin(0.996);
     taskFlowPID_lose->SetV0sK0sArmenterosAlphaMin(0.2);
-    taskFlowPID_lose->SetV0sK0sNumTauMax(3.2);
-    taskFlowPID_lose->SetV0sLambdaNumTauMax(3.2);
+    taskFlowPID_lose->SetV0sK0sNumTauMax(4.);
+    taskFlowPID_lose->SetV0sLambdaNumTauMax(4.);
     taskFlowPID_lose->SetV0sProtonNumSigmaMax(5.);
     taskFlowPID_lose->SetV0sProtonPIDPtMax(1.2);
+
+    AliAnalysisTaskFlowPID* taskFlowPID_tight = AddTaskFlowPID("flowPID_tight"); // loser than JHEP
+    // tracks & event selection cuts
+    taskFlowPID_tight->SetAODAnalysis(kTRUE);
+    taskFlowPID_tight->SetPbPbAnalysis(kTRUE);
+    taskFlowPID_tight->SetPeriod10h(kTRUE);
+    taskFlowPID_tight->SetCentFlag(0);
+    taskFlowPID_tight->SetPVtxZMax(10);
+    taskFlowPID_tight->SetTrackEtaMax(0.8);
+    taskFlowPID_tight->SetTrackPtMax(10.);
+    taskFlowPID_tight->SetTrackPtMin(0.1);
+    taskFlowPID_tight->SetNumTPCclsMin(70);
+    taskFlowPID_tight->SetTrackFilterBit(128);
+    taskFlowPID_tight->SetDiffFlow(kFALSE);
+    taskFlowPID_tight->SetPID(kTRUE);
+    // V0 selection cuts
+    taskFlowPID_tight->SetV0sOnFly(kFALSE);
+    taskFlowPID_tight->SetV0sTPCRefit(kTRUE);
+    taskFlowPID_tight->SetV0sRejectKinks(kTRUE);
+    taskFlowPID_tight->SetV0sDCAPVMin(0.1);
+    taskFlowPID_tight->SetV0sDCAPVMax(0.);
+    taskFlowPID_tight->SetV0sDCADaughtersMax(1.);
+    taskFlowPID_tight->SetV0sDecayRadiusMin(5.);
+    taskFlowPID_tight->SetV0sDecayRadiusMax(0.);
+    taskFlowPID_tight->SetV0sDaughterPtMin(0.1);
+    taskFlowPID_tight->SetV0sDaughterEtaMax(0.8);
+    taskFlowPID_tight->SetV0sMotherEtaMax(0.8);
+    taskFlowPID_tight->SetV0sMotherRapMax(0.);
+    taskFlowPID_tight->SetV0sMotherPtMin(0.2);
+    taskFlowPID_tight->SetV0sMotherPtMax(5.);
+    taskFlowPID_tight->SetV0sK0sCPAMin(0.998);
+    taskFlowPID_tight->SetV0sLambdaCPAMin(0.999);
+    taskFlowPID_tight->SetV0sK0sNumTauMax(2.5);
+    taskFlowPID_tight->SetV0sK0sArmenterosAlphaMin(0.2);
+    taskFlowPID_tight->SetV0sLambdaNumTauMax(2.5);
+    taskFlowPID_tight->SetV0sProtonNumSigmaMax(2.5);
+    taskFlowPID_tight->SetV0sProtonPIDPtMax(1.5);
+
+
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);

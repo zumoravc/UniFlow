@@ -1178,66 +1178,65 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       if(TMath::Abs(dVal< 1) && (dWeight > 0))
         fDiffCorTwo2Gap10[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, dVal,dWeight);     
     }
-
-    if(fPID)
+  }
+    
+  if(fPID)
+  {
+    for(Int_t i(0); i < fNumPtBins; i++)
     {
-      for(Int_t i(0); i < fNumPtBins; i++)
+      for(Int_t j(0); j < fNumMinvFlowBinsK0s; j++)
       {
-        for(Int_t j(0); j < fNumMinvFlowBinsK0s; j++)
-        {
-          dWeight = iNumV2Gap00P_K0s[i][j]*(iNumGap00N);
-          dAmp = (fVvec2Gap00P_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap00N))).Re();
-          dVal = dAmp / dWeight;
-          if( TMath::Abs(dVal < 1) && (dWeight > 0))
-            fV0sDiffTwo2Gap00P_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
-          
-          dWeight = iNumV2Gap00N_K0s[i][j]*(iNumGap00P);
-          dAmp = (fVvec2Gap00N_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap00P))).Re();
-          dVal = dAmp / dWeight;
-          if( TMath::Abs(dVal < 1) && (dWeight > 0))
-            fV0sDiffTwo2Gap00N_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
-          
-          dWeight = iNumV2Gap09P_K0s[i][j]*(iNumGap09N);
-          dAmp = (fVvec2Gap09P_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap09N))).Re();
-          dVal = dAmp / dWeight;
-          if( TMath::Abs(dVal < 1) && (dWeight > 0))
-            fV0sDiffTwo2Gap09P_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
-          
-          dWeight = iNumV2Gap09N_K0s[i][j]*(iNumGap09P);
-          dAmp = (fVvec2Gap09N_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap09P))).Re();
-          dVal = dAmp / dWeight;
-          if( TMath::Abs(dVal < 1) && (dWeight > 0))
-            fV0sDiffTwo2Gap09N_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
-        }
+        dWeight = iNumV2Gap00P_K0s[i][j]*(iNumGap00N);
+        dAmp = (fVvec2Gap00P_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap00N))).Re();
+        dVal = dAmp / dWeight;
+        if( TMath::Abs(dVal < 1) && (dWeight > 0))
+          fV0sDiffTwo2Gap00P_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
+        
+        dWeight = iNumV2Gap00N_K0s[i][j]*(iNumGap00P);
+        dAmp = (fVvec2Gap00N_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap00P))).Re();
+        dVal = dAmp / dWeight;
+        if( TMath::Abs(dVal < 1) && (dWeight > 0))
+          fV0sDiffTwo2Gap00N_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
+        
+        dWeight = iNumV2Gap09P_K0s[i][j]*(iNumGap09N);
+        dAmp = (fVvec2Gap09P_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap09N))).Re();
+        dVal = dAmp / dWeight;
+        if( TMath::Abs(dVal < 1) && (dWeight > 0))
+          fV0sDiffTwo2Gap09P_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
+        
+        dWeight = iNumV2Gap09N_K0s[i][j]*(iNumGap09P);
+        dAmp = (fVvec2Gap09N_K0s[i][j]*(TComplex::Conjugate(fQvec2Gap09P))).Re();
+        dVal = dAmp / dWeight;
+        if( TMath::Abs(dVal < 1) && (dWeight > 0))
+          fV0sDiffTwo2Gap09N_K0s[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
+      }
 
-        for(Int_t j(0); j < fNumMinvFlowBinsLambda; j++)
-        {
-          dWeight = iNumV2Gap00P_Lambda[i][j]*(iNumGap00N);
-          dAmp = (fVvec2Gap00P_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap00N))).Re();
-          dVal = dAmp / dWeight;
-          if( TMath::Abs(dVal < 1) && (dWeight > 0))
-            fV0sDiffTwo2Gap00P_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
-          
-          dWeight = iNumV2Gap00N_Lambda[i][j]*(iNumGap00P);
-          dAmp = (fVvec2Gap00N_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap00P))).Re();
-          dVal = dAmp / dWeight;
-          if( TMath::Abs(dVal < 1) && (dWeight > 0))
-            fV0sDiffTwo2Gap00N_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);          dWeight = iNumV2Gap09P_Lambda[i][j]*(iNumGap09N);
-          
-          dAmp = (fVvec2Gap09P_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap09N))).Re();
-          dVal = dAmp / dWeight;
-          if( TMath::Abs(dVal < 1) && (dWeight > 0))
-            fV0sDiffTwo2Gap09P_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
-          
-          dWeight = iNumV2Gap09N_Lambda[i][j]*(iNumGap09P);
-          dAmp = (fVvec2Gap09N_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap09P))).Re();
-          dVal = dAmp / dWeight;
-          if( TMath::Abs(dVal < 1) && (dWeight > 0))
-            fV0sDiffTwo2Gap09N_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
-        }
+      for(Int_t j(0); j < fNumMinvFlowBinsLambda; j++)
+      {
+        dWeight = iNumV2Gap00P_Lambda[i][j]*(iNumGap00N);
+        dAmp = (fVvec2Gap00P_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap00N))).Re();
+        dVal = dAmp / dWeight;
+        if( TMath::Abs(dVal < 1) && (dWeight > 0))
+          fV0sDiffTwo2Gap00P_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
+        
+        dWeight = iNumV2Gap00N_Lambda[i][j]*(iNumGap00P);
+        dAmp = (fVvec2Gap00N_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap00P))).Re();
+        dVal = dAmp / dWeight;
+        if( TMath::Abs(dVal < 1) && (dWeight > 0))
+          fV0sDiffTwo2Gap00N_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);          dWeight = iNumV2Gap09P_Lambda[i][j]*(iNumGap09N);
+        
+        dAmp = (fVvec2Gap09P_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap09N))).Re();
+        dVal = dAmp / dWeight;
+        if( TMath::Abs(dVal < 1) && (dWeight > 0))
+          fV0sDiffTwo2Gap09P_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
+        
+        dWeight = iNumV2Gap09N_Lambda[i][j]*(iNumGap09P);
+        dAmp = (fVvec2Gap09N_Lambda[i][j]*(TComplex::Conjugate(fQvec2Gap09P))).Re();
+        dVal = dAmp / dWeight;
+        if( TMath::Abs(dVal < 1) && (dWeight > 0))
+          fV0sDiffTwo2Gap09N_Lambda[fCentBinIndex]->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesLambda[j+1] + fMinvFlowBinEdgesLambda[j])/2 ,dVal, dWeight);
       }
     }
-
   }
 
   PostData(1, fOutList);  // stream the results the analysis of this event to the output manager which will take care of writing it to a file
