@@ -3,24 +3,31 @@ TH1D* MakeRatio(TH1D* fNom, TH1D* fDenom, const char* name);
 //TCanvas* CompareRatio(TH1D* fNom, TH1D* fDenom);
 
 
-void ProcessFlow()
+void ProcessFlow(
+			TString sInput = "~/NBI/Codes/flow/results/V0s/9/merge/AnalysisResults.root",
+			TString sOutput = "~/NBI/Codes/results/TPConly",
+			TString sOutputFormat = "png",
+			Bool_t bKatarinaDiff = kTRUE,
+			Bool_t bYouRef = kTRUE
+	)
 {
-	TString sInput = "~/NBI/Codes/flow/results/V0s/1/mergedAnalysisResults.root";
+	/*
+	TString sInput = "~/NBI/Codes/flow/results/V0s/9/merge/AnalysisResults.root";
 	TString sOutput = "~/NBI/Codes/results/TPConly";
 	TString sOutputFormat = "png";
 	Bool_t bKatarinaDiff = kTRUE;
 	Bool_t bYouRef = kTRUE;
-	
+	*/
 
 	gROOT->LoadMacro("~/NBI/Codes/macros/func/CompareHistos.C");
 	gROOT->LoadMacro("~/NBI/Codes/macros/func/CompareRatio.C");
 
 	TFile* fInput = new TFile(sInput.Data(),"READ");
-	fInput->cd("FlowPID");
+	fInput->cd("flowPID_JHEP");
 	//fInput->ls();
 
 	// ===== Loading input ===== 
-	TList* fInputList = (TList*) gDirectory->Get("Tracks");
+	TList* fInputList = (TList*) gDirectory->Get("Tracks_flowPID_JHEP");
 
 	// reference
 	TProfile* fRefCorTwo2 = (TProfile*) fInputList->FindObject("fRefCorTwo2"); 
