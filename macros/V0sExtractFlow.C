@@ -52,6 +52,13 @@ void V0sExtractFlow(
 	cCan = ExtractFlow(hInvMassK0s[0][2],hFlowMassK0s[0][2]);
 	cCan->Print(Form("%s/fitK0s/test.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
 
+
+	TH1D* hInvMassK0s_rebin = (TH1D*) hInvMassK0s[0][2]->Clone("hInvMassK0s_rebin");
+	hInvMassK0s_rebin->Rebin(6);
+
+	cCan = ExtractFlow(hInvMassK0s_rebin,hFlowMassK0s[0][2]);
+	cCan->Print(Form("%s/fitK0s/test_rebin.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+
 	/*
 	for(Int_t i(0); i < iNumCentBins; i++)
 	{
@@ -80,6 +87,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass)
 	TH1D* hInvMass_temp = (TH1D*) hInvMass->Clone("hInvMass_temp"); // cloning inv mass dist for peak window fitting
 	TH1D* hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side"); // cloning inv mass dist for sidebands fitting
 	TH1D* hInvMass_subs = (TH1D*) hInvMass->Clone("hInvMass_subs"); // cloning inv mass dist for BG subtracttion
+	TH1D* hInvMassRebin = (TH1D*) hInvMass->Clone("hInvMassRebin"); // cloning inv mass dist for rebining
 
 	TCanvas* cCan = new TCanvas("cCan","cFit",2000,1000);
 	cCan->Divide(2,1);
@@ -104,8 +112,8 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass)
 	fFitInvMass->SetParLimits(2,0.,0.01);
 	//fFitInvMass->SetLineColor(kGreen);
 	fFitInvMass->SetLineWidth(2);
-	hInvMass->SetMinimum(0);
-	hInvMass->SetMaximum(4000);	
+	//hInvMass->SetMinimum(0);
+	//hInvMass->SetMaximum(4000);	
 
 	hInvMass->Fit("fFitInvMass","R");
 
@@ -219,12 +227,25 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass)
 	fFitInvMassPeak->Draw("same");
 	fFitInvMassFixed->Draw("same");
 	fFitInvMassGauss->Draw("same");
+/*
+	// REBIN ORIGINAL PLOT
+	TCanvas* cCanRebin = new TCanvas("cCanRebin","Rebin",2000,2000);
+	cCanRebin->Divide(2,2);
 
-	
+	hInvMassRebin->Rebin(2);
+
+	cCanRebin->cd(1);
+	hInvMassRebin->Draw();
+
+
+	cCanRebin->Print("~/NBI/Codes/results/V0s/10/plots_JHEP/fitK0s/temp_rebin.png","png");
+*/
+
+
 
 	// estimating number of candidates
-	const Int_t iNumMethod = 5; // 0 from approx fit / 1 signal from peak fit / 2 signal bin counting 
-	TString sMethod[] = {"AproxFit","PeakFit","BinCounting","AproxFitIntegral","PeakFitIntegral"};
+	const Int_t iNumMethod = 7; // 0 from approx fit / 1 signal from peak fit / 2 signal bin counting 
+	TString sMethod[] = {"AproxFit","PeakFit","BinCounting","AproxFitIntegral","PeakFitIntegral","FixedFitIntegral","GaussFitIntegral"};
 	Double_t dCandTot[iNumMethod] = {0};
 	Double_t dCandSig[iNumMethod] = {0};
 	Double_t dCandBg[iNumMethod] = {0};
@@ -259,16 +280,47 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass)
 	Double_t* dX = new Double_t[nPoints];
 	Double_t* dW = new Double_t[nPoints];
 	fFitInvMass->CalcGaussLegendreSamplingPoints(nPoints,dX,dW,1e-15);
+	fFitInvMassBg->CalcGaussLegendreSamplingPoints(nPoints,dX,dW,1e-15);
+	fFitInvMassFixed->CalcGaussLegendreSamplingPoints(nPoints,dX,dW,1e-15);
+	fFitInvMassGauss->CalcGaussLegendreSamplingPoints(nPoints,dX,dW,1e-15);
 
-	dCandTot[iIndexMethod] = dCandTot[0];
-	dCandBg[iIndexMethod] = dCandBg[0];
-	dCandSig[iIndexMethod] = fFitInvMass->IntegralFast(nPoints,dX,dW,dMassWindow[0],dMassWindow[1]);// - dCandBg[iIndexMethod]; 
+	Double_t dIntTot = fFitInvMass->IntegralFast(nPoints,dX,dW,dMassWindow[0],dMassWindow[1]) / hInvMass->GetBinWidth(5);
+	Double_t dIntBg = fFitInvMassBg->IntegralFast(nPoints,dX,dW,dMassWindow[0],dMassWindow[1]) /  hInvMass->GetBinWidth(5);
+	Double_t dIntSig = (dIntTot - dIntBg);
+
+	dCandTot[iIndexMethod] = dIntTot;
+	dCandBg[iIndexMethod] = dIntBg;
+	dCandSig[iIndexMethod] = dIntSig;
 
 	iIndexMethod++;
 
-	dCandTot[iIndexMethod] = dCandTot[0];
-	dCandBg[iIndexMethod] = dCandBg[0];
-	dCandSig[iIndexMethod] = fFitInvMassPeak->Integral(dMassWindow[0],dMassWindow[1]);// - dCandBg[iIndexMethod]; 
+	dIntTot = fFitInvMassPeak->IntegralFast(nPoints,dX,dW,dMassWindow[0],dMassWindow[1]) / hInvMass->GetBinWidth(5);
+ 	dIntBg = fFitInvMassBg->IntegralFast(nPoints,dX,dW,dMassWindow[0],dMassWindow[1]) /  hInvMass->GetBinWidth(5);
+	dIntSig = (dIntTot - dIntBg);
+
+	dCandTot[iIndexMethod] = dIntTot;
+	dCandBg[iIndexMethod] = dIntBg;
+	dCandSig[iIndexMethod] = dIntSig;
+
+	iIndexMethod++;
+
+	dIntTot = fFitInvMassFixed->IntegralFast(nPoints,dX,dW,dMassWindow[0],dMassWindow[1]) / hInvMass->GetBinWidth(5);
+ 	dIntBg = fFitInvMassBg->IntegralFast(nPoints,dX,dW,dMassWindow[0],dMassWindow[1]) /  hInvMass->GetBinWidth(5);
+	dIntSig = (dIntTot - dIntBg);
+
+	dCandTot[iIndexMethod] = dIntTot;
+	dCandBg[iIndexMethod] = dIntBg;
+	dCandSig[iIndexMethod] = dIntSig;
+
+	iIndexMethod++;
+
+	dIntTot = fFitInvMassGauss->IntegralFast(nPoints,dX,dW,dMassWindow[0],dMassWindow[1]) / hInvMass->GetBinWidth(5);
+ 	dIntBg = 0; // bg subtracted
+	dIntSig = dIntTot;
+
+	dCandTot[iIndexMethod] = dIntTot;
+	dCandBg[iIndexMethod] = dIntBg;
+	dCandSig[iIndexMethod] = dIntSig;
 
 	iIndexMethod++;
 
