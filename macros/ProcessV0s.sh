@@ -1,6 +1,6 @@
 #!/bin/bash
-inPath=~/NBI/Codes/results/V0s/8/merge/plusplus/
-outPath=~/NBI/Codes/results/V0s/8/
+inPath=~/NBI/Codes/results/V0s/10/merge/
+outPath=~/NBI/Codes/results/V0s/10
 tag=JHEP
 
 

@@ -49,16 +49,16 @@ void V0sExtractFlow(
 	// ===== Extracting signal & flow ===== 
 	TCanvas* cCan;
 
-	cCan = ExtractFlow(hInvMassK0s[0][2],hFlowMassK0s[0][2]);
+	cCan = ExtractFlow(hInvMassK0s[2][0],hFlowMassK0s[2][0]);
 	cCan->Print(Form("%s/fitK0s/test.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
 
-
+/*
 	TH1D* hInvMassK0s_rebin = (TH1D*) hInvMassK0s[0][2]->Clone("hInvMassK0s_rebin");
 	hInvMassK0s_rebin->Rebin(6);
 
 	cCan = ExtractFlow(hInvMassK0s_rebin,hFlowMassK0s[0][2]);
 	cCan->Print(Form("%s/fitK0s/test_rebin.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
-
+*/
 	/*
 	for(Int_t i(0); i < iNumCentBins; i++)
 	{
@@ -329,11 +329,67 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass)
 	{
 		printf("Cand::Method %s: Sig %g / Bg %g / Total %g (Sig+BG %g) / Sig/Bg %g\n",sMethod[i].Data(),dCandSig[i],dCandBg[i], dCandTot[i], dCandSig[i]+dCandBg[i],dCandSig[i]/dCandBg[i]);
 	}
-		// fitting flow mass dist
-	cCan->cd(2);
+	
+
+
+	// fitting flow mass dist
+	TCanvas* cCanFlowTemp = new TCanvas("cCanFlowTemp","FlowTemp",2000,2000);
+	cCanFlowTemp->Divide(2,2);
+	cCanFlowTemp->cd(1);
+	
+	TH1D* hFlowMass_temp = (TH1D*) hFlowMass->Clone("hFlowMass_temp");
+	TH1D* hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
+
+	// side bands fitting
+
+	for(Int_t i(1); i < hFlowMass->GetNbinsX()+1; i++)
+	{
+		if(hFlowMass->GetBinCenter(i) > dMassWindow[0] && hFlowMass->GetBinCenter(i) < dMassWindow[1])
+		{
+			hFlowMass_side->SetBinError(i,9999999999999); 
+		}
+	}
+	
+	TF1* fFitFlowMass_side = new TF1("fFitFlowMass_side","pol2(0)",0.4,0.6);
+	hFlowMass_side->Fit("fFitFlowMass_side","R");
+
+	// Fitting by vTot (LH side)
+
+	TF1* fFitFlowMassTot = new TF1("fFitFlowMassTot","gaus(0)+gaus(3)+pol2(6)",0.4,0.6);
+	fFitFlowMassTot->SetParameter(0,-0.05);
+	fFitFlowMassTot->SetParameter(1,0.49);
+	fFitFlowMassTot->SetParameter(2,0.05);
+	fFitFlowMassTot->SetParameter(3,-0.05);
+	fFitFlowMassTot->SetParameter(4,0.49);
+	fFitFlowMassTot->SetParameter(5,0.05);
+	fFitFlowMassTot->SetParameter(6,fFitFlowMass_side->GetParameter(0));
+	fFitFlowMassTot->SetParameter(7,fFitFlowMass_side->GetParameter(1));
+	fFitFlowMassTot->SetParameter(8,fFitFlowMass_side->GetParameter(2));
+	//fFitFlowMassTot->FixParameter(3,fFitFlowMass_side->GetParameter(0));
+	//fFitFlowMassTot->FixParameter(4,fFitFlowMass_side->GetParameter(1));
+	//fFitFlowMassTot->FixParameter(5,fFitFlowMass_side->GetParameter(2));
+	hFlowMass_temp->Fit("fFitFlowMassTot","R");
+
+	TF1* fFitFlowMassTot = new TF1("fFitFlowMassTot","gaus(0)+gaus(3)+pol2(6)",dMassWindow[0],dMassWindow[1]);
+
+
+	// drawing
+
+	cCanFlowTemp->cd(1);
+	hFlowMass_temp->SetMinimum(0.00);
+	hFlowMass_temp->SetMaximum(0.11);
+	hFlowMass_temp->Draw();
+
+	cCanFlowTemp->cd(2);
+	hFlowMass_side->SetMinimum(0.00);
+	hFlowMass_side->SetMaximum(0.11);
+	hFlowMass_side->Draw();
+
+
 	//TF1* fFitFlowMass = new TF1("fFitFlowMass","pol1(0)",0.4,0.6); 
 	//hFlowMass->Fit("fFitFlowMass","R");
 
+	cCanFlowTemp->Print("~/NBI/Codes/results/V0s/10/plots_JHEP/fitK0s/flow_temp.png","png");
 
 	return cCan;
 	
