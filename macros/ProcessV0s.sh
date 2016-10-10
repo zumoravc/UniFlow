@@ -3,7 +3,6 @@ inPath=~/NBI/Codes/results/V0s/10/merge/
 outPath=~/NBI/Codes/results/V0s/10
 tag=JHEP
 
-
 # =================================================
 
 mkdir -pv ${outPath}

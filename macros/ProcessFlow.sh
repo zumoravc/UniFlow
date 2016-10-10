@@ -1,8 +1,9 @@
 #!/bin/bash
 
-outDir="/home/vojtech/NBI/Codes/results/TPConly"
+inDir=~/NBI/Codes/results/V0s/8/merge/plusplus
+outDir=~/NBI/Codes/results/V0s/8/JHEP
 
-macroPath="/home/vojtech/NBI/Codes/macros"
+macroPath=~/NBI/Codes/macros
 
 mkdir -pv ${outDir}
 mkdir -pv ${outDir}/CompYouRef
@@ -11,4 +12,4 @@ mkdir -pv ${outDir}/CompKatarinaDiff
 
 #alienv enter AliPhysics/latest
 
-root -l -b -q ${macroPath}/ProcessFlow.C
+root -l -b -q ${macroPath}/ProcessFlow.C\(\"${inDir}/AnalysisResults.root\",\"${outDir}\"\)
