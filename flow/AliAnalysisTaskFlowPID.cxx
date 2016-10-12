@@ -752,15 +752,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fArrV0sALambdaFiltered.Clear("C");
 
   // filtering objects and filling relevant containers
-  
-  // tracsk
-  AliAODTrack* inTrack = 0x0;
-  for(Int_t i(0); i < iTracks; i++)
-  {
-    inTrack = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
-    FilterTrack(inTrack);
-  }
-
+  FilterTracks();
 
   // track counters in different regions
   Int_t iNumTracksSelected = 0;
@@ -1402,14 +1394,29 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 	return kTRUE;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskFlowPID::FilterTrack(const AliAODTrack* track)
+void AliAnalysisTaskFlowPID::FilterTracks()
 {
-  if(IsTrackSelected)
-  {
-  
-    //new(fArrTracksSelected[iNumTracksSelected]) AliAODTrack(*track)
-  }
+  const Int_t iNumTracks = fAOD->GetNumberOfTracks();
+  Int_t iNumSelected = 0;
 
+  if(iNumTracks > 0)
+    return;
+
+  AliAODTrack* track = 0x0;
+  for(Int_t i(0); i < iNumTracks; i++)
+  {
+    track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
+    
+    if(!track)
+      continue;
+
+    if(IsTrackSelected(track))
+    {  
+      new(fArrTracksFiltered[iNumSelected]) AliAODTrack(*track);
+      iNumTracks++;
+    }
+  }
+  
   return;
 }
 //_____________________________________________________________________________
