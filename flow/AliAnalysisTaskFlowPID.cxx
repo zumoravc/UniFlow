@@ -767,12 +767,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   Int_t iNumTracksSelectedNew = FilterTracks();
 
   // testing filtering
+  fTestTracksMult->Fill(iNumTracksSelectedNew);
+  
   AliAODTrack* tempTrack = 0x0;
   for(Int_t i(0); i < iNumTracksSelectedNew; i++)
   {
     tempTrack = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
     fTestTracksPt->Fill(tempTrack->Pt());
-    fTestTracksMult->Fill(iNumTracksSelectedNew);
   }
 
   // track counters in different regions
@@ -971,6 +972,10 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       iNumGap10N++;
     }    
   }   // end of loop over all tracks
+
+  // testing number of tracks 
+  //printf("TracksNum: Old: %d / new %d / clones size: %d (fast: %d)\n",iNumTracksSelected,iNumTracksSelectedNew,fArrTracksFiltered.GetEntries(),fArrTracksFiltered.GetEntriesFast());
+
 
   if(iNumTracksSelected < 2) return; // 0 tracks selected in this event
 
@@ -1436,8 +1441,8 @@ Int_t AliAnalysisTaskFlowPID::FilterTracks()
 
     if(IsTrackSelected(track))
     {  
-      iNumSelected++;
       new(fArrTracksFiltered[iNumSelected]) AliAODTrack(*track);
+      iNumSelected++;
     }
   }
   
