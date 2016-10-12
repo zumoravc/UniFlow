@@ -1,5 +1,4 @@
 /**************************************************************************
-/**************************************************************************
  * Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
  *                                                                        *
  * Author: The ALICE Off-line Project.                                    *
@@ -771,7 +770,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   AliAODTrack* tempTrack = 0x0;
   for(Int_t i(0); i < iNumTracksSelectedNew; i++)
   {
-    tempTrack = static_cast<AliAODTrack*>(fArrTracksFiltered->At(i));
+    tempTrack = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
     fTestTracksPt->Fill(tempTrack->Pt());
     fTestTracksMult->Fill(iNumTracksSelectedNew);
   }
