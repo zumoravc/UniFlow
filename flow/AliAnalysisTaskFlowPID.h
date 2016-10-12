@@ -66,7 +66,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 				Bool_t                  IsTrackSelected(const AliAODTrack* track);
-                void            FilterTracks();
+                Int_t            FilterTracks();
 
 				void                  IsV0aK0s(const AliAODv0* v0);
 				void                 IsV0aLambda(const AliAODv0* v0);
