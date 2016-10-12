@@ -177,6 +177,10 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*                  fOutListV0s;    //! main output list
         TList*                  fOutListQA;	//! QA output list
 
+        // testing / temporary histos
+        TH1D*                   fTestTracksPt;      //! test histo
+        TH1D*                   fTestTracksMult;      //! test histo
+
         //std histos
         TH1D*										fEventMult;			 //! selected events multiplicity distribution
         TH1D*   					      fCentralityDis;     //! event centrality distribution

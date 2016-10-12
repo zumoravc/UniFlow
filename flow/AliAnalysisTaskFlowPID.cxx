@@ -165,7 +165,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fQATrackFilterMap(0),
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
-  fQAV0sCounterLambda(0)
+  fQAV0sCounterLambda(0),
+
+  fTestTracksPt(0x0),
+  fTestTracksMult(0x0)
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
@@ -283,7 +286,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fQATrackFilterMap(0),
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
-  fQAV0sCounterLambda(0)
+  fQAV0sCounterLambda(0),
+
+  fTestTracksPt(0x0),
+  fTestTracksMult(0x0)
 {
   // constructor
 
@@ -413,6 +419,13 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListQA = new TList();
   fOutListQA->SetOwner(kTRUE);
 
+  // test histos
+  fTestTracksPt = new TH1D("fTestTracksPt", "Tracks #it{p}_{T} (selected); #it{p}^{track}_{T} (GeV/#it{c});", 100, 0, 10);    
+  fOutList->Add(fTestTracksPt);
+  fTestTracksMult = new TH1D("fTestTracksMult","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
+  fOutList->Add(fTestTracksMult);
+  
+ 
   // main output
   fEventMult = new TH1D("fEventMult","Track multiplicity (all tracks in selected events); tracks;",100,0,10000);
   fOutList->Add(fEventMult);
@@ -753,6 +766,15 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   // filtering objects and filling relevant containers
   Int_t iNumTracksSelectedNew = FilterTracks();
+
+  // testing filtering
+  AliAODTrack* tempTrack = 0x0;
+  for(Int_t i(0); i < iNumTracksSelectedNew; i++)
+  {
+    tempTrack = static_cast<AliAODTrack*>(fArrTracksFiltered->At(i));
+    fTestTracksPt->Fill(tempTrack->Pt());
+    fTestTracksMult->Fill(iNumTracksSelectedNew);
+  }
 
   // track counters in different regions
   Int_t iNumTracksSelected = 0;
