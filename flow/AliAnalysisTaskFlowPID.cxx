@@ -1399,12 +1399,15 @@ Int_t AliAnalysisTaskFlowPID::FilterTracks()
   const Int_t iNumTracks = fAOD->GetNumberOfTracks();
   Int_t iNumSelected = 0;
 
-  if(iNumTracks > 0)
+  if(iNumTracks < 1)
     return 0;
 
   AliAODTrack* track = 0x0;
   for(Int_t i(0); i < iNumTracks; i++)
   {
+    if(iNumSelected >= 10000) // checking TClonesArray overflow
+      return iNumSelected;
+
     track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
     
     if(!track)
@@ -1412,8 +1415,8 @@ Int_t AliAnalysisTaskFlowPID::FilterTracks()
 
     if(IsTrackSelected(track))
     {  
+      iNumSelected++;
       new(fArrTracksFiltered[iNumSelected]) AliAODTrack(*track);
-      iNumTracks++;
     }
   }
   
