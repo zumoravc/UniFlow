@@ -66,6 +66,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 				Bool_t                  IsTrackSelected(const AliAODTrack* track);
+                void            FilterTrack(const AliAODTrack* track);
+
 				void                  IsV0aK0s(const AliAODv0* v0);
 				void                 IsV0aLambda(const AliAODv0* v0);
 				Bool_t                  IsV0Selected(const AliAODv0* v0);
@@ -166,6 +168,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TComplex                fVvec2Gap09P_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
         TComplex                fVvec2Gap09N_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
         
+        TClonesArray            fArrTracksFiltered; // container for filtered tracks
+        TClonesArray            fArrV0sK0sFiltered; // container for filtered V0 K0s candidates
+        TClonesArray            fArrV0sLambdaFiltered; // container for filtered V0 Lambda candidates
+        TClonesArray            fArrV0sALambdaFiltered; // container for filtered V0 ALambda candidates
+
         TList*                  fOutList;    //! main output list
         TList*                  fOutListV0s;    //! main output list
         TList*                  fOutListQA;	//! QA output list

@@ -90,6 +90,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fQvec2Gap08N(0),
   fQvec2Gap09N(0),
   fQvec2Gap10N(0),
+  fArrTracksFiltered("AliAODTrack",10000),
+  fArrV0sK0sFiltered("AliAODv0",5000),
+  fArrV0sLambdaFiltered("AliAODv0",5000),
+  fArrV0sALambdaFiltered("AliAODv0",5000),
 
   fOutList(0),
   fOutListV0s(0),
@@ -203,6 +207,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fQvec2Gap08N(0),
   fQvec2Gap09N(0),
   fQvec2Gap10N(0),
+  fArrTracksFiltered("AliAODTrack",10000),
+  fArrV0sK0sFiltered("AliAODv0",5000),
+  fArrV0sLambdaFiltered("AliAODv0",5000),
+  fArrV0sALambdaFiltered("AliAODv0",5000),
   
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
@@ -736,7 +744,24 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   
   const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
+ 
+  // cleaning all TClonesArray containers
+  fArrTracksFiltered.Clear("C");
+  fArrV0sK0sFiltered.Clear("C");
+  fArrV0sLambdaFiltered.Clear("C");
+  fArrV0sALambdaFiltered.Clear("C");
+
+  // filtering objects and filling relevant containers
   
+  // tracsk
+  AliAODTrack* inTrack = 0x0;
+  for(Int_t i(0); i < iTracks; i++)
+  {
+    inTrack = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
+    FilterTrack(inTrack);
+  }
+
+
   // track counters in different regions
   Int_t iNumTracksSelected = 0;
   Int_t iNumGap00P = 0;
@@ -1375,6 +1400,17 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 	}
 
 	return kTRUE;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskFlowPID::FilterTrack(const AliAODTrack* track)
+{
+  if(IsTrackSelected)
+  {
+  
+    //new(fArrTracksSelected[iNumTracksSelected]) AliAODTrack(*track)
+  }
+
+  return;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
