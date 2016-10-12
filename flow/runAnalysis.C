@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -18,7 +18,7 @@ void runAnalysis()
 
     gSystem->AddIncludePath("-I$ALICE_ROOT/include");
     gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
-    gSystem->AddIncludePath("-I$ALICE_PHYSICS/../src/OADB/COMMON/MULTIPLICITY"); 
+    //gSystem->AddIncludePath("-I$ALICE_PHYSICS/../src/OADB/COMMON/MULTIPLICITY"); 
     gSystem->Load("libPhysics.so");
     gSystem->Load("libOADB.so");
     gSystem->Load("libSTEERBase");
@@ -166,7 +166,7 @@ void runAnalysis()
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
-        chain->Add("~/NBI/Codes/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
+        chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
         // if we want to run on grid, we create and configure the plugin
