@@ -764,13 +764,14 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fArrV0sALambdaFiltered.Clear("C");
 
   // filtering objects and filling relevant containers
-  Int_t iNumTracksSelectedNew = FilterTracks();
+  FilterTracks();
+  FilterV0s();
 
   // testing filtering
-  fTestTracksMult->Fill(iNumTracksSelectedNew);
+  fTestTracksMult->Fill(fArrTracksFiltered.GetEntriesFast());
   
   AliAODTrack* tempTrack = 0x0;
-  for(Int_t i(0); i < iNumTracksSelectedNew; i++)
+  for(Int_t i(0); i < fArrTracksFiltered.GetEntriesFast(); i++)
   {
     tempTrack = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
     fTestTracksPt->Fill(tempTrack->Pt());
@@ -1008,7 +1009,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
       fQAV0sCounter->Fill(0);
 
-		  V0sQA(fV0,0); // Filling QA histograms 'Before cuts' for V0s in selected events
+		  //V0sQA(fV0,0); // Filling QA histograms 'Before cuts' for V0s in selected events
     
       if(!IsV0Selected(fV0))
         continue;
@@ -1017,7 +1018,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
       iNumV0sSelected++;
 
-      V0sQA(fV0,1); // Filling QA histos after cuts
+      //V0sQA(fV0,1); // Filling QA histos after cuts
 
       // selected V0 candidates
       fPtBinIndex = GetPtBinIndex(fV0->Pt());
@@ -1420,19 +1421,19 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 	return kTRUE;
 }
 //_____________________________________________________________________________
-Int_t AliAnalysisTaskFlowPID::FilterTracks()
+void AliAnalysisTaskFlowPID::FilterTracks()
 {
   const Int_t iNumTracks = fAOD->GetNumberOfTracks();
   Int_t iNumSelected = 0;
 
   if(iNumTracks < 1)
-    return 0;
+    return;
 
   AliAODTrack* track = 0x0;
   for(Int_t i(0); i < iNumTracks; i++)
   {
     if(iNumSelected >= 10000) // checking TClonesArray overflow
-      return iNumSelected;
+      return;
 
     track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
     
@@ -1446,7 +1447,62 @@ Int_t AliAnalysisTaskFlowPID::FilterTracks()
     }
   }
   
-  return iNumSelected;
+  return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskFlowPID::FilterV0s()
+{
+  const Int_t iNumV0s = fAOD->GetNumberOfV0s();
+  Int_t iNumK0sSelected = 0, iNumLambdaSelected = 0, iNumALambdaSelected = 0; 
+
+  if(iNumV0s < 1)
+    return;
+
+  AliAODv0* v0 = 0x0;
+  for(Int_t i(0); i < iNumV0s; i++)
+  {
+    if(iNumK0sSelected >= 5000 || iNumLambdaSelected >= 5000 || iNumALambdaSelected >= 5000) // checking TClonesArray overflow
+      return; 
+
+    v0 = static_cast<AliAODv0*>(fAOD->GetV0(i));
+    
+    if(!v0)
+      continue;
+
+    fV0candK0s = kTRUE;
+    fV0candLambda = kTRUE;
+    fV0candALambda = kTRUE;     
+
+    V0sQA(v0,0); // Filling QA histograms 'Before cuts' for V0s in selected events
+  
+    if(!IsV0Selected(v0))
+      continue;
+
+    // !!! after this point value of V0s flags (fV0cand...) should not be changed !!!
+    
+    V0sQA(v0,1); // Filling QA histos after cuts
+
+    // Filling the Arrays
+    if(fV0candK0s)
+    {
+      new(fArrV0sK0sFiltered[iNumK0sSelected]) AliAODv0(*v0);
+      iNumK0sSelected++;
+    }
+
+    if(fV0candLambda)
+    {
+      new(fArrV0sLambdaFiltered[iNumLambdaSelected]) AliAODv0(*v0);
+      iNumLambdaSelected++;
+    }    
+
+    if(fV0candALambda)
+    {
+      new(fArrV0sALambdaFiltered[iNumALambdaSelected]) AliAODv0(*v0);
+      iNumALambdaSelected++;
+    }
+  }
+
+  return;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
