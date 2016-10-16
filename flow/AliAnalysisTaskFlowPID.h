@@ -75,9 +75,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
                 Bool_t          AreRefFlowVectorsFilled(const Float_t dEtaGap = -1, const Short_t iHarm = -1);
                 void            FillRefFlowVectors(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2);
                 void            EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
+                void            EstimateRefPtDiffCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
                 void            EstimateV0Cumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
-                void            EstimateV0CumulantWithMass(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
-
+                
 				void                    EventQA(const AliAODEvent* event);
 				void            FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
