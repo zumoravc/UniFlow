@@ -62,7 +62,10 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
         const static Int_t 			fNumCentBins = 9;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
         static Double_t					fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
-
+        const static Int_t    fNumHarmonics = 1; // number of harmonics
+        static Int_t          fHarmonics[fNumHarmonics]; // values of used harmonics
+        const static Int_t    fNumEtaGap = 4; // number of harmonics
+        static Double_t          fEtaGap[fNumEtaGap]; // values of used harmonics
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 				Bool_t                  IsTrackSelected(const AliAODTrack* track);
@@ -76,7 +79,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
                 void            FillRefFlowVectors(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2);
                 void            EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
                 void            EstimateRefPtDiffCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
-                void            EstimateV0Cumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
+                void            EstimateV0Cumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, const Short_t iSpecies = 1, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
+                void            EstimateV0Cumulant(Short_t iEtaGapIndex = 0, Short_t iHarmonicsIndex = 0);
                 
 				void                    EventQA(const AliAODEvent* event);
 				void            FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
@@ -216,23 +220,28 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile*                               fRefCorTwo2Gap09;                //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap09_test;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap10;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-				TProfile*								fDiffCorTwo2[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo2Gap00[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo2Gap04[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo2Gap08[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-				TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+    	TProfile*								fDiffCorTwo2[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+    	TProfile*								fDiffCorTwo2Gap00[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+    	TProfile*								fDiffCorTwo2Gap04[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+    	TProfile*								fDiffCorTwo2Gap08[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+    	TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
+    	TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
-				TProfile2D* 			fV0sDiffTwo2Gap00P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-				TProfile2D*             fV0sDiffTwo2Gap00N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-                TProfile2D*             fV0sDiffTwo2Gap09P_K0s_test[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-                TProfile2D*             fV0sDiffTwo2Gap09N_K0s_test[fNumCentBins];
-  				TProfile2D*             fV0sDiffTwo2Gap09P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-				TProfile2D*             fV0sDiffTwo2Gap09N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-				TProfile2D*             fV0sDiffTwo2Gap00P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
-				TProfile2D*             fV0sDiffTwo2Gap00N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
-				TProfile2D*             fV0sDiffTwo2Gap09P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
-				TProfile2D*             fV0sDiffTwo2Gap09N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwoPos_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwoNeg_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwoPos_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+       
+        TProfile2D* 			fV0sDiffTwo2Gap00P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+    	TProfile2D*             fV0sDiffTwo2Gap00N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwo2Gap09P_K0s_test[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwo2Gap09N_K0s_test[fNumCentBins];
+		TProfile2D*             fV0sDiffTwo2Gap09P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+    	TProfile2D*             fV0sDiffTwo2Gap09N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+    	TProfile2D*             fV0sDiffTwo2Gap00P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+    	TProfile2D*             fV0sDiffTwo2Gap00N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+    	TProfile2D*             fV0sDiffTwo2Gap09P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+    	TProfile2D*             fV0sDiffTwo2Gap09N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events

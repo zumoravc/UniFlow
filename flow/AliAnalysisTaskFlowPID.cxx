@@ -53,6 +53,8 @@ Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 
 Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.13,1.14,1.15,1.16};
+Int_t AliAnalysisTaskFlowPID::fHarmonics[] = {2};
+Double_t AliAnalysisTaskFlowPID::fEtaGap[] = {0.,0.4,0.9,1.};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
@@ -334,6 +336,17 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
 
   for(Int_t i(0); i < fNumCentBins; i++)
   {
+    for(Int_t j(0); j < fNumHarmonics; j++)
+    {
+      for(Int_t k(0); k < fNumEtaGap; k++)
+      {
+        fV0sDiffTwoPos_K0s[i][j][k] = 0x0;
+        fV0sDiffTwoNeg_K0s[i][j][k] = 0x0;
+        fV0sDiffTwoPos_Lambda[i][j][k] = 0x0;
+        fV0sDiffTwoNeg_Lambda[i][j][k] = 0x0;
+      }
+    }
+    
     fDiffCorTwo2[i] = 0;
     fDiffCorTwo2Gap00[i] = 0;
     fDiffCorTwo2Gap04[i] = 0;
@@ -800,22 +813,55 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   FilterTracks();
   FilterV0s();
 
+ 
+  //Double_t dEtaGap2 = 1.2;
+  //TString sTest = Form("%02.2g %02.2g ",10*dEtaGap, 10*dEtaGap2);
+  //printf("Test EtaGap (double) %f / (string) %s / (string *10) \n",dEtaGap,sTest.Data());
 
-  // potential begin of loop over EtaGap & Harmonics
 
-  FillRefFlowVectors();
-  EstimateRefCumulant(0.9, 2, fRefCorTwo2Gap09_test);
 
-  if(fDiffFlow)
+
+
+  // begin of loop over EtaGap & Harmonics
+  Int_t iHarm = 0;
+  Double_t dEtaGap = 0;
+  TProfile2D* profV0sPos = 0x0;
+  TProfile2D* profV0sNeg = 0x0;
+  for(Int_t i(0); i < fNumHarmonics; i++)
   {
-    //EstimateRefPtDiffCumulant(0.4,2,fDiffCorTwo2Gap04[fCentBinIndex],fDiffCorTwo2Gap00[fCentBinIndex]);  
-  }
+    for(Int_t j(0); j < fNumEtaGap; j++)
+    {
+      iHarm = fHarmonics[i];
+      dEtaGap = fEtaGap[j];
+
+      FillRefFlowVectors(dEtaGap, iHarm);
+      EstimateRefCumulant(dEtaGap, iHarm, fRefCorTwo2Gap09_test);
+
+      if(fDiffFlow)
+      {
+        //EstimateRefPtDiffCumulant(0.4,2,fDiffCorTwo2Gap04[fCentBinIndex],fDiffCorTwo2Gap00[fCentBinIndex]);  
+      }
+      
+      if(fPID)
+      {
+        // output & profile finding testing
+        //TString sNameProfPos = Form("fV0sDiffTwo%d_Gap%02.2gP_K0s_Cent%d",iHarm,10*0.,fCentBinIndex);
+        //TString sNameProfNeg = Form("fV0sDiffTwo%d_Gap%02.2gN_K0s_Cent%d",iHarm,10*dEtaGap,fCentBinIndex);
+        //printf("%s\n",sNameProfPos.Data());
+        //profV0sPos = (TProfile2D*) fOutListV0s->FindObject(sNameProfPos.Data());
+        //profV0sNeg = (TProfile2D*) fOutListV0s->FindObject(sNameProfNeg.Data());
+        
+        //profV0sPos = (TProfile2D*) fOutListV0s->FindObject(Form("fV0sDiffTwo%d_Gap%02.2gP_K0s_Cent%d",iHarm,10*dEtaGap,fCentBinIndex));
+        //profV0sNeg = (TProfile2D*) fOutListV0s->FindObject(Form("fV0sDiffTwo%d_Gap%02.2gN_K0s_Cent%d",iHarm,10*dEtaGap,fCentBinIndex));
+        //if(!profV0sPos || !profV0sNeg)
+        //  continue;
+        
+        EstimateV0Cumulant(dEtaGap, iHarm, fV0sDiffTwoPos_K0s, fV0);
+      }
   
-  if(fPID)
-  {
-    EstimateV0Cumulant(0.,2,fV0sDiffTwo2Gap09P_K0s_test[fCentBinIndex],fV0sDiffTwo2Gap09N_K0s_test[fCentBinIndex]);
-  }
-  
+    } // end of loop over eta gap
+  } // end of loop over harmonics
+ 
   // end of potential loop over EtaGap & Harmonics
 
   PostData(1, fOutList);  // stream the results the analysis of this event to the output manager which will take care of writing it to a file
@@ -930,7 +976,7 @@ void AliAnalysisTaskFlowPID::EstimateRefPtDiffCumulant(const Float_t dEtaGap, co
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Float_t dEtaGap, const Short_t iHarm, TProfile2D* profilePos, TProfile2D* profileNeg)
+void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Float_t dEtaGap, const Short_t iHarm, const Short_t iSpecies, TProfile2D* profilePos, TProfile2D* profileNeg)
 {
   // checking if pointers are valid
   if(!profilePos)
@@ -943,9 +989,22 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Float_t dEtaGap, const Sho
   if(!AreRefFlowVectorsFilled(dEtaGap,iHarm)) // if yes fill ref flow vectors
     FillRefFlowVectors(dEtaGap, iHarm);
 
-  // POIs : so far K0s
+  // POIs
+
+  TClonesArray arrayV0;
+  if(iSpecies == 1) // K0s
+  {
+    arrayV0 = fArrV0sK0sFiltered;
+  }
+  else if (iSpecies == 2) // (anti)Lambda
+  {
+    arrayV0 = fArrV0sLambdaFiltered;
+  }
+  else 
+    return;
+
   const Double_t dEtaGapCut = dEtaGap / 2; // eta cut limit for POI
-  const Int_t iNumV0s = fArrV0sK0sFiltered.GetEntries();
+  const Int_t iNumV0s = arrayV0.GetEntries();
   
   TComplex vecVpos[fNumPtBins]; // flow vector for POIs in positive eta (including eta gap cut) [or all POIs with no eta gap]
   TComplex vecVneg[fNumPtBins]; // flow vector for POIs in negative eta (including eta gap cut)
@@ -969,7 +1028,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Float_t dEtaGap, const Sho
 
     for(Int_t i(0); i < iNumV0s; i++) // loop over POIs
     {
-      v0 = static_cast<AliAODv0*>(fArrV0sK0sFiltered.At(i));
+      v0 = static_cast<AliAODv0*>(arrayV0.At(i));
 
       if(!v0)
         continue;
@@ -1039,6 +1098,11 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Float_t dEtaGap, const Sho
   } // end of loop over Minv bins
 
   return; 
+}
+//_____________________________________________________________________________
+void AliAnalysisFlowPID::EstimateV0Cumulant(Short_t iEtaGapIndex = 0, Short_t iHarmonicsIndex = 0)
+{
+  Estima
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::AreRefFlowVectorsFilled(const Float_t dEtaGap, const Short_t iHarm)
