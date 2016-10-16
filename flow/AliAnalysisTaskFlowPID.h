@@ -72,8 +72,14 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				void                  IsV0aK0s(const AliAODv0* v0);
 				void                 IsV0aLambda(const AliAODv0* v0);
 				Bool_t                  IsV0Selected(const AliAODv0* v0);
+                Bool_t          AreRefFlowVectorsFilled(const Float_t dEtaGap = -1, const Short_t iHarm = -1);
+                void            FillRefFlowVectors(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2);
+                void            EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
+                void            EstimateV0Cumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
+                void            EstimateV0CumulantWithMass(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
+
 				void                    EventQA(const AliAODEvent* event);
-				void            V0sQA(const AliAODv0* v0, const Short_t iQAindex);
+				void            FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
     
 	    	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
@@ -122,6 +128,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAODEvent*            fAOD;           //! input event
         AliPIDResponse*					fPIDResponse;		//! PID response
         AliTPCPIDResponse               fTPCPIDResponse;       // TPC PID response
+        Float_t                         fEtaCutFlag;    // value of eta cut during flow vectors filling  (actual value)
+        Short_t                         fHarmFlag;    // value of harmonics during flow vectors filling  (actual value)
         AliAODTrack*						fTrack;					//! AOD track
         Double_t 								fTrackPt;				// track pT
         Double_t 								fTrackPhi;				// track phi
@@ -139,6 +147,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Float_t									fCentPercentile;					// event centrality bin index indicator
         Short_t                 fPtBinIndex;        // track pT bin index indicator
         Short_t									fMinvFlowBinIndex;		// track pT bin index indicator
+        
+        TComplex                                fVecRefPos;                 // complex flow vector Q for RFPs in positive eta
+        TComplex                                fVecRefNeg;                 // complex flow vector Q for RFPs in negative eta
+        Int_t                                   fCountRefPos;           // counter for number of RFPs in positive eta
+        Int_t                                   fCountRefNeg;           // counter for number of RFPs in positive eta
+
         TComplex								fQvec2;					// complex flow vector Q (n = 2)
         TComplex								fQvec3;					// complex flow vector Q (n = 3)
         TComplex								fQvec4;					// complex flow vector Q (n = 4)
@@ -199,7 +213,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile*								fRefCorTwo2Gap00;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap04;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*               fRefCorTwo2Gap08;                //! event averaged 2-particle correlation for reference flow <<2>> v5
-        TProfile*								fRefCorTwo2Gap09;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*                               fRefCorTwo2Gap09;                //! event averaged 2-particle correlation for reference flow <<2>> v5
+        TProfile*								fRefCorTwo2Gap09_test;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
         TProfile*								fRefCorTwo2Gap10;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
 				TProfile*								fDiffCorTwo2[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 				TProfile*								fDiffCorTwo2Gap00[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
@@ -208,9 +223,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 				TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
 
-				TProfile2D* 			      fV0sDiffTwo2Gap00P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+				TProfile2D* 			fV0sDiffTwo2Gap00P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
 				TProfile2D*             fV0sDiffTwo2Gap00N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-				TProfile2D*             fV0sDiffTwo2Gap09P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+                TProfile2D*             fV0sDiffTwo2Gap09P_K0s_test[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+                TProfile2D*             fV0sDiffTwo2Gap09N_K0s_test[fNumCentBins];
+  				TProfile2D*             fV0sDiffTwo2Gap09P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
 				TProfile2D*             fV0sDiffTwo2Gap09N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
 				TProfile2D*             fV0sDiffTwo2Gap00P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 				TProfile2D*             fV0sDiffTwo2Gap00N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
@@ -220,11 +237,13 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 				// V0s histos
         TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
         TH1D*                                       fV0sInvMassK0sGap00;        //! selected K0s inv. mass distribution (pT & cent integrated)
-        TH1D*										fV0sInvMassK0sGap09;		//! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*                                       fV0sInvMassK0sGap09;        //! selected K0s inv. mass distribution (pT & cent integrated)
+        TH1D*										fV0sInvMassK0sGap09_test;		//! selected K0s inv. mass distribution (pT & cent integrated)
         TH1D*                                       fV0sInvMassLambdaGap00;     //! selected Lambda candidates inv. mass distribution (pT & cent integrated)
         TH1D*										fV0sInvMassLambdaGap09;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
         TH2D*										fV0sK0sGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        TH2D*										fV0sK0sGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
+        TH2D*                                       fV0sK0sGap09[fNumCentBins];                         //! selected K0s distribution (InvMass, pT)
+        TH2D*										fV0sK0sGap09_test[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sLambdaGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         // QA histos // index 0: before / 1: after cuts
@@ -236,33 +255,34 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fQATrackPhi;		//! phi dist of all tracks in all events
         TH1D*										fQATrackFilterMap;//! filter bit of all tracks
         	// QA V0s
+        const static Short_t                        fQAV0sNumSteps = 2;        // number of various steps (0 before cuts / 1 after cuts / 2 testing) 
         TH1D*										fQAV0sCounter;		//! V0s counter
         TH1D*										fQAV0sCounterK0s;		//! K0s counter
         TH1D*										fQAV0sCounterLambda;		//! Lambda counter
-        TH1D*										fQAV0sRecoMethod[2];	//! offline/online V0 reconstruction method
-        TH1D*										fQAV0sTPCRefit[2];	//! TPC refit true/false
-        TH1D*										fQAV0sKinks[2];	//! V0 kinks true/false
-        TH1D*										fQAV0sDCAtoPV[2];	//! V0 DCA to PV
-        TH1D*										fQAV0sDCADaughters[2];	//! DCA between V0 daughters
-        TH1D*										fQAV0sDecayRadius[2];	//! Distance between PV and Secondary vertex in transverse plane
-        TH1D*                                       fQAV0sDaughterPt[2];    //! pT dist of V0 daughters
-        TH1D*										fQAV0sDaughterPhi[2];	//! pT dist of V0 daughters
-        TH1D*                                       fQAV0sDaughterEta[2];   //! pseudorapidity dist of V0 daughters
-        TH2D*										fQAV0sDaughterTPCdEdxPt[2];	//! TPC dEdx vs pT of V0 daughters
-        TH1D*										fQAV0sMotherPt[2];	//! pT dist of V0s
-        TH1D*										fQAV0sMotherPhi[2];	//! azimuthal dist of V0s
-        TH1D*                                       fQAV0sMotherEta[2]; //! pseudorapidity dist of V0s
-        TH1D*                                       fQAV0sMotherRapK0s[2];  //! rapidity dist of V0s (K0s mass hypothesis)
-        TH1D*                                       fQAV0sMotherRapLambda[2];   //! rapidity dist of V0s (Lambda mass hypothesis)
-        TH1D*                                       fQAV0sInvMassK0s[2];    //! inv. mass dist of V0s (K0s mass hypothesis)
-        TH1D*										fQAV0sInvMassLambda[2];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
-        TH1D*										fQAV0sCPAK0s[2];	//! cosine of pointing angle of K0s candidates
-        TH1D*										fQAV0sCPALambda[2];	//! cosine of pointing angle of Lambda candidates
-        TH1D*										fQAV0sNumTauK0s[2];	//! number of c*tau of K0s candidates
-        TH1D*										fQAV0sNumTauLambda[2];	//! number of c*tau of Lambda candidates
-        TH2D*										fQAV0sArmenterosK0s[2];	//! Armenteros-Podolanski plot for K0s candidates
-        TH2D*										fQAV0sArmenterosLambda[2];	//! Armenteros-Podolanski plot for K0s candidates
-        TH2D*                                       fQAV0sProtonNumSigmaPtLambda[2];  //! number of TPC sigmas and pT of proton (Lambda candidates)
+        TH1D*										fQAV0sRecoMethod[fQAV0sNumSteps];	//! offline/online V0 reconstruction method
+        TH1D*										fQAV0sTPCRefit[fQAV0sNumSteps];	//! TPC refit true/false
+        TH1D*										fQAV0sKinks[fQAV0sNumSteps];	//! V0 kinks true/false
+        TH1D*										fQAV0sDCAtoPV[fQAV0sNumSteps];	//! V0 DCA to PV
+        TH1D*										fQAV0sDCADaughters[fQAV0sNumSteps];	//! DCA between V0 daughters
+        TH1D*										fQAV0sDecayRadius[fQAV0sNumSteps];	//! Distance between PV and Secondary vertex in transverse plane
+        TH1D*                                       fQAV0sDaughterPt[fQAV0sNumSteps];    //! pT dist of V0 daughters
+        TH1D*										fQAV0sDaughterPhi[fQAV0sNumSteps];	//! pT dist of V0 daughters
+        TH1D*                                       fQAV0sDaughterEta[fQAV0sNumSteps];   //! pseudorapidity dist of V0 daughters
+        TH2D*										fQAV0sDaughterTPCdEdxPt[fQAV0sNumSteps];	//! TPC dEdx vs pT of V0 daughters
+        TH1D*                                       fQAV0sMotherPt[fQAV0sNumSteps];  //! pT dist of V0s
+        TH1D*										fQAV0sMotherPhi[fQAV0sNumSteps];	//! azimuthal dist of V0s
+        TH1D*                                       fQAV0sMotherEta[fQAV0sNumSteps]; //! pseudorapidity dist of V0s
+        TH1D*                                       fQAV0sMotherRapK0s[fQAV0sNumSteps];  //! rapidity dist of V0s (K0s mass hypothesis)
+        TH1D*                                       fQAV0sMotherRapLambda[fQAV0sNumSteps];   //! rapidity dist of V0s (Lambda mass hypothesis)
+        TH1D*                                       fQAV0sInvMassK0s[fQAV0sNumSteps];    //! inv. mass dist of V0s (K0s mass hypothesis)
+        TH1D*										fQAV0sInvMassLambda[fQAV0sNumSteps];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
+        TH1D*										fQAV0sCPAK0s[fQAV0sNumSteps];	//! cosine of pointing angle of K0s candidates
+        TH1D*										fQAV0sCPALambda[fQAV0sNumSteps];	//! cosine of pointing angle of Lambda candidates
+        TH1D*										fQAV0sNumTauK0s[fQAV0sNumSteps];	//! number of c*tau of K0s candidates
+        TH1D*										fQAV0sNumTauLambda[fQAV0sNumSteps];	//! number of c*tau of Lambda candidates
+        TH2D*										fQAV0sArmenterosK0s[fQAV0sNumSteps];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2D*										fQAV0sArmenterosLambda[fQAV0sNumSteps];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2D*                                       fQAV0sProtonNumSigmaPtLambda[fQAV0sNumSteps];  //! number of TPC sigmas and pT of proton (Lambda candidates)
         
 
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
