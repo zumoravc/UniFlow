@@ -83,20 +83,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fVecRefNeg(0,0,kFALSE),
   fCountRefPos(0),
   fCountRefNeg(0),
-  fQvec2(0),
-  fQvec3(0),
-  fQvec4(0),
-  fQvec5(0),
-  fQvec2Gap00P(0),
-  fQvec2Gap04P(0),
-  fQvec2Gap08P(0),
-  fQvec2Gap09P(0),
-  fQvec2Gap10P(0),
-  fQvec2Gap00N(0),
-  fQvec2Gap04N(0),
-  fQvec2Gap08N(0),
-  fQvec2Gap09N(0),
-  fQvec2Gap10N(0),
   fArrTracksFiltered("AliAODTrack",10000),
   fArrV0sK0sFiltered("AliAODv0",5000),
   fArrV0sLambdaFiltered("AliAODv0",5000),
@@ -141,11 +127,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCutV0ProtonPIDPtMax(0.),
 
   fEventCounter(0),
-  fV0sMult(0),
-  fV0sInvMassK0sGap00(0),
-  fV0sInvMassK0sGap09(0),
-  fV0sInvMassLambdaGap00(0),
-  fV0sInvMassLambdaGap09(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -173,10 +154,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fQATrackFilterMap(0),
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
-  fQAV0sCounterLambda(0),
-
-  fTestTracksPt(0x0),
-  fTestTracksMult(0x0)
+  fQAV0sCounterLambda(0)
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
@@ -210,20 +188,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fVecRefNeg(0),
   fCountRefPos(0),
   fCountRefNeg(0),
-  fQvec2(0),
-  fQvec3(0),
-  fQvec4(0),
-  fQvec5(0),
-  fQvec2Gap00P(0),
-  fQvec2Gap04P(0),
-  fQvec2Gap08P(0),
-  fQvec2Gap09P(0),
-  fQvec2Gap10P(0),
-  fQvec2Gap00N(0),
-  fQvec2Gap04N(0),
-  fQvec2Gap08N(0),
-  fQvec2Gap09N(0),
-  fQvec2Gap10N(0),
   fArrTracksFiltered("AliAODTrack",10000),
   fArrV0sK0sFiltered("AliAODv0",5000),
   fArrV0sLambdaFiltered("AliAODv0",5000),
@@ -268,12 +232,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fOutListQA(0),
   fEventCounter(0),
 
-  fV0sMult(0),
-
-  fV0sInvMassK0sGap00(0),
-  fV0sInvMassK0sGap09(0),
-  fV0sInvMassLambdaGap00(0),
-  fV0sInvMassLambdaGap09(0),
   fEventMult(0),
   fCentralityDis(0),
   fCentSPDvsV0M(0),
@@ -301,10 +259,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fQATrackFilterMap(0),
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
-  fQAV0sCounterLambda(0),
-
-  fTestTracksPt(0x0),
-  fTestTracksMult(0x0)
+  fQAV0sCounterLambda(0)
 {
   // constructor
   for(Int_t i(0); i < fNumCentBins; i++)
@@ -410,12 +365,6 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListQA = new TList();
   fOutListQA->SetOwner(kTRUE);
 
-  // test histos
-  fTestTracksPt = new TH1D("fTestTracksPt", "Tracks #it{p}_{T} (selected); #it{p}^{track}_{T} (GeV/#it{c});", 100, 0, 10);    
-  fOutList->Add(fTestTracksPt);
-  fTestTracksMult = new TH1D("fTestTracksMult","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
-  fOutList->Add(fTestTracksMult);
-  
  
   // main output
   fEventMult = new TH1D("fEventMult","Track multiplicity (all tracks in selected events); tracks;",100,0,10000);
@@ -435,21 +384,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fTracksCharge = new TH1D("fTracksCharge", "Track charge (selected); charge^{track};", 3,-1.5,1.5);    
   fOutList->Add(fTracksCharge);          
   
-  // V0s histos
-
-  fV0sMult = new TH1D("fV0sMult","V0s multiplicity (in selected events); V0s;",200,0,1000);
-  fOutListV0s->Add(fV0sMult);
-  fV0sInvMassK0sGap00 = new TH1D("fV0sInvMassK0sGap00","K^{0}_{S} InvMass |#Delta#it{#eta}| > 0 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
-  fOutListV0s->Add(fV0sInvMassK0sGap00);
-  fV0sInvMassK0sGap09 = new TH1D("fV0sInvMassK0sGap09","K^{0}_{S} InvMass |#Delta#it{#eta}| > 0.9 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
-  fOutListV0s->Add(fV0sInvMassK0sGap09);
-  fV0sInvMassK0sGap09_test = new TH1D("fV0sInvMassK0sGap09_test","K^{0}_{S} InvMass |#Delta#it{#eta}| > 0.9 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 200,fV0MinMassK0s,fV0MaxMassK0s);          
-  fOutListV0s->Add(fV0sInvMassK0sGap09_test);
-  fV0sInvMassLambdaGap00 = new TH1D("fV0sInvMassLambdaGap00","#Lambda+#bar{#Lambda} InvMass |#Delta#it{#eta}| > 0 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 80,fV0MinMassLambda,fV0MaxMassLambda);          
-  fOutListV0s->Add(fV0sInvMassLambdaGap00);
-  fV0sInvMassLambdaGap09 = new TH1D("fV0sInvMassLambdaGap09","#Lambda+#bar{#Lambda} InvMass |#Delta#it{#eta}| > 0.9 (selected); #it{m}_{inv} (GeV/#it{c}^{2});", 80,fV0MinMassLambda,fV0MaxMassLambda);          
-  fOutListV0s->Add(fV0sInvMassLambdaGap09);
-  
+  // V0s histos  
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     for(Int_t j(0); j < fNumHarmonics; j++)
@@ -740,20 +675,12 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   FilterTracks();
   FilterV0s();
 
- 
-  //Double_t dEtaGap2 = 1.2;
-  //TString sTest = Form("%02.2g %02.2g ",10*dEtaGap, 10*dEtaGap2);
-  //printf("Test EtaGap (double) %f / (string) %s / (string *10) \n",dEtaGap,sTest.Data());
-
-
-
-
-
   // begin of loop over EtaGap & Harmonics
   Int_t iHarm = 0;
   Double_t dEtaGap = 0;
   TProfile2D* profV0sPos = 0x0;
   TProfile2D* profV0sNeg = 0x0;
+  
   for(Int_t i(0); i < fNumHarmonics; i++)
   {
     for(Int_t j(0); j < fNumEtaGap; j++)
@@ -771,19 +698,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       
       if(fPID)
       {
-        // output & profile finding testing
-        //TString sNameProfPos = Form("fV0sDiffTwo%d_Gap%02.2gP_K0s_Cent%d",iHarm,10*0.,fCentBinIndex);
-        //TString sNameProfNeg = Form("fV0sDiffTwo%d_Gap%02.2gN_K0s_Cent%d",iHarm,10*dEtaGap,fCentBinIndex);
-        //printf("%s\n",sNameProfPos.Data());
-        //profV0sPos = (TProfile2D*) fOutListV0s->FindObject(sNameProfPos.Data());
-        //profV0sNeg = (TProfile2D*) fOutListV0s->FindObject(sNameProfNeg.Data());
-        
-        //profV0sPos = (TProfile2D*) fOutListV0s->FindObject(Form("fV0sDiffTwo%d_Gap%02.2gP_K0s_Cent%d",iHarm,10*dEtaGap,fCentBinIndex));
-        //profV0sNeg = (TProfile2D*) fOutListV0s->FindObject(Form("fV0sDiffTwo%d_Gap%02.2gN_K0s_Cent%d",iHarm,10*dEtaGap,fCentBinIndex));
-        //if(!profV0sPos || !profV0sNeg)
-        //  continue;
-        
-        //EstimateV0Cumulant(dEtaGap, iHarm, fV0sDiffTwoPos_K0s, fV0);
         EstimateV0Cumulant(i,j);
       }
   
@@ -903,133 +817,6 @@ void AliAnalysisTaskFlowPID::EstimateRefPtDiffCumulant(const Float_t dEtaGap, co
   } // end of loop over pt bins
   return;
 }
-//_____________________________________________________________________________
-
-/*
-void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Float_t dEtaGap, const Short_t iHarm, const Short_t iSpecies, TProfile2D* profilePos, TProfile2D* profileNeg)
-{
-  // checking if pointers are valid
-  if(!profilePos)
-    return;
-
-  if(!profileNeg && dEtaGap >= 0.0) // if with eta gap, negative profile has to be valid as well
-    return;
-
-  // check if RFPs flow vectors are empty
-  if(!AreRefFlowVectorsFilled(dEtaGap,iHarm)) // if yes fill ref flow vectors
-    FillRefFlowVectors(dEtaGap, iHarm);
-
-  // POIs
-
-  TClonesArray arrayV0;
-  if(iSpecies == 1) // K0s
-  {
-    arrayV0 = fArrV0sK0sFiltered;
-  }
-  else if (iSpecies == 2) // (anti)Lambda
-  {
-    arrayV0 = fArrV0sLambdaFiltered;
-  }
-  else 
-    return;
-
-  const Double_t dEtaGapCut = dEtaGap / 2; // eta cut limit for POI
-  const Int_t iNumV0s = arrayV0.GetEntries();
-  
-  TComplex vecVpos[fNumPtBins]; // flow vector for POIs in positive eta (including eta gap cut) [or all POIs with no eta gap]
-  TComplex vecVneg[fNumPtBins]; // flow vector for POIs in negative eta (including eta gap cut)
-  Int_t iCountVpos[fNumPtBins]; // counter of POIs in positive eta [or all POIs with no eta gap]
-  Int_t iCountVneg[fNumPtBins]; // counter of POIs in negative eta
-  
-  AliAODv0* v0 = 0x0;
-  Double_t dPhi = 0, dEta = 0;
-  Double_t dWeight = 0, dAmp = 0, dVal = 0;
-  Short_t iMinvFlowBinIndexK0s = -1, iPtBinIndex = -1;
-
-  for(Int_t j(0); j < fNumMinvFlowBinsK0s; j++) // loop over Minv bins
-  {
-    for(Int_t i(0); i < fNumPtBins; i++) // 0-ing staff
-    {
-      vecVpos[i] = TComplex(0,0,kFALSE);
-      vecVneg[i] = TComplex(0,0,kFALSE);
-      iCountVpos[i] = 0;
-      iCountVneg[i] = 0;
-    }
-
-    for(Int_t i(0); i < iNumV0s; i++) // loop over POIs
-    {
-      v0 = static_cast<AliAODv0*>(arrayV0.At(i));
-
-      if(!v0)
-        continue;
-
-      iMinvFlowBinIndexK0s = GetMinvFlowBinIndexK0s(v0->MassK0Short());
-      iPtBinIndex = GetPtBinIndex(v0->Pt());
-
-      if(iPtBinIndex == -1 || iMinvFlowBinIndexK0s != j)
-        continue;
-
-      dPhi = v0->Phi();
-      dEta = v0->Eta();
-
-      // filling the flow vectors for POIs
-      if(dEtaGap < 0.) // no eta gap
-      {
-        vecVpos[iPtBinIndex] += TComplex(TMath::Cos(iHarm*dPhi),TMath::Sin(iHarm*dPhi),kFALSE);
-        iCountVpos[iPtBinIndex]++;
-      }
-      else // with eta gap
-      {
-        if(dEta > dEtaGapCut)
-        {
-          vecVpos[iPtBinIndex] += TComplex(TMath::Cos(iHarm*dPhi),TMath::Sin(iHarm*dPhi),kFALSE);
-          iCountVpos[iPtBinIndex]++;
-          fV0sK0sGap09_test[fCentBinIndex]->Fill(v0->Pt(), v0->MassK0Short());     
-          fV0sInvMassK0sGap09_test->Fill(v0->MassK0Short());
-        }
-
-        if(dEta < -dEtaGapCut)
-        {
-          vecVneg[iPtBinIndex] += TComplex(TMath::Cos(iHarm*dPhi),TMath::Sin(iHarm*dPhi),kFALSE);
-          iCountVneg[iPtBinIndex]++;
-          fV0sK0sGap09_test[fCentBinIndex]->Fill(v0->Pt(), v0->MassK0Short()); 
-          fV0sInvMassK0sGap09_test->Fill(v0->MassK0Short());
-        }
-      }
-    } // end of loop over POIs entries
-
-    // filling the TProfiles
-
-    for(Int_t i(0); i < fNumPtBins; i++)
-    {
-      if(dEtaGap < 0.) // with no eta gap
-      {
-        dWeight = iCountVpos[i] * fCountRefPos;
-        dAmp = (vecVpos[i] * (TComplex::Conjugate(fVecRefPos))).Re();
-        dVal = dAmp / dWeight;
-        if( TMath::Abs(dVal < 1) && (dWeight > 0))
-          profilePos->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
-      }
-      else // with eta gap
-      {
-        dWeight = iCountVpos[i] * (fCountRefNeg);
-        dAmp = (vecVpos[i] * (TComplex::Conjugate(fVecRefNeg))).Re();
-        dVal = dAmp / dWeight;
-        if( TMath::Abs(dVal < 1) && (dWeight > 0))
-          profilePos->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
-        
-        dWeight = iCountVneg[i] * (fCountRefPos);
-        dAmp = (vecVneg[i] * (TComplex::Conjugate(fVecRefPos))).Re();
-        dVal = dAmp / dWeight;
-        if( TMath::Abs(dVal < 1) && (dWeight > 0))
-          profileNeg->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (fMinvFlowBinEdgesK0s[j+1] + fMinvFlowBinEdgesK0s[j])/2 ,dVal, dWeight);
-      }
-    }
-  } // end of loop over Minv bins
-
-  return; 
-}
-*/
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::EstimateV0Cumulant(Short_t iEtaGapIndex, Short_t iHarmonicsIndex)
 {

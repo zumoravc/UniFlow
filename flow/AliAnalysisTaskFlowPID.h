@@ -30,7 +30,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void										SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
         void										SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void										SetPID(Bool_t pid) { fPID = pid; }
-				// V0s setters
+	       // V0s setters
         void										SetV0sOnFly(Bool_t onFly) { fCutV0onFly = onFly; }
         void										SetV0sTPCRefit(Bool_t refit) { fCutV0refitTPC = refit; }
         void										SetV0sRejectKinks(Bool_t reject) { fCutV0rejectKinks = reject; }
@@ -79,7 +79,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void            FillRefFlowVectors(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2);
         void            EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
         void            EstimateRefPtDiffCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
-        //void            EstimateV0Cumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, const Short_t iSpecies = 1, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
         void            EstimateV0Cumulant(Short_t iEtaGapIndex = 0, Short_t iHarmonicsIndex = 0);
                 
 		void                    EventQA(const AliAODEvent* event);
@@ -157,35 +156,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Int_t                                   fCountRefPos;           // counter for number of RFPs in positive eta
         Int_t                                   fCountRefNeg;           // counter for number of RFPs in positive eta
 
-        TComplex								fQvec2;					// complex flow vector Q (n = 2)
-        TComplex								fQvec3;					// complex flow vector Q (n = 3)
-        TComplex								fQvec4;					// complex flow vector Q (n = 4)
-        TComplex								fQvec5;					// complex flow vector Q (n = 5)
-        TComplex								fQvec2Gap00P;				// complex flow vector Q (n = 2) with eta gap
-        TComplex								fQvec2Gap00N;					// complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap04P;                   // complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap04N;                   // complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap08P;                   // complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap08N;                   // complex flow vector Q (n = 2) with eta gap
-        TComplex								fQvec2Gap09P;					// complex flow vector Q (n = 2) with eta gap
-        TComplex								fQvec2Gap09N;					// complex flow vector Q (n = 2) with eta gap
-        TComplex                fQvec2Gap10P;                   // complex flow vector Q (n = 2) with eta gap
-        TComplex								fQvec2Gap10N;					// complex flow vector Q (n = 2) with eta gap
-        TComplex								fPvec2[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow 
-        TComplex								fPvec2Gap00P[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow with eta gap
-        TComplex								fPvec2Gap04P[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow with eta gap
-        TComplex								fPvec2Gap08P[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow with eta gap
-        TComplex								fPvec2Gap10P[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow with eta gap
-        TComplex								fPvec3[fNumPtBins];	// complex vector p (n = 2) for pT-differential flow 
-
-        TComplex                fVvec2Gap00P_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
-        TComplex                fVvec2Gap00N_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
-        TComplex                fVvec2Gap09P_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
-        TComplex                fVvec2Gap09N_K0s[fNumPtBins][fNumMinvFlowBinsK0s]; //
-        TComplex                fVvec2Gap00P_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
-        TComplex                fVvec2Gap00N_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
-        TComplex                fVvec2Gap09P_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
-        TComplex                fVvec2Gap09N_Lambda[fNumPtBins][fNumMinvFlowBinsK0s]; //
         
         TClonesArray            fArrTracksFiltered; // container for filtered tracks
         TClonesArray            fArrV0sK0sFiltered; // container for filtered V0 K0s candidates
@@ -195,10 +165,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*                  fOutList;    //! main output list
         TList*                  fOutListV0s;    //! main output list
         TList*                  fOutListQA;	//! QA output list
-
-        // testing / temporary histos
-        TH1D*                   fTestTracksPt;      //! test histo
-        TH1D*                   fTestTracksMult;      //! test histo
 
         //std histos
         TH1D*										fEventMult;			 //! selected events multiplicity distribution
@@ -231,38 +197,16 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile2D*             fV0sDiffTwoNeg_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected K0s candidates Minv, pT v2 profile
         TProfile2D*             fV0sDiffTwoPos_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
         TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
-       
-        TProfile2D* 			fV0sDiffTwo2Gap00P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-    	TProfile2D*             fV0sDiffTwo2Gap00N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-        TProfile2D*             fV0sDiffTwo2Gap09P_K0s_test[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-        TProfile2D*             fV0sDiffTwo2Gap09N_K0s_test[fNumCentBins];
-		TProfile2D*             fV0sDiffTwo2Gap09P_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-    	TProfile2D*             fV0sDiffTwo2Gap09N_K0s[fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
-    	TProfile2D*             fV0sDiffTwo2Gap00P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
-    	TProfile2D*             fV0sDiffTwo2Gap00N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
-    	TProfile2D*             fV0sDiffTwo2Gap09P_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
-    	TProfile2D*             fV0sDiffTwo2Gap09N_Lambda[fNumCentBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
-				// V0s histos
-        TH1D*										fV0sMult;				//! multiplicity of V0s in selected events
-        TH1D*                                       fV0sInvMassK0sGap00;        //! selected K0s inv. mass distribution (pT & cent integrated)
-        TH1D*                                       fV0sInvMassK0sGap09;        //! selected K0s inv. mass distribution (pT & cent integrated)
-        TH1D*										fV0sInvMassK0sGap09_test;		//! selected K0s inv. mass distribution (pT & cent integrated)
-        TH1D*                                       fV0sInvMassLambdaGap00;     //! selected Lambda candidates inv. mass distribution (pT & cent integrated)
-        TH1D*										fV0sInvMassLambdaGap09;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+		// V0s histos
         TH1D*                                       fV0sInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];
         TH1D*                                       fV0sInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];
         TH2D*                                       fV0sK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
         TH2D*                                       fV0sLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
         
-        TH2D*										fV0sK0sGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        TH2D*                                       fV0sK0sGap09[fNumCentBins];                         //! selected K0s distribution (InvMass, pT)
-        TH2D*										fV0sK0sGap09_test[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        TH2D*										fV0sLambdaGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        TH2D*										fV0sLambdaGap09[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
-        // QA histos // index 0: before / 1: after cuts
-        TH1D* 									fEventCounter;  //! event rejection tracker
-        TH1D* 									fQAPVz;					//! PV z distance distribution
+         // QA histos // index 0: before / 1: after cuts
+        TH1D* 									    fEventCounter;  //! event rejection tracker
+        TH1D* 									    fQAPVz;					//! PV z distance distribution
         TH1D*										fQANumTracks;		//! number of AOD tracks distribution
         TH1D*										fQATrackPt;			//! pT dist of all tracks in all events
         TH1D*										fQATrackEta;		//! eta dist of all tracks in all events
