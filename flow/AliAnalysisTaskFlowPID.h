@@ -64,29 +64,29 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t					fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
         const static Int_t    fNumHarmonics = 1; // number of harmonics
         static Int_t          fHarmonics[fNumHarmonics]; // values of used harmonics
-        const static Int_t    fNumEtaGap = 4; // number of harmonics
+        const static Int_t    fNumEtaGap = 1; // number of harmonics
         static Double_t          fEtaGap[fNumEtaGap]; // values of used harmonics
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
-				Bool_t                  IsTrackSelected(const AliAODTrack* track);
-                void            FilterTracks();
-                void            FilterV0s();
+		Bool_t                  IsTrackSelected(const AliAODTrack* track);
+        void            FilterTracks();
+        void            FilterV0s();
 
-				void                  IsV0aK0s(const AliAODv0* v0);
-				void                 IsV0aLambda(const AliAODv0* v0);
-				Bool_t                  IsV0Selected(const AliAODv0* v0);
-                Bool_t          AreRefFlowVectorsFilled(const Float_t dEtaGap = -1, const Short_t iHarm = -1);
-                void            FillRefFlowVectors(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2);
-                void            EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
-                void            EstimateRefPtDiffCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
-                void            EstimateV0Cumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, const Short_t iSpecies = 1, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
-                void            EstimateV0Cumulant(Short_t iEtaGapIndex = 0, Short_t iHarmonicsIndex = 0);
+		void                  IsV0aK0s(const AliAODv0* v0);
+		void                 IsV0aLambda(const AliAODv0* v0);
+		Bool_t                  IsV0Selected(const AliAODv0* v0);
+        Bool_t          AreRefFlowVectorsFilled(const Float_t dEtaGap = -1, const Short_t iHarm = -1);
+        void            FillRefFlowVectors(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2);
+        void            EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
+        void            EstimateRefPtDiffCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
+        //void            EstimateV0Cumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, const Short_t iSpecies = 1, TProfile2D* profilePos = 0x0, TProfile2D* profileNeg = 0x0);
+        void            EstimateV0Cumulant(Short_t iEtaGapIndex = 0, Short_t iHarmonicsIndex = 0);
                 
-				void                    EventQA(const AliAODEvent* event);
-				void            FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
+		void                    EventQA(const AliAODEvent* event);
+		void            FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
     
-	    	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
+    	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
         Bool_t                  plpMV(const AliVEvent *event);
 
         Short_t                 GetPtBinIndex(const Double_t dPt);
@@ -250,6 +250,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fV0sInvMassK0sGap09_test;		//! selected K0s inv. mass distribution (pT & cent integrated)
         TH1D*                                       fV0sInvMassLambdaGap00;     //! selected Lambda candidates inv. mass distribution (pT & cent integrated)
         TH1D*										fV0sInvMassLambdaGap09;		//! selected Lambda candidates inv. mass distribution (pT & cent integrated)
+        TH1D*                                       fV0sInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];
+        TH1D*                                       fV0sInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];
+        TH2D*                                       fV0sK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
+        TH2D*                                       fV0sLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
+        
         TH2D*										fV0sK0sGap00[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
         TH2D*                                       fV0sK0sGap09[fNumCentBins];                         //! selected K0s distribution (InvMass, pT)
         TH2D*										fV0sK0sGap09_test[fNumCentBins];							//! selected K0s distribution (InvMass, pT)
