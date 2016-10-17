@@ -184,8 +184,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 		// V0s histos
-        TH1D*                   fV0sInvMassK0s[fNumEtaGap];
-        TH1D*                   fV0sInvMassLambda[fNumEtaGap];
+        TH1D*                   fV0sInvMassK0s[fNumEtaGap]; //!
+        TH1D*                   fV0sInvMassLambda[fNumEtaGap]; //!
         TH2D*                   fV0sPtInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
         TH2D*                   fV0sPtInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
         
@@ -230,7 +230,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 3);
+        ClassDef(AliAnalysisTaskFlowPID, 4);
 };
 
 #endif
