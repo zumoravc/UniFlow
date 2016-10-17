@@ -64,7 +64,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t			fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumHarmonics = 1; // number of harmonics
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-        const static Int_t      fNumEtaGap = 1; // number of harmonics
+        const static Int_t      fNumEtaGap = 3; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
@@ -184,8 +184,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 		// V0s histos
-        TH1D*                   fV0sInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];
-        TH1D*                   fV0sInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];
+        TH1D*                   fV0sInvMassK0s[fNumEtaGap];
+        TH1D*                   fV0sInvMassLambda[fNumEtaGap];
         TH2D*                   fV0sPtInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
         TH2D*                   fV0sPtInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
         
