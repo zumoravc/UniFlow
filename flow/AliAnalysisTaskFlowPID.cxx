@@ -136,16 +136,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTracksEta(0),
   fTracksPhi(0),
   fTracksCharge(0),
-  fRefCorTwo2(0),
-  fRefCorTwo3(0),
-  fRefCorTwo4(0),
-  fRefCorTwo5(0),
-  fRefCorTwo2Gap00(0),
-  fRefCorTwo2Gap04(0),
-  fRefCorTwo2Gap08(0),
-  fRefCorTwo2Gap09(0),
-  fRefCorTwo2Gap09_test(0),
-  fRefCorTwo2Gap10(0),
+
   fQAPVz(0),
   fQANumTracks(0),
   fQATrackPt(0),
@@ -241,16 +232,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTracksEta(0),
   fTracksPhi(0),
   fTracksCharge(0),
-  fRefCorTwo2(0),
-  fRefCorTwo3(0),
-  fRefCorTwo4(0),
-  fRefCorTwo5(0),
-  fRefCorTwo2Gap00(0),
-  fRefCorTwo2Gap04(0),
-  fRefCorTwo2Gap08(0),
-  fRefCorTwo2Gap09(0),
-  fRefCorTwo2Gap09_test(0),
-  fRefCorTwo2Gap10(0),
+
   fQAPVz(0),
   fQANumTracks(0),
   fQATrackPt(0),
@@ -272,21 +254,24 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
         fV0sDiffTwoNeg_K0s[i][j][k] = 0x0;
         fV0sDiffTwoPos_Lambda[i][j][k] = 0x0;
         fV0sDiffTwoNeg_Lambda[i][j][k] = 0x0;
-        fV0sK0s[i][j][k] = 0x0;
-        fV0sLambda[i][j][k] = 0x0;
+        fV0sPtInvMassK0s[i][j][k] = 0x0;
+        fV0sPtInvMassLambda[i][j][k] = 0x0;
 
         fV0sInvMassK0s[i][j][k] = 0x0;
         fV0sInvMassLambda[i][j][k] = 0x0;
 
+        fTracksDiffTwoPos[i][j][k] = 0x0;
+        fTracksDiffTwoNeg[i][j][k] = 0x0;
       }
     }
-    
-    fDiffCorTwo2[i] = 0;
-    fDiffCorTwo2Gap00[i] = 0;
-    fDiffCorTwo2Gap04[i] = 0;
-    fDiffCorTwo2Gap08[i] = 0;
-    fDiffCorTwo2Gap10[i] = 0;
-    fDiffCorTwo3[i] = 0;
+  }
+
+  for(Int_t i(0); i < fNumHarmonics; i++)
+  {
+    for(Int_t j(0); j < fNumEtaGap; j++)
+    {
+      fTracksRefTwo[i][j] = 0x0;
+    }
   }
 
   // QA plots
@@ -384,124 +369,79 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fTracksCharge = new TH1D("fTracksCharge", "Track charge (selected); charge^{track};", 3,-1.5,1.5);    
   fOutList->Add(fTracksCharge);          
   
-  // V0s histos  
-  for(Int_t i(0); i < fNumCentBins; i++)
+  // reference
+  for(Int_t i(0); i < fNumHarmonics; i++)
   {
-    for(Int_t j(0); j < fNumHarmonics; j++)
+    for(Int_t j(0); j < fNumEtaGap; j++)
     {
-      for(Int_t k(0); k < fNumEtaGap; k++)
-      {
-        fV0sDiffTwoPos_K0s[i][j][k] = new TProfile2D(Form("fV0sDiffTwoPos_K0s_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
-        fV0sDiffTwoPos_K0s[i][j][k]->Sumw2();
-        fOutListV0s->Add(fV0sDiffTwoPos_K0s[i][j][k]);
-  
-        fV0sDiffTwoNeg_K0s[i][j][k] = new TProfile2D(Form("fV0sDiffTwoNeg_K0s_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
-        fV0sDiffTwoNeg_K0s[i][j][k]->Sumw2();
-        fOutListV0s->Add(fV0sDiffTwoNeg_K0s[i][j][k]);
-
-        fV0sK0s[i][j][k] = new TH2D(Form("fV0s_K0s_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("K^{0}_{S} candidates n=%d |#Delta#it{#eta}| > %g Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassK0s, fV0MaxMassK0s);
-        fV0sK0s[i][j][k]->Sumw2();
-        fOutListV0s->Add(fV0sK0s[i][j][k]);
-
-        fV0sInvMassK0s[i][j][k] = new TH1D(Form("fV0sInvMass_K0s_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("K^{0}_{S} InvMass n=%d |#Delta#it{#eta}| > %g Cent %g-%g%% (selected); #it{m}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]), 200,fV0MinMassK0s,fV0MaxMassK0s);          
-        fOutListV0s->Add(fV0sInvMassK0s[i][j][k]);
-
-        fV0sDiffTwoPos_Lambda[i][j][k] = new TProfile2D(Form("fV0sDiffTwoPos_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i), Form("#Lambda+#bar{#Lambda} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
-        fV0sDiffTwoPos_Lambda[i][j][k]->Sumw2();
-        fOutListV0s->Add(fV0sDiffTwoPos_Lambda[i][j][k]);
-  
-        fV0sDiffTwoNeg_Lambda[i][j][k] = new TProfile2D(Form("fV0sDiffTwoNeg_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i), Form("#Lambda+#bar{#Lambda} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, it{#eta}^{POI} < -%g} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
-        fV0sDiffTwoNeg_Lambda[i][j][k]->Sumw2();
-        fOutListV0s->Add(fV0sDiffTwoNeg_Lambda[i][j][k]);
-
-        fV0sLambda[i][j][k] = new TH2D(Form("fV0s_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("#Lambda+#bar{#Lambda} candidates n=%d |#Delta#it{#eta}| > %g Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassLambda, fV0MaxMassLambda);
-        fV0sLambda[i][j][k]->Sumw2();
-        fOutListV0s->Add(fV0sLambda[i][j][k]);
-
-        fV0sInvMassLambda[i][j][k] = new TH1D(Form("fV0sInvMass_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("#Lambda+#bar{#Lambda} InvMass n=%d |#Delta#it{#eta}| > %g Cent %g-%g%% (selected); #it{m}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]), 200,fV0MinMassLambda,fV0MaxMassLambda);          
-        fOutListV0s->Add(fV0sInvMassLambda[i][j][k]);
-      }
+      fTracksRefTwo[i][j] = new TProfile(Form("fTracksRefTwo_n%d_Gap%02.2g",fHarmonics[i],10*fEtaGap[j]),Form("#LT#LT2#GT#GT_{%d,|#Delta#it{#eta}| > %g} (ref. flow); centrality;",fHarmonics[i],fEtaGap[j]),fNumCentBins,fCentBinEdges);
+      fTracksRefTwo[i][j]->Sumw2();
+      fOutList->Add(fTracksRefTwo[i][j]);
     }
   }
-
   
-  
-  fRefCorTwo2 = new TProfile("fRefCorTwo2","#LT#LT2#GT#GT_{2} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo2->Sumw2();
-  fOutList->Add(fRefCorTwo2);
-  fRefCorTwo3 = new TProfile("fRefCorTwo3","#LT#LT2#GT#GT_{3} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo3->Sumw2();
-  fOutList->Add(fRefCorTwo3);
-  fRefCorTwo4 = new TProfile("fRefCorTwo4","#LT#LT2#GT#GT_{4} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo4->Sumw2();
-  fOutList->Add(fRefCorTwo4);
-  fRefCorTwo5 = new TProfile("fRefCorTwo5","#LT#LT2#GT#GT_{5} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo5->Sumw2();
-  fOutList->Add(fRefCorTwo5);
-
-  fRefCorTwo2Gap00 = new TProfile("fRefCorTwo2_Gap00","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo2Gap00->Sumw2();
-  fOutList->Add(fRefCorTwo2Gap00);
-  fRefCorTwo2Gap04 = new TProfile("fRefCorTwo2_Gap04","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.4} (ref. flow); centrality",fNumCentBins,fCentBinEdges);
-  fRefCorTwo2Gap04->Sumw2();
-  fOutList->Add(fRefCorTwo2Gap04);
-  fRefCorTwo2Gap08 = new TProfile("fRefCorTwo2_Gap08","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.8} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo2Gap08->Sumw2();
-  fOutList->Add(fRefCorTwo2Gap08);
-  fRefCorTwo2Gap09 = new TProfile("fRefCorTwo2_Gap09","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.9} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo2Gap09->Sumw2();
-  fOutList->Add(fRefCorTwo2Gap09);
-    fRefCorTwo2Gap09_test = new TProfile("fRefCorTwo2_Gap09_test","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 0.9} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo2Gap09_test->Sumw2();
-  fOutList->Add(fRefCorTwo2Gap09_test);
-  fRefCorTwo2Gap10 = new TProfile("fRefCorTwo2_Gap10","#LT#LT2#GT#GT_{2,|#Delta#it{#eta}| > 1} (ref. flow); centrality;",fNumCentBins,fCentBinEdges);
-  fRefCorTwo2Gap10->Sumw2();
-  fOutList->Add(fRefCorTwo2Gap10);
-  
+  // tracks diff
   if(fDiffFlow) // do differential flow switch
   {
     for(Int_t i = 0; i < fNumCentBins; i++)
     {
-      fDiffCorTwo2[i] = new TProfile(Form("fDiffCorTwo2_Cent%d",i),Form("#LT#LT2'#GT#GT_{2} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
-      fDiffCorTwo2[i]->Sumw2();
-      fOutList->Add(fDiffCorTwo2[i]);
+      for(Int_t j(0); j < fNumHarmonics; j++)
+      {
+        for(Int_t k(0); k < fNumEtaGap; k++)
+        {
+          fTracksDiffTwoPos[i][j][k] = new TProfile(Form("fTracksDiffTwoPos_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("#LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+          fTracksDiffTwoPos[i][j][k]->Sumw2();
+          fOutList->Add(fTracksDiffTwoPos[i][j][k]);
+
+          fTracksDiffTwoNeg[i][j][k] = new TProfile(Form("fTracksDiffTwoNeg_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("#LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
+          fTracksDiffTwoNeg[i][j][k]->Sumw2();
+          fOutList->Add(fTracksDiffTwoNeg[i][j][k]);
+        }
+      }
     }
+  }
+
+  // V0s histos  
+  if(fPID)
+  {
+    for(Int_t i(0); i < fNumCentBins; i++)
+    {
+      for(Int_t j(0); j < fNumHarmonics; j++)
+      {
+        for(Int_t k(0); k < fNumEtaGap; k++)
+        {
+          fV0sDiffTwoPos_K0s[i][j][k] = new TProfile2D(Form("fV0sDiffTwoPos_K0s_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+          fV0sDiffTwoPos_K0s[i][j][k]->Sumw2();
+          fOutListV0s->Add(fV0sDiffTwoPos_K0s[i][j][k]);
     
-    for(Int_t i = 0; i < fNumCentBins; i++)
-    {
-      fDiffCorTwo2Gap00[i] = new TProfile(Form("fDiffCorTwo2_Gap00_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0} Cent %g-%g%% |#it{#eta}^{POI}|>0 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
-      fDiffCorTwo2Gap00[i]->Sumw2();
-      fOutList->Add(fDiffCorTwo2Gap00[i]);
-    }
+          fV0sDiffTwoNeg_K0s[i][j][k] = new TProfile2D(Form("fV0sDiffTwoNeg_K0s_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i), Form("K^{0}_{S} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+          fV0sDiffTwoNeg_K0s[i][j][k]->Sumw2();
+          fOutListV0s->Add(fV0sDiffTwoNeg_K0s[i][j][k]);
 
-    for(Int_t i = 0; i < fNumCentBins; i++)
-    {
-      fDiffCorTwo2Gap04[i] = new TProfile(Form("fDiffCorTwo2_Gap04_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.4} Cent %g-%g%% #it{#eta}^{POI}>0.2 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
-      fDiffCorTwo2Gap04[i]->Sumw2();
-      fOutList->Add(fDiffCorTwo2Gap04[i]);
-    }
+          fV0sPtInvMassK0s[i][j][k] = new TH2D(Form("fV0sPtInvMass_K0s_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("K^{0}_{S} candidates n=%d |#Delta#it{#eta}| > %g Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassK0s, fV0MaxMassK0s);
+          fV0sPtInvMassK0s[i][j][k]->Sumw2();
+          fOutListV0s->Add(fV0sPtInvMassK0s[i][j][k]);
 
-    for(Int_t i = 0; i < fNumCentBins; i++)
-    {
-      fDiffCorTwo2Gap08[i] = new TProfile(Form("fDiffCorTwo2_Gap08_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 0.8} Cent %g-%g%% #it{#eta}^{POI}>0.4 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
-      fDiffCorTwo2Gap08[i]->Sumw2();
-      fOutList->Add(fDiffCorTwo2Gap08[i]);
-    }
+          fV0sInvMassK0s[i][j][k] = new TH1D(Form("fV0sInvMass_K0s_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("K^{0}_{S} InvMass n=%d |#Delta#it{#eta}| > %g Cent %g-%g%% (selected); #it{m}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]), 200,fV0MinMassK0s,fV0MaxMassK0s);          
+          fOutListV0s->Add(fV0sInvMassK0s[i][j][k]);
 
-    for(Int_t i = 0; i < fNumCentBins; i++)
-    {
-      fDiffCorTwo2Gap10[i] = new TProfile(Form("fDiffCorTwo2_Gap10_Cent%d",i),Form("#LT#LT2'#GT#GT_{2,|#Delta#it{#eta}| > 1} Cent %g-%g%% #it{#eta}^{POI}>0.5 (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
-      fDiffCorTwo2Gap10[i]->Sumw2();
-      fOutList->Add(fDiffCorTwo2Gap10[i]);
-    }
-
-    for(Int_t i = 0; i < fNumCentBins; i++)
-    {
-      fDiffCorTwo3[i] = new TProfile(Form("fDiffCorTwo3_Cent%d",i),Form("#LT#LT2'#GT#GT_{3} Cent %g-%g%% (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges);
-      fDiffCorTwo3[i]->Sumw2();
-      fOutList->Add(fDiffCorTwo3[i]);
-    }
+          fV0sDiffTwoPos_Lambda[i][j][k] = new TProfile2D(Form("fV0sDiffTwoPos_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i), Form("#Lambda+#bar{#Lambda} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+          fV0sDiffTwoPos_Lambda[i][j][k]->Sumw2();
+          fOutListV0s->Add(fV0sDiffTwoPos_Lambda[i][j][k]);
     
+          fV0sDiffTwoNeg_Lambda[i][j][k] = new TProfile2D(Form("fV0sDiffTwoNeg_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i), Form("#Lambda+#bar{#Lambda} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, it{#eta}^{POI} < -%g} Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+          fV0sDiffTwoNeg_Lambda[i][j][k]->Sumw2();
+          fOutListV0s->Add(fV0sDiffTwoNeg_Lambda[i][j][k]);
+
+          fV0sPtInvMassLambda[i][j][k] = new TH2D(Form("fV0sPtInvMass_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("#Lambda+#bar{#Lambda} candidates n=%d |#Delta#it{#eta}| > %g Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassLambda, fV0MaxMassLambda);
+          fV0sPtInvMassLambda[i][j][k]->Sumw2();
+          fOutListV0s->Add(fV0sPtInvMassLambda[i][j][k]);
+
+          fV0sInvMassLambda[i][j][k] = new TH1D(Form("fV0sInvMass_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("#Lambda+#bar{#Lambda} InvMass n=%d |#Delta#it{#eta}| > %g Cent %g-%g%% (selected); #it{m}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]), 200,fV0MinMassLambda,fV0MaxMassLambda);          
+          fOutListV0s->Add(fV0sInvMassLambda[i][j][k]);
+        }
+      }
+    }
   }
   
 
@@ -673,7 +613,9 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   // filtering objects and filling relevant containers
   FilterTracks();
-  FilterV0s();
+  
+  if(fPID)
+    FilterV0s();
 
   // begin of loop over EtaGap & Harmonics
   Int_t iHarm = 0;
@@ -689,11 +631,11 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       dEtaGap = fEtaGap[j];
 
       FillRefFlowVectors(dEtaGap, iHarm);
-      EstimateRefCumulant(dEtaGap, iHarm, fRefCorTwo2Gap09_test);
+      EstimateRefCumulant(dEtaGap, iHarm, fTracksRefTwo[i][j]);
 
       if(fDiffFlow)
       {
-        //EstimateRefPtDiffCumulant(0.4,2,fDiffCorTwo2Gap04[fCentBinIndex],fDiffCorTwo2Gap00[fCentBinIndex]);  
+        EstimateRefPtDiffCumulant(dEtaGap,iHarm,fTracksDiffTwoPos[fCentBinIndex][i][j],fTracksDiffTwoNeg[fCentBinIndex][i][j]);  
       }
       
       if(fPID)
@@ -857,7 +799,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(Short_t iEtaGapIndex, Short_t iH
         arrayV0s = fArrV0sK0sFiltered;
         profV0sPos = fV0sDiffTwoPos_K0s[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         profV0sNeg = fV0sDiffTwoNeg_K0s[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
-        hPtInvMass = fV0sK0s[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
+        hPtInvMass = fV0sPtInvMassK0s[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         hInvMass = fV0sInvMassK0s[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         iNumMinvFlowBins = fNumMinvFlowBinsK0s;
         dInvMassBinEdges = fMinvFlowBinEdgesK0s;
@@ -867,7 +809,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(Short_t iEtaGapIndex, Short_t iH
         arrayV0s = fArrV0sLambdaFiltered;
         profV0sPos = fV0sDiffTwoPos_Lambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         profV0sNeg = fV0sDiffTwoNeg_Lambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
-        hPtInvMass = fV0sLambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
+        hPtInvMass = fV0sPtInvMassLambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         hInvMass = fV0sInvMassLambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         iNumMinvFlowBins = fNumMinvFlowBinsLambda;
         dInvMassBinEdges = fMinvFlowBinEdgesLambda;
@@ -877,7 +819,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(Short_t iEtaGapIndex, Short_t iH
         arrayV0s = fArrV0sALambdaFiltered;
         profV0sPos = fV0sDiffTwoPos_Lambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         profV0sNeg = fV0sDiffTwoNeg_Lambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
-        hPtInvMass = fV0sLambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
+        hPtInvMass = fV0sPtInvMassLambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         hInvMass = fV0sInvMassLambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex];
         iNumMinvFlowBins = fNumMinvFlowBinsLambda;
         dInvMassBinEdges = fMinvFlowBinEdgesLambda;
@@ -1084,7 +1026,6 @@ void AliAnalysisTaskFlowPID::EstimateRefCumulant(const Float_t dEtaGap, const Sh
 
   if(dEtaGap < 0.) // no eta gap
   {
-    //::Info("EstimateRefCumulant","Estimating with NO eta gap");
     dWeight = fCountRefPos * (fCountRefPos - 1);
     dAmp = (fVecRefPos * (TComplex::Conjugate(fVecRefPos))).Re();
     dVal = (dAmp - fCountRefPos) / dWeight;
@@ -1093,7 +1034,6 @@ void AliAnalysisTaskFlowPID::EstimateRefCumulant(const Float_t dEtaGap, const Sh
   }
   else // with eta gap 
   {
-    //::Info("EstimateRefCumulant","Estimating with eta gap");
     dWeight = fCountRefPos * fCountRefNeg;
     dAmp = (fVecRefPos * (TComplex::Conjugate(fVecRefNeg))).Re();
     dVal = (dAmp) / dWeight;

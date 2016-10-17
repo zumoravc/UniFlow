@@ -148,12 +148,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t 								fV0MinMassLambda;		// Upper limit of Lambda inv. mass window
         Short_t									fCentBinIndex;					// event centrality bin index indicator
         Float_t									fCentPercentile;					// event centrality bin index indicator
-        Short_t                 fPtBinIndex;        // track pT bin index indicator
+        Short_t                                 fPtBinIndex;        // track pT bin index indicator
         Short_t									fMinvFlowBinIndex;		// track pT bin index indicator
         
-        TComplex                                fVecRefPos;                 // complex flow vector Q for RFPs in positive eta
+        TComplex                                fVecRefPos;                 // complex flow vector Q for RFPs in positive eta (or all if no eta gap)
         TComplex                                fVecRefNeg;                 // complex flow vector Q for RFPs in negative eta
-        Int_t                                   fCountRefPos;           // counter for number of RFPs in positive eta
+        Int_t                                   fCountRefPos;           // counter for number of RFPs in positive eta (or all if no eta gap)
         Int_t                                   fCountRefNeg;           // counter for number of RFPs in positive eta
 
         
@@ -176,33 +176,21 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fTracksEta;      //! selected tracks eta distribution
         TH1D* 									fTracksPhi;			 //! selected tracks phi distribution
         TH1D* 									fTracksCharge;			 //! selected tracks charge distribution
-        TProfile*								fRefCorTwo2;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
-        TProfile*								fRefCorTwo3;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v3
-        TProfile*								fRefCorTwo4;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v4
-        TProfile*								fRefCorTwo5;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-        TProfile*								fRefCorTwo2Gap00;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-        TProfile*								fRefCorTwo2Gap04;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-        TProfile*               fRefCorTwo2Gap08;                //! event averaged 2-particle correlation for reference flow <<2>> v5
-        TProfile*                               fRefCorTwo2Gap09;                //! event averaged 2-particle correlation for reference flow <<2>> v5
-        TProfile*								fRefCorTwo2Gap09_test;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-        TProfile*								fRefCorTwo2Gap10;			 	 //! event averaged 2-particle correlation for reference flow <<2>> v5
-    	TProfile*								fDiffCorTwo2[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-    	TProfile*								fDiffCorTwo2Gap00[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-    	TProfile*								fDiffCorTwo2Gap04[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-    	TProfile*								fDiffCorTwo2Gap08[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-    	TProfile*								fDiffCorTwo2Gap10[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-    	TProfile*								fDiffCorTwo3[fNumCentBins];			 //! event averaged 2-particle correlation for differential flow <<2'>>
-
+        
+        TProfile*				fTracksRefTwo[fNumHarmonics][fNumEtaGap];			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*               fTracksDiffTwoPos[fNumCentBins][fNumHarmonics][fNumEtaGap];          //! event averaged 2-particle correlation for differential flow <<2'>>
+        TProfile*               fTracksDiffTwoNeg[fNumCentBins][fNumHarmonics][fNumEtaGap];          //! event averaged 2-particle correlation for differential flow <<2'>>
+        
         TProfile2D*             fV0sDiffTwoPos_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected K0s candidates Minv, pT v2 profile
         TProfile2D*             fV0sDiffTwoNeg_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected K0s candidates Minv, pT v2 profile
         TProfile2D*             fV0sDiffTwoPos_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
         TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 		// V0s histos
-        TH1D*                                       fV0sInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];
-        TH1D*                                       fV0sInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];
-        TH2D*                                       fV0sK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
-        TH2D*                                       fV0sLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
+        TH1D*                   fV0sInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];
+        TH1D*                   fV0sInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];
+        TH2D*                   fV0sPtInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
+        TH2D*                   fV0sPtInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
         
          // QA histos // index 0: before / 1: after cuts
         TH1D* 									    fEventCounter;  //! event rejection tracker
@@ -212,7 +200,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*										fQATrackEta;		//! eta dist of all tracks in all events
         TH1D*										fQATrackPhi;		//! phi dist of all tracks in all events
         TH1D*										fQATrackFilterMap;//! filter bit of all tracks
-        	// QA V0s
+        // QA V0s
         const static Short_t                        fQAV0sNumSteps = 2;        // number of various steps (0 before cuts / 1 after cuts / 2 testing) 
         TH1D*										fQAV0sCounter;		//! V0s counter
         TH1D*										fQAV0sCounterK0s;		//! K0s counter
