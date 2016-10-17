@@ -17,8 +17,8 @@ void V0sExtractFlow(
 	Double_t fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
 	// =======================================
-	gROOT->LoadMacro("~/NBI/Codes/macros/func/CompareRatio.C");
-	gROOT->LoadMacro("~/NBI/Codes/macros/func/CompareHistos.C");
+	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatio.C");
+	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C");
 
 	TFile* fInput = new TFile(sInput.Data(),"READ");
 	
@@ -257,7 +257,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2)
 	hInvMass_RatioSigTot->Draw();
 
 
-	cCanTemp->Print("~/NBI/Codes/results/V0s/10/plots_JHEP/fitK0s/temp.png","png");
+	cCanTemp->Print("~/NBI/Flow/results/V0s/10/plots_JHEP/fitK0s/temp.png","png");
 
 	// Drawing over the original plot
 
@@ -455,7 +455,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2)
 	//TF1* fFitFlowMass = new TF1("fFitFlowMass","pol1(0)",0.4,0.6); 
 	//hFlowMass->Fit("fFitFlowMass","R");
 
-	cCanFlowTemp->Print("~/NBI/Codes/results/V0s/10/plots_JHEP/fitK0s/flow_temp.png","png");
+	cCanFlowTemp->Print("~/NBI/Flow/results/V0s/10/plots_JHEP/fitK0s/flow_temp.png","png");
 
 
 	return cCan;

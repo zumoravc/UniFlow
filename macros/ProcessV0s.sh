@@ -1,6 +1,6 @@
 #!/bin/bash
-inPath=~/NBI/Codes/results/V0s/10/merge/
-outPath=~/NBI/Codes/results/V0s/10
+inPath=~/NBI/Flow/results/V0s/10/merge/
+outPath=~/NBI/Flow/results/V0s/10
 tag=JHEP
 
 # =================================================
@@ -24,5 +24,5 @@ mkdir -pv ${plotsDir}/compFlowMass/
 mkdir -pv ${plotsDir}/fitK0s/
 mkdir -pv ${plotsDir}/fitLambda/
 
-#root -l -b -q ~/NBI/Codes/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap00\",\"png\"\)
-root -l -b -q ~/NBI/Codes/macros/V0sExtractFlow.C\(\"${outPath}/${plotsDir}/V0sFlow.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap00\",\"png\"\)
+#root -l -b -q ~/NBI/Flow/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap00\",\"png\"\)
+root -l -b -q ~/NBI/Flow/macros/V0sExtractFlow.C\(\"${outPath}/${plotsDir}/V0sFlow.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap00\",\"png\"\)
