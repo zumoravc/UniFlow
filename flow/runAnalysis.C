@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/10";
+    TString sWorkDir = "V0s/12-filtering";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -94,7 +94,7 @@ void runAnalysis()
     taskFlowPID_lose->SetTrackPtMin(0.1);
     taskFlowPID_lose->SetNumTPCclsMin(70);
     taskFlowPID_lose->SetTrackFilterBit(128);
-    taskFlowPID_lose->SetDiffFlow(kFALSE);
+    taskFlowPID_lose->SetDiffFlow(0);
     taskFlowPID_lose->SetPID(kTRUE);
     // V0 selection cuts
     taskFlowPID_lose->SetV0sOnFly(kFALSE);
@@ -131,7 +131,7 @@ void runAnalysis()
     taskFlowPID_tight->SetTrackPtMin(0.1);
     taskFlowPID_tight->SetNumTPCclsMin(70);
     taskFlowPID_tight->SetTrackFilterBit(128);
-    taskFlowPID_tight->SetDiffFlow(kFALSE);
+    taskFlowPID_tight->SetDiffFlow(0);
     taskFlowPID_tight->SetPID(kTRUE);
     // V0 selection cuts
     taskFlowPID_tight->SetV0sOnFly(kFALSE);
@@ -172,7 +172,7 @@ void runAnalysis()
         // if we want to run on grid, we create and configure the plugin
         AliAnalysisAlien *alienHandler = new AliAnalysisAlien();
         // also specify the include (header) paths on grid
-        alienHandler->AddIncludePath("-I. -I$ROOTSYS/include -I$ALICE_ROOT -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include");
+        alienHandler->AddIncludePath("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include");
         // make sure your source files get copied to grid
         alienHandler->SetAdditionalLibs("AliAnalysisTaskFlowPID.cxx AliAnalysisTaskFlowPID.h");
         alienHandler->SetAnalysisSource("AliAnalysisTaskFlowPID.cxx");
@@ -191,14 +191,14 @@ void runAnalysis()
         // all
         //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871, 138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
         // part1
-        //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
+        Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
         //part2
         //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
 
         // -- 46 runs
         //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595, 137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
         // part 1    
-        Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595};
+        //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595};
         // part 2
         //Int_t runNumber[] = {137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
 

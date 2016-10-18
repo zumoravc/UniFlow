@@ -64,7 +64,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t			fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumHarmonics = 1; // number of harmonics
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-        const static Int_t      fNumEtaGap = 7; // number of harmonics
+        const static Int_t      fNumEtaGap = 8; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
