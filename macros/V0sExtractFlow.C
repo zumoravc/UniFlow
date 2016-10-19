@@ -76,11 +76,11 @@ void V0sExtractFlow(
 
 		cPtFlow->cd();
 		hFlowPt_K0s[i]->Draw();
-		cPtFlow->Print(Form("%s/finalFlow/flowPt_K0s_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+		cPtFlow->Print(Form("%s/PtFlow/flowPt_K0s_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 
 		cPtFlow->cd();
 		hFlowPt_Lambda[i]->Draw();
-		cPtFlow->Print(Form("%s/finalFlow/flowPt_Lambda_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+		cPtFlow->Print(Form("%s/PtFlow/flowPt_Lambda_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 	}
 
 
@@ -102,14 +102,14 @@ void V0sExtractFlow(
 			cPtFlow->cd();
 			hFlowPt_K0s[i]->Draw();
 			graphJHEP_K0s[i]->Draw("same");
-			cPtFlow->Print(Form("%s/finalFlow/flowPt_K0s_withJHEP_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			cPtFlow->Print(Form("%s/PtFlow/flowPt_K0s_withJHEP_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 
 			fJHEP->cd(Form("Table %d",41+i));
 			graphJHEP_Lambda[i] = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1")->Clone(Form("graphJHEP_Lambda_Cent_%d",i));	
 			cPtFlow->cd();
 			hFlowPt_Lambda[i]->Draw();
 			graphJHEP_Lambda[i]->Draw("same");
-			cPtFlow->Print(Form("%s/finalFlow/flowPt_Lambda_withJHEP_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+			cPtFlow->Print(Form("%s/PtFlow/flowPt_Lambda_withJHEP_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 		} 
 
 		
