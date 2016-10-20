@@ -24,8 +24,8 @@ TCanvas* CompareRatio(TH1D* fNom, TH1D* fDenom)
 		hRatio->SetBinError(i,TMath::Sqrt(dErr));
 	}
 	
-	hRatio->SetMinimum(0.9);
-	hRatio->SetMaximum(1.1);
+	hRatio->SetMinimum(0.5);
+	hRatio->SetMaximum(1.5);
 	//hRatio->SetTitle("Me/Other");
 	hRatio->SetLineColor(kRed);
 	hRatio->SetMarkerColor(kRed);

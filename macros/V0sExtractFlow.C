@@ -5,8 +5,7 @@ void V0sExtractFlow(
 		const TString sOutput = "~/NBI/Codes/results/V0s/8/plusplus/plots",
 		const TString sTag = "_JHEP",
 		const TString sEtaGap = "Gap10",
-		const TString sOutputFormat = "png",
-		const Bool_t bLoadHEP = "kFALSE"
+		const TString sOutputFormat = "png"
 	)
 {
 
@@ -54,9 +53,14 @@ void V0sExtractFlow(
 	// ===== Extracting signal & flow ===== 
 	TCanvas* cCan;
 
-	//cCan = ExtractFlow(hInvMassK0s[4][0],hFlowMassK0s[4][0]);
-	//cCan->Print(Form("%s/fitK0s/test.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
-
+	/*
+	// testing in for one distribution
+	Double_t dVal = 0;
+	cCan = ExtractFlow(hInvMassK0s[4][0],hFlowMassK0s[4][0],&dVal,0);
+	cCan->Print(Form("%s/fitK0s/test.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());
+	return;
+	*/
+	
 	TCanvas* cPtFlow = new TCanvas("cPtFlow","PtFlow",1500,1500);
 	TH1D* hFlowPt_K0s[iNumCentBins]; 
 	TH1D* hFlowPt_Lambda[iNumCentBins]; 
@@ -90,36 +94,6 @@ void V0sExtractFlow(
 		cPtFlow->cd();
 		hFlowPt_Lambda[i]->Draw();
 		cPtFlow->Print(Form("%s/PtFlow/flowPt_Lambda_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-	}
-
-	// loading JHEP HEP data
-
-	if(bLoadHEP)
-	{
-		TFile* fJHEP = new TFile("/Users/vpacik/NBI/Flow/hepData/PID_v2_PbPb/HEPData-ins1297103-1-root.root","READ");
-
-		const Short_t iNumCentBinsHEP = 7;
-		TGraphAsymmErrors* graphJHEP_K0s[iNumCentBinsHEP];
-		TGraphAsymmErrors* graphJHEP_Lambda[iNumCentBinsHEP];
-
-		for(Int_t i(0); i < 7; i++)
-		{
-			fJHEP->cd(Form("Table %d",15+i));
-			graphJHEP_K0s[i] = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1")->Clone(Form("graphJHEP_K0s_Cent_%d",i));	
-			cPtFlow->cd();
-			hFlowPt_K0s[i]->Draw();
-			graphJHEP_K0s[i]->Draw("same");
-			cPtFlow->Print(Form("%s/PtFlow/flowPt_K0s_withJHEP_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-
-			fJHEP->cd(Form("Table %d",41+i));
-			graphJHEP_Lambda[i] = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1")->Clone(Form("graphJHEP_Lambda_Cent_%d",i));	
-			cPtFlow->cd();
-			hFlowPt_Lambda[i]->Draw();
-			graphJHEP_Lambda[i]->Draw("same");
-			cPtFlow->Print(Form("%s/PtFlow/flowPt_Lambda_withJHEP_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-		} 
-
-		
 	}
 }
 
@@ -170,7 +144,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	TH1D* hInvMass_subs = (TH1D*) hInvMass->Clone("hInvMass_subs"); // cloning inv mass dist for BG subtracttion
 	TH1D* hInvMassRebin = (TH1D*) hInvMass->Clone("hInvMassRebin"); // cloning inv mass dist for rebining
 
-	// fitting inv mass dist
+	// ==== Fitting inv mass dist =====
 	printf("-----------------------------------------\n");
 	printf("Fitting Inv Mass first shot\n");
 	printf("-----------------------------------------\n");
@@ -225,12 +199,12 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 		hInvMass_subs->SetBinContent(i,hInvMass->GetBinContent(i) - fFitInvMassBg->Eval(hInvMass_subs->GetBinCenter(i)));
 	}
 
+	TH1D* hInvMass_RatioSigTot = (TH1D*) hInvMass_subs->Clone("hInvMass_RatioSigTot");
+	hInvMass_RatioSigTot->Divide(hInvMass);
+	
 	printf("-----------------------------------------\n");
 	printf("Fitting Inv Mass BG subtracted\n");
 	printf("-----------------------------------------\n");
-	
-	TH1D* hInvMass_RatioSigTot = (TH1D*) hInvMass_subs->Clone("hInvMass_RatioSigTot");
-
 	TF1* fFitInvMassSubs = new TF1("fFitInvMassSubs","gaus(0)+pol3(3)",dFitRange[0],dFitRange[1]); 
 	fFitInvMassSubs->SetParameter(1,dMassPeak);
 	fFitInvMassSubs->SetParameter(2,0.005);
@@ -240,45 +214,28 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	fFitInvMassSubs->SetLineStyle(2);
 	fFitInvMassSubs->SetLineColor(kRed+2);
 	fFitInvMassSubs->SetNpx(1000000);
-	hInvMass_subs->Fit("fFitInvMassSubs","R0");
+	hInvMass_subs->Fit("fFitInvMassSubs","R");
 	hInvMass_subs->SetMaximum(2000);
-	//hInvMass_subs->Draw();
-
-	//cCan->cd(2);
-
+	
 	printf("-----------------------------------------\n");
 	printf("Fitting Inv Mass Ratio Sig/Tot\n");
 	printf("-----------------------------------------\n");
 	
+
 	TF1* fFitInvMassRatioSigTot = new TF1("fFitInvMassRatioSigTot","gaus(0)+gaus(3)+pol2(6)",dFitRange[0],dFitRange[1]);
 	fFitInvMassRatioSigTot->SetParameter(0,0.7);
 	fFitInvMassRatioSigTot->SetParameter(1,dMassPeak);
 	fFitInvMassRatioSigTot->SetParLimits(1,dMassPeak-dMassPeakLimit,dMassPeak+dMassPeakLimit);
-	fFitInvMassRatioSigTot->SetParameter(2,0.05);
-	fFitInvMassRatioSigTot->SetParLimits(2,0.,0.03);
+	fFitInvMassRatioSigTot->SetParameter(2,0.02);
+	fFitInvMassRatioSigTot->SetParLimits(2,0.01,0.03);
 	fFitInvMassRatioSigTot->SetParameter(3,0.7);
 	fFitInvMassRatioSigTot->SetParameter(4,dMassPeak);
 	fFitInvMassRatioSigTot->SetParLimits(4,dMassPeak-dMassPeakLimit,dMassPeak+dMassPeakLimit);
-	fFitInvMassRatioSigTot->SetParameter(5,0.05);
-	fFitInvMassRatioSigTot->SetParLimits(5,0.,0.03);
-	//fFitInvMassRatioSigTot->FixParameter(6,fFitFlowMass_side->GetParameter(0));
-	//fFitInvMassRatioSigTot->FixParameter(7,fFitFlowMass_side->GetParameter(1));
-	//fFitInvMassRatioSigTot->FixParameter(8,fFitFlowMass_side->GetParameter(2));
-	hInvMass_RatioSigTot->Fit("fFitInvMassRatioSigTot","R0");
-	//hInvMass_RatioSigTot->Draw();
+	fFitInvMassRatioSigTot->SetParameter(5,0.02);
+	fFitInvMassRatioSigTot->SetParLimits(5,0.01,0.03);
+	hInvMass_RatioSigTot->Fit("fFitInvMassRatioSigTot","R");
 
-
-	// Drawing over the original plot
-
-	//cCan->cd(1);
-	//fFitInvMassBg->Draw("same");
-	//fFitInvMassSubs->Draw("same");
-	//fFitInvMassPeak->Draw("same");
-	//fFitInvMassFixed->Draw("same");
-	//fFitInvMassGauss->Draw("same");
-
-	
-	// fitting flow mass dist
+	// ==== Fitting flow mass dist ====
 	TH1D* hFlowMass_temp = (TH1D*) hFlowMass->Clone("hFlowMass_temp");
 	TH1D* hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
 
@@ -295,7 +252,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	printf("Fitting Flow Mass sidebands\n");
 	printf("-----------------------------------------\n");
 	
-	TF1* fFitFlowMass_side = new TF1("fFitFlowMass_side","pol2(0)",dFitRange[0],dFitRange[1]);
+	TF1* fFitFlowMass_side = new TF1("fFitFlowMass_side","pol1(0)",dFitRange[0],dFitRange[1]);
 	hFlowMass_side->Fit("fFitFlowMass_side","R0");
 
 	// Fitting by vTot (LH side)
@@ -304,7 +261,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	printf("Fitting Flow Mass total \n");
 	printf("-----------------------------------------\n");
 
-	TF1* fFitFlowMassTot = new TF1("fFitFlowMassTot","[12]*(gaus(0)+gaus(3)+pol2(6))+(1-(gaus(0)+gaus(3)+pol2(6)))*pol2(9)",dFitRange[0],dFitRange[1]);
+	TF1* fFitFlowMassTot = new TF1("fFitFlowMassTot","[11]*(gaus(0)+gaus(3)+pol2(6))+(1-(gaus(0)+gaus(3)+pol2(6)))*pol1(9)",dFitRange[0],dFitRange[1]);
 	// inv mass fit parameters
 	for(Int_t i(0); i < 9; i++)
 	{
@@ -313,10 +270,15 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	// vn bg fit parameters
 	fFitFlowMassTot->FixParameter(9,fFitFlowMass_side->GetParameter(0));
 	fFitFlowMassTot->FixParameter(10,fFitFlowMass_side->GetParameter(1));
-	fFitFlowMassTot->FixParameter(11,fFitFlowMass_side->GetParameter(2));
+	//fFitFlowMassTot->FixParameter(11,fFitFlowMass_side->GetParameter(2));
 	hFlowMass_temp->Fit("fFitFlowMassTot","R0");
 
-	*dConV2 = fFitFlowMassTot->GetParameter(12);
+	*dConV2 = fFitFlowMassTot->GetParameter(11);
+	
+	TLatex* latex = new TLatex();
+	latex->SetNDC();
+	latex->SetTextFont(42);
+	latex->SetTextSize(0.05);
 
 	// drawing
 	TCanvas* cCan = new TCanvas("cCan","cFit",2000,1000);
@@ -325,12 +287,17 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	hInvMass->Draw();
 	fFitInvMass->Draw("same");
 	fFitInvMassBg->Draw("same");
+	fFitInvMassSubs->Draw("same");
 	cCan->cd(2);
+	hInvMass_RatioSigTot->SetStats(0);
 	hInvMass_RatioSigTot->Draw();
 	fFitInvMassRatioSigTot->Draw("same");
 	cCan->cd(3);
+	hFlowMass->SetStats(0);
 	hFlowMass->Draw();
 	fFitFlowMassTot->Draw("same");
-
+	latex->DrawLatex(0.2,0.2,Form("#it{v}_{2}: %g #pm %g",fFitFlowMassTot->GetParameter(11),fFitFlowMassTot->GetParError(11)));
+	latex->DrawLatex(0.2,0.11,Form("Chi2/ndf: %g / %d",fFitFlowMassTot->GetChisquare(),fFitFlowMassTot->GetNDF()));
+	
 	return cCan;	
 }
