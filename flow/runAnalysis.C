@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/13-QM12-check";
+    TString sWorkDir = "V0s/14-K0s-rebin";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -82,6 +82,7 @@ void runAnalysis()
     taskFlowPID->SetV0sProtonNumSigmaMax(3.);
     taskFlowPID->SetV0sProtonPIDPtMax(1.2);
     
+    /*
     AliAnalysisTaskFlowPID* taskFlowPID_lose = AddTaskFlowPID("flowPID_lose"); // loser than JHEP
     // tracks & event selection cuts
     taskFlowPID_lose->SetAODAnalysis(kTRUE);
@@ -155,7 +156,7 @@ void runAnalysis()
     taskFlowPID_tight->SetV0sLambdaNumTauMax(2.5);
     taskFlowPID_tight->SetV0sProtonNumSigmaMax(2.5);
     taskFlowPID_tight->SetV0sProtonPIDPtMax(1.5);
-
+*/
 
 
     if (!mgr->InitAnalysis()) return;
