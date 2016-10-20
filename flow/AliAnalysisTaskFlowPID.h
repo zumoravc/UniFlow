@@ -54,9 +54,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void					SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
 
-        const static Int_t 		fNumPtBins = 14;			// number of pT bins used for pT-differential flow
+        const static Int_t 		fNumPtBins = 22;			// number of pT bins used for pT-differential flow
         static Double_t			fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
-        const static Int_t      fNumMinvFlowBinsK0s = 13;  // number of inv. mass bin for differential flow plots (K0s)
+        const static Int_t      fNumMinvFlowBinsK0s = 12;  // number of inv. mass bin for differential flow plots (K0s)
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
         const static Int_t      fNumMinvFlowBinsLambda = 11;  // number of inv. mass bin for differential flow plots ((A)Lambda)
         static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
