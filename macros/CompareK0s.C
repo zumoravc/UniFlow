@@ -1,5 +1,7 @@
 void CompareK0s()
 {	
+	TString sPath = "~/NBI/Flow/results/V0s/13-QM12-check-2/JHEP";
+
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatio.C");
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C");
 
@@ -15,7 +17,7 @@ void CompareK0s()
 	hQMK0s[1] = (TH1D*) gDirectory->Get("hist")->Clone("hQMK0s_4050");
 	
 	// loading my input
-	TFile* fInMine = new TFile("~/NBI/Flow/results/V0s/13-QM12-check-2/testExtract/PtFlow_V0s_Gap10.root","READ");
+	TFile* fInMine = new TFile(Form("%s/PtFlow_V0s_Gap10.root",sPath.Data()),"READ");
 	fInMine->cd();
 
 	TH1D* hK0s[2];
@@ -55,5 +57,6 @@ void CompareK0s()
 	{
 		//cCompRatio[i] = CompareHistos(lCompK0s[i],sLabel,0.,0.3,kFALSE);
 		cCompRatio[i] = CompareRatio(hK0s[i],hQMK0s[i]);
+		cCompRatio[i]->Print(Form("%s/comp_K0s_%d.png",sPath.Data(),i),"png");
 	}
 }
