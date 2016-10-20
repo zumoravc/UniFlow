@@ -297,7 +297,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	hFlowMass->Draw();
 	fFitFlowMassTot->Draw("same");
 	latex->DrawLatex(0.2,0.2,Form("#it{v}_{2}: %g #pm %g",fFitFlowMassTot->GetParameter(11),fFitFlowMassTot->GetParError(11)));
-	latex->DrawLatex(0.2,0.11,Form("Chi2/ndf: %g / %d",fFitFlowMassTot->GetChisquare(),fFitFlowMassTot->GetNDF()));
+	latex->DrawLatex(0.2,0.15,Form("Chi2/ndf: %g / %d",fFitFlowMassTot->GetChisquare(),fFitFlowMassTot->GetNDF()));
 	
 	return cCan;	
 }

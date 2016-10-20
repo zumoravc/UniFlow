@@ -43,7 +43,7 @@ TCanvas* CompareRatio(TH1D* fNom, TH1D* fDenom)
 	TCanvas* cCan = new TCanvas();
 	cCan->Divide(2,1);
 	cCan->cd(1);
-	fNom->Draw();
+	fNom->Draw("ep");
 	fDenom->Draw("same");
 
 	cCan->cd(2);
