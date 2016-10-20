@@ -11,11 +11,11 @@ void ProcessV0s(
 	//const TString sOutputFormat = "png";
 	//const TString sEtaGap = "Gap09";
  
-	const Int_t iNumPtBins = 10; // pT bins
+	const Int_t iNumPtBins = 22; // pT bins
 	const Int_t iNumCentBins = 9; // centrality bins
 	const Int_t iHarm = 2; // harmonics
 	// bins edges
-	Double_t fPtBinEdges[] = {0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6}; 
+	Double_t fPtBinEdges[] = {0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.2,2.4,2.6,2.8,3.0,3.4}; 
 	Double_t fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
 	// =======================================
@@ -23,7 +23,7 @@ void ProcessV0s(
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C");
 
 	TFile* fInput = new TFile(sInput.Data(),"READ");
-	TFile* fOutput = new TFile(Form("%s/V0sFlow_%s.root",sOutput.Data(),sEtaGap.Data()),"RECREATE");
+	TFile* fOutput = new TFile(Form("%s/../MassDist_V0s_%s.root",sOutput.Data(),sEtaGap.Data()),"RECREATE");
 
 	fInput->cd(Form("%s",sTag.Data()));
 
@@ -62,17 +62,17 @@ void ProcessV0s(
 	TH1D* hInvMass_K0s[iNumCentBins][iNumPtBins];
 	TH1D* hInvMass_Lambda[iNumCentBins][iNumPtBins];
 
-	TH1D* hCummMass_Pos_K0s[iNumCentBins][iNumPtBins];
-	TH1D* hCummMass_Neg_K0s[iNumCentBins][iNumPtBins];
-	TH1D* hCummMass_Pos_Lambda[iNumCentBins][iNumPtBins];
-	TH1D* hCummMass_Neg_Lambda[iNumCentBins][iNumPtBins];
+	TH1D* hCumMass_Pos_K0s[iNumCentBins][iNumPtBins];
+	TH1D* hCumMass_Neg_K0s[iNumCentBins][iNumPtBins];
+	TH1D* hCumMass_Pos_Lambda[iNumCentBins][iNumPtBins];
+	TH1D* hCumMass_Neg_Lambda[iNumCentBins][iNumPtBins];
 
 	TList* lInvMass_K0s = new TList();
 	TList* lInvMass_Lambda = new TList();
-	TList* lCummMass_Pos_K0s = new TList();
-	TList* lCummMass_Neg_K0s = new TList();
-	TList* lCummMass_Pos_Lambda = new TList();
-	TList* lCummMass_Neg_Lambda = new TList();
+	TList* lCumMass_Pos_K0s = new TList();
+	TList* lCumMass_Neg_K0s = new TList();
+	TList* lCumMass_Pos_Lambda = new TList();
+	TList* lCumMass_Neg_Lambda = new TList();
 	
 
 	TCanvas* cTemp = new TCanvas();
@@ -97,29 +97,29 @@ void ProcessV0s(
 			lInvMass_Lambda->Add(hInvMass_Lambda[i][j]);
 			
 			// cum x inv mass plots
-			hCummMass_Pos_K0s[i][j] = (TH1D*) p2V0sDiffTwoPos_K0s[i]->ProjectionY(Form("hCummMass_Pos_K0s_Cent%d_pt%d",i,j),j+1,j+1,"e");
-			hCummMass_Pos_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #LT#LT2'#GT#GT |#it{#eta}^{POI}|>0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
-			hCummMass_Pos_K0s[i][j]->Draw();
-			cTemp->Print(Form("%s/CummMassK0s/CummMass_Pos_K0s_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
-			lCummMass_Pos_K0s->Add(hCummMass_Pos_K0s[i][j]);
+			hCumMass_Pos_K0s[i][j] = (TH1D*) p2V0sDiffTwoPos_K0s[i]->ProjectionY(Form("hCumMass_Pos_K0s_Cent%d_pt%d",i,j),j+1,j+1,"e");
+			hCumMass_Pos_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #LT#LT2'#GT#GT |#it{#eta}^{POI}|>0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hCumMass_Pos_K0s[i][j]->Draw();
+			cTemp->Print(Form("%s/CumMassK0s/CumMass_Pos_K0s_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
+			lCumMass_Pos_K0s->Add(hCumMass_Pos_K0s[i][j]);
 			
-			hCummMass_Neg_K0s[i][j] = (TH1D*) p2V0sDiffTwoNeg_K0s[i]->ProjectionY(Form("hCummMass_Neg_K0s_Cent%d_pt%d",i,j),j+1,j+1,"e");
-			hCummMass_Neg_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #LT#LT2'#GT#GT |#it{#eta}^{POI}|<-0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
-			hCummMass_Neg_K0s[i][j]->Draw();
-			cTemp->Print(Form("%s/CummMassK0s/CummMass_Neg_K0s_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
-			lCummMass_Neg_K0s->Add(hCummMass_Neg_K0s[i][j]);
+			hCumMass_Neg_K0s[i][j] = (TH1D*) p2V0sDiffTwoNeg_K0s[i]->ProjectionY(Form("hCumMass_Neg_K0s_Cent%d_pt%d",i,j),j+1,j+1,"e");
+			hCumMass_Neg_K0s[i][j]->SetTitle(Form("K_{S}^{0}: #LT#LT2'#GT#GT |#it{#eta}^{POI}|<-0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hCumMass_Neg_K0s[i][j]->Draw();
+			cTemp->Print(Form("%s/CumMassK0s/CumMass_Neg_K0s_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
+			lCumMass_Neg_K0s->Add(hCumMass_Neg_K0s[i][j]);
 
-			hCummMass_Pos_Lambda[i][j] = (TH1D*) p2V0sDiffTwoPos_Lambda[i]->ProjectionY(Form("hCummMass_Pos_Lambda_Cent%d_pt%d",i,j),j+1,j+1,"e");
-			hCummMass_Pos_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #LT#LT2'#GT#GT |#it{#eta}^{POI}|>0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
-			hCummMass_Pos_Lambda[i][j]->Draw();
-			cTemp->Print(Form("%s/CummMassLambda/CummMass_Pos_Lambda_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
-			lCummMass_Pos_Lambda->Add(hCummMass_Pos_Lambda[i][j]);
+			hCumMass_Pos_Lambda[i][j] = (TH1D*) p2V0sDiffTwoPos_Lambda[i]->ProjectionY(Form("hCumMass_Pos_Lambda_Cent%d_pt%d",i,j),j+1,j+1,"e");
+			hCumMass_Pos_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #LT#LT2'#GT#GT |#it{#eta}^{POI}|>0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hCumMass_Pos_Lambda[i][j]->Draw();
+			cTemp->Print(Form("%s/CumMassLambda/CumMass_Pos_Lambda_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
+			lCumMass_Pos_Lambda->Add(hCumMass_Pos_Lambda[i][j]);
 			
-			hCummMass_Neg_Lambda[i][j] = (TH1D*) p2V0sDiffTwoNeg_Lambda[i]->ProjectionY(Form("hCummMass_Neg_Lambda_Cent%d_pt%d",i,j),j+1,j+1,"e");
-			hCummMass_Neg_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #LT#LT2'#GT#GT |#it{#eta}^{POI}|<-0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
-			hCummMass_Neg_Lambda[i][j]->Draw();
-			cTemp->Print(Form("%s/CummMassLambda/CummMass_Neg_Lambda_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
-			lCummMass_Neg_Lambda->Add(hCummMass_Neg_Lambda[i][j]);
+			hCumMass_Neg_Lambda[i][j] = (TH1D*) p2V0sDiffTwoNeg_Lambda[i]->ProjectionY(Form("hCumMass_Neg_Lambda_Cent%d_pt%d",i,j),j+1,j+1,"e");
+			hCumMass_Neg_Lambda[i][j]->SetTitle(Form("#Lambda+#bar{#Lambda}: #LT#LT2'#GT#GT |#it{#eta}^{POI}|<-0.45 %g<#it{p}_{T}<%g GeV/#it{c} Cent %g-%g%%",fPtBinEdges[j],fPtBinEdges[j+1],fCentBinEdges[i],fCentBinEdges[i+1]));
+			hCumMass_Neg_Lambda[i][j]->Draw();
+			cTemp->Print(Form("%s/CumMassLambda/CumMass_Neg_Lambda_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
+			lCumMass_Neg_Lambda->Add(hCumMass_Neg_Lambda[i][j]);
 
 			
 		}
@@ -151,10 +151,10 @@ void ProcessV0s(
 
 		for(Int_t j(0); j < iNumPtBins; j++)
 		{
-			hFlowMass_Pos_K0s[i][j] = (TH1D*) hCummMass_Pos_K0s[i][j]->Clone(Form("hFlowMass_Pos_K0s_Cent%d_pt%d",i,j));
-			hFlowMass_Neg_K0s[i][j] = (TH1D*) hCummMass_Neg_K0s[i][j]->Clone(Form("hFlowMass_Neg_K0s_Cent%d_pt%d",i,j));
-			hFlowMass_Pos_Lambda[i][j] = (TH1D*) hCummMass_Pos_Lambda[i][j]->Clone(Form("hFlowMass_Pos_Lambda_Cent%d_pt%d",i,j));
-			hFlowMass_Neg_Lambda[i][j] = (TH1D*) hCummMass_Neg_Lambda[i][j]->Clone(Form("hFlowMass_Neg_Lambda_Cent%d_pt%d",i,j));
+			hFlowMass_Pos_K0s[i][j] = (TH1D*) hCumMass_Pos_K0s[i][j]->Clone(Form("hFlowMass_Pos_K0s_Cent%d_pt%d",i,j));
+			hFlowMass_Neg_K0s[i][j] = (TH1D*) hCumMass_Neg_K0s[i][j]->Clone(Form("hFlowMass_Neg_K0s_Cent%d_pt%d",i,j));
+			hFlowMass_Pos_Lambda[i][j] = (TH1D*) hCumMass_Pos_Lambda[i][j]->Clone(Form("hFlowMass_Pos_Lambda_Cent%d_pt%d",i,j));
+			hFlowMass_Neg_Lambda[i][j] = (TH1D*) hCumMass_Neg_Lambda[i][j]->Clone(Form("hFlowMass_Neg_Lambda_Cent%d_pt%d",i,j));
 
 			hFlowMass_Pos_K0s[i][j]->Divide(fUnity,dRefFlow);
 			hFlowMass_Neg_K0s[i][j]->Divide(fUnity,dRefFlow);
@@ -201,87 +201,16 @@ void ProcessV0s(
 		}
 	}
 
-
-	// ===== Making comparison plots ======
-	// inv mass plots
-	TCanvas* cInvMassK0sPt = new TCanvas("cInvMassK0sPt","InvMassK0sPt",1800,1800);
-	cInvMassK0sPt->Divide(3,3);
-	TCanvas* cInvMassLambdaPt = new TCanvas("cInvMassLambdaPt","InvMassLambdaPt",1800,1800);
-	cInvMassLambdaPt->Divide(3,3);
-	TCanvas* cInvMassK0sCent = new TCanvas("cInvMassK0sCent","InvMassK0sCent",1800,1800);
-	cInvMassK0sCent->Divide(3,3);
-	TCanvas* cInvMassLambdaCent = new TCanvas("cInvMassLambdaCent","InvMassLambdaCent",1800,1800);
-	cInvMassLambdaCent->Divide(3,3);
-
-	// flow mass plots
-	TCanvas* cFlowMassK0sPt = new TCanvas("cFlowMassK0sPt","FlowMassK0sPt",1800,1800);
-	cFlowMassK0sPt->Divide(3,3);
-	TCanvas* cFlowMassLambdaPt = new TCanvas("cFlowMassLambdaPt","FlowMassLambdaPt",1800,1800);
-	cFlowMassLambdaPt->Divide(3,3);
-	TCanvas* cFlowMassK0sCent = new TCanvas("cFlowMassK0sCent","FlowMassK0sCent",1800,1800);
-	cFlowMassK0sCent->Divide(3,3);
-	TCanvas* cFlowMassLambdaCent = new TCanvas("cFlowMassLambdaCent","FlowMassLambdaCent",1800,1800);
-	cFlowMassLambdaCent->Divide(3,3);
-
-	// loop for all cent and fixed pT
-	for(Int_t j(0); j < iNumPtBins; j++) // pT
-	{
-		for(Int_t i(0); i < 9; i++) // cent
-		{
-			cInvMassK0sPt->cd(i+1);
-			hInvMass_K0s[i][j]->Draw();
-
-			cInvMassLambdaPt->cd(i+1);
-			hInvMass_Lambda[i][j]->Draw();
-
-			cFlowMassK0sPt->cd(i+1);
-			hFlowMass_K0s[i][j]->Draw();
-		
-			cFlowMassLambdaPt->cd(i+1);
-			hFlowMass_Lambda[i][j]->Draw();
-		}
-		cInvMassK0sPt->Print(Form("%s/compInvMass/InvMass_K0s_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
-		cInvMassLambdaPt->Print(Form("%s/compInvMass/InvMass_Lambda_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
-		cFlowMassK0sPt->Print(Form("%s/compFlowMass/FlowMass_K0s_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
-		cFlowMassLambdaPt->Print(Form("%s/compFlowMass/FlowMass_Lambda_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
-	}
-
-	// loop for all pT and fixed cent
-	for(Int_t i(0); i < iNumCentBins; i++) // cent
-	{
-	for(Int_t j(0); j < 9; j++) // pT
-		{
-			cInvMassK0sCent->cd(j+1);
-			hInvMass_K0s[i][j]->Draw();
-
-			cInvMassLambdaCent->cd(j+1);
-			hInvMass_Lambda[i][j]->Draw();
-
-			cFlowMassK0sCent->cd(j+1);
-			hFlowMass_K0s[i][j]->Draw();
-
-			cFlowMassLambdaCent->cd(j+1);
-			hFlowMass_Lambda[i][j]->Draw();
-		}
-		cInvMassK0sCent->Print(Form("%s/compInvMass/InvMass_K0s_allPt_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-		cInvMassLambdaCent->Print(Form("%s/compInvMass/InvMass_Lambda_allPt_Cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-		cFlowMassK0sCent->Print(Form("%s/compFlowMass/FlowMass_K0s_allPt_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-		cFlowMassLambdaCent->Print(Form("%s/compFlowMass/FlowMass_Lambda_allPt_Cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-	}
-
-
-	
-
 	// ===== Saving output ======
 	fOutput->cd();
 	lInvMass_K0s->Write("lInvMass_K0s",TObject::kSingleKey);
 	lInvMass_Lambda->Write("lInvMass_Lambda",TObject::kSingleKey);
 	lFlowMass_K0s->Write("lFlowMass_K0s",TObject::kSingleKey);
 	lFlowMass_Lambda->Write("lFlowMass_Lambda",TObject::kSingleKey);
-	lCummMass_Pos_K0s->Write("lCummMass_Pos_K0s",TObject::kSingleKey);
-	lCummMass_Neg_K0s->Write("lCummMass_Neg_K0s",TObject::kSingleKey);
-	lCummMass_Pos_Lambda->Write("lCummMass_Pos_Lambda",TObject::kSingleKey);
-	lCummMass_Neg_Lambda->Write("lCummMass_Neg_Lambda",TObject::kSingleKey);
+	lCumMass_Pos_K0s->Write("lCumMass_Pos_K0s",TObject::kSingleKey);
+	lCumMass_Neg_K0s->Write("lCumMass_Neg_K0s",TObject::kSingleKey);
+	lCumMass_Pos_Lambda->Write("lCumMass_Pos_Lambda",TObject::kSingleKey);
+	lCumMass_Neg_Lambda->Write("lCumMass_Neg_Lambda",TObject::kSingleKey);
 	lFlowMass_Pos_K0s->Write("lFlowMass_Pos_K0s",TObject::kSingleKey);
 	lFlowMass_Neg_K0s->Write("lFlowMass_Neg_K0s",TObject::kSingleKey);
 	lFlowMass_Pos_Lambda->Write("lFlowMass_Pos_Lambda",TObject::kSingleKey);

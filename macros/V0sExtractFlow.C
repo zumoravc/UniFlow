@@ -24,6 +24,9 @@ void V0sExtractFlow(
 	TFile* fInput = new TFile(sInput.Data(),"READ");
 	TFile* fOutput = new TFile(Form("%s/../PtFlow_V0s_%s.root",sOutput.Data(),sEtaGap.Data()),"RECREATE");
 	
+	if(!fInput->IsOpen())
+		return;
+
 	fInput->cd();
 
 	// ===== Loading input ===== 
