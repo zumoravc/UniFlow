@@ -50,7 +50,7 @@ TCanvas* CompareRatio(TH1D* fNom, TH1D* fDenom)
 	hRatio->Draw();
 	lUnity->Draw("same");
 
-	latex->DrawLatex(0.15,0.85,"Me/Katarina");
+	latex->DrawLatex(0.15,0.85,"Me/Other");
 
 
 	return cCan;
