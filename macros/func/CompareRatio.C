@@ -24,8 +24,8 @@ TCanvas* CompareRatio(TH1D* fNom, TH1D* fDenom)
 		hRatio->SetBinError(i,TMath::Sqrt(dErr));
 	}
 	
-	hRatio->SetMinimum(0.9);
-	hRatio->SetMaximum(1.1);
+	hRatio->SetMinimum(0.);
+	hRatio->SetMaximum(2.);
 	//hRatio->SetTitle("Me/Other");
 	hRatio->SetLineColor(kRed);
 	hRatio->SetMarkerColor(kRed);
@@ -50,7 +50,7 @@ TCanvas* CompareRatio(TH1D* fNom, TH1D* fDenom)
 	hRatio->Draw();
 	lUnity->Draw("same");
 
-	latex->DrawLatex(0.15,0.85,"Me/Katarina");
+	latex->DrawLatex(0.15,0.85,"Me/Other");
 
 
 	return cCan;

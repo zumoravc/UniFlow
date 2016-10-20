@@ -1,6 +1,6 @@
 #!/bin/bash
-inPath=~/NBI/Flow/results/V0s/13-QM12-check/merge
-outPath=~/NBI/Flow/results/V0s/13-QM12-check/
+inPath=~/NBI/Flow/results/V0s/13-QM12-check-2/merge
+outPath=~/NBI/Flow/results/V0s/13-QM12-check-2
 tag=JHEP
 
 # =================================================
@@ -29,6 +29,6 @@ do
 	mkdir -pv ${plotsDir}/PtFlow/
 
 
-	root -l -b -q ~/NBI/Flow/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
+	#root -l -b -q ~/NBI/Flow/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
 	root -l -b -q ~/NBI/Flow/macros/V0sExtractFlow.C\(\"${outPath}/MassDist_V0s_Gap${gap}.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\",kFALSE\)
 done

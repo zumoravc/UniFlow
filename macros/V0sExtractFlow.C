@@ -11,10 +11,10 @@ void V0sExtractFlow(
 {
 
 
-	const Int_t iNumPtBins = 10; // pT bins
+	const Int_t iNumPtBins = 22; // pT bins
 	const Int_t iNumCentBins = 9; // centrality bins
 	// bins edges
-	Double_t fPtBinEdges[] = {0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6}; 
+	Double_t fPtBinEdges[] = {0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.2,2.4,2.6,2.8,3.0,3.4}; 
 	Double_t fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
 	// =======================================
@@ -22,6 +22,8 @@ void V0sExtractFlow(
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C");
 
 	TFile* fInput = new TFile(sInput.Data(),"READ");
+	TFile* fOutput = new TFile(Form("%s/../PtFlow_V0s_%s.root",sOutput.Data(),sEtaGap.Data()),"RECREATE");
+
 	
 	fInput->cd();
 
@@ -73,6 +75,10 @@ void V0sExtractFlow(
 			cCan->Print(Form("%s/fitLambda/fit_Lambda_Cent_%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
 			hFlowPt_Lambda[i]->SetBinContent(j+1,dExtractedV2_Lambda[j]);
 		}
+
+		fOutput->cd();
+		hFlowPt_K0s[i]->Write();
+		hFlowPt_Lambda[i]->Write();
 
 		cPtFlow->cd();
 		hFlowPt_K0s[i]->Draw();

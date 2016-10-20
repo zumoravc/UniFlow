@@ -15,7 +15,7 @@ void CompareK0s()
 	hQMK0s[1] = (TH1D*) gDirectory->Get("hist")->Clone("hQMK0s_4050");
 	
 	// loading my input
-	TFile* fInMine = new TFile("~/NBI/Flow/results/V0s/13-QM12-check/PtFlow_V0s_Gap10.root","READ");
+	TFile* fInMine = new TFile("~/NBI/Flow/results/V0s/13-QM12-check-2/PtFlow_V0s_Gap10.root","READ");
 	fInMine->cd();
 
 	TH1D* hK0s[2];
