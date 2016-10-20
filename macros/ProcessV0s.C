@@ -136,6 +136,8 @@ void ProcessV0s(
 	TH1D* hFlowMass_K0s[iNumCentBins][iNumPtBins];
 	TH1D* hFlowMass_Lambda[iNumCentBins][iNumPtBins];
 
+	TH1D* hRefFlow = (TH1D*) hTracksRefTwo->Clone("hRefFlowTwo");
+
 	TList* lFlowMass_K0s = new TList();
 	TList* lFlowMass_Pos_K0s = new TList();
 	TList* lFlowMass_Neg_K0s = new TList();
@@ -148,6 +150,7 @@ void ProcessV0s(
 	for(Int_t i(0); i < iNumCentBins; i++)
 	{
 		dRefFlow = TMath::Sqrt(hTracksRefTwo->GetBinContent(i+1));
+		hRefFlow->SetBinContent(i+1, dRefFlow);
 
 		for(Int_t j(0); j < iNumPtBins; j++)
 		{
@@ -199,81 +202,13 @@ void ProcessV0s(
 			cTemp->Print(Form("%s/FlowMassLambda/FlowMass_Lambda_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
 			lFlowMass_Lambda->Add(hFlowMass_Lambda[i][j]);
 		}
+		hRefFlow->Draw();
+		cTemp->Print(Form("%s/RefFlow/RefFlowTwo.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());	
 	}
-
-
-	// ===== Making comparison plots ======
-	// inv mass plots
-	TCanvas* cInvMassK0sPt = new TCanvas("cInvMassK0sPt","InvMassK0sPt",1800,1800);
-	cInvMassK0sPt->Divide(3,3);
-	TCanvas* cInvMassLambdaPt = new TCanvas("cInvMassLambdaPt","InvMassLambdaPt",1800,1800);
-	cInvMassLambdaPt->Divide(3,3);
-	TCanvas* cInvMassK0sCent = new TCanvas("cInvMassK0sCent","InvMassK0sCent",1800,1800);
-	cInvMassK0sCent->Divide(3,3);
-	TCanvas* cInvMassLambdaCent = new TCanvas("cInvMassLambdaCent","InvMassLambdaCent",1800,1800);
-	cInvMassLambdaCent->Divide(3,3);
-
-	// flow mass plots
-	TCanvas* cFlowMassK0sPt = new TCanvas("cFlowMassK0sPt","FlowMassK0sPt",1800,1800);
-	cFlowMassK0sPt->Divide(3,3);
-	TCanvas* cFlowMassLambdaPt = new TCanvas("cFlowMassLambdaPt","FlowMassLambdaPt",1800,1800);
-	cFlowMassLambdaPt->Divide(3,3);
-	TCanvas* cFlowMassK0sCent = new TCanvas("cFlowMassK0sCent","FlowMassK0sCent",1800,1800);
-	cFlowMassK0sCent->Divide(3,3);
-	TCanvas* cFlowMassLambdaCent = new TCanvas("cFlowMassLambdaCent","FlowMassLambdaCent",1800,1800);
-	cFlowMassLambdaCent->Divide(3,3);
-
-	// loop for all cent and fixed pT
-	for(Int_t j(0); j < iNumPtBins; j++) // pT
-	{
-		for(Int_t i(0); i < 9; i++) // cent
-		{
-			cInvMassK0sPt->cd(i+1);
-			hInvMass_K0s[i][j]->Draw();
-
-			cInvMassLambdaPt->cd(i+1);
-			hInvMass_Lambda[i][j]->Draw();
-
-			cFlowMassK0sPt->cd(i+1);
-			hFlowMass_K0s[i][j]->Draw();
-		
-			cFlowMassLambdaPt->cd(i+1);
-			hFlowMass_Lambda[i][j]->Draw();
-		}
-		cInvMassK0sPt->Print(Form("%s/compInvMass/InvMass_K0s_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
-		cInvMassLambdaPt->Print(Form("%s/compInvMass/InvMass_Lambda_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
-		cFlowMassK0sPt->Print(Form("%s/compFlowMass/FlowMass_K0s_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
-		cFlowMassLambdaPt->Print(Form("%s/compFlowMass/FlowMass_Lambda_allCent_pt%d.%s",sOutput.Data(),j,sOutputFormat.Data()),sOutputFormat.Data());
-	}
-
-	// loop for all pT and fixed cent
-	for(Int_t i(0); i < iNumCentBins; i++) // cent
-	{
-	for(Int_t j(0); j < 9; j++) // pT
-		{
-			cInvMassK0sCent->cd(j+1);
-			hInvMass_K0s[i][j]->Draw();
-
-			cInvMassLambdaCent->cd(j+1);
-			hInvMass_Lambda[i][j]->Draw();
-
-			cFlowMassK0sCent->cd(j+1);
-			hFlowMass_K0s[i][j]->Draw();
-
-			cFlowMassLambdaCent->cd(j+1);
-			hFlowMass_Lambda[i][j]->Draw();
-		}
-		cInvMassK0sCent->Print(Form("%s/compInvMass/InvMass_K0s_allPt_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-		cInvMassLambdaCent->Print(Form("%s/compInvMass/InvMass_Lambda_allPt_Cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-		cFlowMassK0sCent->Print(Form("%s/compFlowMass/FlowMass_K0s_allPt_cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-		cFlowMassLambdaCent->Print(Form("%s/compFlowMass/FlowMass_Lambda_allPt_Cent%d.%s",sOutput.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-	}
-
-
-	
 
 	// ===== Saving output ======
 	fOutput->cd();
+	hRefFlow->Write();
 	lInvMass_K0s->Write("lInvMass_K0s",TObject::kSingleKey);
 	lInvMass_Lambda->Write("lInvMass_Lambda",TObject::kSingleKey);
 	lFlowMass_K0s->Write("lFlowMass_K0s",TObject::kSingleKey);
