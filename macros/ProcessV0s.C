@@ -136,6 +136,8 @@ void ProcessV0s(
 	TH1D* hFlowMass_K0s[iNumCentBins][iNumPtBins];
 	TH1D* hFlowMass_Lambda[iNumCentBins][iNumPtBins];
 
+	TH1D* hRefFlow = (TH1D*) hTracksRefTwo->Clone("hRefFlowTwo");
+
 	TList* lFlowMass_K0s = new TList();
 	TList* lFlowMass_Pos_K0s = new TList();
 	TList* lFlowMass_Neg_K0s = new TList();
@@ -148,6 +150,7 @@ void ProcessV0s(
 	for(Int_t i(0); i < iNumCentBins; i++)
 	{
 		dRefFlow = TMath::Sqrt(hTracksRefTwo->GetBinContent(i+1));
+		hRefFlow->SetBinContent(i+1, dRefFlow);
 
 		for(Int_t j(0); j < iNumPtBins; j++)
 		{
@@ -199,10 +202,13 @@ void ProcessV0s(
 			cTemp->Print(Form("%s/FlowMassLambda/FlowMass_Lambda_Cent%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
 			lFlowMass_Lambda->Add(hFlowMass_Lambda[i][j]);
 		}
+		hRefFlow->Draw();
+		cTemp->Print(Form("%s/RefFlow/RefFlowTwo.%s",sOutput.Data(),sOutputFormat.Data()),sOutputFormat.Data());	
 	}
 
 	// ===== Saving output ======
 	fOutput->cd();
+	hRefFlow->Write();
 	lInvMass_K0s->Write("lInvMass_K0s",TObject::kSingleKey);
 	lInvMass_Lambda->Write("lInvMass_Lambda",TObject::kSingleKey);
 	lFlowMass_K0s->Write("lFlowMass_K0s",TObject::kSingleKey);
