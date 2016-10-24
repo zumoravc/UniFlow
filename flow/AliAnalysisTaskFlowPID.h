@@ -178,7 +178,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D* 					fTracksCharge;			 //! selected tracks charge distribution
         
 
-        const static Int_t    fNumSampleBins = 10; // number of sampling bins 
+        const static Int_t      fNumSampleBins = 5; // number of sampling bins 
         TProfile*				fTracksRefTwo[fNumHarmonics][fNumEtaGap][fNumSampleBins];			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*               fTracksDiffTwoPos[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];          //! event averaged 2-particle correlation for differential flow <<2'>>
         TProfile*               fTracksDiffTwoNeg[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];          //! event averaged 2-particle correlation for differential flow <<2'>>

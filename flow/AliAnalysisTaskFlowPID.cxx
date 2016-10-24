@@ -644,6 +644,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     TRandom3 rr(0);
     Double_t ranNum = rr.Rndm();
     
+    /* // sampling for 10 samples
     if (ranNum <= 0.1) fSampleBinIndex = 0;
     else if (ranNum <= 0.2 && ranNum > 0.1) fSampleBinIndex = 1;
     else if (ranNum <= 0.3 && ranNum > 0.2) fSampleBinIndex = 2;
@@ -654,6 +655,14 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     else if (ranNum <= 0.8 && ranNum > 0.7) fSampleBinIndex = 7;
     else if (ranNum <= 0.9 && ranNum > 0.8) fSampleBinIndex = 8;
     else fSampleBinIndex = 9;
+    */
+
+    // sampling for 5 samples
+    if (ranNum <= 0.2) fSampleBinIndex = 0;
+    else if (ranNum <= 0.4 && ranNum > 0.2) fSampleBinIndex = 1;
+    else if (ranNum <= 0.6 && ranNum > 0.4) fSampleBinIndex = 2;
+    else if (ranNum <= 0.8 && ranNum > 0.6) fSampleBinIndex = 3;
+    else fSampleBinIndex = 4;
   } 
   else
   {
