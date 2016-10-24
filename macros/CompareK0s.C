@@ -1,6 +1,7 @@
 void CompareK0s()
 {	
-	TString sPath = "~/NBI/Flow/results/V0s/13-QM12-check-2/JHEP";
+	TString sPath = "~/NBI/Flow/results/V0s/15-sampling/sampling_test";
+	TString sGap = "Gap00";
 
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatio.C");
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C");
@@ -17,12 +18,12 @@ void CompareK0s()
 	hQMK0s[1] = (TH1D*) gDirectory->Get("hist")->Clone("hQMK0s_4050");
 	
 	// loading my input
-	TFile* fInMine = new TFile(Form("%s/PtFlow_V0s_Gap10.root",sPath.Data()),"READ");
+	TFile* fInMine = new TFile(Form("%s/PtFlow_V0s_%s.root",sPath.Data(),sGap.Data()),"READ");
 	fInMine->cd();
 
 	TH1D* hK0s[2];
-	hK0s[0] = (TH1D*) gDirectory->Get("hFlowPt_K0s_Gap10_Cent2")->Clone("hK0s_1020");
-	hK0s[1] = (TH1D*) gDirectory->Get("hFlowPt_K0s_Gap10_Cent5")->Clone("hK0s_4050");
+	hK0s[0] = (TH1D*) gDirectory->Get("hFlowPt_K0s_Gap00_Cent2")->Clone("hK0s_1020");
+	hK0s[1] = (TH1D*) gDirectory->Get("hFlowPt_K0s_Gap00_Cent5")->Clone("hK0s_4050");
 
 
 	TList* lCompK0s[2];
