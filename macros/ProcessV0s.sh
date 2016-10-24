@@ -1,14 +1,14 @@
 #!/bin/bash
-tag=JHEP
-inPath=~/NBI/Flow/results/V0s/13-QM12-check-2/merge
-outPath=~/NBI/Flow/results/V0s/13-QM12-check-2/${tag}
+tag=sampling
+inPath=~/NBI/Flow/results/V0s/15-sampling/merge
+outPath=~/NBI/Flow/results/V0s/15-sampling/${tag}_test
 
 # =================================================
 
 mkdir -pv ${outPath}
 cd ${outPath}
 
-for gap in 10 #10 #02 04 06 08 10
+for gap in 00 #10 #02 04 06 08 10
 do
 	echo " === Processing Gap${gap} === "
 	plotsDir=plots_Gap${gap}
@@ -29,5 +29,7 @@ do
 
 
 	#root -l -b -q ~/NBI/Flow/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
+	root -l -b -q ~/NBI/Flow/macros/ProcessV0sSampled.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
+	
 	root -l -b -q ~/NBI/Flow/macros/V0sExtractFlow.C\(\"${outPath}/MassDist_V0s_Gap${gap}.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
 done

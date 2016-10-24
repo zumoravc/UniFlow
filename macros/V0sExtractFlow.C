@@ -1,4 +1,4 @@
-TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2,const Short_t iPartSpecies = 0);
+TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t* dConV2Err, const Short_t iPartSpecies = 0);
 
 void V0sExtractFlow(
 		const TString sInput = "~/NBI/Codes/results/V0s/8/plusplus_part1/plots/V0sFlow.root",
@@ -13,7 +13,7 @@ void V0sExtractFlow(
 	const Int_t iNumPtBins = 22; // pT bins
 	const Int_t iNumCentBins = 9; // centrality bins
 	// bins edges
-	Double_t fPtBinEdges[] = {0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.2,2.4,2.6,2.8,3.0,3.4}; 
+	Double_t fPtBinEdges[] = {0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8}; 
 	Double_t fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
 	// =======================================
@@ -65,7 +65,9 @@ void V0sExtractFlow(
 	TH1D* hFlowPt_K0s[iNumCentBins]; 
 	TH1D* hFlowPt_Lambda[iNumCentBins]; 
 	Double_t dExtractedV2_K0s[iNumPtBins] = {0};
+	Double_t dExtractedV2Err_K0s[iNumPtBins] = {0};
 	Double_t dExtractedV2_Lambda[iNumPtBins] = {0};
+	Double_t dExtractedV2Err_Lambda[iNumPtBins] = {0};
 	for(Int_t i(0); i < iNumCentBins; i++)
 	{
 		hFlowPt_K0s[i] = new TH1D(Form("hFlowPt_K0s_%s_Cent%d",sEtaGap.Data(),i),Form("K0s: v2 %s Cent %d; #it{p}_{T} (GeV/#it{c}); #it{v_2}",sEtaGap.Data(),i),iNumPtBins,fPtBinEdges);
@@ -73,13 +75,15 @@ void V0sExtractFlow(
 		
 		for(Int_t j(0); j < iNumPtBins; j++)
 		{
-			cCan = ExtractFlow(hInvMassK0s[i][j],hFlowMassK0s[i][j],&dExtractedV2_K0s[j],0);
+			cCan = ExtractFlow(hInvMassK0s[i][j],hFlowMassK0s[i][j],&dExtractedV2_K0s[j],&dExtractedV2Err_K0s[j],0);
 			cCan->Print(Form("%s/fitK0s/fit_K0s_Cent_%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
 			hFlowPt_K0s[i]->SetBinContent(j+1,dExtractedV2_K0s[j]);
+			hFlowPt_K0s[i]->SetBinError(j+1,dExtractedV2Err_K0s[j]);
 			
-			//cCan = ExtractFlow(hInvMassLambda[i][j],hFlowMassLambda[i][j],&dExtractedV2_Lambda[j],1);
-			//cCan->Print(Form("%s/fitLambda/fit_Lambda_Cent_%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
-			//hFlowPt_Lambda[i]->SetBinContent(j+1,dExtractedV2_Lambda[j]);
+			cCan = ExtractFlow(hInvMassLambda[i][j],hFlowMassLambda[i][j],&dExtractedV2_Lambda[j],&dExtractedV2Err_Lambda[j],1);
+			cCan->Print(Form("%s/fitLambda/fit_Lambda_Cent_%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
+			hFlowPt_Lambda[i]->SetBinContent(j+1,dExtractedV2_Lambda[j]);
+			hFlowPt_Lambda[i]->SetBinError(j+1,dExtractedV2Err_Lambda[j]);
 		}
 
 		// writing to output root file
@@ -97,7 +101,7 @@ void V0sExtractFlow(
 	}
 }
 
-TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Short_t iPartSpecies)
+TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t* dConV2Err, const Short_t iPartSpecies)
 {
 	const Short_t dNumSigma = 5;
 
@@ -262,10 +266,16 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	printf("-----------------------------------------\n");
 
 	TF1* fFitFlowMassTot = new TF1("fFitFlowMassTot","[11]*(gaus(0)+gaus(3)+pol2(6))+(1-(gaus(0)+gaus(3)+pol2(6)))*pol1(9)",dFitRange[0],dFitRange[1]);
+	Double_t dParValue = 0;
+	Double_t dParError = 0;
 	// inv mass fit parameters
 	for(Int_t i(0); i < 9; i++)
 	{
-		fFitFlowMassTot->FixParameter(i,fFitInvMassRatioSigTot->GetParameter(i));
+		dParValue = fFitInvMassRatioSigTot->GetParameter(i);
+		dParError = TMath::Abs(fFitInvMassRatioSigTot->GetParError(i));
+
+		fFitFlowMassTot->SetParameter(i,dParValue);
+		fFitFlowMassTot->SetParLimits(i,dParValue-dParError,dParValue+dParError);
 	}
 	// vn bg fit parameters
 	fFitFlowMassTot->FixParameter(9,fFitFlowMass_side->GetParameter(0));
@@ -274,6 +284,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	hFlowMass_temp->Fit("fFitFlowMassTot","R0");
 
 	*dConV2 = fFitFlowMassTot->GetParameter(11);
+	*dConV2Err = fFitFlowMassTot->GetParError(11);
 	
 	TLatex* latex = new TLatex();
 	latex->SetNDC();
