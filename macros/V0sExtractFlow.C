@@ -114,6 +114,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t
 	}
 	
 	Double_t dMassPeak = 0., dMassPeakLimit = 0.;
+	Double_t dSigmaMin = 0, dSigmaMax = 0;
 	Double_t dFitRange[2] = {0};
 	TString sPartName;
 
@@ -123,6 +124,8 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t
 			sPartName = TString("K0s");
 			dMassPeak = 0.49;
 			dMassPeakLimit = 0.03;
+			dSigmaMin = 0.01;
+			dSigmaMax = 0.03;
 			dFitRange[0] = 0.4;
 			dFitRange[1] = 0.6;
 
@@ -130,9 +133,11 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t
 
 		case 1: //Lambda
 			sPartName = TString("Lambda");
-			dMassPeak = 1.116;
+			dMassPeak = 1.11;
 			dMassPeakLimit = 0.01;
-			dFitRange[0] = 1.09;
+			dSigmaMin = 0.002;
+			dSigmaMax = 0.006;
+			dFitRange[0] = 1.08;
 			dFitRange[1] = 1.16;
 		break;
 
@@ -231,12 +236,12 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t
 	fFitInvMassRatioSigTot->SetParameter(1,dMassPeak);
 	fFitInvMassRatioSigTot->SetParLimits(1,dMassPeak-dMassPeakLimit,dMassPeak+dMassPeakLimit);
 	fFitInvMassRatioSigTot->SetParameter(2,0.02);
-	fFitInvMassRatioSigTot->SetParLimits(2,0.01,0.03);
+	fFitInvMassRatioSigTot->SetParLimits(2,dSigmaMin,dSigmaMax);
 	fFitInvMassRatioSigTot->SetParameter(3,0.7);
 	fFitInvMassRatioSigTot->SetParameter(4,dMassPeak);
 	fFitInvMassRatioSigTot->SetParLimits(4,dMassPeak-dMassPeakLimit,dMassPeak+dMassPeakLimit);
 	fFitInvMassRatioSigTot->SetParameter(5,0.02);
-	fFitInvMassRatioSigTot->SetParLimits(5,0.01,0.03);
+	fFitInvMassRatioSigTot->SetParLimits(5,dSigmaMin, dSigmaMax);
 	hInvMass_RatioSigTot->Fit("fFitInvMassRatioSigTot","R");
 
 	// ==== Fitting flow mass dist ====
@@ -272,10 +277,11 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t
 	for(Int_t i(0); i < 9; i++)
 	{
 		dParValue = fFitInvMassRatioSigTot->GetParameter(i);
-		dParError = TMath::Abs(fFitInvMassRatioSigTot->GetParError(i));
+		//dParError = TMath::Abs(fFitInvMassRatioSigTot->GetParError(i));
 
-		fFitFlowMassTot->SetParameter(i,dParValue);
-		fFitFlowMassTot->SetParLimits(i,dParValue-dParError,dParValue+dParError);
+		//fFitFlowMassTot->SetParameter(i,dParValue);
+		//fFitFlowMassTot->SetParLimits(i,dParValue-dParError,dParValue+dParError);
+		fFitFlowMassTot->FixParameter(i,dParValue);
 	}
 	// vn bg fit parameters
 	fFitFlowMassTot->FixParameter(9,fFitFlowMass_side->GetParameter(0));
