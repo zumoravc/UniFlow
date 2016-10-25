@@ -28,6 +28,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void					SetTrackPtMin(Double_t pt) { fTrackPtMin = pt; }
         void					SetNumTPCclsMin(UShort_t tpcCls) { fNumTPCclsMin = tpcCls; }
         void					SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
+        void                    SetSampling(Bool_t sample) { fSampling = sample; }
         void					SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void					SetPID(Bool_t pid) { fPID = pid; }
 	       // V0s setters
@@ -79,7 +80,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    FillRefFlowVectors(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2);
         void                    EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
         void                    EstimateRefPtDiffCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
-        void                    EstimateV0Cumulant(Short_t iEtaGapIndex = 0, Short_t iHarmonicsIndex = 0);
+        void                    EstimateV0Cumulant(const Short_t iEtaGapIndex = 0, const Short_t iHarmonicsIndex = 0, const Short_t iSampleIndex = 0);
                 
 		void                    EventQA(const AliAODEvent* event);
 		void                    FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
@@ -103,6 +104,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t				fTrackPtMin;		// (GeV/c) Minimal track pT
         UShort_t				fNumTPCclsMin;	// () Minimal number of TPC clusters used for track reconstruction
         UInt_t					fTrackFilterBit;// Required track filter bit 
+        Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
         Bool_t 					fDiffFlow;			// Do differential flow ? (or reference only)
         Bool_t 					fPID;						// Do PID (so far V0s) ? 
 		
@@ -145,6 +147,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Float_t                 fCentPercentile;                    // event centrality bin index indicator
         Short_t                 fPtBinIndex;        // track pT bin index indicator
         Short_t                 fMinvFlowBinIndex;      // track pT bin index indicator
+        Short_t                 fSampleBinIndex;         // sampling bin index indicator
         
         TComplex                fVecRefPos;                 // complex flow vector Q for RFPs in positive eta (or all if no eta gap)
         TComplex                fVecRefNeg;                 // complex flow vector Q for RFPs in negative eta
@@ -174,14 +177,16 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D* 				    fTracksPhi;			 //! selected tracks phi distribution
         TH1D* 					fTracksCharge;			 //! selected tracks charge distribution
         
-        TProfile*				fTracksRefTwo[fNumHarmonics][fNumEtaGap];			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
-        TProfile*               fTracksDiffTwoPos[fNumCentBins][fNumHarmonics][fNumEtaGap];          //! event averaged 2-particle correlation for differential flow <<2'>>
-        TProfile*               fTracksDiffTwoNeg[fNumCentBins][fNumHarmonics][fNumEtaGap];          //! event averaged 2-particle correlation for differential flow <<2'>>
+
+        const static Int_t      fNumSampleBins = 5; // number of sampling bins 
+        TProfile*				fTracksRefTwo[fNumHarmonics][fNumEtaGap][fNumSampleBins];			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*               fTracksDiffTwoPos[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];          //! event averaged 2-particle correlation for differential flow <<2'>>
+        TProfile*               fTracksDiffTwoNeg[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];          //! event averaged 2-particle correlation for differential flow <<2'>>
         
-        TProfile2D*             fV0sDiffTwoPos_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected K0s candidates Minv, pT v2 profile
-        TProfile2D*             fV0sDiffTwoNeg_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected K0s candidates Minv, pT v2 profile
-        TProfile2D*             fV0sDiffTwoPos_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
-        TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwoPos_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwoNeg_K0s[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwoPos_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
+        TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
 		// V0s histos
         TH1D*                   fV0sInvMassK0s[fNumEtaGap]; //!
@@ -191,6 +196,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
          // QA histos // index 0: before / 1: after cuts
         TH1D* 					fEventCounter;  //! event rejection tracker
+        TH1D*                   fSampleCounter; //! distribution of events in sampling bins
         TH1D* 					fQAPVz;					//! PV z distance distribution
         TH1D*					fQANumTracks;		//! number of AOD tracks distribution
         TH1D*					fQATrackPt;			//! pT dist of all tracks in all events
