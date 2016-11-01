@@ -83,8 +83,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    EstimateRefPtDiffCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
         void                    EstimateV0Cumulant(const Short_t iEtaGapIndex = 0, const Short_t iHarmonicsIndex = 0, const Short_t iSampleIndex = 0);
                 
-		void                    EventQA(const AliAODEvent* event);
-        void                    FillTracksQA(const AliAODTrack* track, const Short_t iQAindex);
+		void                    FillEventQA(const AliAODEvent* event, const Short_t iQAindex);
+        void                    FillTrackQA(const AliAODTrack* track, const Short_t iQAindex);
 		void                    FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
     
@@ -200,7 +200,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         const static Short_t    fQANumSteps = 2;        // number of various steps (0 before cuts / 1 after cuts / 2 testing) 
         TH1D*                   fEventCounter;  //! event rejection tracker
         TH1D*                   fSampleCounter; //! distribution of events in sampling bins
-        TH1D*                   fQAPVz;                 //! PV z distance distribution
+        // QA events
+        TH1D*                   fQAEventsPVz[fQANumSteps];                 //! PV z distance distribution
+        TH1D*                   fQAEventsNumContrPV[fQANumSteps];                 //! number of contributors to PV 
+        TH1D*                   fQAEventsNumSPDContrPV[fQANumSteps];                 //! number of SPD contributors to PV 
+        TH1D*                   fQAEventsDistPVSPD[fQANumSteps];                 //! z-distance between AOD & SPD PV
         // QA tracks
         TH1D*                   fQATracksMult[fQANumSteps];       //! number of AOD tracks distribution
         TH1D*                   fQATracksPt[fQANumSteps];         //! pT dist of all tracks in all events

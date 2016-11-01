@@ -136,7 +136,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTracksPhi(0),
   fTracksCharge(0),
 
-  fQAPVz(0),
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
   fQAV0sCounterLambda(0)
@@ -226,7 +225,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTracksPhi(0),
   fTracksCharge(0),
 
-  fQAPVz(0),
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
   fQAV0sCounterLambda(0)
@@ -275,6 +273,11 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   // QA plots
   for (Int_t i(0); i < fQANumSteps; i++)
   {
+    // Events
+    fQAEventsPVz[i] = 0x0; 
+    fQAEventsNumContrPV[i] = 0x0;
+    fQAEventsNumSPDContrPV[i] = 0x0;
+    fQAEventsDistPVSPD[i] = 0x0; 
     // Tracks
     fQATracksMult[i] = 0x0;
     fQATracksPt[i] = 0x0;
@@ -487,13 +490,24 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fSampleCounter = new TH1D("fSampleCounter","Event distribution if sampling bins; sampling bin index; events",fNumSampleBins,0,fNumSampleBins);
   for(Int_t i = 0; i < fNumSampleBins; i++)
     fSampleCounter->GetXaxis()->SetBinLabel(i+1,Form("%d",i));
-  
   fOutListQA->Add(fSampleCounter);
-  fQAPVz = new TH1D("fQAPVz","QA: PV #it{z}; #it{z} (cm);",100,-50,50);
-  fOutListQA->Add(fQAPVz);
+  
+  // QA events output
   fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
   fOutListQA->Add(fCentSPDvsV0M);
   
+  for(Int_t i(0); i < fQANumSteps; i++)
+  {
+    fQAEventsPVz[i] = new TH1D(Form("fQAEventsPVz_%s",sQAlabel[i].Data()),Form("QA Events: PV #it{z} (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),101,-50,50);
+    fOutListQA->Add(fQAEventsPVz[i]);
+    fQAEventsNumContrPV[i] = new TH1D(Form("fQAEventsNumContrPV_%s",sQAlabel[i].Data()),Form("QA Events: Number of contributors to AOD PV (%s cuts); Number of contributors;",sQAlabel[i].Data()),20,0,20);
+    fOutListQA->Add(fQAEventsNumContrPV[i]);
+    fQAEventsNumSPDContrPV[i] = new TH1D(Form("fQAEventsNumSPDContrPV_%s",sQAlabel[i].Data()),Form("QA Events: Number of contributors to SPD PV (%s cuts); Number of contributors;",sQAlabel[i].Data()),20,0,20);
+    fOutListQA->Add(fQAEventsNumSPDContrPV[i]);
+    fQAEventsDistPVSPD[i] = new TH1D(Form("fQAEventsDistPVSPD_%s",sQAlabel[i].Data()),Form("QA Events: #it{z}-istance between SPD vertex & PV (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),50,0,5);
+    fOutListQA->Add(fQAEventsDistPVSPD[i]);
+  }
+
   // QA tracks output
   for(Int_t i(0); i < fQANumSteps; i++)
   {
@@ -602,6 +616,31 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
 	fEventCounter->Fill(0); // input event
 
+  if(fAODAnalysis) // AOD analysis 
+  {
+    fAOD = dynamic_cast<AliAODEvent*>(InputEvent()); 
+    if(!fAOD) return;
+  }
+
+  if( !fAODAnalysis || dynamic_cast<AliESDEvent*>(InputEvent()) ) // ESD analysis
+  {
+    ::Warning("UserExec","ESD event: not implemented. Terminating!");
+    return; 
+  }
+
+  fEventCounter->Fill(1); // event AOD ok
+  
+  FillEventQA(fAOD,0); // before cuts event QA
+
+  // event selection
+  if(!IsEventSelected(fAOD))
+  {
+    return;
+  }
+  
+  // from here only selected events survive
+
+  FillEventQA(fAOD,1); // after cuts events QA
 
   // loading PID response for protons
   if((fCutV0ProtonNumSigmaMax > 0.) && (fCutV0ProtonPIDPtMax > 0.))
@@ -618,30 +657,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     fTPCPIDResponse = fPIDResponse->GetTPCResponse();
   }
 
-  if( !fAODAnalysis || dynamic_cast<AliESDEvent*>(InputEvent()) ) // ESD analysis
-  {
-    ::Warning("UserExec","ESD event: not implemented. Terminating!");
-    return; 
-  }
-
-  if(fAODAnalysis) // AOD analysis 
-  {
-    fAOD = dynamic_cast<AliAODEvent*>(InputEvent()); 
-    if(!fAOD) return;
-  }
-
-  fEventCounter->Fill(1); // event AOD ok
-  
-  // basic event QA
-  EventQA(fAOD);
-
-  // event selection
-  if(!IsEventSelected(fAOD))
-  {
-    return;
-  }
-  // only events passing selection criteria defined @ IsEventSelected()
-  
   if(fSampling) // randomly assign sampling bin index for stat. uncertanity estimation
   {
     TRandom3 rr(0);
@@ -677,6 +692,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
   
+  // === tracks & PID species filtering ====
+
   // cleaning all TClonesArray containers
   fArrTracksFiltered.Clear("C");
   fArrV0sK0sFiltered.Clear("C");
@@ -688,6 +705,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   
   if(fPID)
     FilterV0s();
+
+  // ==== FLOW ANALYSIS ====
 
   // begin of loop over EtaGap & Harmonics
   Int_t iHarm = 0;
@@ -1200,8 +1219,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 	
 	if(fPbPb)
 	{
-		// not implemented yet
-		EstimateCentrality(fAOD);
+  	EstimateCentrality(fAOD);
     if (fCentBinIndex < 0 || fCentBinIndex > fNumCentBins || fCentPercentile < 0 || fCentPercentile > 80)
       return kFALSE;
 	}
@@ -1262,13 +1280,13 @@ void AliAnalysisTaskFlowPID::FilterTracks()
     if(!track)
       continue;
 
-    FillTracksQA(track,0); // tracks QA before cuts
+    FillTrackQA(track,0); // tracks QA before cuts
 
     if(IsTrackSelected(track))
     {  
       new(fArrTracksFiltered[iNumSelected]) AliAODTrack(*track);
       iNumSelected++;
-      FillTracksQA(track,1); // tracks QA after cuts
+      FillTrackQA(track,1); // tracks QA after cuts
     }
   }
 
@@ -1745,19 +1763,25 @@ void AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   return;
 }              
 //_____________________________________________________________________________
-void AliAnalysisTaskFlowPID::EventQA(const AliAODEvent* event)
+void AliAnalysisTaskFlowPID::FillEventQA(const AliAODEvent* event, const Short_t iQAindex)
 {
   // event QA procedure
 	const AliAODVertex* aodVtx = event->GetPrimaryVertex();
-	const Double_t dVtxZ = aodVtx->GetZ();
-	//const Double_t dNumContrinutors = aodVtx->GetNContributors();
+  const Double_t dVtxZ = aodVtx->GetZ();
+  const Int_t iNumContr = aodVtx->GetNContributors();
+  const AliAODVertex* spdVtx = event->GetPrimaryVertexSPD();
+  const Int_t iNumContrSPD = spdVtx->GetNContributors();
+  const Double_t spdVtxZ = spdVtx->GetZ();
 
-	fQAPVz->Fill(dVtxZ);
+  fQAEventsPVz[iQAindex]->Fill(dVtxZ);
+  fQAEventsNumContrPV[iQAindex]->Fill(iNumContr);
+  fQAEventsNumSPDContrPV[iQAindex]->Fill(iNumContrSPD);
+  fQAEventsDistPVSPD[iQAindex]->Fill(TMath::Abs(dVtxZ - spdVtxZ));
 
 	return; 
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskFlowPID::FillTracksQA(const AliAODTrack* track, const Short_t iQAindex)
+void AliAnalysisTaskFlowPID::FillTrackQA(const AliAODTrack* track, const Short_t iQAindex)
 {
   fQATracksPt[iQAindex]->Fill(track->Pt());
   fQATracksPhi[iQAindex]->Fill(track->Phi());
