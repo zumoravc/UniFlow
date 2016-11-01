@@ -1,14 +1,14 @@
 #include "TROOT.h"
 
-#include "CFitter.h"
-#include "CFitter.cxx"
+#include "FPFitter.h"
+#include "FPFitter.cxx"
 
 void testFitter()
 {
-	gROOT->LoadMacro("CFitter.cxx++g"); // compiling CFitter locally
+	gROOT->LoadMacro("FPFitter.cxx++g"); // compiling CFitter locally
 
 
-	CFitter* fit = new CFitter();
+	FPFitter* fit = new FPFitter();
 	printf("Chi2 %g \n",fit->GetChi2());
 
 }

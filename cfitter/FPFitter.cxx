@@ -13,26 +13,23 @@
  * provided "as is" without express or implied warranty.                  *
  **************************************************************************/
 
-/* CFitter
+/* FPFitter
  *
- * Class implemented (primarily for PID flow) fitting purposes of identified hardon extraction
+ * Class implemented for PID flow fitting purposes.
  * 
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
  */
 
-#include "CFitter.h"
+#include "FPFitter.h"
 
-class CFitter;    
-
-//ClassImp(CFitter) // classimp: necessary for root
-
+class FPFitter;    
 //_____________________________________________________________________________
-CFitter::CFitter() 
+FPFitter::FPFitter() 
 {
 	fChi2 = -1;
 }
 //_____________________________________________________________________________
-CFitter::~CFitter()
+FPFitter::~FPFitter() 
 {
 }
 //_____________________________________________________________________________
