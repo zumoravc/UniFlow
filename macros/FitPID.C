@@ -7,7 +7,10 @@
  */
 
 #include "Fitter.cpp"
+#include <RooFit.h>
+
 #include "TFile.h"
+#include "TF1.h" 
 #include "TH1D.h"
 
 void FitPID(
@@ -20,7 +23,7 @@ void FitPID(
 		
 	)
 {
-	/*
+	
 	const Int_t iNumPtBins = 22; // pT bins
 	const Int_t iNumCentBins = 9; // centrality bins
 	// bins edges
@@ -65,16 +68,19 @@ void FitPID(
 
 	printf(": DONE ====\n");
 
-	*/
-
 	// fitting 
 
-
-	Fitter* fit = new Fitter();
-	//fit->AttachInvMass(hInvMassK0s[3][3]);
+	Fitter* fitK0s = new Fitter();
+	fitK0s->AttachInvMass(hInvMassK0s[3][3]);
+	fitK0s->AttachFlowMass(hFlowMassK0s[3][3]);
+	fitK0s->SetRangeMassMin(0.4);
+	fitK0s->SetRangeMassMax(0.6);
 	
 
-	printf("Chi2 %g \n",fit->GetChi2());
+	printf("Chi2 %g \n",fitK0s->GetChi2());
+	//fitK0s->TestRooFit();
+	fitK0s->RooFitInvMass();
+	fitK0s->FitInvMass();
 
 }
 
