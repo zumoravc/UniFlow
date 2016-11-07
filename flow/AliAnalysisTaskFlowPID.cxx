@@ -81,6 +81,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCountRefPos(0),
   fCountRefNeg(0),
   fArrTracksFiltered("AliAODTrack",10000),
+  fArrPionFiltered("AliAODTrack",5000),
+  fArrKaonFiltered("AliAODTrack",5000),
+  fArrProtonFiltered("AliAODTrack",5000),
   fArrV0sK0sFiltered("AliAODv0",5000),
   fArrV0sLambdaFiltered("AliAODv0",5000),
   fArrV0sALambdaFiltered("AliAODv0",5000),
@@ -93,15 +96,19 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
   fCentFlag(0),
+  fSampling(0),
+  fDiffFlow(0),
+  fPID(0),  
+
   fPVtxCutZ(0.),
   fTrackEtaMax(0),
   fTrackPtMax(0),
   fTrackPtMin(0),
   fNumTPCclsMin(0),
   fTrackFilterBit(0),
-  fSampling(0),
-  fDiffFlow(0),
-  fPID(0),  
+  fCutPionNumSigmaMax(0),
+  fCutKaonNumSigmaMax(0),
+  fCutProtonNumSigmaMax(0),
   fCutV0onFly(kFALSE),
   fCutV0rejectKinks(kFALSE),
   fCutV0refitTPC(kTRUE),
@@ -170,23 +177,35 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCountRefPos(0),
   fCountRefNeg(0),
   fArrTracksFiltered("AliAODTrack",10000),
+  fArrPionFiltered("AliAODTrack",5000),
+  fArrKaonFiltered("AliAODTrack",5000),
+  fArrProtonFiltered("AliAODTrack",5000),
   fArrV0sK0sFiltered("AliAODv0",5000),
   fArrV0sLambdaFiltered("AliAODv0",5000),
   fArrV0sALambdaFiltered("AliAODv0",5000),
-  
+
+  fOutList(0),
+  fOutListV0s(0),
+  fOutListQA(0),
+
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
   fCentFlag(0),
+  fSampling(0),
+  fDiffFlow(0),
+  fPID(0),  
+
   fPVtxCutZ(0.),
   fTrackEtaMax(0),
   fTrackPtMax(0),
   fTrackPtMin(0),
   fNumTPCclsMin(0),
   fTrackFilterBit(0),
-  fSampling(kFALSE),
-  fDiffFlow(kFALSE),
-  fPID(kFALSE),  
+  fCutPionNumSigmaMax(0),
+  fCutKaonNumSigmaMax(0),
+  fCutProtonNumSigmaMax(0),
+  
   fCutV0onFly(kFALSE),
   fCutV0rejectKinks(kFALSE),
   fCutV0refitTPC(kTRUE),
@@ -208,10 +227,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
-
-  fOutList(0),
-  fOutListV0s(0),
-  fOutListQA(0),
 
   fEventCounter(0),
   fSampleCounter(0),
@@ -285,6 +300,15 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fQATracksPhi[i] = 0x0;
     fQATracksFilterMap[i] = 0x0;
     fQATracksNumTPCcls[i] = 0x0;
+    fQATracksDCAxy[i] = 0x0;
+    fQATracksDCAz[i] = 0x0;
+    fQATracksTPCstatus[i] = 0x0;
+    fQATracksTOFstatus[i] = 0x0;
+    fQATracksTPCdEdx[i] = 0x0;
+    fQATracksTOFbeta[i] = 0x0;
+    fQATracksTOF[i] = 0x0;
+    // PID tracks
+    fQAPionPID[i] = 0x0;
     // V0s
   	fQAV0sRecoMethod[i] = 0;	
 		fQAV0sTPCRefit[i] = 0;	
@@ -513,7 +537,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   {
     fQATracksMult[i] = new TH1D(Form("fQATracksMult_%s",sQAlabel[i].Data()),Form("QA Tracks: Number of tracks in selected events (%s cuts); #it{N}^{tracks}",sQAlabel[i].Data()), 500,0,5000);
     fOutListQA->Add(fQATracksMult[i]);
-    fQATracksFilterMap[i] = new TH1D(Form("fQATracksFilterMap_%s",sQAlabel[i].Data()),Form("QA Tracks: Track filter bits (%s cuts); filter bit",sQAlabel[i].Data()), 1000,0,1000);
+    fQATracksFilterMap[i] = new TH1D(Form("fQATracksFilterMap_%s",sQAlabel[i].Data()),Form("QA Tracks: Track filter bits (%s cuts); filter bit",sQAlabel[i].Data()), 2000,0,2000);
     fOutListQA->Add(fQATracksFilterMap[i]);
     fQATracksNumTPCcls[i] = new TH1D(Form("fQATracksNumTPCcls_%s",sQAlabel[i].Data()),Form("QA Tracks: Track number of TPC clusters (%s cuts); #it{N}^{TPC clusters}",sQAlabel[i].Data()), 200,0,200);
     fOutListQA->Add(fQATracksNumTPCcls[i]);
@@ -523,7 +547,43 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListQA->Add(fQATracksEta[i]);
     fQATracksPhi[i] = new TH1D(Form("fQATracksPhi_%s",sQAlabel[i].Data()),Form("QA Tracks: Track #it{#varphi} (%s cuts); #it{#varphi}",sQAlabel[i].Data()), 100,0.,TMath::TwoPi());
     fOutListQA->Add(fQATracksPhi[i]);
+    fQATracksDCAxy[i] = new TH1D(Form("fQATracksDCAxy_%s",sQAlabel[i].Data()),Form("QA Tracks: Track DCA_#it{xy} (%s cuts); DCA_#it{xy} (cm?)",sQAlabel[i].Data()), 100,-10.,10);
+    fOutListQA->Add(fQATracksDCAxy[i]);
+    fQATracksDCAz[i] = new TH1D(Form("fQATracksDCAz_%s",sQAlabel[i].Data()),Form("QA Tracks: Track DCA_#it{z} (%s cuts); DCA_#it{z} (cm?)",sQAlabel[i].Data()), 100,-10.,10);
+    fOutListQA->Add(fQATracksDCAz[i]);
+    fQATracksTPCdEdx[i] = new TH2D(Form("fQATracksTPCdEdx_%s",sQAlabel[i].Data()),Form("QA Tracks: TPC PID information (%s cuts); #it{p} (GeV/#it{c}); TPC dEdx (au)",sQAlabel[i].Data()), 100,0,10, 2000,-10,1000);
+    fOutListQA->Add(fQATracksTPCdEdx[i]);
+    fQATracksTOF[i] = new TH2D(Form("fQATracksTOF_%s",sQAlabel[i].Data()),Form("QA Tracks: TOF #it{t-t_{0}} information (%s cuts); #it{p} (GeV/#it{c}); TOF #it{t-t_{0}} (ps?)  ",sQAlabel[i].Data()), 100,0,10, 20000,-10,1000);
+    fOutListQA->Add(fQATracksTOF[i]);
+    fQATracksTOFbeta[i] = new TH2D(Form("fQATracksTOFbeta_%s",sQAlabel[i].Data()),Form("QA Tracks: TOF #beta information (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 500,0, 1.5);
+    fOutListQA->Add(fQATracksTOFbeta[i]);
+    
+    Int_t iNPIDstatusBins = 4;
+    TString sPIDstatus[] = {"kDetNoSignal","kDetPidOk","kDetMismatch","kDetNoParams"};
+    
+    fQATracksTPCstatus[i] = new TH1D(Form("fQATracksTPCstatus_%s",sQAlabel[i].Data()),Form("QA Tracks: PID status: TPC (%s cuts); isTOFok?",sQAlabel[i].Data()), iNPIDstatusBins,0,iNPIDstatusBins);
+    fOutListQA->Add(fQATracksTPCstatus[i]);
+    fQATracksTOFstatus[i] = new TH1D(Form("fQATracksTOFstatus_%s",sQAlabel[i].Data()),Form("QA Tracks: PID status: TOF (%s cuts); isTOFok?",sQAlabel[i].Data()), iNPIDstatusBins,0,iNPIDstatusBins);
+    fOutListQA->Add(fQATracksTOFstatus[i]);
+    
+    for(Int_t j = 0; j < iNPIDstatusBins; j++)
+    {
+      fQATracksTOFstatus[i]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+      fQATracksTPCstatus[i]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+    }
   }
+
+  // QA tracks PID output
+  for(Int_t i(0); i < fQANumSteps; i++)
+  {
+    fQAPionPID[i] = new TH2D(Form("fQAPionPID_%s",sQAlabel[i].Data()),Form("QA Pions: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-1000,50, 100,-1000,50);
+    fOutListQA->Add(fQAPionPID[i]);
+    fQAKaonPID[i] = new TH2D(Form("fQAKaonPID_%s",sQAlabel[i].Data()),Form("QA Kaons: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-50,50, 100,-50,50);
+    fOutListQA->Add(fQAKaonPID[i]);
+    fQAProtonPID[i] = new TH2D(Form("fQAProtonPID_%s",sQAlabel[i].Data()),Form("QA Protons: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-50,50, 100,-50,50);
+    fOutListQA->Add(fQAProtonPID[i]);
+  }
+
 
   // QA V0s output
   Int_t iNV0sCounterBins = 18;
@@ -696,6 +756,9 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   // cleaning all TClonesArray containers
   fArrTracksFiltered.Clear("C");
+  fArrPionFiltered.Clear("C");
+  fArrKaonFiltered.Clear("C");
+  fArrProtonFiltered.Clear("C");
   fArrV0sK0sFiltered.Clear("C");
   fArrV0sLambdaFiltered.Clear("C");
   fArrV0sALambdaFiltered.Clear("C");
@@ -703,8 +766,14 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   // filtering objects and filling relevant containers
   FilterTracks();
   
+  
   if(fPID)
+  {
+    //FilterPIDTracks();
     FilterV0s();
+  }
+
+
 
   // ==== FLOW ANALYSIS ====
 
@@ -1231,17 +1300,17 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 {
-	// track selection procedure
+	// track selection procedure excluding FilterBit
 
 	if(!track)
 	{
 		return kFALSE;
 	}
 
-	if( !track->TestFilterBit(fTrackFilterBit) )
-	{
-		return kFALSE;	
-	}
+  if( !track->TestFilterBit(fTrackFilterBit) ) 
+  {
+    return kFALSE;
+  }
 
 	if(track->GetTPCNcls() < fNumTPCclsMin)
 	{
@@ -1261,11 +1330,136 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 	return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsTrackPion(const AliAODTrack* track)
+{
+  if(!fPIDResponse)
+  {
+    return kFALSE;
+  }
+
+  Float_t dNumSigmaTPC = 0;
+  Float_t dNumSigmaTOF = 0;
+
+  AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
+  AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
+
+  
+  if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
+    return kFALSE;
+
+  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
+  {
+    dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
+  }
+  
+  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
+  {
+    dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion);
+  }
+
+  fQAPionPID[0]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+  
+
+  Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
+  
+  if(dNumSigmaCombined >= fCutPionNumSigmaMax)
+  {
+    return kFALSE;
+  }
+    
+  fQAPionPID[1]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+
+  
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsTrackKaon(const AliAODTrack* track)
+{
+ if(!fPIDResponse)
+    return kFALSE;
+
+  Float_t dNumSigmaTPC = 0;
+  Float_t dNumSigmaTOF = 0;
+
+  AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
+  AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
+
+  if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
+    return kFALSE;
+
+  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
+  {
+    dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
+  }
+  
+  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
+  {
+    dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
+  }
+
+  // Filling QA for pions
+  fQAKaonPID[0]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+
+  Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
+  
+  if(dNumSigmaCombined >= fCutKaonNumSigmaMax)
+  {
+    return kFALSE;
+  }
+    
+  fQAKaonPID[1]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+  
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsTrackProton(const AliAODTrack* track)
+{
+  if(!fPIDResponse)
+    return kFALSE;
+
+  Float_t dNumSigmaTPC = 0;
+  Float_t dNumSigmaTOF = 0;
+
+  AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
+  AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
+
+  if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
+    return kFALSE;
+
+  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
+  {
+    dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
+  }
+  
+  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
+  {
+    dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton);
+  }
+  // Filling QA for pions
+  fQAProtonPID[0]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+
+  Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
+  
+  if(dNumSigmaCombined >= fCutProtonNumSigmaMax)
+  {
+    return kFALSE;
+  }
+    
+  fQAProtonPID[1]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+  return kTRUE;
+}
+//_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FilterTracks()
 {
+  // Filter all input tracks and clones the ones which passes selection to relevant TClonesArrays
+  // Filter both reference particles and PID particles (pi,K,p) / with different filter bits
+
   const Int_t iNumTracks = fAOD->GetNumberOfTracks();
   Int_t iNumSelected = 0;
-
+  Int_t iNumPions = 0;
+  Int_t iNumKaons = 0;
+  Int_t iNumProtons = 0;
+  
   if(iNumTracks < 1)
     return;
 
@@ -1284,16 +1478,83 @@ void AliAnalysisTaskFlowPID::FilterTracks()
 
     if(IsTrackSelected(track))
     {  
+      // (ref.) tracks passing all criteria
       new(fArrTracksFiltered[iNumSelected]) AliAODTrack(*track);
       iNumSelected++;
       FillTrackQA(track,1); // tracks QA after cuts
+      
+      if(fPID) 
+      {
+        // (PID: pi,K,p) tracks passing all criteria
+      
+        if(IsTrackPion(track))
+        {
+          new(fArrPionFiltered[iNumPions]) AliAODTrack(*track);
+          iNumPions++;
+        }
+        
+        if(IsTrackKaon(track))
+        {
+          new(fArrKaonFiltered[iNumKaons]) AliAODTrack(*track);
+          iNumKaons++;
+        }
+        
+        if(IsTrackProton(track))
+        {
+          new(fArrProtonFiltered[iNumProtons]) AliAODTrack(*track);
+          iNumProtons++;
+        }
+      }
     }
-  }
+  } // end of loop over all tracks
 
   fQATracksMult[0]->Fill(iNumTracks);
   fQATracksMult[1]->Fill(iNumSelected);
   
   return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskFlowPID::FilterPIDTracks()
+{
+  // Obsolete function
+  return;
+
+  Int_t iNumPions = 0;
+  Int_t iNumKaons = 0;
+  Int_t iNumProtons = 0;
+
+  const Int_t iNumTracksFiltered = fArrTracksFiltered.GetEntriesFast();
+  AliAODTrack* track = 0x0;
+
+  // loop over already filtered tracks
+  for(Int_t i(0); i < iNumTracksFiltered; i++)
+  {
+    track = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
+    
+    if(!track)
+      continue;
+
+    if(IsTrackPion(track))
+    {
+      new(fArrPionFiltered[iNumPions]) AliAODTrack(*track);
+      //printf("%s\n","it is a pion" );
+      iNumPions++;
+    }
+    
+    if(IsTrackKaon(track))
+    {
+      new(fArrKaonFiltered[iNumKaons]) AliAODTrack(*track);
+      iNumKaons++;
+    }
+    
+    if(IsTrackProton(track))
+    {
+      new(fArrProtonFiltered[iNumProtons]) AliAODTrack(*track);
+      iNumProtons++;
+    } 
+  }
+
+  //printf("Pions in filter method %d\n",iNumPions);
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FilterV0s()
@@ -1788,6 +2049,35 @@ void AliAnalysisTaskFlowPID::FillTrackQA(const AliAODTrack* track, const Short_t
   fQATracksEta[iQAindex]->Fill(track->Eta());
   fQATracksFilterMap[iQAindex]->Fill(track->GetFilterMap());
   fQATracksNumTPCcls[iQAindex]->Fill(track->GetTPCNcls());
+
+  const Float_t dDCAx = track->XAtDCA();
+  const Float_t dDCAy = track->YAtDCA();
+  const Float_t dDCAz = track->ZAtDCA();
+
+  fQATracksDCAxy[iQAindex]->Fill(TMath::Sqrt(dDCAy*dDCAy + dDCAx*dDCAx));
+  fQATracksDCAz[iQAindex]->Fill(dDCAz);
+
+  AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
+  AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
+
+  fQATracksTOFstatus[iQAindex]->Fill((Int_t) pidStatusTOF );
+  fQATracksTPCstatus[iQAindex]->Fill((Int_t) pidStatusTPC );
+
+  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
+  {
+    fQATracksTPCdEdx[iQAindex]->Fill(track->P(), track->GetTPCsignal());
+    //printf("signal TPC (in OK) %g\n",track->GetTPCsignal());
+  }
+  
+  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
+  {
+    fQATracksTOF[iQAindex]->Fill(track->P(), track->GetTOFsignal()/1000);
+    //printf("signal TOF (in OK) %g\n",track->GetTOFsignal());
+    Double_t dTOF[5];
+    track->GetIntegratedTimes(dTOF);
+    Double_t dBetaTOF = dTOF[0] / track->GetTOFsignal();
+    fQATracksTOFbeta[iQAindex]->Fill(track->P(),dBetaTOF);
+  }
 }  
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAindex)

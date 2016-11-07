@@ -32,6 +32,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetTrackPtMin(Double_t pt) { fTrackPtMin = pt; }
         void                    SetNumTPCclsMin(UShort_t tpcCls) { fNumTPCclsMin = tpcCls; }
         void                    SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
+        void                    SetPionNumSigmasMax(Double_t numSigmas) { fCutPionNumSigmaMax = numSigmas; }
+        void                    SetKaonNumSigmasMax(Double_t numSigmas) { fCutKaonNumSigmaMax = numSigmas; }
+        void                    SetProtonNumSigmasMax(Double_t numSigmas) { fCutProtonNumSigmaMax = numSigmas; }
         // V0s setters
         void					SetV0sOnFly(Bool_t onFly) { fCutV0onFly = onFly; }
         void					SetV0sTPCRefit(Bool_t refit) { fCutV0refitTPC = refit; }
@@ -71,12 +74,17 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 		Bool_t                  IsTrackSelected(const AliAODTrack* track);
-        void                    FilterTracks();
-        void                    FilterV0s();
-
+        Bool_t                  IsTrackPion(const AliAODTrack* track); 
+        Bool_t                  IsTrackKaon(const AliAODTrack* track); 
+        Bool_t                  IsTrackProton(const AliAODTrack* track); 
 		void                    IsV0aK0s(const AliAODv0* v0);
 		void                    IsV0aLambda(const AliAODv0* v0);
 		Bool_t                  IsV0Selected(const AliAODv0* v0);
+        
+        void                    FilterTracks(); // filter all input tracks (including PID tracks for pi,K,p)
+        void                    FilterPIDTracks(); // obsolete / not used
+        void                    FilterV0s();
+
         Bool_t                  AreRefFlowVectorsFilled(const Float_t dEtaGap = -1, const Short_t iHarm = -1);
         void                    FillRefFlowVectors(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2);
         void                    EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
@@ -85,7 +93,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
                 
 		void                    FillEventQA(const AliAODEvent* event, const Short_t iQAindex);
         void                    FillTrackQA(const AliAODTrack* track, const Short_t iQAindex);
-		void                    FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
+        void                    FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
     
     	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
@@ -95,21 +103,24 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Short_t                 GetMinvFlowBinIndexK0s(const Double_t dMass);
         Short_t                 GetMinvFlowBinIndexLambda(const Double_t dMass);
 
-        //cuts & selection: event & track
-        Bool_t					fAODAnalysis;		// is AOD analysis?
-        Bool_t					fPbPb;					// is PbPb analysis?
-		Bool_t       			fLHC10h;        // flag to LHC10h data?
-		Short_t					fCentFlag;			// centrality flag
-        Double_t 				fPVtxCutZ; 			// (cm) PV z cut
-        Double_t 				fTrackEtaMax; 	// () Maximum pseudorapidity range
-        Double_t				fTrackPtMax;		// (GeV/c) Maximal track pT
-        Double_t				fTrackPtMin;		// (GeV/c) Minimal track pT
-        UShort_t				fNumTPCclsMin;	// () Minimal number of TPC clusters used for track reconstruction
-        UInt_t					fTrackFilterBit;// Required track filter bit 
+        //cuts & selection: analysis
+        Bool_t                  fAODAnalysis;       // is AOD analysis?
+        Bool_t                  fPbPb;                  // is PbPb analysis?
+        Bool_t                  fLHC10h;        // flag to LHC10h data?
+        Short_t                 fCentFlag;          // centrality flag
         Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
-        Bool_t 					fDiffFlow;			// Do differential flow ? (or reference only)
-        Bool_t 					fPID;						// Do PID (so far V0s) ? 
-		
+        Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
+        Bool_t                  fPID;                       // Do PID (so far V0s) ? 
+        //cuts & selection: events & tracks
+        Double_t                fPVtxCutZ;          // (cm) PV z cut
+        UInt_t                  fTrackFilterBit; // tracks filter bit 
+        UShort_t                fNumTPCclsMin;  // () Minimal number of TPC clusters used for track reconstruction
+        Double_t                fTrackEtaMax;   // () Maximum pseudorapidity range
+        Double_t                fTrackPtMax;        // (GeV/c) Maximal track pT
+        Double_t                fTrackPtMin;        // (GeV/c) Minimal track pT
+        Double_t                fCutPionNumSigmaMax;
+        Double_t                fCutKaonNumSigmaMax;
+        Double_t                fCutProtonNumSigmaMax;
         //cuts & selection: V0 reconstruction
 		Bool_t 					fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
 		Bool_t					fCutV0refitTPC; // Check TPC refit of V0 daughters ?
@@ -141,6 +152,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Short_t                 fHarmFlag;    // value of harmonics during flow vectors filling  (actual value)
 
         TClonesArray            fArrTracksFiltered; // container for filtered tracks
+        TClonesArray            fArrPionFiltered; // container for filtered pions
+        TClonesArray            fArrKaonFiltered; // container for filtered kaons
+        TClonesArray            fArrProtonFiltered; // container for filtered protons
         TClonesArray            fArrV0sK0sFiltered; // container for filtered V0 K0s candidates
         TClonesArray            fArrV0sLambdaFiltered; // container for filtered V0 Lambda candidates
         TClonesArray            fArrV0sALambdaFiltered; // container for filtered V0 ALambda candidates
@@ -212,6 +226,17 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fQATracksPhi[fQANumSteps];        //! phi dist of all tracks in all events
         TH1D*                   fQATracksFilterMap[fQANumSteps];//! filter bit of all tracks
         TH1D*                   fQATracksNumTPCcls[fQANumSteps];//! dist of track number of TPC clusters
+        TH1D*                   fQATracksDCAxy[fQANumSteps]; //! dist of tracks dca in transverse plane
+        TH1D*                   fQATracksDCAz[fQANumSteps]; //! dist of tracks dca in z
+        TH1D*                   fQATracksTPCstatus[fQANumSteps]; //! based on AliPIDResponse::CheckPIDStatus();
+        TH1D*                   fQATracksTOFstatus[fQANumSteps]; //! based on AliPIDResponse::CheckPIDStatus();
+        TH2D*                   fQATracksTPCdEdx[fQANumSteps]; //! TPC PID information
+        TH2D*                   fQATracksTOF[fQANumSteps]; //! TOF PID information
+        TH2D*                   fQATracksTOFbeta[fQANumSteps]; //! TOF PID information
+        // QA PID tracks
+        TH2D*                   fQAPionPID[fQANumSteps]; //! number of sigmas TPC and TOF PID
+        TH2D*                   fQAKaonPID[fQANumSteps]; //! number of sigmas TPC and TOF PID
+        TH2D*                   fQAProtonPID[fQANumSteps]; //! number of sigmas TPC and TOF PID
         // QA V0s
         TH1D*					fQAV0sCounter;		//! V0s counter
         TH1D*					fQAV0sCounterK0s;		//! K0s counter
