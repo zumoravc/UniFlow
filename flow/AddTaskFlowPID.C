@@ -20,8 +20,10 @@ AliAnalysisTaskFlowPID* AddTaskFlowPID(TString name = "name")
 
   mgr->AddTask(task); // add your task to the manager
   mgr->ConnectInput(task,0,mgr->GetCommonInputContainer()); // your task needs input: here we connect the manager to your task
-  mgr->ConnectOutput(task,1,mgr->CreateContainer(Form("Tracks_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
-  mgr->ConnectOutput(task,2,mgr->CreateContainer(Form("V0s_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
-  mgr->ConnectOutput(task,3,mgr->CreateContainer(Form("QA_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
+  mgr->ConnectOutput(task,1,mgr->CreateContainer(Form("Events_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
+  mgr->ConnectOutput(task,2,mgr->CreateContainer(Form("Tracks_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
+  mgr->ConnectOutput(task,3,mgr->CreateContainer(Form("PID_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
+  mgr->ConnectOutput(task,4,mgr->CreateContainer(Form("V0s_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
+  mgr->ConnectOutput(task,5,mgr->CreateContainer(Form("QA_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, fileName.Data())); // same for the output
   return task;
 }

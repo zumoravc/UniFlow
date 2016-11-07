@@ -178,9 +178,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t 				fV0MaxMassLambda;		// Upper limit of Lambda inv. mass window
         Double_t 				fV0MinMassLambda;		// Upper limit of Lambda inv. mass window
     
-        TList*                  fOutList;    //! main output list
-        TList*                  fOutListV0s;    //! main output list
-        TList*                  fOutListQA;	//! QA output list
+        TList*                  fOutListEvents;    //! events related output list
+        TList*                  fOutListTracks;    //! (ref.) tracks related output list
+        TList*                  fOutListPID;    //! PID (pi,K,p) tracks related output list
+        TList*                  fOutListV0s;    //! V0s (K0s,Lambda) related output list
+        TList*                  fOutListQA;	    //! additional QA output list
 
         //std histos
         TH1D*					fEventMult;			 //! selected events multiplicity distribution

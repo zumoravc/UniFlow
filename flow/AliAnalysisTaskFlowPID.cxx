@@ -88,7 +88,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fArrV0sLambdaFiltered("AliAODv0",5000),
   fArrV0sALambdaFiltered("AliAODv0",5000),
 
-  fOutList(0),
+  fOutListEvents(0),
+  fOutListTracks(0),
+  fOutListPID(0),
   fOutListV0s(0),
   fOutListQA(0),
 
@@ -184,7 +186,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fArrV0sLambdaFiltered("AliAODv0",5000),
   fArrV0sALambdaFiltered("AliAODv0",5000),
 
-  fOutList(0),
+  fOutListEvents(0),
+  fOutListTracks(0),
+  fOutListPID(0),
   fOutListV0s(0),
   fOutListQA(0),
 
@@ -345,15 +349,27 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
                                       // make changes to your AddTask macro!
   DefineOutput(2, TList::Class());  
   
-  DefineOutput(3, TList::Class());	
+  DefineOutput(3, TList::Class());  
+  DefineOutput(4, TList::Class());  
+  DefineOutput(5, TList::Class());	
 }
 //_____________________________________________________________________________
 AliAnalysisTaskFlowPID::~AliAnalysisTaskFlowPID()
 {
   // destructor
-  if(fOutList) 
+  if(fOutListEvents) 
   {
-      delete fOutList;     // at the end of your task, it is deleted from memory by calling this function
+    delete fOutListEvents;     // at the end of your task, it is deleted from memory by calling this function
+  }
+
+  if(fOutListTracks)
+  {
+    delete fOutListTracks;
+  }
+
+  if(fOutListPID)
+  {
+    delete fOutListPID;
   }
 
   if(fOutListV0s)
@@ -374,8 +390,14 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   // here you create the histograms that you want to use 
   // the histograms are in this case added to a TList, this list is in the end saved to an output file
 
-  fOutList = new TList();          // this is a list which will contain all of your histograms at the end of the analysis, the contents of this list are written to the output file
-  fOutList->SetOwner(kTRUE);       // memory stuff: the list is owner of all objects it contains and will delete them if requested (dont worry about this now)
+  fOutListEvents = new TList();
+  fOutListEvents->SetOwner(kTRUE);
+
+  fOutListTracks = new TList();
+  fOutListTracks->SetOwner(kTRUE);
+
+  fOutListPID = new TList();
+  fOutListPID->SetOwner(kTRUE);
 
   fOutListV0s = new TList();
   fOutListV0s->SetOwner(kTRUE);
@@ -384,23 +406,25 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListQA->SetOwner(kTRUE);
 
  
-  // main output
+  // Events
   fEventMult = new TH1D("fEventMult","Track multiplicity (all tracks in selected events); tracks;",100,0,10000);
-  fOutList->Add(fEventMult);
+  fOutListEvents->Add(fEventMult);
   fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality;", fNumCentBins,fCentBinEdges);
-  fOutList->Add(fCentralityDis);
+  fOutListEvents->Add(fCentralityDis);
+  
+  // Tracks
   fMultTracksSelected = new TH1D("fMultTracksSelected","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
-  fOutList->Add(fMultTracksSelected);
+  fOutListTracks->Add(fMultTracksSelected);
   fTracksPtCent = new TH2D("fTracksPtCent", "Tracks #it{p}_{T} vs. centrality (selected); #it{p}^{track}_{T} (GeV/#it{c}); centrality;", fNumPtBins,fPtBinEdges,fNumCentBins,fCentBinEdges);    
-  fOutList->Add(fTracksPtCent);          
+  fOutListTracks->Add(fTracksPtCent);          
   fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected); #it{p}^{track}_{T} (GeV/#it{c});", 100, 0, 10);    
-  fOutList->Add(fTracksPt);          
+  fOutListTracks->Add(fTracksPt);          
   fTracksEta = new TH1D("fTracksEta", "Tracks #it{#eta} (selected); #it{#eta}^{track};", 400, -2, 2);    
-  fOutList->Add(fTracksEta);          
+  fOutListTracks->Add(fTracksEta);          
   fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected); #it{#varphi}^{track};", 360, 0., TMath::TwoPi());    
-  fOutList->Add(fTracksPhi);          
+  fOutListTracks->Add(fTracksPhi);          
   fTracksCharge = new TH1D("fTracksCharge", "Track charge (selected); charge^{track};", 3,-1.5,1.5);    
-  fOutList->Add(fTracksCharge);          
+  fOutListTracks->Add(fTracksCharge);          
   
   // reference
   for(Int_t i(0); i < fNumHarmonics; i++)
@@ -411,7 +435,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
       {
         fTracksRefTwo[i][j][k] = new TProfile(Form("fTracksRefTwo_n%d_Gap%02.2g_sample%d",fHarmonics[i],fEtaGap[j]*10,k),Form("#LT#LT2#GT#GT_{%d,|#Delta#it{#eta}| > %g} sample %d (ref. flow); centrality;",fHarmonics[i],fEtaGap[j],k),fNumCentBins,fCentBinEdges);    
         fTracksRefTwo[i][j][k]->Sumw2();
-        fOutList->Add(fTracksRefTwo[i][j][k]);
+        fOutListTracks->Add(fTracksRefTwo[i][j][k]);
       }
     }
   }
@@ -429,13 +453,13 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
           {
             fTracksDiffTwoPos[i][j][k][m] = new TProfile(Form("fTracksDiffTwoPos_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
             fTracksDiffTwoPos[i][j][k][m]->Sumw2();
-            fOutList->Add(fTracksDiffTwoPos[i][j][k][m]);
+            fOutListTracks->Add(fTracksDiffTwoPos[i][j][k][m]);
 
             if(!(fEtaGap[k] < 0.)) // make only with eta gap 
             {
               fTracksDiffTwoNeg[i][j][k][m] = new TProfile(Form("fTracksDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
               fTracksDiffTwoNeg[i][j][k][m]->Sumw2();
-              fOutList->Add(fTracksDiffTwoNeg[i][j][k][m]);
+              fOutListTracks->Add(fTracksDiffTwoNeg[i][j][k][m]);
             }
             
           }
@@ -509,62 +533,61 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
   for(Int_t i = 0; i < iNEventCounterBins; i++)
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
-  fOutListQA->Add(fEventCounter);
+  fOutListEvents->Add(fEventCounter);
   
   fSampleCounter = new TH1D("fSampleCounter","Event distribution if sampling bins; sampling bin index; events",fNumSampleBins,0,fNumSampleBins);
   for(Int_t i = 0; i < fNumSampleBins; i++)
     fSampleCounter->GetXaxis()->SetBinLabel(i+1,Form("%d",i));
-  fOutListQA->Add(fSampleCounter);
+  fOutListEvents->Add(fSampleCounter);
   
-  // QA events output
   fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
-  fOutListQA->Add(fCentSPDvsV0M);
+  fOutListEvents->Add(fCentSPDvsV0M);
   
   for(Int_t i(0); i < fQANumSteps; i++)
   {
     fQAEventsPVz[i] = new TH1D(Form("fQAEventsPVz_%s",sQAlabel[i].Data()),Form("QA Events: PV #it{z} (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),101,-50,50);
-    fOutListQA->Add(fQAEventsPVz[i]);
+    fOutListEvents->Add(fQAEventsPVz[i]);
     fQAEventsNumContrPV[i] = new TH1D(Form("fQAEventsNumContrPV_%s",sQAlabel[i].Data()),Form("QA Events: Number of contributors to AOD PV (%s cuts); Number of contributors;",sQAlabel[i].Data()),20,0,20);
-    fOutListQA->Add(fQAEventsNumContrPV[i]);
+    fOutListEvents->Add(fQAEventsNumContrPV[i]);
     fQAEventsNumSPDContrPV[i] = new TH1D(Form("fQAEventsNumSPDContrPV_%s",sQAlabel[i].Data()),Form("QA Events: Number of contributors to SPD PV (%s cuts); Number of contributors;",sQAlabel[i].Data()),20,0,20);
-    fOutListQA->Add(fQAEventsNumSPDContrPV[i]);
+    fOutListEvents->Add(fQAEventsNumSPDContrPV[i]);
     fQAEventsDistPVSPD[i] = new TH1D(Form("fQAEventsDistPVSPD_%s",sQAlabel[i].Data()),Form("QA Events: #it{z}-istance between SPD vertex & PV (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),50,0,5);
-    fOutListQA->Add(fQAEventsDistPVSPD[i]);
+    fOutListEvents->Add(fQAEventsDistPVSPD[i]);
   }
 
   // QA tracks output
   for(Int_t i(0); i < fQANumSteps; i++)
   {
     fQATracksMult[i] = new TH1D(Form("fQATracksMult_%s",sQAlabel[i].Data()),Form("QA Tracks: Number of tracks in selected events (%s cuts); #it{N}^{tracks}",sQAlabel[i].Data()), 500,0,5000);
-    fOutListQA->Add(fQATracksMult[i]);
+    fOutListTracks->Add(fQATracksMult[i]);
     fQATracksFilterMap[i] = new TH1D(Form("fQATracksFilterMap_%s",sQAlabel[i].Data()),Form("QA Tracks: Track filter bits (%s cuts); filter bit",sQAlabel[i].Data()), 2000,0,2000);
-    fOutListQA->Add(fQATracksFilterMap[i]);
+    fOutListTracks->Add(fQATracksFilterMap[i]);
     fQATracksNumTPCcls[i] = new TH1D(Form("fQATracksNumTPCcls_%s",sQAlabel[i].Data()),Form("QA Tracks: Track number of TPC clusters (%s cuts); #it{N}^{TPC clusters}",sQAlabel[i].Data()), 200,0,200);
-    fOutListQA->Add(fQATracksNumTPCcls[i]);
+    fOutListTracks->Add(fQATracksNumTPCcls[i]);
     fQATracksPt[i] = new TH1D(Form("fQATracksPt_%s",sQAlabel[i].Data()),Form("QA Tracks: Track #it{p}_{T} (%s cuts); #it{p}_{T} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);
-    fOutListQA->Add(fQATracksPt[i]);
+    fOutListTracks->Add(fQATracksPt[i]);
     fQATracksEta[i] = new TH1D(Form("fQATracksEta_%s",sQAlabel[i].Data()),Form("QA Tracks: Track #it{#eta} (%s cuts); #it{#eta}",sQAlabel[i].Data()), 401,-2,2);
-    fOutListQA->Add(fQATracksEta[i]);
+    fOutListTracks->Add(fQATracksEta[i]);
     fQATracksPhi[i] = new TH1D(Form("fQATracksPhi_%s",sQAlabel[i].Data()),Form("QA Tracks: Track #it{#varphi} (%s cuts); #it{#varphi}",sQAlabel[i].Data()), 100,0.,TMath::TwoPi());
-    fOutListQA->Add(fQATracksPhi[i]);
+    fOutListTracks->Add(fQATracksPhi[i]);
     fQATracksDCAxy[i] = new TH1D(Form("fQATracksDCAxy_%s",sQAlabel[i].Data()),Form("QA Tracks: Track DCA_#it{xy} (%s cuts); DCA_#it{xy} (cm?)",sQAlabel[i].Data()), 100,-10.,10);
-    fOutListQA->Add(fQATracksDCAxy[i]);
+    fOutListTracks->Add(fQATracksDCAxy[i]);
     fQATracksDCAz[i] = new TH1D(Form("fQATracksDCAz_%s",sQAlabel[i].Data()),Form("QA Tracks: Track DCA_#it{z} (%s cuts); DCA_#it{z} (cm?)",sQAlabel[i].Data()), 100,-10.,10);
-    fOutListQA->Add(fQATracksDCAz[i]);
+    fOutListTracks->Add(fQATracksDCAz[i]);
     fQATracksTPCdEdx[i] = new TH2D(Form("fQATracksTPCdEdx_%s",sQAlabel[i].Data()),Form("QA Tracks: TPC PID information (%s cuts); #it{p} (GeV/#it{c}); TPC dEdx (au)",sQAlabel[i].Data()), 100,0,10, 2000,-10,1000);
-    fOutListQA->Add(fQATracksTPCdEdx[i]);
+    fOutListTracks->Add(fQATracksTPCdEdx[i]);
     fQATracksTOF[i] = new TH2D(Form("fQATracksTOF_%s",sQAlabel[i].Data()),Form("QA Tracks: TOF #it{t-t_{0}} information (%s cuts); #it{p} (GeV/#it{c}); TOF #it{t-t_{0}} (ps?)  ",sQAlabel[i].Data()), 100,0,10, 20000,-10,1000);
-    fOutListQA->Add(fQATracksTOF[i]);
+    fOutListTracks->Add(fQATracksTOF[i]);
     fQATracksTOFbeta[i] = new TH2D(Form("fQATracksTOFbeta_%s",sQAlabel[i].Data()),Form("QA Tracks: TOF #beta information (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 500,0, 1.5);
-    fOutListQA->Add(fQATracksTOFbeta[i]);
+    fOutListTracks->Add(fQATracksTOFbeta[i]);
     
     Int_t iNPIDstatusBins = 4;
     TString sPIDstatus[] = {"kDetNoSignal","kDetPidOk","kDetMismatch","kDetNoParams"};
     
     fQATracksTPCstatus[i] = new TH1D(Form("fQATracksTPCstatus_%s",sQAlabel[i].Data()),Form("QA Tracks: PID status: TPC (%s cuts); isTOFok?",sQAlabel[i].Data()), iNPIDstatusBins,0,iNPIDstatusBins);
-    fOutListQA->Add(fQATracksTPCstatus[i]);
+    fOutListTracks->Add(fQATracksTPCstatus[i]);
     fQATracksTOFstatus[i] = new TH1D(Form("fQATracksTOFstatus_%s",sQAlabel[i].Data()),Form("QA Tracks: PID status: TOF (%s cuts); isTOFok?",sQAlabel[i].Data()), iNPIDstatusBins,0,iNPIDstatusBins);
-    fOutListQA->Add(fQATracksTOFstatus[i]);
+    fOutListTracks->Add(fQATracksTOFstatus[i]);
     
     for(Int_t j = 0; j < iNPIDstatusBins; j++)
     {
@@ -577,11 +600,11 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   for(Int_t i(0); i < fQANumSteps; i++)
   {
     fQAPionPID[i] = new TH2D(Form("fQAPionPID_%s",sQAlabel[i].Data()),Form("QA Pions: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-1000,50, 100,-1000,50);
-    fOutListQA->Add(fQAPionPID[i]);
+    fOutListPID->Add(fQAPionPID[i]);
     fQAKaonPID[i] = new TH2D(Form("fQAKaonPID_%s",sQAlabel[i].Data()),Form("QA Kaons: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-50,50, 100,-50,50);
-    fOutListQA->Add(fQAKaonPID[i]);
+    fOutListPID->Add(fQAKaonPID[i]);
     fQAProtonPID[i] = new TH2D(Form("fQAProtonPID_%s",sQAlabel[i].Data()),Form("QA Protons: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-50,50, 100,-50,50);
-    fOutListQA->Add(fQAProtonPID[i]);
+    fOutListPID->Add(fQAProtonPID[i]);
   }
 
 
@@ -591,83 +614,85 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fQAV0sCounter = new TH1D("fQAV0sCounter","QA V^{0}_{S} counter",iNV0sCounterBins,0,iNV0sCounterBins);
   for(Int_t i = 0; i < iNV0sCounterBins; i++)
     fQAV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
-  fOutListQA->Add(fQAV0sCounter);
+  fOutListV0s->Add(fQAV0sCounter);
 
   Int_t iNV0sCounterK0sBins = 7;
   TString sV0sCounterK0sLabel[] = {"Input","Inv. Mass","Mother #it{y} acceptance","CPA","Life-time","Armenteros","Selected"};
   fQAV0sCounterK0s = new TH1D("fQAV0sCounterK0s","QA K^{0}_{S} counter",iNV0sCounterK0sBins,0,iNV0sCounterK0sBins);
   for(Int_t i = 0; i < iNV0sCounterK0sBins; i++)
     fQAV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sCounterK0sLabel[i].Data() );
-  fOutListQA->Add(fQAV0sCounterK0s);
+  fOutListV0s->Add(fQAV0sCounterK0s);
 
   Int_t iNV0sCounterLambdaBins = 7;
   TString sV0sCounterLambdaLabel[] = {"Input","Inv. Mass","Mother #it{y} acceptance","CPA","Life-time","proton PID","Selected"};
   fQAV0sCounterLambda = new TH1D("fQAV0sCounterLambda","QA #Lambda/#bar{#Lambda} counter",iNV0sCounterLambdaBins,0,iNV0sCounterLambdaBins);
   for(Int_t i = 0; i < iNV0sCounterLambdaBins; i++)
     fQAV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sCounterLambdaLabel[i].Data() );
-  fOutListQA->Add(fQAV0sCounterLambda);
+  fOutListV0s->Add(fQAV0sCounterLambda);
 
 	for(Int_t i(0); i < fQANumSteps; i++)
   {
   	fQAV0sRecoMethod[i] = new TH1D(Form("fQAV0sRecoMethod_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Reconstruction method (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
   	fQAV0sRecoMethod[i]->GetXaxis()->SetBinLabel(1, "offline");
   	fQAV0sRecoMethod[i]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
-  	fOutListQA->Add(fQAV0sRecoMethod[i]);	
+  	fOutListV0s->Add(fQAV0sRecoMethod[i]);	
 		fQAV0sTPCRefit[i] = new TH1D(Form("fQAV0sTPCRefit_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: TPC refit (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
 		fQAV0sTPCRefit[i]->GetXaxis()->SetBinLabel(1, "not refit");
   	fQAV0sTPCRefit[i]->GetXaxis()->SetBinLabel(2, "refit");
-  	fOutListQA->Add(fQAV0sTPCRefit[i]);	
+  	fOutListV0s->Add(fQAV0sTPCRefit[i]);	
 		fQAV0sKinks[i] = new TH1D(Form("fQAV0sKinks_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Kinks (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
 		fQAV0sKinks[i]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
   	fQAV0sKinks[i]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
-  	fOutListQA->Add(fQAV0sKinks[i]);	
+  	fOutListV0s->Add(fQAV0sKinks[i]);	
 		fQAV0sDCAtoPV[i] = new TH1D(Form("fQAV0sDCAtoPV_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter DCA to PV (%s cuts); daughter DCA^{PV} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
-  	fOutListQA->Add(fQAV0sDCAtoPV[i]);	
+  	fOutListV0s->Add(fQAV0sDCAtoPV[i]);	
 		fQAV0sDCADaughters[i] = new TH1D(Form("fQAV0sDCADaughters_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: DCA among daughters (%s cuts); DCA^{daughters} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
-  	fOutListQA->Add(fQAV0sDCADaughters[i]);	
+  	fOutListV0s->Add(fQAV0sDCADaughters[i]);	
 		fQAV0sDecayRadius[i] = new TH1D(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 200,0.,500.);	
-  	fOutListQA->Add(fQAV0sDecayRadius[i]);	
+  	fOutListV0s->Add(fQAV0sDecayRadius[i]);	
     fQAV0sDaughterPt[i] = new TH1D(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
-    fOutListQA->Add(fQAV0sDaughterPt[i]);
+    fOutListV0s->Add(fQAV0sDaughterPt[i]);
     fQAV0sDaughterPhi[i] = new TH1D(Form("fQAV0sDaughterPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#varphi} (%s cuts); #it{#varphi}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
-    fOutListQA->Add(fQAV0sDaughterPhi[i]);   
+    fOutListV0s->Add(fQAV0sDaughterPhi[i]);   
     fQAV0sDaughterTPCdEdxPt[i] = new TH2D(Form("fQAV0sDaughterTPCdEdxPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: TPC dEdx daughters (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c}); TPC dEdx (au);",sQAlabel[i].Data()), 100,0.,10,200,0.,200.);
-  	fOutListQA->Add(fQAV0sDaughterTPCdEdxPt[i]);	
+  	fOutListV0s->Add(fQAV0sDaughterTPCdEdxPt[i]);	
     fQAV0sDaughterEta[i] = new TH1D(Form("fQAV0sDaughterEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#eta} (%s cuts); #it{#eta}^{daugter}",sQAlabel[i].Data()), 401,-2,2);  
-    fOutListQA->Add(fQAV0sDaughterEta[i]);  
+    fOutListV0s->Add(fQAV0sDaughterEta[i]);  
     fQAV0sMotherPt[i] = new TH1D(Form("fQAV0sMotherPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{p}_{T} (%s cuts); #it{p}_{T}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
-    fOutListQA->Add(fQAV0sMotherPt[i]); 
+    fOutListV0s->Add(fQAV0sMotherPt[i]); 
     fQAV0sMotherPhi[i] = new TH1D(Form("fQAV0sMotherPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#varphi} (%s cuts); #it{#varphi}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
-    fOutListQA->Add(fQAV0sMotherPhi[i]);  
+    fOutListV0s->Add(fQAV0sMotherPhi[i]);  
     fQAV0sMotherEta[i] = new TH1D(Form("fQAV0sMotherEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#eta} (%s cuts); #it{#eta}^{V0}",sQAlabel[i].Data()), 401,-2,2); 
-    fOutListQA->Add(fQAV0sMotherEta[i]);  
+    fOutListV0s->Add(fQAV0sMotherEta[i]);  
     fQAV0sMotherRapK0s[i] = new TH1D(Form("fQAV0sMotherRapK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo) (%s cuts); #it{y}^{V0,K0s}",sQAlabel[i].Data()), 400,-2,2);
-    fOutListQA->Add(fQAV0sMotherRapK0s[i]);
+    fOutListV0s->Add(fQAV0sMotherRapK0s[i]);
     fQAV0sMotherRapLambda[i] = new TH1D(Form("fQAV0sMotherRapLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo) (%s cuts); #it{y}^{V0,#Lambda}",sQAlabel[i].Data()),400,-2,2);
-    fOutListQA->Add(fQAV0sMotherRapLambda[i]);     
+    fOutListV0s->Add(fQAV0sMotherRapLambda[i]);     
     fQAV0sInvMassK0s[i] = new TH1D(Form("fQAV0sInvMassK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: InvMass (%s cuts); #it{m}_{inv} (GeV/#it{c}^{2});",sQAlabel[i].Data()), 200,fV0MinMassK0s,fV0MaxMassK0s);
-    fOutListQA->Add(fQAV0sInvMassK0s[i]);  
+    fOutListV0s->Add(fQAV0sInvMassK0s[i]);  
     fQAV0sInvMassLambda[i] = new TH1D(Form("fQAV0sInvMassLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: InvMass (%s cuts); #it{m}_{inv} (GeV/#it{c}^{2});",sQAlabel[i].Data()), 80,fV0MinMassLambda,fV0MaxMassLambda);
-    fOutListQA->Add(fQAV0sInvMassLambda[i]);  
+    fOutListV0s->Add(fQAV0sInvMassLambda[i]);  
     fQAV0sCPAK0s[i] = new TH1D(Form("fQAV0sCPAK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: CPA (%s cuts); CPA^{K0s}",sQAlabel[i].Data()), 100,0.9,1.);  
-    fOutListQA->Add(fQAV0sCPAK0s[i]); 
+    fOutListV0s->Add(fQAV0sCPAK0s[i]); 
     fQAV0sCPALambda[i] = new TH1D(Form("fQAV0sCPALambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA (%s cuts); CPA^{#Lambda}",sQAlabel[i].Data()), 100, 0.9,1.); 
-    fOutListQA->Add(fQAV0sCPALambda[i]);  
+    fOutListV0s->Add(fQAV0sCPALambda[i]);  
     fQAV0sNumTauK0s[i] = new TH1D(Form("fQAV0sNumTauK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Number of #it{c#tau} (%s cuts); #it{c#tau}^{K0s} (cm)",sQAlabel[i].Data()), 100, 0.,10.);
-    fOutListQA->Add(fQAV0sNumTauK0s[i]);  
+    fOutListV0s->Add(fQAV0sNumTauK0s[i]);  
     fQAV0sNumTauLambda[i] = new TH1D(Form("fQAV0sNumTauLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Number of #it{c#tau} (%s cuts); #it{c#tau}^{#Lambda} (cm)",sQAlabel[i].Data()), 300, 0.,30);
-    fOutListQA->Add(fQAV0sNumTauLambda[i]);
+    fOutListV0s->Add(fQAV0sNumTauLambda[i]);
     fQAV0sArmenterosK0s[i] = new TH2D(Form("fQAV0sArmenterosK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
-    fOutListQA->Add(fQAV0sArmenterosK0s[i]);
+    fOutListV0s->Add(fQAV0sArmenterosK0s[i]);
     fQAV0sArmenterosLambda[i] = new TH2D(Form("fQAV0sArmenterosLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
-    fOutListQA->Add(fQAV0sArmenterosLambda[i]);
+    fOutListV0s->Add(fQAV0sArmenterosLambda[i]);
     fQAV0sProtonNumSigmaPtLambda[i] = new TH2D(Form("fQAV0sProtonNumSigmaPtLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: (anti-)proton PID (%s cuts); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});",sQAlabel[i].Data()), 100,0.,10,100,0.,10.);
-    fOutListQA->Add(fQAV0sProtonNumSigmaPtLambda[i]);
+    fOutListV0s->Add(fQAV0sProtonNumSigmaPtLambda[i]);
 	}
 
-  PostData(1, fOutList);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
-	PostData(2, fOutListV0s);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
-	PostData(3, fOutListQA);           // postdata will notify the analysis manager of changes / updates to the fOutputList object. the manager will in the end take care of writing your output to file so it needs to know what's in the output
+  PostData(1, fOutListEvents);           
+  PostData(2, fOutListTracks);           
+  PostData(3, fOutListPID);           
+	PostData(4, fOutListV0s);          
+	PostData(5, fOutListQA);           
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::UserExec(Option_t *)
@@ -808,9 +833,11 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
  
   // end of potential loop over EtaGap & Harmonics
 
-  PostData(1, fOutList);  // stream the results the analysis of this event to the output manager which will take care of writing it to a file
-  PostData(2, fOutListV0s);
-  PostData(3, fOutListQA);
+  PostData(1, fOutListEvents);           
+  PostData(2, fOutListTracks);           
+  PostData(3, fOutListPID);           
+  PostData(4, fOutListV0s);          
+  PostData(5, fOutListQA);         
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::Terminate(Option_t *)
