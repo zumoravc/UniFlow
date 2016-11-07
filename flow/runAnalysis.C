@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/14-K0s-rebin";
+    TString sWorkDir = "V0s/testPID-2";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -38,14 +38,19 @@ void runAnalysis()
     gROOT->LoadMacro("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
     AliMultSelectionTask* taskMultSelection = AddTaskMultSelection(kFALSE); // user mode:
 
-    // PID response needed for V0s PID
+    // PID response needed for PID
     gROOT->LoadMacro("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C");
     AliAnalysisTaskPIDResponse* taskPIDResponse = AddTaskPIDResponse(kFALSE); // not MC
+
+    // PID response QA by ALICE
+    gROOT->LoadMacro("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDqa.C");
+    AliAnalysisTaskPIDqa* taskPIDqa = AddTaskPIDqa("PID_QA.root");
+    
 
     gROOT->LoadMacro("AliAnalysisTaskFlowPID.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskFlowPID.C"); // load the addtask macro
     
-    AliAnalysisTaskFlowPID* taskFlowPID = AddTaskFlowPID("flowPID_JHEP"); // JHEP + V0 analysis notes
+    AliAnalysisTaskFlowPID* taskFlowPID = AddTaskFlowPID("flowPID_FB768");
     // tracks & event selection cuts
     taskFlowPID->SetAODAnalysis(kTRUE);
     taskFlowPID->SetPbPbAnalysis(kTRUE);
@@ -56,9 +61,12 @@ void runAnalysis()
     taskFlowPID->SetTrackPtMax(10.);
     taskFlowPID->SetTrackPtMin(0.1);
     taskFlowPID->SetNumTPCclsMin(70);
-    taskFlowPID->SetTrackFilterBit(128);
-    taskFlowPID->SetDiffFlow(kFALSE);
+    taskFlowPID->SetTrackFilterBit(768);
+    taskFlowPID->SetDiffFlow(kTRUE);
     taskFlowPID->SetPID(kTRUE);
+    taskFlowPID->SetPionNumSigmasMax(3);
+    taskFlowPID->SetKaonNumSigmasMax(3);
+    taskFlowPID->SetProtonNumSigmasMax(3);
     // V0 selection cuts
     taskFlowPID->SetV0sOnFly(kFALSE);
     taskFlowPID->SetV0sTPCRefit(kTRUE);
@@ -167,7 +175,8 @@ void runAnalysis()
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
-        chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
+        //chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
+        chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138870/ESDs/pass2/AOD160/0058/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
         // if we want to run on grid, we create and configure the plugin
@@ -192,16 +201,19 @@ void runAnalysis()
         // all
         //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871, 138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
         // part1
-        //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
+        Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
         //part2
         //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
+        // testing sample
+        //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662};
+
 
         // -- 46 runs
         //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595, 137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
         // part 1    
         //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595};
         // part 2
-        Int_t runNumber[] = {137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
+        //Int_t runNumber[] = {137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
 
         Int_t iNumRuns = sizeof(runNumber) / sizeof(runNumber[0]);
         
