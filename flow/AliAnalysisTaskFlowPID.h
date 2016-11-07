@@ -24,6 +24,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void					SetCentFlag(Short_t flag) { fCentFlag = flag; }
         void					SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
         void                    SetSampling(Bool_t sample) { fSampling = sample; }
+        void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; } 
         void					SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void					SetPID(Bool_t pid) { fPID = pid; }
         // track setters
@@ -109,6 +110,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fLHC10h;        // flag to LHC10h data?
         Short_t                 fCentFlag;          // centrality flag
         Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
+        Bool_t                  fDoFlow;        // Do flow analysis (if kFALSE: only selection, filtering and QA)
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
         Bool_t                  fPID;                       // Do PID (so far V0s) ? 
         //cuts & selection: events & tracks
@@ -184,10 +186,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*                  fOutListV0s;    //! V0s (K0s,Lambda) related output list
         TList*                  fOutListQA;	    //! additional QA output list
 
-        //std histos
+        // event histos
         TH1D*					fEventMult;			 //! selected events multiplicity distribution
         TH1D*   				fCentralityDis;     //! event centrality distribution
         TH2D*					fCentSPDvsV0M;      //! V0M vs SPD
+        
+        // tracks histos
         TH1D*					fMultTracksSelected; //! multiplicity of selected tracks in a given event
         TH2D*					fTracksPtCent;		//! selected tracks pT vs event centrality
         TH1D*                   fTracksPt;       //! selected tracks pT distribution
@@ -195,9 +199,51 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D* 				    fTracksPhi;			 //! selected tracks phi distribution
         TH1D* 					fTracksCharge;			 //! selected tracks charge distribution
         
+        // PID histos
+        TH1D*                   fPionsCounter; //! 
+        TH2D*                   fAllsTPCdEdx; //! dEdx TPC of all selected particles (pi,K,p)
+        TH2D*                   fAllsTOFbeta; //! beta TOF of all selected particles (pi,K,p)
+        TH2D*                   fAllsNsigmasTPCasPion; //! TPC number of sigmas of selected particles (pi hypothesis)
+        TH2D*                   fAllsNsigmasTOFasPion; //! TOF number of sigmas dist of selected particles (pi hypothesis)
+        TH2D*                   fAllsNsigmasTPCasKaon; //! TPC number of sigmas of selected particles (K hypothesis)
+        TH2D*                   fAllsNsigmasTOFasKaon; //! TOF number of sigmas dist of selected particles (K hypothesis)
+        TH2D*                   fAllsNsigmasTPCasProton; //! TPC number of sigmas of selected particles (p hypothesis)
+        TH2D*                   fAllsNsigmasTOFasProton; //! TOF number of sigmas dist of selected particles (p hypothesis)
+        TH1D*                   fPionsMult; //! event multiplicity of selected pions
+        TH1D*                   fPionsPt; //! pT dist of selected pions
+        TH1D*                   fPionsEta; //! eta dist of selected pions
+        TH1D*                   fPionsPhi; //! phi dist of selected pions
+        TH2D*                   fPionsTPCdEdx; //! dEdx TPC of selected pions
+        TH2D*                   fPionsTOFbeta; //! beta TOF of selected pions
+        TH2D*                   fPionsNsigmasTPCTOF; //! number of sigmas of selected pions
+        TH1D*                   fKaonsCounter; //! 
+        TH1D*                   fKaonsMult; //! event multiplicity of selected Kaons
+        TH1D*                   fKaonsPt; //! pT dist of selected Kaons
+        TH1D*                   fKaonsEta; //! eta dist of selected Kaons
+        TH1D*                   fKaonsPhi; //! phi dist of selected Kaons
+        TH2D*                   fKaonsTPCdEdx; //! dEdx TPC of selected Kaons
+        TH2D*                   fKaonsTOFbeta; //! beta TOF of selected Kaons
+        TH2D*                   fKaonsNsigmasTPCTOF; //! number of sigmas of selected Kaons 
+        TH1D*                   fProtonsCounter; //! 
+        TH1D*                   fProtonsMult; //! event multiplicity of selected Protons
+        TH1D*                   fProtonsPt; //! pT dist of selected Protons
+        TH1D*                   fProtonsEta; //! eta dist of selected Protons
+        TH1D*                   fProtonsPhi; //! phi dist of selected Protons
+        TH2D*                   fProtonsTPCdEdx; //! dEdx TPC of selected Protons
+        TH2D*                   fProtonsTOFbeta; //! beta TOF of selected Protons
+        TH2D*                   fProtonsNsigmasTPCTOF; //! number of sigmas of selected Protons 
+ 
 
+		// V0s histos
+        TH1D*                   fV0sInvMassK0s[fNumEtaGap]; //!
+        TH1D*                   fV0sInvMassLambda[fNumEtaGap]; //!
+        TH2D*                   fV0sPtInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
+        TH2D*                   fV0sPtInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
+        
+
+        // TProfiles
         const static Int_t      fNumSampleBins = 5; // number of sampling bins 
-        TProfile*				fTracksRefTwo[fNumHarmonics][fNumEtaGap][fNumSampleBins];			 	 //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*               fTracksRefTwo[fNumHarmonics][fNumEtaGap][fNumSampleBins];                //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*               fTracksDiffTwoPos[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];          //! event averaged 2-particle correlation for differential flow <<2'>>
         TProfile*               fTracksDiffTwoNeg[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];          //! event averaged 2-particle correlation for differential flow <<2'>>
         
@@ -206,11 +252,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile2D*             fV0sDiffTwoPos_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
         TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
-		// V0s histos
-        TH1D*                   fV0sInvMassK0s[fNumEtaGap]; //!
-        TH1D*                   fV0sInvMassLambda[fNumEtaGap]; //!
-        TH2D*                   fV0sPtInvMassK0s[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
-        TH2D*                   fV0sPtInvMassLambda[fNumCentBins][fNumHarmonics][fNumEtaGap];                         //! selected K0s distribution (InvMass, pT)
         
         // QA histos // index 0: before / 1: after cuts
         const static Short_t    fQANumSteps = 2;        // number of various steps (0 before cuts / 1 after cuts / 2 testing) 
@@ -236,9 +277,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fQATracksTOF[fQANumSteps]; //! TOF PID information
         TH2D*                   fQATracksTOFbeta[fQANumSteps]; //! TOF PID information
         // QA PID tracks
-        TH2D*                   fQAPionPID[fQANumSteps]; //! number of sigmas TPC and TOF PID
-        TH2D*                   fQAKaonPID[fQANumSteps]; //! number of sigmas TPC and TOF PID
-        TH2D*                   fQAProtonPID[fQANumSteps]; //! number of sigmas TPC and TOF PID
         // QA V0s
         TH1D*					fQAV0sCounter;		//! V0s counter
         TH1D*					fQAV0sCounterK0s;		//! K0s counter

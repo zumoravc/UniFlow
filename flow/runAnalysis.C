@@ -63,6 +63,7 @@ void runAnalysis()
     taskFlowPID->SetTrackPtMin(0.1);
     taskFlowPID->SetNumTPCclsMin(70);
     taskFlowPID->SetTrackFilterBit(768);
+    taskFlowPID->SetDoFlow(kFALSE);
     taskFlowPID->SetDiffFlow(kTRUE);
     taskFlowPID->SetPID(kTRUE);
     taskFlowPID->SetPionNumSigmasMax(3);

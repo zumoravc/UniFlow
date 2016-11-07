@@ -99,6 +99,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fLHC10h(kTRUE),
   fCentFlag(0),
   fSampling(0),
+  fDoFlow(0),
   fDiffFlow(0),
   fPID(0),  
 
@@ -144,6 +145,39 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTracksEta(0),
   fTracksPhi(0),
   fTracksCharge(0),
+
+  fPionsCounter(0x0),
+  fKaonsCounter(0x0),
+  fProtonsCounter(0x0),
+  fAllsTPCdEdx(0x0),
+  fAllsTOFbeta(0x0),
+  fAllsNsigmasTPCasPion(0x0),
+  fAllsNsigmasTOFasPion(0x0),
+  fAllsNsigmasTPCasKaon(0x0),
+  fAllsNsigmasTOFasKaon(0x0),
+  fAllsNsigmasTPCasProton(0x0),
+  fAllsNsigmasTOFasProton(0x0),
+  fPionsMult(0x0),
+  fPionsPt(0x0),
+  fPionsEta(0x0),
+  fPionsPhi(0x0),
+  fPionsTPCdEdx(0x0),
+  fPionsTOFbeta(0x0),
+  fPionsNsigmasTPCTOF(0x0),
+  fKaonsMult(0x0),
+  fKaonsPt(0x0),
+  fKaonsEta(0x0),
+  fKaonsPhi(0x0),
+  fKaonsTPCdEdx(0x0),
+  fKaonsTOFbeta(0x0),
+  fKaonsNsigmasTPCTOF(0x0), 
+  fProtonsMult(0x0),
+  fProtonsPt(0x0),
+  fProtonsEta(0x0),
+  fProtonsPhi(0x0),
+  fProtonsTPCdEdx(0x0),
+  fProtonsTOFbeta(0x0),
+  fProtonsNsigmasTPCTOF(0x0),  
 
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
@@ -196,6 +230,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
   fCentFlag(0),
+  fDoFlow(0),
   fSampling(0),
   fDiffFlow(0),
   fPID(0),  
@@ -243,6 +278,39 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTracksEta(0),
   fTracksPhi(0),
   fTracksCharge(0),
+
+  fPionsCounter(0x0),
+  fKaonsCounter(0x0),
+  fProtonsCounter(0x0),
+  fAllsTPCdEdx(0x0),
+  fAllsTOFbeta(0x0),
+  fAllsNsigmasTPCasPion(0x0),
+  fAllsNsigmasTOFasPion(0x0),
+  fAllsNsigmasTPCasKaon(0x0),
+  fAllsNsigmasTOFasKaon(0x0),
+  fAllsNsigmasTPCasProton(0x0),
+  fAllsNsigmasTOFasProton(0x0),
+  fPionsMult(0x0),
+  fPionsPt(0x0),
+  fPionsEta(0x0),
+  fPionsPhi(0x0),
+  fPionsTPCdEdx(0x0),
+  fPionsTOFbeta(0x0),
+  fPionsNsigmasTPCTOF(0x0),
+  fKaonsMult(0x0),
+  fKaonsPt(0x0),
+  fKaonsEta(0x0),
+  fKaonsPhi(0x0),
+  fKaonsTPCdEdx(0x0),
+  fKaonsTOFbeta(0x0),
+  fKaonsNsigmasTPCTOF(0x0), 
+  fProtonsMult(0x0),
+  fProtonsPt(0x0),
+  fProtonsEta(0x0),
+  fProtonsPhi(0x0),
+  fProtonsTPCdEdx(0x0),
+  fProtonsTOFbeta(0x0),
+  fProtonsNsigmasTPCTOF(0x0),  
 
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
@@ -311,8 +379,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fQATracksTPCdEdx[i] = 0x0;
     fQATracksTOFbeta[i] = 0x0;
     fQATracksTOF[i] = 0x0;
-    // PID tracks
-    fQAPionPID[i] = 0x0;
+ 
     // V0s
   	fQAV0sRecoMethod[i] = 0;	
 		fQAV0sTPCRefit[i] = 0;	
@@ -468,6 +535,89 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     }
   }
 
+  // PID tracks histos
+  if(fPID)
+  {
+    // counters
+    Int_t iNPIDCounterBins = 6;
+    TString sPIDCounterLabel[] = {"Input","PID TPC OK","PID TOF OK","TPC && TOF PID OK","#it{n#sigma}","Selected"};
+    
+    fPionsCounter = new TH1D("fPionsCounter", "#pi: Counter", iNPIDCounterBins,0,iNPIDCounterBins);
+    fKaonsCounter = new TH1D("fKaonsCounter", "K: Counter", iNPIDCounterBins,0,iNPIDCounterBins);
+    fProtonsCounter = new TH1D("fProtonsCounter", "p: Counter", iNPIDCounterBins,0,iNPIDCounterBins);
+    for(Int_t i = 0; i < iNPIDCounterBins; i++)
+    {
+      fPionsCounter->GetXaxis()->SetBinLabel(i+1, sPIDCounterLabel[i].Data() );
+      fKaonsCounter->GetXaxis()->SetBinLabel(i+1, sPIDCounterLabel[i].Data() );
+      fProtonsCounter->GetXaxis()->SetBinLabel(i+1, sPIDCounterLabel[i].Data() );
+    }
+    fOutListPID->Add(fPionsCounter);
+    fOutListPID->Add(fKaonsCounter);
+    fOutListPID->Add(fProtonsCounter);
+
+    fAllsTOFbeta = new TH2D("fAllsTOFbeta","#pi,K,p: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);          
+    fOutListPID->Add(fAllsTOFbeta);
+    fAllsTPCdEdx = new TH2D("fAllsTPCdEdx","#pi,K,p: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);          
+    fOutListPID->Add(fAllsTPCdEdx);
+    fAllsNsigmasTPCasPion = new TH2D("fAllsNsigmasTPCasPion","#pi,K,p: #it{n#sigma} TPC as #pi (selected); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}", 100,0,10, 100,-10,10);          
+    fOutListPID->Add(fAllsNsigmasTPCasPion);
+    fAllsNsigmasTOFasPion = new TH2D("fAllsNsigmasTOFasPion","#pi,K,p: #it{n#sigma} TOF as #pi (selected); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}", 100,0,10, 100,-10,10);          
+    fOutListPID->Add(fAllsNsigmasTOFasPion);
+    fAllsNsigmasTPCasKaon = new TH2D("fAllsNsigmasTPCasKaon","#pi,K,p: #it{n#sigma} TPC as K (selected); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}", 100,0,10, 100,-10,10);          
+    fOutListPID->Add(fAllsNsigmasTPCasKaon);
+    fAllsNsigmasTOFasKaon = new TH2D("fAllsNsigmasTOFasKaon","#pi,K,p: #it{n#sigma} TOF as K (selected); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}", 100,0,10, 100,-10,10);          
+    fOutListPID->Add(fAllsNsigmasTOFasKaon);  
+    fAllsNsigmasTPCasProton = new TH2D("fAllsNsigmasTPCasProton","#pi,K,p: #it{n#sigma} TPC as p (selected); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}", 100,0,10, 100,-10,10);          
+    fOutListPID->Add(fAllsNsigmasTPCasProton);
+    fAllsNsigmasTOFasProton = new TH2D("fAllsNsigmasTOFasProton","#pi,K,p: #it{n#sigma} TOF as p (selected); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}", 100,0,10, 100,-10,10);          
+    fOutListPID->Add(fAllsNsigmasTOFasProton);
+
+    fPionsMult = new TH1D("fPionsMult","#pi: Event multiplicity (selected); multiplicity",5000,0,5000);
+    fOutListPID->Add(fPionsMult);
+    fPionsPt = new TH1D("fPionsPt", "#pi: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
+    fOutListPID->Add(fPionsPt);          
+    fPionsEta = new TH1D("fPionsEta", "#pi: #it{#eta} (selected); #it{#eta};", 400, -2, 2);    
+    fOutListPID->Add(fPionsEta);          
+    fPionsPhi = new TH1D("fPionsPhi", "#pi: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());    
+    fOutListPID->Add(fPionsPhi);
+    fPionsTOFbeta = new TH2D("fPionsTOFbeta","#pi: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);          
+    fOutListPID->Add(fPionsTOFbeta);
+    fPionsTPCdEdx = new TH2D("fPionsTPCdEdx","#pi: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);          
+    fOutListPID->Add(fPionsTPCdEdx);
+    fPionsNsigmasTPCTOF = new TH2D("fPionsNsigmasTPCTOF","#pi: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
+    fOutListPID->Add(fPionsNsigmasTPCTOF);
+
+    fKaonsMult = new TH1D("fKaonsMult","K: Event multiplicity (selected); multiplicity",5000,0,5000);
+    fOutListPID->Add(fKaonsMult);
+    fKaonsPt = new TH1D("fKaonsPt", "K: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
+    fOutListPID->Add(fKaonsPt);          
+    fKaonsEta = new TH1D("fKaonsEta", "K: #it{#eta} (selected); #it{#eta};", 400, -2, 2);    
+    fOutListPID->Add(fKaonsEta);          
+    fKaonsPhi = new TH1D("fKaonsPhi", "K: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());    
+    fOutListPID->Add(fKaonsPhi);
+    fKaonsTOFbeta = new TH2D("fKaonsTOFbeta","K: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);          
+    fOutListPID->Add(fKaonsTOFbeta);
+    fKaonsTPCdEdx = new TH2D("fKaonsTPCdEdx","K: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);          
+    fOutListPID->Add(fKaonsTPCdEdx);
+    fKaonsNsigmasTPCTOF = new TH2D("fKaonsNsigmasTPCTOF","K: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
+    fOutListPID->Add(fKaonsNsigmasTPCTOF);
+
+    fProtonsMult = new TH1D("fProtonsMult","p: Event multiplicity (selected); multiplicity",5000,0,5000);
+    fOutListPID->Add(fProtonsMult);
+    fProtonsPt = new TH1D("fProtonsPt", "p: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
+    fOutListPID->Add(fProtonsPt);          
+    fProtonsEta = new TH1D("fProtonsEta", "p: #it{#eta} (selected); #it{#eta};", 400, -2, 2);    
+    fOutListPID->Add(fProtonsEta);          
+    fProtonsPhi = new TH1D("fProtonsPhi", "p: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());    
+    fOutListPID->Add(fProtonsPhi);
+    fProtonsTOFbeta = new TH2D("fProtonsTOFbeta","p: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);          
+    fOutListPID->Add(fProtonsTOFbeta);
+    fProtonsTPCdEdx = new TH2D("fProtonsTPCdEdx","p: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);          
+    fOutListPID->Add(fProtonsTPCdEdx);
+    fProtonsNsigmasTPCTOF = new TH2D("fProtonsNsigmasTPCTOF","p: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
+    fOutListPID->Add(fProtonsNsigmasTPCTOF);
+  } 
+
   // V0s histos  
   if(fPID)
   {
@@ -597,16 +747,6 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   }
 
   // QA tracks PID output
-  for(Int_t i(0); i < fQANumSteps; i++)
-  {
-    fQAPionPID[i] = new TH2D(Form("fQAPionPID_%s",sQAlabel[i].Data()),Form("QA Pions: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-1000,50, 100,-1000,50);
-    fOutListPID->Add(fQAPionPID[i]);
-    fQAKaonPID[i] = new TH2D(Form("fQAKaonPID_%s",sQAlabel[i].Data()),Form("QA Kaons: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-50,50, 100,-50,50);
-    fOutListPID->Add(fQAKaonPID[i]);
-    fQAProtonPID[i] = new TH2D(Form("fQAProtonPID_%s",sQAlabel[i].Data()),Form("QA Protons: PID response (TPC,TOF) (%s cuts); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,-50,50, 100,-50,50);
-    fOutListPID->Add(fQAProtonPID[i]);
-  }
-
 
   // QA V0s output
   Int_t iNV0sCounterBins = 18;
@@ -789,49 +929,47 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fArrV0sALambdaFiltered.Clear("C");
 
   // filtering objects and filling relevant containers
-  FilterTracks();
-  
+  FilterTracks(); // filter reference and PID tracks
   
   if(fPID)
   {
-    //FilterPIDTracks();
-    FilterV0s();
+    FilterV0s(); // filter V0s
   }
 
-
+  // all the possible tracks & candidates (passing selection criteria) are filtered and filled and relevant TClonesArray
 
   // ==== FLOW ANALYSIS ====
-
-  // begin of loop over EtaGap & Harmonics
-  Int_t iHarm = 0;
-  Double_t dEtaGap = 0;
-  TProfile2D* profV0sPos = 0x0;
-  TProfile2D* profV0sNeg = 0x0;
-  
-  for(Int_t indexHarm(0); indexHarm < fNumHarmonics; indexHarm++)
+  if(fDoFlow)
   {
-    for(Int_t indexEtaGap(0); indexEtaGap < fNumEtaGap; indexEtaGap++)
+    // begin of loop over EtaGap & Harmonics
+    Int_t iHarm = 0;
+    Double_t dEtaGap = 0;
+    TProfile2D* profV0sPos = 0x0;
+    TProfile2D* profV0sNeg = 0x0;
+    
+    for(Int_t indexHarm(0); indexHarm < fNumHarmonics; indexHarm++)
     {
-      iHarm = fHarmonics[indexHarm];
-      dEtaGap = fEtaGap[indexEtaGap];
-
-      FillRefFlowVectors(dEtaGap, iHarm);
-      EstimateRefCumulant(dEtaGap, iHarm, fTracksRefTwo[indexHarm][indexEtaGap][fSampleBinIndex]);
-
-      if(fDiffFlow)
+      for(Int_t indexEtaGap(0); indexEtaGap < fNumEtaGap; indexEtaGap++)
       {
-        EstimateRefPtDiffCumulant(dEtaGap,iHarm,fTracksDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fTracksDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
-      }
-      
-      if(fPID)
-      {
-        EstimateV0Cumulant(indexEtaGap,indexHarm,fSampleBinIndex);
-      }
-  
-    } // end of loop over eta gap
-  } // end of loop over harmonics
- 
-  // end of potential loop over EtaGap & Harmonics
+        iHarm = fHarmonics[indexHarm];
+        dEtaGap = fEtaGap[indexEtaGap];
+
+        FillRefFlowVectors(dEtaGap, iHarm);
+        EstimateRefCumulant(dEtaGap, iHarm, fTracksRefTwo[indexHarm][indexEtaGap][fSampleBinIndex]);
+
+        if(fDiffFlow)
+        {
+          EstimateRefPtDiffCumulant(dEtaGap,iHarm,fTracksDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fTracksDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
+        }
+        
+        if(fPID)
+        {
+          EstimateV0Cumulant(indexEtaGap,indexHarm,fSampleBinIndex);
+        }
+    
+      } // end of loop over eta gap
+    } // end of loop over harmonics
+  }
 
   PostData(1, fOutListEvents);           
   PostData(2, fOutListTracks);           
@@ -1364,28 +1502,27 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackPion(const AliAODTrack* track)
     return kFALSE;
   }
 
+  fPionsCounter->Fill(0); // input
+
   Float_t dNumSigmaTPC = 0;
   Float_t dNumSigmaTOF = 0;
 
   AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
   AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
 
-  
+  if( pidStatusTPC == AliPIDResponse::kDetPidOk)
+    fPionsCounter->Fill(1); // TPC PID OK
+
+  if( pidStatusTOF == AliPIDResponse::kDetPidOk )
+    fPionsCounter->Fill(2); // TOF PID OK
+
   if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
     return kFALSE;
 
-  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
-  {
-    dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
-  }
-  
-  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
-  {
-    dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion);
-  }
+  fPionsCounter->Fill(3); // TOF && TPC PID OK 
 
-  fQAPionPID[0]->Fill(dNumSigmaTPC,dNumSigmaTOF);
-  
+  dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
+  dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion);
 
   Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
   
@@ -1393,10 +1530,9 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackPion(const AliAODTrack* track)
   {
     return kFALSE;
   }
-    
-  fQAPionPID[1]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+  fPionsCounter->Fill(4); // number of sigmas
 
-  
+  fPionsCounter->Fill(5); // selected
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -1405,27 +1541,27 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackKaon(const AliAODTrack* track)
  if(!fPIDResponse)
     return kFALSE;
 
+  fKaonsCounter->Fill(0); // input
+
   Float_t dNumSigmaTPC = 0;
   Float_t dNumSigmaTOF = 0;
 
   AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
   AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
 
+  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
+    fKaonsCounter->Fill(1); // TOF PID OK
+
+  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
+    fKaonsCounter->Fill(2); // TOF PID OK
+
   if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
     return kFALSE;
 
-  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
-  {
-    dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
-  }
-  
-  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
-  {
-    dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
-  }
+  fKaonsCounter->Fill(3); // TOF && TPC PID OK 
 
-  // Filling QA for pions
-  fQAKaonPID[0]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+  dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
+  dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
 
   Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
   
@@ -1433,9 +1569,10 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackKaon(const AliAODTrack* track)
   {
     return kFALSE;
   }
-    
-  fQAKaonPID[1]->Fill(dNumSigmaTPC,dNumSigmaTOF);
-  
+
+  fKaonsCounter->Fill(4); // number of sigmas
+
+  fKaonsCounter->Fill(5); // selected
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -1444,26 +1581,27 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackProton(const AliAODTrack* track)
   if(!fPIDResponse)
     return kFALSE;
 
+  fProtonsCounter->Fill(0); // input
+
   Float_t dNumSigmaTPC = 0;
   Float_t dNumSigmaTOF = 0;
 
   AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
   AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
 
+  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
+    fProtonsCounter->Fill(1); // TOF PID OK
+
+  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
+    fProtonsCounter->Fill(2); // TOF PID OK
+
   if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
     return kFALSE;
 
-  if(pidStatusTPC == AliPIDResponse::kDetPidOk)
-  {
-    dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
-  }
-  
-  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
-  {
-    dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton);
-  }
-  // Filling QA for pions
-  fQAProtonPID[0]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+  fProtonsCounter->Fill(3); // TOF && TPC PID OK 
+
+  dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
+  dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton);
 
   Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
   
@@ -1471,8 +1609,10 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackProton(const AliAODTrack* track)
   {
     return kFALSE;
   }
-    
-  fQAProtonPID[1]->Fill(dNumSigmaTPC,dNumSigmaTOF);
+
+  fProtonsCounter->Fill(4); // number of sigmas
+
+  fProtonsCounter->Fill(5); // selected
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -1486,6 +1626,8 @@ void AliAnalysisTaskFlowPID::FilterTracks()
   Int_t iNumPions = 0;
   Int_t iNumKaons = 0;
   Int_t iNumProtons = 0;
+
+  Bool_t bIsEither = kFALSE;
   
   if(iNumTracks < 1)
     return;
@@ -1501,6 +1643,7 @@ void AliAnalysisTaskFlowPID::FilterTracks()
     if(!track)
       continue;
 
+
     FillTrackQA(track,0); // tracks QA before cuts
 
     if(IsTrackSelected(track))
@@ -1514,22 +1657,74 @@ void AliAnalysisTaskFlowPID::FilterTracks()
       {
         // (PID: pi,K,p) tracks passing all criteria
       
+        bIsEither = kFALSE;
+
+        Double_t dTOF[5] = {0};
+        Double_t dBetaTOF = 0;
+
         if(IsTrackPion(track))
         {
+          bIsEither = kTRUE;
           new(fArrPionFiltered[iNumPions]) AliAODTrack(*track);
           iNumPions++;
+
+          fPionsPt->Fill(track->Pt());
+          fPionsEta->Fill(track->Eta());
+          fPionsPhi->Fill(track->Phi());
+          fPionsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion) );
+          fPionsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+          
+          track->GetIntegratedTimes(dTOF);
+          dBetaTOF = dTOF[0] / track->GetTOFsignal();
+          fPionsTOFbeta->Fill(track->P(), dBetaTOF);
+
         }
         
         if(IsTrackKaon(track))
         {
+          bIsEither = kTRUE;
           new(fArrKaonFiltered[iNumKaons]) AliAODTrack(*track);
           iNumKaons++;
+
+          fKaonsPt->Fill(track->Pt());
+          fKaonsEta->Fill(track->Eta());
+          fKaonsPhi->Fill(track->Phi());
+          fKaonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kKaon) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kKaon) );
+          fKaonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+          
+          track->GetIntegratedTimes(dTOF);
+          dBetaTOF = dTOF[0] / track->GetTOFsignal();
+          fKaonsTOFbeta->Fill(track->P(), dBetaTOF);
+
         }
         
         if(IsTrackProton(track))
         {
+          bIsEither = kTRUE;
           new(fArrProtonFiltered[iNumProtons]) AliAODTrack(*track);
           iNumProtons++;
+
+          fProtonsPt->Fill(track->Pt());
+          fProtonsEta->Fill(track->Eta());
+          fProtonsPhi->Fill(track->Phi());
+          fProtonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kProton) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kProton) );
+          fProtonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+          
+          track->GetIntegratedTimes(dTOF);
+          dBetaTOF = dTOF[0] / track->GetTOFsignal();
+          fProtonsTOFbeta->Fill(track->P(), dBetaTOF);
+        }
+
+        if(bIsEither) // either PID as pi,K or p
+        {
+          fAllsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+          fAllsTOFbeta->Fill(track->P(), dBetaTOF);
+          fAllsNsigmasTPCasPion->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion));
+          fAllsNsigmasTOFasPion->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion));
+          fAllsNsigmasTPCasKaon->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kKaon));
+          fAllsNsigmasTOFasKaon->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kKaon));
+          fAllsNsigmasTPCasProton->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kProton));
+          fAllsNsigmasTOFasProton->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kProton));
         }
       }
     }
@@ -1537,6 +1732,13 @@ void AliAnalysisTaskFlowPID::FilterTracks()
 
   fQATracksMult[0]->Fill(iNumTracks);
   fQATracksMult[1]->Fill(iNumSelected);
+
+  if(fPID)
+  {
+    fPionsMult->Fill(iNumPions);
+    fKaonsMult->Fill(iNumKaons);
+    fProtonsMult->Fill(iNumProtons);
+  }
   
   return;
 }
@@ -2122,11 +2324,6 @@ void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAinde
 	Double_t dDecayRadius = 0;
 	Double_t dDecayCoor[3] = {0};
 	Double_t dPropLife = 0;
-
-  if(fPIDResponse)
-  {
-   //AliTPCPIDResponse responseTPC = (AliTPCPIDResponse) fPIDResponse->GetTPCResponse();
-  }
 
 	// universal cuts
 	
