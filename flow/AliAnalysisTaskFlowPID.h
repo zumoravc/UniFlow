@@ -82,8 +82,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		void                    IsV0aLambda(const AliAODv0* v0);
 		Bool_t                  IsV0Selected(const AliAODv0* v0);
         
-        void                    FilterTracks(); // filter all input tracks (including PID tracks for pi,K,p)
-        void                    FilterPIDTracks(); // obsolete / not used
+        void                    FilterTracks(); // filter all input tracks 
+        void                    FilterPIDTracks(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
         void                    FilterV0s();
 
         Bool_t                  AreRefFlowVectorsFilled(const Float_t dEtaGap = -1, const Short_t iHarm = -1);
@@ -94,6 +94,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
                 
 		void                    FillEventQA(const AliAODEvent* event, const Short_t iQAindex);
         void                    FillTrackQA(const AliAODTrack* track, const Short_t iQAindex);
+        void                    FillPIDQA(const AliAODTrack* track, const Short_t iQAindex);
         void                    FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
     
@@ -201,14 +202,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
         // PID histos
         TH1D*                   fPionsCounter; //! 
-        TH2D*                   fAllsTPCdEdx; //! dEdx TPC of all selected particles (pi,K,p)
-        TH2D*                   fAllsTOFbeta; //! beta TOF of all selected particles (pi,K,p)
-        TH2D*                   fAllsNsigmasTPCasPion; //! TPC number of sigmas of selected particles (pi hypothesis)
-        TH2D*                   fAllsNsigmasTOFasPion; //! TOF number of sigmas dist of selected particles (pi hypothesis)
-        TH2D*                   fAllsNsigmasTPCasKaon; //! TPC number of sigmas of selected particles (K hypothesis)
-        TH2D*                   fAllsNsigmasTOFasKaon; //! TOF number of sigmas dist of selected particles (K hypothesis)
-        TH2D*                   fAllsNsigmasTPCasProton; //! TPC number of sigmas of selected particles (p hypothesis)
-        TH2D*                   fAllsNsigmasTOFasProton; //! TOF number of sigmas dist of selected particles (p hypothesis)
         TH1D*                   fPionsMult; //! event multiplicity of selected pions
         TH1D*                   fPionsPt; //! pT dist of selected pions
         TH1D*                   fPionsEta; //! eta dist of selected pions
@@ -277,6 +270,15 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fQATracksTOF[fQANumSteps]; //! TOF PID information
         TH2D*                   fQATracksTOFbeta[fQANumSteps]; //! TOF PID information
         // QA PID tracks
+        TH2D*                   fQAPIDTPCdEdx[fQANumSteps]; //! dEdx TPC of all selected particles (pi,K,p)
+        TH2D*                   fQAPIDTOFbeta[fQANumSteps]; //! beta TOF of all selected particles (pi,K,p) 
+        TH2D*                   fQAPIDNsigmasTPCasPion[fQANumSteps]; //! TPC number of sigmas of selected particles (pi hypothesis)
+        TH2D*                   fQAPIDNsigmasTOFasPion[fQANumSteps]; //! TOF number of sigmas dist of selected particles (pi hypothesis)
+        TH2D*                   fQAPIDNsigmasTPCasKaon[fQANumSteps]; //! TPC number of sigmas of selected particles (K hypothesis)
+        TH2D*                   fQAPIDNsigmasTOFasKaon[fQANumSteps]; //! TOF number of sigmas dist of selected particles (K hypothesis)
+        TH2D*                   fQAPIDNsigmasTPCasProton[fQANumSteps]; //! TPC number of sigmas of selected particles (p hypothesis)
+        TH2D*                   fQAPIDNsigmasTOFasProton[fQANumSteps]; //! TOF number of sigmas dist of selected particles (p hypothesis)
+
         // QA V0s
         TH1D*					fQAV0sCounter;		//! V0s counter
         TH1D*					fQAV0sCounterK0s;		//! K0s counter
