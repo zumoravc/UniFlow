@@ -25,8 +25,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void					SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
         void                    SetSampling(Bool_t sample) { fSampling = sample; }
         void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; } 
-        void					SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
-        void					SetPID(Bool_t pid) { fPID = pid; }
+        void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
+        void                    SetPID(Bool_t pid) { fPID = pid; }
+        void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
         // track setters
         void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
@@ -60,7 +61,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void					SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
 
-        const static Int_t 		fNumPtBins = 22;			// number of pT bins used for pT-differential flow
+        const static Int_t 		fNumPtBins = 24;			// number of pT bins used for pT-differential flow
         static Double_t			fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumMinvFlowBinsK0s = 12;  // number of inv. mass bin for differential flow plots (K0s)
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
@@ -70,7 +71,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t			fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumHarmonics = 1; // number of harmonics
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-        const static Int_t      fNumEtaGap = 8; // number of harmonics
+        const static Int_t      fNumEtaGap = 5; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
@@ -112,8 +113,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Short_t                 fCentFlag;          // centrality flag
         Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
         Bool_t                  fDoFlow;        // Do flow analysis (if kFALSE: only selection, filtering and QA)
+        Bool_t                  fDoV0s;                       // Do V0s analysis?
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
-        Bool_t                  fPID;                       // Do PID (so far V0s) ? 
+        Bool_t                  fPID;                       // Do PID ?
         //cuts & selection: events & tracks
         Double_t                fPVtxCutZ;          // (cm) PV z cut
         UInt_t                  fTrackFilterBit; // tracks filter bit 

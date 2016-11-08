@@ -50,13 +50,13 @@ class AliAnalysisTaskFlowPID;
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
 //Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0}; // You, Katarina binning
-Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8}; // PID flow v2 JHEP paper
+Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8}; // PID flow v2 JHEP paper
 Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 //Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.425,0.45,0.47,0.49,0.495,0.5,0.505,0.51,0.53,0.55,0.575,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.125,1.13,1.14,1.15,1.16};
 Int_t AliAnalysisTaskFlowPID::fHarmonics[AliAnalysisTaskFlowPID::fNumHarmonics] = {2};
-Double_t AliAnalysisTaskFlowPID::fEtaGap[AliAnalysisTaskFlowPID::fNumEtaGap] = {-1.,0.,0.2,0.4,0.6,0.8,0.9,1.};
+Double_t AliAnalysisTaskFlowPID::fEtaGap[AliAnalysisTaskFlowPID::fNumEtaGap] = {-1.,0.,0.4,0.8,0.9};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
@@ -101,7 +101,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fSampling(0),
   fDoFlow(0),
   fDiffFlow(0),
-  fPID(0),  
+  fPID(0),
+  fDoV0s(0),  
 
   fPVtxCutZ(0.),
   fTrackEtaMax(0),
@@ -226,6 +227,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fSampling(0),
   fDiffFlow(0),
   fPID(0),  
+  fDoV0s(0), 
 
   fPVtxCutZ(0.),
   fTrackEtaMax(0),
@@ -919,9 +921,12 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fArrPionFiltered.Clear("C");
   fArrKaonFiltered.Clear("C");
   fArrProtonFiltered.Clear("C");
-  fArrV0sK0sFiltered.Clear("C");
-  fArrV0sLambdaFiltered.Clear("C");
-  fArrV0sALambdaFiltered.Clear("C");
+  if(fDoV0s)
+  {
+    fArrV0sK0sFiltered.Clear("C");
+    fArrV0sLambdaFiltered.Clear("C");
+    fArrV0sALambdaFiltered.Clear("C"); 
+  }
 
   // filtering objects and filling relevant containers
   FilterTracks(); // filter reference tracks
@@ -929,7 +934,9 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   if(fPID)
   {
     FilterPIDTracks(); // filter PID tracks (pi,K,p)
-    FilterV0s(); // filter V0s
+    
+    if(fDoV0s)
+      FilterV0s(); // filter V0s
   }
 
   // all the possible tracks & candidates (passing selection criteria) are filtered and filled and relevant TClonesArray
@@ -960,7 +967,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
         
         if(fPID)
         {
-          EstimateV0Cumulant(indexEtaGap,indexHarm,fSampleBinIndex);
+          if(fDoV0s)
+            EstimateV0Cumulant(indexEtaGap,indexHarm,fSampleBinIndex);
         }
     
       } // end of loop over eta gap
