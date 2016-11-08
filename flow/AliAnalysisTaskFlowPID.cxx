@@ -321,6 +321,13 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
 
           fTracksDiffTwoPos[i][j][k][m] = 0x0;
           fTracksDiffTwoNeg[i][j][k][m] = 0x0;
+
+          fPionsDiffTwoPos[i][j][k][m] = 0x0;
+          fPionsDiffTwoNeg[i][j][k][m] = 0x0;
+          fKaonsDiffTwoPos[i][j][k][m] = 0x0;
+          fKaonsDiffTwoNeg[i][j][k][m] = 0x0;
+          fProtonsDiffTwoPos[i][j][k][m] = 0x0;
+          fProtonsDiffTwoNeg[i][j][k][m] = 0x0;
         }
       }
     }
@@ -516,11 +523,42 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
             fTracksDiffTwoPos[i][j][k][m]->Sumw2();
             fOutListTracks->Add(fTracksDiffTwoPos[i][j][k][m]);
 
+            if(fPID)
+            {
+              fPionsDiffTwoPos[i][j][k][m] = new TProfile(Form("fPionsDiffTwoPos_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#pi: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
+              fPionsDiffTwoPos[i][j][k][m]->Sumw2();
+              fOutListPID->Add(fPionsDiffTwoPos[i][j][k][m]);
+ 
+              fKaonsDiffTwoPos[i][j][k][m] = new TProfile(Form("fKaonsDiffTwoPos_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("K: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
+              fKaonsDiffTwoPos[i][j][k][m]->Sumw2();
+              fOutListPID->Add(fKaonsDiffTwoPos[i][j][k][m]);
+ 
+              fProtonsDiffTwoPos[i][j][k][m] = new TProfile(Form("fProtonsDiffTwoPos_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("p: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
+              fProtonsDiffTwoPos[i][j][k][m]->Sumw2();
+              fOutListPID->Add(fProtonsDiffTwoPos[i][j][k][m]); 
+            }
+
             if(!(fEtaGap[k] < 0.)) // make only with eta gap 
             {
               fTracksDiffTwoNeg[i][j][k][m] = new TProfile(Form("fTracksDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
               fTracksDiffTwoNeg[i][j][k][m]->Sumw2();
               fOutListTracks->Add(fTracksDiffTwoNeg[i][j][k][m]);
+              
+              if(fPID)
+              {
+                fPionsDiffTwoNeg[i][j][k][m] = new TProfile(Form("fPionsDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#pi: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
+                fPionsDiffTwoNeg[i][j][k][m]->Sumw2();
+                fOutListPID->Add(fPionsDiffTwoNeg[i][j][k][m]);
+   
+                fKaonsDiffTwoNeg[i][j][k][m] = new TProfile(Form("fKaonsDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("K: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
+                fKaonsDiffTwoNeg[i][j][k][m]->Sumw2();
+                fOutListPID->Add(fKaonsDiffTwoNeg[i][j][k][m]);
+   
+                fProtonsDiffTwoNeg[i][j][k][m] = new TProfile(Form("fProtonsDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("p: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
+                fProtonsDiffTwoNeg[i][j][k][m]->Sumw2();
+                fOutListPID->Add(fProtonsDiffTwoNeg[i][j][k][m]); 
+              }
+
             }
             
           }
@@ -962,7 +1000,12 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
         if(fDiffFlow)
         {
-          EstimateRefPtDiffCumulant(dEtaGap,iHarm,fTracksDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fTracksDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
+          // tracks
+          EstimatePtDiffCumulant(fArrTracksFiltered,dEtaGap,iHarm,fTracksDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fTracksDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
+          // PID tracks
+          EstimatePtDiffCumulant(fArrPionFiltered,dEtaGap,iHarm,fPionsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fPionsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
+          EstimatePtDiffCumulant(fArrKaonFiltered,dEtaGap,iHarm,fKaonsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fKaonsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
+          EstimatePtDiffCumulant(fArrProtonFiltered,dEtaGap,iHarm,fProtonsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fProtonsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
         }
         
         if(fPID)
@@ -988,7 +1031,7 @@ void AliAnalysisTaskFlowPID::Terminate(Option_t *)
   // called at the END of the analysis (when all events are processed)
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskFlowPID::EstimateRefPtDiffCumulant(const Float_t dEtaGap, const Short_t iHarm, TProfile* profilePos, TProfile* profileNeg)
+void AliAnalysisTaskFlowPID::EstimatePtDiffCumulant(TClonesArray &array, const Float_t dEtaGap, const Short_t iHarm,TProfile* profilePos, TProfile* profileNeg)
 {
   // checking if pointers are valid
   if(!profilePos)
@@ -1003,7 +1046,7 @@ void AliAnalysisTaskFlowPID::EstimateRefPtDiffCumulant(const Float_t dEtaGap, co
 
   // POIs
   const Double_t dEtaGapCut = dEtaGap / 2; // eta cut limit for POI
-  const Int_t iNumPOIs = fArrTracksFiltered.GetEntries();
+  const Int_t iNumPOIs = array.GetEntries();
   
   TComplex vecPpos[fNumPtBins]; // flow vector for POIs in positive eta (including eta gap cut) [or all POIs with no eta gap]
   TComplex vecPneg[fNumPtBins]; // flow vector for POIs in negative eta (including eta gap cut)
@@ -1025,7 +1068,7 @@ void AliAnalysisTaskFlowPID::EstimateRefPtDiffCumulant(const Float_t dEtaGap, co
 
   for(Int_t i(0); i < iNumPOIs; i++) // loop over POIs
   {
-    track = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
+    track = static_cast<AliAODTrack*>(array.At(i));
 
     if(!track)
       continue;
