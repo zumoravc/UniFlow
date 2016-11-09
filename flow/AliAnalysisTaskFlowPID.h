@@ -28,6 +28,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void                    SetPID(Bool_t pid) { fPID = pid; }
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
+        void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
         // track setters
         void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
@@ -92,6 +93,28 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
         void                    EstimatePtDiffCumulant(TClonesArray &array, const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
         void                    EstimateV0Cumulant(const Short_t iEtaGapIndex = 0, const Short_t iHarmonicsIndex = 0, const Short_t iSampleIndex = 0);
+
+        // Katarina's implementation of GF
+        void GFKFillVectors(TClonesArray &array,const Int_t ptBin);
+        TComplex Q(int n, int p);
+        TComplex p(int n, int p);
+        TComplex q(int n, int p);
+        TComplex* TwoDiff(int n1, int n2);
+        TComplex* FourDiff(int n1, int n2, int n3, int n4);
+        void GFKDoFlow(const Int_t ptBin, TProfile* prof2, TProfile* prof4);
+        void DoGenFramKatarina();
+        TComplex Qvector[5][5]; //
+        TComplex pvector[5][5]; //
+        TComplex qvector[5][5]; //
+        TProfile*           fdn2RePion[fNumCentBins][5]; //!
+        TProfile*           fdn4RePion[fNumCentBins][5]; //!
+        TProfile*           fdn2ReKaon[fNumCentBins][5]; //!
+        TProfile*           fdn4ReKaon[fNumCentBins][5];  //!
+        TProfile*           fdn2ReProton[fNumCentBins][5]; //!
+        TProfile*           fdn4ReProton[fNumCentBins][5]; //!
+
+
+        // end of Katarina's implementation
                 
 		void                    FillEventQA(const AliAODEvent* event, const Short_t iQAindex);
         void                    FillTrackQA(const AliAODTrack* track, const Short_t iQAindex);
@@ -116,6 +139,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fDoV0s;                       // Do V0s analysis?
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
         Bool_t                  fPID;                       // Do PID ?
+        Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
         //cuts & selection: events & tracks
         Double_t                fPVtxCutZ;          // (cm) PV z cut
         UInt_t                  fTrackFilterBit; // tracks filter bit 
