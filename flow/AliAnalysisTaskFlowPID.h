@@ -95,17 +95,23 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    EstimateV0Cumulant(const Short_t iEtaGapIndex = 0, const Short_t iHarmonicsIndex = 0, const Short_t iSampleIndex = 0);
 
         // Katarina's implementation of GF
+        void GFKFillRefVectors(TClonesArray &array);
         void GFKFillVectors(TClonesArray &array,const Int_t ptBin);
         TComplex Q(int n, int p);
         TComplex p(int n, int p);
         TComplex q(int n, int p);
+        TComplex* Two(int n1, int n2);
         TComplex* TwoDiff(int n1, int n2);
+        TComplex* Four(int n1, int n2, int n3, int n4);
         TComplex* FourDiff(int n1, int n2, int n3, int n4);
-        void GFKDoFlow(const Int_t ptBin, TProfile* prof2, TProfile* prof4);
+        void GFKDoRefFlow(TProfile* prof2,TProfile* prof4);
+        void GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TProfile* prof4);
         void DoGenFramKatarina();
         TComplex Qvector[5][5]; //
         TComplex pvector[5][5]; //
         TComplex qvector[5][5]; //
+        TProfile*           fcn2ReTracks[5];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*           fcn4ReTracks[5];                //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*           fdn2RePion[fNumCentBins][5]; //!
         TProfile*           fdn4RePion[fNumCentBins][5]; //!
         TProfile*           fdn2ReKaon[fNumCentBins][5]; //!

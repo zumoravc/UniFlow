@@ -317,6 +317,12 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     }
   }
 
+  for(Int_t j(0); j < fNumSampleBins; j++)
+  {
+    fcn2ReTracks[j] = 0x0;
+    fcn4ReTracks[j] = 0x0;
+  }
+
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     for(Int_t j(0); j < fNumSampleBins; j++)
@@ -327,7 +333,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
       fdn4ReKaon[i][j] = 0x0;
       fdn2ReProton[i][j] = 0x0;
       fdn4ReProton[i][j] = 0x0;
-
     }
   }
 
@@ -506,31 +511,42 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   // Katarina GF
 
+  for(Int_t j(0); j < fNumSampleBins; j++)
+  {
+    fcn2ReTracks[j] = new TProfile(Form("fc22ReTracks_number%d", j), Form("Tracks: <<2>> ref Re noGap sample %d; cent",j), fNumCentBins,fCentBinEdges);
+    fcn2ReTracks[j]->Sumw2();
+    fOutListPID->Add(fcn2ReTracks[j]);
+
+    fcn4ReTracks[j] = new TProfile(Form("fc42ReTracks_number%d", j), Form("Tracks: <<4>> ref Re noGap sample %d; cent",j), fNumCentBins,fCentBinEdges);
+    fcn4ReTracks[j]->Sumw2();
+    fOutListPID->Add(fcn4ReTracks[j]);
+  }
+
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     for(Int_t j(0); j < fNumSampleBins; j++)
     {
-      fdn2RePion[i][j] = new TProfile(Form("fd22RePion_cent%d_number%d", i, j), Form("#pi: <<2>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
+      fdn2RePion[i][j] = new TProfile(Form("fd22RePion_cent%d_number%d", i, j), Form("#pi: <<2'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
       fdn2RePion[i][j]->Sumw2();
       fOutListPID->Add(fdn2RePion[i][j]);
 
-      fdn4RePion[i][j] = new TProfile(Form("fd42RePion_cent%d_number%d", i, j), Form("#pi: <<2>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
+      fdn4RePion[i][j] = new TProfile(Form("fd42RePion_cent%d_number%d", i, j), Form("#pi: <<4'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
       fdn4RePion[i][j]->Sumw2();
       fOutListPID->Add(fdn4RePion[i][j]);
 
-      fdn2ReKaon[i][j] = new TProfile(Form("fd22ReKaon_cent%d_number%d", i, j), Form("K: <<2>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
+      fdn2ReKaon[i][j] = new TProfile(Form("fd22ReKaon_cent%d_number%d", i, j), Form("K: <<2'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
       fdn2ReKaon[i][j]->Sumw2();
       fOutListPID->Add(fdn2ReKaon[i][j]);
 
-      fdn4ReKaon[i][j] = new TProfile(Form("fd42ReKaon_cent%d_number%d", i, j), Form("K: <<2>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
+      fdn4ReKaon[i][j] = new TProfile(Form("fd42ReKaon_cent%d_number%d", i, j), Form("K: <<4'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
       fdn4ReKaon[i][j]->Sumw2();
       fOutListPID->Add(fdn4ReKaon[i][j]);
 
-      fdn2ReProton[i][j] = new TProfile(Form("fd22ReProton_cent%d_number%d", i, j), Form("p: <<2>> diff Re noGap cent %d sample %d ; pT",i,j), fNumPtBins,fPtBinEdges);
+      fdn2ReProton[i][j] = new TProfile(Form("fd22ReProton_cent%d_number%d", i, j), Form("p: <<2'>> diff Re noGap cent %d sample %d ; pT",i,j), fNumPtBins,fPtBinEdges);
       fdn2ReProton[i][j]->Sumw2();
       fOutListPID->Add(fdn2ReProton[i][j]);
 
-      fdn4ReProton[i][j] = new TProfile(Form("fd42ReProton_cent%d_number%d", i, j), Form("p: <<2>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
+      fdn4ReProton[i][j] = new TProfile(Form("fd42ReProton_cent%d_number%d", i, j), Form("p: <<4'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
       fdn4ReProton[i][j]->Sumw2();
       fOutListPID->Add(fdn4ReProton[i][j]);
     }
@@ -2716,44 +2732,39 @@ Short_t AliAnalysisTaskFlowPID::GetMinvFlowBinIndexLambda(const Double_t dMass)
 //_____________________________________________________________________
 void AliAnalysisTaskFlowPID::DoGenFramKatarina()
 {
+  // ref flow
+  GFKFillRefVectors(fArrTracksFiltered);
+  GFKDoRefFlow(fcn2ReTracks[fSampleBinIndex],fcn4ReTracks[fSampleBinIndex]);
 
   for(Int_t i(0); i < fNumPtBins; i++)
   {
-    // Fill Q,p,q vectors
+    // Diff flow 
+    // fill p,q vectors
     GFKFillVectors(fArrPionFiltered,i);
-    GFKDoFlow(i,fdn2RePion[fCentBinIndex][fSampleBinIndex],fdn4RePion[fCentBinIndex][fSampleBinIndex]);
+    GFKDoDiffFlow(i,fdn2RePion[fCentBinIndex][fSampleBinIndex],fdn4RePion[fCentBinIndex][fSampleBinIndex]);
 
     GFKFillVectors(fArrKaonFiltered,i);
-    GFKDoFlow(i,fdn2ReKaon[fCentBinIndex][fSampleBinIndex],fdn4ReKaon[fCentBinIndex][fSampleBinIndex]);
+    GFKDoDiffFlow(i,fdn2ReKaon[fCentBinIndex][fSampleBinIndex],fdn4ReKaon[fCentBinIndex][fSampleBinIndex]);
 
     GFKFillVectors(fArrProtonFiltered,i);
-    GFKDoFlow(i,fdn2ReProton[fCentBinIndex][fSampleBinIndex],fdn4ReProton[fCentBinIndex][fSampleBinIndex]);
+    GFKDoDiffFlow(i,fdn2ReProton[fCentBinIndex][fSampleBinIndex],fdn4ReProton[fCentBinIndex][fSampleBinIndex]);
   }
 
   return;
 }
 //_____________________________________________________________________
-void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptBin)
+void AliAnalysisTaskFlowPID::GFKFillRefVectors(TClonesArray &array)
 {
-
-  Double_t weightPt = 1.;
-  Double_t weight = 1.;
-
-  const Int_t iNumTracks = array.GetEntriesFast();
-  
+  double weight = 1.;
   Double_t Qcos[5][5] = {0};
   Double_t Qsin[5][5] = {0};
-  Double_t pcosPt[5][5] = {0};
-  Double_t psinPt[5][5] = {0};
-  Double_t qcosPt[5][5] = {0};
-  Double_t qsinPt[5][5] = {0};
-
+  
   AliAODTrack* aodTrk = 0x0;
 
   //Refs
-  for(Int_t i(0); i < fArrTracksFiltered.GetEntriesFast(); i++)
+  for(Int_t i(0); i < array.GetEntriesFast(); i++)
   {
-    aodTrk = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
+    aodTrk = static_cast<AliAODTrack*>(array.At(i));
     for(int iharm=0; iharm<5; iharm++)
     {
       for(int ipow=0; ipow<5; ipow++)
@@ -2763,6 +2774,31 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
       }
     }
   }
+  
+  for(int iharm=0; iharm<5; iharm++)
+  {
+    for(int ipow=0; ipow<5; ipow++)
+    {
+      Qvector[iharm][ipow] = TComplex(Qcos[iharm][ipow], Qsin[iharm][ipow]);
+    }
+  }
+
+  return;
+}
+//_____________________________________________________________________
+void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptBin)
+{
+
+  Double_t weightPt = 1.;
+
+  const Int_t iNumTracks = array.GetEntriesFast();
+  
+  Double_t pcosPt[5][5] = {0};
+  Double_t psinPt[5][5] = {0};
+  Double_t qcosPt[5][5] = {0};
+  Double_t qsinPt[5][5] = {0};
+
+  AliAODTrack* aodTrk = 0x0;
 
   //POIs
   for(Int_t i(0); i < iNumTracks; i++)
@@ -2776,8 +2812,6 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
     {
       for(int ipow=0; ipow<5; ipow++)
       {
-        //Qcos[iharm][ipow] += TMath::Power(weight, ipow)*TMath::Cos(iharm*aodTrk->Phi());
-        //Qsin[iharm][ipow] += TMath::Power(weight, ipow)*TMath::Sin(iharm*aodTrk->Phi());
         pcosPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
         psinPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
         qcosPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
@@ -2790,7 +2824,6 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
   {
     for(int ipow=0; ipow<5; ipow++)
     {
-      Qvector[iharm][ipow] = TComplex(Qcos[iharm][ipow], Qsin[iharm][ipow]);
       pvector[iharm][ipow] = TComplex(pcosPt[iharm][ipow], psinPt[iharm][ipow]);
       qvector[iharm][ipow] = TComplex(qcosPt[iharm][ipow], qsinPt[iharm][ipow]);
     }
@@ -2799,7 +2832,32 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
   return;
 }
 //_____________________________________________________________________
-void AliAnalysisTaskFlowPID::GFKDoFlow(const Int_t ptBin,TProfile* prof2,TProfile* prof4)
+void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4)
+{
+  double Dn2 = Two(0, 0)->Re();
+  double Dn4 = Four(0,0,0,0)->Re();  
+  
+  //printf("DDn2: %g / DDn4: %g\n",DDn2, DDn4);
+
+  if(Dn2 != 0)
+  { 
+    //..v2{2} = <cos2(phi1 - phi2)>
+    TComplex *v22 = Two(2, -2);
+    double v22Re = v22->Re()/Dn2;
+    prof2->Fill(fCentPercentile, v22Re, Dn2);
+  } 
+
+  if(Dn4 != 0)
+  {
+    //..v2{4} = <cos2(phi1 + phi2 - phi3 - phi4)> 
+    TComplex *v24 = Four(2, 2, -2, -2);
+    double v24Re = v24->Re()/Dn4;
+    prof4->Fill(fCentPercentile, v24Re, Dn4);
+  }
+  return;  
+}
+//_____________________________________________________________________
+void AliAnalysisTaskFlowPID::GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TProfile* prof4)
 {
   double DDn2 = TwoDiff(0, 0)->Re();
   double DDn4 = FourDiff(0,0,0,0)->Re();
@@ -2850,6 +2908,13 @@ TComplex AliAnalysisTaskFlowPID::q(int n, int p)
 
 }
 //____________________________________________________________________
+TComplex* AliAnalysisTaskFlowPID::Two(int n1, int n2)
+{
+  TComplex formula = Q(n1,1)*Q(n2,1) - Q(n1+n2,2);
+  TComplex *out = (TComplex*) &formula;
+  return out;
+}
+//____________________________________________________________________
 
 TComplex* AliAnalysisTaskFlowPID::TwoDiff(int n1, int n2)
 {
@@ -2858,7 +2923,20 @@ TComplex* AliAnalysisTaskFlowPID::TwoDiff(int n1, int n2)
   TComplex *out = (TComplex*) &formula;
   return out;
 }
-//_____________________________________________________________________________
+//____________________________________________________________________
+TComplex* AliAnalysisTaskFlowPID::Four(int n1, int n2, int n3, int n4)
+{
+
+  TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-Q(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*Q(n1+n3,2)*Q(n4,1)
+                    - Q(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.*Q(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*Q(n1+n4,2)
+                    + Q(n2+n3,2)*Q(n1+n4,2)-Q(n1,1)*Q(n3,1)*Q(n2+n4,2)+Q(n1+n3,2)*Q(n2+n4,2)
+                    + 2.*Q(n3,1)*Q(n1+n2+n4,3)-Q(n1,1)*Q(n2,1)*Q(n3+n4,2)+Q(n1+n2,2)*Q(n3+n4,2)
+                    + 2.*Q(n2,1)*Q(n1+n3+n4,3)+2.*Q(n1,1)*Q(n2+n3+n4,3)-6.*Q(n1+n2+n3+n4,4);
+  TComplex *out = (TComplex*) &formula;
+  return out;
+
+}
+//____________________________________________________________________
 TComplex* AliAnalysisTaskFlowPID::FourDiff(int n1, int n2, int n3, int n4)
 {
 
