@@ -14,9 +14,14 @@ void RunProcessFlow()
 	//gROOT->LoadMacro("FitPID.C+g"); // 
 
 	ProcessFlow* process = new ProcessFlow();
-	process->SetInputFilePath("~/NBI/Flow/results/test-PID-GFK-2/merge");
+	process->SetInputFilePath("~/NBI/Flow/results/V0s/PID-GFK-3/merge");
+	process->SetOutputFilePath("~/NBI/Flow/classProcess");
 	process->SetTag("FB768");
+	process->SetNumBinsCentrality(9);
+	process->SetNumSamples(5);
 	process->Run();
+
+	delete process;
 
 	return;
 }
