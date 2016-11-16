@@ -307,9 +307,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   // constructor
 
   // KAtarina gen fram
-  for(int iharm=0; iharm<5; iharm++)
+  for(Int_t iharm = 0; iharm < fMaxNumHarmonics; iharm++)
   {
-    for(int ipow=0; ipow<5; ipow++)
+    for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
     {
       Qvector[iharm][ipow] = TComplex(0,0,kFALSE);
       pvector[iharm][ipow] = TComplex(0,0,kFALSE);
@@ -317,22 +317,29 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     }
   }
 
-  for(Int_t j(0); j < fNumSampleBins; j++)
+  for(Int_t i(0); i < fNumHarmonics; i++)
   {
-    fcn2ReTracks[j] = 0x0;
-    fcn4ReTracks[j] = 0x0;
+    for(Int_t j(0); j < fNumSampleBins; j++)
+    {
+      fcn2Tracks[i][j] = 0x0;
+      fcn4Tracks[i][j] = 0x0;
+    }
+    
   }
 
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    for(Int_t j(0); j < fNumSampleBins; j++)
+    for(Int_t k(0); k < fNumHarmonics; k++)
     {
-      fdn2RePion[i][j] = 0x0;
-      fdn4RePion[i][j] = 0x0;
-      fdn2ReKaon[i][j] = 0x0;
-      fdn4ReKaon[i][j] = 0x0;
-      fdn2ReProton[i][j] = 0x0;
-      fdn4ReProton[i][j] = 0x0;
+      for(Int_t j(0); j < fNumSampleBins; j++)
+      {
+        fdn2Pion[i][k][j] = 0x0;
+        fdn4Pion[i][k][j] = 0x0;
+        fdn2Kaon[i][k][j] = 0x0;
+        fdn4Kaon[i][k][j] = 0x0;
+        fdn2Proton[i][k][j] = 0x0;
+        fdn4Proton[i][k][j] = 0x0;
+      }
     }
   }
 
@@ -511,44 +518,50 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   // Katarina GF
 
-  for(Int_t j(0); j < fNumSampleBins; j++)
+  for(Int_t i(0); i < fNumHarmonics; i++)
   {
-    fcn2ReTracks[j] = new TProfile(Form("fc22ReTracks_number%d", j), Form("Tracks: <<2>> ref Re noGap sample %d; cent",j), fNumCentBins,fCentBinEdges);
-    fcn2ReTracks[j]->Sumw2();
-    fOutListPID->Add(fcn2ReTracks[j]);
+    for(Int_t j(0); j < fNumSampleBins; j++)
+    {
+      fcn2Tracks[i][j] = new TProfile(Form("fc%d2Tracks_number%d",fHarmonics[i], j), Form("Tracks: <<2>> harmonics %d ref noGap sample %d; cent",fHarmonics[i],j), fNumCentBins,fCentBinEdges);
+      fcn2Tracks[i][j]->Sumw2();
+      fOutListPID->Add(fcn2Tracks[i][j]);
 
-    fcn4ReTracks[j] = new TProfile(Form("fc42ReTracks_number%d", j), Form("Tracks: <<4>> ref Re noGap sample %d; cent",j), fNumCentBins,fCentBinEdges);
-    fcn4ReTracks[j]->Sumw2();
-    fOutListPID->Add(fcn4ReTracks[j]);
+      fcn4Tracks[i][j] = new TProfile(Form("fc%d4Tracks_number%d",fHarmonics[i], j), Form("Tracks: <<4>> harmonics %d ref noGap sample %d; cent",fHarmonics[i],j), fNumCentBins,fCentBinEdges);
+      fcn4Tracks[i][j]->Sumw2();
+      fOutListPID->Add(fcn4Tracks[i][j]);
+    }
   }
 
   for(Int_t i(0); i < fNumCentBins; i++)
   {
-    for(Int_t j(0); j < fNumSampleBins; j++)
+    for(Int_t k(0); k < fNumHarmonics; k++)
     {
-      fdn2RePion[i][j] = new TProfile(Form("fd22RePion_cent%d_number%d", i, j), Form("#pi: <<2'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
-      fdn2RePion[i][j]->Sumw2();
-      fOutListPID->Add(fdn2RePion[i][j]);
+      for(Int_t j(0); j < fNumSampleBins; j++)
+      {
+        fdn2Pion[i][k][j] = new TProfile(Form("fd%d2Pion_cent%d_number%d", fHarmonics[k], i, j), Form("#pi: <<2'>> harmonics %d diff noGap cent %d sample %d; pT",fHarmonics[k],i,j), fNumPtBins,fPtBinEdges);
+        fdn2Pion[i][k][j]->Sumw2();
+        fOutListPID->Add(fdn2Pion[i][k][j]);
 
-      fdn4RePion[i][j] = new TProfile(Form("fd42RePion_cent%d_number%d", i, j), Form("#pi: <<4'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
-      fdn4RePion[i][j]->Sumw2();
-      fOutListPID->Add(fdn4RePion[i][j]);
+        fdn4Pion[i][k][j] = new TProfile(Form("fd%d4Pion_cent%d_number%d", fHarmonics[k],i, j), Form("#pi: <<4'>> harmonics %d noGap cent %d sample %d; pT",fHarmonics[k],i,j), fNumPtBins,fPtBinEdges);
+        fdn4Pion[i][k][j]->Sumw2();
+        fOutListPID->Add(fdn4Pion[i][k][j]);
 
-      fdn2ReKaon[i][j] = new TProfile(Form("fd22ReKaon_cent%d_number%d", i, j), Form("K: <<2'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
-      fdn2ReKaon[i][j]->Sumw2();
-      fOutListPID->Add(fdn2ReKaon[i][j]);
+        fdn2Kaon[i][k][j] = new TProfile(Form("fd%d2Kaon_cent%d_number%d", fHarmonics[k],i, j), Form("K: <<2'>> harmonics %d diff noGap cent %d sample %d; pT",fHarmonics[k],i,j), fNumPtBins,fPtBinEdges);
+        fdn2Kaon[i][k][j]->Sumw2();
+        fOutListPID->Add(fdn2Kaon[i][k][j]);
 
-      fdn4ReKaon[i][j] = new TProfile(Form("fd42ReKaon_cent%d_number%d", i, j), Form("K: <<4'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
-      fdn4ReKaon[i][j]->Sumw2();
-      fOutListPID->Add(fdn4ReKaon[i][j]);
+        fdn4Kaon[i][k][j] = new TProfile(Form("fd%d4Kaon_cent%d_number%d", fHarmonics[k],i, j), Form("K: <<4'>> harmonics %d diff noGap cent %d sample %d; pT",fHarmonics[k],i,j), fNumPtBins,fPtBinEdges);
+        fdn4Kaon[i][k][j]->Sumw2();
+        fOutListPID->Add(fdn4Kaon[i][k][j]);
 
-      fdn2ReProton[i][j] = new TProfile(Form("fd22ReProton_cent%d_number%d", i, j), Form("p: <<2'>> diff Re noGap cent %d sample %d ; pT",i,j), fNumPtBins,fPtBinEdges);
-      fdn2ReProton[i][j]->Sumw2();
-      fOutListPID->Add(fdn2ReProton[i][j]);
+        fdn2Proton[i][k][j] = new TProfile(Form("fd%d2Proton_cent%d_number%d", fHarmonics[k],i, j), Form("p: <<2'>> harmonics %d diff noGap cent %d sample %d ; pT",fHarmonics[k],i,j), fNumPtBins,fPtBinEdges);
+        fdn2Proton[i][k][j]->Sumw2();
+        fOutListPID->Add(fdn2Proton[i][k][j]);
 
-      fdn4ReProton[i][j] = new TProfile(Form("fd42ReProton_cent%d_number%d", i, j), Form("p: <<4'>> diff Re noGap cent %d sample %d; pT",i,j), fNumPtBins,fPtBinEdges);
-      fdn4ReProton[i][j]->Sumw2();
-      fOutListPID->Add(fdn4ReProton[i][j]);
+        fdn4Proton[i][k][j] = new TProfile(Form("fd%d4Proton_cent%d_number%d", fHarmonics[k],i, j), Form("p: <<4'>> harmonics %d diff noGap cent %d sample %d; pT",fHarmonics[k],i,j), fNumPtBins,fPtBinEdges);
+        fdn4Proton[i][k][j]->Sumw2();
+        fOutListPID->Add(fdn4Proton[i][k][j]);
+      }
     }
   }
 
@@ -1068,6 +1081,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     Double_t dEtaGap = 0;
     TProfile2D* profV0sPos = 0x0;
     TProfile2D* profV0sNeg = 0x0;
+    
     
     for(Int_t indexHarm(0); indexHarm < fNumHarmonics; indexHarm++)
     {
@@ -2734,20 +2748,32 @@ void AliAnalysisTaskFlowPID::DoGenFramKatarina()
 {
   // ref flow
   GFKFillRefVectors(fArrTracksFiltered);
-  GFKDoRefFlow(fcn2ReTracks[fSampleBinIndex],fcn4ReTracks[fSampleBinIndex]);
+
+  for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+  {
+    GFKDoRefFlow(fcn2Tracks[iHarm][fSampleBinIndex],fcn4Tracks[iHarm][fSampleBinIndex],fHarmonics[iHarm]);
+  }
 
   for(Int_t i(0); i < fNumPtBins; i++)
   {
     // Diff flow 
     // fill p,q vectors
     GFKFillVectors(fArrPionFiltered,i);
-    GFKDoDiffFlow(i,fdn2RePion[fCentBinIndex][fSampleBinIndex],fdn4RePion[fCentBinIndex][fSampleBinIndex]);
+    for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+    {
+      GFKDoDiffFlow(i,fdn2Pion[iHarm][fCentBinIndex][fSampleBinIndex],fdn4Pion[iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm]);
+    }
 
     GFKFillVectors(fArrKaonFiltered,i);
-    GFKDoDiffFlow(i,fdn2ReKaon[fCentBinIndex][fSampleBinIndex],fdn4ReKaon[fCentBinIndex][fSampleBinIndex]);
-
+     for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+    {
+      GFKDoDiffFlow(i,fdn2Kaon[iHarm][fCentBinIndex][fSampleBinIndex],fdn4Kaon[iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm]);
+    }
     GFKFillVectors(fArrProtonFiltered,i);
-    GFKDoDiffFlow(i,fdn2ReProton[fCentBinIndex][fSampleBinIndex],fdn4ReProton[fCentBinIndex][fSampleBinIndex]);
+    for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+    {
+      GFKDoDiffFlow(i,fdn2Proton[iHarm][fCentBinIndex][fSampleBinIndex],fdn4Proton[iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm]);
+    }
   }
 
   return;
@@ -2756,8 +2782,8 @@ void AliAnalysisTaskFlowPID::DoGenFramKatarina()
 void AliAnalysisTaskFlowPID::GFKFillRefVectors(TClonesArray &array)
 {
   double weight = 1.;
-  Double_t Qcos[5][5] = {0};
-  Double_t Qsin[5][5] = {0};
+  Double_t Qcos[fMaxNumHarmonics][fMaxNumWeights] = {0};
+  Double_t Qsin[fMaxNumHarmonics][fMaxNumWeights] = {0};
   
   AliAODTrack* aodTrk = 0x0;
 
@@ -2765,9 +2791,9 @@ void AliAnalysisTaskFlowPID::GFKFillRefVectors(TClonesArray &array)
   for(Int_t i(0); i < array.GetEntriesFast(); i++)
   {
     aodTrk = static_cast<AliAODTrack*>(array.At(i));
-    for(int iharm=0; iharm<5; iharm++)
+    for(Int_t iharm = 0; iharm < fMaxNumHarmonics; iharm++)
     {
-      for(int ipow=0; ipow<5; ipow++)
+      for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
       {
         Qcos[iharm][ipow] += TMath::Power(weight, ipow)*TMath::Cos(iharm*aodTrk->Phi());
         Qsin[iharm][ipow] += TMath::Power(weight, ipow)*TMath::Sin(iharm*aodTrk->Phi());
@@ -2775,9 +2801,9 @@ void AliAnalysisTaskFlowPID::GFKFillRefVectors(TClonesArray &array)
     }
   }
   
-  for(int iharm=0; iharm<5; iharm++)
+  for(Int_t iharm = 0; iharm < fMaxNumHarmonics; iharm++)
   {
-    for(int ipow=0; ipow<5; ipow++)
+    for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
     {
       Qvector[iharm][ipow] = TComplex(Qcos[iharm][ipow], Qsin[iharm][ipow]);
     }
@@ -2793,10 +2819,10 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
 
   const Int_t iNumTracks = array.GetEntriesFast();
   
-  Double_t pcosPt[5][5] = {0};
-  Double_t psinPt[5][5] = {0};
-  Double_t qcosPt[5][5] = {0};
-  Double_t qsinPt[5][5] = {0};
+  Double_t pcosPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
+  Double_t psinPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
+  Double_t qcosPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
+  Double_t qsinPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
 
   AliAODTrack* aodTrk = 0x0;
 
@@ -2808,9 +2834,9 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
     if( ptBin != GetPtBinIndex(aodTrk->Pt()) )
       continue;
 
-    for(int iharm=0; iharm<5; iharm++)
+    for(Int_t iharm = 0; iharm < fMaxNumHarmonics; iharm++)
     {
-      for(int ipow=0; ipow<5; ipow++)
+      for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
       {
         pcosPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
         psinPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
@@ -2820,9 +2846,9 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
     }
   }
 
-  for(int iharm=0; iharm<5; iharm++)
+  for(Int_t iharm = 0; iharm < fMaxNumHarmonics; iharm++)
   {
-    for(int ipow=0; ipow<5; ipow++)
+    for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
     {
       pvector[iharm][ipow] = TComplex(pcosPt[iharm][ipow], psinPt[iharm][ipow]);
       qvector[iharm][ipow] = TComplex(qcosPt[iharm][ipow], qsinPt[iharm][ipow]);
@@ -2832,7 +2858,7 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
   return;
 }
 //_____________________________________________________________________
-void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4)
+void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const Short_t iHarm)
 {
   double Dn2 = Two(0, 0)->Re();
   double Dn4 = Four(0,0,0,0)->Re();  
@@ -2842,7 +2868,7 @@ void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4)
   if(Dn2 != 0)
   { 
     //..v2{2} = <cos2(phi1 - phi2)>
-    TComplex *v22 = Two(2, -2);
+    TComplex *v22 = Two(iHarm, -iHarm);
     double v22Re = v22->Re()/Dn2;
     prof2->Fill(fCentPercentile, v22Re, Dn2);
   } 
@@ -2850,14 +2876,14 @@ void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4)
   if(Dn4 != 0)
   {
     //..v2{4} = <cos2(phi1 + phi2 - phi3 - phi4)> 
-    TComplex *v24 = Four(2, 2, -2, -2);
+    TComplex *v24 = Four(iHarm, iHarm, -iHarm, -iHarm);
     double v24Re = v24->Re()/Dn4;
     prof4->Fill(fCentPercentile, v24Re, Dn4);
   }
   return;  
 }
 //_____________________________________________________________________
-void AliAnalysisTaskFlowPID::GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TProfile* prof4)
+void AliAnalysisTaskFlowPID::GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TProfile* prof4, const Short_t iHarm)
 {
   double DDn2 = TwoDiff(0, 0)->Re();
   double DDn4 = FourDiff(0,0,0,0)->Re();
@@ -2868,7 +2894,7 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TPr
   if(DDn2 != 0)
   {
     //..v2{2}
-    TComplex *v22pt = TwoDiff(2, -2);
+    TComplex *v22pt = TwoDiff(iHarm, -iHarm);
     double v22ptRe = v22pt->Re()/DDn2;
   //  if( TMath::Abs(v22ptRe < 1))
     prof2->Fill((fPtBinEdges[ptBin+1] + fPtBinEdges[ptBin])/2, v22ptRe, DDn2); 
@@ -2878,7 +2904,7 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TPr
   if(DDn4 != 0)
   {
     //..v2{4}
-    TComplex *v24pt = FourDiff(2, 2, -2, -2);
+    TComplex *v24pt = FourDiff(iHarm, iHarm, -iHarm, -iHarm);
     double v24ptRe = v24pt->Re()/DDn4;
     prof4->Fill((fPtBinEdges[ptBin+1] + fPtBinEdges[ptBin])/2, v24ptRe, DDn4);
   }  

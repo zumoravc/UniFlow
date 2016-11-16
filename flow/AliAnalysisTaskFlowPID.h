@@ -74,6 +74,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
         const static Int_t      fNumEtaGap = 5; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
+        const static Int_t      fMaxNumHarmonics = 8; // maximal number of harmonics for Q,p,q vector arrays
+        const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 		Bool_t                  IsTrackSelected(const AliAODTrack* track);
@@ -95,8 +97,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    EstimateV0Cumulant(const Short_t iEtaGapIndex = 0, const Short_t iHarmonicsIndex = 0, const Short_t iSampleIndex = 0);
 
         // Katarina's implementation of GF
-        void GFKFillRefVectors(TClonesArray &array);
-        void GFKFillVectors(TClonesArray &array,const Int_t ptBin);
+        void GFKFillRefVectors(TClonesArray &array); // fill Q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
+        void GFKFillVectors(TClonesArray &array, const Int_t ptBin); // fill p,q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
         TComplex Q(int n, int p);
         TComplex p(int n, int p);
         TComplex q(int n, int p);
@@ -104,20 +106,22 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TComplex* TwoDiff(int n1, int n2);
         TComplex* Four(int n1, int n2, int n3, int n4);
         TComplex* FourDiff(int n1, int n2, int n3, int n4);
-        void GFKDoRefFlow(TProfile* prof2,TProfile* prof4);
-        void GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TProfile* prof4);
+        void GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const Short_t iHarm);
+        void GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TProfile* prof4, const Short_t iHarm);
         void DoGenFramKatarina();
-        TComplex Qvector[5][5]; //
-        TComplex pvector[5][5]; //
-        TComplex qvector[5][5]; //
-        TProfile*           fcn2ReTracks[5];                //! event averaged 2-particle correlation for reference flow <<2>> v2
-        TProfile*           fcn4ReTracks[5];                //! event averaged 2-particle correlation for reference flow <<2>> v2
-        TProfile*           fdn2RePion[fNumCentBins][5]; //!
-        TProfile*           fdn4RePion[fNumCentBins][5]; //!
-        TProfile*           fdn2ReKaon[fNumCentBins][5]; //!
-        TProfile*           fdn4ReKaon[fNumCentBins][5];  //!
-        TProfile*           fdn2ReProton[fNumCentBins][5]; //!
-        TProfile*           fdn4ReProton[fNumCentBins][5]; //!
+        const static Int_t fGFKNumSamples = 5;
+        TComplex Qvector[fMaxNumHarmonics][fMaxNumWeights]; //
+        TComplex pvector[fMaxNumHarmonics][fMaxNumWeights]; //
+        TComplex qvector[fMaxNumHarmonics][fMaxNumWeights]; //
+        TProfile*           fcn2Tracks[fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*           fcn4Tracks[fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        
+        TProfile*           fdn2Pion[fNumCentBins][fNumHarmonics][fGFKNumSamples]; //!
+        TProfile*           fdn4Pion[fNumCentBins][fNumHarmonics][fGFKNumSamples]; //!
+        TProfile*           fdn2Kaon[fNumCentBins][fNumHarmonics][fGFKNumSamples]; //!
+        TProfile*           fdn4Kaon[fNumCentBins][fNumHarmonics][fGFKNumSamples];  //!
+        TProfile*           fdn2Proton[fNumCentBins][fNumHarmonics][fGFKNumSamples]; //!
+        TProfile*           fdn4Proton[fNumCentBins][fNumHarmonics][fGFKNumSamples]; //!
 
 
         // end of Katarina's implementation
