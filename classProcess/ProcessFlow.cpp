@@ -127,6 +127,10 @@ void ProcessFlow::Run()
 	
 	TH1D* hGFKPionsTwo[10][10] = {0x0}; // pt diff <<2'>> (pions) = dn2
 	TH1D* hGFKPionsFour[10][10] = {0x0}; // pt diff <<4'>> (pions)
+	TH1D* hGFKKaonsTwo[10][10] = {0x0}; // pt diff <<2'>> (pions) = dn2
+	TH1D* hGFKKaonsFour[10][10] = {0x0}; // pt diff <<4'>> (pions)
+	TH1D* hGFKProtonsTwo[10][10] = {0x0}; // pt diff <<2'>> (pions) = dn2
+	TH1D* hGFKProtonsFour[10][10] = {0x0}; // pt diff <<4'>> (pions)
 	
 	ffOutputFile->cd();
 
@@ -135,11 +139,11 @@ void ProcessFlow::Run()
 	{
 		profTemp = (TProfile*) lPID->FindObject(Form("fc22ReTracks_number%d",j));
 		hGFKTracksRefTwo[j] = (TH1D*) profTemp->ProjectionX();
-		hGFKTracksRefTwo[j]->Write(Form("hGFKTrackRefTwo_sample%d",j));
+		//hGFKTracksRefTwo[j]->Write(Form("hGFKTrackRefTwo_sample%d",j));
 
 		profTemp = (TProfile*) lPID->FindObject(Form("fc42ReTracks_number%d",j));
 		hGFKTracksRefFour[j] = (TH1D*) profTemp->ProjectionX();
-		hGFKTracksRefFour[j]->Write(Form("hGFKTrackRefFour_sample%d",j));
+		//hGFKTracksRefFour[j]->Write(Form("hGFKTrackRefFour_sample%d",j));
 		//hGFKTracksCn4[j] = EstimateCn4(hGFKTracksRefTwo[j], hGFKTracksRefFour[j]);
 		//hGFKTracksCn4[j]->Write();
 
@@ -147,11 +151,23 @@ void ProcessFlow::Run()
 		{
 			profTemp = (TProfile*) lPID->FindObject(Form("fd22RePion_cent%d_number%d",i,j));
 			hGFKPionsTwo[i][j] = (TH1D*) profTemp->ProjectionX();
-			hGFKPionsTwo[i][j]->Write(Form("hGFKPionsTwo_cent%d_sample%d",i,j));
+			//hGFKPionsTwo[i][j]->Write(Form("hGFKPionsTwo_cent%d_sample%d",i,j));
 
 			profTemp = (TProfile*) lPID->FindObject(Form("fd42RePion_cent%d_number%d",i,j));
 			hGFKPionsFour[i][j] = (TH1D*) profTemp->ProjectionX();
-			hGFKPionsFour[i][j]->Write(Form("hGFKPionsFour_cent%d_sample%d",i,j));
+			//hGFKPionsFour[i][j]->Write(Form("hGFKPionsFour_cent%d_sample%d",i,j));
+
+			profTemp = (TProfile*) lPID->FindObject(Form("fd22ReKaon_cent%d_number%d",i,j));
+			hGFKKaonsTwo[i][j] = (TH1D*) profTemp->ProjectionX();
+			
+			profTemp = (TProfile*) lPID->FindObject(Form("fd42ReKaon_cent%d_number%d",i,j));
+			hGFKKaonsFour[i][j] = (TH1D*) profTemp->ProjectionX();
+
+			profTemp = (TProfile*) lPID->FindObject(Form("fd22ReProton_cent%d_number%d",i,j));
+			hGFKProtonsTwo[i][j] = (TH1D*) profTemp->ProjectionX();
+			
+			profTemp = (TProfile*) lPID->FindObject(Form("fd42ReProton_cent%d_number%d",i,j));
+			hGFKProtonsFour[i][j] = (TH1D*) profTemp->ProjectionX();
 		}
 	}		
 
@@ -160,24 +176,32 @@ void ProcessFlow::Run()
 	// estimating 4 particle cummulants dn4, cn4
 	TH1D* hGFKTracksCn4[10] = {0x0};	// reference cn4 
 	TH1D* hGFKPionsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
+	TH1D* hGFKKaonsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
+	TH1D* hGFKProtonsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
 	
 	for(Short_t j(0); j < fiNumSamples; j++)
 	{
 		hGFKTracksCn4[j] = EstimateCn4(hGFKTracksRefTwo[j], hGFKTracksRefFour[j]);
-		hGFKTracksCn4[j]->Write(Form("GFKTracksCn4_sample%d",j));
+		//hGFKTracksCn4[j]->Write(Form("GFKTracksCn4_sample%d",j));
 
 		for(Short_t i(0); i < fiNumBinsCent; i++)
 		{
 			hGFKPionsDn4[i][j] = EstimateDn4(hGFKTracksRefTwo[j]->GetBinContent(i+1),hGFKPionsTwo[i][j],hGFKPionsFour[i][j]);
-			hGFKPionsDn4[i][j]->Write(Form("GFKPionsDn4_cent%d_sample%d",i,j));
+			hGFKKaonsDn4[i][j] = EstimateDn4(hGFKTracksRefTwo[j]->GetBinContent(i+1),hGFKKaonsTwo[i][j],hGFKKaonsFour[i][j]);
+			hGFKProtonsDn4[i][j] = EstimateDn4(hGFKTracksRefTwo[j]->GetBinContent(i+1),hGFKProtonsTwo[i][j],hGFKProtonsFour[i][j]);
+			//hGFKPionsDn4[i][j]->Write(Form("GFKPionsDn4_cent%d_sample%d",i,j));
 		}
 	}
 	
 	// estimating v22, v24, v'22, v'24
 	TH1D* hGFKRefv22[10] = {0x0};
 	TH1D* hGFKRefv24[10] = {0x0};
-	TH1D* hGFKDiffv22[10][10] = {0x0};
-	TH1D* hGFKDiffv24[10][10] = {0x0};
+	TH1D* hGFKPionsDiffv22[10][10] = {0x0};
+	TH1D* hGFKPionsDiffv24[10][10] = {0x0};
+	TH1D* hGFKKaonsDiffv22[10][10] = {0x0};
+	TH1D* hGFKKaonsDiffv24[10][10] = {0x0};
+	TH1D* hGFKProtonsDiffv22[10][10] = {0x0};
+	TH1D* hGFKProtonsDiffv24[10][10] = {0x0};
 
 	Double_t dValue = 0;
 	for(Short_t j(0); j < fiNumSamples; j++)
@@ -197,32 +221,68 @@ void ProcessFlow::Run()
 			hGFKRefv24[j]->SetBinContent(i+1,TMath::Power(-dValue,0.25));
 			hGFKRefv24[j]->SetBinError(i+1,0);
 
+			hGFKPionsDiffv22[i][j] = (TH1D*) hGFKPionsTwo[i][j]->Clone(Form("hGFKPionsDiffv22_sample%d",j));
+			hGFKPionsDiffv22[i][j]->SetTitle(Form("#pi: v'_{2}{2} diff cent %d sample %d",i,j));
+			hGFKPionsDiffv24[i][j] = (TH1D*) hGFKPionsDn4[i][j]->Clone(Form("hGFKPionsDiffv24_sample%d",j));
+			hGFKPionsDiffv24[i][j]->SetTitle(Form("#pi: v'_{2}{4} diff cent %d sample %d",i,j));
 
-			hGFKDiffv22[i][j] = (TH1D*) hGFKPionsTwo[i][j]->Clone(Form("hGFKDiffv22_sample%d",j));
-			hGFKDiffv22[i][j]->SetTitle(Form("#pi: v'_{2}{2} diff cent %d sample %d",i,j));
-			hGFKDiffv24[i][j] = (TH1D*) hGFKPionsDn4[i][j]->Clone(Form("hGFKDiffv24_sample%d",j));
-			hGFKDiffv24[i][j]->SetTitle(Form("#pi: v'_{2}{4} diff cent %d sample %d",i,j));
+			hGFKKaonsDiffv22[i][j] = (TH1D*) hGFKKaonsTwo[i][j]->Clone(Form("hGFKKaonsDiffv22_sample%d",j));
+			hGFKKaonsDiffv22[i][j]->SetTitle(Form("K: v'_{2}{2} diff cent %d sample %d",i,j));
+			hGFKKaonsDiffv24[i][j] = (TH1D*) hGFKKaonsDn4[i][j]->Clone(Form("hGFKKaonsDiffv24_sample%d",j));
+			hGFKKaonsDiffv24[i][j]->SetTitle(Form("K: v'_{2}{4} diff cent %d sample %d",i,j));
 
-			for(Int_t k(1); k < (hGFKDiffv22[0][0]->GetNbinsX() + 1); k++)
+			hGFKProtonsDiffv22[i][j] = (TH1D*) hGFKProtonsTwo[i][j]->Clone(Form("hGFKProtonsDiffv22_sample%d",j));
+			hGFKProtonsDiffv22[i][j]->SetTitle(Form("p: v'_{2}{2} diff cent %d sample %d",i,j));
+			hGFKProtonsDiffv24[i][j] = (TH1D*) hGFKProtonsDn4[i][j]->Clone(Form("hGFKProtonsDiffv24_sample%d",j));
+			hGFKProtonsDiffv24[i][j]->SetTitle(Form("p: v'_{2}{4} diff cent %d sample %d",i,j));
+
+
+			for(Int_t k(1); k < (hGFKPionsDiffv22[0][0]->GetNbinsX() + 1); k++)
 			{
 				dValue = hGFKPionsTwo[i][j]->GetBinContent(k);
 				dValue = dValue / hGFKRefv22[j]->GetBinContent(i+1);
-				hGFKDiffv22[i][j]->SetBinContent(k,dValue);
-				hGFKDiffv22[i][j]->SetBinError(k,0);
+				hGFKPionsDiffv22[i][j]->SetBinContent(k,dValue);
+				hGFKPionsDiffv22[i][j]->SetBinError(k,0);
 
 				dValue = hGFKPionsDn4[i][j]->GetBinContent(k);
 				dValue = dValue / TMath::Power(hGFKRefv24[j]->GetBinContent(i+1),3);
-				hGFKDiffv24[i][j]->SetBinContent(k,-dValue);
-				hGFKDiffv24[i][j]->SetBinError(k,0);
+				hGFKPionsDiffv24[i][j]->SetBinContent(k,-dValue);
+				hGFKPionsDiffv24[i][j]->SetBinError(k,0);
 			}
 
-		  hGFKDiffv22[i][j]->Write(Form("hGFKDiffv22_cent%d_sample%d",i,j));
-		  hGFKDiffv24[i][j]->Write(Form("hGFKDiffv24_cent%d_sample%d",i,j));
+			for(Int_t k(1); k < (hGFKKaonsDiffv22[0][0]->GetNbinsX() + 1); k++)
+			{
+				dValue = hGFKKaonsTwo[i][j]->GetBinContent(k);
+				dValue = dValue / hGFKRefv22[j]->GetBinContent(i+1);
+				hGFKKaonsDiffv22[i][j]->SetBinContent(k,dValue);
+				hGFKKaonsDiffv22[i][j]->SetBinError(k,0);
+
+				dValue = hGFKKaonsDn4[i][j]->GetBinContent(k);
+				dValue = dValue / TMath::Power(hGFKRefv24[j]->GetBinContent(i+1),3);
+				hGFKKaonsDiffv24[i][j]->SetBinContent(k,-dValue);
+				hGFKKaonsDiffv24[i][j]->SetBinError(k,0);
+			}
+
+			for(Int_t k(1); k < (hGFKProtonsDiffv22[0][0]->GetNbinsX() + 1); k++)
+			{
+				dValue = hGFKProtonsTwo[i][j]->GetBinContent(k);
+				dValue = dValue / hGFKRefv22[j]->GetBinContent(i+1);
+				hGFKProtonsDiffv22[i][j]->SetBinContent(k,dValue);
+				hGFKProtonsDiffv22[i][j]->SetBinError(k,0);
+
+				dValue = hGFKProtonsDn4[i][j]->GetBinContent(k);
+				dValue = dValue / TMath::Power(hGFKRefv24[j]->GetBinContent(i+1),3);
+				hGFKProtonsDiffv24[i][j]->SetBinContent(k,-dValue);
+				hGFKProtonsDiffv24[i][j]->SetBinError(k,0);
+			}
+
+		  //hGFKPionsDiffv22[i][j]->Write(Form("hGFKPionsDiffv22_cent%d_sample%d",i,j));
+		  //hGFKPionsDiffv24[i][j]->Write(Form("hGFKPionsDiffv24_cent%d_sample%d",i,j));
 
 		}
 
-		hGFKRefv22[j]->Write(Form("hGFKRefv22_sample%d",j));
-		hGFKRefv24[j]->Write(Form("hGFKRefv24_sample%d",j));
+		//hGFKRefv22[j]->Write(Form("hGFKRefv22_sample%d",j));
+		//hGFKRefv24[j]->Write(Form("hGFKRefv24_sample%d",j));
 	}
 
 	// up to this point: validated & works well
@@ -230,8 +290,12 @@ void ProcessFlow::Run()
 	// desampling
 	TList* lRefv22 = new TList();
 	TList* lRefv24 = new TList();
-	TList* lDiffv22 = new TList();
-	TList* lDiffv24 = new TList();
+	TList* lPionsDiffv22 = new TList();
+	TList* lPionsDiffv24 = new TList();
+	TList* lKaonsDiffv22 = new TList();
+	TList* lKaonsDiffv24 = new TList();
+	TList* lProtonsDiffv22 = new TList();
+	TList* lProtonsDiffv24 = new TList();
 
 	
 	ffOutputFile->cd();
@@ -246,32 +310,60 @@ void ProcessFlow::Run()
 	DesampleList(lRefv22,fiNumSamples);
 	DesampleList(lRefv24,fiNumSamples);
 
-	lRefv22->Write("lPionsRefv22",TObject::kSingleKey);
-	lRefv24->Write("lPionsRefv24",TObject::kSingleKey);
+	lRefv22->Write("lTracksRefv22",TObject::kSingleKey);
+	lRefv24->Write("lTracksRefv24",TObject::kSingleKey);
 
 	// pt diff
 	for(Short_t i(0); i < fiNumBinsCent; i++)
 	{
-		lDiffv22->Clear();
-		lDiffv24->Clear();
+		lPionsDiffv22->Clear();
+		lPionsDiffv24->Clear();
+		lKaonsDiffv22->Clear();
+		lKaonsDiffv24->Clear();
+		lProtonsDiffv22->Clear();
+		lProtonsDiffv24->Clear();
 
 		for(Short_t j(0); j < fiNumSamples; j++)
 		{
-			lDiffv22->Add(hGFKDiffv22[i][j]);
-			lDiffv24->Add(hGFKDiffv24[i][j]);
+			lPionsDiffv22->Add(hGFKPionsDiffv22[i][j]);
+			lPionsDiffv24->Add(hGFKPionsDiffv24[i][j]);
+			lKaonsDiffv22->Add(hGFKKaonsDiffv22[i][j]);
+			lKaonsDiffv24->Add(hGFKKaonsDiffv24[i][j]);
+			lProtonsDiffv22->Add(hGFKProtonsDiffv22[i][j]);
+			lProtonsDiffv24->Add(hGFKProtonsDiffv24[i][j]);
 		}
 		
-		DesampleList(lDiffv22,fiNumSamples);		
-		DesampleList(lDiffv24,fiNumSamples);		
+		DesampleList(lPionsDiffv22,fiNumSamples);		
+		DesampleList(lPionsDiffv24,fiNumSamples);		
+		DesampleList(lKaonsDiffv22,fiNumSamples);		
+		DesampleList(lKaonsDiffv24,fiNumSamples);		
+		DesampleList(lProtonsDiffv22,fiNumSamples);		
+		DesampleList(lProtonsDiffv24,fiNumSamples);		
 		
-		lDiffv22->Write(Form("lPionsDiffv22_cent%d",i),TObject::kSingleKey);
-		lDiffv24->Write(Form("lPionsDiffv24_cent%d",i),TObject::kSingleKey);
-	}
+		lPionsDiffv22->Write(Form("lPionsDiffv22_cent%d",i),TObject::kSingleKey);
+		lPionsDiffv24->Write(Form("lPionsDiffv24_cent%d",i),TObject::kSingleKey);
+		lKaonsDiffv22->Write(Form("lKaonsDiffv22_cent%d",i),TObject::kSingleKey);
+		lKaonsDiffv24->Write(Form("lKaonsDiffv24_cent%d",i),TObject::kSingleKey);
+		lProtonsDiffv22->Write(Form("lProtonsDiffv22_cent%d",i),TObject::kSingleKey);
+		lProtonsDiffv24->Write(Form("lProtonsDiffv24_cent%d",i),TObject::kSingleKey);
 
+		(lPionsDiffv22->Last())->Write(Form("hPionsDiffv22_cent%d",i));
+		(lPionsDiffv24->Last())->Write(Form("hPionsDiffv24_cent%d",i));
+		(lKaonsDiffv22->Last())->Write(Form("hKaonsDiffv22_cent%d",i));
+		(lKaonsDiffv24->Last())->Write(Form("hKaonsDiffv24_cent%d",i));
+		(lProtonsDiffv22->Last())->Write(Form("hProtonsDiffv22_cent%d",i));
+		(lProtonsDiffv24->Last())->Write(Form("hProtonsDiffv24_cent%d",i));
+
+	}
+	
 	delete lRefv22;
 	delete lRefv24;
-	delete lDiffv22;
-	delete lDiffv24;
+	delete lPionsDiffv22;
+	delete lPionsDiffv24;
+	delete lKaonsDiffv22;
+	delete lKaonsDiffv24;
+	delete lProtonsDiffv22;
+	delete lProtonsDiffv24;
 
 	// writing to output file
 
