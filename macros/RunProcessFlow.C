@@ -16,6 +16,7 @@ void RunProcessFlow()
 	ProcessFlow* process = new ProcessFlow();
 	process->SetInputFilePath("~/NBI/Flow/results/V0s/PID-GFK-3/merge");
 	process->SetOutputFilePath("~/NBI/Flow/classProcess");
+	process->SetOutputFileName("ProcessFlow_FB768_GFK.root");
 	process->SetTag("FB768");
 	process->SetNumBinsCentrality(9);
 	process->SetNumSamples(5);

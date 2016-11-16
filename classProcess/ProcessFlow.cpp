@@ -135,6 +135,7 @@ void ProcessFlow::Run()
 	ffOutputFile->cd();
 
 	TProfile* profTemp = 0x0;
+	TH1D* dummyHist = 0x0; // temporary hist 
 	for(Short_t j(0); j < fiNumSamples; j++)
 	{
 		profTemp = (TProfile*) lPID->FindObject(Form("fc22ReTracks_number%d",j));
@@ -297,7 +298,14 @@ void ProcessFlow::Run()
 	TList* lProtonsDiffv22 = new TList();
 	TList* lProtonsDiffv24 = new TList();
 
-	
+	// output list by flow harmonics & particle species 
+	TList* lFinalPionsDiffv22 = new TList();
+	TList* lFinalKaonsDiffv22 = new TList();
+	TList* lFinalProtonsDiffv22 = new TList();
+	TList* lFinalPionsDiffv24 = new TList();
+	TList* lFinalKaonsDiffv24 = new TList();
+	TList* lFinalProtonsDiffv24 = new TList();
+
 	ffOutputFile->cd();
 	// filling the lists 
 	// reference	
@@ -310,9 +318,9 @@ void ProcessFlow::Run()
 	DesampleList(lRefv22,fiNumSamples);
 	DesampleList(lRefv24,fiNumSamples);
 
-	lRefv22->Write("lTracksRefv22",TObject::kSingleKey);
-	lRefv24->Write("lTracksRefv24",TObject::kSingleKey);
-
+	(lRefv22->Last())->Write("Refv22_Tracks");
+	(lRefv24->Last())->Write("Refv24_Tracks");
+	
 	// pt diff
 	for(Short_t i(0); i < fiNumBinsCent; i++)
 	{
@@ -340,19 +348,42 @@ void ProcessFlow::Run()
 		DesampleList(lProtonsDiffv22,fiNumSamples);		
 		DesampleList(lProtonsDiffv24,fiNumSamples);		
 		
-		lPionsDiffv22->Write(Form("lPionsDiffv22_cent%d",i),TObject::kSingleKey);
-		lPionsDiffv24->Write(Form("lPionsDiffv24_cent%d",i),TObject::kSingleKey);
-		lKaonsDiffv22->Write(Form("lKaonsDiffv22_cent%d",i),TObject::kSingleKey);
-		lKaonsDiffv24->Write(Form("lKaonsDiffv24_cent%d",i),TObject::kSingleKey);
-		lProtonsDiffv22->Write(Form("lProtonsDiffv22_cent%d",i),TObject::kSingleKey);
-		lProtonsDiffv24->Write(Form("lProtonsDiffv24_cent%d",i),TObject::kSingleKey);
-
+		//lPionsDiffv22->Write(Form("lPionsDiffv22_cent%d",i),TObject::kSingleKey);
+		//lPionsDiffv24->Write(Form("lPionsDiffv24_cent%d",i),TObject::kSingleKey);
+		//lKaonsDiffv22->Write(Form("lKaonsDiffv22_cent%d",i),TObject::kSingleKey);
+		//lKaonsDiffv24->Write(Form("lKaonsDiffv24_cent%d",i),TObject::kSingleKey);
+		//lProtonsDiffv22->Write(Form("lProtonsDiffv22_cent%d",i),TObject::kSingleKey);
+		//lProtonsDiffv24->Write(Form("lProtonsDiffv24_cent%d",i),TObject::kSingleKey);
+		/*
 		(lPionsDiffv22->Last())->Write(Form("hPionsDiffv22_cent%d",i));
 		(lPionsDiffv24->Last())->Write(Form("hPionsDiffv24_cent%d",i));
 		(lKaonsDiffv22->Last())->Write(Form("hKaonsDiffv22_cent%d",i));
 		(lKaonsDiffv24->Last())->Write(Form("hKaonsDiffv24_cent%d",i));
 		(lProtonsDiffv22->Last())->Write(Form("hProtonsDiffv22_cent%d",i));
 		(lProtonsDiffv24->Last())->Write(Form("hProtonsDiffv24_cent%d",i));
+		*/
+
+
+		// Writing output TLists & setting names for final output
+		dummyHist = (TH1D*) lPionsDiffv22->Last();
+		dummyHist->SetName(Form("Diffv22_Pions_cent%d",i));
+		lFinalPionsDiffv22->Add(dummyHist);
+		dummyHist = (TH1D*)lKaonsDiffv22->Last();
+		dummyHist->SetName(Form("Diffv22_Kaons_cent%d",i));
+		lFinalKaonsDiffv22->Add(dummyHist);
+		dummyHist = (TH1D*)lProtonsDiffv22->Last();
+		dummyHist->SetName(Form("Diffv22_Protons_cent%d",i));
+		lFinalProtonsDiffv22->Add(dummyHist);
+		
+		dummyHist = (TH1D*) lPionsDiffv24->Last();
+		dummyHist->SetName(Form("Diffv24_Pions_cent%d",i));
+		lFinalPionsDiffv24->Add(dummyHist);
+		dummyHist = (TH1D*)lKaonsDiffv24->Last();
+		dummyHist->SetName(Form("Diffv24_Kaons_cent%d",i));
+		lFinalKaonsDiffv24->Add(dummyHist);
+		dummyHist = (TH1D*)lProtonsDiffv24->Last();
+		dummyHist->SetName(Form("Diffv24_Protons_cent%d",i));
+		lFinalProtonsDiffv24->Add(dummyHist);
 
 	}
 	
@@ -366,8 +397,17 @@ void ProcessFlow::Run()
 	delete lProtonsDiffv24;
 
 	// writing to output file
-
-	//profTemp->Write();
+	ffOutputFile->cd();
+	lFinalPionsDiffv22->Write("Diffv22_Pions",TObject::kSingleKey);
+	lFinalKaonsDiffv22->Write("Diffv22_Kaons",TObject::kSingleKey);
+	lFinalProtonsDiffv22->Write("Diffv22_Protons",TObject::kSingleKey);
+	
+	lFinalPionsDiffv24->Write("Diffv24_Pions",TObject::kSingleKey);
+	lFinalKaonsDiffv24->Write("Diffv24_Kaons",TObject::kSingleKey);
+	lFinalProtonsDiffv24->Write("Diffv24_Protons",TObject::kSingleKey);
+	
+	//lDiffv22->Write("Diffv22",TObject::kSingleKey);
+	//lDiffv24->Write("Diffv24",TObject::kSingleKey);
 
 
 	
