@@ -23,6 +23,11 @@
 ### OTHERS ###
 *.xml
 *.tmp
+.DS_Store 			# Mac specific 
 
 ### Directories ###
 results/*
+hepData/*
+
+
+
