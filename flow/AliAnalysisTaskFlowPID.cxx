@@ -314,12 +314,16 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
       Qvector[iharm][ipow] = TComplex(0,0,kFALSE);
       QvectorGapPos[iharm][ipow] = TComplex(0,0,kFALSE);
       QvectorGapNeg[iharm][ipow] = TComplex(0,0,kFALSE);
-      pvector[iharm][ipow] = TComplex(0,0,kFALSE);
-      pvectorGapPos[iharm][ipow] = TComplex(0,0,kFALSE);
-      pvectorGapNeg[iharm][ipow] = TComplex(0,0,kFALSE);
-      qvector[iharm][ipow] = TComplex(0,0,kFALSE);
-      qvectorGapPos[iharm][ipow] = TComplex(0,0,kFALSE);
-      qvectorGapNeg[iharm][ipow] = TComplex(0,0,kFALSE);
+      
+      for(Int_t iPt(0); iPt < fNumPtBins; iPt++)
+      {
+        pvector[iharm][ipow][iPt] = TComplex(0,0,kFALSE);
+        pvectorGapPos[iharm][ipow][iPt] = TComplex(0,0,kFALSE);
+        pvectorGapNeg[iharm][ipow][iPt] = TComplex(0,0,kFALSE);
+        qvector[iharm][ipow][iPt] = TComplex(0,0,kFALSE);
+        qvectorGapPos[iharm][ipow][iPt] = TComplex(0,0,kFALSE);
+        qvectorGapNeg[iharm][ipow][iPt] = TComplex(0,0,kFALSE);
+      }
     }
   }
 
@@ -2765,43 +2769,44 @@ Short_t AliAnalysisTaskFlowPID::GetMinvFlowBinIndexLambda(const Double_t dMass)
 //_____________________________________________________________________
 void AliAnalysisTaskFlowPID::DoGenFramKatarina()
 {
-  // ref flow
-  //Int_t iEtaGap = 0; 
+  Double_t dEtaGap = 0;
 
   for(Int_t iEtaGap(0); iEtaGap < fNumEtaGap; iEtaGap++)
   {
-    GFKFillRefVectors(fArrTracksFiltered,fEtaGap[iEtaGap]);
+    dEtaGap = fEtaGap[iEtaGap];
 
-    
+    GFKFillRefVectors(fArrTracksFiltered,dEtaGap);
+   
     for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
     {
-      GFKDoRefFlow(fcn2Tracks[iEtaGap][iHarm][fSampleBinIndex],fcn4Tracks[iEtaGap][iHarm][fSampleBinIndex],fHarmonics[iHarm],fEtaGap[iEtaGap]);
+      GFKDoRefFlow(fcn2Tracks[iEtaGap][iHarm][fSampleBinIndex],fcn4Tracks[iEtaGap][iHarm][fSampleBinIndex],fHarmonics[iHarm],dEtaGap);
     }
-    
-    for(Int_t i(0); i < fNumPtBins; i++)
+       
+    // Diff flow 
+    // fill p,q vectors
+
+    // pions
+    GFKFillVectors(fArrPionFiltered,dEtaGap);
+    for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
     {
-      // Diff flow 
-      // fill p,q vectors
-      GFKFillVectors(fArrPionFiltered,i,fEtaGap[iEtaGap]);
-      for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
-      {
-        GFKDoDiffFlow(i,fdn2Pion[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Pion[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],fEtaGap[iEtaGap]);
-      }
+      GFKDoDiffFlow(fdn2Pion[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Pion[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap);
+    }
 
-      GFKFillVectors(fArrKaonFiltered,i,fEtaGap[iEtaGap]);
-      for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
-      {
-        GFKDoDiffFlow(i,fdn2Kaon[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Kaon[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],fEtaGap[iEtaGap]);
-      }
-      GFKFillVectors(fArrProtonFiltered,i,fEtaGap[iEtaGap]);
-      for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
-      {
-        GFKDoDiffFlow(i,fdn2Proton[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Proton[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],fEtaGap[iEtaGap]);
-      }
+    // kaons
+    GFKFillVectors(fArrKaonFiltered,dEtaGap);
+    for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+    {
+      GFKDoDiffFlow(fdn2Kaon[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Kaon[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap);
+    }
+
+    // protons
+    GFKFillVectors(fArrProtonFiltered,dEtaGap);
+    for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+    {
+      GFKDoDiffFlow(fdn2Proton[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Proton[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap);
     }
     
-  }
-
+  } // end of loop over eta gaps
 
   return;
 }
@@ -2866,7 +2871,7 @@ void AliAnalysisTaskFlowPID::GFKFillRefVectors(TClonesArray &array,const Double_
   return;
 }
 //_____________________________________________________________________
-void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptBin, const Double_t dEtaGap)
+void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Double_t dEtaGap)
 {
 
   Double_t weightPt = 1.;
@@ -2874,24 +2879,25 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
 
   const Int_t iNumTracks = array.GetEntriesFast();
   
-  Double_t pcosPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  Double_t pcosPtGapPos[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  Double_t pcosPtGapNeg[fMaxNumHarmonics][fMaxNumWeights] = {0};
+  Double_t pcosPt[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
+  Double_t pcosPtGapPos[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
+  Double_t pcosPtGapNeg[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
 
-  Double_t psinPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  Double_t psinPtGapPos[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  Double_t psinPtGapNeg[fMaxNumHarmonics][fMaxNumWeights] = {0};
+  Double_t psinPt[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
+  Double_t psinPtGapPos[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
+  Double_t psinPtGapNeg[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
 
-  Double_t qcosPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  Double_t qcosPtGapPos[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  Double_t qcosPtGapNeg[fMaxNumHarmonics][fMaxNumWeights] = {0};
+  Double_t qcosPt[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
+  Double_t qcosPtGapPos[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
+  Double_t qcosPtGapNeg[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
 
-  Double_t qsinPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  Double_t qsinPtGapPos[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  Double_t qsinPtGapNeg[fMaxNumHarmonics][fMaxNumWeights] = {0};
+  Double_t qsinPt[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
+  Double_t qsinPtGapPos[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
+  Double_t qsinPtGapNeg[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
 
   AliAODTrack* aodTrk = 0x0;
   Double_t dEta = 0;
+  Int_t iPtBinIndex = -1;
 
   //POIs
   for(Int_t i(0); i < iNumTracks; i++)
@@ -2899,7 +2905,8 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
     aodTrk = static_cast<AliAODTrack*>(array.At(i));
     dEta = aodTrk->Eta();
 
-    if( ptBin != GetPtBinIndex(aodTrk->Pt()) )
+    iPtBinIndex = GetPtBinIndex(aodTrk->Pt());
+    if(iPtBinIndex == -1)
       continue;
 
     for(Int_t iharm = 0; iharm < fMaxNumHarmonics; iharm++)
@@ -2908,30 +2915,29 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
       {
         if(dEtaGap < 0.) // with no gap -> only positive quantities are filled 
         {
-          pcosPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
-          psinPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
-          qcosPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
-          qsinPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
+          pcosPt[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
+          psinPt[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
+          qcosPt[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
+          qsinPt[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
         }
         else if(!(dEtaGap < 0.)) // with eta gap
         {
           if(dEta > dEtaGapCut)
           {
-            pcosPtGapPos[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
-            psinPtGapPos[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
-            qcosPtGapPos[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
-            qsinPtGapPos[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
+            pcosPtGapPos[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
+            psinPtGapPos[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
+            //qcosPtGapPos[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
+            //qsinPtGapPos[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
           }
 
           if(dEta < -dEtaGapCut)
           {
-            pcosPtGapNeg[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
-            psinPtGapNeg[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
-            qcosPtGapNeg[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
-            qsinPtGapNeg[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
+            pcosPtGapNeg[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
+            psinPtGapNeg[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
+            //qcosPtGapNeg[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
+            //qsinPtGapNeg[iharm][ipow][iPtBinIndex] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
           }
         }
-
       }
     }
   }
@@ -2940,12 +2946,15 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t ptB
   {
     for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
     {
-      pvector[iharm][ipow] = TComplex(pcosPt[iharm][ipow], psinPt[iharm][ipow]);
-      pvectorGapPos[iharm][ipow] = TComplex(pcosPtGapPos[iharm][ipow], psinPtGapPos[iharm][ipow]);
-      pvectorGapNeg[iharm][ipow] = TComplex(pcosPtGapNeg[iharm][ipow], psinPtGapNeg[iharm][ipow]);
-      qvector[iharm][ipow] = TComplex(qcosPt[iharm][ipow], qsinPt[iharm][ipow]);
-      qvectorGapPos[iharm][ipow] = TComplex(qcosPtGapPos[iharm][ipow], qsinPtGapPos[iharm][ipow]);
-      qvectorGapNeg[iharm][ipow] = TComplex(qcosPtGapNeg[iharm][ipow], qsinPtGapNeg[iharm][ipow]);
+      for(Int_t iPt(0); iPt < fNumPtBins; iPt++)
+      {
+        pvector[iharm][ipow][iPt] = TComplex(pcosPt[iharm][ipow][iPt], psinPt[iharm][ipow][iPt]);
+        pvectorGapPos[iharm][ipow][iPt] = TComplex(pcosPtGapPos[iharm][ipow][iPt], psinPtGapPos[iharm][ipow][iPt]);
+        pvectorGapNeg[iharm][ipow][iPt] = TComplex(pcosPtGapNeg[iharm][ipow][iPt], psinPtGapNeg[iharm][ipow][iPt]);
+        qvector[iharm][ipow][iPt] = TComplex(qcosPt[iharm][ipow][iPt], qsinPt[iharm][ipow][iPt]);
+        qvectorGapPos[iharm][ipow][iPt] = TComplex(qcosPtGapPos[iharm][ipow][iPt], qsinPtGapPos[iharm][ipow][iPt]);
+        qvectorGapNeg[iharm][ipow][iPt] = TComplex(qcosPtGapNeg[iharm][ipow][iPt], qsinPtGapNeg[iharm][ipow][iPt]);
+      }
     }
   }
 
@@ -3005,61 +3014,65 @@ void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const
   return;  
 }
 //_____________________________________________________________________
-void AliAnalysisTaskFlowPID::GFKDoDiffFlow(const Int_t ptBin,TProfile* prof2,TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap)
+void AliAnalysisTaskFlowPID::GFKDoDiffFlow(TProfile* prof2,TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap)
 {
-  if(dEtaGap < 0.) // no gap
+  for(Int_t iPt(0); iPt < fNumPtBins; iPt++)
   {
-    double DDn2 = TwoDiff(0, 0)->Re();
-    double DDn4 = FourDiff(0,0,0,0)->Re();
-
-    //printf("DDn2: %g / DDn4: %g\n",DDn2, DDn4);
-
-    //if(DDn2 > 1)
-    if(DDn2 != 0)
+    if(dEtaGap < 0.) // no gap
     {
-      //..v2{2}
-      TComplex *v22pt = TwoDiff(iHarm, -iHarm);
-      double v22ptRe = v22pt->Re()/DDn2;
-    //  if( TMath::Abs(v22ptRe < 1))
-      prof2->Fill((fPtBinEdges[ptBin+1] + fPtBinEdges[ptBin])/2, v22ptRe, DDn2); 
+      double DDn2 = TwoDiff(0,0,iPt)->Re();
+      double DDn4 = FourDiff(0,0,0,0,iPt)->Re();
+
+      //printf("DDn2: %g / DDn4: %g\n",DDn2, DDn4);
+
+      //if(DDn2 > 1)
+      if(DDn2 != 0)
+      {
+        //..v2{2}
+        TComplex *v22pt = TwoDiff(iHarm, -iHarm, iPt);
+        double v22ptRe = v22pt->Re()/DDn2;
+      //  if( TMath::Abs(v22ptRe < 1))
+        prof2->Fill((fPtBinEdges[iPt+1] + fPtBinEdges[iPt])/2, v22ptRe, DDn2); 
+
+      }
+      
+      if(DDn4 != 0)
+      {
+        //..v2{4}
+        TComplex *v24pt = FourDiff(iHarm, iHarm, -iHarm, -iHarm, iPt);
+        double v24ptRe = v24pt->Re()/DDn4;
+        prof4->Fill((fPtBinEdges[iPt+1] + fPtBinEdges[iPt])/2, v24ptRe, DDn4);
+      } 
+    }
+    else
+    { // with gap
+      double DDn2 = TwoDiffGapPos(0,0,iPt)->Re();
+      double DDn4 = 0;
+
+      //printf("DDn2: %g / DDn4: %g\n",DDn2, DDn4);
+
+      //if(DDn2 > 1)
+      if(DDn2 != 0)
+      {
+        //..v2{2}
+        TComplex *v22pt = TwoDiffGapPos(iHarm, -iHarm, iPt);
+        double v22ptRe = v22pt->Re()/DDn2;
+      //  if( TMath::Abs(v22ptRe < 1))
+        prof2->Fill((fPtBinEdges[iPt+1] + fPtBinEdges[iPt])/2, v22ptRe, DDn2); 
+
+      }
+      
+      if(DDn4 != 0)
+      {
+        //..v2{4}
+        TComplex *v24pt = FourDiff(iHarm, iHarm, -iHarm, -iHarm, iPt);
+        double v24ptRe = v24pt->Re()/DDn4;
+        prof4->Fill((fPtBinEdges[iPt+1] + fPtBinEdges[iPt])/2, v24ptRe, DDn4);
+      } 
 
     }
-    
-    if(DDn4 != 0)
-    {
-      //..v2{4}
-      TComplex *v24pt = FourDiff(iHarm, iHarm, -iHarm, -iHarm);
-      double v24ptRe = v24pt->Re()/DDn4;
-      prof4->Fill((fPtBinEdges[ptBin+1] + fPtBinEdges[ptBin])/2, v24ptRe, DDn4);
-    } 
-  }
-  else
-  {
-    double DDn2 = TwoDiffGapPos(0, 0)->Re();
-    double DDn4 = 0;
+  } // end of loop over pT bins
 
-    //printf("DDn2: %g / DDn4: %g\n",DDn2, DDn4);
-
-    //if(DDn2 > 1)
-    if(DDn2 != 0)
-    {
-      //..v2{2}
-      TComplex *v22pt = TwoDiffGapPos(iHarm, -iHarm);
-      double v22ptRe = v22pt->Re()/DDn2;
-    //  if( TMath::Abs(v22ptRe < 1))
-      prof2->Fill((fPtBinEdges[ptBin+1] + fPtBinEdges[ptBin])/2, v22ptRe, DDn2); 
-
-    }
-    
-    if(DDn4 != 0)
-    {
-      //..v2{4}
-      TComplex *v24pt = FourDiff(iHarm, iHarm, -iHarm, -iHarm);
-      double v24ptRe = v24pt->Re()/DDn4;
-      prof4->Fill((fPtBinEdges[ptBin+1] + fPtBinEdges[ptBin])/2, v24ptRe, DDn4);
-    } 
-
-  }
 }
 //_____________________________________________________________________
 TComplex AliAnalysisTaskFlowPID::Q(int n, int p)
@@ -3086,35 +3099,35 @@ TComplex AliAnalysisTaskFlowPID::QGapNeg(int n, int p)
 
 }
 //____________________________________________________________________
-TComplex AliAnalysisTaskFlowPID::p(int n, int p)
+TComplex AliAnalysisTaskFlowPID::p(int n, int p, int pt)
 {
 
-  if(n>=0) return pvector[n][p];
-  else return TComplex::Conjugate(pvector[n][p]);
+  if(n>=0) return pvector[n][p][pt];
+  else return TComplex::Conjugate(pvector[n][p][pt]);
 
 }
 //____________________________________________________________________
-TComplex AliAnalysisTaskFlowPID::pGapPos(int n, int p)
+TComplex AliAnalysisTaskFlowPID::pGapPos(int n, int p, int pt)
 {
 
-  if(n>=0) return pvectorGapPos[n][p];
-  else return TComplex::Conjugate(pvectorGapPos[n][p]);
+  if(n>=0) return pvectorGapPos[n][p][pt];
+  else return TComplex::Conjugate(pvectorGapPos[n][p][pt]);
 
 }
 //____________________________________________________________________
-TComplex AliAnalysisTaskFlowPID::pGapNeg(int n, int p)
+TComplex AliAnalysisTaskFlowPID::pGapNeg(int n, int p, int pt)
 {
 
-  if(n>=0) return pvectorGapNeg[n][p];
-  else return TComplex::Conjugate(pvectorGapNeg[n][p]);
+  if(n>=0) return pvectorGapNeg[n][p][pt];
+  else return TComplex::Conjugate(pvectorGapNeg[n][p][pt]);
 
 }
 //____________________________________________________________________
-TComplex AliAnalysisTaskFlowPID::q(int n, int p)
+TComplex AliAnalysisTaskFlowPID::q(int n, int p, int pt)
 {
 
-  if(n>=0) return qvector[n][p];
-  else return TComplex::Conjugate(qvector[n][p]);
+  if(n>=0) return qvector[n][p][pt];
+  else return TComplex::Conjugate(qvector[n][p][pt]);
 
 }
 //____________________________________________________________________
@@ -3132,26 +3145,26 @@ TComplex* AliAnalysisTaskFlowPID::TwoGap(int n1, int n2)
   return out;
 }
 //____________________________________________________________________
-TComplex* AliAnalysisTaskFlowPID::TwoDiff(int n1, int n2)
+TComplex* AliAnalysisTaskFlowPID::TwoDiff(int n1, int n2, int pt)
 {
 
-  TComplex formula = p(n1,1)*Q(n2,1) - q(n1+n2,1);
+  TComplex formula = p(n1,1,pt)*Q(n2,1) - q(n1+n2,1,pt);
   TComplex *out = (TComplex*) &formula;
   return out;
 }
 //____________________________________________________________________
-TComplex* AliAnalysisTaskFlowPID::TwoDiffGapPos(int n1, int n2)
+TComplex* AliAnalysisTaskFlowPID::TwoDiffGapPos(int n1, int n2, int pt)
 {
 
-  TComplex formula = pGapPos(n1,1)*QGapNeg(n2,1);
+  TComplex formula = pGapPos(n1,1,pt)*QGapNeg(n2,1);
   TComplex *out = (TComplex*) &formula;
   return out;
 }
 //____________________________________________________________________
-TComplex* AliAnalysisTaskFlowPID::TwoDiffGapNeg(int n1, int n2)
+TComplex* AliAnalysisTaskFlowPID::TwoDiffGapNeg(int n1, int n2, int pt)
 {
 
-  TComplex formula = pGapNeg(n1,1)*QGapPos(n2,1);
+  TComplex formula = pGapNeg(n1,1,pt)*QGapPos(n2,1);
   TComplex *out = (TComplex*) &formula;
   return out;
 }
@@ -3182,15 +3195,15 @@ TComplex* AliAnalysisTaskFlowPID::FourGap(int n1, int n2, int n3, int n4)
 
 }
 //____________________________________________________________________
-TComplex* AliAnalysisTaskFlowPID::FourDiff(int n1, int n2, int n3, int n4)
+TComplex* AliAnalysisTaskFlowPID::FourDiff(int n1, int n2, int n3, int n4, int pt)
 {
 
 
-  TComplex formula = p(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-q(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*q(n1+n3,2)*Q(n4,1)
-                    - p(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.*q(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*q(n1+n4,2)
-                    + Q(n2+n3,2)*q(n1+n4,2)-p(n1,1)*Q(n3,1)*Q(n2+n4,2)+q(n1+n3,2)*Q(n2+n4,2)
-                    + 2.*Q(n3,1)*q(n1+n2+n4,3)-p(n1,1)*Q(n2,1)*Q(n3+n4,2)+q(n1+n2,2)*Q(n3+n4,2)
-                    + 2.*Q(n2,1)*q(n1+n3+n4,3)+2.*p(n1,1)*Q(n2+n3+n4,3)-6.*q(n1+n2+n3+n4,4);
+  TComplex formula = p(n1,1,pt)*Q(n2,1)*Q(n3,1)*Q(n4,1)-q(n1+n2,2,pt)*Q(n3,1)*Q(n4,1)-Q(n2,1)*q(n1+n3,2,pt)*Q(n4,1)
+                    - p(n1,1,pt)*Q(n2+n3,2)*Q(n4,1)+2.*q(n1+n2+n3,3,pt)*Q(n4,1)-Q(n2,1)*Q(n3,1)*q(n1+n4,2,pt)
+                    + Q(n2+n3,2)*q(n1+n4,2,pt)-p(n1,1,pt)*Q(n3,1)*Q(n2+n4,2)+q(n1+n3,2,pt)*Q(n2+n4,2)
+                    + 2.*Q(n3,1)*q(n1+n2+n4,3,pt)-p(n1,1,pt)*Q(n2,1)*Q(n3+n4,2)+q(n1+n2,2,pt)*Q(n3+n4,2)
+                    + 2.*Q(n2,1)*q(n1+n3+n4,3,pt)+2.*p(n1,1,pt)*Q(n2+n3+n4,3)-6.*q(n1+n2+n3+n4,4,pt);
   TComplex *out = (TComplex*) &formula;
   return out;
 
