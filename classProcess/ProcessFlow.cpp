@@ -123,7 +123,13 @@ void ProcessFlow::Run()
 	TList* lPID = (TList*) gDirectory->Get(Form("PID_flowPID_%s",fsTag.Data()));
 	
 	TH1D* hGFKTracksRefTwo[10] = {0x0}; // reference <<2>> = cn2
+	TH1D* hGFKTracksRefTwoGap00[10] = {0x0}; // reference <<2>> = cn2
+	TH1D* hGFKTracksRefTwoGap10[10] = {0x0}; // reference <<2>> = cn2
+	TH1D* hGFKTracksRefTwo3[10] = {0x0}; // reference <<2>> = cn2
+	TH1D* hGFKTracksRefTwo4[10] = {0x0}; // reference <<2>> = cn2
 	TH1D* hGFKTracksRefFour[10] = {0x0};	// reference <<4>> 
+	TH1D* hGFKTracksRefFour3[10] = {0x0};	// reference <<4>> 
+	TH1D* hGFKTracksRefFour4[10] = {0x0};	// reference <<4>> 
 	
 	TH1D* hGFKPionsTwo[10][10] = {0x0}; // pt diff <<2'>> (pions) = dn2
 	TH1D* hGFKPionsFour[10][10] = {0x0}; // pt diff <<4'>> (pions)
@@ -136,46 +142,70 @@ void ProcessFlow::Run()
 
 	TProfile* profTemp = 0x0;
 	TH1D* dummyHist = 0x0; // temporary hist 
+
+
 	for(Short_t j(0); j < fiNumSamples; j++)
 	{
-		profTemp = (TProfile*) lPID->FindObject(Form("fc22ReTracks_number%d",j));
+		profTemp = (TProfile*) lPID->FindObject(Form("fc22Tracks_gap-1_number%d",j));
 		hGFKTracksRefTwo[j] = (TH1D*) profTemp->ProjectionX();
+
+		profTemp = (TProfile*) lPID->FindObject(Form("fc22Tracks_gap00_number%d",j));
+		hGFKTracksRefTwoGap00[j] = (TH1D*) profTemp->ProjectionX();
+
+		profTemp = (TProfile*) lPID->FindObject(Form("fc22Tracks_gap01_number%d",j));
+		hGFKTracksRefTwoGap10[j] = (TH1D*) profTemp->ProjectionX();
 		//hGFKTracksRefTwo[j]->Write(Form("hGFKTrackRefTwo_sample%d",j));
 
-		profTemp = (TProfile*) lPID->FindObject(Form("fc42ReTracks_number%d",j));
+		profTemp = (TProfile*) lPID->FindObject(Form("fc32Tracks_gap-1_number%d",j));
+		hGFKTracksRefTwo3[j] = (TH1D*) profTemp->ProjectionX();
+
+		profTemp = (TProfile*) lPID->FindObject(Form("fc42Tracks_gap-1_number%d",j));
+		hGFKTracksRefTwo4[j] = (TH1D*) profTemp->ProjectionX();
+
+		profTemp = (TProfile*) lPID->FindObject(Form("fc24Tracks_gap-1_number%d",j));
 		hGFKTracksRefFour[j] = (TH1D*) profTemp->ProjectionX();
 		//hGFKTracksRefFour[j]->Write(Form("hGFKTrackRefFour_sample%d",j));
 		//hGFKTracksCn4[j] = EstimateCn4(hGFKTracksRefTwo[j], hGFKTracksRefFour[j]);
 		//hGFKTracksCn4[j]->Write();
 
+		profTemp = (TProfile*) lPID->FindObject(Form("fc34Tracks_gap-1_number%d",j));
+		hGFKTracksRefFour3[j] = (TH1D*) profTemp->ProjectionX();
+
+		profTemp = (TProfile*) lPID->FindObject(Form("fc44Tracks_gap-1_number%d",j));
+		hGFKTracksRefFour4[j] = (TH1D*) profTemp->ProjectionX();
+		
 		for(Short_t i(0); i < fiNumBinsCent; i++)
 		{
-			profTemp = (TProfile*) lPID->FindObject(Form("fd22RePion_cent%d_number%d",i,j));
+			profTemp = (TProfile*) lPID->FindObject(Form("fd22Pion_gap-1_cent%d_number%d",i,j));
 			hGFKPionsTwo[i][j] = (TH1D*) profTemp->ProjectionX();
 			//hGFKPionsTwo[i][j]->Write(Form("hGFKPionsTwo_cent%d_sample%d",i,j));
 
-			profTemp = (TProfile*) lPID->FindObject(Form("fd42RePion_cent%d_number%d",i,j));
+			profTemp = (TProfile*) lPID->FindObject(Form("fd24Pion_gap-1_cent%d_number%d",i,j));
 			hGFKPionsFour[i][j] = (TH1D*) profTemp->ProjectionX();
 			//hGFKPionsFour[i][j]->Write(Form("hGFKPionsFour_cent%d_sample%d",i,j));
 
-			profTemp = (TProfile*) lPID->FindObject(Form("fd22ReKaon_cent%d_number%d",i,j));
+			profTemp = (TProfile*) lPID->FindObject(Form("fd22Kaon_gap-1_cent%d_number%d",i,j));
 			hGFKKaonsTwo[i][j] = (TH1D*) profTemp->ProjectionX();
 			
-			profTemp = (TProfile*) lPID->FindObject(Form("fd42ReKaon_cent%d_number%d",i,j));
+			profTemp = (TProfile*) lPID->FindObject(Form("fd24Kaon_gap-1_cent%d_number%d",i,j));
 			hGFKKaonsFour[i][j] = (TH1D*) profTemp->ProjectionX();
 
-			profTemp = (TProfile*) lPID->FindObject(Form("fd22ReProton_cent%d_number%d",i,j));
+			profTemp = (TProfile*) lPID->FindObject(Form("fd22Proton_gap-1_cent%d_number%d",i,j));
 			hGFKProtonsTwo[i][j] = (TH1D*) profTemp->ProjectionX();
 			
-			profTemp = (TProfile*) lPID->FindObject(Form("fd42ReProton_cent%d_number%d",i,j));
+			profTemp = (TProfile*) lPID->FindObject(Form("fd24Proton_gap-1_cent%d_number%d",i,j));
 			hGFKProtonsFour[i][j] = (TH1D*) profTemp->ProjectionX();
 		}
+
 	}		
 
 	// loaded
 
 	// estimating 4 particle cummulants dn4, cn4
 	TH1D* hGFKTracksCn4[10] = {0x0};	// reference cn4 
+	TH1D* hGFKTracksC34[10] = {0x0};	// reference cn4 
+	TH1D* hGFKTracksC44[10] = {0x0};	// reference cn4 
+
 	TH1D* hGFKPionsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
 	TH1D* hGFKKaonsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
 	TH1D* hGFKProtonsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
@@ -183,6 +213,8 @@ void ProcessFlow::Run()
 	for(Short_t j(0); j < fiNumSamples; j++)
 	{
 		hGFKTracksCn4[j] = EstimateCn4(hGFKTracksRefTwo[j], hGFKTracksRefFour[j]);
+		hGFKTracksC34[j] = EstimateCn4(hGFKTracksRefTwo3[j], hGFKTracksRefFour3[j]);
+		hGFKTracksC44[j] = EstimateCn4(hGFKTracksRefTwo4[j], hGFKTracksRefFour4[j]);
 		//hGFKTracksCn4[j]->Write(Form("GFKTracksCn4_sample%d",j));
 
 		for(Short_t i(0); i < fiNumBinsCent; i++)
@@ -196,7 +228,13 @@ void ProcessFlow::Run()
 	
 	// estimating v22, v24, v'22, v'24
 	TH1D* hGFKRefv22[10] = {0x0};
+	TH1D* hGFKRefv22Gap00[10] = {0x0};
+	TH1D* hGFKRefv22Gap10[10] = {0x0};
+	TH1D* hGFKRefv32[10] = {0x0};
+	TH1D* hGFKRefv42[10] = {0x0};
 	TH1D* hGFKRefv24[10] = {0x0};
+	TH1D* hGFKRefv34[10] = {0x0};
+	TH1D* hGFKRefv44[10] = {0x0};
 	TH1D* hGFKPionsDiffv22[10][10] = {0x0};
 	TH1D* hGFKPionsDiffv24[10][10] = {0x0};
 	TH1D* hGFKKaonsDiffv22[10][10] = {0x0};
@@ -209,8 +247,20 @@ void ProcessFlow::Run()
 	{
 		hGFKRefv22[j] = (TH1D*) hGFKTracksRefTwo[j]->Clone(Form("hGFKRefv22_sample%d",j));
 		hGFKRefv22[j]->SetTitle(Form("Tracks: v_{2}{2} ref noGap sample %d",j));
+		hGFKRefv22Gap00[j] = (TH1D*) hGFKTracksRefTwoGap00[j]->Clone(Form("hGFKRefv22_Gap00_sample%d",j));
+		hGFKRefv22Gap00[j]->SetTitle(Form("Tracks: v_{2}{2} ref Gap)) sample %d",j));
+		hGFKRefv22Gap10[j] = (TH1D*) hGFKTracksRefTwoGap10[j]->Clone(Form("hGFKRefv22_Gap10_sample%d",j));
+		hGFKRefv22Gap10[j]->SetTitle(Form("Tracks: v_{2}{2} ref Gap10 sample %d",j));
+		hGFKRefv32[j] = (TH1D*) hGFKTracksRefTwo3[j]->Clone(Form("hGFKRefv32_sample%d",j));
+		hGFKRefv32[j]->SetTitle(Form("Tracks: v_{3}{2} ref noGap sample %d",j));
+		hGFKRefv42[j] = (TH1D*) hGFKTracksRefTwo4[j]->Clone(Form("hGFKRefv42_sample%d",j));
+		hGFKRefv42[j]->SetTitle(Form("Tracks: v_{4}{2} ref noGap sample %d",j));
 		hGFKRefv24[j] = (TH1D*) hGFKTracksRefFour[j]->Clone(Form("hGFKRefv24_sample%d",j));
 		hGFKRefv24[j]->SetTitle(Form("Tracks: v_{2}{4} ref noGap sample %d",j));
+		hGFKRefv34[j] = (TH1D*) hGFKTracksRefFour3[j]->Clone(Form("hGFKRefv34_sample%d",j));
+		hGFKRefv34[j]->SetTitle(Form("Tracks: v_{3}{4} ref noGap sample %d",j));
+		hGFKRefv44[j] = (TH1D*) hGFKTracksRefFour4[j]->Clone(Form("hGFKRefv44_sample%d",j));
+		hGFKRefv44[j]->SetTitle(Form("Tracks: v_{4}{4} ref noGap sample %d",j));
 
 		for(Short_t i(0); i < fiNumBinsCent; i++)
 		{
@@ -218,9 +268,47 @@ void ProcessFlow::Run()
 			hGFKRefv22[j]->SetBinContent(i+1,TMath::Sqrt(dValue));
 			hGFKRefv22[j]->SetBinError(i+1,0);
 
+			dValue = hGFKTracksRefTwoGap00[j]->GetBinContent(i+1);
+			hGFKRefv22Gap00[j]->SetBinContent(i+1,TMath::Sqrt(dValue));
+			hGFKRefv22Gap00[j]->SetBinError(i+1,0);\
+
+			dValue = hGFKTracksRefTwoGap10[j]->GetBinContent(i+1);
+			hGFKRefv22Gap10[j]->SetBinContent(i+1,TMath::Sqrt(dValue));
+			hGFKRefv22Gap10[j]->SetBinError(i+1,0);
+
+			dValue = hGFKTracksRefTwo3[j]->GetBinContent(i+1);
+			hGFKRefv32[j]->SetBinContent(i+1,TMath::Sqrt(dValue));
+			hGFKRefv32[j]->SetBinError(i+1,0);
+
+			dValue = hGFKTracksRefTwo4[j]->GetBinContent(i+1);
+			hGFKRefv42[j]->SetBinContent(i+1,TMath::Sqrt(dValue));
+			hGFKRefv42[j]->SetBinError(i+1,0);
+
 			dValue = hGFKTracksCn4[j]->GetBinContent(i+1);
 			hGFKRefv24[j]->SetBinContent(i+1,TMath::Power(-dValue,0.25));
 			hGFKRefv24[j]->SetBinError(i+1,0);
+
+			dValue = hGFKTracksC34[j]->GetBinContent(i+1);		
+			if(dValue < 0)
+			{
+				hGFKRefv34[j]->SetBinContent(i+1,TMath::Power(-dValue,0.25));
+			}
+			else
+			{
+				hGFKRefv34[j]->SetBinContent(i+1,10);
+			}
+			hGFKRefv34[j]->SetBinError(i+1,0);
+
+			dValue = hGFKTracksC44[j]->GetBinContent(i+1);
+			if(dValue < 0)
+			{
+				hGFKRefv44[j]->SetBinContent(i+1,TMath::Power(-dValue,0.25));
+			}
+			else
+			{
+				hGFKRefv44[j]->SetBinContent(i+1,10);
+			}
+			hGFKRefv44[j]->SetBinError(i+1,0);
 
 			hGFKPionsDiffv22[i][j] = (TH1D*) hGFKPionsTwo[i][j]->Clone(Form("hGFKPionsDiffv22_sample%d",j));
 			hGFKPionsDiffv22[i][j]->SetTitle(Form("#pi: v'_{2}{2} diff cent %d sample %d",i,j));
@@ -290,7 +378,13 @@ void ProcessFlow::Run()
 
 	// desampling
 	TList* lRefv22 = new TList();
+	TList* lRefv22Gap00 = new TList();
+	TList* lRefv22Gap10 = new TList();
+	TList* lRefv32 = new TList();
+	TList* lRefv42 = new TList();
 	TList* lRefv24 = new TList();
+	TList* lRefv34 = new TList();
+	TList* lRefv44 = new TList();
 	TList* lPionsDiffv22 = new TList();
 	TList* lPionsDiffv24 = new TList();
 	TList* lKaonsDiffv22 = new TList();
@@ -312,14 +406,32 @@ void ProcessFlow::Run()
 	for(Short_t j(0); j < fiNumSamples; j++)
 	{
 		lRefv22->Add(hGFKRefv22[j]);
+		lRefv22Gap00->Add(hGFKRefv22Gap00[j]);
+		lRefv22Gap10->Add(hGFKRefv22Gap10[j]);
+		lRefv32->Add(hGFKRefv32[j]);
+		lRefv42->Add(hGFKRefv42[j]);
 		lRefv24->Add(hGFKRefv24[j]);
+		lRefv34->Add(hGFKRefv34[j]);
+		lRefv44->Add(hGFKRefv44[j]);
 	}
 
 	DesampleList(lRefv22,fiNumSamples);
+	DesampleList(lRefv22Gap00,fiNumSamples);
+	DesampleList(lRefv22Gap10,fiNumSamples);
+	DesampleList(lRefv32,fiNumSamples);
+	DesampleList(lRefv42,fiNumSamples);
 	DesampleList(lRefv24,fiNumSamples);
+	DesampleList(lRefv34,fiNumSamples);
+	DesampleList(lRefv44,fiNumSamples);
 
 	(lRefv22->Last())->Write("Refv22_Tracks");
+	(lRefv22Gap00->Last())->Write("Refv22_Gap00_Tracks");
+	(lRefv22Gap10->Last())->Write("Refv22_Gap10_Tracks");
+	(lRefv32->Last())->Write("Refv32_Tracks");
+	(lRefv42->Last())->Write("Refv42_Tracks");
 	(lRefv24->Last())->Write("Refv24_Tracks");
+	(lRefv34->Last())->Write("Refv34_Tracks");
+	(lRefv44->Last())->Write("Refv44_Tracks");
 	
 	// pt diff
 	for(Short_t i(0); i < fiNumBinsCent; i++)
@@ -388,7 +500,13 @@ void ProcessFlow::Run()
 	}
 	
 	delete lRefv22;
+	delete lRefv22Gap00;
+	delete lRefv22Gap10;
+	delete lRefv32;
+	delete lRefv42;
 	delete lRefv24;
+	delete lRefv34;
+	delete lRefv44;
 	delete lPionsDiffv22;
 	delete lPionsDiffv24;
 	delete lKaonsDiffv22;

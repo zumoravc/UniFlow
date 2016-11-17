@@ -8,26 +8,27 @@ TGraphErrors* Kv2_1020_QC4(Int_t color=1, Int_t marker=20);
 
 void PlotPID()
 {
-	TFile* fInput = new TFile("~/NBI/Flow/classProcess/ProcessedFlow.root","READ");
+	TFile* fInput = new TFile("~/NBI/Flow/classProcess/ProcessFlow_FB768_GFK.root","READ");
 	fInput->cd();
 	//fInput->ls();
-
-	//TGraphErrors* Kv2_1020_QC2 = Kv2_1020_QC2();
+/*
+	TGraphErrors* Kv2_1020_QC2 = Kv2_1020_QC2();
 	TGraphAsymmErrors* v2Pion1020 = v2Pion1020();	
 	TGraphAsymmErrors* v2Kaon1020 = v2Kaon1020();	
 	TGraphAsymmErrors* v2aProton1020 = v2Antiproton1020();
   TGraphErrors* Kv2_1020_QC4 = Kv2_1020_QC4();
+*/
 
 	TCanvas* Diff22_cent3 = PlotCent(2,"Diffv22");
 	Diff22_cent3->cd();
-	v2Pion1020->Draw("same");
-	v2Kaon1020->Draw("same");
-	v2aProton1020->Draw("same");
+	//v2Pion1020->Draw("same");
+	//v2Kaon1020->Draw("same");
+	//v2aProton1020->Draw("same");
 
 	//Kv2_1020_QC2->Draw("same");
 	TCanvas* Diff24_cent3 = PlotCent(2,"Diffv24");
-  Diff24_cent3->cd();
-  Kv2_1020_QC4->Draw("same");
+  //Diff24_cent3->cd();
+  //Kv2_1020_QC4->Draw("same");
 /*
 	const Short_t iCent = 3;
 
