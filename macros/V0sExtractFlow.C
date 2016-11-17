@@ -26,7 +26,7 @@ void V0sExtractFlow(
 		fhChi2Ndf_Lambda[i] = new TH1D(Form("fhChi2Ndf_Lambda%d",i),Form("Lambda: Chi2 / NDF Cent %d",i),iNumPtBins,fPtBinEdges);	
 	}
 
-	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatio.C");
+	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatios.C");
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C");
 
 	TFile* fInput = new TFile(sInput.Data(),"READ");
