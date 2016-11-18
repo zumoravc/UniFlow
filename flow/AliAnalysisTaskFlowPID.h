@@ -98,33 +98,33 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
         // Katarina's implementation of GF
         void GFKFillRefVectors(TClonesArray &array, const Double_t dEtaGap); // fill Q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
-        void GFKFillVectors(TClonesArray &array, const Double_t dEtaGap, const Bool_t bTracks = kTRUE); // fill p,q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
+        void GFKFillVectors(TClonesArray &array, const Double_t dEtaGap, const Int_t iPtBin, const Bool_t bTracks = kTRUE); // fill p,q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
         TComplex Q(int n, int p);
         TComplex QGapPos(int n, int p);
         TComplex QGapNeg(int n, int p);
-        TComplex p(int n, int p, int pt);
-        TComplex pGapPos(int n, int p, int pt);
-        TComplex pGapNeg(int n, int p, int pt);
-        TComplex q(int n, int p, int pt);
+        TComplex p(int n, int p);
+        TComplex pGapPos(int n, int p);
+        TComplex pGapNeg(int n, int p);
+        TComplex q(int n, int p);
         TComplex* Two(int n1, int n2);
         TComplex* TwoGap(int n1, int n2);
-        TComplex* TwoDiff(int n1, int n2, int pt);
-        TComplex* TwoDiffGapPos(int n1, int n2, int pt);
-        TComplex* TwoDiffGapNeg(int n1, int n2, int pt);
+        TComplex* TwoDiff(int n1, int n2);
+        TComplex* TwoDiffGapPos(int n1, int n2);
+        TComplex* TwoDiffGapNeg(int n1, int n2);
         TComplex* Four(int n1, int n2, int n3, int n4);
         TComplex* FourGap(int n1, int n2, int n3, int n4);
-        TComplex* FourDiff(int n1, int n2, int n3, int n4, int pt);
+        TComplex* FourDiff(int n1, int n2, int n3, int n4);
         void GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap);
-        void GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Neg, TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap);
+        void GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Neg, TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap, const Int_t iPtBin);
         void DoGenFramKatarina();
         const static Int_t fGFKNumSamples = 5;
         
         const static Int_t fGFKNumVectors = 2; // pos and negative part of Q & p & q vectors
         TComplex Qvector[fMaxNumHarmonics][fMaxNumWeights]; //
-        TComplex pvector[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
-        TComplex qvector[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
+        TComplex pvector[fMaxNumHarmonics][fMaxNumWeights]; //
+        TComplex qvector[fMaxNumHarmonics][fMaxNumWeights]; //
         TComplex QvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights]; //
-        TComplex pvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
+        TComplex pvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights]; //
         //TComplex qvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
         
         TProfile*           fcn2Tracks[fNumEtaGap][fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
