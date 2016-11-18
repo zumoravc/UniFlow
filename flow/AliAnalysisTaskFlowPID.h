@@ -115,28 +115,27 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TComplex* FourGap(int n1, int n2, int n3, int n4);
         TComplex* FourDiff(int n1, int n2, int n3, int n4, int pt);
         void GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap);
-        void GFKDoDiffFlow(TProfile* prof2,TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap);
+        void GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Neg, TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap);
         void DoGenFramKatarina();
         const static Int_t fGFKNumSamples = 5;
         
+        const static Int_t fGFKNumVectors = 2; // pos and negative part of Q & p & q vectors
         TComplex Qvector[fMaxNumHarmonics][fMaxNumWeights]; //
-        TComplex QvectorGapPos[fMaxNumHarmonics][fMaxNumWeights]; //
-        TComplex QvectorGapNeg[fMaxNumHarmonics][fMaxNumWeights]; //
         TComplex pvector[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
-        TComplex pvectorGapPos[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
-        TComplex pvectorGapNeg[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
         TComplex qvector[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
-        TComplex qvectorGapPos[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
-        TComplex qvectorGapNeg[fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
-
+        TComplex QvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights]; //
+        TComplex pvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
+        //TComplex qvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
+        
         TProfile*           fcn2Tracks[fNumEtaGap][fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*           fcn4Tracks[fNumEtaGap][fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
         
-        TProfile*           fdn2Pion[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
+        TProfile*           fdn2Pion[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
+        TProfile*           fdn2Kaon[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
+        TProfile*           fdn2Proton[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
+        
         TProfile*           fdn4Pion[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 4 particle cumulant
-        TProfile*           fdn2Kaon[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
         TProfile*           fdn4Kaon[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];  //! 4 particle cumulant
-        TProfile*           fdn2Proton[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
         TProfile*           fdn4Proton[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 4 particle cumulant
 
 
