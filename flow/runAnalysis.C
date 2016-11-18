@@ -66,7 +66,7 @@ void runAnalysis()
     taskFlowPID->SetDoFlow(kTRUE);
     taskFlowPID->SetDiffFlow(kTRUE);
     taskFlowPID->SetPID(kTRUE);
-    taskFlowPID->SetDoV0s(kFALSE);
+    taskFlowPID->SetDoV0s(kTRUE);
     taskFlowPID->SetSampling(kTRUE);
     taskFlowPID->SetPionNumSigmasMax(3);
     taskFlowPID->SetKaonNumSigmasMax(3);

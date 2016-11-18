@@ -98,7 +98,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
         // Katarina's implementation of GF
         void GFKFillRefVectors(TClonesArray &array, const Double_t dEtaGap); // fill Q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
-        void GFKFillVectors(TClonesArray &array, const Double_t dEtaGap); // fill p,q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
+        void GFKFillVectors(TClonesArray &array, const Double_t dEtaGap, const Bool_t bTracks = kTRUE); // fill p,q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
         TComplex Q(int n, int p);
         TComplex QGapPos(int n, int p);
         TComplex QGapNeg(int n, int p);
@@ -133,12 +133,16 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile*           fdn2Pion[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
         TProfile*           fdn2Kaon[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
         TProfile*           fdn2Proton[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
-        
+
         TProfile*           fdn4Pion[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 4 particle cumulant
         TProfile*           fdn4Kaon[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];  //! 4 particle cumulant
         TProfile*           fdn4Proton[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 4 particle cumulant
 
-
+        TProfile2D*         fdn2K0s[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*         fdn2Lambda[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*         fdn4K0s[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*         fdn4Lambda[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];      //! selected K0s candidates Minv, pT v2 profile
+        
         // end of Katarina's implementation
                 
 		void                    FillEventQA(const AliAODEvent* event, const Short_t iQAindex);
