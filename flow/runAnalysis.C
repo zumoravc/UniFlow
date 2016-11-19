@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/GFK-diff";
+    TString sWorkDir = "0-GFK-PbPb-full";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -63,14 +63,14 @@ void runAnalysis()
     taskFlowPID->SetTrackPtMin(0.1);
     taskFlowPID->SetNumTPCclsMin(70);
     taskFlowPID->SetTrackFilterBit(768);
-    taskFlowPID->SetDoFlow(kTRUE);
-    taskFlowPID->SetDiffFlow(kTRUE);
-    taskFlowPID->SetPID(kTRUE);
-    taskFlowPID->SetDoV0s(kTRUE);
-    taskFlowPID->SetSampling(kTRUE);
     taskFlowPID->SetPionNumSigmasMax(3);
     taskFlowPID->SetKaonNumSigmasMax(3);
     taskFlowPID->SetProtonNumSigmasMax(3);
+    //taskFlowPID->SetDoFlow(kTRUE);
+    //taskFlowPID->SetDiffFlow(kTRUE);
+    taskFlowPID->SetPID(kTRUE);
+    taskFlowPID->SetDoV0s(kTRUE);
+    taskFlowPID->SetSampling(kTRUE);
     taskFlowPID->SetDoFlowGenFramKatarina(kTRUE);
     taskFlowPID->SetDoOldFlow(kFALSE);
     // V0 selection cuts
@@ -87,7 +87,7 @@ void runAnalysis()
     taskFlowPID->SetV0sMotherEtaMax(0.8);
     taskFlowPID->SetV0sMotherRapMax(0.);
     taskFlowPID->SetV0sMotherPtMin(0.2);
-    taskFlowPID->SetV0sMotherPtMax(5.);
+    taskFlowPID->SetV0sMotherPtMax(10.);
     taskFlowPID->SetV0sK0sCPAMin(0.998);
     taskFlowPID->SetV0sLambdaCPAMin(0.998);
     taskFlowPID->SetV0sK0sNumTauMax(3.);
@@ -207,9 +207,9 @@ void runAnalysis()
         // all
         //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871, 138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
         // part1
-        //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
+        Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
         //part2
-        Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
+        // Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
         // testing sample
         //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662};
 

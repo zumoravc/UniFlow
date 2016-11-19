@@ -63,7 +63,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void					SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
 
-        const static Int_t 		fNumPtBins = 24;			// number of pT bins used for pT-differential flow
+        const static Int_t 		fNumPtBins = 29;			// number of pT bins used for pT-differential flow
         static Double_t			fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumMinvFlowBinsK0s = 12;  // number of inv. mass bin for differential flow plots (K0s)
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
@@ -246,13 +246,13 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t 				fV0MinMassLambda;		// Upper limit of Lambda inv. mass window
     
         TList*                  fOutListCumulants; //! list with all cumulants
-        TList*                  fListCumRef[fNumEtaGap]; // list of particle cumulants for each eta gap
-        TList*                  fListCumTracks[fNumEtaGap]; // list of particle cumulants for each eta gap
-        TList*                  fListCumPions[fNumEtaGap]; // list of particle cumulants for each eta gap
-        TList*                  fListCumKaons[fNumEtaGap]; // list of particle cumulants for each eta gap
-        TList*                  fListCumProtons[fNumEtaGap]; // list of particle cumulants for each eta gap
-        TList*                  fListCumK0s[fNumEtaGap]; // list of particle cumulants for each eta gap
-        TList*                  fListCumLambda[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumRef[fNumEtaGap]; //! list of particle cumulants for each eta gap
+        TList*                  fListCumTracks[fNumEtaGap]; //! list of particle cumulants for each eta gap
+        TList*                  fListCumPions[fNumEtaGap]; //! list of particle cumulants for each eta gap
+        TList*                  fListCumKaons[fNumEtaGap]; //! list of particle cumulants for each eta gap
+        TList*                  fListCumProtons[fNumEtaGap]; //! list of particle cumulants for each eta gap
+        TList*                  fListCumK0s[fNumEtaGap]; //! list of particle cumulants for each eta gap
+        TList*                  fListCumLambda[fNumEtaGap]; //! list of particle cumulants for each eta gap
         
         TList*                  fOutListEvents;    //! events related output list
         TList*                  fOutListTracks;    //! (ref.) tracks related output list
@@ -390,7 +390,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 4);
+        ClassDef(AliAnalysisTaskFlowPID, 6);
 };
 
 #endif

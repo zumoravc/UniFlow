@@ -50,7 +50,7 @@ class AliAnalysisTaskFlowPID;
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
 //Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0}; // You, Katarina binning
-Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8}; // PID flow v2 JHEP paper
+Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8,4.2,4.6,5.,5.5,6}; // PID flow v2 JHEP paper
 Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 //Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.425,0.45,0.47,0.49,0.495,0.5,0.505,0.51,0.53,0.55,0.575,0.6};
@@ -614,7 +614,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
     fListCumLambda[i] = new TList();
     fListCumLambda[i]->SetOwner(kTRUE);
-    fListCumLambda[i]->SetName(Form("fListRef_Gap%02.2g",10*fEtaGap[i]));
+    fListCumLambda[i]->SetName(Form("fListLambda_Gap%02.2g",10*fEtaGap[i]));
     fOutListCumulants->Add(fListCumLambda[i]);
   }
 
@@ -1253,6 +1253,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   // all the possible tracks & candidates (passing selection criteria) are filtered and filled and relevant TClonesArray
 
+  if(fDoGenFramKat) // do flow according to Gen Framework implemented by Kat.
+  {
+    DoGenFramKatarina();
+  }
+
+
+
   if(fOldFlow)
   {
     
@@ -1297,10 +1304,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     }
   } // end of if(DoOldFlow)
 
-  if(fDoGenFramKat) // do flow according to Gen Framework implemented by Kat.
-  {
-    DoGenFramKatarina();
-  }
   
   PostData(1, fOutListCumulants);           
   PostData(2, fOutListEvents);           
