@@ -72,6 +72,7 @@ void runAnalysis()
     taskFlowPID->SetKaonNumSigmasMax(3);
     taskFlowPID->SetProtonNumSigmasMax(3);
     taskFlowPID->SetDoFlowGenFramKatarina(kTRUE);
+    taskFlowPID->SetDoOldFlow(kFALSE);
     // V0 selection cuts
     taskFlowPID->SetV0sOnFly(kFALSE);
     taskFlowPID->SetV0sTPCRefit(kTRUE);

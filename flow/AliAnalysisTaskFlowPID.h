@@ -29,6 +29,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetPID(Bool_t pid) { fPID = pid; }
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
         void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
+        void                    SetDoOldFlow(Bool_t oldFlow) { fOldFlow = oldFlow; } // do old flow (before Katarinas GFK)
         // track setters
         void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
@@ -176,6 +177,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
         Bool_t                  fPID;                       // Do PID ?
         Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
+        Bool_t                  fOldFlow; // switch to old flow analysis
         //cuts & selection: events & tracks
         Double_t                fPVtxCutZ;          // (cm) PV z cut
         UInt_t                  fTrackFilterBit; // tracks filter bit 
