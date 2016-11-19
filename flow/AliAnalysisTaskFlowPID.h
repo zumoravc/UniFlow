@@ -245,11 +245,20 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t 				fV0MaxMassLambda;		// Upper limit of Lambda inv. mass window
         Double_t 				fV0MinMassLambda;		// Upper limit of Lambda inv. mass window
     
+        TList*                  fOutListCumulants; //! list with all cumulants
+        TList*                  fListCumRef[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumTracks[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumPions[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumKaons[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumProtons[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumK0s[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumLambda[fNumEtaGap]; // list of particle cumulants for each eta gap
+        
         TList*                  fOutListEvents;    //! events related output list
         TList*                  fOutListTracks;    //! (ref.) tracks related output list
         TList*                  fOutListPID;    //! PID (pi,K,p) tracks related output list
         TList*                  fOutListV0s;    //! V0s (K0s,Lambda) related output list
-        TList*                  fOutListQA;	    //! additional QA output list
+        TList*                  fOutListQA;     //! additional QA output list
 
         // event histos
         TH1D*					fEventMult;			 //! selected events multiplicity distribution
