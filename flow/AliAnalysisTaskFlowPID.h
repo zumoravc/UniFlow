@@ -28,6 +28,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void                    SetPID(Bool_t pid) { fPID = pid; }
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
+        void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
+        void                    SetDoOldFlow(Bool_t oldFlow) { fOldFlow = oldFlow; } // do old flow (before Katarinas GFK)
         // track setters
         void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
@@ -69,10 +71,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
         const static Int_t 		fNumCentBins = 9;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
         static Double_t			fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
-        const static Int_t      fNumHarmonics = 1; // number of harmonics
+        const static Int_t      fNumHarmonics = 3; // number of harmonics
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-        const static Int_t      fNumEtaGap = 5; // number of harmonics
+        const static Int_t      fNumEtaGap = 4; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
+        const static Int_t      fMaxNumHarmonics = 8; // maximal number of harmonics for Q,p,q vector arrays
+        const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
 		Bool_t                  IsTrackSelected(const AliAODTrack* track);
@@ -92,6 +96,62 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    EstimateRefCumulant(const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profile = 0x0);
         void                    EstimatePtDiffCumulant(TClonesArray &array, const Float_t dEtaGap = 0.9, const Short_t iHarm = 2, TProfile* profilePos = 0x0, TProfile* profileNeg = 0x0);
         void                    EstimateV0Cumulant(const Short_t iEtaGapIndex = 0, const Short_t iHarmonicsIndex = 0, const Short_t iSampleIndex = 0);
+
+        // Katarina's implementation of GF
+        void GFKFillRefVectors(TClonesArray &array, const Double_t dEtaGap); // fill Q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
+        void GFKFillVectors(TClonesArray &array, const Int_t iEtaGapIndex, const Int_t iPtBin, const Int_t iV0s = 0, const Int_t iMass = 0); // fill p,q vectors for all harmonics (given by fMaxNumHarmonics) and all powers of weight (given by fMaxNumWeights)
+        TComplex Q(int n, int p);
+        TComplex QGapPos(int n, int p);
+        TComplex QGapNeg(int n, int p);
+        TComplex p(int n, int p);
+        TComplex pGapPos(int n, int p);
+        TComplex pGapNeg(int n, int p);
+        TComplex q(int n, int p);
+        TComplex* Two(int n1, int n2);
+        TComplex* TwoGap(int n1, int n2);
+        TComplex* TwoDiff(int n1, int n2);
+        TComplex* TwoDiffGapPos(int n1, int n2);
+        TComplex* TwoDiffGapNeg(int n1, int n2);
+        TComplex* Four(int n1, int n2, int n3, int n4);
+        TComplex* FourGap(int n1, int n2, int n3, int n4);
+        TComplex* FourDiff(int n1, int n2, int n3, int n4);
+        void GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap);
+        void GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Neg, TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap, const Int_t iPtBin);
+        void GFKDoDiffFlowV0s(TProfile2D* prof2Pos, TProfile2D* prof2Neg, TProfile2D* prof4, const Short_t iHarm, const Double_t dEtaGap, const Int_t iPtBin, const Double_t dMassBin);
+        void DoGenFramKatarina();
+        const static Int_t fGFKNumSamples = 5;
+        
+        const static Int_t fGFKNumVectors = 2; // pos and negative part of Q & p & q vectors
+        TComplex Qvector[fMaxNumHarmonics][fMaxNumWeights]; //
+        TComplex pvector[fMaxNumHarmonics][fMaxNumWeights]; //
+        TComplex qvector[fMaxNumHarmonics][fMaxNumWeights]; //
+        TComplex QvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights]; //
+        TComplex pvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights]; //
+        //TComplex qvectorGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights][fNumPtBins]; //
+        
+        TProfile*           fcn2Tracks[fNumEtaGap][fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*           fcn4Tracks[fNumEtaGap][fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        
+        TProfile*           fdn2Tracks[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*           fdn4Tracks[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        
+        TProfile*           fdn2Pion[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
+        TProfile*           fdn2Kaon[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
+        TProfile*           fdn2Proton[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
+
+        TProfile*           fdn4Pion[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 4 particle cumulant
+        TProfile*           fdn4Kaon[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];  //! 4 particle cumulant
+        TProfile*           fdn4Proton[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 4 particle cumulant
+
+        TProfile2D*         fdn2K0s[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*         fdn2Lambda[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*         fdn4K0s[fNumEtaGap][fNumHarmonics][fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        TProfile2D*         fdn4Lambda[fNumEtaGap][fNumHarmonics][fNumCentBins];      //! selected K0s candidates Minv, pT v2 profile
+        
+        TH2D*               fInvMassPtK0s[fGFKNumVectors][fNumEtaGap][fNumCentBins]; //! 
+        TH2D*               fInvMassPtLambda[fGFKNumVectors][fNumEtaGap][fNumCentBins]; //!
+
+        // end of Katarina's implementation
                 
 		void                    FillEventQA(const AliAODEvent* event, const Short_t iQAindex);
         void                    FillTrackQA(const AliAODTrack* track, const Short_t iQAindex);
@@ -116,6 +176,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fDoV0s;                       // Do V0s analysis?
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
         Bool_t                  fPID;                       // Do PID ?
+        Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
+        Bool_t                  fOldFlow; // switch to old flow analysis
         //cuts & selection: events & tracks
         Double_t                fPVtxCutZ;          // (cm) PV z cut
         UInt_t                  fTrackFilterBit; // tracks filter bit 
@@ -183,11 +245,20 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t 				fV0MaxMassLambda;		// Upper limit of Lambda inv. mass window
         Double_t 				fV0MinMassLambda;		// Upper limit of Lambda inv. mass window
     
+        TList*                  fOutListCumulants; //! list with all cumulants
+        TList*                  fListCumRef[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumTracks[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumPions[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumKaons[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumProtons[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumK0s[fNumEtaGap]; // list of particle cumulants for each eta gap
+        TList*                  fListCumLambda[fNumEtaGap]; // list of particle cumulants for each eta gap
+        
         TList*                  fOutListEvents;    //! events related output list
         TList*                  fOutListTracks;    //! (ref.) tracks related output list
         TList*                  fOutListPID;    //! PID (pi,K,p) tracks related output list
         TList*                  fOutListV0s;    //! V0s (K0s,Lambda) related output list
-        TList*                  fOutListQA;	    //! additional QA output list
+        TList*                  fOutListQA;     //! additional QA output list
 
         // event histos
         TH1D*					fEventMult;			 //! selected events multiplicity distribution

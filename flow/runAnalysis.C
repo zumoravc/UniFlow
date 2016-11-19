@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "V0s/PID-v22";
+    TString sWorkDir = "V0s/GFK-diff";
     TString sOutDir = "outFlow";
     
     // since we will compile a class, tell root where to look for headers  
@@ -66,11 +66,13 @@ void runAnalysis()
     taskFlowPID->SetDoFlow(kTRUE);
     taskFlowPID->SetDiffFlow(kTRUE);
     taskFlowPID->SetPID(kTRUE);
-    taskFlowPID->SetDoV0s(kFALSE);
+    taskFlowPID->SetDoV0s(kTRUE);
     taskFlowPID->SetSampling(kTRUE);
     taskFlowPID->SetPionNumSigmasMax(3);
     taskFlowPID->SetKaonNumSigmasMax(3);
     taskFlowPID->SetProtonNumSigmasMax(3);
+    taskFlowPID->SetDoFlowGenFramKatarina(kTRUE);
+    taskFlowPID->SetDoOldFlow(kFALSE);
     // V0 selection cuts
     taskFlowPID->SetV0sOnFly(kFALSE);
     taskFlowPID->SetV0sTPCRefit(kTRUE);
