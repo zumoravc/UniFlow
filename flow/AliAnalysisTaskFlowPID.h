@@ -131,6 +131,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile*           fcn2Tracks[fNumEtaGap][fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*           fcn4Tracks[fNumEtaGap][fNumHarmonics][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
         
+        TProfile*           fdn2Tracks[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        TProfile*           fdn4Tracks[fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples];                //! event averaged 2-particle correlation for reference flow <<2>> v2
+        
         TProfile*           fdn2Pion[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
         TProfile*           fdn2Kaon[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant
         TProfile*           fdn2Proton[fGFKNumVectors][fNumEtaGap][fNumHarmonics][fNumCentBins][fGFKNumSamples]; //! 2 particle cumulant

@@ -367,11 +367,13 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
         {
           for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
           {
+            fdn2Tracks[iVec][m][k][i][j] = 0x0;
             fdn2Pion[iVec][m][k][i][j] = 0x0;
             fdn2Kaon[iVec][m][k][i][j] = 0x0;
             fdn2Proton[iVec][m][k][i][j] = 0x0;
           }
 
+          fdn4Tracks[m][k][i][j] = 0x0;
           fdn4Pion[m][k][i][j] = 0x0;
           fdn4Kaon[m][k][i][j] = 0x0;
           fdn4Proton[m][k][i][j] = 0x0;
@@ -562,14 +564,14 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     {
       for(Int_t j(0); j < fNumSampleBins; j++)
       {
-        fcn2Tracks[m][i][j] = new TProfile(Form("fTracks_n%d2_gap%02.2g_number%d",fHarmonics[i], fEtaGap[m]*10, j), Form("Tracks: <<2>> ref harmonics %d Gap %g sample %d; cent",fHarmonics[i],fEtaGap[m],j), fNumCentBins,fCentBinEdges);
+        fcn2Tracks[m][i][j] = new TProfile(Form("fTracksRef_n%d2_gap%02.2g_number%d",fHarmonics[i], fEtaGap[m]*10, j), Form("Tracks: <<2>> ref harmonics %d Gap %g sample %d; cent",fHarmonics[i],fEtaGap[m],j), fNumCentBins,fCentBinEdges);
         fcn2Tracks[m][i][j]->Sumw2();
         fOutListPID->Add(fcn2Tracks[m][i][j]);
         // four particle cumulants does not have gap
         if(fEtaGap[m] >= -0.) // case with gap
           continue; 
 
-        fcn4Tracks[m][i][j] = new TProfile(Form("fTracks_n%d4_gap%02.2g_number%d",fHarmonics[i], fEtaGap[m]*10,j), Form("Tracks: <<4>> ref harmonics %d Gap %g sample %d; cent",fHarmonics[i],fEtaGap[m],j), fNumCentBins,fCentBinEdges);
+        fcn4Tracks[m][i][j] = new TProfile(Form("fTracksRef_n%d4_gap%02.2g_number%d",fHarmonics[i], fEtaGap[m]*10,j), Form("Tracks: <<4>> ref harmonics %d Gap %g sample %d; cent",fHarmonics[i],fEtaGap[m],j), fNumCentBins,fCentBinEdges);
         fcn4Tracks[m][i][j]->Sumw2();
         fOutListTracks->Add(fcn4Tracks[m][i][j]);
       }
@@ -626,6 +628,10 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
             if(fEtaGap[m] < 0. && iVec == 1) //only positive vectors for No Gap situation
               continue;
 
+            fdn2Tracks[iVec][m][k][i][j] = new TProfile(Form("fTracks_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i, j), Form("#Tracks: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
+            fdn2Tracks[iVec][m][k][i][j]->Sumw2();
+            fOutListTracks->Add(fdn2Tracks[iVec][m][k][i][j]);
+        
             fdn2Pion[iVec][m][k][i][j] = new TProfile(Form("fPion_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i, j), Form("#pi: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
             fdn2Pion[iVec][m][k][i][j]->Sumw2();
             fOutListPID->Add(fdn2Pion[iVec][m][k][i][j]);
@@ -643,6 +649,10 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
           // four particle cumulants does not have gap
           if(fEtaGap[m] >= -0.) // case with gap
             continue;
+
+          fdn4Tracks[m][k][i][j] = new TProfile(Form("fTracks_n%d4_gap%02.2g_cent%d_number%d", fHarmonics[k],fEtaGap[m]*10,i, j), Form("Tracks: <<4'>> harmonics %d Gap %g cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],i,j), fNumPtBins,fPtBinEdges);
+          fdn4Tracks[m][k][i][j]->Sumw2();
+          fOutListTracks->Add(fdn4Tracks[m][k][i][j]);
 
           fdn4Pion[m][k][i][j] = new TProfile(Form("fPion_n%d4_gap%02.2g_cent%d_number%d", fHarmonics[k],fEtaGap[m]*10,i, j), Form("#pi: <<4'>> harmonics %d Gap %g cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],i,j), fNumPtBins,fPtBinEdges);
           fdn4Pion[m][k][i][j]->Sumw2();
@@ -2865,6 +2875,12 @@ void AliAnalysisTaskFlowPID::DoGenFramKatarina()
     for(Int_t iPt(0); iPt < fNumPtBins; iPt++)
     {
       // fill p,q vectors
+
+      GFKFillVectors(fArrTracksFiltered,iEtaGap,iPt,0);
+      for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+      {
+        GFKDoDiffFlow(fdn2Tracks[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Tracks[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Tracks[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
+      }
 
       // pions
       GFKFillVectors(fArrPionFiltered,iEtaGap,iPt,0);
