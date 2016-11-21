@@ -44,7 +44,7 @@ public:
 		void Debug(TString sMethod, TString sMsg); // printf the msg as info
 
     Bool_t	Initialize(); // check array size, etc.
-    Bool_t	DesampleList(TList* inList, const Short_t iNumSamples); // estimate average of sigma from list of samples
+    Bool_t DesampleList(TList* inList, const Short_t iNumSamples); // estimate average of sigma from list of samples
     Bool_t ProcessRefFlow(const TList* listIn, TList* listOut, const Short_t iHarmonics, const Double_t dEtaGap); // desample reference flow (indipendent on ProcessList / not needed to run first)
     Bool_t 	ProcessList(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
     //TH1D*	EstimateCn2(const TH1D* hCum2); // estimate cn{2} out of <<2>>
@@ -362,6 +362,8 @@ void ProcessFlow::Run()
 			
 		for(Short_t iEtaGap(0); iEtaGap < fiNumEtaGaps; iEtaGap++)
 		{
+			Debug("","");
+
 			// estimate (desample) reference flow
 			bStatusProcess = ProcessRefFlow(listRef[iEtaGap], listOutRef[iHarmonics][iEtaGap],fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap]);
 			if(!bStatusProcess)
@@ -395,6 +397,26 @@ void ProcessFlow::Run()
 			}
 
 			ffOutputFile->cd();
+
+			if(fdEtaGaps[iEtaGap] < 0.) // NoGap case = Four particle cumulats are last (not the two = before last)
+			{
+				listOutRef[iHarmonics][iEtaGap]->Last()->Write(Form("hRef_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ));
+				listOutRef[iHarmonics][iEtaGap]->RemoveLast(); // should remove the last one from TList => now the cn2 is last 
+				/*
+				listOutTracks[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				listOutTracks[iHarmonics][iEtaGap]->RemoveLast();
+				
+				listOutPions[iHarmonics][iEtaGap]->Write(Form("Pions_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				listOutPions[iHarmonics][iEtaGap]->RemoveLast();
+				
+				listOutKaons[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				listOutKaons[iHarmonics][iEtaGap]->RemoveLast();
+				
+				listOutProtons[iHarmonics][iEtaGap]->Write(Form("Protons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				listOutProtons[iHarmonics][iEtaGap]->RemoveLast();
+				*/
+			}
+
 			listOutRef[iHarmonics][iEtaGap]->Last()->Write(Form("hRef_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ));
 			listOutTracks[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 			listOutPions[iHarmonics][iEtaGap]->Write(Form("Pions_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
@@ -425,6 +447,8 @@ void ProcessFlow::Run()
 //_____________________________________________________________________________
 Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Short_t iHarmonics, const Double_t dEtaGap)
 {
+	Debug("ProcessRefFlow",Form("Processing list with %d entries. First \"%s\"",listIn->GetEntries(),listIn->First()->GetName()));
+
 	// checking in/out lists
 	if(!listIn)
 	{
@@ -432,31 +456,95 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 		return kFALSE;
 	}
 
-	TProfile* profRef = 0x0;
-	TH1D* histTemp = 0x0;
-	TList* listTemp = new TList();
+	//listIn->ls();
+
+	TProfile* profRef2 = 0x0; // two particle cumulants
+	TProfile* profRef4 = 0x0; // four particle cumulants
+	TH1D* histTemp2 = 0x0;
+	TH1D* histTemp4 = 0x0;
+	TList* listTemp2 = new TList();
+	TList* listTemp4 = new TList();
+
+	Short_t iNumBinsX = 0;
+	Double_t dValue = 0;
+	Double_t dCum2 = 0, dCum4 = 0; // <<2>>,<<4>>
 
 	for(Short_t iSample(0); iSample < fiNumSamples; iSample++)
 	{
-		profRef = (TProfile*) listIn->FindObject(Form("fTracksRef_n%d2_gap%02.2g_number%d",iHarmonics,10*dEtaGap,iSample));
-		if(!profRef)
+		profRef2 = (TProfile*) listIn->FindObject(Form("fTracksRef_n%d2_gap%02.2g_number%d",iHarmonics,10*dEtaGap,iSample));
+		if(!profRef2)
 		{
 			Error("ProcessRefFlow","Input Ref TProfile not found!");
 			return kFALSE;
 		}
 
-		histTemp = (TH1D*) profRef->ProjectionX()->Clone();
-		listTemp->Add(histTemp);
+
+		histTemp2 = (TH1D*) profRef2->ProjectionX()->Clone();
+		
+		// making Cn out of <<2>>
+		iNumBinsX = profRef2->GetNbinsX();
+		for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
+		{
+			dValue = profRef2->GetBinContent(iBinX);
+			histTemp2->SetBinContent(iBinX, TMath::Sqrt(dValue));
+			histTemp2->SetBinError(iBinX, 0);
+		}
+
+		listTemp2->Add(histTemp2);
+
+		if(dEtaGap < 0) // if NoGap case: load 4 particle cumulants
+		{
+			profRef4 = (TProfile*) listIn->FindObject(Form("fTracksRef_n%d4_gap%02.2g_number%d",iHarmonics,10*dEtaGap,iSample));
+			if(!profRef4)
+			{
+				Error("ProcessRefFlow","Input Ref TProfile not found!");
+				return kFALSE;
+			}
+			histTemp4 = (TH1D*) profRef4->ProjectionX()->Clone();
+		
+			// making Cn out of <<4>>
+			iNumBinsX = profRef4->GetNbinsX();
+			for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
+			{
+				dCum4 = profRef4->GetBinContent(iBinX);
+				dCum2 = profRef2->GetBinContent(iBinX);
+				dValue = dCum4 - 2*TMath::Power(dCum2,2);
+				if(dValue < 0)
+					histTemp4->SetBinContent(iBinX, TMath::Power(-dValue,0.25));
+			 	else
+					histTemp4->SetBinContent(iBinX, -9);
+
+				histTemp4->SetBinError(iBinX, 0);
+			}
+			
+			listTemp4->Add(histTemp4);
+		} // end of if NoGap
+
 	} // end of loop over samples
 
-	if(!DesampleList(listTemp, fiNumSamples))
+	if(!DesampleList(listTemp2, fiNumSamples))
 	{
-		Error("ProcessRefFlow",Form("Desampling FAILED!"));
+		Error("ProcessRefFlow",Form("Desampling cn{2} FAILED!"));
 		return kFALSE;
 	}
 
-	listOut->Add(listTemp->Last());
-	delete listTemp;
+	listOut->Add(listTemp2->Last());
+
+	if(dEtaGap < 0)
+	{
+		if(!DesampleList(listTemp4, fiNumSamples))
+		{
+			Error("ProcessRefFlow",Form("Desampling cn{4} FAILED!"));
+			return kFALSE;
+		}
+		
+		listOut->Add(listTemp4->Last()); 
+	}
+
+
+
+	delete listTemp2;
+	delete listTemp4;
 	//histTemp = (TH1D*) listTemp->Last()->Clone();
 	//histOut = histTemp;
 	//histOut = (TH1D*) listTemp->Last()->Clone();
@@ -466,6 +554,7 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 //_____________________________________________________________________________
 Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies)
 {
+	Debug("ProcessList",Form("Processing list with %d entries. First \"%s\"",listIn->GetEntries(),listIn->First()->GetName()));
 	// checking in/out lists
 	if(!listIn)
 	{
@@ -483,28 +572,47 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 
 	// initializint tempList for histograms based on centrality
 	TList* listTemp[fiNumBinsCent];
+	TList* listTemp4[fiNumBinsCent];
+
 	for(Short_t iCent(0); iCent < fiNumBinsCent; iCent++)
 	{
 		listTemp[iCent] = new TList();
+		listTemp4[iCent] = new TList();
 	}
 
+	//listIn->ls();
 
-	TProfile* profRef = 0x0;
+
+	TProfile* profRef2 = 0x0;
+	TProfile* profRef4 = 0x0;
 	TProfile* profTemp = 0x0;
+	TProfile* profTemp4 = 0x0;
 	TH1D* histTemp = 0x0;
+	TH1D* histTemp4 = 0x0;
 	Short_t iNumBinsX = 0;
 	Double_t dRef = 0, dValue = 0;
+	Double_t dCum2 = 0, dCum4 = 0, dRefCum2 = 0, dRefCum4 = 0; // <<2'>>, <<4'>>, <<2>>, <<4>>
 
 	TString sRapSign[2] = {"Pos","Neg"};
 
 	for(Short_t iSample(0); iSample < fiNumSamples; iSample++)
 	{
-		profRef = (TProfile*) listRef->FindObject(Form("fTracksRef_n%d2_gap%02.2g_number%d",iHarmonics,10*dEtaGap,iSample));
-		if(!profRef)
+		profRef2 = (TProfile*) listRef->FindObject(Form("fTracksRef_n%d2_gap%02.2g_number%d",iHarmonics,10*dEtaGap,iSample));
+		if(!profRef2)
 		{
-			Error("ProcessList","Input Ref TProfile not found!");
+			Error("ProcessList","Input Ref <<2>> TProfile not found!");
 			return kFALSE;
 		}
+
+		if(dEtaGap < 0.) // no gap case
+		{
+			profRef4 = (TProfile*) listRef->FindObject(Form("fTracksRef_n%d4_gap%02.2g_number%d",iHarmonics,10*dEtaGap,iSample));
+			if(!profRef4)
+			{
+				Error("ProcessList","Input Ref <<4>> TProfile not found!");
+				return kFALSE;
+			}
+		} // end of NoGap case
 
 		for(Short_t iRap(0); iRap < 2; iRap++)
 		{
@@ -513,12 +621,13 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 
 			for(Short_t iCent(0); iCent < fiNumBinsCent; iCent++)
 			{
-				dRef = TMath::Sqrt(profRef->GetBinContent(iCent+1)); // getting reference cummulant
+				dRefCum2 = profRef2->GetBinContent(iCent+1);
+				dRef = TMath::Sqrt(dRefCum2); // getting reference cummulant
 
 				profTemp = (TProfile*) listIn->FindObject(Form("f%s_n%d2_%s_gap%02.2g_cent%d_number%d",sSpecies.Data(),iHarmonics,sRapSign[iRap].Data(),10*dEtaGap,iCent,iSample));
 				if(!profTemp)
 				{
-					Error("ProcessList","Input POIs TProfile not found!");
+					Error("ProcessList",Form("Input POIs %s <<2>> TProfile not found!",sSpecies.Data()));
 					return kFALSE;
 				}
 				
@@ -531,12 +640,48 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 				for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
 				{
 					dValue = histTemp->GetBinContent(iBinX);
-					dValue = dValue / dRef;
-					histTemp->SetBinContent(iBinX, dValue);
+					dValue = dValue / dRef; 
+					histTemp->SetBinContent(iBinX, dValue);	
 					histTemp->SetBinError(iBinX,0);
 				} // end of loop over pt (X) bins
 
 				listTemp[iCent]->Add(histTemp);
+
+				if(dEtaGap < 0.) // no Gap case
+				{
+					profTemp4 = (TProfile*) listIn->FindObject(Form("f%s_n%d4_gap%02.2g_cent%d_number%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iSample));
+					if(!profTemp4)
+					{
+						Error("ProcessList",Form("Input POIs %s <<4>> TProfile not found! Name: \"f%s_n%d4_gap%02.2g_cent%d_number%d\"",sSpecies.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iSample));
+						return kFALSE;
+					}
+
+					histTemp4 = (TH1D*) profTemp4->ProjectionX()->Clone();
+					iNumBinsX = histTemp4->GetNbinsX();
+
+					for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
+					{
+						dCum4 = profTemp4->GetBinContent(iBinX);
+						dCum2 = profTemp->GetBinContent(iBinX);
+						dRefCum2 = profRef2->GetBinContent(iCent+1);
+						dRefCum4 = profRef4->GetBinContent(iCent+1);
+
+						dValue = dCum4 - 2 * dCum2 * dRefCum2; // dn{4}
+						dRef = dRefCum4 - 2 * TMath::Power(dRefCum2,2);// cn{4}
+						
+						if(dRef < 0.)
+							histTemp4->SetBinContent(iBinX, -1 * dValue / TMath::Power(-dRef, 0.75) ); // vn{4}
+						else
+							histTemp4->SetBinContent(iBinX, -9. ); // vn{4}
+
+						histTemp4->SetBinError(iBinX,0);
+					} // end of loop over pt (X) bins
+
+					listTemp4[iCent]->Add(histTemp4);
+				
+
+				} // end of if NoGap case
+
 
 			} // end of loop over centralities
 		} // end of loop over rapidity sign (POS / NEG)
@@ -546,6 +691,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 	// listTemp[fiNumBinsCent] should be full of flow based on samples	
 	Bool_t bStatusDesample = kFALSE;
 	Short_t iNumSamples = fiNumSamples;
+	
 	if(dEtaGap >= 0.) // if NoGap case include both POS & Neg POIs (2xiNumSamples)
 		iNumSamples = iNumSamples*2;
 
@@ -559,7 +705,27 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 		}
 
 		listOut->Add(listTemp[iCent]->Last());
+		
+		
+		if(dEtaGap < 0.)
+		{
+
+
+			bStatusDesample = DesampleList(listTemp4[iCent],iNumSamples);
+			if(bStatusDesample == kFALSE)
+			{	
+				Error("ProcessList",Form("Desampling: cent %d status %d (FAILED)!",iCent,bStatusDesample));
+				return kFALSE;
+			}
+
+			//listTemp4[iCent]->ls();
+			listOut->Add(listTemp4[iCent]->Last());
+
+		}
+		
+
 		delete listTemp[iCent];
+		delete listTemp4[iCent];
 	}
 
 	return kTRUE;
@@ -581,16 +747,16 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 		Error("DesampleList",Form("iNumSamples (%d) is NOT equal to number of entries (%d) in input list.",iNumSamples, inList->GetEntries()));
 		return kFALSE;
 	}
-
 	TString sName = inList->First()->GetName();
 	TString sTitle = inList->First()->GetTitle();
 
 	//printf("%s\n", sName.Data());
 	//printf("%s\n", sTitle.Data());
-	//sName.Append("_desampled");
-	sName.Remove(sName.Length()-13); // remove the "_numberX_Z_px" from end of the name
+	sName.Append("_desampled");
+	//sName.Remove(sName.Length()-11); // remove the "_numberX_Z_px" from end of the name
 	//printf("%s\n", sName.Data());
-	sTitle.Remove(sTitle.Length()-8); // remove the "_sampleX_px" from end of the name
+	sTitle.Append("_desampled");
+	//sTitle.Remove(sTitle.Length()-8); // remove the "_sampleX_px" from end of the name
 	//printf("%s\n", sTitle.Data());
 
 	TH1D* histOut = (TH1D*) inList->First()->Clone(sName.Data());
@@ -614,7 +780,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 		}
 
 		dMean = dValue / iNumSamples;
-
+	
 		// estimating error
 		for(Short_t j(0); j < iNumSamples; j++)
 		{
@@ -629,6 +795,9 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 	}
 
 	inList->Add(histOut);
+	
+	//ffOutputFile->cd();
+	//inList->Write(Form("Desampling_%s",inList->First()->GetName()),TObject::kSingleKey);
 
 	return kTRUE;
 }
@@ -1186,26 +1355,26 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 //_____________________________________________________________________________
 void ProcessFlow::Fatal(TString sMethod, TString sMsg)
 {
-	printf("F-ProcessFlow::%s: %s Terminating!\n", sMethod.Data(), sMsg.Data());
+	printf("Fatal-ProcessFlow::%s: %s Terminating!\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 void ProcessFlow::Error(TString sMethod, TString sMsg)
 {
-	printf("E-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
+	printf("Error-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 void ProcessFlow::Info(TString sMethod, TString sMsg)
 {
-	printf("I-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
+	printf("Info-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 void ProcessFlow::Warning(TString sMethod, TString sMsg)
 {
-	printf("W-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
+	printf("Warning-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 void ProcessFlow::Debug(TString sMethod, TString sMsg)
 {
 	if(fbDebug)
-		printf("D-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
+		printf("Debug-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
 }
