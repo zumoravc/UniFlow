@@ -119,7 +119,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Neg, TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap, const Int_t iPtBin);
         void GFKDoDiffFlowV0s(TProfile2D* prof2Pos, TProfile2D* prof2Neg, TProfile2D* prof4, const Short_t iHarm, const Double_t dEtaGap, const Int_t iPtBin, const Double_t dMassBin);
         void DoGenFramKatarina();
-        const static Int_t fGFKNumSamples = 5;
+        const static Int_t fGFKNumSamples = 10;
         
         const static Int_t fGFKNumVectors = 2; // pos and negative part of Q & p & q vectors
         TComplex Qvector[fMaxNumHarmonics][fMaxNumWeights]; //
@@ -308,7 +308,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
 
         // TProfiles
-        const static Int_t      fNumSampleBins = 5; // number of sampling bins 
+        const static Int_t      fNumSampleBins = 10; // number of sampling bins 
         TProfile*               fTracksRefTwo[fNumHarmonics][fNumEtaGap][fNumSampleBins];                //! event averaged 2-particle correlation for reference flow <<2>> v2
         TProfile*               fTracksDiffTwoPos[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];          //! event averaged 2-particle correlation for differential flow <<2'>>
         TProfile*               fTracksDiffTwoNeg[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];          //! event averaged 2-particle correlation for differential flow <<2'>>
@@ -328,7 +328,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         // QA histos // index 0: before / 1: after cuts
         const static Short_t    fQANumSteps = 2;        // number of various steps (0 before cuts / 1 after cuts / 2 testing) 
         TH1D*                   fEventCounter;  //! event rejection tracker
-        TH1D*                   fSampleCounter; //! distribution of events in sampling bins
+        TH2D*                   fSampleCounter; //! distribution of events in sampling bins 
         // QA events
         TH1D*                   fQAEventsPVz[fQANumSteps];                 //! PV z distance distribution
         TH1D*                   fQAEventsNumContrPV[fQANumSteps];                 //! number of contributors to PV 

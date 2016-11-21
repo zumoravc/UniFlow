@@ -743,7 +743,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   // Events
   fEventMult = new TH1D("fEventMult","Track multiplicity (all tracks in selected events); tracks;",100,0,10000);
   fOutListEvents->Add(fEventMult);
-  fCentralityDis = new TH1D("fCentralityDis", "centrality distribution; centrality;", fNumCentBins,fCentBinEdges);
+  fCentralityDis = new TH1D("fCentralityDis", "Event centrality distribution; centrality percentile; Events;", fNumCentBins,fCentBinEdges);
   fOutListEvents->Add(fCentralityDis);
   
   // Tracks
@@ -973,7 +973,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
   fOutListEvents->Add(fEventCounter);
   
-  fSampleCounter = new TH1D("fSampleCounter","Event distribution if sampling bins; sampling bin index; events",fNumSampleBins,0,fNumSampleBins);
+  fSampleCounter = new TH2D("fSampleCounter","Event distribution if sampling bins; sampling bin index; centrality bin index; events",fNumSampleBins,0,fNumSampleBins, fNumCentBins, 0, fNumCentBins);
   for(Int_t i = 0; i < fNumSampleBins; i++)
     fSampleCounter->GetXaxis()->SetBinLabel(i+1,Form("%d",i));
   fOutListEvents->Add(fSampleCounter);
@@ -1196,32 +1196,36 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     TRandom3 rr(0);
     Double_t ranNum = rr.Rndm();
     
-    /* // sampling for 10 samples
-    if (ranNum <= 0.1) fSampleBinIndex = 0;
-    else if (ranNum <= 0.2 && ranNum > 0.1) fSampleBinIndex = 1;
-    else if (ranNum <= 0.3 && ranNum > 0.2) fSampleBinIndex = 2;
-    else if (ranNum <= 0.4 && ranNum > 0.3) fSampleBinIndex = 3;
-    else if (ranNum <= 0.5 && ranNum > 0.4) fSampleBinIndex = 4;
-    else if (ranNum <= 0.6 && ranNum > 0.5) fSampleBinIndex = 5;
-    else if (ranNum <= 0.7 && ranNum > 0.6) fSampleBinIndex = 6;
-    else if (ranNum <= 0.8 && ranNum > 0.7) fSampleBinIndex = 7;
-    else if (ranNum <= 0.9 && ranNum > 0.8) fSampleBinIndex = 8;
-    else fSampleBinIndex = 9;
-    */
-
-    // sampling for 5 samples
-    if (ranNum <= 0.2) fSampleBinIndex = 0;
-    else if (ranNum <= 0.4 && ranNum > 0.2) fSampleBinIndex = 1;
-    else if (ranNum <= 0.6 && ranNum > 0.4) fSampleBinIndex = 2;
-    else if (ranNum <= 0.8 && ranNum > 0.6) fSampleBinIndex = 3;
-    else fSampleBinIndex = 4;
+    if(fGFKNumSamples == 5)
+    {
+      // sampling for 5 samples
+      if (ranNum <= 0.2) fSampleBinIndex = 0;
+      else if (ranNum <= 0.4 && ranNum > 0.2) fSampleBinIndex = 1;
+      else if (ranNum <= 0.6 && ranNum > 0.4) fSampleBinIndex = 2;
+      else if (ranNum <= 0.8 && ranNum > 0.6) fSampleBinIndex = 3;
+      else fSampleBinIndex = 4;
+    }
+    else
+    {
+      // sampling for 10 samples
+      if (ranNum <= 0.1) fSampleBinIndex = 0;
+      else if (ranNum <= 0.2 && ranNum > 0.1) fSampleBinIndex = 1;
+      else if (ranNum <= 0.3 && ranNum > 0.2) fSampleBinIndex = 2;
+      else if (ranNum <= 0.4 && ranNum > 0.3) fSampleBinIndex = 3;
+      else if (ranNum <= 0.5 && ranNum > 0.4) fSampleBinIndex = 4;
+      else if (ranNum <= 0.6 && ranNum > 0.5) fSampleBinIndex = 5;
+      else if (ranNum <= 0.7 && ranNum > 0.6) fSampleBinIndex = 6;
+      else if (ranNum <= 0.8 && ranNum > 0.7) fSampleBinIndex = 7;
+      else if (ranNum <= 0.9 && ranNum > 0.8) fSampleBinIndex = 8;
+      else fSampleBinIndex = 9;
+    }
   } 
   else
   {
     fSampleBinIndex = 0;
   }
 
-  fSampleCounter->Fill(fSampleBinIndex);
+  fSampleCounter->Fill(fSampleBinIndex,fCentBinIndex);
 
   const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
@@ -1793,6 +1797,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
       return kFALSE;
 	}
   
+  fCentralityDis->Fill(fCentPercentile);
   fEventCounter->Fill(6);
 
  	return kTRUE;
