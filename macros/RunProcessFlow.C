@@ -17,17 +17,18 @@ void RunProcessFlow()
 	Short_t sizeHarmonics = sizeof(harmonics) / sizeof(harmonics[0]);
 
 	//Double_t etaGaps[] = {-1.,0.,0.5,1.};
-	Double_t etaGaps[] = {-1.}; // only NoGap case
+	Double_t etaGaps[] = {-1.,0.,1.}; // only NoGap case
 	Short_t sizeEtaGaps = sizeof(etaGaps) / sizeof(etaGaps[0]);
 
-	//Double_t cent[] = {0.,5.,10.,20,30,40,50,60,70,80}; //edges
-	Double_t cent[] = {20,30,40}; //edges
+	Double_t cent[] = {0.,5.,10.,20,30,40,50,60,70,80}; //edges
+	//Double_t cent[] = {20,30,40}; //edges
 	Short_t sizeCent = sizeof(cent) / sizeof(cent[0]) - 1; 
 
 	ProcessFlow* process = new ProcessFlow();
 	process->SetDebug(1);
 	process->SetInputFilePath("~/NBI/Flow/results/0-GFK-PbPb-full/");
 	process->SetOutputFilePath("~/NBI/Flow/temp");
+	process->SetOutputFileName("Flow.root");
 	process->SetTag("FB768");
 	process->SetHarmonicsArray(harmonics,sizeHarmonics);
 	process->SetEtaGapsArray(etaGaps,sizeEtaGaps);

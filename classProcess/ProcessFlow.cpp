@@ -9,6 +9,7 @@
 #include "TFile.h"
 #include "TList.h"
 #include "TH1.h"
+#include "TH2.h"
 #include "TProfile.h"
 #include "TString.h"
 #include "TCanvas.h"
@@ -31,7 +32,9 @@ public:
     void	SetBinsCentArray(Double_t* array, Short_t iSize = 0);
     void	SetHarmonicsArray(Short_t* array, Short_t iSize = 0);
     void	SetEtaGapsArray(Double_t* array, Short_t iSize = 0);
+    void	SetSamplingSpread(Bool_t bSpread) { fbSamplingSpread = bSpread; }
     
+
     void	Run();
 
 
@@ -81,6 +84,7 @@ public:
 		TString fsTag; // AnalysisTask tag to process
 		Short_t fiNumSamples; // number of samples
 		Short_t fiNumBinsCent; // number of centrality bins
+		Bool_t fbSamplingSpread; // flag for plotting spread of values during de-sampling
 
 
 		
@@ -99,6 +103,7 @@ ProcessFlow::ProcessFlow()
 	fiNumSamples = 0;
 	fiNumBinsCent = 0;
 	fiNumEtaGaps = 0;
+	fbSamplingSpread = kFALSE;
 
 	ffInputFile = 0x0;
 	ffOutputFile = 0x0;
@@ -418,10 +423,10 @@ void ProcessFlow::Run()
 			}
 
 			listOutRef[iHarmonics][iEtaGap]->Last()->Write(Form("hRef_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ));
-			listOutTracks[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutPions[iHarmonics][iEtaGap]->Write(Form("Pions_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutKaons[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutProtons[iHarmonics][iEtaGap]->Write(Form("Protons_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			listOutTracks[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			listOutPions[iHarmonics][iEtaGap]->Write(Form("Pions_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			listOutKaons[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			listOutProtons[iHarmonics][iEtaGap]->Write(Form("Protons_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 
 		} // end of loop over eta gaps
 	} // end of loop over harmonics
@@ -752,23 +757,28 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 
 	//printf("%s\n", sName.Data());
 	//printf("%s\n", sTitle.Data());
-	sName.Append("_desampled");
 	//sName.Remove(sName.Length()-11); // remove the "_numberX_Z_px" from end of the name
+	sName.Append("_desampled");
 	//printf("%s\n", sName.Data());
 	sTitle.Append("_desampled");
 	//sTitle.Remove(sTitle.Length()-8); // remove the "_sampleX_px" from end of the name
 	//printf("%s\n", sTitle.Data());
 
 	TH1D* histOut = (TH1D*) inList->First()->Clone(sName.Data());
+	histOut->SetStats(0);
 	histOut->SetTitle(sTitle.Data());
 
+
 	const Short_t iNumBinsX = histOut->GetNbinsX();
+	
+	TH2D* hValues = new TH2D(Form("Desampling_%s",sName.Data()),"Desampling values spread;values;axisX bin",1000,-0.5,0.5,iNumBinsX,1,iNumBinsX+1);
 
 	TH1D* histTemp = 0x0;
-	Double_t dValue = 0, dMean = 0, dSigma = 0;
+	Double_t dValue = 0, dSum = 0, dMean = 0, dSigma = 0;
 	for(Short_t i(1); i < iNumBinsX+1; i++)
 	{
 		dValue = 0;
+		dSum = 0;
 		dMean = 0;
 		dSigma = 0;
 
@@ -776,10 +786,12 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 		for(Short_t j(0); j < iNumSamples; j++)
 		{
 			histTemp = (TH1D*) inList->At(j);
-			dValue += histTemp->GetBinContent(i);
+			dValue = histTemp->GetBinContent(i);
+			dSum += dValue;
+			hValues->Fill(dValue,i);
 		}
 
-		dMean = dValue / iNumSamples;
+		dMean = dSum / iNumSamples;
 	
 		// estimating error
 		for(Short_t j(0); j < iNumSamples; j++)
@@ -796,9 +808,12 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 
 	inList->Add(histOut);
 	
-	//ffOutputFile->cd();
-	//inList->Write(Form("Desampling_%s",inList->First()->GetName()),TObject::kSingleKey);
-
+	if(fbSamplingSpread)
+	{
+		ffOutputFile->cd();
+		hValues->Write();	
+	}
+	
 	return kTRUE;
 }
 //_____________________________________________________________________________
