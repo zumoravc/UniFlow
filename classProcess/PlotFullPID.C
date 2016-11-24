@@ -4,16 +4,19 @@ void PlotFullPID()
 {
 	TString sOutput = TString("~/NBI/Flow/temp");
 
-	TFile* fInput = new TFile("~/NBI/Flow/classProcess/ProcessFlow_FB768_GFK.root","READ");
+	TFile* fInput = new TFile("~/NBI/Flow/temp/Flow-10samples.root","READ");
 	fInput->cd();
-	//fInput->ls();
+	fInput->ls();
 
-	TList* lDiffv22_Pions = (TList*) fInput->Get("Diffv22_Pions");
+
+	TList* lTracks_n22 = (TList*) fInput->Get("Tracks_n2_Gap-10");
+	TList* lDiffv22_Pions = (TList*) fInput->Get("n2_Pions");
 	TList* lDiffv24_Pions = (TList*) fInput->Get("Diffv24_Pions");
 	TList* lDiffv22_Kaons = (TList*) fInput->Get("Diffv22_Kaons");
 	TList* lDiffv24_Kaons = (TList*) fInput->Get("Diffv24_Kaons");
 	TList* lDiffv22_Protons = (TList*) fInput->Get("Diffv22_Protons");
 	TList* lDiffv24_Protons = (TList*) fInput->Get("Diffv24_Protons");
+	return;
 
 	//TH1D* hRefv22_Tracks = (TH1D*) fInput->Get("Refv22_Tracks");
 	//TH1D* hRefv24_Tracks = (TH1D*) fInput->Get("Refv24_Tracks");
