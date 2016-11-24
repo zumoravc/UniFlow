@@ -28,6 +28,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; } 
         void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void                    SetPID(Bool_t pid) { fPID = pid; }
+        void                    SetUseBayesPID(Bool_t pidBay) { fUseBayesPID = pidBay; }
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
         void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
         void                    SetDoOldFlow(Bool_t oldFlow) { fOldFlow = oldFlow; } // do old flow (before Katarinas GFK)
@@ -179,6 +180,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fDoV0s;                       // Do V0s analysis?
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
         Bool_t                  fPID;                       // Do PID ?
+        Bool_t                  fUseBayesPID;                       // Do Bayes PID ?
         Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
         Bool_t                  fOldFlow; // switch to old flow analysis
         //cuts & selection: events & tracks
@@ -216,7 +218,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
         // members
         AliAODEvent*            fAOD;           //! input event
-        AliPIDResponse*			fPIDResponse;		//! PID response
+        AliPIDResponse*         fPIDResponse;       //! PID response
+        AliPIDCombined*			fPIDCombined;		//! PID response
         AliTPCPIDResponse       fTPCPIDResponse;       // TPC PID response
         Float_t                 fEtaCutFlag;    // value of eta cut during flow vectors filling  (actual value)
         Short_t                 fHarmFlag;    // value of harmonics during flow vectors filling  (actual value)

@@ -43,6 +43,7 @@
 #include "AliAODInputHandler.h"
 #include "AliMultSelection.h"
 #include "AliPIDResponse.h"
+#include "AliPIDCombined.h"
 #include "AliAnalysisTaskFlowPID.h"
 #include "AliLog.h" 
 class AliAnalysisTaskFlowPID;    
@@ -61,6 +62,7 @@ Double_t AliAnalysisTaskFlowPID::fEtaGap[AliAnalysisTaskFlowPID::fNumEtaGap] = {
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
   fPIDResponse(0),
+  fPIDCombined(0),
   fTPCPIDResponse(),
   fEtaCutFlag(0),
   fHarmFlag(0), 
@@ -104,6 +106,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fDoFlow(0),
   fDiffFlow(0),
   fPID(0),
+  fUseBayesPID(0),
   fDoV0s(0),
   fOldFlow(0),
   fDoGenFramKat(0),
@@ -188,6 +191,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTaskSE(name),
   fAOD(0),
   fPIDResponse(0),
+  fPIDCombined(0),
   fTPCPIDResponse(),
   fEtaCutFlag(0),
   fHarmFlag(0), 
@@ -233,7 +237,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fDoFlow(0),
   fSampling(0),
   fDiffFlow(0),
-  fPID(0),  
+  fPID(0),
+  fUseBayesPID(0),
   fDoV0s(0),
   fOldFlow(0),
   fDoGenFramKat(0),
@@ -528,6 +533,11 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
 AliAnalysisTaskFlowPID::~AliAnalysisTaskFlowPID()
 {
   // destructor
+  if(fPIDCombined)
+  {
+    delete fPIDCombined;
+  }
+
   if(fOutListCumulants)
   {
     delete fOutListCumulants;
@@ -565,6 +575,13 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   // this function is called ONCE at the start of your analysis (RUNTIME)
   // here you create the histograms that you want to use 
   // the histograms are in this case added to a TList, this list is in the end saved to an output file
+
+  if(fUseBayesPID)
+  {
+    fPIDCombined = new AliPIDCombined();
+    fPIDCombined->SetDefaultTPCPriors();
+    fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
+  }
 
   fOutListCumulants = new TList();
   fOutListCumulants->SetOwner(kTRUE);
