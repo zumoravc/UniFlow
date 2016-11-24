@@ -19,14 +19,17 @@ TGraphAsymmErrors* v2Antiproton1020(Int_t color=1, Int_t marker=20, Int_t first=
 TGraphErrors* Kv2_1020_QC4(Int_t color=1, Int_t marker=20);
 */
 
-void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~/NBI/Flow/temp/Flow-10samples.root")
+void PlotGFK(
+	TString sOutPath = "~/NBI/Flow/temp/comp/",
+ 	TString sInputFile = "~/NBI/Flow/temp/Flow-10samples.root",
+	Bool_t bYou = kFALSE,
+	Bool_t bYouRatio = kFALSE,
+	Bool_t bPID = kFALSE
+ )
 {
 	
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C++");
 
-	Bool_t bYou = kTRUE;
-	Bool_t bYouRatio = kTRUE;
-	Bool_t bPID = kFALSE;
 
 
 	//TString sOutPath = "~/NBI/Flow/temp/comp/";
@@ -98,6 +101,28 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			if(!hYouRef42[iGap]) return;
 		}
 
+		// loading PRL 105
+		TFile* fPRL105 = new TFile("~/NBI/Flow/hepData/PRL105/HEPData-ins877822-1-root.root","READ");
+		fPRL105->cd("Table 1");
+		fPRL105->ls();
+
+		TGraphAsymmErrors* hPRL105_v22_4050 = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1");
+		TGraphAsymmErrors* hPRL105_v24_4050 = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y2");
+		
+		hPRL105_v22_4050->SetLineColor(kGreen+2);
+		hPRL105_v22_4050->SetMarkerColor(kGreen+2);
+		hPRL105_v24_4050->SetLineColor(kGreen+2);
+		hPRL105_v24_4050->SetMarkerColor(kGreen+2);
+
+		// loading PRL 116
+		TFile* fPRL116 = new TFile("~/NBI/Flow/hepData/PRL116/HEPData-ins1419244-1-root.root","READ");
+		fPRL116->cd("Table 3");
+		fPRL116->ls();
+
+		TGraphAsymmErrors* PRL116_Ref22 = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1");
+		TGraphAsymmErrors* PRL116_Ref24 = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y2");
+
+
 		TLine* unity = new TLine(0.,1.,80.,1.);
 		TCanvas* cRatio = new TCanvas("cRatio");
 		cRatio->Divide(2,1);
@@ -110,6 +135,11 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			hYouRef22[iGap]->Draw();
 			hYouRef22[iGap]->SetMinimum(0.);
 			hRef2[0][iGap]->Draw("same");
+			if(iGap == 2)
+			{
+				PRL116_Ref22->Draw("P");
+			}
+
 
 
 			cRatio->cd(2);
@@ -126,8 +156,9 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 		for(Short_t iGap(0); iGap < iNumEtaGaps; iGap++)
 		{
 			cRatio->cd(1);
-			hYouRef32[iGap]->Draw();
 			hYouRef32[iGap]->SetMinimum(0.);
+			hYouRef32[iGap]->SetMaximum(0.15);
+			hYouRef32[iGap]->Draw();
 			hRef2[1][iGap]->Draw("same");
 
 			
@@ -173,9 +204,11 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 		}
 
 		cRatio->cd(1);
-		hYouRef24->Draw();
 		hYouRef24->SetMinimum(0.);
+		hYouRef24->SetMaximum(0.15);
+		hYouRef24->Draw();
 		hRef4[0]->Draw("same");
+		PRL116_Ref24->Draw("P");
 
 		cRatio->cd(2);
 		hTempRatio = (TH1D*) hYouRef24->Clone("hTempRatio");
@@ -256,13 +289,18 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			}
 		}
 
+
+
+
 		printf("loaded\n");
 		// plotting v22, v24
 
-		TLegend* legTracks = new TLegend(0.12,0.6,0.3,0.89);
+		TLegend* legTracks = new TLegend(0.12,0.68,0.3,0.89);
 		legTracks->SetBorderSize(0);
 		legTracks->AddEntry(hMinePtV22[0][0], "Mine","pel");
-		//legTracks->AddEntry(hYouPtV22[0][0], "You","pel");
+		legTracks->AddEntry(hYouPtV22[0][0], "You","pel");
+		legTracks->AddEntry(hPRL105_v22_4050, "PRL105","pel");
+
 		
 		TLatex latexTracks;
 		latexTracks.SetNDC();
@@ -272,8 +310,14 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			for(Short_t iCent(0); iCent < iNumCent; iCent++)
 			{
 				cTemp->cd();
+				hMinePtV22[iGap][iCent]->SetMinimum(0.0);
+				hMinePtV22[iGap][iCent]->SetMaximum(0.3);
 				hMinePtV22[iGap][iCent]->Draw();
 				hYouPtV22[iGap][iCent]->Draw("same");
+				if(iCent == 6 && iGap == 2)
+				{
+					hPRL105_v22_4050->Draw("P");
+				}
 				legTracks->Draw();
 				cTemp->SaveAs(Form("%s/Tracks/PtV22_Gap%s_cent%d_comp.pdf",sOutPath.Data(),sEtaGaps[iGap].Data(),iCent));
 				
@@ -299,6 +343,8 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			for(Short_t iCent(0); iCent < iNumCent; iCent++)
 			{
 				cTemp->cd();
+				hMinePtV32[iGap][iCent]->SetMinimum(0.0);
+				hMinePtV32[iGap][iCent]->SetMaximum(0.3);
 				hMinePtV32[iGap][iCent]->Draw();
 				hYouPtV32[iGap][iCent]->Draw("same");
 				legTracks->Draw();
@@ -326,6 +372,8 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			for(Short_t iCent(0); iCent < iNumCent; iCent++)
 			{
 				cTemp->cd();
+				hMinePtV42[iGap][iCent]->SetMinimum(0.0);
+				hMinePtV42[iGap][iCent]->SetMaximum(0.3);
 				hMinePtV42[iGap][iCent]->Draw();
 				hYouPtV42[iGap][iCent]->Draw("same");
 				legTracks->Draw();
@@ -354,8 +402,14 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 		for(Short_t iCent(0); iCent < iNumCent; iCent++)
 		{
 			cTemp->cd();
+			hMinePtV24[iCent]->SetMinimum(0.0);
+			hMinePtV24[iCent]->SetMaximum(0.3);
 			hMinePtV24[iCent]->Draw();
 			hYouPtV24[iCent]->Draw("same");
+			if(iCent == 6 && iGap == 2)
+			{
+				hPRL105_v24_4050->Draw("P");
+			}
 			legTracks->Draw();
 			cTemp->SaveAs(Form("%s/Tracks/PtV24_cent%d_comp.pdf",sOutPath.Data(),iCent));
 		}
@@ -363,6 +417,8 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 		for(Short_t iCent(0); iCent < iNumCent; iCent++)
 		{
 			cTemp->cd();
+			hMinePtV34[iCent]->SetMinimum(0.0);
+			hMinePtV34[iCent]->SetMaximum(0.3);
 			hMinePtV34[iCent]->Draw();
 			hYouPtV34[iCent]->Draw("same");
 			legTracks->Draw();
@@ -373,15 +429,17 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 		for(Short_t iCent(0); iCent < iNumCent; iCent++)
 		{
 			cTemp->cd();
+			hMinePtV44[iCent]->SetMinimum(0.0);
+			hMinePtV44[iCent]->SetMaximum(0.3);
 			hMinePtV44[iCent]->Draw();
 			//hYouPtV44[iCent]->Draw("same");
 			legTracks->Draw();
 			cTemp->SaveAs(Form("%s/Tracks/PtV44_cent%d_comp.pdf",sOutPath.Data(),iCent));
 		}
-	}
 
-	delete cTemp;
-	delete cRatio;
+		//delete cTemp;
+		//delete cRatio;
+	}
 
 	// ============================================================================
 	// Comparison of pi, K, p
@@ -501,12 +559,14 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
     TString sErrorOption = TString("P");
 
 
+
+
 		//lsPions[0][3]->ls();
 		for(Short_t iCent(0); iCent < iNumCent; iCent++)
 		{
-			PionV2[iCent] = GetV2(1,iCentBins[iCent],iCentBins[iCent+1]);
-			KaonV2[iCent] = GetV2(2,iCentBins[iCent],iCentBins[iCent+1]);
-			ProtonV2[iCent] = GetV2(3,iCentBins[iCent],iCentBins[iCent+1]);
+			PionV2[iCent] = GetV2(0,iCentBins[iCent],iCentBins[iCent+1]);
+			KaonV2[iCent] = GetV2(1,iCentBins[iCent],iCentBins[iCent+1]);
+			ProtonV2[iCent] = GetV2(2,iCentBins[iCent],iCentBins[iCent+1]);
 
 			hMinePionV2[iCent] = (TH1D*) lsPions[0][2]->FindObject(Form("fPion_n22_gap10_cent%d_number0_0_px_desampled",iCent));
 			hMinePionV2[iCent]->SetMarkerStyle(20);
@@ -529,13 +589,71 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			hMineProtonV32[iCent]->SetMarkerColor(kBlue);
 		}
 		
+    // loading form JHEP 06 (2015) 190
+    TFile* fJHEP = new TFile("~/NBI/Flow/hepData/JHEP06_2015_190/HEPData-ins1297103-1-root.root");
+    //fJHEP->ls();
+  	
+  	TGraphAsymmErrors* Pions_JHEP[iNumCent];
+  	TGraphAsymmErrors* Kaons_JHEP[iNumCent];
+  	TGraphAsymmErrors* Protons_JHEP[iNumCent];
+
+  	for(Short_t iCent(0); iCent < iNumCent; iCent++)
+  	{
+  		Pions_JHEP[iCent] = 0x0;
+  		Kaons_JHEP[iCent] = 0x0;
+  		Protons_JHEP[iCent] = 0x0;
+  	}
+		
+  	TFile* fJHEPout = new TFile("~/NBI/Flow/results/JHEP_06_2015_190/PIDv2.root","RECREATE");
+
+  	Color_t colJHEP = kGreen+2;
+
+  	Short_t indCent = 0; 
+		for(Short_t iTable(1); iTable < 8; iTable++)
+		{
+			fJHEP->cd(Form("Table %d",iTable));
+			Pions_JHEP[indCent] = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1")->Clone(Form("Pions_JHEP_cent%d",indCent));
+			Pions_JHEP[indCent]->SetMarkerColor(colJHEP);
+			Pions_JHEP[indCent]->SetLineColor(colJHEP);
+			fJHEPout->cd();
+			Pions_JHEP[indCent]->Write();
+			indCent++;
+
+		}
+
+  	indCent = 0; 
+		for(Short_t iTable(8); iTable < 15; iTable++)
+		{
+			fJHEP->cd(Form("Table %d",iTable));
+			Kaons_JHEP[indCent] = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1")->Clone(Form("Kaons_JHEP_cent%d",indCent));
+			Kaons_JHEP[indCent]->SetMarkerColor(colJHEP);
+			Kaons_JHEP[indCent]->SetLineColor(colJHEP);
+			fJHEPout->cd();
+			Kaons_JHEP[indCent]->Write();
+			indCent++;
+
+		}
+
+  	indCent = 0; 
+		for(Short_t iTable(29); iTable < 36; iTable++)
+		{
+			fJHEP->cd(Form("Table %d",iTable));
+			Protons_JHEP[indCent] = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1")->Clone(Form("Protons_JHEP_cent%d",indCent));
+			Protons_JHEP[indCent]->SetMarkerColor(colJHEP);
+			Protons_JHEP[indCent]->SetLineColor(colJHEP);
+			fJHEPout->cd();
+			Protons_JHEP[indCent]->Write();
+			indCent++;
+		}
 		printf("Loaded\n");
+
 
 		TLegend* leg = new TLegend(0.12,0.6,0.3,0.89);
 		leg->SetBorderSize(0);
-		leg->AddEntry(hMinePionV2[2], "Mine QC2 #Delta#eta > 0","pel");
+		leg->AddEntry(hMinePionV2[2], "Mine QC2 #Delta#eta > 1","pel");
 		leg->AddEntry(ProtonV22[2], "QC2 QM11 #Delta#eta > 1","pel");
-		leg->AddEntry(ProtonV2[2], "SP #Delta#eta > 0.9","pel");
+		//leg->AddEntry(ProtonV2[2], "SP #Delta#eta > 0.9","pel");
+		leg->AddEntry(Pions_JHEP[2], "SP #Delta#eta > 0.9 [JHEP06 190]","pel");
 		
 		TLatex latex;
 		latex.SetNDC();
@@ -558,11 +676,14 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			hMinePionV2[iCent]->SetMaximum(0.5);
 			hMinePionV2[iCent]->Draw();
 			
-			if(PionV2[iCent])
-				PionV2[iCent]->Draw(sErrorOption.Data());
+			//if(PionV2[iCent])
+				//PionV2[iCent]->Draw(sErrorOption.Data());
 
 			if(PionV22[iCent])
 				PionV22[iCent]->Draw(sErrorOption.Data());
+
+			if(Pions_JHEP[iCent])
+				Pions_JHEP[iCent]->Draw(sErrorOption.Data());
 			
 			leg->Draw();
 			latex.DrawLatex(0.65,0.8, Form("#pi: %d%% - %d%%",iCentBins[iCent],iCentBins[iCent+1]));
@@ -581,12 +702,15 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			hMineKaonV2[iCent]->SetMaximum(0.5);
 			hMineKaonV2[iCent]->Draw();
 			
-			if(KaonV2[iCent])
-				KaonV2[iCent]->Draw(sErrorOption.Data());
+			//if(KaonV2[iCent])
+				//KaonV2[iCent]->Draw(sErrorOption.Data());
 
 			if(KaonV22[iCent])
 				KaonV22[iCent]->Draw(sErrorOption.Data());
 			
+			if(Kaons_JHEP[iCent])
+				Kaons_JHEP[iCent]->Draw(sErrorOption.Data());
+
 			leg->Draw();
 			latex.DrawLatex(0.65,0.8, Form("K: %d%% - %d%%",iCentBins[iCent],iCentBins[iCent+1]));
 			cPID->SaveAs(Form("%s/Kaons/KaonV22_cent%d_comp.pdf",sOutPath.Data(),iCent));
@@ -604,11 +728,14 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			hMineProtonV2[iCent]->SetMaximum(0.5);
 			hMineProtonV2[iCent]->Draw();
 
-			if(ProtonV2[iCent])
-				ProtonV2[iCent]->Draw(sErrorOption.Data());
+			//if(ProtonV2[iCent])
+			//	ProtonV2[iCent]->Draw(sErrorOption.Data());
 
 			if(ProtonV22[iCent])
 				ProtonV22[iCent]->Draw(sErrorOption.Data());
+
+			if(Protons_JHEP[iCent])
+				Protons_JHEP[iCent]->Draw(sErrorOption.Data());
 
 			leg->Draw();
 			latex.DrawLatex(0.65,0.8, Form("p: %d%% - %d%%",iCentBins[iCent],iCentBins[iCent+1]));
@@ -627,8 +754,8 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			hMinePionV32[iCent]->SetMaximum(0.5);
 			hMinePionV32[iCent]->Draw();
 			
-			if(PionV3[iCent])
-				PionV3[iCent]->Draw(sErrorOption.Data());
+			//if(PionV3[iCent])
+			//	PionV3[iCent]->Draw(sErrorOption.Data());
 
 			if(PionV32[iCent])
 				PionV32[iCent]->Draw(sErrorOption.Data());
@@ -649,8 +776,8 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			hMineKaonV32[iCent]->SetMaximum(0.5);
 			hMineKaonV32[iCent]->Draw();
 			
-			if(KaonV3[iCent])
-				KaonV3[iCent]->Draw(sErrorOption.Data());
+			//if(KaonV3[iCent])
+			//	KaonV3[iCent]->Draw(sErrorOption.Data());
 
 			if(KaonV32[iCent])
 				KaonV32[iCent]->Draw(sErrorOption.Data());
@@ -671,8 +798,8 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 			hMineProtonV32[iCent]->SetMaximum(0.5);
 			hMineProtonV32[iCent]->Draw();
 			
-			if(ProtonV3[iCent])
-				ProtonV3[iCent]->Draw(sErrorOption.Data());
+			//if(ProtonV3[iCent])
+			//	ProtonV3[iCent]->Draw(sErrorOption.Data());
 
 			if(ProtonV32[iCent])
 				ProtonV32[iCent]->Draw(sErrorOption.Data());
@@ -684,7 +811,7 @@ void PlotGFK(TString sOutPath = "~/NBI/Flow/temp/comp/", TString sInputFile = "~
 	}
 
 
-
+	fInput->Close();
 
 
 

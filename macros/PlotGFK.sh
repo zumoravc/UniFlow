@@ -1,7 +1,7 @@
 #!/bin/bash
 
-inputFile=~/NBI/Flow/results/1-GFK-PbPb-YouBinning/Flow-YouBins.root
-outPath=~/NBI/Flow/results/1-GFK-PbPb-YouBinning/comp
+inputFile=~/NBI/Flow/results/0-GFK-PbPb-full-10samples/Flow.root
+outPath=~/NBI/Flow/results/0-GFK-PbPb-full-10samples/comp2
 
 mkdir -pv ${outPath}
 mkdir -pv ${outPath}/Ref
@@ -11,4 +11,4 @@ mkdir -pv ${outPath}/Pions
 mkdir -pv ${outPath}/Kaons
 mkdir -pv ${outPath}/Protons
 
-root -l -q ~/NBI/Flow/macros/PlotGFK.C\(\"${outPath}\",\"${inputFile}\"\)
+root -b -l -q ~/NBI/Flow/macros/PlotGFK.C\(\"${outPath}\",\"${inputFile}\",1,0,1\)
