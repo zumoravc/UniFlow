@@ -49,8 +49,8 @@ class AliAnalysisTaskFlowPID;
 
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
-//Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0}; // You, Katarina binning
-Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8,4.2,4.6,5.,5.5,6}; // PID flow v2 JHEP paper
+Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0}; // You, Katarina binning
+//Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8,4.2,4.6,5.,5.5,6}; // PID flow v2 JHEP paper
 Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 //Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.425,0.45,0.47,0.49,0.495,0.5,0.505,0.51,0.53,0.55,0.575,0.6};
@@ -142,6 +142,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fSampleCounter(0),
   fEventMult(0),
   fCentralityDis(0),
+  fCentDistUnitBin(0),
   fCentSPDvsV0M(0),
   fMultTracksSelected(0),
   fTracksPtCent(0),
@@ -271,6 +272,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fSampleCounter(0),
   fEventMult(0),
   fCentralityDis(0),
+  fCentDistUnitBin(0),
   fCentSPDvsV0M(0),
   fMultTracksSelected(0),
   fTracksPtCent(0),
@@ -743,9 +745,11 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   // Events
   fEventMult = new TH1D("fEventMult","Track multiplicity (all tracks in selected events); tracks;",100,0,10000);
   fOutListEvents->Add(fEventMult);
-  fCentralityDis = new TH1D("fCentralityDis", "Event centrality distribution; centrality percentile; Events;", fNumCentBins,fCentBinEdges);
+  fCentralityDis = new TH1D("fCentralityDis", "Event centrality distribution (final binning); centrality percentile; Events;", fNumCentBins,fCentBinEdges);
   fOutListEvents->Add(fCentralityDis);
-  
+  fCentDistUnitBin = new TH1D("fCentDistUnitBin", "Event centrality distibution (unit binning); centrality percentile; Events", 100, 0, 100);
+  fOutListEvents->Add(fCentDistUnitBin);
+
   // Tracks
   fMultTracksSelected = new TH1D("fMultTracksSelected","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
   fOutListTracks->Add(fMultTracksSelected);
@@ -1798,6 +1802,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 	}
   
   fCentralityDis->Fill(fCentPercentile);
+  fCentDistUnitBin->Fill(fCentPercentile);
   fEventCounter->Fill(6);
 
  	return kTRUE;

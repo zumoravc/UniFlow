@@ -63,7 +63,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void					SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
 
-        const static Int_t 		fNumPtBins = 29;			// number of pT bins used for pT-differential flow
+        //const static Int_t      fNumPtBins = 29;            // number of pT bins used for pT-differential flow // mine 
+        const static Int_t 		fNumPtBins = 13;			// number of pT bins used for pT-differential flow // you, katarina
         static Double_t			fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumMinvFlowBinsK0s = 12;  // number of inv. mass bin for differential flow plots (K0s)
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
@@ -262,7 +263,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
         // event histos
         TH1D*					fEventMult;			 //! selected events multiplicity distribution
-        TH1D*   				fCentralityDis;     //! event centrality distribution
+        TH1D*                   fCentralityDis;     //! event centrality distribution
+        TH1D*   				fCentDistUnitBin;     //! event centrality distribution 
         TH2D*					fCentSPDvsV0M;      //! V0M vs SPD
         
         // tracks histos
