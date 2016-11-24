@@ -98,6 +98,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
+  fRejectPileFromSPD(kFALSE),
   fCentFlag(0),
   fSampling(0),
   fDoFlow(0),
@@ -227,6 +228,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fAODAnalysis(kTRUE),
   fPbPb(kTRUE),
   fLHC10h(kTRUE),
+  fRejectPileFromSPD(kFALSE),
   fCentFlag(0),
   fDoFlow(0),
   fSampling(0),
@@ -1717,7 +1719,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   // event selection criteria
 
   // Pileup rejection
-  if( event->IsPileupFromSPD(3) ) //min contributors ???  	
+  if( fRejectPileFromSPD && event->IsPileupFromSPD(3) ) //min contributors ???  	
 	{
 		if(fDebug) ::Info("IsEventSelected","Event rejected: SPD pile up");
     return kFALSE;
@@ -2767,6 +2769,13 @@ void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)
       centrCode = i;
   }
   
+  if(centrCode > fNumCentBins)
+  {
+    fCentPercentile = -100.;
+    fCentBinIndex = -1;
+    return;
+  }
+
   fCentPercentile = lPercentile;
   fCentBinIndex = centrCode;
 

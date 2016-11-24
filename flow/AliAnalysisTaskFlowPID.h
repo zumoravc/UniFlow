@@ -20,7 +20,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         // event setters
         void					SetAODAnalysis(Bool_t aod) { fAODAnalysis = aod; }
         void					SetPbPbAnalysis(Bool_t pbpb) { fPbPb = pbpb; }
-        void					SetPeriod10h(Bool_t period) { fLHC10h = period; }
+        void                    SetPeriod10h(Bool_t period) { fLHC10h = period; }
+        void					SetRejectPileUpSPD(Bool_t pileSPD) { fRejectPileFromSPD = pileSPD; }
         void					SetCentFlag(Short_t flag) { fCentFlag = flag; }
         void					SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
         void                    SetSampling(Bool_t sample) { fSampling = sample; }
@@ -171,6 +172,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fAODAnalysis;       // is AOD analysis?
         Bool_t                  fPbPb;                  // is PbPb analysis?
         Bool_t                  fLHC10h;        // flag to LHC10h data?
+        Bool_t                  fRejectPileFromSPD;   // switch for rejection based on is PileFromSPD
         Short_t                 fCentFlag;          // centrality flag
         Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
         Bool_t                  fDoFlow;        // Do flow analysis (if kFALSE: only selection, filtering and QA)
