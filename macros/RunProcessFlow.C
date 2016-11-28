@@ -25,11 +25,11 @@ void RunProcessFlow()
 	Short_t sizeCent = sizeof(cent) / sizeof(cent[0]) - 1; 
 
 	ProcessFlow* process = new ProcessFlow();
-	process->SetDebug(1);
-	process->SetInputFilePath("~/NBI/Flow/results/0-GFK-PbPb-full-10samples/merge/");
-	process->SetOutputFilePath("~/NBI/Flow/results/0-GFK-PbPb-full-10samples");
-	process->SetOutputFileName("Flow.root");
-	process->SetTag("FB768");
+	process->SetDebug(0);
+	process->SetInputFilePath("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/merge/");
+	process->SetOutputFilePath("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/");
+	process->SetOutputFileName("Flow_FB768_Old_PileON_PeriodON.root");
+	process->SetTag("FB768_Old_PileON_PeriodON");
 	process->SetHarmonicsArray(harmonics,sizeHarmonics);
 	process->SetEtaGapsArray(etaGaps,sizeEtaGaps);
 	process->SetBinsCentArray(cent,sizeCent);

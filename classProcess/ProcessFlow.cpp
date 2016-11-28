@@ -471,7 +471,7 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 	TList* listTemp4 = new TList();
 
 	Short_t iNumBinsX = 0;
-	Double_t dValue = 0;
+	Double_t dValue = 0, dCon = 0;
 	Double_t dCum2 = 0, dCum4 = 0; // <<2>>,<<4>>
 
 	for(Short_t iSample(0); iSample < fiNumSamples; iSample++)
@@ -490,8 +490,13 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 		iNumBinsX = profRef2->GetNbinsX();
 		for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
 		{
-			dValue = profRef2->GetBinContent(iBinX);
-			histTemp2->SetBinContent(iBinX, TMath::Sqrt(dValue));
+			dCon = profRef2->GetBinContent(iBinX);
+			if(dCon > 0.)
+				dValue = TMath::Sqrt(dCon);
+			else
+				dValue = -9.;
+
+			histTemp2->SetBinContent(iBinX, dValue);
 			histTemp2->SetBinError(iBinX, 0);
 		}
 
@@ -738,7 +743,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 //_____________________________________________________________________________
 Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 {
-	Info("DesampleList",Form("Desampling list with %d entries (first: %s)",inList->GetEntries(), inList->First()->GetName()));
+	//Info("DesampleList",Form("Desampling list with %d entries (first: %s)",inList->GetEntries(), inList->First()->GetName()));
 	
 	// checking in/out lists
 	if(!inList)
@@ -775,35 +780,51 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 
 	TH1D* histTemp = 0x0;
 	Double_t dValue = 0, dSum = 0, dMean = 0, dSigma = 0;
+	Short_t iWrongSamples = 0;
 	for(Short_t i(1); i < iNumBinsX+1; i++)
 	{
 		dValue = 0;
 		dSum = 0;
 		dMean = 0;
 		dSigma = 0;
+		iWrongSamples = 0;
 
 		// estimating mean
 		for(Short_t j(0); j < iNumSamples; j++)
 		{
 			histTemp = (TH1D*) inList->At(j);
 			dValue = histTemp->GetBinContent(i);
-			dSum += dValue;
+			if(dValue > -1)
+			{
+				dSum += dValue;
+			}
+			else
+			{
+				iWrongSamples++;
+			}
+
 			hValues->Fill(dValue,i);
 		}
 
-		dMean = dSum / iNumSamples;
-	
+		dMean = dSum / (iNumSamples - iWrongSamples);
+		
+
+
 		// estimating error
 		for(Short_t j(0); j < iNumSamples; j++)
 		{
 			histTemp = (TH1D*) inList->At(j);
-			dSigma += TMath::Power(histTemp->GetBinContent(i) - dMean, 2);
+			dValue = histTemp->GetBinContent(i);
+			if(dValue > -1.)
+			{
+				dSigma += TMath::Power(dValue - dMean, 2);
+			}
 		}
 
-		dSigma = TMath::Sqrt(dSigma / (iNumSamples-1) );
+		dSigma = TMath::Sqrt(dSigma / (iNumSamples-1 - iWrongSamples) );
 
 		histOut->SetBinContent(i, dMean);
-		histOut->SetBinError(i, dSigma / TMath::Sqrt(iNumSamples));
+		histOut->SetBinError(i, dSigma / TMath::Sqrt(iNumSamples - iWrongSamples));
 	}
 
 	inList->Add(histOut);
