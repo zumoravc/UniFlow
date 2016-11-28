@@ -31,6 +31,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
         void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
         void                    SetDoOldFlow(Bool_t oldFlow) { fOldFlow = oldFlow; } // do old flow (before Katarinas GFK)
+        void                    SetUseOldCent(Bool_t oldCent) { fUseOldCent = oldCent; } // use old cent framework
         // track setters
         void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
@@ -81,6 +82,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
     private:
         Bool_t                  IsEventSelected(const AliAODEvent* event);
+        Bool_t                  OldIsEventSelected(const AliAODEvent* event);
 		Bool_t                  IsTrackSelected(const AliAODTrack* track);
         Bool_t                  IsTrackPion(const AliAODTrack* track); 
         Bool_t                  IsTrackKaon(const AliAODTrack* track); 
@@ -160,7 +162,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    FillPIDQA(const AliAODTrack* track, const Short_t iQAindex);
         void                    FillV0sQA(const AliAODv0* v0, const Short_t iQAindex);
        	void                    EstimateCentrality(AliVEvent* ev);
-    
+        virtual Int_t GetTPCMult(AliVEvent* ev) const; // Old centrality framework
+        virtual Int_t GetGlobalMult(AliVEvent* ev) const; // old centlity framework
     	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
         Bool_t                  plpMV(const AliVEvent *event);
 
@@ -181,6 +184,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fPID;                       // Do PID ?
         Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
         Bool_t                  fOldFlow; // switch to old flow analysis
+        Bool_t                  fUseOldCent; // switch for old (Run1) centrality selection
         //cuts & selection: events & tracks
         Double_t                fPVtxCutZ;          // (cm) PV z cut
         UInt_t                  fTrackFilterBit; // tracks filter bit 

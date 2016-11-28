@@ -106,6 +106,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fPID(0),
   fDoV0s(0),
   fOldFlow(0),
+  fUseOldCent(0),
   fDoGenFramKat(0),
 
   fPVtxCutZ(0.),
@@ -237,6 +238,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fDoV0s(0),
   fOldFlow(0),
   fDoGenFramKat(0),
+  fUseOldCent(0),
 
   fPVtxCutZ(0.),
   fTrackEtaMax(0),
@@ -1173,11 +1175,25 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   FillEventQA(fAOD,0); // before cuts event QA
 
   // event selection
-  if(!IsEventSelected(fAOD))
-  {
-    return;
-  }
   
+  if(fUseOldCent) // as by You Run1
+  {
+    if(!OldIsEventSelected(fAOD))
+    {
+      //printf("Rejected\n");
+      return;
+    }
+  } 
+  else // Run2 cent selection based on AliMult
+  {
+    if(!IsEventSelected(fAOD))
+    {
+      return;
+    }
+  }
+
+  //printf("Event selection passed\n");
+
   // from here only selected events survive
 
   FillEventQA(fAOD,1); // after cuts events QA
@@ -1714,8 +1730,245 @@ void AliAnalysisTaskFlowPID::EstimateRefCumulant(const Float_t dEtaGap, const Sh
   return;
 }
 //_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::OldIsEventSelected(const AliAODEvent* event)
+{
+  //printf("Inside OldIsEventSelected\n");
+  //GetVertex()
+  Float_t vtxz = -999.;
+
+  if (!fAODAnalysis)
+  {
+    return kFALSE;
+  }
+  
+  AliAODEvent* aod = (AliAODEvent*)event;
+
+  const AliAODVertex* trkVtx = aod->GetPrimaryVertex();
+  if (!trkVtx || trkVtx->GetNContributors()<=0)
+      return kFALSE;
+  TString vtxTtl = trkVtx->GetTitle();
+  if (!vtxTtl.Contains("VertexerTracks"))
+      return kFALSE;
+  const AliAODVertex* spdVtx = aod->GetPrimaryVertexSPD();
+  if (!spdVtx || spdVtx->GetNContributors()<=0)
+      return kFALSE;
+  if (TMath::Abs(spdVtx->GetZ() - trkVtx->GetZ())>0.5)
+      return kFALSE;
+
+  vtxz = trkVtx->GetZ();
+  
+
+  if(vtxz < -990)
+  {
+    //printf("Vtx 1\n");
+    return kFALSE;
+  }
+  else
+  {
+    //fVtx->Fill(1);
+    //fVtxBeforeCuts->Fill(zvtx);
+    if (TMath::Abs(vtxz) < fPVtxCutZ)
+    {
+      //fMultCorBeforeCuts->Fill(GetGlobalMult(fAOD), GetTPCMult(fAOD));
+      if(fRejectPileFromSPD)
+      {
+
+        Short_t isPileup = fAOD->IsPileupFromSPD(3);
+        if (isPileup != 0)
+            return kFALSE;
+
+        //if (fAOD->GetHeader()->GetRefMultiplicityComb08() < 0)
+        //    return;
+
+        //New cut from Ruben for pileup hybrid
+        if (plpMV(fAOD))
+            return kFALSE;
+
+
+        if ( (fLHC10h) && ((Float_t(GetTPCMult(fAOD)) < (-40.3+1.22*GetGlobalMult(fAOD))) || (Float_t(GetTPCMult(fAOD)) > (32.1+1.59*GetGlobalMult(fAOD))) ) )
+            return kFALSE;
+
+        if ( (!fLHC10h) && ( (Float_t(GetTPCMult(fAOD)) < (-36.73+1.48*GetGlobalMult(fAOD))) || (Float_t(GetTPCMult(fAOD)) > (62.87+1.78*GetGlobalMult(fAOD))) ) )
+            return kFALSE;
+
+      }
+
+      //printf("Vtx & pileup passed\n");
+  
+      // GetCentrCode()
+      AliAODEvent* aod = (AliAODEvent*)event;  
+      AliCentrality* centrality = ((AliAODHeader*)aod->GetHeader())->GetCentralityP();
+      
+      Short_t centrCode = -1;
+      Float_t cent = -1.;
+      
+      if (fCentFlag == 0)
+        cent = centrality->GetCentralityPercentile("V0M");
+      else if (fCentFlag == 1)
+        cent = centrality->GetCentralityPercentile("TRK");
+      else if (fCentFlag == 2)
+        cent = centrality->GetCentralityPercentile("CL1");
+    
+      Float_t centTrk = centrality->GetCentralityPercentile("TRK"); 
+      Float_t centV0 = centrality->GetCentralityPercentile("V0M");
+
+      if (fLHC10h) 
+      {
+        if (TMath::Abs(centV0 - centTrk) < 5.0 && cent <= 80 && cent > 0)
+        {
+          if ((cent > 0) && (cent <= 5.0))
+            centrCode = 0; 
+          else if ((cent > 5.0) && (cent <= 10.0))
+            centrCode = 1;
+          else if ((cent > 10.0) && (cent <= 20.0))
+            centrCode = 2;
+          else if ((cent > 20.0) && (cent <= 30.0))
+            centrCode = 3;   
+          else if ((cent > 30.0) && (cent <= 40.0))
+            centrCode = 4; 
+          else if ((cent > 40.0) && (cent <= 50.0))
+            centrCode = 5;  
+          else if ((cent > 50.0) && (cent <= 60.0))
+            centrCode = 6;
+          else if ((cent > 60.0) && (cent <= 70.0))
+            centrCode = 7;                     
+          else if ((cent > 70.0) && (cent <= 80.0))
+            centrCode = 8;     
+        }
+      }
+  
+      if (!fLHC10h) 
+      {
+        if (cent <= 80 && cent > 0)
+        {  
+          if ((cent > 0) && (cent <= 5.0))
+             centrCode = 0; 
+          else if ((cent > 5.0) && (cent <= 10.0))
+             centrCode = 1;
+          else if ((cent > 10.0) && (cent <= 20.0))
+             centrCode = 2;
+          else if ((cent > 20.0) && (cent <= 30.0))
+             centrCode = 3;   
+          else if ((cent > 30.0) && (cent <= 40.0))
+             centrCode = 4; 
+          else if ((cent > 40.0) && (cent <= 50.0))
+             centrCode = 5;  
+          else if ((cent > 50.0) && (cent <= 60.0))
+             centrCode = 6;
+          else if ((cent > 60.0) && (cent <= 70.0))
+             centrCode = 7;                     
+          else if ((cent > 70.0) && (cent <= 80.0))
+            centrCode = 8;  
+        }
+      }
+
+      Short_t cenAOD = centrCode;
+      
+      if (cenAOD >= 0)
+      { 
+        fCentralityDis->Fill(fCentPercentile);
+        fCentDistUnitBin->Fill(fCentPercentile);
+        fEventCounter->Fill(6);
+
+        fCentPercentile = cent;
+        fCentBinIndex = cenAOD;
+
+        return kTRUE;
+      }
+    }
+  }
+
+  return kFALSE;
+}
+//____________________________________________________________________
+Int_t AliAnalysisTaskFlowPID::GetTPCMult(AliVEvent* ev) const
+{
+  
+  // function to return the tpc only multiplicity as in the flow package; it is used to cut on the event multiplcity to remove outliers in the centrality
+  
+  Int_t multTPC = 0;
+    
+  if (fAODAnalysis) {
+    
+    AliAODEvent* aod = (AliAODEvent*)ev;
+    const Int_t nGoodTracks = aod->GetNumberOfTracks();
+    for(Int_t iTracks = 0; iTracks < nGoodTracks; iTracks++) {     
+      AliAODTrack* trackAOD =(AliAODTrack*) aod->GetTrack(iTracks);
+      
+      if (!trackAOD)
+  continue;
+      
+      if (!(trackAOD->TestFilterBit(1)))
+  continue;
+      
+      if ((trackAOD->Pt() < fTrackPtMin) || (trackAOD->Pt() > fTrackPtMax) || (TMath::Abs(trackAOD->Eta()) > fTrackEtaMax) || (trackAOD->GetTPCNcls() < 70)  || (trackAOD->GetDetPid()->GetTPCsignal() < 10.0) || (trackAOD->Chi2perNDF() < 0.2))
+  continue;
+      
+      multTPC++;
+    }//track loop
+    
+  }//analysis type
+  
+  return multTPC;
+}
+
+//____________________________________________________________________
+Int_t AliAnalysisTaskFlowPID::GetGlobalMult(AliVEvent* ev) const
+{
+  
+  // function to return the global multiplicity as in the flow package; it is used to cut on the event multiplcity to remove outliers in the centrality
+  
+  Int_t multGlobal = 0;
+  if (fAODAnalysis) {
+    
+    AliAODEvent* aod = (AliAODEvent*)ev;
+    const Int_t nGoodTracks = aod->GetNumberOfTracks();
+    for(Int_t iTracks = 0; iTracks < nGoodTracks; iTracks++) {     
+      AliAODTrack* trackAOD = (AliAODTrack*)aod->GetTrack(iTracks);
+      
+      if (!trackAOD)
+  continue;
+      
+      if (!(trackAOD->TestFilterBit(16)))
+  continue;
+      
+      if ((trackAOD->Pt() < fTrackPtMin) || (trackAOD->Pt() > fTrackPtMax) || (TMath::Abs(trackAOD->Eta()) > fTrackEtaMax) || (trackAOD->GetTPCNcls() < 70) || (trackAOD->GetDetPid()->GetTPCsignal() < 10.0) || (trackAOD->Chi2perNDF() < 0.1))
+  continue;
+      
+      
+        // clone for constraining
+        Double_t b[2] = { -99., -99.};
+        Double_t bCov[3] = { -99., -99., -99.};
+        
+        AliAODTrack* trackAODC = new AliAODTrack(*trackAOD);
+        if (!trackAODC) {
+            AliWarning("Clone of AOD track failed.");
+            delete trackAODC;
+            continue;
+        }
+        
+        if (!trackAODC->PropagateToDCA(aod->GetPrimaryVertex(), aod->GetMagneticField(), 100., b, bCov)){
+            delete trackAODC;
+            continue;
+        } else {
+            delete trackAODC;
+        }
+
+        
+      if ((TMath::Abs(b[0]) > 0.3) || (TMath::Abs(b[1]) > 0.3))
+          continue;
+      
+      multGlobal++;
+    }//track loop
+    
+  }//analysis type
+  
+  return multGlobal;
+}
+//_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 {
+  //printf("Inside IsEventSelected\n");
   // event selection criteria
 
   // Pileup rejection
@@ -2741,12 +2994,21 @@ void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)
     AliMultSelection* MultSelection = 0;
     MultSelection = (AliMultSelection*) aod->FindListObject("MultSelection");
     
+
     if(!MultSelection)
     {
       lPercentile = -100;
+
     }
     else
     {
+      if(!MultSelection->IsEventSelected())
+      {
+        fCentPercentile = -100.;
+        fCentBinIndex = -1;
+        return;
+      }
+
       if(fCentFlag == 0)
         lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
       
