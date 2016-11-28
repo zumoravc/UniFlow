@@ -41,6 +41,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetPionNumSigmasMax(Double_t numSigmas) { fCutPionNumSigmaMax = numSigmas; }
         void                    SetKaonNumSigmasMax(Double_t numSigmas) { fCutKaonNumSigmaMax = numSigmas; }
         void                    SetProtonNumSigmasMax(Double_t numSigmas) { fCutProtonNumSigmaMax = numSigmas; }
+        void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutBayesPIDPionMin = probPi; }
+        void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutBayesPIDKaonMin = probK; }
+        void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutBayesPIDProtonMin = probP; }
         // V0s setters
         void					SetV0sOnFly(Bool_t onFly) { fCutV0onFly = onFly; }
         void					SetV0sTPCRefit(Bool_t refit) { fCutV0refitTPC = refit; }
@@ -92,6 +95,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
         void                    FilterTracks(); // filter all input tracks 
         void                    FilterPIDTracks(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
+        void                    FilterPIDTracksBayesPID(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
         void                    FilterV0s();
 
         Bool_t                  AreRefFlowVectorsFilled(const Float_t dEtaGap = -1, const Short_t iHarm = -1);
@@ -193,6 +197,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t                fCutPionNumSigmaMax;
         Double_t                fCutKaonNumSigmaMax;
         Double_t                fCutProtonNumSigmaMax;
+        Double_t                fCutBayesPIDPionMin; // minimal value of Bayes PID probability for pion
+        Double_t                fCutBayesPIDKaonMin; // minimal value of Bayes PID probability for Kaon
+        Double_t                fCutBayesPIDProtonMin; // minimal value of Bayes PID probability for proton
         //cuts & selection: V0 reconstruction
 		Bool_t 					fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
 		Bool_t					fCutV0refitTPC; // Check TPC refit of V0 daughters ?
@@ -305,6 +312,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fProtonsTPCdEdx; //! dEdx TPC of selected Protons
         TH2D*                   fProtonsTOFbeta; //! beta TOF of selected Protons
         TH2D*                   fProtonsNsigmasTPCTOF; //! number of sigmas of selected Protons 
+        TH1D*                   fBayesProbPion; //! Bayes probability of being the pion
+        TH1D*                   fBayesProbKaon; //! Bayes probability of being the kaon
+        TH1D*                   fBayesProbProton; //! Bayes probability of being the proton
  
 
 		// V0s histos

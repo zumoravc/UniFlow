@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -73,11 +73,11 @@ void runAnalysis()
     gROOT->LoadMacro("AliAnalysisTaskFlowPID.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskFlowPID.C"); // load the addtask macro
     
-    AliAnalysisTaskFlowPID* taskFlowPID = AddTaskFlowPID("flowPID_FB768");
+    AliAnalysisTaskFlowPID* taskFlowPID = AddTaskFlowPID("flowPID_FB768_Bayes");
     // tracks & event selection cuts
     taskFlowPID->SetAODAnalysis(kTRUE);
     taskFlowPID->SetPbPbAnalysis(kTRUE);
-    taskFlowPID->SetPeriod10h(kTRUE);
+    taskFlowPID->SetPeriod10h(kFALSE);
     taskFlowPID->SetCentFlag(0);
     taskFlowPID->SetPVtxZMax(10);
     taskFlowPID->SetTrackEtaMax(0.8);
@@ -89,12 +89,16 @@ void runAnalysis()
     taskFlowPID->SetKaonNumSigmasMax(3);
     taskFlowPID->SetProtonNumSigmasMax(3);
     //taskFlowPID->SetDoFlow(kTRUE);
-    //taskFlowPID->SetDiffFlow(kTRUE);
+    taskFlowPID->SetDiffFlow(kTRUE);
     taskFlowPID->SetPID(kTRUE);
     taskFlowPID->SetDoV0s(kTRUE);
     taskFlowPID->SetSampling(kTRUE);
     taskFlowPID->SetDoFlowGenFramKatarina(kTRUE);
     taskFlowPID->SetDoOldFlow(kFALSE);
+    taskFlowPID->SetUseBayesPID(kTRUE);
+    taskFlowPID->SetPIDBayesProbPionMin(0.95);
+    taskFlowPID->SetPIDBayesProbKaonMin(0.95);
+    taskFlowPID->SetPIDBayesProbProtonMin(0.95);
     // V0 selection cuts
     taskFlowPID->SetV0sOnFly(kFALSE);
     taskFlowPID->SetV0sTPCRefit(kTRUE);
@@ -118,6 +122,55 @@ void runAnalysis()
     taskFlowPID->SetV0sProtonNumSigmaMax(3.);
     taskFlowPID->SetV0sProtonPIDPtMax(1.2);
     
+
+    AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB768_Nsigma");
+    // tracks & event selection cuts
+    task2->SetAODAnalysis(kTRUE);
+    task2->SetPbPbAnalysis(kTRUE);
+    task2->SetPeriod10h(kFALSE);
+    task2->SetCentFlag(0);
+    task2->SetPVtxZMax(10);
+    task2->SetTrackEtaMax(0.8);
+    task2->SetTrackPtMin(0.2);
+    task2->SetTrackPtMax(5.);
+    task2->SetNumTPCclsMin(70);
+    task2->SetTrackFilterBit(768);
+    task2->SetPionNumSigmasMax(3);
+    task2->SetKaonNumSigmasMax(3);
+    task2->SetProtonNumSigmasMax(3);
+    //task2->SetDoFlow(kTRUE);
+    task2->SetDiffFlow(kTRUE);
+    task2->SetPID(kTRUE);
+    task2->SetDoV0s(kTRUE);
+    task2->SetSampling(kTRUE);
+    task2->SetDoFlowGenFramKatarina(kTRUE);
+    task2->SetDoOldFlow(kFALSE);
+    task2->SetUseBayesPID(kFALSE);
+    task2->SetPIDBayesProbPionMin(0.95);
+    task2->SetPIDBayesProbKaonMin(0.95);
+    task2->SetPIDBayesProbProtonMin(0.95);
+    // V0 selection cuts
+    task2->SetV0sOnFly(kFALSE);
+    task2->SetV0sTPCRefit(kTRUE);
+    task2->SetV0sRejectKinks(kTRUE);
+    task2->SetV0sDCAPVMin(0.1);
+    task2->SetV0sDCAPVMax(0.);
+    task2->SetV0sDCADaughtersMax(1.);
+    task2->SetV0sDecayRadiusMin(5.);
+    task2->SetV0sDecayRadiusMax(0.);
+    task2->SetV0sDaughterPtMin(0.1);
+    task2->SetV0sDaughterEtaMax(0.8);
+    task2->SetV0sMotherEtaMax(0.8);
+    task2->SetV0sMotherRapMax(0.);
+    task2->SetV0sMotherPtMin(0.2);
+    task2->SetV0sMotherPtMax(10.);
+    task2->SetV0sK0sCPAMin(0.998);
+    task2->SetV0sLambdaCPAMin(0.998);
+    task2->SetV0sK0sNumTauMax(3.);
+    task2->SetV0sK0sArmenterosAlphaMin(0.2);
+    task2->SetV0sLambdaNumTauMax(3.);
+    task2->SetV0sProtonNumSigmaMax(3.);
+    task2->SetV0sProtonPIDPtMax(1.2);
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);

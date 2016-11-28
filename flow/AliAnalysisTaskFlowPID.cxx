@@ -120,6 +120,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
+  fCutBayesPIDPionMin(0),
+  fCutBayesPIDKaonMin(0),
+  fCutBayesPIDProtonMin(0),
+
   fCutV0onFly(kFALSE),
   fCutV0rejectKinks(kFALSE),
   fCutV0refitTPC(kTRUE),
@@ -179,6 +183,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fProtonsTPCdEdx(0x0),
   fProtonsTOFbeta(0x0),
   fProtonsNsigmasTPCTOF(0x0),  
+  fBayesProbPion(0x0), 
+  fBayesProbKaon(0x0), 
+  fBayesProbProton(0x0), 
 
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
@@ -252,6 +259,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
+  fCutBayesPIDPionMin(0),
+  fCutBayesPIDKaonMin(0),
+  fCutBayesPIDProtonMin(0),
   
   fCutV0onFly(kFALSE),
   fCutV0rejectKinks(kFALSE),
@@ -311,7 +321,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fProtonsPhi(0x0),
   fProtonsTPCdEdx(0x0),
   fProtonsTOFbeta(0x0),
-  fProtonsNsigmasTPCTOF(0x0),  
+  fProtonsNsigmasTPCTOF(0x0), 
+  fBayesProbPion(0x0), 
+  fBayesProbKaon(0x0), 
+  fBayesProbProton(0x0), 
 
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
@@ -580,6 +593,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   {
     fPIDCombined = new AliPIDCombined();
     fPIDCombined->SetDefaultTPCPriors();
+    fPIDCombined->SetSelectedSpecies(5);
     fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
   }
 
@@ -924,6 +938,12 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fProtonsTPCdEdx);
     fProtonsNsigmasTPCTOF = new TH2D("fProtonsNsigmasTPCTOF","p: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
     fOutListPID->Add(fProtonsNsigmasTPCTOF);
+    fBayesProbPion = new TH1D("fBayesProbPion","#pi,K,p: Bayesian probablibity as #pi (all selected); probability", 1000, 0., 1.); 
+    fOutListPID->Add(fBayesProbPion);
+    fBayesProbKaon = new TH1D("fBayesProbKaon", "#pi,K,p: Bayesian probablibity as K (all selected); probability", 1000, 0., 1.); 
+    fOutListPID->Add(fBayesProbKaon);
+    fBayesProbProton = new TH1D("fBayesProbProton","#pi,K,p: Bayesian probablibity as proton (all selected); probability", 1000, 0., 1.); 
+    fOutListPID->Add(fBayesProbProton);
   } 
 
   if(fOldFlow)
@@ -1272,7 +1292,14 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   
   if(fPID)
   {
-    FilterPIDTracks(); // filter PID tracks (pi,K,p)
+    if(fUseBayesPID) // filter PID tracks Using Bayes PID
+    {
+      FilterPIDTracksBayesPID(); 
+    }
+    else
+    {
+      FilterPIDTracks(); // filter PID tracks (pi,K,p)
+    }
       
     if(fDoV0s)
       FilterV0s(); // filter V0s
@@ -2101,6 +2128,127 @@ void AliAnalysisTaskFlowPID::FilterPIDTracks()
     if(bIsEither) // either PID as pi,K or p
     {
       FillPIDQA(track,1);
+    }
+  } // end of loop over filtered tracks
+
+  fPionsMult->Fill(iNumPions);
+  fKaonsMult->Fill(iNumKaons);
+  fProtonsMult->Fill(iNumProtons);
+
+  return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
+{
+  const Int_t iNumTracks = fArrTracksFiltered.GetEntriesFast();
+
+  if(iNumTracks == 0) // no filter tracks
+    return;
+
+  Int_t iNumPions = 0;
+  Int_t iNumKaons = 0;
+  Int_t iNumProtons = 0;
+
+  Bool_t bIsEither = kFALSE;
+
+  Double_t dTOF[5] = {0};
+  Double_t dBetaTOF = 0;
+
+  Bool_t bIsTOF = kFALSE;
+
+  Double_t dPropPID[5] = {0}; // array 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+  Bool_t bIsPion = kFALSE;
+  Bool_t bIsKaon = kFALSE;
+  Bool_t bIsProton = kFALSE;
+
+
+  UInt_t iDetUsed = 0;
+  AliAODTrack* track = 0x0;
+  for(Int_t i(0); i < iNumTracks; i++)
+  {
+    track = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
+
+    FillPIDQA(track,0);
+    
+    bIsPion = kFALSE;
+    bIsKaon = kFALSE;
+    bIsProton = kFALSE;
+
+    bIsEither = kFALSE;
+
+    bIsTOF = (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME); // checking TOF
+    iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dPropPID);
+
+    // checking the PID probability
+    if(dPropPID[2] > fCutBayesPIDPionMin) // is Pion?
+      bIsPion = kTRUE;
+
+    if(dPropPID[3] > fCutBayesPIDKaonMin) // is Kaon?
+      bIsKaon= kTRUE;
+
+    if(dPropPID[4] > fCutBayesPIDProtonMin) // is Proton?
+      bIsProton = kTRUE;
+    
+    //printf("PID: pion %g (%d) / kaon %g (%d) / proton %g (%d) \n", dPropPID[2], bIsPion, dPropPID[3], bIsKaon, dPropPID[4], bIsProton);
+
+    if(bIsPion)
+    {
+      bIsEither = kTRUE;
+      new(fArrPionFiltered[iNumPions]) AliAODTrack(*track);
+      iNumPions++;
+
+      fPionsPt->Fill(track->Pt());
+      fPionsEta->Fill(track->Eta());
+      fPionsPhi->Fill(track->Phi());
+      fPionsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion) );
+      fPionsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+
+      track->GetIntegratedTimes(dTOF);
+      dBetaTOF = dTOF[0] / track->GetTOFsignal();
+      fPionsTOFbeta->Fill(track->P(), dBetaTOF);
+    }
+    
+    if(bIsKaon)
+    {
+      bIsEither = kTRUE;
+      new(fArrKaonFiltered[iNumKaons]) AliAODTrack(*track);
+      iNumKaons++;
+
+      fKaonsPt->Fill(track->Pt());
+      fKaonsEta->Fill(track->Eta());
+      fKaonsPhi->Fill(track->Phi());
+      fKaonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kKaon) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kKaon) );
+      fKaonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+      
+      track->GetIntegratedTimes(dTOF);
+      dBetaTOF = dTOF[0] / track->GetTOFsignal();
+      fKaonsTOFbeta->Fill(track->P(), dBetaTOF);
+
+    }
+    
+    if(bIsProton)
+    {
+      bIsEither = kTRUE;
+      new(fArrProtonFiltered[iNumProtons]) AliAODTrack(*track);
+      iNumProtons++;
+
+      fProtonsPt->Fill(track->Pt());
+      fProtonsEta->Fill(track->Eta());
+      fProtonsPhi->Fill(track->Phi());
+      fProtonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kProton) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kProton) );
+      fProtonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+      
+      track->GetIntegratedTimes(dTOF);
+      dBetaTOF = dTOF[0] / track->GetTOFsignal();
+      fProtonsTOFbeta->Fill(track->P(), dBetaTOF);
+    }
+
+    if(bIsEither) // either PID as pi,K or p
+    {
+      FillPIDQA(track,1);
+      fBayesProbPion->Fill(dPropPID[2]);
+      fBayesProbKaon->Fill(dPropPID[3]);
+      fBayesProbProton->Fill(dPropPID[4]);
     }
   } // end of loop over filtered tracks
 
