@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -78,6 +78,7 @@ void runAnalysis()
     // tracks & event selection cuts
     taskFlowPID->SetAODAnalysis(kTRUE);
     taskFlowPID->SetPbPbAnalysis(kTRUE);
+    taskFlowPID->SetUseOldCent(kFALSE);
     taskFlowPID->SetPeriod10h(kTRUE);
     taskFlowPID->SetRejectPileUpSPD(kTRUE);
     taskFlowPID->SetCentFlag(0);
@@ -90,14 +91,13 @@ void runAnalysis()
     taskFlowPID->SetPionNumSigmasMax(3);
     taskFlowPID->SetKaonNumSigmasMax(3);
     taskFlowPID->SetProtonNumSigmasMax(3);
-    //taskFlowPID->SetDoFlow(kTRUE);
-    //taskFlowPID->SetDiffFlow(kTRUE);
-    taskFlowPID->SetPID(kFALSE);
-    taskFlowPID->SetDoV0s(kTRUE);
-    taskFlowPID->SetSampling(kTRUE);
     taskFlowPID->SetDoFlowGenFramKatarina(kTRUE);
+    taskFlowPID->SetDiffFlow(kTRUE);
+    taskFlowPID->SetPID(kFALSE);
+    taskFlowPID->SetDoV0s(kFALSE);
+    taskFlowPID->SetSampling(kTRUE);
     taskFlowPID->SetDoOldFlow(kFALSE);
-    taskFlowPID->SetUseOldCent(kFALSE);
+    //taskFlowPID->SetDoFlow(kTRUE);
     // V0 selection cuts
     taskFlowPID->SetV0sOnFly(kFALSE);
     taskFlowPID->SetV0sTPCRefit(kTRUE);
@@ -173,7 +173,7 @@ void runAnalysis()
     task2->SetV0sProtonPIDPtMax(1.2);
     
     */
-
+    /*
      // Testing PileRejection & period ON/OFF
     AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB768_New_PileON_PeriodOFF");
     // tracks & event selection cuts
@@ -510,6 +510,9 @@ void runAnalysis()
     task7->SetV0sLambdaNumTauMax(3.);
     task7->SetV0sProtonNumSigmaMax(3.);
     task7->SetV0sProtonPIDPtMax(1.2);
+    
+    */
+
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);

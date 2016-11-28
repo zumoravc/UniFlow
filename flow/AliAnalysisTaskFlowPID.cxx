@@ -1256,14 +1256,17 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   // cleaning all TClonesArray containers
   fArrTracksFiltered.Clear("C");
-  fArrPionFiltered.Clear("C");
-  fArrKaonFiltered.Clear("C");
-  fArrProtonFiltered.Clear("C");
-  if(fDoV0s)
+  if(fPID)
   {
-    fArrV0sK0sFiltered.Clear("C");
-    fArrV0sLambdaFiltered.Clear("C");
-    fArrV0sALambdaFiltered.Clear("C"); 
+    fArrPionFiltered.Clear("C");
+    fArrKaonFiltered.Clear("C");
+    fArrProtonFiltered.Clear("C");
+    if(fDoV0s)
+    {
+      fArrV0sK0sFiltered.Clear("C");
+      fArrV0sLambdaFiltered.Clear("C");
+      fArrV0sALambdaFiltered.Clear("C"); 
+    }
   }
 
   // filtering objects and filling relevant containers
@@ -3232,73 +3235,81 @@ void AliAnalysisTaskFlowPID::DoGenFramKatarina()
     
     //printf("Diff flow \n");
     // Diff flow 
-    for(Int_t iPt(0); iPt < fNumPtBins; iPt++)
+    if(fDiffFlow)
     {
-      // fill p,q vectors
-
-      GFKFillVectors(fArrTracksFiltered,iEtaGap,iPt,0);
-      for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+      for(Int_t iPt(0); iPt < fNumPtBins; iPt++)
       {
-        GFKDoDiffFlow(fdn2Tracks[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Tracks[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Tracks[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
-      }
+        // fill p,q vectors
 
-      // pions
-      GFKFillVectors(fArrPionFiltered,iEtaGap,iPt,0);
-      for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
-      {
-        GFKDoDiffFlow(fdn2Pion[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Pion[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Pion[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
-      }
-
-      // kaons
-      GFKFillVectors(fArrKaonFiltered,iEtaGap,iPt,0);
-      for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
-      {
-        GFKDoDiffFlow(fdn2Kaon[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Kaon[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Kaon[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
-      }
-
-      // protons
-      GFKFillVectors(fArrProtonFiltered,iEtaGap,iPt,0);
-      for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
-      {
-        GFKDoDiffFlow(fdn2Proton[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Proton[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Proton[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
-      }
-
-
-      // K0s
-      for(Int_t iMass(0); iMass < fNumMinvFlowBinsK0s; iMass++)
-      {
-        dMass = (fMinvFlowBinEdgesK0s[iMass+1]+fMinvFlowBinEdgesK0s[iMass])/2;
-        //printf("fill Kos pre Gap %g pT %d \n",dEtaGap,iPt);  
-        GFKFillVectors(fArrV0sK0sFiltered,iEtaGap,iPt,1,iMass);
-        //printf("fill Kos post\n");  
-
+        GFKFillVectors(fArrTracksFiltered,iEtaGap,iPt,0);
         for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
         {
-          GFKDoDiffFlowV0s(fdn2K0s[0][iEtaGap][iHarm][fCentBinIndex],fdn2K0s[1][iEtaGap][iHarm][fCentBinIndex],fdn4K0s[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
+          GFKDoDiffFlow(fdn2Tracks[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Tracks[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Tracks[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
         }
-      }
-      
-      //Lambda
-      for(Int_t iMass(0); iMass < fNumMinvFlowBinsLambda; iMass++)
-      {
-        dMass = (fMinvFlowBinEdgesLambda[iMass+1]+fMinvFlowBinEdgesLambda[iMass])/2;
+
+        if(fPID)
+        {
+          // pions
+          GFKFillVectors(fArrPionFiltered,iEtaGap,iPt,0);
+          for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+          {
+            GFKDoDiffFlow(fdn2Pion[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Pion[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Pion[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
+          }
+
+          // kaons
+          GFKFillVectors(fArrKaonFiltered,iEtaGap,iPt,0);
+          for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+          {
+            GFKDoDiffFlow(fdn2Kaon[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Kaon[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Kaon[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
+          }
+
+          // protons
+          GFKFillVectors(fArrProtonFiltered,iEtaGap,iPt,0);
+          for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+          {
+            GFKDoDiffFlow(fdn2Proton[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Proton[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Proton[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
+          }
+
+
+          // K0s
+          for(Int_t iMass(0); iMass < fNumMinvFlowBinsK0s; iMass++)
+          {
+            dMass = (fMinvFlowBinEdgesK0s[iMass+1]+fMinvFlowBinEdgesK0s[iMass])/2;
+            //printf("fill Kos pre Gap %g pT %d \n",dEtaGap,iPt);  
+            GFKFillVectors(fArrV0sK0sFiltered,iEtaGap,iPt,1,iMass);
+            //printf("fill Kos post\n");  
+
+            for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+            {
+              GFKDoDiffFlowV0s(fdn2K0s[0][iEtaGap][iHarm][fCentBinIndex],fdn2K0s[1][iEtaGap][iHarm][fCentBinIndex],fdn4K0s[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
+            }
+          }
+          
+          //Lambda
+          for(Int_t iMass(0); iMass < fNumMinvFlowBinsLambda; iMass++)
+          {
+            dMass = (fMinvFlowBinEdgesLambda[iMass+1]+fMinvFlowBinEdgesLambda[iMass])/2;
+            
+            // filling Lambda
+            GFKFillVectors(fArrV0sLambdaFiltered,iEtaGap,iPt,2,iMass);
+            for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+            {
+              GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
+            }
+            
+            //Filling antilambdas
+            GFKFillVectors(fArrV0sALambdaFiltered,iEtaGap,iPt,3,iMass);
+            for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
+            {
+              GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
+            }
+          }    
+        } // end of DoPID flag
         
-        // filling Lambda
-        GFKFillVectors(fArrV0sLambdaFiltered,iEtaGap,iPt,2,iMass);
-        for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
-        {
-          GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
-        }
-        
-        //Filling antilambdas
-        GFKFillVectors(fArrV0sALambdaFiltered,iEtaGap,iPt,3,iMass);
-        for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
-        {
-          GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
-        }
-      }  
-      
-    } // end of pT bins loop  
+      } // end of pT bins loop  
+       
+    } // end of DoDiffFlow flag
+
   } // end of loop over eta gaps
 
   return;
