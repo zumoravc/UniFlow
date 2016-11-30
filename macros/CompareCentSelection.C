@@ -2,25 +2,25 @@ TH1D* ConvertHist(TH1D* hist, TH1D* stat, TH1D* sys);
 
 void CompareCentSelection()
 {
-	TString sOutputPath = "~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/centComparison2/";
+	TString sOutputPath = "~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/centComparison/";
 
 
 	//TFile* fInputNew = new TFile("~/NBI/Flow/results/7-GFK-PbPb-OldCent/Flow.root","READ");
 	
 	//TFile* fInputOld = new TFile("~/NBI/Flow/results/7-GFK-PbPb-OldCent/Flow_OldCent.root","READ");
 
-	TFile* fInputOld_PileON_PeriodON = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/Flow_FB768_Old_PileON_PeriodON.root","READ");
-	TFile* fInputOld_PileOFF_PeriodON = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/Flow_FB768_Old_PileOFF_PeriodON.root","READ");
-	TFile* fInputOld_PileON_PeriodOFF = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/Flow_FB768_Old_PileON_PeriodOFF.root","READ");
-	TFile* fInputOld_PileOFF_PeriodOFF = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/Flow_FB768_Old_PileOFF_PeriodOFF.root","READ");
+	TFile* fInputOld_PileON_PeriodON = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/Flow_FB768_Old_PileON_PeriodON.root","READ");
+	TFile* fInputOld_PileOFF_PeriodON = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/Flow_FB768_Old_PileOFF_PeriodON.root","READ");
+	TFile* fInputOld_PileON_PeriodOFF = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/Flow_FB768_Old_PileON_PeriodOFF.root","READ");
+	TFile* fInputOld_PileOFF_PeriodOFF = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/Flow_FB768_Old_PileOFF_PeriodOFF.root","READ");
 	
-	TFile* fInputNew_PileON_PeriodON = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/Flow_FB768_New_PileON_PeriodON.root","READ");
-	TFile* fInputNew_PileOFF_PeriodON = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/Flow_FB768_New_PileOFF_PeriodON.root","READ");
-	TFile* fInputNew_PileON_PeriodOFF = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/Flow_FB768_New_PileON_PeriodOFF.root","READ");
-	TFile* fInputNew_PileOFF_PeriodOFF = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/Flow_FB768_New_PileOFF_PeriodOFF.root","READ");
+	TFile* fInputNew_PileON_PeriodON = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/Flow_FB768_New_PileON_PeriodON.root","READ");
+	TFile* fInputNew_PileOFF_PeriodON = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/Flow_FB768_New_PileOFF_PeriodON.root","READ");
+	TFile* fInputNew_PileON_PeriodOFF = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/Flow_FB768_New_PileON_PeriodOFF.root","READ");
+	TFile* fInputNew_PileOFF_PeriodOFF = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/Flow_FB768_New_PileOFF_PeriodOFF.root","READ");
 	
-	TFile* fQA_Old = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/merge/AnalysisResults.root","READ");
-	TFile* fQA_New = new TFile("~/NBI/Flow/results/8-GFK-PbPb-UltCentTest/merge/AnalysisResults.root","READ");
+	TFile* fQA_Old = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/merge/AnalysisResults.root","READ");
+	TFile* fQA_New = new TFile("~/NBI/Flow/results/10-GFK-PbPb-R1-noSampling/merge/AnalysisResults.root","READ");
 	
 	Color_t colNew = kRed;
 	Color_t colOld = kGreen+2;
@@ -224,6 +224,13 @@ void CompareCentSelection()
 	hCentDist_OFF_OFF->Draw("same");
 
 	cOld->SaveAs(Form("%s/CentOLD.pdf",sOutputPath.Data()));
+	
+	cOld->cd(3);
+	//hCentDist_ON_ON->Draw();
+	//hCentDist_ON_OFF->Draw("same");
+	//hCentDist_OFF_ON->Draw("same");
+	hCentDist_OFF_OFF->Draw();
+	cOld->SaveAs(Form("%s/CentOLD_one.pdf",sOutputPath.Data()));
 
 	printf("=================== Comparing NEW cent variations =====================\n");
 	

@@ -9,7 +9,7 @@ TCanvas* CompareHistos(
 */
 
 void Compare(TH1D* hOne, TH1D* hTwo, TPad* pad);
-
+TH1D* DivideGraphByHist(const TGraphAsymmErrors* graph, const TH1* hist);
 
 /*
 TGraphErrors* Kv2_1020_QC2(Int_t color=1, Int_t marker=20);
@@ -74,16 +74,18 @@ void PlotGFK(
 	// ######## Tlists loaded ##################
 
 		const Short_t iNumCent = 9;
+		Color_t colMine = kBlue+2;
 	// ============================================================================
 	// Comparison with YOU 
 
 	if(bYou)
 	{
+		Color_t colYou = kRed;
 
 		TString sYouLabel[] = {"NoGap","Gap00","Gap10"};
 		// reference 
 		
-		TFile* fYouRef= new TFile("~/NBI/Flow/results/you/Analysis_vn_2468.root","READ");
+		TFile* fYouRef= new TFile("~/NBI/Flow/results/you/FB768/Analysis_vn_2468.root","READ");
 		fYouRef->ls();
 
 		TH1D* hYouRef22[iNumEtaGaps];
@@ -95,10 +97,16 @@ void PlotGFK(
 		{
 			hYouRef22[iGap] = (TH1D*) fYouRef->Get(Form("fv22%s",sYouLabel[iGap].Data()));
 			if(!hYouRef22[iGap]) return;
+			hYouRef22[iGap]->SetLineColor(colYou);
+			hYouRef22[iGap]->SetMarkerColor(colYou);
 			hYouRef32[iGap] = (TH1D*) fYouRef->Get(Form("fv32%s",sYouLabel[iGap].Data()));
 			if(!hYouRef32[iGap]) return;
+			hYouRef32[iGap]->SetLineColor(colYou);
+			hYouRef32[iGap]->SetMarkerColor(colYou);
 			hYouRef42[iGap] = (TH1D*) fYouRef->Get(Form("fv42%s",sYouLabel[iGap].Data()));
 			if(!hYouRef42[iGap]) return;
+			hYouRef42[iGap]->SetLineColor(colYou);
+			hYouRef42[iGap]->SetMarkerColor(colYou);
 		}
 
 		// loading PRL 105
@@ -121,12 +129,18 @@ void PlotGFK(
 
 		TGraphAsymmErrors* PRL116_Ref22 = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y1");
 		TGraphAsymmErrors* PRL116_Ref24 = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y2");
+		PRL116_Ref22->SetLineColor(kGreen+2);
+		PRL116_Ref22->SetMarkerColor(kGreen+2);
+		PRL116_Ref24->SetLineColor(kGreen+2);
+		PRL116_Ref24->SetMarkerColor(kGreen+2);
 
+		printf("PRL116_Ref22: %d \n", 	PRL116_Ref22->GetN());
 
 		TLine* unity = new TLine(0.,1.,80.,1.);
 		TCanvas* cRatio = new TCanvas("cRatio");
 		cRatio->Divide(2,1);
 		TH1D* hTempRatio = 0x0;
+		TH1D* hTempRatioPRL = 0x0;
 		TH1D* hDummy = new TH1D();
 
 		for(Short_t iGap(0); iGap < iNumEtaGaps; iGap++)
@@ -148,6 +162,11 @@ void PlotGFK(
 			hTempRatio->SetMinimum(0.8);
 			hTempRatio->SetMaximum(1.2);
 			hTempRatio->Draw();
+			if(iGap == 2)
+			{
+				hTempRatioPRL = DivideGraphByHist(PRL116_Ref22, hRef2[0][iGap]);
+				hTempRatioPRL->Draw("same");
+			}
 			unity->Draw("same");
 			cRatio->SaveAs(Form("%s/Ref/Ref_v22_Gap%s_comp.pdf",sOutPath.Data(),sEtaGaps[iGap].Data()));
 		}
@@ -216,6 +235,9 @@ void PlotGFK(
 		hTempRatio->SetMinimum(0.8);
 		hTempRatio->SetMaximum(1.2);
 		hTempRatio->Draw();
+		hTempRatioPRL = DivideGraphByHist(PRL116_Ref24,hRef4[0]);
+		hTempRatioPRL->Draw("same");
+
 		unity->Draw("same");
 		cRatio->SaveAs(Form("%s/Ref/Ref_v24_comp.pdf",sOutPath.Data(),sEtaGaps[iGap].Data()));
 
@@ -223,9 +245,9 @@ void PlotGFK(
 		// Loading You
 
 		TCanvas* cTemp = new TCanvas("cTemp");
-		TFile* fYouPtV2 = new TFile("~/NBI/Flow/results/you/Analysis_v2pt.root","READ");
-		TFile* fYouPtV3 = new TFile("~/NBI/Flow/results/you/Analysis_v3pt.root","READ");
-		TFile* fYouPtV4 = new TFile("~/NBI/Flow/results/you/Analysis_v4pt.root","READ");
+		TFile* fYouPtV2 = new TFile("~/NBI/Flow/results/you/FB768/Analysis_v2pt.root","READ");
+		TFile* fYouPtV3 = new TFile("~/NBI/Flow/results/you/FB128/Analysis_v3pt.root","READ");
+		TFile* fYouPtV4 = new TFile("~/NBI/Flow/results/you/FB128/Analysis_v4pt.root","READ");
 		//fYouPtV2->cd();
 		//fYouPtV2->ls();
 		//fYouPtV3->ls();
@@ -568,6 +590,8 @@ void PlotGFK(
 			KaonV2[iCent] = GetV2(1,iCentBins[iCent],iCentBins[iCent+1]);
 			ProtonV2[iCent] = GetV2(2,iCentBins[iCent],iCentBins[iCent+1]);
 
+			lsPions[0][2]->ls();
+
 			hMinePionV2[iCent] = (TH1D*) lsPions[0][2]->FindObject(Form("fPion_n22_gap10_cent%d_number0_0_px_desampled",iCent));
 			hMinePionV2[iCent]->SetMarkerStyle(20);
 			hMinePionV2[iCent]->SetMarkerColor(kBlue);
@@ -690,7 +714,6 @@ void PlotGFK(
 			cPID->SaveAs(Form("%s/Pions/PionV22_cent%d_comp.pdf",sOutPath.Data(),iCent));	
 		}
 
-	
 		for(Short_t iCent(0); iCent < iNumCent; iCent++)
 		{
 			if(!hMineKaonV2[iCent])
@@ -807,7 +830,226 @@ void PlotGFK(
 			leg->Draw();
 			latex.DrawLatex(0.65,0.8, Form("p: %d%% - %d%%",iCentBins[iCent],iCentBins[iCent+1]));
 			cPID->SaveAs(Form("%s/Protons/ProtonV32_cent%d_comp.pdf",sOutPath.Data(),iCent));	
-		}	
+		}
+
+		// fitting several centralities at once
+		TCanvas* cALL = new TCanvas("cALL","ALL",1000,1000);
+		Color_t col_JHEP = kGreen+2;
+		Color_t col_SP = kRed;
+		Color_t col_Mine = kBlue-4;
+
+		TLegend* legAll = new TLegend(0.12,0.6,0.5,0.89);
+		legAll->SetBorderSize(0);
+		legAll->AddEntry(hMinePionV2[2], "QC2 |#Delta#eta| > 1 [This analysis]","pel");
+		legAll->AddEntry(PionV22[2], "QC2 |#Delta#eta| > 1 [QM11]","pel");
+		legAll->AddEntry(Pions_JHEP[2], "SP |#Delta#eta| > 0.9 [JHEP 06 190]","pel");
+		
+		// pions
+		cALL->cd();
+		Short_t localCent = 2; // 10-20
+		hMinePionV2[localCent]->SetTitle("; #it{p}_{T} (GeV/#it{c});");
+		hMinePionV2[localCent]->SetMinimum(0.);
+		hMinePionV2[localCent]->SetMaximum(0.4);
+		hMinePionV2[localCent]->SetLineColor(col_Mine);
+		hMinePionV2[localCent]->SetMarkerColor(col_Mine);
+		hMinePionV2[localCent]->Draw();
+		legAll->Draw();
+
+		if(PionV22[localCent])
+		{
+			PionV22[localCent]->SetMarkerStyle(20);
+			PionV22[localCent]->SetMarkerColor(col_SP);
+			PionV22[localCent]->SetLineColor(col_SP);
+			PionV22[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		if(Pions_JHEP[localCent])
+		{
+			Pions_JHEP[localCent]->SetMarkerStyle(20);
+			Pions_JHEP[localCent]->SetMarkerColor(col_JHEP);
+			Pions_JHEP[localCent]->SetLineColor(col_JHEP);
+			Pions_JHEP[localCent]->Draw(sErrorOption.Data());
+		}
+
+		if(PionV32[localCent])
+		{
+			PionV32[localCent]->SetMarkerStyle(22);
+			PionV32[localCent]->SetMarkerColor(col_SP);
+			PionV32[localCent]->SetLineColor(col_SP);
+			PionV32[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		hMinePionV32[localCent]->SetMarkerColor(col_Mine);
+		hMinePionV32[localCent]->SetLineColor(col_Mine);
+		hMinePionV32[localCent]->SetMarkerStyle(22);
+		hMinePionV32[localCent]->Draw("same");
+
+		hMinePionV2[localCent]->Draw("same"); // to be on top
+
+
+
+		localCent = 5; // 40 - 50
+		hMinePionV2[localCent]->SetTitle("; #it{p}_{T} (GeV/#it{c});");
+		hMinePionV2[localCent]->SetMarkerStyle(21);
+		hMinePionV2[localCent]->SetLineColor(col_Mine);
+		hMinePionV2[localCent]->SetMarkerColor(col_Mine);
+		hMinePionV2[localCent]->Draw("same");
+		
+		if(PionV22[localCent])
+		{
+			PionV22[localCent]->SetMarkerStyle(21);
+			PionV22[localCent]->SetMarkerColor(col_SP);
+			PionV22[localCent]->SetLineColor(col_SP);
+			PionV22[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		if(Pions_JHEP[localCent])
+		{
+			Pions_JHEP[localCent]->SetMarkerStyle(21);
+			Pions_JHEP[localCent]->SetMarkerColor(col_JHEP);
+			Pions_JHEP[localCent]->SetLineColor(col_JHEP);
+			Pions_JHEP[localCent]->Draw(sErrorOption.Data());
+		}
+
+
+		hMinePionV2[localCent]->Draw("same"); // to be on top
+
+		cALL->SaveAs(Form("%s/Pions/All_Pions.pdf",sOutPath.Data(),iCent));	
+
+		// kaons
+		Short_t localCent = 2; // 10-20
+		hMineKaonV2[localCent]->SetTitle("; #it{p}_{T} (GeV/#it{c});");
+		hMineKaonV2[localCent]->SetMinimum(0.);
+		hMineKaonV2[localCent]->SetMaximum(0.4);
+		hMineKaonV2[localCent]->SetLineColor(col_Mine);
+		hMineKaonV2[localCent]->SetMarkerColor(col_Mine);
+		hMineKaonV2[localCent]->Draw();
+		legAll->Draw();
+
+		if(KaonV22[localCent])
+		{
+			KaonV22[localCent]->SetMarkerStyle(20);
+			KaonV22[localCent]->SetMarkerColor(col_SP);
+			KaonV22[localCent]->SetLineColor(col_SP);
+			KaonV22[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		if(Kaons_JHEP[localCent])
+		{
+			Kaons_JHEP[localCent]->SetMarkerStyle(20);
+			Kaons_JHEP[localCent]->SetMarkerColor(col_JHEP);
+			Kaons_JHEP[localCent]->SetLineColor(col_JHEP);
+			Kaons_JHEP[localCent]->Draw(sErrorOption.Data());
+		}
+		
+		if(KaonV32[localCent])
+		{
+			KaonV32[localCent]->SetMarkerStyle(22);
+			KaonV32[localCent]->SetMarkerColor(col_SP);
+			KaonV32[localCent]->SetLineColor(col_SP);
+			KaonV32[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		hMineKaonV32[localCent]->SetMarkerColor(col_Mine);
+		hMineKaonV32[localCent]->SetLineColor(col_Mine);
+		hMineKaonV32[localCent]->SetMarkerStyle(22);
+		hMineKaonV32[localCent]->Draw("same");
+
+		hMineKaonV2[localCent]->Draw("same"); // to be on top
+
+		localCent = 5; // 40 - 50
+		hMineKaonV2[localCent]->SetTitle("; #it{p}_{T} (GeV/#it{c});");
+		hMineKaonV2[localCent]->SetMarkerStyle(21);
+		hMineKaonV2[localCent]->SetLineColor(col_Mine);
+		hMineKaonV2[localCent]->SetMarkerColor(col_Mine);
+		hMineKaonV2[localCent]->Draw("same");
+		
+		if(KaonV22[localCent])
+		{
+			KaonV22[localCent]->SetMarkerStyle(21);
+			KaonV22[localCent]->SetMarkerColor(col_SP);
+			KaonV22[localCent]->SetLineColor(col_SP);
+			KaonV22[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		if(Kaons_JHEP[localCent])
+		{
+			Kaons_JHEP[localCent]->SetMarkerStyle(21);
+			Kaons_JHEP[localCent]->SetMarkerColor(col_JHEP);
+			Kaons_JHEP[localCent]->SetLineColor(col_JHEP);
+			Kaons_JHEP[localCent]->Draw(sErrorOption.Data());
+		}
+		hMineKaonV2[localCent]->Draw("same"); // to be on top
+
+		cALL->SaveAs(Form("%s/Kaons/All_Kaons.pdf",sOutPath.Data(),iCent));	
+
+		// protons
+		Short_t localCent = 2; // 10-20
+		hMineProtonV2[localCent]->SetTitle("; #it{p}_{T} (GeV/#it{c});");
+		hMineProtonV2[localCent]->SetMinimum(0.);
+		hMineProtonV2[localCent]->SetMaximum(0.4);
+		hMineProtonV2[localCent]->SetLineColor(col_Mine);
+		hMineProtonV2[localCent]->SetMarkerColor(col_Mine);
+		hMineProtonV2[localCent]->Draw();
+		legAll->Draw();
+
+		if(ProtonV22[localCent])
+		{
+			ProtonV22[localCent]->SetMarkerStyle(20);
+			ProtonV22[localCent]->SetMarkerColor(col_SP);
+			ProtonV22[localCent]->SetLineColor(col_SP);
+			ProtonV22[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		if(Protons_JHEP[localCent])
+		{
+			Protons_JHEP[localCent]->SetMarkerStyle(20);
+			Protons_JHEP[localCent]->SetMarkerColor(col_JHEP);
+			Protons_JHEP[localCent]->SetLineColor(col_JHEP);
+			Protons_JHEP[localCent]->Draw(sErrorOption.Data());
+		}
+
+		if(ProtonV32[localCent])
+		{
+			ProtonV32[localCent]->SetMarkerStyle(22);
+			ProtonV32[localCent]->SetMarkerColor(col_SP);
+			ProtonV32[localCent]->SetLineColor(col_SP);
+			ProtonV32[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		hMineProtonV32[localCent]->SetMarkerColor(col_Mine);
+		hMineProtonV32[localCent]->SetLineColor(col_Mine);
+		hMineProtonV32[localCent]->SetMarkerStyle(22);
+		hMineProtonV32[localCent]->Draw("same");
+
+		hMineProtonV2[localCent]->Draw("same"); // to be on top
+
+		localCent = 5; // 40 - 50
+		hMineProtonV2[localCent]->SetTitle("; #it{p}_{T} (GeV/#it{c});");
+		hMineProtonV2[localCent]->SetMarkerStyle(21);
+		hMineProtonV2[localCent]->SetLineColor(col_Mine);
+		hMineProtonV2[localCent]->SetMarkerColor(col_Mine);
+		hMineProtonV2[localCent]->Draw("same");
+		
+		if(ProtonV22[localCent])
+		{
+			ProtonV22[localCent]->SetMarkerStyle(21);
+			ProtonV22[localCent]->SetMarkerColor(col_SP);
+			ProtonV22[localCent]->SetLineColor(col_SP);
+			ProtonV22[localCent]->Draw(sErrorOption.Data());	
+		}
+
+		if(Protons_JHEP[localCent])
+		{
+			Protons_JHEP[localCent]->SetMarkerStyle(21);
+			Protons_JHEP[localCent]->SetMarkerColor(col_JHEP);
+			Protons_JHEP[localCent]->SetLineColor(col_JHEP);
+			Protons_JHEP[localCent]->Draw(sErrorOption.Data());
+		}
+		hMineProtonV2[localCent]->Draw("same"); // to be on top
+
+		cALL->SaveAs(Form("%s/Protons/All_Protons.pdf",sOutPath.Data(),iCent));	
+
 	}
 
 
@@ -848,7 +1090,7 @@ void PlotGFK(
 
 	// Comparing with published / preliminary / You results
 
-	TFile* fYouRef = new TFile("~/NBI/Flow/results/you/Analysis_vn_2468.root","READ");
+	TFile* fYouRef = new TFile("~/NBI/Flow/results/you/FB768/Analysis_vn_2468.root","READ");
 	fYouRef->cd();
 	//fYouRef->ls();
 
@@ -910,7 +1152,7 @@ void PlotGFK(
 */
 
 	// pt diff
-	TFile* fYouDiff2 = new TFile("~/NBI/Flow/results/you/Analysis_v2pt.root","READ");
+	TFile* fYouDiff2 = new TFile("~/NBI/Flow/results/you/FB768/Analysis_v2pt.root","READ");
 	fYouDiff2->cd();
 	fYouDiff2->ls();
 	
@@ -929,7 +1171,38 @@ void PlotGFK(
 	return;
 }
 
+TH1D* DivideGraphByHist(const TGraphAsymmErrors* graph, const TH1* hist)
+{
+	if(!graph || !hist)
+		return 0x0;
 
+	printf("Name graph %s  hist \n", graph->GetName(), hist->GetName());
+
+	printf("Inside Divede\n");
+
+	TCanvas* cDivide = new TCanvas("cDivide","Divide");
+	cDivide->cd();
+	hist->Draw();
+	graph->Draw("P");
+	
+	TH1D* hOut = (TH1D*) hist->Clone();
+
+	const Int_t iNumBins = graph->GetN();
+
+	printf("Bins %d\n", iNumBins);
+
+	Double_t dRatio = 0, dError = 0, dX = 0, dY = 0;
+	for(Short_t i(0); i < iNumBins; i++)
+	{
+		graph->GetPoint(i,dX,dY);
+		printf("X: %gY: %g\n", dX, dY);	
+
+		dRatio = dY / hist->GetBinContent(i+1);
+		hOut->SetBinContent(i+1,dRatio);
+		//hOut->SetBinError(i,TMath::Sqrt(dError));
+	}
+	return hOut;
+}
 
 // TGraphErrors* Kv2_1020_QC2(Int_t color, Int_t marker) {
 //   Int_t _nPoints = 19;

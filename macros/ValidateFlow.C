@@ -22,6 +22,9 @@ ValidateFlow(
 	Color_t colPRL = kGreen+2;
 	Color_t colYou = kRed;
 
+	Short_t MarkerStyleMine = 21;
+	Short_t MarkerStyleYou = 14;
+
 	TLine lineUnityRef = TLine(0,1.,80,1.);
 	lineUnityRef.SetLineStyle(kDashed);
 	lineUnityRef.SetLineColor(kBlack);
@@ -43,16 +46,21 @@ ValidateFlow(
 	TH1D* hRef_v22_Gap10 = (TH1D*) gDirectory->Get("hRef_n22_Gap10");
 	hRef_v22_Gap10->SetLineColor(colMine);
 	hRef_v22_Gap10->SetMarkerColor(colMine);
+	hRef_v22_Gap10->SetMarkerStyle(MarkerStyleMine);
 	TH1D* hRef_v32_Gap10 = (TH1D*) gDirectory->Get("hRef_n32_Gap10");
 	hRef_v32_Gap10->SetLineColor(colMine);
 	hRef_v32_Gap10->SetMarkerColor(colMine);
+	hRef_v32_Gap10->SetMarkerStyle(MarkerStyleMine);
 	TH1D* hRef_v24 = (TH1D*) gDirectory->Get("hRef_n24_Gap-10");
 	hRef_v24->SetLineColor(colMine);
 	hRef_v24->SetMarkerColor(colMine);
+	hRef_v24->SetMarkerStyle(MarkerStyleMine);
 
 	TList* listTrack = (TList*) gDirectory->Get("Tracks_n2_Gap10");
 	TH1D* hTracks_v22_Gap10_Cent05 = (TH1D*) listTrack->FindObject("fTracks_n22_gap10_cent0_number0_0_px_desampled");
+	hTracks_v22_Gap10_Cent05->SetMarkerStyle(MarkerStyleMine);
 	TH1D* hTracks_v22_Gap10_Cent3040 = (TH1D*) listTrack->FindObject("fTracks_n22_gap10_cent4_number0_0_px_desampled");
+	hTracks_v22_Gap10_Cent3040->SetMarkerStyle(MarkerStyleMine);
 	printf("======================================================\n");
 
 	// loading PRL 116
@@ -105,11 +113,14 @@ ValidateFlow(
 	TH1D* hYouRef_v22_Gap10 = (TH1D*)	gDirectory->Get("fv22Gap10");
 	hYouRef_v22_Gap10->SetLineColor(colYou);
 	hYouRef_v22_Gap10->SetMarkerColor(colYou);
+	hYouRef_v22_Gap10->SetMarkerStyle(MarkerStyleYou);
 	TH1D* hYouRef_v32_Gap10 = (TH1D*)	gDirectory->Get("fv32Gap10");
 	hYouRef_v32_Gap10->SetLineColor(colYou);
 	hYouRef_v32_Gap10->SetMarkerColor(colYou);
+	hYouRef_v32_Gap10->SetMarkerStyle(MarkerStyleYou);
 	TH1D* hYouRef_v24 = (TH1D*) gDirectory->Get("fv24");
 	hYouRef_v24->SetLineColor(colYou);
+	hYouRef_v24->SetMarkerStyle(MarkerStyleYou);
 	hYouRef_v24->SetMarkerColor(colYou);
 
 	TFile* fInputYouPt2 = new TFile("/Users/vpacik/NBI/Flow/results/you/FB768/Analysis_v2pt.root","READ");
@@ -117,9 +128,11 @@ ValidateFlow(
 	TH1D* hYouDif_v22_Gap10_cent05 = (TH1D*) gDirectory->Get("hisv22Gap10_cent0");
 	hYouDif_v22_Gap10_cent05->SetLineColor(colYou);
 	hYouDif_v22_Gap10_cent05->SetMarkerColor(colYou);
+	hYouDif_v22_Gap10_cent05->SetMarkerStyle(MarkerStyleYou);
 	TH1D* hYouDif_v22_Gap10_cent3040 = (TH1D*) gDirectory->Get("hisv22Gap10_cent4");
 	hYouDif_v22_Gap10_cent3040->SetLineColor(colYou);
 	hYouDif_v22_Gap10_cent3040->SetMarkerColor(colYou);
+	hYouDif_v22_Gap10_cent3040->SetMarkerStyle(MarkerStyleYou);
 	printf("======================================================\n");
 
 	// ratio
@@ -164,20 +177,20 @@ ValidateFlow(
 	TLegend* legAbs = new TLegend(0.32,0.12,0.65,0.35);
 	legAbs->SetBorderSize(0);
 	legAbs->AddEntry(hRef_v22_Gap10, "Mine","pel");
-	legAbs->AddEntry(hPRL116_v22_Gap10, "PRL116","pel");
+	//legAbs->AddEntry(hPRL116_v22_Gap10, "PRL116","pel");
 	legAbs->AddEntry(hYouRef_v22_Gap10, "You","pel");
 
 	TLegend* legDiff = new TLegend(0.32,0.12,0.75,0.35);
 	legDiff->SetBorderSize(0);
 	legDiff->AddEntry(hRef_v22_Gap10, "Mine","pel");
-	legDiff->AddEntry(hPRL116_v22_Gap10, "PRL107","pel");
+	//legDiff->AddEntry(hPRL116_v22_Gap10, "PRL107","pel");
 	legDiff->AddEntry(hYouDif_v22_Gap10_cent05, "You","pel");
 
 	TLegend* legRatio = new TLegend(0.12,0.7,0.5,0.89);
 	legRatio->SetHeader("Ratio Mine / X");
 	legRatio->SetBorderSize(0);
 	//legRatio->AddEntry(hRef_v22_Gap10, "Mine","pel");
-	legRatio->AddEntry(hPRL116_v22_Gap10, "PRL116","pel");
+	//legRatio->AddEntry(hPRL116_v22_Gap10, "PRL116","pel");
 	legRatio->AddEntry(hYouRef_v22_Gap10, "You","pel");
 
 	TLegend* legRatioPRL107 = new TLegend(0.12,0.7,0.5,0.89);
@@ -193,19 +206,21 @@ ValidateFlow(
 	
 	// v22
 	cPRL->cd(1);
-	hRef_v22_Gap10->Draw();
+	hRef_v22_Gap10->Draw("ep");
 	hYouRef_v22_Gap10->Draw("same");
 	//hPRL116_v22_Gap10->SetLineColor(kRed);
 	//hPRL116_v22_Gap10->Draw("same");
-	gPRL116_v22_Gap10->Draw("P");
+	//gPRL116_v22_Gap10->Draw("P");
 	legAbs->Draw();
 	latex.DrawLatex(0.3,0.4,"v_{2}{2,Gap 1.0}");
 
 	cPRL->cd(2);
-	hRatio_PRL116_v22_Gap10->SetMinimum(0.9);
-	hRatio_PRL116_v22_Gap10->SetMaximum(1.1);
-	hRatio_PRL116_v22_Gap10->Draw();
-	hRatio_YouRef_v22_Gap10->Draw("same");
+	//hRatio_PRL116_v22_Gap10->SetMinimum(0.9);
+	//hRatio_PRL116_v22_Gap10->SetMaximum(1.1);
+	//hRatio_PRL116_v22_Gap10->Draw();
+	hRatio_YouRef_v22_Gap10->SetMinimum(0.9);
+	hRatio_YouRef_v22_Gap10->SetMaximum(1.1);
+	hRatio_YouRef_v22_Gap10->Draw();
 	legRatio->Draw();
 	lineUnityRef.Draw();
 
@@ -214,7 +229,7 @@ ValidateFlow(
 	// v32
 	 // to be revisited - some error
 	cPRL->cd(1);
-	hRef_v32_Gap10->Draw();
+	hRef_v32_Gap10->Draw("ep");
 	hYouRef_v32_Gap10->Draw("same");
 	//hPRL116_v22_Gap10->SetLineColor(kRed);
 	//hPRL116_v22_Gap10->Draw("same");
@@ -239,17 +254,19 @@ ValidateFlow(
 	cPRL->cd(1);
 	hRef_v24->SetMinimum(0.);
 	hRef_v24->SetMaximum(0.13);
-	hRef_v24->Draw();
+	hRef_v24->Draw("ep");
 	hYouRef_v24->Draw("same");
-	gPRL116_v24->Draw("P");
+	//gPRL116_v24->Draw("P");
 	legAbs->Draw();
 	latex.DrawLatex(0.3,0.4,"v_{2}{4}");
 
 	cPRL->cd(2);
-	hRatio_PRL116_v24->SetMinimum(0.9);
-	hRatio_PRL116_v24->SetMaximum(1.1);
-	hRatio_PRL116_v24->Draw();
-	hRatio_YouRef_v24->Draw("same");
+	//hRatio_PRL116_v24->SetMinimum(0.9);
+	//hRatio_PRL116_v24->SetMaximum(1.1);
+	//hRatio_PRL116_v24->Draw();
+	hRatio_YouRef_v24->SetMinimum(0.9);
+	hRatio_YouRef_v24->SetMaximum(1.1);
+	hRatio_YouRef_v24->Draw();
 	lineUnityRef.Draw();
 	legRatio->Draw();
 
@@ -257,9 +274,9 @@ ValidateFlow(
 
 	// pT diff v22 cent 0-5
 	cPRL->cd(1);
-	hTracks_v22_Gap10_Cent05->Draw();
+	hTracks_v22_Gap10_Cent05->Draw("ep");
 	hYouDif_v22_Gap10_cent05->Draw("same");
-	gPRL107_v22_Gap10_centO5->Draw("P");
+	//gPRL107_v22_Gap10_centO5->Draw("P");
 	//legDiff->SetHeader("v_{2}{2, Gap10} 0-5%");
 	latex.DrawLatex(0.3,0.4,"v_{2}{2,Gap 1.0} 0-5%");
 	legDiff->Draw();
@@ -274,9 +291,9 @@ ValidateFlow(
 	
 	// pT diff v22 cent 30-40
 	cPRL->cd(1);
-	hTracks_v22_Gap10_Cent3040->Draw();
+	hTracks_v22_Gap10_Cent3040->Draw("ep");
 	hYouDif_v22_Gap10_cent3040->Draw("same");
-	gPRL107_v22_Gap10_cent3040->Draw("P");
+	//gPRL107_v22_Gap10_cent3040->Draw("P");
 	//legDiff->SetHeader("v_{2}{2, Gap10} 30-40%");
 	legDiff->Draw();
 	latex.DrawLatex(0.3,0.4,"v_{2}{2,Gap 1.0} 30-40%");
