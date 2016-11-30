@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "8-GFK-PbPb-UltCentTest";
+    TString sWorkDir = "10-GFK-PbPb-R1-noSampling";
     TString sOutDir = "outFlow";
     
     // run switcher
@@ -19,7 +19,7 @@ void runAnalysis()
         // part1
         //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
         //part2
-        Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
+        //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
         // testing sample
         //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662};
 
@@ -27,7 +27,7 @@ void runAnalysis()
     // -- 46 runs
         //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595, 137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
         // part 1    
-        //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595};
+        Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595};
         // part 2
         //Int_t runNumber[] = {137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
 
@@ -74,62 +74,67 @@ void runAnalysis()
     gROOT->LoadMacro("AliAnalysisTaskFlowPID.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskFlowPID.C"); // load the addtask macro
     
-    AliAnalysisTaskFlowPID* taskFlowPID = AddTaskFlowPID("flowPID_FB768_New_PileON_PeriodON");
+    AliAnalysisTaskFlowPID* task1 = AddTaskFlowPID("flowPID_FB768_New_PileOFF_PeriodOFF");
     // tracks & event selection cuts
-    taskFlowPID->SetAODAnalysis(kTRUE);
-    taskFlowPID->SetPbPbAnalysis(kTRUE);
-    taskFlowPID->SetUseOldCent(kFALSE);
-    taskFlowPID->SetPeriod10h(kTRUE);
-    taskFlowPID->SetRejectPileUpSPD(kTRUE);
-    taskFlowPID->SetCentFlag(0);
-    taskFlowPID->SetPVtxZMax(10);
-    taskFlowPID->SetTrackEtaMax(0.8);
-    taskFlowPID->SetTrackPtMin(0.2);
-    taskFlowPID->SetTrackPtMax(5.);
-    taskFlowPID->SetNumTPCclsMin(70);
-    taskFlowPID->SetTrackFilterBit(768);
-    taskFlowPID->SetPionNumSigmasMax(3);
-    taskFlowPID->SetKaonNumSigmasMax(3);
-    taskFlowPID->SetProtonNumSigmasMax(3);
-    taskFlowPID->SetDoFlowGenFramKatarina(kTRUE);
-    taskFlowPID->SetDiffFlow(kTRUE);
-    taskFlowPID->SetPID(kFALSE);
-    taskFlowPID->SetDoV0s(kFALSE);
-    taskFlowPID->SetSampling(kTRUE);
-    taskFlowPID->SetDoOldFlow(kFALSE);
-    //taskFlowPID->SetDoFlow(kTRUE);
+    task1->SetAODAnalysis(kTRUE);
+    task1->SetPbPbAnalysis(kTRUE);
+    task1->SetUseOldCent(kFALSE);
+    task1->SetPeriod10h(kFALSE);
+    task1->SetRejectPileUpSPD(kFALSE);
+    task1->SetDoOldFlow(kFALSE);
+    task1->SetDoFlowGenFramKatarina(kTRUE);
+    task1->SetDiffFlow(kTRUE);
+    task1->SetPID(kFALSE);
+    task1->SetDoV0s(kFALSE);
+    task1->SetSampling(kFALSE);
+    task1->SetCentFlag(0);
+    task1->SetPVtxZMax(10);
+    task1->SetTrackEtaMax(0.8);
+    task1->SetTrackPtMin(0.2);
+    task1->SetTrackPtMax(5.);
+    task1->SetNumTPCclsMin(70);
+    task1->SetTrackFilterBit(768);
+    task1->SetPionNumSigmasMax(3);
+    task1->SetKaonNumSigmasMax(3);
+    task1->SetProtonNumSigmasMax(3);
+    //task1->SetDoFlow(kTRUE);
     // V0 selection cuts
-    taskFlowPID->SetV0sOnFly(kFALSE);
-    taskFlowPID->SetV0sTPCRefit(kTRUE);
-    taskFlowPID->SetV0sRejectKinks(kTRUE);
-    taskFlowPID->SetV0sDCAPVMin(0.1);
-    taskFlowPID->SetV0sDCAPVMax(0.);
-    taskFlowPID->SetV0sDCADaughtersMax(1.);
-    taskFlowPID->SetV0sDecayRadiusMin(5.);
-    taskFlowPID->SetV0sDecayRadiusMax(0.);
-    taskFlowPID->SetV0sDaughterPtMin(0.1);
-    taskFlowPID->SetV0sDaughterEtaMax(0.8);
-    taskFlowPID->SetV0sMotherEtaMax(0.8);
-    taskFlowPID->SetV0sMotherRapMax(0.);
-    taskFlowPID->SetV0sMotherPtMin(0.2);
-    taskFlowPID->SetV0sMotherPtMax(10.);
-    taskFlowPID->SetV0sK0sCPAMin(0.998);
-    taskFlowPID->SetV0sLambdaCPAMin(0.998);
-    taskFlowPID->SetV0sK0sNumTauMax(3.);
-    taskFlowPID->SetV0sK0sArmenterosAlphaMin(0.2);
-    taskFlowPID->SetV0sLambdaNumTauMax(3.);
-    taskFlowPID->SetV0sProtonNumSigmaMax(3.);
-    taskFlowPID->SetV0sProtonPIDPtMax(1.2);
-    
-    /*
+    task1->SetV0sOnFly(kFALSE);
+    task1->SetV0sTPCRefit(kTRUE);
+    task1->SetV0sRejectKinks(kTRUE);
+    task1->SetV0sDCAPVMin(0.1);
+    task1->SetV0sDCAPVMax(0.);
+    task1->SetV0sDCADaughtersMax(1.);
+    task1->SetV0sDecayRadiusMin(5.);
+    task1->SetV0sDecayRadiusMax(0.);
+    task1->SetV0sDaughterPtMin(0.1);
+    task1->SetV0sDaughterEtaMax(0.8);
+    task1->SetV0sMotherEtaMax(0.8);
+    task1->SetV0sMotherRapMax(0.);
+    task1->SetV0sMotherPtMin(0.2);
+    task1->SetV0sMotherPtMax(10.);
+    task1->SetV0sK0sCPAMin(0.998);
+    task1->SetV0sLambdaCPAMin(0.998);
+    task1->SetV0sK0sNumTauMax(3.);
+    task1->SetV0sK0sArmenterosAlphaMin(0.2);
+    task1->SetV0sLambdaNumTauMax(3.);
+    task1->SetV0sProtonNumSigmaMax(3.);
+    task1->SetV0sProtonPIDPtMax(1.2); 
 
-    AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB768_OldCent");
-    task2->SelectCollisionCandidates(AliVEvent::kMB);
+    /*
+    AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB768_NewCent_NoSampling");
     // tracks & event selection cuts
     task2->SetAODAnalysis(kTRUE);
     task2->SetPbPbAnalysis(kTRUE);
-    task2->SetPeriod10h(kTRUE);
-    task2->SetRejectPileUpSPD(kTRUE);
+    task2->SetUseOldCent(kFALSE);
+    task2->SetPeriod10h(kFALSE);
+    task2->SetRejectPileUpSPD(kFALSE);
+    task2->SetDoOldFlow(kFALSE);
+    task2->SetDoFlowGenFramKatarina(kTRUE);
+    task2->SetDiffFlow(kTRUE);
+    task2->SetPID(kFALSE);
+    task2->SetDoV0s(kFALSE);
+    task2->SetSampling(kFALSE);
     task2->SetCentFlag(0);
     task2->SetPVtxZMax(10);
     task2->SetTrackEtaMax(0.8);
@@ -141,14 +146,6 @@ void runAnalysis()
     task2->SetKaonNumSigmasMax(3);
     task2->SetProtonNumSigmasMax(3);
     //task2->SetDoFlow(kTRUE);
-    //task2->SetDiffFlow(kTRUE);
-    task2->SetPID(kFALSE);
-    task2->SetDoV0s(kTRUE);
-    task2->SetSampling(kTRUE);
-    task2->SetDoFlowGenFramKatarina(kTRUE);
-    task2->SetDoOldFlow(kFALSE);
-    task2->SetUseOldCent(kTRUE);
-
     // V0 selection cuts
     task2->SetV0sOnFly(kFALSE);
     task2->SetV0sTPCRefit(kTRUE);
@@ -170,10 +167,57 @@ void runAnalysis()
     task2->SetV0sK0sArmenterosAlphaMin(0.2);
     task2->SetV0sLambdaNumTauMax(3.);
     task2->SetV0sProtonNumSigmaMax(3.);
-    task2->SetV0sProtonPIDPtMax(1.2);
+    task2->SetV0sProtonPIDPtMax(1.2); 
+    
+    AliAnalysisTaskFlowPID* task3 = AddTaskFlowPID("flowPID_FB768_OldCent_NoSampling");
+    // tracks & event selection cuts
+    task3->SetAODAnalysis(kTRUE);
+    task3->SetPbPbAnalysis(kTRUE);
+    task3->SetUseOldCent(kTRUE);
+    task3->SetPeriod10h(kFALSE);
+    task3->SetRejectPileUpSPD(kFALSE);
+    task3->SetDoOldFlow(kFALSE);
+    task3->SetDoFlowGenFramKatarina(kTRUE);
+    task3->SetDiffFlow(kTRUE);
+    task3->SetPID(kFALSE);
+    task3->SetDoV0s(kFALSE);
+    task3->SetSampling(kFALSE);
+    task3->SetCentFlag(0);
+    task3->SetPVtxZMax(10);
+    task3->SetTrackEtaMax(0.8);
+    task3->SetTrackPtMin(0.2);
+    task3->SetTrackPtMax(5.);
+    task3->SetNumTPCclsMin(70);
+    task3->SetTrackFilterBit(768);
+    task3->SetPionNumSigmasMax(3);
+    task3->SetKaonNumSigmasMax(3);
+    task3->SetProtonNumSigmasMax(3);
+    //task3->SetDoFlow(kTRUE);
+    // V0 selection cuts
+    task3->SetV0sOnFly(kFALSE);
+    task3->SetV0sTPCRefit(kTRUE);
+    task3->SetV0sRejectKinks(kTRUE);
+    task3->SetV0sDCAPVMin(0.1);
+    task3->SetV0sDCAPVMax(0.);
+    task3->SetV0sDCADaughtersMax(1.);
+    task3->SetV0sDecayRadiusMin(5.);
+    task3->SetV0sDecayRadiusMax(0.);
+    task3->SetV0sDaughterPtMin(0.1);
+    task3->SetV0sDaughterEtaMax(0.8);
+    task3->SetV0sMotherEtaMax(0.8);
+    task3->SetV0sMotherRapMax(0.);
+    task3->SetV0sMotherPtMin(0.2);
+    task3->SetV0sMotherPtMax(10.);
+    task3->SetV0sK0sCPAMin(0.998);
+    task3->SetV0sLambdaCPAMin(0.998);
+    task3->SetV0sK0sNumTauMax(3.);
+    task3->SetV0sK0sArmenterosAlphaMin(0.2);
+    task3->SetV0sLambdaNumTauMax(3.);
+    task3->SetV0sProtonNumSigmaMax(3.);
+    task3->SetV0sProtonPIDPtMax(1.2);
     
     */
-    /*
+
      // Testing PileRejection & period ON/OFF
     AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB768_New_PileON_PeriodOFF");
     // tracks & event selection cuts
@@ -192,10 +236,10 @@ void runAnalysis()
     task2->SetKaonNumSigmasMax(3);
     task2->SetProtonNumSigmasMax(3);
     //task2->SetDoFlow(kTRUE);
-    //task2->SetDiffFlow(kTRUE);
+    task2->SetDiffFlow(kTRUE);
     task2->SetPID(kFALSE);
     task2->SetDoV0s(kTRUE);
-    task2->SetSampling(kTRUE);
+    task2->SetSampling(kFALSE);
     task2->SetDoFlowGenFramKatarina(kTRUE);
     task2->SetDoOldFlow(kFALSE);
     task2->SetUseOldCent(kFALSE);
@@ -240,10 +284,10 @@ void runAnalysis()
     task3->SetKaonNumSigmasMax(3);
     task3->SetProtonNumSigmasMax(3);
     //task3->SetDoFlow(kTRUE);
-    //task3->SetDiffFlow(kTRUE);
+    task3->SetDiffFlow(kTRUE);
     task3->SetPID(kFALSE);
     task3->SetDoV0s(kTRUE);
-    task3->SetSampling(kTRUE);
+    task3->SetSampling(kFALSE);
     task3->SetDoFlowGenFramKatarina(kTRUE);
     task3->SetDoOldFlow(kFALSE);
     task3->SetUseOldCent(kFALSE);
@@ -271,12 +315,12 @@ void runAnalysis()
     task3->SetV0sProtonNumSigmaMax(3.);
     task3->SetV0sProtonPIDPtMax(1.2);
 
-    AliAnalysisTaskFlowPID* task4 = AddTaskFlowPID("flowPID_FB768_New_PileOFF_PeriodOFF");
+    AliAnalysisTaskFlowPID* task4 = AddTaskFlowPID("flowPID_FB768_New_PileON_PeriodON");
     // tracks & event selection cuts
     task4->SetAODAnalysis(kTRUE);
     task4->SetPbPbAnalysis(kTRUE);
-    task4->SetPeriod10h(kFALSE);
-    task4->SetRejectPileUpSPD(kFALSE);
+    task4->SetPeriod10h(kTRUE);
+    task4->SetRejectPileUpSPD(kTRUE);
     task4->SetCentFlag(0);
     task4->SetPVtxZMax(10);
     task4->SetTrackEtaMax(0.8);
@@ -288,10 +332,10 @@ void runAnalysis()
     task4->SetKaonNumSigmasMax(3);
     task4->SetProtonNumSigmasMax(3);
     //task4->SetDoFlow(kTRUE);
-    //task4->SetDiffFlow(kTRUE);
+    task4->SetDiffFlow(kTRUE);
     task4->SetPID(kFALSE);
     task4->SetDoV0s(kTRUE);
-    task4->SetSampling(kTRUE);
+    task4->SetSampling(kFALSE);
     task4->SetDoFlowGenFramKatarina(kTRUE);
     task4->SetDoOldFlow(kFALSE);
     task4->SetUseOldCent(kFALSE);
@@ -336,10 +380,10 @@ void runAnalysis()
     task8->SetKaonNumSigmasMax(3);
     task8->SetProtonNumSigmasMax(3);
     //task8->SetDoFlow(kTRUE);
-    //task8->SetDiffFlow(kTRUE);
+    task8->SetDiffFlow(kTRUE);
     task8->SetPID(kFALSE);
     task8->SetDoV0s(kTRUE);
-    task8->SetSampling(kTRUE);
+    task8->SetSampling(kFALSE);
     task8->SetDoFlowGenFramKatarina(kTRUE);
     task8->SetDoOldFlow(kFALSE);
     task8->SetUseOldCent(kTRUE);
@@ -384,10 +428,10 @@ void runAnalysis()
     task5->SetKaonNumSigmasMax(3);
     task5->SetProtonNumSigmasMax(3);
     //task5->SetDoFlow(kTRUE);
-    //task5->SetDiffFlow(kTRUE);
+    task5->SetDiffFlow(kTRUE);
     task5->SetPID(kFALSE);
     task5->SetDoV0s(kTRUE);
-    task5->SetSampling(kTRUE);
+    task5->SetSampling(kFALSE);
     task5->SetDoFlowGenFramKatarina(kTRUE);
     task5->SetDoOldFlow(kFALSE);
     task5->SetUseOldCent(kTRUE);
@@ -432,10 +476,10 @@ void runAnalysis()
     task6->SetKaonNumSigmasMax(3);
     task6->SetProtonNumSigmasMax(3);
     //task6->SetDoFlow(kTRUE);
-    //task6->SetDiffFlow(kTRUE);
+    task6->SetDiffFlow(kTRUE);
     task6->SetPID(kFALSE);
     task6->SetDoV0s(kTRUE);
-    task6->SetSampling(kTRUE);
+    task6->SetSampling(kFALSE);
     task6->SetDoFlowGenFramKatarina(kTRUE);
     task6->SetDoOldFlow(kFALSE);
     task6->SetUseOldCent(kTRUE);
@@ -480,10 +524,10 @@ void runAnalysis()
     task7->SetKaonNumSigmasMax(3);
     task7->SetProtonNumSigmasMax(3);
     //task7->SetDoFlow(kTRUE);
-    //task7->SetDiffFlow(kTRUE);
+    task7->SetDiffFlow(kTRUE);
     task7->SetPID(kFALSE);
     task7->SetDoV0s(kTRUE);
-    task7->SetSampling(kTRUE);
+    task7->SetSampling(kFALSE);
     task7->SetDoFlowGenFramKatarina(kTRUE);
     task7->SetDoOldFlow(kFALSE);
     task7->SetUseOldCent(kTRUE);
@@ -511,7 +555,7 @@ void runAnalysis()
     task7->SetV0sProtonNumSigmaMax(3.);
     task7->SetV0sProtonPIDPtMax(1.2);
     
-    */
+    
 
 
     if (!mgr->InitAnalysis()) return;

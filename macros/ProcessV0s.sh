@@ -1,14 +1,14 @@
 #!/bin/bash
 tag=sampling
-inPath=~/NBI/Flow/results/V0s/15-sampling-5bins/merge
-outPath=~/NBI/Flow/results/V0s/15-sampling-5bins/${tag}
+inPath=~/NBI/Flow/results/V0s/15-sampling/merge
+outPath=~/NBI/Flow/results/V0s/15-sampling/testGap10/${tag}
 
 # =================================================
 
 mkdir -pv ${outPath}
 cd ${outPath}
 
-for gap in 00 # 00 10 #10 #02 04 06 08 10
+for gap in 10 # 00 10 #10 #02 04 06 08 10
 do
 	echo " === Processing Gap${gap} === "
 	plotsDir=plots_Gap${gap}
