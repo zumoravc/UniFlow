@@ -19,7 +19,7 @@ void ProcessV0s(
 	Double_t fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
 	// =======================================
-	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatio.C");
+	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatios.C");
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C");
 
 	TFile* fInput = new TFile(sInput.Data(),"READ");
@@ -28,10 +28,16 @@ void ProcessV0s(
 	fInput->cd(Form("%s",sTag.Data()));
 
 	// ===== Loading input ===== 
-	TList* lInputTracks = (TList*) gDirectory->Get(Form("Tracks_%s",sTag.Data()));
-	TList* lInputV0s = (TList*) gDirectory->Get(Form("V0s_%s",sTag.Data()));
+	TList* lInputCumulants = (TList*) gDirectory->Get(Form("Cumulants_%s",sTag.Data()));
+	lInputCumulants->ls();
+	TList* lInputTracks = (TList*) lInputCumulants->FindObject(Form("Tracks_%s",sTag.Data()));
+	TList* lInputLambda = (TList*) lInputCumulants->FindObject(Form("fListLambda_%s",sEtaGap.Data()));
+	TList* lInputK0s = (TList*) lInputCumulants->FindObject(Form("fListK0s_%s",sEtaGap.Data()));
 	//TList* lInputTracks = (TList*) gDirectory->Get(Form("Tracks",sTag.Data()));
 	//TList* lInputV0s = (TList*) gDirectory->Get(Form("V0s"));
+
+	printf("WORK IN PROGRESS");
+	return;
 
 	// reference 
 	TProfile* pTracksRefTwo = (TProfile*) (lInputTracks->FindObject(Form("fTracksRefTwo_n%d_%s_sample0",iHarm,sEtaGap.Data())) )->Clone(Form("pTracksRefTwo_%s",sEtaGap.Data())); 
@@ -48,14 +54,14 @@ void ProcessV0s(
 	
 	for(Int_t i(0); i < iNumCentBins; i++)
 	{
-		h2InvMass_K0s[i] = (TH2D*) (lInputV0s->FindObject(Form("fV0sPtInvMass_K0s_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i)))->Clone(Form("h2InvMass_K0s_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
-		h2InvMass_Lambda[i] = (TH2D*) (lInputV0s->FindObject(Form("fV0sPtInvMass_Lambda_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i)))->Clone(Form("h2InvMass_Lambda_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
+		h2InvMass_K0s[i] = (TH2D*) (lInputK0s->FindObject(Form("fV0sPtInvMass_K0s_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i)))->Clone(Form("h2InvMass_K0s_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
+		h2InvMass_Lambda[i] = (TH2D*) (lInputLambda->FindObject(Form("fV0sPtInvMass_Lambda_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i)))->Clone(Form("h2InvMass_Lambda_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
 
-		p2V0sDiffTwoPos_K0s[i] = (TProfile2D*) (lInputV0s->FindObject(Form("fV0sDiffTwoPos_K0s_n%d_%s_Cent%d_sample0",iHarm,sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwoPos_K0s_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
-		p2V0sDiffTwoNeg_K0s[i] = (TProfile2D*) (lInputV0s->FindObject(Form("fV0sDiffTwoNeg_K0s_n%d_%s_Cent%d_sample0",iHarm,sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwoNeg_K0s_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
+		p2V0sDiffTwoPos_K0s[i] = (TProfile2D*) (lInputK0s->FindObject(Form("fV0sDiffTwoPos_K0s_n%d_%s_Cent%d_sample0",iHarm,sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwoPos_K0s_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
+		p2V0sDiffTwoNeg_K0s[i] = (TProfile2D*) (lInputK0s->FindObject(Form("fV0sDiffTwoNeg_K0s_n%d_%s_Cent%d_sample0",iHarm,sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwoNeg_K0s_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
 	
-		p2V0sDiffTwoPos_Lambda[i] = (TProfile2D*) (lInputV0s->FindObject(Form("fV0sDiffTwoPos_Lambda_n%d_%s_Cent%d_sample0",iHarm,sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwoPos_Lambda_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
-		p2V0sDiffTwoNeg_Lambda[i] = (TProfile2D*) (lInputV0s->FindObject(Form("fV0sDiffTwoNeg_Lambda_n%d_%s_Cent%d_sample0",iHarm,sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwoNeg_Lambda_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
+		p2V0sDiffTwoPos_Lambda[i] = (TProfile2D*) (lInputK0s->FindObject(Form("fV0sDiffTwoPos_Lambda_n%d_%s_Cent%d_sample0",iHarm,sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwoPos_Lambda_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
+		p2V0sDiffTwoNeg_Lambda[i] = (TProfile2D*) (lInputK0s->FindObject(Form("fV0sDiffTwoNeg_Lambda_n%d_%s_Cent%d_sample0",iHarm,sEtaGap.Data(),i)))->Clone(Form("p2V0sDiffTwoNeg_Lambda_n%d_%s_Cent%d",iHarm,sEtaGap.Data(),i));
 	}
 
 	// ===== Making projections ======

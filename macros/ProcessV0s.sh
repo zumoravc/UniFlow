@@ -1,14 +1,14 @@
 #!/bin/bash
-tag=sampling
-inPath=~/NBI/Flow/results/V0s/15-sampling/merge
-outPath=~/NBI/Flow/results/V0s/15-sampling/testGap10/${tag}
+tag=FB768
+inPath=~/NBI/Flow/results/0-GFK-PbPb-full/merge
+outPath=~/NBI/Flow/results/0-GFK-PbPb-full/${tag}
 
 # =================================================
 
 mkdir -pv ${outPath}
 cd ${outPath}
 
-for gap in 10 # 00 10 #10 #02 04 06 08 10
+for gap in 00 # 00 10 #10 #02 04 06 08 10
 do
 	echo " === Processing Gap${gap} === "
 	plotsDir=plots_Gap${gap}
@@ -28,8 +28,8 @@ do
 	mkdir -pv ${plotsDir}/PtFlow/
 
 
-	#root -l -b -q ~/NBI/Flow/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
-	root -l -b -q ~/NBI/Flow/macros/ProcessV0sSampled.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
+	root -l -b -q ~/NBI/Flow/macros/ProcessV0s.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
+	#root -l -b -q ~/NBI/Flow/macros/ProcessV0sSampled.C\(\"${inPath}/AnalysisResults.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
 	
-	root -l -b -q ~/NBI/Flow/macros/V0sExtractFlow.C\(\"${outPath}/MassDist_V0s_Gap${gap}.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
+	#root -l -b -q ~/NBI/Flow/macros/V0sExtractFlow.C\(\"${outPath}/MassDist_V0s_Gap${gap}.root\",\"${outPath}/${plotsDir}\",\"flowPID_${tag}\",\"Gap${gap}\",\"png\"\)
 done
