@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "10-GFK-PbPb-R1-noSampling";
+    TString sWorkDir = "11-GFK-PbPb-R1";
     TString sOutDir = "outFlow";
     
     // run switcher
@@ -77,7 +77,9 @@ void runAnalysis()
     AliAnalysisTaskFlowPID* task1 = AddTaskFlowPID("flowPID_FB768_New_PileOFF_PeriodOFF");
     // tracks & event selection cuts
     task1->SetAODAnalysis(kTRUE);
-    task1->SetPbPbAnalysis(kTRUE);
+    task1->SetPbPbAnalysis(kFALSE);
+    task1->SetPPAnalysis(kFALSE);
+    task1->SetPPbAnalysis(kFALSE);
     task1->SetUseOldCent(kFALSE);
     task1->SetPeriod10h(kFALSE);
     task1->SetRejectPileUpSPD(kFALSE);
@@ -218,6 +220,7 @@ void runAnalysis()
     
     */
 
+    /*
      // Testing PileRejection & period ON/OFF
     AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB768_New_PileON_PeriodOFF");
     // tracks & event selection cuts
@@ -556,7 +559,7 @@ void runAnalysis()
     task7->SetV0sProtonPIDPtMax(1.2);
     
     
-
+    */
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);

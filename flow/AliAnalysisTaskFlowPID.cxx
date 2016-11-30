@@ -96,9 +96,13 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fOutListQA(0),
 
   fAODAnalysis(kTRUE),
-  fPbPb(kTRUE),
+  fPbPb(kFALSE),
+  fPP(kFALSE),
+  fPPb(kFALSE),
   fLHC10h(kTRUE),
   fRejectPileFromSPD(kFALSE),
+  fUseIsPileUpFromSPD(kFALSE),
+  fUsePlpMV(kFALSE),
   fCentFlag(0),
   fSampling(0),
   fDoFlow(0),
@@ -227,9 +231,13 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fOutListQA(0),
 
   fAODAnalysis(kTRUE),
-  fPbPb(kTRUE),
+  fPbPb(kFALSE),
+  fPP(kFALSE),
+  fPPb(kFALSE),
   fLHC10h(kTRUE),
   fRejectPileFromSPD(kFALSE),
+  fUseIsPileUpFromSPD(kFALSE),
+  fUsePlpMV(kFALSE),
   fCentFlag(0),
   fDoFlow(0),
   fSampling(0),
@@ -1155,6 +1163,12 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 {
   // this function is called once for each event
+  if(!fPP && !fPPb && !fPbPb)
+  {
+    ::Error("UserExec","Neighter pp, pPb nor PbPb analysis switch is on. Terminating!");
+    return; 
+  }
+
 
 	fEventCounter->Fill(0); // input event
 
@@ -1776,23 +1790,26 @@ Bool_t AliAnalysisTaskFlowPID::OldIsEventSelected(const AliAODEvent* event)
       if(fRejectPileFromSPD)
       {
 
-        Short_t isPileup = fAOD->IsPileupFromSPD(3);
-        if (isPileup != 0)
+        if(fUseIsPileUpFromSPD)
+        {
+          Short_t isPileup = fAOD->IsPileupFromSPD(3);
+          if (isPileup != 0)
             return kFALSE;
+        }
 
         //if (fAOD->GetHeader()->GetRefMultiplicityComb08() < 0)
         //    return;
 
         //New cut from Ruben for pileup hybrid
-        if (plpMV(fAOD))
+        if (fUsePlpMV && plpMV(fAOD))
             return kFALSE;
 
 
         if ( (fLHC10h) && ((Float_t(GetTPCMult(fAOD)) < (-40.3+1.22*GetGlobalMult(fAOD))) || (Float_t(GetTPCMult(fAOD)) > (32.1+1.59*GetGlobalMult(fAOD))) ) )
             return kFALSE;
 
-        if ( (!fLHC10h) && ( (Float_t(GetTPCMult(fAOD)) < (-36.73+1.48*GetGlobalMult(fAOD))) || (Float_t(GetTPCMult(fAOD)) > (62.87+1.78*GetGlobalMult(fAOD))) ) )
-            return kFALSE;
+        //if ( (!fLHC10h) && ( (Float_t(GetTPCMult(fAOD)) < (-36.73+1.48*GetGlobalMult(fAOD))) || (Float_t(GetTPCMult(fAOD)) > (62.87+1.78*GetGlobalMult(fAOD))) ) )
+            //return kFALSE;
 
       }
 
