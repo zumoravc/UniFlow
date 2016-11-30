@@ -743,7 +743,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 //_____________________________________________________________________________
 Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 {
-	//Info("DesampleList",Form("Desampling list with %d entries (first: %s)",inList->GetEntries(), inList->First()->GetName()));
+	Debug("DesampleList",Form("Desampling list with %d entries (first: %s)",inList->GetEntries(), inList->First()->GetName()));
 	
 	// checking in/out lists
 	if(!inList)
@@ -751,6 +751,9 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 		Error("DesampleList","Input list does not exists!");
 		return kFALSE;
 	}
+
+	if(fbDebug)
+		inList->ls();
 
 	if(iNumSamples != inList->GetEntries())
 	{
@@ -805,12 +808,19 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 
 			hValues->Fill(dValue,i);
 		}
+		if((iNumSamples - iWrongSamples) > 0)
+		{
+			dMean = dSum / (iNumSamples - iWrongSamples);
+		}
+		else
+		{
+			dMean = dSum;
+		}
 
-		dMean = dSum / (iNumSamples - iWrongSamples);
-		
-
+		histOut->SetBinContent(i, dMean);
 
 		// estimating error
+		
 		for(Short_t j(0); j < iNumSamples; j++)
 		{
 			histTemp = (TH1D*) inList->At(j);
@@ -820,11 +830,15 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 				dSigma += TMath::Power(dValue - dMean, 2);
 			}
 		}
-
-		dSigma = TMath::Sqrt(dSigma / (iNumSamples-1 - iWrongSamples) );
-
-		histOut->SetBinContent(i, dMean);
-		histOut->SetBinError(i, dSigma / TMath::Sqrt(iNumSamples - iWrongSamples));
+		
+		if(iNumSamples - iWrongSamples > 0)
+		{
+			histOut->SetBinError(i, TMath::Sqrt(dSigma) / (iNumSamples - iWrongSamples));
+		}
+		else
+		{
+			histOut->SetBinError(i, TMath::Sqrt(dSigma));	
+		}
 	}
 
 	inList->Add(histOut);
