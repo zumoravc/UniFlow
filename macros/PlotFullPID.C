@@ -2,25 +2,24 @@ TCanvas* PlotCent(const Short_t iCent, TString sTag);
 
 void PlotFullPID()
 {
-	TString sOutput = TString("~/NBI/Flow/temp");
+	TString sOutput = TString("~/NBI/Flow/results/5-GFK-PbPb-MultSelectNoRejection/comp-try2/");
 
-	TFile* fInput = new TFile("~/NBI/Flow/temp/Flow-10samples.root","READ");
+	TFile* fInput = new TFile("~/NBI/Flow/classProcess/ProcessFlow_FB768_GFK.root","READ");
 	fInput->cd();
 	fInput->ls();
 
 
-	TList* lTracks_n22 = (TList*) fInput->Get("Tracks_n2_Gap-10");
-	TList* lDiffv22_Pions = (TList*) fInput->Get("n2_Pions");
+	TList* lTracks_n22 = (TList*) fInput->Get("Refv22_Tracks");
+	TList* lDiffv22_Pions = (TList*) fInput->Get("Diffv22_Pions");
 	TList* lDiffv24_Pions = (TList*) fInput->Get("Diffv24_Pions");
 	TList* lDiffv22_Kaons = (TList*) fInput->Get("Diffv22_Kaons");
 	TList* lDiffv24_Kaons = (TList*) fInput->Get("Diffv24_Kaons");
 	TList* lDiffv22_Protons = (TList*) fInput->Get("Diffv22_Protons");
 	TList* lDiffv24_Protons = (TList*) fInput->Get("Diffv24_Protons");
-	return;
 
 	//TH1D* hRefv22_Tracks = (TH1D*) fInput->Get("Refv22_Tracks");
 	//TH1D* hRefv24_Tracks = (TH1D*) fInput->Get("Refv24_Tracks");
-
+/*
 	TFile* fInputRef = new TFile("~/NBI/Flow/temp/ProcessFlow_FB768_GFK.root","READ");
 	TH1D* hRefv22 = (TH1D*) fInputRef->Get("Refv22_Tracks");
 	TH1D* hRefv22Gap00 = (TH1D*) fInputRef->Get("Refv22_Gap00_Tracks");
@@ -28,12 +27,12 @@ void PlotFullPID()
 	TH1D* hRefv32 = (TH1D*) fInputRef->Get("Refv32_Tracks");
 	TH1D* hRefv42 = (TH1D*) fInputRef->Get("Refv42_Tracks");
 	TH1D* hRefv24 = (TH1D*) fInputRef->Get("Refv24_Tracks");
-
+	*/
 	TFile* fInputV0s = new TFile("~/NBI/Flow/results/V0s/15-sampling-5bins/sampling/PtFlow_V0s_Gap00.root","READ");
 
 
-	Color_t colorPID[] = {kRed, kGreen, kBlue, kBlack, kMagenta, kGreen+2, kRed+2, kBlue+2,kMagenta+2};
-	TString sLegend[] = {"#pi (no gap)","K (no gap)" ,"p (no gap)","#Lambda (v22 Gap 0)","K0s (v22 Gap 0)"};
+	Color_t colorPID[] = {kRed, kGreen+2, kBlue, kBlack, kMagenta, kGreen+2, kRed+2, kBlue+2,kMagenta+2};
+	TString sLegend[] = {"#pi","K","K^{0}_{S}","p","#Lambda"};
 	
 	TH1D* histPion = 0x0;
 	TH1D* histKaon = 0x0;
@@ -44,10 +43,10 @@ void PlotFullPID()
 	const Short_t iNumCent = 9;
 
 	TCanvas* cCanPions = new TCanvas();
-	TLegend* legPions = new TLegend(0.15,0.6,0.26,0.9);
+	TLegend* legPions = new TLegend(0.12,0.6,0.26,0.9);
 	legPions->SetBorderSize(0);
-	TCanvas* cCan = new TCanvas();
-
+	TCanvas* cCan = new TCanvas("cCan","Can",700,1100);
+	/*
 	// reference
 	hRefv22->SetStats(0);
 	hRefv22->SetMinimum(0.);
@@ -74,11 +73,11 @@ void PlotFullPID()
 	legRef->AddEntry(hRefv42,"v42 NoGap","pel");
 	legRef->Draw("same");
 	cCan->Print(Form("%s/Ref_Tracks.png",sOutput.Data()));
-
+	*/
 	// PID v22
 	for(Int_t i(0); i < iNumCent; i++)
 	{
-		TLegend* leg = new TLegend(0.15,0.6,0.35,0.9);
+		TLegend* leg = new TLegend(0.12,0.6,0.4,0.9);
 		leg->SetBorderSize(0);
 		
 		cCan->cd();
@@ -91,24 +90,30 @@ void PlotFullPID()
 		histK0s = (TH1D*) fInputV0s->Get(Form("hFlowPt_K0s_Gap00_Cent%d",i));
 		
 		histProton->SetStats(0);
+		histProton->SetTitle(";#it{p}_{T} (GeV/#it{c}); #it{v}_{2} {QC2, |#Delta#eta| > 0. }");
+		histProton->SetTitleOffset(1.3,"y");
 		histProton->SetMinimum(-0.05);
 		histProton->SetMaximum(0.45);
 		histPion->SetLineColor(colorPID[0]);
 		histPion->SetMarkerColor(colorPID[0]);
+		histPion->SetMarkerStyle(20);
 		histKaon->SetLineColor(colorPID[1]);
 		histKaon->SetMarkerColor(colorPID[1]);
+		histKaon->SetMarkerStyle(20);
 		histProton->SetLineColor(colorPID[2]);
 		histProton->SetMarkerColor(colorPID[2]);
+		histProton->SetMarkerStyle(20);
 		histLambda->SetLineColor(colorPID[3]);
 		histLambda->SetMarkerColor(colorPID[3]);
+		histLambda->SetMarkerStyle(20);
 		histK0s->SetLineColor(colorPID[4]);
 		histK0s->SetMarkerColor(colorPID[4]);
-
+		histK0s->SetMarkerStyle(20);
 		leg->AddEntry(histPion,sLegend[0].Data(),"pel");
 		leg->AddEntry(histKaon,sLegend[1].Data(),"pel");
-		leg->AddEntry(histProton,sLegend[2].Data(),"pel");
-		leg->AddEntry(histLambda,sLegend[3].Data(),"pel");
-		leg->AddEntry(histK0s,sLegend[4].Data(),"pel");
+		leg->AddEntry(histK0s,sLegend[2].Data(),"pel");
+		leg->AddEntry(histProton,sLegend[3].Data(),"pel");
+		leg->AddEntry(histLambda,sLegend[4].Data(),"pel");
 
 		histProton->Draw();
 		histPion->Draw("same");
@@ -116,9 +121,9 @@ void PlotFullPID()
 		histLambda->Draw("same");
 		histK0s->Draw("same");
 		leg->Draw("same");
-		cCan->Print(Form("%s/PID_v22_cent%d.png",sOutput.Data(),i));
+		cCan->Print(Form("%s/PID_v22_cent%d.pdf",sOutput.Data(),i));
 
-
+		/*
 		// v24
 		histPion = (TH1D*) lDiffv24_Pions->At(i);
 		histKaon = (TH1D*) lDiffv24_Kaons->At(i);
@@ -155,10 +160,10 @@ void PlotFullPID()
 		legPions->AddEntry(histPion,Form("Pion cent%d",i),"pel");
 		histPion->Draw("same");
 
-
+	*/
 	}
-	legPions->Draw("same");
-	cCanPions->Print(Form("%s/PID_v24_Pions.png",sOutput.Data()));
+	//legPions->Draw("same");
+	//cCanPions->Print(Form("%s/PID_v24_Pions.png",sOutput.Data()));
 
 
 
