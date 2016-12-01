@@ -576,6 +576,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   // here you create the histograms that you want to use 
   // the histograms are in this case added to a TList, this list is in the end saved to an output file
 
+  ListParameters();
+
   fOutListCumulants = new TList();
   fOutListCumulants->SetOwner(kTRUE);
 
@@ -1358,8 +1360,70 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::Terminate(Option_t *)
 {
+
+
   // terminate
   // called at the END of the analysis (when all events are processed)
+
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskFlowPID::ListParameters()
+{
+  printf("\n======= List of input parameters ======\n");
+  
+  printf("--------- Analysis & events setters --------\n");
+  printf("SetAODAnalysis(Bool_t %d)\n",fAODAnalysis);
+  printf("SetPbPbAnalysis(Bool_t %d)\n",fPbPb);
+  printf("SetPPAnalysis(Bool_t %d)\n",fPP);
+  printf("SetPPbAnalysis(Bool_t %d)\n",fPPb);
+  printf("SetPeriod10h(Bool_t %d)\n",fLHC10h);
+  printf("SetRejectPileUpSPD(Bool_t %d)\n",fRejectPileFromSPD);
+  printf("SetUsePlpMV(Bool_t %d)\n",fUsePlpMV);
+  printf("SetUseIsPileUpFromSPD(Bool_t %d)\n",fUseIsPileUpFromSPD);
+  printf("SetCentFlag(Short_t %d)\n",fCentFlag);
+  printf("SetPVtxZMax(Double_t %f)\n",fPVtxCutZ);
+  printf("SetSampling(Bool_t %d)\n",fSampling);
+  printf("SetDoFlow(Bool_t %d)\n",fDoFlow);
+  printf("SetDiffFlow(Bool_t %d)\n",fDiffFlow);
+  printf("SetPID(Bool_t %d)\n",fPID);
+  printf("SetDoV0s(Bool_t %d)\n",fDoV0s);
+  printf("SetDoFlowGenFramKatarina(Bool_t %d)\n",fDoGenFramKat);
+  printf("SetDoOldFlow(Bool_t %d)\n",fOldFlow);
+  printf("SetUseOldCent(Bool_t %d)\n",fUseOldCent);
+
+  printf("--------- Tracks & PID setters --------\n");
+  printf("SetTrackEtaMax(Double_t %f)\n",fTrackEtaMax);
+  printf("SetTrackPtMax(Double_t %f)\n", fTrackPtMax);
+  printf("SetTrackPtMin(Double_t %f)\n", fTrackPtMin);
+  printf("SetNumTPCclsMin(UShort_t %d)\n", fNumTPCclsMin);
+  printf("SetTrackFilterBit(UInt_t %d)\n", fTrackFilterBit);
+  printf("SetPionNumSigmasMax(Double_t %f)\n", fCutPionNumSigmaMax);
+  printf("SetKaonNumSigmasMax(Double_t %f)\n", fCutKaonNumSigmaMax);
+  printf("SetProtonNumSigmasMax(Double_t %f)\n", fCutProtonNumSigmaMax);
+
+  printf("--------- V0s setters --------\n");
+  printf("SetV0sOnFly(Bool_t %d)\n", fCutV0onFly);
+  printf("SetV0sTPCRefit(Bool_t %d)\n", fCutV0refitTPC);
+  printf("SetV0sRejectKinks(Bool_t %d)\n", fCutV0rejectKinks);
+  printf("SetV0sDCAPVMin(Double_t %f)\n", fCutV0MinDCAtoPV);
+  printf("SetV0sDCAPVMax(Double_t %f)\n", fCutV0MaxDCAtoPV);
+  printf("SetV0sDCADaughtersMax(Double_t %f)\n", fCutV0MaxDCADaughters);
+  printf("SetV0sDecayRadiusMin(Double_t %f)\n", fCutV0MinDecayRadius);
+  printf("SetV0sDecayRadiusMax(Double_t %f)\n", fCutV0MaxDecayRadius);
+  printf("SetV0sDaughterPtMin(Double_t %f)\n", fCutV0DaughterPtMin);
+  printf("SetV0sDaughterEtaMax(Double_t %f)\n", fCutV0DaughterEtaMax);
+  printf("SetV0sMotherEtaMax(Double_t %f)\n",  fCutV0MotherEtaMax);
+  printf("SetV0sMotherRapMax(Double_t %f)\n", fCutV0MotherRapMax);
+  printf("SetV0sMotherPtMin(Double_t %f)\n", fCutV0MotherPtMin);
+  printf("SetV0sMotherPtMax(Double_t %f)\n", fCutV0MotherPtMax);
+  printf("SetV0sK0sCPAMin(Double_t %f)\n", fCutV0MinCPAK0s);
+  printf("SetV0sLambdaCPAMin(Double_t %f)\n", fCutV0MinCPALambda);
+  printf("SetV0sK0sNumTauMax(Double_t %f)\n", fCutV0NumTauK0sMax);
+  printf("SetV0sLambdaNumTauMax(Double_t %f)\n", fCutV0NumTauLambdaMax);
+  printf("SetV0sK0sArmenterosAlphaMin(Double_t %f)\n", fCutV0K0sArmenterosAlphaMin);
+  printf("SetV0sProtonNumSigmaMax(Double_t %f)\n", fCutV0ProtonNumSigmaMax);
+  printf("SetV0sProtonPIDPtMax(Double_t %f)\n", fCutV0ProtonPIDPtMax);
+  printf("====================================\n\n");
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::EstimatePtDiffCumulant(TClonesArray &array, const Float_t dEtaGap, const Short_t iHarm,TProfile* profilePos, TProfile* profileNeg)

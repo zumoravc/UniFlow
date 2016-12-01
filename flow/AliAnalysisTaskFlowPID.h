@@ -85,6 +85,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         const static Int_t      fMaxNumHarmonics = 8; // maximal number of harmonics for Q,p,q vector arrays
         const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
     private:
+        void                    ListParameters();
         Bool_t                  IsEventSelected(const AliAODEvent* event);
         Bool_t                  OldIsEventSelected(const AliAODEvent* event);
 		Bool_t                  IsTrackSelected(const AliAODTrack* track);
