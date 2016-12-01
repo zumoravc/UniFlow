@@ -191,6 +191,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fBayesProbPion(0x0), 
   fBayesProbKaon(0x0), 
   fBayesProbProton(0x0), 
+  fQAPIDTOFbetaNoTOF(0x0),
 
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
@@ -335,6 +336,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fBayesProbPion(0x0), 
   fBayesProbKaon(0x0), 
   fBayesProbProton(0x0), 
+  fQAPIDTOFbetaNoTOF(0x0),
+
 
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
@@ -1090,6 +1093,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   }
 
   // QA tracks PID output
+  fQAPIDTOFbetaNoTOF = new TH2D(Form("fQAPIDTOFbetaNoTOF"),Form("#pi,K,p: TOF #beta with NO TOF; #it{p} (GeV/#it{c}); TOF #beta"), 1000,0,10, 100,0,1.5);          
+  fOutListPID->Add(fQAPIDTOFbetaNoTOF);
+
   for(Int_t i(0); i < fQANumSteps; i++)
   {
     fQAPIDTOFbeta[i] = new TH2D(Form("fQAPIDTOFbeta_%s",sQAlabel[i].Data()),Form("#pi,K,p: TOF #beta (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 100,0,1.5);          
@@ -1430,6 +1436,7 @@ void AliAnalysisTaskFlowPID::ListParameters()
   printf("SetDoFlow(Bool_t %d)\n",fDoFlow);
   printf("SetDiffFlow(Bool_t %d)\n",fDiffFlow);
   printf("SetPID(Bool_t %d)\n",fPID);
+  printf("SetUseBayesPID(Bool_t %d)\n",fUseBayesPID);
   printf("SetDoV0s(Bool_t %d)\n",fDoV0s);
   printf("SetDoFlowGenFramKatarina(Bool_t %d)\n",fDoGenFramKat);
   printf("SetDoOldFlow(Bool_t %d)\n",fOldFlow);
@@ -1444,6 +1451,9 @@ void AliAnalysisTaskFlowPID::ListParameters()
   printf("SetPionNumSigmasMax(Double_t %f)\n", fCutPionNumSigmaMax);
   printf("SetKaonNumSigmasMax(Double_t %f)\n", fCutKaonNumSigmaMax);
   printf("SetProtonNumSigmasMax(Double_t %f)\n", fCutProtonNumSigmaMax);
+  printf("SetPIDBayesProbPionMin(Double_t %f)\n", fCutBayesPIDPionMin);
+  printf("SetPIDBayesProbKaonMin(Double_t %f)\n", fCutBayesPIDKaonMin);
+  printf("SetPIDBayesProbProtonMin(Double_t %f)\n", fCutBayesPIDProtonMin);
 
   printf("--------- V0s setters --------\n");
   printf("SetV0sOnFly(Bool_t %d)\n", fCutV0onFly);
@@ -2488,8 +2498,8 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
 
   Bool_t bIsEither = kFALSE;
 
-  Double_t dTOF[5] = {0};
-  Double_t dBetaTOF = 0;
+  Double_t dTOF[5] = {-900};
+  Double_t dBetaTOF = -999;
 
   Bool_t bIsTOF = kFALSE;
 
@@ -2528,6 +2538,13 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
     
     //printf("PID: pion %g (%d) / kaon %g (%d) / proton %g (%d) \n", dPropPID[2], bIsPion, dPropPID[3], bIsKaon, dPropPID[4], bIsProton);
 
+    if(bIsTOF)
+    {
+      track->GetIntegratedTimes(dTOF);
+      dBetaTOF = dTOF[0] / track->GetTOFsignal();
+      
+    }
+
     if(bIsPion)
     {
       bIsEither = kTRUE;
@@ -2540,9 +2557,9 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fPionsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion) );
       fPionsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
 
-      track->GetIntegratedTimes(dTOF);
-      dBetaTOF = dTOF[0] / track->GetTOFsignal();
-      fPionsTOFbeta->Fill(track->P(), dBetaTOF);
+
+      if(bIsTOF)
+        fPionsTOFbeta->Fill(track->P(), dBetaTOF);
     }
     
     if(bIsKaon)
@@ -2557,9 +2574,8 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fKaonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kKaon) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kKaon) );
       fKaonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
       
-      track->GetIntegratedTimes(dTOF);
-      dBetaTOF = dTOF[0] / track->GetTOFsignal();
-      fKaonsTOFbeta->Fill(track->P(), dBetaTOF);
+      if(bIsTOF)
+        fKaonsTOFbeta->Fill(track->P(), dBetaTOF);
 
     }
     
@@ -2575,9 +2591,8 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fProtonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kProton) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kProton) );
       fProtonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
       
-      track->GetIntegratedTimes(dTOF);
-      dBetaTOF = dTOF[0] / track->GetTOFsignal();
-      fProtonsTOFbeta->Fill(track->P(), dBetaTOF);
+      if(bIsTOF)
+        fProtonsTOFbeta->Fill(track->P(), dBetaTOF);
     }
 
     if(bIsEither) // either PID as pi,K or p
@@ -2586,6 +2601,9 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fBayesProbPion->Fill(dPropPID[2]);
       fBayesProbKaon->Fill(dPropPID[3]);
       fBayesProbProton->Fill(dPropPID[4]);
+      
+      if(!bIsTOF) // if no TOF information
+        fQAPIDTOFbetaNoTOF->Fill(track->P(), dBetaTOF);
     }
   } // end of loop over filtered tracks
 

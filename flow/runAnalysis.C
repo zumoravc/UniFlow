@@ -1,6 +1,6 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
     
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "11-GFK-PbPb-R1";
+    TString sWorkDir = "11-GFK-PbPb-R1-BayesTest";
     TString sOutDir = "outFlow";
     
     // run switcher
@@ -17,7 +17,7 @@ void runAnalysis()
         // all
         //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871, 138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
         // part1
-        //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
+        Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
         //part2
         //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
         // testing sample
@@ -27,7 +27,7 @@ void runAnalysis()
     // -- 46 runs
         //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595, 137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
         // part 1    
-        Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595};
+        //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595};
         // part 2
         //Int_t runNumber[] = {137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
 
@@ -73,7 +73,7 @@ void runAnalysis()
 
     gROOT->LoadMacro("AliAnalysisTaskFlowPID.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskFlowPID.C"); // load the addtask macro
-    
+    /*
     AliAnalysisTaskFlowPID* task1 = AddTaskFlowPID("flowPID_FB768_New_PileOFF_PeriodOFF");
     // tracks & event selection cuts
     task1->SetAODAnalysis(kTRUE);
@@ -122,7 +122,7 @@ void runAnalysis()
     task1->SetV0sLambdaNumTauMax(3.);
     task1->SetV0sProtonNumSigmaMax(3.);
     task1->SetV0sProtonPIDPtMax(1.2); 
-
+    */
     /*
     AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB768_NewCent_NoSampling");
     // tracks & event selection cuts
@@ -560,11 +560,64 @@ void runAnalysis()
     
     
     */
+    AliAnalysisTaskFlowPID* task1 = AddTaskFlowPID("flowPID_FB768_Bayes");
+    // tracks & event selection cuts
+    task1->SetAODAnalysis(kTRUE);
+    task1->SetPbPbAnalysis(kTRUE);
+    task1->SetPPbAnalysis(kFALSE);
+    task1->SetPPAnalysis(kFALSE);
+    task1->SetPeriod10h(kFALSE);
+    task1->SetCentFlag(0);
+    task1->SetPVtxZMax(10);
+    task1->SetTrackEtaMax(0.8);
+    task1->SetTrackPtMin(0.2);
+    task1->SetTrackPtMax(5.);
+    task1->SetNumTPCclsMin(70);
+    task1->SetTrackFilterBit(768);
+    task1->SetPionNumSigmasMax(3);
+    task1->SetKaonNumSigmasMax(3);
+    task1->SetProtonNumSigmasMax(3);
+    //task1->SetDoFlow(kTRUE);
+    task1->SetDiffFlow(kTRUE);
+    task1->SetPID(kTRUE);
+    task1->SetDoV0s(kTRUE);
+    task1->SetSampling(kTRUE);
+    task1->SetDoFlowGenFramKatarina(kTRUE);
+    task1->SetDoOldFlow(kFALSE);
+    task1->SetUseBayesPID(kTRUE);
+    task1->SetPIDBayesProbPionMin(0.95);
+    task1->SetPIDBayesProbKaonMin(0.95);
+    task1->SetPIDBayesProbProtonMin(0.95);
+    // V0 selection cuts
+    task1->SetV0sOnFly(kFALSE);
+    task1->SetV0sTPCRefit(kTRUE);
+    task1->SetV0sRejectKinks(kTRUE);
+    task1->SetV0sDCAPVMin(0.1);
+    task1->SetV0sDCAPVMax(0.);
+    task1->SetV0sDCADaughtersMax(1.);
+    task1->SetV0sDecayRadiusMin(5.);
+    task1->SetV0sDecayRadiusMax(0.);
+    task1->SetV0sDaughterPtMin(0.1);
+    task1->SetV0sDaughterEtaMax(0.8);
+    task1->SetV0sMotherEtaMax(0.8);
+    task1->SetV0sMotherRapMax(0.);
+    task1->SetV0sMotherPtMin(0.2);
+    task1->SetV0sMotherPtMax(10.);
+    task1->SetV0sK0sCPAMin(0.998);
+    task1->SetV0sLambdaCPAMin(0.998);
+    task1->SetV0sK0sNumTauMax(3.);
+    task1->SetV0sK0sArmenterosAlphaMin(0.2);
+    task1->SetV0sLambdaNumTauMax(3.);
+    task1->SetV0sProtonNumSigmaMax(3.);
+    task1->SetV0sProtonPIDPtMax(1.2);
+
 
     AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB768_Nsigma");
     // tracks & event selection cuts
     task2->SetAODAnalysis(kTRUE);
     task2->SetPbPbAnalysis(kTRUE);
+    task2->SetPPbAnalysis(kFALSE);
+    task2->SetPPAnalysis(kFALSE);
     task2->SetPeriod10h(kFALSE);
     task2->SetCentFlag(0);
     task2->SetPVtxZMax(10);
@@ -654,7 +707,7 @@ void runAnalysis()
         alienHandler->SetSplitMaxInputFileNumber(200);
         alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
-        alienHandler->SetTTL(30000);
+        alienHandler->SetTTL(36000);
         alienHandler->SetJDLName("FlowPID.jdl");
         alienHandler->SetPrice(1);    
         alienHandler->SetOutputToRunNo(kTRUE);
