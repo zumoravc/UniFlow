@@ -32,6 +32,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; } 
         void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void                    SetPID(Bool_t pid) { fPID = pid; }
+        void                    SetUseBayesPID(Bool_t pidBay) { fUseBayesPID = pidBay; }
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
         void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
         void                    SetDoOldFlow(Bool_t oldFlow) { fOldFlow = oldFlow; } // do old flow (before Katarinas GFK)
@@ -45,6 +46,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetPionNumSigmasMax(Double_t numSigmas) { fCutPionNumSigmaMax = numSigmas; }
         void                    SetKaonNumSigmasMax(Double_t numSigmas) { fCutKaonNumSigmaMax = numSigmas; }
         void                    SetProtonNumSigmasMax(Double_t numSigmas) { fCutProtonNumSigmaMax = numSigmas; }
+        void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutBayesPIDPionMin = probPi; }
+        void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutBayesPIDKaonMin = probK; }
+        void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutBayesPIDProtonMin = probP; }
         // V0s setters
         void					SetV0sOnFly(Bool_t onFly) { fCutV0onFly = onFly; }
         void					SetV0sTPCRefit(Bool_t refit) { fCutV0refitTPC = refit; }
@@ -98,6 +102,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
         void                    FilterTracks(); // filter all input tracks 
         void                    FilterPIDTracks(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
+        void                    FilterPIDTracksBayesPID(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
         void                    FilterV0s();
 
         Bool_t                  AreRefFlowVectorsFilled(const Float_t dEtaGap = -1, const Short_t iHarm = -1);
@@ -191,6 +196,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fDoV0s;                       // Do V0s analysis?
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
         Bool_t                  fPID;                       // Do PID ?
+        Bool_t                  fUseBayesPID;                       // Do Bayes PID ?
         Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
         Bool_t                  fOldFlow; // switch to old flow analysis
         Bool_t                  fUseOldCent; // switch for old (Run1) centrality selection
@@ -204,6 +210,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t                fCutPionNumSigmaMax;
         Double_t                fCutKaonNumSigmaMax;
         Double_t                fCutProtonNumSigmaMax;
+        Double_t                fCutBayesPIDPionMin; // minimal value of Bayes PID probability for pion
+        Double_t                fCutBayesPIDKaonMin; // minimal value of Bayes PID probability for Kaon
+        Double_t                fCutBayesPIDProtonMin; // minimal value of Bayes PID probability for proton
         //cuts & selection: V0 reconstruction
 		Bool_t 					fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
 		Bool_t					fCutV0refitTPC; // Check TPC refit of V0 daughters ?
@@ -229,7 +238,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         
         // members
         AliAODEvent*            fAOD;           //! input event
-        AliPIDResponse*			fPIDResponse;		//! PID response
+        AliPIDResponse*         fPIDResponse;       //! PID response
+        AliPIDCombined*			fPIDCombined;		//! PID response
         AliTPCPIDResponse       fTPCPIDResponse;       // TPC PID response
         Float_t                 fEtaCutFlag;    // value of eta cut during flow vectors filling  (actual value)
         Short_t                 fHarmFlag;    // value of harmonics during flow vectors filling  (actual value)
@@ -315,6 +325,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fProtonsTPCdEdx; //! dEdx TPC of selected Protons
         TH2D*                   fProtonsTOFbeta; //! beta TOF of selected Protons
         TH2D*                   fProtonsNsigmasTPCTOF; //! number of sigmas of selected Protons 
+        TH1D*                   fBayesProbPion; //! Bayes probability of being the pion
+        TH1D*                   fBayesProbKaon; //! Bayes probability of being the kaon
+        TH1D*                   fBayesProbProton; //! Bayes probability of being the proton
  
 
 		// V0s histos
