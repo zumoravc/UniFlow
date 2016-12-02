@@ -41,11 +41,13 @@
 #include "AliAnalysisTask.h"
 #include "AliAnalysisManager.h"
 #include "AliAODInputHandler.h"
+#include "AliAnalysisUtils.h"
 #include "AliMultSelection.h"
 #include "AliPIDResponse.h"
 #include "AliPIDCombined.h"
 #include "AliAnalysisTaskFlowPID.h"
 #include "AliLog.h" 
+
 class AliAnalysisTaskFlowPID;    
 
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
@@ -102,6 +104,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fPP(kFALSE),
   fPPb(kFALSE),
   fLHC10h(kTRUE),
+  fTrigger(kFALSE),
   fRejectPileFromSPD(kFALSE),
   fUseIsPileUpFromSPD(kFALSE),
   fUsePlpMV(kFALSE),
@@ -247,6 +250,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fPP(kFALSE),
   fPPb(kFALSE),
   fLHC10h(kTRUE),
+  fTrigger(kFALSE),
   fRejectPileFromSPD(kFALSE),
   fUseIsPileUpFromSPD(kFALSE),
   fUsePlpMV(kFALSE),
@@ -1235,20 +1239,29 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   // event selection
   
-  if(fUseOldCent) // as by You Run1
+  if(fPbPb)
   {
-    if(!OldIsEventSelected(fAOD))
+    if(fUseOldCent) // as by You Run1
     {
-      //printf("Rejected\n");
-      return;
+      if(!OldIsEventSelected(fAOD))
+      {
+        //printf("Rejected\n");
+        return;
+      }
+    } 
+    else // Run2 cent selection based on AliMult
+    {
+      if(!IsEventSelected(fAOD))
+      {
+        return;
+      }
     }
-  } 
-  else // Run2 cent selection based on AliMult
+  }
+
+  if(fPP)
   {
-    if(!IsEventSelected(fAOD))
-    {
+    if(!IsEventSelectedPP(fAOD))
       return;
-    }
   }
 
   //printf("Event selection passed\n");
@@ -2110,9 +2123,9 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   // event selection criteria
 
   // Pileup rejection
-  if( fRejectPileFromSPD && event->IsPileupFromSPD(3) ) //min contributors ???  	
-	{
-		if(fDebug) ::Info("IsEventSelected","Event rejected: SPD pile up");
+  if( fRejectPileFromSPD && event->IsPileupFromSPD(3) ) //min contributors ???    
+  {
+    if(fDebug) ::Info("IsEventSelected","Event rejected: SPD pile up");
     return kFALSE;
   }
   
@@ -2124,27 +2137,27 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   const AliAODVertex* aodVtx = event->GetPrimaryVertex();
   if(!aodVtx)
   {
-  	if(fDebug > 0) 
-  		::Info("IsEventSelected","Event rejected: Primary vertex not found");
-  	return kFALSE;
+    if(fDebug > 0) 
+      ::Info("IsEventSelected","Event rejected: Primary vertex not found");
+    return kFALSE;
   }
 
   Int_t iNContrib = aodVtx->GetNContributors();
   if(iNContrib <= 0) 
-  {	
-  	if(fDebug > 0)
-  	{
-  		::Info("IsEventSelected","Event rejected: Low number of PV contributors");
-  	} 
-  	return kFALSE;
+  { 
+    if(fDebug > 0)
+    {
+      ::Info("IsEventSelected","Event rejected: Low number of PV contributors");
+    } 
+    return kFALSE;
   }
 
   TString sVtxTitle = aodVtx->GetTitle();
   if( !sVtxTitle.Contains("VertexerTracks") )
   {
-		if(fDebug > 1)
-			::Info("IsEventSelected","Event rejected: Title does not contain 'VertexerTracks'");
-  	return kFALSE;
+    if(fDebug > 1)
+      ::Info("IsEventSelected","Event rejected: Title does not contain 'VertexerTracks'");
+    return kFALSE;
   }
 
   fEventCounter->Fill(3);
@@ -2152,51 +2165,126 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   const AliAODVertex* spdVtx = event->GetPrimaryVertexSPD();
   if(!spdVtx)
   {
-  	if(fDebug) 
-  		::Info("IsEventSelected","Event rejected: SPD vertex not found");
-  	return kFALSE;
+    if(fDebug) 
+      ::Info("IsEventSelected","Event rejected: SPD vertex not found");
+    return kFALSE;
   }
 
   Int_t iNContribSPD = spdVtx->GetNContributors();
   if(iNContribSPD <= 0)
   {
-  	if(fDebug) 
-  		::Info("IsEventSelected","Event rejected: Low number of SPD contributors");
-  	return kFALSE;
+    if(fDebug) 
+      ::Info("IsEventSelected","Event rejected: Low number of SPD contributors");
+    return kFALSE;
   }
 
   const Double_t aodVtxZ = aodVtx->GetZ();
   const Double_t spdVtxZ = spdVtx->GetZ();
   if(TMath::Abs(aodVtxZ - spdVtxZ) > 0.5)
   {
-  	if(fDebug) 
-  		::Info("IsEventSelected","Event rejected: High z-distance diference between AOD and SPD vertex");
-  	return kFALSE;
-  }	
+    if(fDebug) 
+      ::Info("IsEventSelected","Event rejected: High z-distance diference between AOD and SPD vertex");
+    return kFALSE;
+  } 
 
   fEventCounter->Fill(4);
 
   if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
-	{
-		if(fDebug) 
-			::Info("IsEventSelected","Event rejected: PV z-distance cut");
-  	return kFALSE;
-	}
+  {
+    if(fDebug) 
+      ::Info("IsEventSelected","Event rejected: PV z-distance cut");
+    return kFALSE;
+  }
 
   fEventCounter->Fill(5);
 
-	// centrality rejection
-	
-	if(fPbPb)
-	{
-  	EstimateCentrality(fAOD);
+  // centrality rejection
+  
+  if(fPbPb)
+  {
+    EstimateCentrality(fAOD);
     if (fCentBinIndex < 0 || fCentBinIndex > fNumCentBins || fCentPercentile < 0 || fCentPercentile > 80)
       return kFALSE;
-	}
+  }
   
   fCentralityDis->Fill(fCentPercentile);
   fCentDistUnitBin->Fill(fCentPercentile);
   fEventCounter->Fill(6);
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
+{
+  if(!fPP || !event) // not pp analysis or no valid event
+    return kFALSE;   
+
+  if(!fAODAnalysis) // not impelemted for ESD 
+    return kFALSE; 
+
+  // event / physics selection criteria
+  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
+  UInt_t fSelectMask = inputHandler->IsEventSelected();
+
+  Bool_t isTriggerSelected = kFALSE;
+  
+  switch(fTrigger) // check for high multiplicity trigger
+  {
+    case 0: isTriggerSelected = fSelectMask& AliVEvent::kINT7; break;
+    case 1: isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0; break;
+    case 2: isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD; break;    
+    default: isTriggerSelected = kFALSE; 
+  } 
+
+  if(!isTriggerSelected)
+    return kFALSE;
+
+  // events passing physics selection
+
+  // primary vertex selection
+  const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(event->GetPrimaryVertex());
+  if(!vtx || vtx->GetNContributors() < 1)
+    return kFALSE;
+
+  // SPD vertex selection
+  const AliAODVertex* vtxSPD = dynamic_cast<const AliAODVertex*>(event->GetPrimaryVertexSPD());
+  
+  Double_t dMaxResol = 0.25; // suggested from DPG
+  Double_t cov[6] = {0};
+  vtxSPD->GetCovarianceMatrix(cov);
+  Double_t zRes = TMath::Sqrt(cov[5]);
+  if ( vtxSPD->IsFromVertexerZ() && (zRes > dMaxResol))
+  {
+    return kFALSE;
+  }
+
+  // PileUp rejection included in Physics selection
+  // but with values for high mult pp (> 5 contrib) => for low ones: do manually (> 3 contrib)
+  if(fTrigger == 0 && fAOD->IsPileupFromSPD(3,0.8) )
+  {
+    return kFALSE;
+  }
+
+  // pileup rejection from multivertexer
+  AliAnalysisUtils utils;
+  utils.SetMinPlpContribMV(5);
+  utils.SetMaxPlpChi2MV(5);
+  utils.SetMinWDistMV(15);
+  utils.SetCheckPlpFromDifferentBCMV(kFALSE);
+  Bool_t isPileupFromMV = utils.IsPileUpMV(event);
+  
+  if(isPileupFromMV)
+  {
+    return kFALSE;
+  }
+  
+  // cutting on PV z-distance 
+  const Double_t aodVtxZ = vtx->GetZ();
+  if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
+  {
+    return kFALSE;
+  }
 
  	return kTRUE;
 }

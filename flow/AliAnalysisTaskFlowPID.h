@@ -22,6 +22,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetPbPbAnalysis(Bool_t pbpb) { fPbPb = pbpb; }
         void                    SetPPAnalysis(Bool_t pp) { fPP = pp; }
         void					SetPPbAnalysis(Bool_t ppb) { fPPb = ppb; }
+        void                    SetTrigger(Short_t trigger) { fTrigger = trigger; }
         void                    SetPeriod10h(Bool_t period) { fLHC10h = period; }
         void                    SetRejectPileUpSPD(Bool_t pileSPD) { fRejectPileFromSPD = pileSPD; }
         void                    SetUsePlpMV(Bool_t plpMV) { fUsePlpMV = plpMV; }
@@ -91,6 +92,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
     private:
         void                    ListParameters();
         Bool_t                  IsEventSelected(const AliAODEvent* event);
+        Bool_t                  IsEventSelectedPP(AliVEvent* event);
         Bool_t                  OldIsEventSelected(const AliAODEvent* event);
 		Bool_t                  IsTrackSelected(const AliAODTrack* track);
         Bool_t                  IsTrackPion(const AliAODTrack* track); 
@@ -187,6 +189,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fPP;                  // is pp analysis?
         Bool_t                  fPPb;                  // is pPb analysis?
         Bool_t                  fLHC10h;        // flag to LHC10h data?
+        Short_t                 fTrigger;   // switch for pp trigger selection / 0: INT7 / 1: kHighMultV0 / 2: kHighMultSPD
         Bool_t                  fRejectPileFromSPD;   // switch for rejection based on is PileFromSPD
         Bool_t                  fUseIsPileUpFromSPD;   // use IsPileupFromSPD method in (old) event selection
         Bool_t                  fUsePlpMV;   // use plpMV method in (old) event selection
