@@ -495,6 +495,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fQAEventsNumContrPV[i] = 0x0;
     fQAEventsNumSPDContrPV[i] = 0x0;
     fQAEventsDistPVSPD[i] = 0x0; 
+    fQAEventsSPDresol[i] = 0x0;
+    fQAEventsTriggerSelection[i] = 0x0; 
     // Tracks
     fQATracksMult[i] = 0x0;
     fQATracksPt[i] = 0x0;
@@ -1043,6 +1045,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
   fOutListEvents->Add(fCentSPDvsV0M);
   
+  Short_t iNEventTriggerBins = 4;
+  TString sEventTriggerLabel[] = {"kINT7","kHighMultV0","kHighMultSPD","Other"};
+  
   for(Int_t i(0); i < fQANumSteps; i++)
   {
     fQAEventsPVz[i] = new TH1D(Form("fQAEventsPVz_%s",sQAlabel[i].Data()),Form("QA Events: PV #it{z} (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),101,-50,50);
@@ -1053,6 +1058,18 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListEvents->Add(fQAEventsNumSPDContrPV[i]);
     fQAEventsDistPVSPD[i] = new TH1D(Form("fQAEventsDistPVSPD_%s",sQAlabel[i].Data()),Form("QA Events: #it{z}-istance between SPD vertex & PV (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),50,0,5);
     fOutListEvents->Add(fQAEventsDistPVSPD[i]);
+    
+    if(fPP)
+    {
+      fQAEventsSPDresol[i] = new TH1D(Form("fQAEventsSPDresol_%s",sQAlabel[i].Data()),Form("QA Events: SPD vertexer z resolution (%s cuts); #it{z} resolution (?cm);",sQAlabel[i].Data()),50,0,50);
+      fOutListEvents->Add(fQAEventsSPDresol[i]);
+      fQAEventsTriggerSelection[i] = new TH1D(Form("fQAEventsTriggerSelection_%s",sQAlabel[i].Data()),Form("QA Events: 2016 pp trigger selection (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),iNEventTriggerBins,0,iNEventTriggerBins);
+      for(Short_t j(0); j < iNEventTriggerBins; j++)
+      {
+        fQAEventsTriggerSelection[i]->GetXaxis()->SetBinLabel(j+1,sEventTriggerLabel[j].Data() );
+      }
+      fOutListEvents->Add(fQAEventsTriggerSelection[i]);
+    }
   }
 
   // QA tracks output
@@ -2216,11 +2233,14 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 {
+//  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 2 selected tracks","At least 1 V0 candidate"};
   if(!fPP || !event) // not pp analysis or no valid event
     return kFALSE;   
 
   if(!fAODAnalysis) // not impelemted for ESD 
     return kFALSE; 
+
+  //fEventCounter->Fill("AOD OK",1);
 
   // event / physics selection criteria
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
@@ -2247,6 +2267,8 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
   if(!vtx || vtx->GetNContributors() < 1)
     return kFALSE;
 
+  fEventCounter->Fill("PV OK",1);
+
   // SPD vertex selection
   const AliAODVertex* vtxSPD = dynamic_cast<const AliAODVertex*>(event->GetPrimaryVertexSPD());
   
@@ -2258,6 +2280,8 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
   {
     return kFALSE;
   }
+
+  fEventCounter->Fill("SPD Vtx OK",1);
 
   // PileUp rejection included in Physics selection
   // but with values for high mult pp (> 5 contrib) => for low ones: do manually (> 3 contrib)
@@ -2279,12 +2303,15 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
     return kFALSE;
   }
   
+  fEventCounter->Fill("Pile-up OK",1);
+
   // cutting on PV z-distance 
   const Double_t aodVtxZ = vtx->GetZ();
   if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
   {
     return kFALSE;
   }
+  fEventCounter->Fill("PV #it{z} OK",1);
 
  	return kTRUE;
 }
@@ -3183,6 +3210,25 @@ void AliAnalysisTaskFlowPID::FillEventQA(const AliAODEvent* event, const Short_t
   fQAEventsNumContrPV[iQAindex]->Fill(iNumContr);
   fQAEventsNumSPDContrPV[iQAindex]->Fill(iNumContrSPD);
   fQAEventsDistPVSPD[iQAindex]->Fill(TMath::Abs(dVtxZ - spdVtxZ));
+
+  if(fPP) // pp analysis
+  {
+    // event / physics selection criteria
+    AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+    AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
+    UInt_t fSelectMask = inputHandler->IsEventSelected();
+  
+    if( fSelectMask& AliVEvent::kINT7 ) { fQAEventsTriggerSelection[iQAindex]->Fill("kINT7",1); }
+    else if (fSelectMask& AliVEvent::kHighMultV0) { fQAEventsTriggerSelection[iQAindex]->Fill("kHighMultV0",1); }
+    else if (fSelectMask& AliVEvent::kHighMultSPD) { fQAEventsTriggerSelection[iQAindex]->Fill("kHighMultSPD",1); }
+    else { fQAEventsTriggerSelection[iQAindex]->Fill("Other",1); }
+    
+    // SPD vertexer resolution
+    Double_t cov[6] = {0};
+    spdVtx->GetCovarianceMatrix(cov);
+    Double_t zRes = TMath::Sqrt(cov[5]);
+    fQAEventsSPDresol[iQAindex]->Fill(zRes);
+  }
 
 	return; 
 }

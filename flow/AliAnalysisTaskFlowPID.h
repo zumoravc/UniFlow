@@ -366,6 +366,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fQAEventsPVz[fQANumSteps];                 //! PV z distance distribution
         TH1D*                   fQAEventsNumContrPV[fQANumSteps];                 //! number of contributors to PV 
         TH1D*                   fQAEventsNumSPDContrPV[fQANumSteps];                 //! number of SPD contributors to PV 
+        TH1D*                   fQAEventsSPDresol[fQANumSteps];              //! SPD vertex resolution
+        TH1D*                   fQAEventsTriggerSelection[fQANumSteps];     //! trigger mask selection for pp 2016 trigger selection
         TH1D*                   fQAEventsDistPVSPD[fQANumSteps];                 //! z-distance between AOD & SPD PV
         // QA tracks
         TH1D*                   fQATracksMult[fQANumSteps];       //! number of AOD tracks distribution
