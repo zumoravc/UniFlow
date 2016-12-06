@@ -81,7 +81,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
         const static Int_t      fNumMinvFlowBinsLambda = 11;  // number of inv. mass bin for differential flow plots ((A)Lambda)
         static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
-        const static Int_t 		fNumCentBins = 9;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
+        const static Int_t 		fNumCentBins = 3;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
         static Double_t			fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumHarmonics = 3; // number of harmonics
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
@@ -179,6 +179,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
     	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
         Bool_t                  plpMV(const AliVEvent *event);
 
+        Short_t                 GetCentBinIndexPP(const Int_t iMult);
         Short_t                 GetPtBinIndex(const Double_t dPt);
         Short_t                 GetMinvFlowBinIndexK0s(const Double_t dMass);
         Short_t                 GetMinvFlowBinIndexLambda(const Double_t dMass);
@@ -295,14 +296,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*   				fCentDistUnitBin;     //! event centrality distribution 
         TH2D*					fCentSPDvsV0M;      //! V0M vs SPD
         
-        // tracks histos
-        TH1D*					fMultTracksSelected; //! multiplicity of selected tracks in a given event
-        TH2D*					fTracksPtCent;		//! selected tracks pT vs event centrality
-        TH1D*                   fTracksPt;       //! selected tracks pT distribution
-        TH1D*                   fTracksEta;      //! selected tracks eta distribution
-        TH1D* 				    fTracksPhi;			 //! selected tracks phi distribution
-        TH1D* 					fTracksCharge;			 //! selected tracks charge distribution
-        
         // PID histos
         TH1D*                   fPionsCounter; //! 
         TH1D*                   fPionsMult; //! event multiplicity of selected pions
@@ -328,9 +321,6 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fProtonsTPCdEdx; //! dEdx TPC of selected Protons
         TH2D*                   fProtonsTOFbeta; //! beta TOF of selected Protons
         TH2D*                   fProtonsNsigmasTPCTOF; //! number of sigmas of selected Protons 
-        TH1D*                   fBayesProbPion; //! Bayes probability of being the pion
-        TH1D*                   fBayesProbKaon; //! Bayes probability of being the kaon
-        TH1D*                   fBayesProbProton; //! Bayes probability of being the proton
  
 
 		// V0s histos
@@ -384,15 +374,19 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fQATracksTOF[fQANumSteps]; //! TOF PID information
         TH2D*                   fQATracksTOFbeta[fQANumSteps]; //! TOF PID information
         // QA PID tracks
+        TH2D*                   fQAPIDTOFbetaNoTOF; //! beta TOF of particles without TOF info 
         TH2D*                   fQAPIDTPCdEdx[fQANumSteps]; //! dEdx TPC of all selected particles (pi,K,p)
         TH2D*                   fQAPIDTOFbeta[fQANumSteps]; //! beta TOF of all selected particles (pi,K,p) 
-        TH2D*                   fQAPIDTOFbetaNoTOF; //! beta TOF of particles without TOF info 
+        TH2D*                   fQAPIDTOFbetaWithTOF[fQANumSteps]; //! beta TOF of all selected particles with TOF info available
         TH2D*                   fQAPIDNsigmasTPCasPion[fQANumSteps]; //! TPC number of sigmas of selected particles (pi hypothesis)
         TH2D*                   fQAPIDNsigmasTOFasPion[fQANumSteps]; //! TOF number of sigmas dist of selected particles (pi hypothesis)
         TH2D*                   fQAPIDNsigmasTPCasKaon[fQANumSteps]; //! TPC number of sigmas of selected particles (K hypothesis)
         TH2D*                   fQAPIDNsigmasTOFasKaon[fQANumSteps]; //! TOF number of sigmas dist of selected particles (K hypothesis)
         TH2D*                   fQAPIDNsigmasTPCasProton[fQANumSteps]; //! TPC number of sigmas of selected particles (p hypothesis)
         TH2D*                   fQAPIDNsigmasTOFasProton[fQANumSteps]; //! TOF number of sigmas dist of selected particles (p hypothesis)
+        TH1D*                   fQAPIDBayesProbPion[fQANumSteps]; //! Bayes probability of being the pion
+        TH1D*                   fQAPIDBayesProbKaon[fQANumSteps]; //! Bayes probability of being the kaon
+        TH1D*                   fQAPIDBayesProbProton[fQANumSteps]; //! Bayes probability of being the proton
 
         // QA V0s
         TH1D*					fQAV0sCounter;		//! V0s counter
@@ -426,7 +420,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 7);
+        ClassDef(AliAnalysisTaskFlowPID, 8);
 };
 
 #endif

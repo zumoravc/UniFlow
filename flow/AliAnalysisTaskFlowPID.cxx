@@ -54,7 +54,9 @@ ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
 Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0}; // You, Katarina binning
 //Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8,4.2,4.6,5.,5.5,6}; // PID flow v2 JHEP paper
-Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
+
+//Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.}; # PbPb
+Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,30.,50.,150.};
 //Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.425,0.45,0.47,0.49,0.495,0.5,0.505,0.51,0.53,0.55,0.575,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.125,1.13,1.14,1.15,1.16};
@@ -160,12 +162,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCentralityDis(0),
   fCentDistUnitBin(0),
   fCentSPDvsV0M(0),
-  fMultTracksSelected(0),
-  fTracksPtCent(0),
-  fTracksPt(0),
-  fTracksEta(0),
-  fTracksPhi(0),
-  fTracksCharge(0),
 
   fPionsCounter(0x0),
   fKaonsCounter(0x0),
@@ -191,9 +187,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fProtonsTPCdEdx(0x0),
   fProtonsTOFbeta(0x0),
   fProtonsNsigmasTPCTOF(0x0),  
-  fBayesProbPion(0x0), 
-  fBayesProbKaon(0x0), 
-  fBayesProbProton(0x0), 
   fQAPIDTOFbetaNoTOF(0x0),
 
   fQAV0sCounter(0),
@@ -306,12 +299,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCentralityDis(0),
   fCentDistUnitBin(0),
   fCentSPDvsV0M(0),
-  fMultTracksSelected(0),
-  fTracksPtCent(0),
-  fTracksPt(0),
-  fTracksEta(0),
-  fTracksPhi(0),
-  fTracksCharge(0),
 
   fPionsCounter(0x0),
   fKaonsCounter(0x0),
@@ -337,9 +324,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fProtonsTPCdEdx(0x0),
   fProtonsTOFbeta(0x0),
   fProtonsNsigmasTPCTOF(0x0), 
-  fBayesProbPion(0x0), 
-  fBayesProbKaon(0x0), 
-  fBayesProbProton(0x0), 
   fQAPIDTOFbetaNoTOF(0x0),
 
 
@@ -514,12 +498,17 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     // PID
     fQAPIDTPCdEdx[i] = 0x0;
     fQAPIDTOFbeta[i] = 0x0;
+    fQAPIDTOFbetaWithTOF[i] = 0x0;
     fQAPIDNsigmasTPCasPion[i] = 0x0;
     fQAPIDNsigmasTOFasPion[i] = 0x0;
     fQAPIDNsigmasTPCasKaon[i] = 0x0;
     fQAPIDNsigmasTOFasKaon[i] = 0x0;
     fQAPIDNsigmasTPCasProton[i] = 0x0;
     fQAPIDNsigmasTOFasProton[i] = 0x0;
+    fQAPIDBayesProbPion[i] = 0x0;
+    fQAPIDBayesProbKaon[i] = 0x0;
+    fQAPIDBayesProbProton[i] = 0x0;
+        
     // V0s
   	fQAV0sRecoMethod[i] = 0;	
 		fQAV0sTPCRefit[i] = 0;	
@@ -618,6 +607,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
   }
 
+  
   fOutListCumulants = new TList();
   fOutListCumulants->SetOwner(kTRUE);
 
@@ -633,8 +623,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListV0s = new TList();
   fOutListV0s->SetOwner(kTRUE);
 
-  fOutListQA = new TList();
-  fOutListQA->SetOwner(kTRUE);
+  //fOutListQA = new TList();
+  //fOutListQA->SetOwner(kTRUE);
 
   for(Int_t i(0); i < fNumEtaGap; i++)
   {
@@ -682,6 +672,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     {
       for(Int_t j(0); j < fNumSampleBins; j++)
       {
+        if(!fSampling && j > 0)
+          continue;
+
         fcn2Tracks[m][i][j] = new TProfile(Form("fTracksRef_n%d2_gap%02.2g_number%d",fHarmonics[i], fEtaGap[m]*10, j), Form("Tracks: <<2>> ref harmonics %d Gap %g sample %d; cent",fHarmonics[i],fEtaGap[m],j), fNumCentBins,fCentBinEdges);
         fcn2Tracks[m][i][j]->Sumw2();
         fListCumRef[m]->Add(fcn2Tracks[m][i][j]);
@@ -744,6 +737,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
         
         for(Int_t j(0); j < fNumSampleBins; j++)
         {
+          if(!fSampling && j > 0)
+            continue;
+
           for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
           {
             if(fEtaGap[m] < 0. && iVec == 1) //only positive vectors for No Gap situation
@@ -795,29 +791,21 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   // end of Katarina GF
 
- 
+  Short_t iMaxMult = 1500;
+  Short_t iNumBinsMult = 1500;
+  if(fPbPb)
+  {
+    iMaxMult = 5000;
+    iNumBinsMult = 500;
+  }
+
   // Events
   fEventMult = new TH1D("fEventMult","Track multiplicity (all tracks in selected events); tracks;",100,0,10000);
   fOutListEvents->Add(fEventMult);
   fCentralityDis = new TH1D("fCentralityDis", "Event centrality distribution (final binning); centrality percentile; Events;", fNumCentBins,fCentBinEdges);
   fOutListEvents->Add(fCentralityDis);
-  fCentDistUnitBin = new TH1D("fCentDistUnitBin", "Event centrality distibution (unit binning); centrality percentile; Events", 100, 0, 100);
+  fCentDistUnitBin = new TH1D("fCentDistUnitBin", "Event centrality distibution (unit binning); centrality percentile; Events", fCentBinEdges[fNumCentBins], 0, fCentBinEdges[fNumCentBins]);
   fOutListEvents->Add(fCentDistUnitBin);
-
-  // Tracks
-  fMultTracksSelected = new TH1D("fMultTracksSelected","Track multiplicity (selected tracks in selected events); tracks;",100,0,5000);
-  fOutListTracks->Add(fMultTracksSelected);
-  fTracksPtCent = new TH2D("fTracksPtCent", "Tracks #it{p}_{T} vs. centrality (selected); #it{p}^{track}_{T} (GeV/#it{c}); centrality;", fNumPtBins,fPtBinEdges,fNumCentBins,fCentBinEdges);    
-  fOutListTracks->Add(fTracksPtCent);          
-  fTracksPt = new TH1D("fTracksPt", "Tracks #it{p}_{T} (selected); #it{p}^{track}_{T} (GeV/#it{c});", 100, 0, 10);    
-  fOutListTracks->Add(fTracksPt);          
-  fTracksEta = new TH1D("fTracksEta", "Tracks #it{#eta} (selected); #it{#eta}^{track};", 400, -2, 2);    
-  fOutListTracks->Add(fTracksEta);          
-  fTracksPhi = new TH1D("fTracksPhi", "Tracks #it{#varphi} (selected); #it{#varphi}^{track};", 360, 0., TMath::TwoPi());    
-  fOutListTracks->Add(fTracksPhi);          
-  fTracksCharge = new TH1D("fTracksCharge", "Track charge (selected); charge^{track};", 3,-1.5,1.5);    
-  fOutListTracks->Add(fTracksCharge);          
-  
   
   if(fOldFlow)
   {
@@ -828,6 +816,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
       {
         for(Int_t k(0); k < fNumSampleBins; k++)
         {
+          if(!fSampling && k > 0)
+            continue;
+
           fTracksRefTwo[i][j][k] = new TProfile(Form("fTracksRefTwo_n%d_Gap%02.2g_sample%d",fHarmonics[i],fEtaGap[j]*10,k),Form("#LT#LT2#GT#GT_{%d,|#Delta#it{#eta}| > %g} sample %d (ref. flow); centrality;",fHarmonics[i],fEtaGap[j],k),fNumCentBins,fCentBinEdges);    
           fTracksRefTwo[i][j][k]->Sumw2();
           fOutListTracks->Add(fTracksRefTwo[i][j][k]);
@@ -846,6 +837,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
           {
             for(Int_t m(0); m < fNumSampleBins; m++)
             {
+              if(!fSampling && m > 0)
+                continue;
+
               fTracksDiffTwoPos[i][j][k][m] = new TProfile(Form("fTracksDiffTwoPos_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
               fTracksDiffTwoPos[i][j][k][m]->Sumw2();
               fOutListTracks->Add(fTracksDiffTwoPos[i][j][k][m]);
@@ -915,7 +909,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fKaonsCounter);
     fOutListPID->Add(fProtonsCounter);
 
-    fPionsMult = new TH1D("fPionsMult","#pi: Event multiplicity (selected); multiplicity",5000,0,5000);
+    fPionsMult = new TH1D("fPionsMult","#pi: Event multiplicity (selected); multiplicity",iNumBinsMult,0,iMaxMult);
     fOutListPID->Add(fPionsMult);
     fPionsPt = new TH1D("fPionsPt", "#pi: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
     fOutListPID->Add(fPionsPt);          
@@ -930,7 +924,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fPionsNsigmasTPCTOF = new TH2D("fPionsNsigmasTPCTOF","#pi: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
     fOutListPID->Add(fPionsNsigmasTPCTOF);
 
-    fKaonsMult = new TH1D("fKaonsMult","K: Event multiplicity (selected); multiplicity",5000,0,5000);
+    fKaonsMult = new TH1D("fKaonsMult","K: Event multiplicity (selected); multiplicity",iNumBinsMult,0,iMaxMult);
     fOutListPID->Add(fKaonsMult);
     fKaonsPt = new TH1D("fKaonsPt", "K: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
     fOutListPID->Add(fKaonsPt);          
@@ -945,7 +939,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fKaonsNsigmasTPCTOF = new TH2D("fKaonsNsigmasTPCTOF","K: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
     fOutListPID->Add(fKaonsNsigmasTPCTOF);
 
-    fProtonsMult = new TH1D("fProtonsMult","p: Event multiplicity (selected); multiplicity",5000,0,5000);
+    fProtonsMult = new TH1D("fProtonsMult","p: Event multiplicity (selected); multiplicity",iNumBinsMult,0,iMaxMult);
     fOutListPID->Add(fProtonsMult);
     fProtonsPt = new TH1D("fProtonsPt", "p: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
     fOutListPID->Add(fProtonsPt);          
@@ -959,12 +953,6 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fProtonsTPCdEdx);
     fProtonsNsigmasTPCTOF = new TH2D("fProtonsNsigmasTPCTOF","p: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
     fOutListPID->Add(fProtonsNsigmasTPCTOF);
-    fBayesProbPion = new TH1D("fBayesProbPion","#pi,K,p: Bayesian probablibity as #pi (all selected); probability", 1000, 0., 1.); 
-    fOutListPID->Add(fBayesProbPion);
-    fBayesProbKaon = new TH1D("fBayesProbKaon", "#pi,K,p: Bayesian probablibity as K (all selected); probability", 1000, 0., 1.); 
-    fOutListPID->Add(fBayesProbKaon);
-    fBayesProbProton = new TH1D("fBayesProbProton","#pi,K,p: Bayesian probablibity as proton (all selected); probability", 1000, 0., 1.); 
-    fOutListPID->Add(fBayesProbProton);
   } 
 
   if(fOldFlow)
@@ -996,8 +984,11 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
             fV0sPtInvMassLambda[i][j][k]->Sumw2();
             fOutListV0s->Add(fV0sPtInvMassLambda[i][j][k]); 
             
-            for(Int_t m(0); m <fNumSampleBins; m++)
+            for(Int_t m(0); m < fNumSampleBins; m++)
             {
+              if(!fSampling && m > 0)
+                continue;
+
               fV0sDiffTwoPos_K0s[i][j][k][m] = new TProfile2D(Form("fV0sDiffTwoPos_K0s_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m), Form("K^{0}_{S} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
               fV0sDiffTwoPos_K0s[i][j][k][m]->Sumw2();
               fOutListV0s->Add(fV0sDiffTwoPos_K0s[i][j][k][m]);
@@ -1027,15 +1018,28 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     }  
   }
   
+  Int_t iNEventCounterBins = 1;
 
 	TString sQAlabel[fQANumSteps] = {"Before","After"/*,"Test"*/};
   // QA events output
-  Int_t iNEventCounterBins = 9;
-  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 2 selected tracks","At least 1 V0 candidate"};
-  fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
-  for(Int_t i = 0; i < iNEventCounterBins; i++)
-    fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
-  fOutListEvents->Add(fEventCounter);
+  if(fPP)
+  {
+    iNEventCounterBins = 10;
+    TString sEventCounterLabel[] = {"Input","AOD OK","Physics selection OK","PV OK","SPD Vtx OK","Pileup SPD OK","Pileup MV OK","PV #it{z} OK","At least 2 selected tracks","At least 1 V0 candidate"};
+    fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
+    for(Int_t i = 0; i < iNEventCounterBins; i++)
+      fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
+    fOutListEvents->Add(fEventCounter);
+  }
+  else
+  {
+    iNEventCounterBins = 9;
+    TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 2 selected tracks","At least 1 V0 candidate"};
+    fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
+    for(Int_t i = 0; i < iNEventCounterBins; i++)
+      fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
+    fOutListEvents->Add(fEventCounter);
+  }  
   
   fSampleCounter = new TH2D("fSampleCounter","Event distribution if sampling bins; sampling bin index; centrality bin index; events",fNumSampleBins,0,fNumSampleBins, fNumCentBins, 0, fNumCentBins);
   for(Int_t i = 0; i < fNumSampleBins; i++)
@@ -1061,7 +1065,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     
     if(fPP)
     {
-      fQAEventsSPDresol[i] = new TH1D(Form("fQAEventsSPDresol_%s",sQAlabel[i].Data()),Form("QA Events: SPD vertexer z resolution (%s cuts); #it{z} resolution (?cm);",sQAlabel[i].Data()),50,0,50);
+      fQAEventsSPDresol[i] = new TH1D(Form("fQAEventsSPDresol_%s",sQAlabel[i].Data()),Form("QA Events: SPD vertexer z resolution (%s cuts); #it{z} resolution (?cm);",sQAlabel[i].Data()),150,0,15);
       fOutListEvents->Add(fQAEventsSPDresol[i]);
       fQAEventsTriggerSelection[i] = new TH1D(Form("fQAEventsTriggerSelection_%s",sQAlabel[i].Data()),Form("QA Events: 2016 pp trigger selection (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),iNEventTriggerBins,0,iNEventTriggerBins);
       for(Short_t j(0); j < iNEventTriggerBins; j++)
@@ -1073,9 +1077,10 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   }
 
   // QA tracks output
+ 
   for(Int_t i(0); i < fQANumSteps; i++)
   {
-    fQATracksMult[i] = new TH1D(Form("fQATracksMult_%s",sQAlabel[i].Data()),Form("QA Tracks: Number of tracks in selected events (%s cuts); #it{N}^{tracks}",sQAlabel[i].Data()), 500,0,5000);
+    fQATracksMult[i] = new TH1D(Form("fQATracksMult_%s",sQAlabel[i].Data()),Form("QA Tracks: Number of tracks in selected events (%s cuts); #it{N}^{tracks}",sQAlabel[i].Data()), iNumBinsMult,0,iMaxMult);
     fOutListTracks->Add(fQATracksMult[i]);
     fQATracksFilterMap[i] = new TH1D(Form("fQATracksFilterMap_%s",sQAlabel[i].Data()),Form("QA Tracks: Track filter bits (%s cuts); filter bit",sQAlabel[i].Data()), 2000,0,2000);
     fOutListTracks->Add(fQATracksFilterMap[i]);
@@ -1121,6 +1126,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   {
     fQAPIDTOFbeta[i] = new TH2D(Form("fQAPIDTOFbeta_%s",sQAlabel[i].Data()),Form("#pi,K,p: TOF #beta (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 100,0,1.5);          
     fOutListPID->Add(fQAPIDTOFbeta[i]);
+    fQAPIDTOFbetaWithTOF[i] = new TH2D(Form("fQAPIDTOFbetaWithTOF_%s",sQAlabel[i].Data()),Form("#pi,K,p: TOF #beta rejecting tracks with no TOF info (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 100,0,1.5);          
+    fOutListPID->Add(fQAPIDTOFbetaWithTOF[i]);
     fQAPIDTPCdEdx[i] = new TH2D(Form("fQAPIDTPCdEdx_%s",sQAlabel[i].Data()),Form("#pi,K,p: TPC #it{dEdx} (%s cuts); #it{p} (GeV/#it{c}); TPC #it{dEdx}",sQAlabel[i].Data()), 1000,0,10, 1000,0,1000);          
     fOutListPID->Add(fQAPIDTPCdEdx[i]);
     fQAPIDNsigmasTPCasPion[i] = new TH2D(Form("fQAPIDNsigmasTPCasPion_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TPC as #pi (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);          
@@ -1135,6 +1142,12 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fQAPIDNsigmasTPCasProton[i]);
     fQAPIDNsigmasTOFasProton[i] = new TH2D(Form("fQAPIDNsigmasTOFasProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TOF as p (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);          
     fOutListPID->Add(fQAPIDNsigmasTOFasProton[i]);
+    fQAPIDBayesProbPion[i] = new TH1D(Form("fQAPIDBayesProbPion_%s",sQAlabel[i].Data()),Form("#pi,K,p: Bayesian probablibity as #pi (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.); 
+    fOutListPID->Add(fQAPIDBayesProbPion[i]);
+    fQAPIDBayesProbKaon[i] = new TH1D(Form("fQAPIDBayesProbKaon_%s",sQAlabel[i].Data()), Form("#pi,K,p: Bayesian probablibity as K (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.); 
+    fOutListPID->Add(fQAPIDBayesProbKaon[i]);
+    fQAPIDBayesProbProton[i] = new TH1D(Form("fQAPIDBayesProbProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: Bayesian probablibity as proton (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.); 
+    fOutListPID->Add(fQAPIDBayesProbProton[i]);
   }
 
 
@@ -1336,7 +1349,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     fSampleBinIndex = 0;
   }
 
-  fSampleCounter->Fill(fSampleBinIndex,fCentBinIndex);
 
   const Int_t iTracks(fAOD->GetNumberOfTracks());           
   fEventMult->Fill(iTracks);
@@ -1377,6 +1389,10 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   }
 
   // all the possible tracks & candidates (passing selection criteria) are filtered and filled and relevant TClonesArray
+
+  // put it here since in pp analysus, fCentBinIndex is returned durinf track filtering
+  fSampleCounter->Fill(fSampleBinIndex,fCentBinIndex);
+
 
   if(fDoGenFramKat) // do flow according to Gen Framework implemented by Kat.
   {
@@ -2262,6 +2278,8 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 
   // events passing physics selection
 
+  fEventCounter->Fill("Physics selection OK",1);
+
   // primary vertex selection
   const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(event->GetPrimaryVertex());
   if(!vtx || vtx->GetNContributors() < 1)
@@ -2289,6 +2307,8 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
   {
     return kFALSE;
   }
+  
+  fEventCounter->Fill("Pileup SPD OK",1);
 
   // pileup rejection from multivertexer
   AliAnalysisUtils utils;
@@ -2303,7 +2323,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
     return kFALSE;
   }
   
-  fEventCounter->Fill("Pile-up OK",1);
+  fEventCounter->Fill("Pileup MV OK",1);
 
   // cutting on PV z-distance 
   const Double_t aodVtxZ = vtx->GetZ();
@@ -2505,6 +2525,21 @@ void AliAnalysisTaskFlowPID::FilterTracks()
 
   fQATracksMult[0]->Fill(iNumTracks);
   fQATracksMult[1]->Fill(iNumSelected);
+
+  // estimating 'centrality' based on multiplicity of charged tracks passing selection criteria
+  if(fPP)
+  {
+    Short_t iMultIndex = GetCentBinIndexPP(iNumSelected);
+    if(iMultIndex != -1)
+    {
+      fCentBinIndex = iMultIndex;
+      fCentPercentile = iNumSelected;
+
+      fCentralityDis->Fill(fCentPercentile);
+      fCentDistUnitBin->Fill(fCentPercentile);
+    }
+  } 
+
   
   return;
 }
@@ -2614,7 +2649,7 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
   Bool_t bIsEither = kFALSE;
 
   Double_t dTOF[5] = {-900};
-  Double_t dBetaTOF = -999;
+  Double_t dBetaTOF = 0.0001;
 
   Bool_t bIsTOF = kFALSE;
 
@@ -2656,8 +2691,7 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
     if(bIsTOF)
     {
       track->GetIntegratedTimes(dTOF);
-      dBetaTOF = dTOF[0] / track->GetTOFsignal();
-      
+      dBetaTOF = dTOF[0] / track->GetTOFsignal(); 
     }
 
     if(bIsPion)
@@ -2671,7 +2705,6 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fPionsPhi->Fill(track->Phi());
       fPionsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion) );
       fPionsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
-
 
       if(bIsTOF)
         fPionsTOFbeta->Fill(track->P(), dBetaTOF);
@@ -2713,10 +2746,7 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
     if(bIsEither) // either PID as pi,K or p
     {
       FillPIDQA(track,1);
-      fBayesProbPion->Fill(dPropPID[2]);
-      fBayesProbKaon->Fill(dPropPID[3]);
-      fBayesProbProton->Fill(dPropPID[4]);
-      
+        
       if(!bIsTOF) // if no TOF information
         fQAPIDTOFbetaNoTOF->Fill(track->P(), dBetaTOF);
     }
@@ -3260,7 +3290,9 @@ void AliAnalysisTaskFlowPID::FillTrackQA(const AliAODTrack* track, const Short_t
     //printf("signal TPC (in OK) %g\n",track->GetTPCsignal());
   }
   
-  if(pidStatusTOF == AliPIDResponse::kDetPidOk)
+  Bool_t bIsTOF = (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME); // checking TOF
+  
+  if(bIsTOF)
   {
     fQATracksTOF[iQAindex]->Fill(track->P(), track->GetTOFsignal()/1000);
     //printf("signal TOF (in OK) %g\n",track->GetTOFsignal());
@@ -3273,18 +3305,36 @@ void AliAnalysisTaskFlowPID::FillTrackQA(const AliAODTrack* track, const Short_t
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FillPIDQA(const AliAODTrack* track, const Short_t iQAindex)
 {
-  Double_t dTOF[5] = {0};
-  track->GetIntegratedTimes(dTOF);
-  Double_t dBetaTOF = dTOF[0] / track->GetTOFsignal();
+  Double_t dTOF[5] = {-990};
+  
+  Double_t dBetaTOF = 0.001;
 
-  fQAPIDTPCdEdx[iQAindex]->Fill(track->P(),track->GetTPCsignal());
+  Bool_t bIsTOF = (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME); // checking TOF
+  
+  if(bIsTOF)
+  {
+    track->GetIntegratedTimes(dTOF);
+    dBetaTOF = dTOF[0] / track->GetTOFsignal();
+    fQAPIDTOFbetaWithTOF[iQAindex]->Fill(track->P(), dBetaTOF);
+
+    fQAPIDNsigmasTOFasPion[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion));
+    fQAPIDNsigmasTOFasKaon[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kKaon));
+    fQAPIDNsigmasTOFasProton[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kProton));
+  }
+
   fQAPIDTOFbeta[iQAindex]->Fill(track->P(), dBetaTOF);
+  fQAPIDTPCdEdx[iQAindex]->Fill(track->P(), track->GetTPCsignal());
+
   fQAPIDNsigmasTPCasPion[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion));
-  fQAPIDNsigmasTOFasPion[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion));
   fQAPIDNsigmasTPCasKaon[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kKaon));
-  fQAPIDNsigmasTOFasKaon[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kKaon));
   fQAPIDNsigmasTPCasProton[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kProton));
-  fQAPIDNsigmasTOFasProton[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTOF(track,AliPID::kProton));
+   
+  // Fill bayes probability
+  Double_t dPropPID[5] = {0};
+  UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dPropPID);
+  fQAPIDBayesProbPion[iQAindex]->Fill(dPropPID[2]);
+  fQAPIDBayesProbKaon[iQAindex]->Fill(dPropPID[3]);
+  fQAPIDBayesProbProton[iQAindex]->Fill(dPropPID[4]);
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAindex)
@@ -3581,6 +3631,22 @@ Short_t AliAnalysisTaskFlowPID::GetPtBinIndex(const Double_t dPt)
   for(Int_t i(0); i < fNumPtBins; i++)
   {
     if( (dPt >= fPtBinEdges[i]) && (dPt < fPtBinEdges[i+1]) )
+      return i;
+  }
+
+  return -1;
+}
+//_____________________________________________________________________________
+Short_t AliAnalysisTaskFlowPID::GetCentBinIndexPP(const Int_t iMult)
+{
+  if(!fPP)
+  {
+    ::Error("GetCentBinIndexPP","Not a pp analysis! Returning -1!");
+    return -1;
+  }  
+  for(Int_t i(0); i < fNumCentBins; i++)
+  {
+    if( (iMult >= fCentBinEdges[i]) && (iMult < fCentBinEdges[i+1]) )
       return i;
   }
 
