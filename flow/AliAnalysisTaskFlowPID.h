@@ -42,6 +42,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
         void                    SetTrackPtMin(Double_t pt) { fTrackPtMin = pt; }
+        void                    SetTrackDCAzMax(Double_t dcaz) {  fTracksDCAzMax = dcaz; }
         void                    SetNumTPCclsMin(UShort_t tpcCls) { fNumTPCclsMin = tpcCls; }
         void                    SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
         void                    SetPionNumSigmasMax(Double_t numSigmas) { fCutPionNumSigmaMax = numSigmas; }
@@ -211,6 +212,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t                fTrackEtaMax;   // () Maximum pseudorapidity range
         Double_t                fTrackPtMax;        // (GeV/c) Maximal track pT
         Double_t                fTrackPtMin;        // (GeV/c) Minimal track pT
+        Double_t                fTracksDCAzMax; //  (cm) Maximal DCA cuts for tracks (pile-up rejection suggested for LHC16)
         Double_t                fCutPionNumSigmaMax;
         Double_t                fCutKaonNumSigmaMax;
         Double_t                fCutProtonNumSigmaMax;
@@ -288,7 +290,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*                  fOutListTracks;    //! (ref.) tracks related output list
         TList*                  fOutListPID;    //! PID (pi,K,p) tracks related output list
         TList*                  fOutListV0s;    //! V0s (K0s,Lambda) related output list
-        TList*                  fOutListQA;     //! additional QA output list
+        //TList*                  fOutListQA;     //! additional QA output list
 
         // event histos
         TH1D*					fEventMult;			 //! selected events multiplicity distribution
@@ -357,6 +359,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fQAEventsNumContrPV[fQANumSteps];                 //! number of contributors to PV 
         TH1D*                   fQAEventsNumSPDContrPV[fQANumSteps];                 //! number of SPD contributors to PV 
         TH1D*                   fQAEventsSPDresol[fQANumSteps];              //! SPD vertex resolution
+        TH1D*                   fQAEventsTriggers[fQANumSteps];     //! trigger check for pp 2016 trigger selection (not filled at FillQA but inside event selection)
         TH1D*                   fQAEventsTriggerSelection[fQANumSteps];     //! trigger mask selection for pp 2016 trigger selection
         TH1D*                   fQAEventsDistPVSPD[fQANumSteps];                 //! z-distance between AOD & SPD PV
         // QA tracks
@@ -420,7 +423,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 8);
+        ClassDef(AliAnalysisTaskFlowPID, 9);
 };
 
 #endif

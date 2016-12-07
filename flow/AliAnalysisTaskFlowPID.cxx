@@ -99,7 +99,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fOutListTracks(0),
   fOutListPID(0),
   fOutListV0s(0),
-  fOutListQA(0),
+  //fOutListQA(0),
 
   fAODAnalysis(kTRUE),
   fPbPb(kFALSE),
@@ -125,6 +125,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fTrackEtaMax(0),
   fTrackPtMax(0),
   fTrackPtMin(0),
+  fTracksDCAzMax(0),
   fNumTPCclsMin(0),
   fTrackFilterBit(0),
   fCutPionNumSigmaMax(0),
@@ -236,7 +237,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fOutListTracks(0),
   fOutListPID(0),
   fOutListV0s(0),
-  fOutListQA(0),
+  //fOutListQA(0),
 
   fAODAnalysis(kTRUE),
   fPbPb(kFALSE),
@@ -262,6 +263,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTrackEtaMax(0),
   fTrackPtMax(0),
   fTrackPtMin(0),
+  fTracksDCAzMax(0),
   fNumTPCclsMin(0),
   fTrackFilterBit(0),
   fCutPionNumSigmaMax(0),
@@ -480,6 +482,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fQAEventsNumSPDContrPV[i] = 0x0;
     fQAEventsDistPVSPD[i] = 0x0; 
     fQAEventsSPDresol[i] = 0x0;
+    fQAEventsTriggers[i] = 0x0;
     fQAEventsTriggerSelection[i] = 0x0; 
     // Tracks
     fQATracksMult[i] = 0x0;
@@ -584,10 +587,12 @@ AliAnalysisTaskFlowPID::~AliAnalysisTaskFlowPID()
     delete fOutListV0s;
   }
 
+  /*
   if(fOutListQA)
   {
     delete fOutListQA;
   }
+  */
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
@@ -1052,6 +1057,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   Short_t iNEventTriggerBins = 4;
   TString sEventTriggerLabel[] = {"kINT7","kHighMultV0","kHighMultSPD","Other"};
   
+  Short_t iNEventTriggersPresentBins = 4;
+  TString sEventTriggersPresentLabel[] = {"kINT7","kHighMultV0","CINT7-B-NOPF-CENT","CVHMV0M-B-SPD2-CENT"};
+  
   for(Int_t i(0); i < fQANumSteps; i++)
   {
     fQAEventsPVz[i] = new TH1D(Form("fQAEventsPVz_%s",sQAlabel[i].Data()),Form("QA Events: PV #it{z} (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),101,-50,50);
@@ -1073,6 +1081,14 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
         fQAEventsTriggerSelection[i]->GetXaxis()->SetBinLabel(j+1,sEventTriggerLabel[j].Data() );
       }
       fOutListEvents->Add(fQAEventsTriggerSelection[i]);
+
+
+      fQAEventsTriggers[i] = new TH1D(Form("fQAEventsTriggers_%s",sQAlabel[i].Data()),Form("QA Events: Triggers present (%s Physics selection)",sQAlabel[i].Data()),iNEventTriggersPresentBins,0,iNEventTriggersPresentBins);
+      for(Short_t j(0); j < iNEventTriggersPresentBins; j++)
+      {
+        fQAEventsTriggers[i]->GetXaxis()->SetBinLabel(j+1,sEventTriggersPresentLabel[j].Data() );
+      }
+      fOutListEvents->Add(fQAEventsTriggers[i]);
     }
   }
 
@@ -1092,9 +1108,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListTracks->Add(fQATracksEta[i]);
     fQATracksPhi[i] = new TH1D(Form("fQATracksPhi_%s",sQAlabel[i].Data()),Form("QA Tracks: Track #it{#varphi} (%s cuts); #it{#varphi}",sQAlabel[i].Data()), 100,0.,TMath::TwoPi());
     fOutListTracks->Add(fQATracksPhi[i]);
-    fQATracksDCAxy[i] = new TH1D(Form("fQATracksDCAxy_%s",sQAlabel[i].Data()),Form("QA Tracks: Track DCA_#it{xy} (%s cuts); DCA_#it{xy} (cm?)",sQAlabel[i].Data()), 100,-10.,10);
+    fQATracksDCAxy[i] = new TH1D(Form("fQATracksDCAxy_%s",sQAlabel[i].Data()),Form("QA Tracks: Track DCA_#it{xy} (%s cuts); DCA_#it{xy} (cm)",sQAlabel[i].Data()), 100,-10.,10);
     fOutListTracks->Add(fQATracksDCAxy[i]);
-    fQATracksDCAz[i] = new TH1D(Form("fQATracksDCAz_%s",sQAlabel[i].Data()),Form("QA Tracks: Track DCA_#it{z} (%s cuts); DCA_#it{z} (cm?)",sQAlabel[i].Data()), 100,-10.,10);
+    fQATracksDCAz[i] = new TH1D(Form("fQATracksDCAz_%s",sQAlabel[i].Data()),Form("QA Tracks: Track DCA_#it{z} (%s cuts); DCA_#it{z} (cm)",sQAlabel[i].Data()), 100,-5.,5);
     fOutListTracks->Add(fQATracksDCAz[i]);
     fQATracksTPCdEdx[i] = new TH2D(Form("fQATracksTPCdEdx_%s",sQAlabel[i].Data()),Form("QA Tracks: TPC PID information (%s cuts); #it{p} (GeV/#it{c}); TPC dEdx (au)",sQAlabel[i].Data()), 100,0,10, 2000,-10,1000);
     fOutListTracks->Add(fQATracksTPCdEdx[i]);
@@ -1236,7 +1252,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   PostData(3, fOutListTracks);           
   PostData(4, fOutListPID);           
 	PostData(5, fOutListV0s);          
-	PostData(6, fOutListQA);           
+	//PostData(6, fOutListQA);           
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::UserExec(Option_t *)
@@ -1451,7 +1467,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   PostData(3, fOutListTracks);           
   PostData(4, fOutListPID);           
   PostData(5, fOutListV0s);          
-  PostData(6, fOutListQA);         
+  //PostData(6, fOutListQA);         
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::Terminate(Option_t *)
@@ -2258,23 +2274,76 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 
   //fEventCounter->Fill("AOD OK",1);
 
+  // trigggers QA check present : suggested by Evgeny
+  TString firedClasses = fInputEvent->GetFiredTriggerClasses();
+  Bool_t isINT7 = firedClasses.Contains("CINT7-B-NOPF-CENT");
+  Bool_t isV0HM = firedClasses.Contains("CVHMV0M-B-SPD2-CENT");
+
+  if(isINT7)
+  {
+    fQAEventsTriggers[0]->Fill("CINT7-B-NOPF-CENT",1);
+  }
+
+  if(isV0HM)
+  {
+    fQAEventsTriggers[0]->Fill("CVHMV0M-B-SPD2-CENT",1);
+  }
+
+
+
   // event / physics selection criteria
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
   AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
   UInt_t fSelectMask = inputHandler->IsEventSelected();
 
+  if(fSelectMask& AliVEvent::kINT7)
+  {
+    fQAEventsTriggers[0]->Fill("kINT7",1);
+  }
+
+  if(fSelectMask& AliVEvent::kHighMultV0)
+  {
+    fQAEventsTriggers[0]->Fill("kHighMultV0",1);
+  }
+
   Bool_t isTriggerSelected = kFALSE;
   
   switch(fTrigger) // check for high multiplicity trigger
   {
-    case 0: isTriggerSelected = fSelectMask& AliVEvent::kINT7; break;
-    case 1: isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0; break;
+    case 0: 
+      isTriggerSelected = fSelectMask& AliVEvent::kINT7; 
+      break;
+
+    case 1:
+      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0; 
+      break;
+
     case 2: isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD; break;    
     default: isTriggerSelected = kFALSE; 
   } 
 
   if(!isTriggerSelected)
     return kFALSE;
+
+  if(isINT7)
+  {
+    fQAEventsTriggers[1]->Fill("CINT7-B-NOPF-CENT",1);
+  }
+
+  if(isV0HM)
+  {
+    fQAEventsTriggers[1]->Fill("CVHMV0M-B-SPD2-CENT",1);
+  }
+
+  if(fSelectMask& AliVEvent::kINT7)
+  {
+    fQAEventsTriggers[1]->Fill("kINT7",1);
+  }
+
+  if(fSelectMask& AliVEvent::kHighMultV0)
+  {
+    fQAEventsTriggers[1]->Fill("kHighMultV0",1);
+  }
 
   // events passing physics selection
 
@@ -2303,10 +2372,13 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 
   // PileUp rejection included in Physics selection
   // but with values for high mult pp (> 5 contrib) => for low ones: do manually (> 3 contrib)
+  
+  /*
   if(fTrigger == 0 && fAOD->IsPileupFromSPD(3,0.8) )
   {
     return kFALSE;
   }
+  */
   
   fEventCounter->Fill("Pileup SPD OK",1);
 
@@ -2364,6 +2436,11 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 	{
 		return kFALSE;
 	}
+
+  if( fTracksDCAzMax > 0. && TMath::Abs(track->ZAtDCA()) > fTracksDCAzMax)
+  {
+    return kFALSE;
+  }
 
 	return kTRUE;
 }
