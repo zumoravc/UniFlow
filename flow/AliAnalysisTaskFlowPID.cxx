@@ -164,6 +164,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCentDistUnitBin(0),
   fCentSPDvsV0M(0),
 
+  fTracksCounter(0x0),
+
   fPionsCounter(0x0),
   fKaonsCounter(0x0),
   fProtonsCounter(0x0),
@@ -302,6 +304,8 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCentDistUnitBin(0),
   fCentSPDvsV0M(0),
 
+  fTracksCounter(0x0),
+
   fPionsCounter(0x0),
   fKaonsCounter(0x0),
   fProtonsCounter(0x0),
@@ -327,7 +331,6 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fProtonsTOFbeta(0x0),
   fProtonsNsigmasTPCTOF(0x0), 
   fQAPIDTOFbetaNoTOF(0x0),
-
 
   fQAV0sCounter(0),
   fQAV0sCounterK0s(0),
@@ -490,6 +493,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fQATracksEta[i] = 0x0;
     fQATracksPhi[i] = 0x0;
     fQATracksFilterMap[i] = 0x0;
+    fQATracksFilterMapBit[i] = 0x0;
     fQATracksNumTPCcls[i] = 0x0;
     fQATracksDCAxy[i] = 0x0;
     fQATracksDCAz[i] = 0x0;
@@ -551,7 +555,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   DefineOutput(3, TList::Class());  
   DefineOutput(4, TList::Class());  
   DefineOutput(5, TList::Class());  
-  DefineOutput(6, TList::Class());	
+  //DefineOutput(6, TList::Class());	
 }
 //_____________________________________________________________________________
 AliAnalysisTaskFlowPID::~AliAnalysisTaskFlowPID()
@@ -609,7 +613,15 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fPIDCombined = new AliPIDCombined();
     fPIDCombined->SetDefaultTPCPriors();
     fPIDCombined->SetSelectedSpecies(5);
-    fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
+
+    if(fTrackFilterBit == 2)
+    {
+      fPIDCombined->SetDetectorMask(AliPIDResponse::kDetITS); 
+    }
+    else
+    {
+      fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
+    }
   }
 
   
@@ -1094,12 +1106,27 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   // QA tracks output
  
+  Short_t iNTracksCounterBins = 8;
+  TString sTracksCounterLabel[] = {"Input","Track OK","FB OK","TPC Ncls OK","Eta OK","Pt OK","DCAz OK","Selected"};
+  fTracksCounter = new TH1D("fTrackCounter","Track Counter",iNTracksCounterBins,0,iNTracksCounterBins);
+  for(Int_t i = 0; i < iNTracksCounterBins; i++)
+    fTracksCounter->GetXaxis()->SetBinLabel(i+1, sTracksCounterLabel[i].Data() );
+  fOutListTracks->Add(fTracksCounter);
+
+  Short_t iNFilterMapBinBins = 12; // filter map bins (passing bit)
+
   for(Int_t i(0); i < fQANumSteps; i++)
   {
     fQATracksMult[i] = new TH1D(Form("fQATracksMult_%s",sQAlabel[i].Data()),Form("QA Tracks: Number of tracks in selected events (%s cuts); #it{N}^{tracks}",sQAlabel[i].Data()), iNumBinsMult,0,iMaxMult);
     fOutListTracks->Add(fQATracksMult[i]);
-    fQATracksFilterMap[i] = new TH1D(Form("fQATracksFilterMap_%s",sQAlabel[i].Data()),Form("QA Tracks: Track filter bits (%s cuts); filter bit",sQAlabel[i].Data()), 2000,0,2000);
+    fQATracksFilterMap[i] = new TH1D(Form("fQATracksFilterMap_%s",sQAlabel[i].Data()),Form("QA Tracks: Track filter bit map (%s cuts); filter bit",sQAlabel[i].Data()), 5000,0,5000);
     fOutListTracks->Add(fQATracksFilterMap[i]);
+
+    fQATracksFilterMapBit[i] = new TH1D(Form("fQATracksFilterMapBit_%s",sQAlabel[i].Data()),Form("QA Tracks: Track filter bits (%s cuts); filter bit",sQAlabel[i].Data()), iNFilterMapBinBins,0,iNFilterMapBinBins);
+    for(Int_t j = 0; j < iNFilterMapBinBins; j++)
+      fQATracksFilterMapBit[i]->GetXaxis()->SetBinLabel(j+1, Form("%d",j));
+    fOutListTracks->Add(fQATracksFilterMapBit[i]);
+
     fQATracksNumTPCcls[i] = new TH1D(Form("fQATracksNumTPCcls_%s",sQAlabel[i].Data()),Form("QA Tracks: Track number of TPC clusters (%s cuts); #it{N}^{TPC clusters}",sQAlabel[i].Data()), 200,0,200);
     fOutListTracks->Add(fQATracksNumTPCcls[i]);
     fQATracksPt[i] = new TH1D(Form("fQATracksPt_%s",sQAlabel[i].Data()),Form("QA Tracks: Track #it{p}_{T} (%s cuts); #it{p}_{T} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);
@@ -2411,37 +2438,56 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 {
 	// track selection procedure excluding FilterBit
+  //{"Input","Track OK","FB OK","TPC Ncls OK","Eta OK","Pt OK","DCAz OK","Selected"};
 
-	if(!track)
-	{
-		return kFALSE;
-	}
+  fTracksCounter->Fill("Input",1);
+
+  if(!track)
+  {
+    return kFALSE;
+  }
+  
+  fTracksCounter->Fill("Track OK",1);
 
   if( !track->TestFilterBit(fTrackFilterBit) ) 
   {
     return kFALSE;
   }
 
-	if(track->GetTPCNcls() < fNumTPCclsMin)
-	{
-		return kFALSE;
-	}
+  fTracksCounter->Fill("FB OK",1);
 
-	if(TMath::Abs(track->Eta()) > fTrackEtaMax)
-	{
-		return kFALSE;
-	}
+  if(fTrackFilterBit != 2) // not stand-alone track  => no TPC info
+  {
+    if(track->GetTPCNcls() < fNumTPCclsMin)
+    {
+      return kFALSE;
+    }
 
-	if( (track->Pt() > fTrackPtMax) || (track->Pt() < fTrackPtMin) )
-	{
-		return kFALSE;
-	}
+    fTracksCounter->Fill("TPC Ncls OK",1);
+  }
+
+  if(TMath::Abs(track->Eta()) > fTrackEtaMax)
+  {
+    return kFALSE;
+  }
+
+  fTracksCounter->Fill("Eta OK",1);
+
+  if( (track->Pt() > fTrackPtMax) || (track->Pt() < fTrackPtMin) )
+  {
+    return kFALSE;
+  }
+  
+  fTracksCounter->Fill("Pt OK",1);
 
   if( fTracksDCAzMax > 0. && TMath::Abs(track->ZAtDCA()) > fTracksDCAzMax)
   {
     return kFALSE;
   }
 
+  fTracksCounter->Fill("DCAz OK",1);
+
+  fTracksCounter->Fill("Selected",1);
 	return kTRUE;
 }
 //_____________________________________________________________________________
@@ -3347,6 +3393,12 @@ void AliAnalysisTaskFlowPID::FillTrackQA(const AliAODTrack* track, const Short_t
   fQATracksEta[iQAindex]->Fill(track->Eta());
   fQATracksFilterMap[iQAindex]->Fill(track->GetFilterMap());
   fQATracksNumTPCcls[iQAindex]->Fill(track->GetTPCNcls());
+
+  for(Short_t i(0); i < 12; i++)
+  {
+    if(track->TestFilterBit(TMath::Power(2.,i)))
+      fQATracksFilterMapBit[iQAindex]->Fill(i);
+  }
 
   const Float_t dDCAx = track->XAtDCA();
   const Float_t dDCAy = track->YAtDCA();

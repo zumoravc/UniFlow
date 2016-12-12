@@ -363,11 +363,13 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fQAEventsTriggerSelection[fQANumSteps];     //! trigger mask selection for pp 2016 trigger selection
         TH1D*                   fQAEventsDistPVSPD[fQANumSteps];                 //! z-distance between AOD & SPD PV
         // QA tracks
+        TH1D*                   fTracksCounter;                   //! track counter
         TH1D*                   fQATracksMult[fQANumSteps];       //! number of AOD tracks distribution
         TH1D*                   fQATracksPt[fQANumSteps];         //! pT dist of all tracks in all events
         TH1D*                   fQATracksEta[fQANumSteps];        //! eta dist of all tracks in all events
         TH1D*                   fQATracksPhi[fQANumSteps];        //! phi dist of all tracks in all events
         TH1D*                   fQATracksFilterMap[fQANumSteps];//! filter bit of all tracks
+        TH1D*                   fQATracksFilterMapBit[fQANumSteps];//! filter bits (bit only) of all tracks
         TH1D*                   fQATracksNumTPCcls[fQANumSteps];//! dist of track number of TPC clusters
         TH1D*                   fQATracksDCAxy[fQANumSteps]; //! dist of tracks dca in transverse plane
         TH1D*                   fQATracksDCAz[fQANumSteps]; //! dist of tracks dca in z
@@ -423,7 +425,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 9);
+        ClassDef(AliAnalysisTaskFlowPID, 10);
 };
 
 #endif
