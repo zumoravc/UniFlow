@@ -176,20 +176,32 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fPionsTPCdEdx(0x0),
   fPionsTOFbeta(0x0),
   fPionsNsigmasTPCTOF(0x0),
+  fPionsBayesAsPion(0x0), 
+  fPionsBayesAsKaon(0x0), 
+  fPionsBayesAsProton(0x0), 
+  fPionsBayes(0x0),
   fKaonsMult(0x0),
   fKaonsPt(0x0),
   fKaonsEta(0x0),
   fKaonsPhi(0x0),
   fKaonsTPCdEdx(0x0),
   fKaonsTOFbeta(0x0),
-  fKaonsNsigmasTPCTOF(0x0), 
+  fKaonsNsigmasTPCTOF(0x0),
+  fKaonsBayesAsPion(0x0), 
+  fKaonsBayesAsKaon(0x0), 
+  fKaonsBayesAsProton(0x0),  
+  fKaonsBayes(0x0),
   fProtonsMult(0x0),
   fProtonsPt(0x0),
   fProtonsEta(0x0),
   fProtonsPhi(0x0),
   fProtonsTPCdEdx(0x0),
   fProtonsTOFbeta(0x0),
-  fProtonsNsigmasTPCTOF(0x0),  
+  fProtonsNsigmasTPCTOF(0x0), 
+  fProtonsBayesAsPion(0x0), 
+  fProtonsBayesAsKaon(0x0), 
+  fProtonsBayesAsProton(0x0), 
+  fProtonsBayes(0x0),
   fQAPIDTOFbetaNoTOF(0x0),
 
   fQAV0sCounter(0),
@@ -316,13 +328,21 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fPionsTPCdEdx(0x0),
   fPionsTOFbeta(0x0),
   fPionsNsigmasTPCTOF(0x0),
+  fPionsBayesAsPion(0x0), 
+  fPionsBayesAsKaon(0x0), 
+  fPionsBayesAsProton(0x0), 
+  fPionsBayes(0x0),
   fKaonsMult(0x0),
   fKaonsPt(0x0),
   fKaonsEta(0x0),
   fKaonsPhi(0x0),
   fKaonsTPCdEdx(0x0),
   fKaonsTOFbeta(0x0),
-  fKaonsNsigmasTPCTOF(0x0), 
+  fKaonsNsigmasTPCTOF(0x0),
+  fKaonsBayesAsPion(0x0), 
+  fKaonsBayesAsKaon(0x0), 
+  fKaonsBayesAsProton(0x0),
+  fKaonsBayes(0x0),  
   fProtonsMult(0x0),
   fProtonsPt(0x0),
   fProtonsEta(0x0),
@@ -330,6 +350,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fProtonsTPCdEdx(0x0),
   fProtonsTOFbeta(0x0),
   fProtonsNsigmasTPCTOF(0x0), 
+  fProtonsBayesAsPion(0x0), 
+  fProtonsBayesAsKaon(0x0), 
+  fProtonsBayesAsProton(0x0), 
+  fProtonsBayes(0x0),
   fQAPIDTOFbetaNoTOF(0x0),
 
   fQAV0sCounter(0),
@@ -515,6 +539,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fQAPIDBayesProbPion[i] = 0x0;
     fQAPIDBayesProbKaon[i] = 0x0;
     fQAPIDBayesProbProton[i] = 0x0;
+    fQAPIDBayesProb[i] = 0x0;
         
     // V0s
   	fQAV0sRecoMethod[i] = 0;	
@@ -940,6 +965,14 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fPionsTPCdEdx);
     fPionsNsigmasTPCTOF = new TH2D("fPionsNsigmasTPCTOF","#pi: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
     fOutListPID->Add(fPionsNsigmasTPCTOF);
+    fPionsBayesAsPion = new TH1D("fPionsBayesAsPion","#pi: Bayes PID (as #pi); probability",100,0,1);
+    fOutListPID->Add(fPionsBayesAsPion);
+    fPionsBayesAsKaon = new TH1D("fPionsBayesAsKaon","#pi: Bayes PID (as K); probability",100,0,1);
+    fOutListPID->Add(fPionsBayesAsKaon);
+    fPionsBayesAsProton = new TH1D("fPionsBayesAsProton","#pi: Bayes PID (as p); probability",100,0,1);
+    fOutListPID->Add(fPionsBayesAsProton);
+    fPionsBayes = new TH3D("fPionsBayes","#pi: Bayes PID; probability #pi; probability K; probability p",100,0,1,100,0,1,100,0,1);
+    fOutListPID->Add(fPionsBayes);
 
     fKaonsMult = new TH1D("fKaonsMult","K: Event multiplicity (selected); multiplicity",iNumBinsMult,0,iMaxMult);
     fOutListPID->Add(fKaonsMult);
@@ -955,6 +988,14 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fKaonsTPCdEdx);
     fKaonsNsigmasTPCTOF = new TH2D("fKaonsNsigmasTPCTOF","K: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
     fOutListPID->Add(fKaonsNsigmasTPCTOF);
+    fKaonsBayesAsPion = new TH1D("fKaonsBayesAsPion","K: Bayes PID (as #pi); probability",100,0,1);
+    fOutListPID->Add(fKaonsBayesAsPion);
+    fKaonsBayesAsKaon = new TH1D("fKaonsBayesAsKaon","K: Bayes PID (as K); probability",100,0,1);
+    fOutListPID->Add(fKaonsBayesAsKaon);
+    fKaonsBayesAsProton = new TH1D("fKaonsBayesAsProton","K: Bayes PID (as p); probability",100,0,1);
+    fOutListPID->Add(fKaonsBayesAsProton);
+    fKaonsBayes = new TH3D("fKaonsBayes","K: Bayes PID; probability #pi; probability K; probability p",100,0,1,100,0,1,100,0,1);
+    fOutListPID->Add(fKaonsBayes);
 
     fProtonsMult = new TH1D("fProtonsMult","p: Event multiplicity (selected); multiplicity",iNumBinsMult,0,iMaxMult);
     fOutListPID->Add(fProtonsMult);
@@ -970,6 +1011,16 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fProtonsTPCdEdx);
     fProtonsNsigmasTPCTOF = new TH2D("fProtonsNsigmasTPCTOF","p: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
     fOutListPID->Add(fProtonsNsigmasTPCTOF);
+    fProtonsBayesAsPion = new TH1D("fProtonsBayesAsPion","p: Bayes PID (as #pi); probability",100,0,1);
+    fOutListPID->Add(fProtonsBayesAsPion);
+    fProtonsBayesAsKaon = new TH1D("fProtonsBayesAsKaon","p: Bayes PID (as K); probability",100,0,1);
+    fOutListPID->Add(fProtonsBayesAsKaon);
+    fProtonsBayesAsProton = new TH1D("fProtonsBayesAsProton","p: Bayes PID (as p); probability",100,0,1);
+    fOutListPID->Add(fProtonsBayesAsProton);
+    fProtonsBayes = new TH3D("fProtonsBayes","p: Bayes PID; probability #pi; probability K; probability p",100,0,1,100,0,1,100,0,1);
+    fOutListPID->Add(fProtonsBayes);
+
+
   } 
 
   if(fOldFlow)
@@ -1191,8 +1242,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fQAPIDBayesProbKaon[i]);
     fQAPIDBayesProbProton[i] = new TH1D(Form("fQAPIDBayesProbProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: Bayesian probablibity as proton (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.); 
     fOutListPID->Add(fQAPIDBayesProbProton[i]);
-  }
-
+    fQAPIDBayesProb[i] = new TH3D(Form("fQAPIDBayesProb_%s",sQAlabel[i].Data()), Form("#pi,K,p: Bayesian probability (%s cuts); probability #pi; probability K; probability p",sQAlabel[i].Data()), 100,0,1, 100,0,1, 100,0,1 );
+    fOutListPID->Add(fQAPIDBayesProb[i]);
+ }
 
   // QA V0s output
   Int_t iNV0sCounterBins = 18;
@@ -2828,6 +2880,10 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fPionsPhi->Fill(track->Phi());
       fPionsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion) );
       fPionsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+      fPionsBayesAsPion->Fill(dPropPID[2]);
+      fPionsBayesAsKaon->Fill(dPropPID[3]);
+      fPionsBayesAsProton->Fill(dPropPID[4]);
+      fPionsBayes->Fill(dPropPID[2],dPropPID[3],dPropPID[4]);
 
       if(bIsTOF)
         fPionsTOFbeta->Fill(track->P(), dBetaTOF);
@@ -2844,6 +2900,10 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fKaonsPhi->Fill(track->Phi());
       fKaonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kKaon) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kKaon) );
       fKaonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
+      fKaonsBayesAsPion->Fill(dPropPID[2]);
+      fKaonsBayesAsKaon->Fill(dPropPID[3]);
+      fKaonsBayesAsProton->Fill(dPropPID[4]);
+      fKaonsBayes->Fill(dPropPID[2],dPropPID[3],dPropPID[4]);
       
       if(bIsTOF)
         fKaonsTOFbeta->Fill(track->P(), dBetaTOF);
@@ -2861,7 +2921,11 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fProtonsPhi->Fill(track->Phi());
       fProtonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kProton) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kProton) );
       fProtonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
-      
+      fProtonsBayesAsPion->Fill(dPropPID[2]);
+      fProtonsBayesAsKaon->Fill(dPropPID[3]);
+      fProtonsBayesAsProton->Fill(dPropPID[4]);
+      fProtonsBayes->Fill(dPropPID[2],dPropPID[3],dPropPID[4]);
+
       if(bIsTOF)
         fProtonsTOFbeta->Fill(track->P(), dBetaTOF);
     }
@@ -3464,6 +3528,7 @@ void AliAnalysisTaskFlowPID::FillPIDQA(const AliAODTrack* track, const Short_t i
   fQAPIDBayesProbPion[iQAindex]->Fill(dPropPID[2]);
   fQAPIDBayesProbKaon[iQAindex]->Fill(dPropPID[3]);
   fQAPIDBayesProbProton[iQAindex]->Fill(dPropPID[4]);
+  fQAPIDBayesProb[iQAindex]->Fill(dPropPID[2],dPropPID[3],dPropPID[4]);
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAindex)

@@ -307,6 +307,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fPionsTPCdEdx; //! dEdx TPC of selected pions
         TH2D*                   fPionsTOFbeta; //! beta TOF of selected pions
         TH2D*                   fPionsNsigmasTPCTOF; //! number of sigmas of selected pions
+        TH1D*                   fPionsBayesAsPion; //! Bayes PID probability of selected pions being pion
+        TH1D*                   fPionsBayesAsKaon; //! Bayes PID probability of selected pions being kaon
+        TH1D*                   fPionsBayesAsProton; //!  Bayes PID probability of selected pions being proton
+        TH3D*                   fPionsBayes; //! Bayes PID probability of selected pions being pi, K, p
+
         TH1D*                   fKaonsCounter; //! 
         TH1D*                   fKaonsMult; //! event multiplicity of selected Kaons
         TH1D*                   fKaonsPt; //! pT dist of selected Kaons
@@ -315,6 +320,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fKaonsTPCdEdx; //! dEdx TPC of selected Kaons
         TH2D*                   fKaonsTOFbeta; //! beta TOF of selected Kaons
         TH2D*                   fKaonsNsigmasTPCTOF; //! number of sigmas of selected Kaons 
+        TH1D*                   fKaonsBayesAsPion; //! Bayes PID probability of selected kaons being pion
+        TH1D*                   fKaonsBayesAsKaon; //! Bayes PID probability of selected kaons being kaon
+        TH1D*                   fKaonsBayesAsProton; //!  Bayes PID probability of selected kaons being proton
+        TH3D*                   fKaonsBayes; //! Bayes PID probability of selected kaons being pi, K, p
+
         TH1D*                   fProtonsCounter; //! 
         TH1D*                   fProtonsMult; //! event multiplicity of selected Protons
         TH1D*                   fProtonsPt; //! pT dist of selected Protons
@@ -322,8 +332,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fProtonsPhi; //! phi dist of selected Protons
         TH2D*                   fProtonsTPCdEdx; //! dEdx TPC of selected Protons
         TH2D*                   fProtonsTOFbeta; //! beta TOF of selected Protons
-        TH2D*                   fProtonsNsigmasTPCTOF; //! number of sigmas of selected Protons 
- 
+        TH2D*                   fProtonsNsigmasTPCTOF; //! number of sigmas of selected Protons
+        TH1D*                   fProtonsBayesAsPion; //! Bayes PID probability of selected protons being pion
+        TH1D*                   fProtonsBayesAsKaon; //! Bayes PID probability of selected protons being kaon
+        TH1D*                   fProtonsBayesAsProton; //!  Bayes PID probability of selected protons being proton
+        TH3D*                   fProtonsBayes; //! Bayes PID probability of selected protons being pi, K, p
 
 		// V0s histos
         TH1D*                   fV0sInvMassK0s[fNumEtaGap]; //!
@@ -392,6 +405,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fQAPIDBayesProbPion[fQANumSteps]; //! Bayes probability of being the pion
         TH1D*                   fQAPIDBayesProbKaon[fQANumSteps]; //! Bayes probability of being the kaon
         TH1D*                   fQAPIDBayesProbProton[fQANumSteps]; //! Bayes probability of being the proton
+        TH3D*                   fQAPIDBayesProb[fQANumSteps]; //! Bayes probability of being pi, K, p
 
         // QA V0s
         TH1D*					fQAV0sCounter;		//! V0s counter
