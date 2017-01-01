@@ -1175,10 +1175,10 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   // Tracks scan output
   if(fTracksScan)
   {
-    const Short_t iNumBinsScanCounter = 2;
-    TString sTracksScanCounterLabel[] = {"All","Selected"};
+    const Short_t iNumBinsScanCounter = 5;
+    TString sTracksScanCounterLabel[] = {"All","Selected","ITS PID OK","TPC PID OK","TOF PID OK"};
     
-    fTracksScanCounter = new TH2D("fTracksScanCounter","Tracks: Scan counter; FB; Counts", fNumScanFB,0,fNumScanFB, iNumBinsScanCounter,0,iNumBinsScanCounter);
+    fTracksScanCounter = new TH2D("fTracksScanCounter","Tracks: Scan counter; FB; ", fNumScanFB,0,fNumScanFB, iNumBinsScanCounter,0,iNumBinsScanCounter);
     fTracksScanPt = new TH2D("fTracksScanPt","Tracks: #it{p}_T scan; FB; #it{p}_T (GeV/#it{c})", fNumScanFB,0,fNumScanFB, 100,0,10);
     fTracksScanPhi = new TH2D("fTracksScanPhi","Tracks: #it{#varphi} scan; FB; #it{#varphi}", fNumScanFB,0,fNumScanFB, 100,0,TMath::TwoPi());
     fTracksScanEta = new TH2D("fTracksScanEta","Tracks: #it{#eta} scan; FB; #it{#eta}", fNumScanFB,0,fNumScanFB, 401,-2,2);
@@ -1449,7 +1449,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   FillEventQA(fAOD,1); // after cuts events QA
 
   // loading PID response for protons
-  if((fCutV0ProtonNumSigmaMax > 0.) && (fCutV0ProtonPIDPtMax > 0.))
+  if(fTracksScan || fPID || ( (fCutV0ProtonNumSigmaMax > 0.) && (fCutV0ProtonPIDPtMax > 0.) ) )
   {
     AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
     AliInputEventHandler* inputHandler = (AliInputEventHandler*)mgr->GetInputEventHandler();
@@ -2751,7 +2751,23 @@ void AliAnalysisTaskFlowPID::ScanTracks()
         fTracksScanCounter->Fill(Form("%d",iFB),"All",1.);
         
         if(IsTrackSelected(track,kTRUE)) // without testing FB for scanning purpose
-          fTracksScanCounter->Fill(Form("%d",iFB),"Selected",1.);    
+          fTracksScanCounter->Fill(Form("%d",iFB),"Selected",1.);
+
+        if(!fPIDResponse)
+        {
+          ::Warning("ScanTracks","No AliPIDResponse object found! Skipping PID scanning");
+          return;
+        }
+
+        if(fPIDResponse->CheckPIDStatus(AliPIDResponse::kITS,track) == AliPIDResponse::kDetPidOk) // checking TOF
+          fTracksScanCounter->Fill(Form("%d",iFB),"ITS PID OK",1.);
+
+        if(fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC,track) == AliPIDResponse::kDetPidOk) // checking TOF
+          fTracksScanCounter->Fill(Form("%d",iFB),"TPC PID OK",1.);
+
+        if(fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF,track) == AliPIDResponse::kDetPidOk) // checking TOF
+          fTracksScanCounter->Fill(Form("%d",iFB),"TOF PID OK",1.);
+
       } 
     }
   } // end of loop over tracks
