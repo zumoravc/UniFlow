@@ -89,7 +89,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
         const static Int_t      fNumEtaGap = 4; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
-        const static Int_t      fNumScanFB = 3; // number of scanned FB
+        const static Int_t      fNumScanFB = 11; // number of scanned FB
         static Short_t          fTracksScanFB[fNumScanFB]; // values of scanned FBs
         const static Int_t      fMaxNumHarmonics = 8; // maximal number of harmonics for Q,p,q vector arrays
         const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
@@ -450,7 +450,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 10);
+        ClassDef(AliAnalysisTaskFlowPID, 11);
 };
 
 #endif
