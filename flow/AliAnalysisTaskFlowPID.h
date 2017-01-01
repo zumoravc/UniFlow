@@ -33,6 +33,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; } 
         void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void                    SetPID(Bool_t pid) { fPID = pid; }
+        void                    SetTracksScan(Bool_t qa) { fTracksScan = qa; }
         void                    SetUseBayesPID(Bool_t pidBay) { fUseBayesPID = pidBay; }
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
         void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
@@ -88,6 +89,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
         const static Int_t      fNumEtaGap = 4; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
+        const static Int_t      fNumScanFB = 3; // number of scanned FB
+        static Short_t          fTracksScanFB[fNumScanFB]; // values of scanned FBs
         const static Int_t      fMaxNumHarmonics = 8; // maximal number of harmonics for Q,p,q vector arrays
         const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
     private:
@@ -95,7 +98,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  IsEventSelected(const AliAODEvent* event);
         Bool_t                  IsEventSelectedPP(AliVEvent* event);
         Bool_t                  OldIsEventSelected(const AliAODEvent* event);
-		Bool_t                  IsTrackSelected(const AliAODTrack* track);
+		Bool_t                  IsTrackSelected(const AliAODTrack* track, const Bool_t bTestFB = kFALSE);
         Bool_t                  IsTrackPion(const AliAODTrack* track); 
         Bool_t                  IsTrackKaon(const AliAODTrack* track); 
         Bool_t                  IsTrackProton(const AliAODTrack* track); 
@@ -103,6 +106,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		void                    IsV0aLambda(const AliAODv0* v0);
 		Bool_t                  IsV0Selected(const AliAODv0* v0);
         
+        void                    ScanTracks(); // tracks scanning of various FBs
         void                    FilterTracks(); // filter all input tracks 
         void                    FilterPIDTracks(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
         void                    FilterPIDTracksBayesPID(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
@@ -200,6 +204,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fDoFlow;        // Do flow analysis (if kFALSE: only selection, filtering and QA)
         Bool_t                  fDoV0s;                       // Do V0s analysis?
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
+        Bool_t                  fTracksScan;      // do scan Pt, Phi, eta of various track FBs 
         Bool_t                  fPID;                       // Do PID ?
         Bool_t                  fUseBayesPID;                       // Do Bayes PID ?
         Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
@@ -362,7 +367,13 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile2D*             fV0sDiffTwoPos_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
         TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
-        
+        // Tracks scan histos
+        TH2D*                   fTracksScanCounter; //! counter of all and selected scanned tracks
+        TH2D*                   fTracksScanPt; //! phi distribution of scanned tracks
+        TH2D*                   fTracksScanPhi; //! phi distribution of scanned tracks
+        TH2D*                   fTracksScanEta; //! phi distribution of scanned tracks
+
+
         // QA histos // index 0: before / 1: after cuts
         const static Short_t    fQANumSteps = 2;        // number of various steps (0 before cuts / 1 after cuts / 2 testing) 
         TH1D*                   fEventCounter;  //! event rejection tracker

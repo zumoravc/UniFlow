@@ -62,6 +62,7 @@ Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.425,0.45,0.47,0
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.125,1.13,1.14,1.15,1.16};
 Int_t AliAnalysisTaskFlowPID::fHarmonics[AliAnalysisTaskFlowPID::fNumHarmonics] = {2,3,4};
 Double_t AliAnalysisTaskFlowPID::fEtaGap[AliAnalysisTaskFlowPID::fNumEtaGap] = {-1.,0.,0.5,1.0};
+Short_t AliAnalysisTaskFlowPID::fTracksScanFB[AliAnalysisTaskFlowPID::fNumScanFB] = {1,32,64};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
   fAOD(0),
@@ -114,6 +115,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fSampling(0),
   fDoFlow(0),
   fDiffFlow(0),
+  fTracksScan(0),
   fPID(0),
   fUseBayesPID(0),
   fDoV0s(0),
@@ -165,6 +167,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fCentSPDvsV0M(0),
 
   fTracksCounter(0x0),
+  fTracksScanCounter(0x0),
+  fTracksScanPt(0x0),
+  fTracksScanPhi(0x0),
+  fTracksScanEta(0x0),
 
   fPionsCounter(0x0),
   fKaonsCounter(0x0),
@@ -266,6 +272,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fDoFlow(0),
   fSampling(0),
   fDiffFlow(0),
+  fTracksScan(0),
   fPID(0),
   fUseBayesPID(0),
   fDoV0s(0),
@@ -317,6 +324,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCentSPDvsV0M(0),
 
   fTracksCounter(0x0),
+  fTracksScanCounter(0x0),
+  fTracksScanPt(0x0),
+  fTracksScanPhi(0x0),
+  fTracksScanEta(0x0),
 
   fPionsCounter(0x0),
   fKaonsCounter(0x0),
@@ -1155,6 +1166,36 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     }
   }
 
+  // Tracks scan output
+  if(fTracksScan)
+  {
+    const Short_t iNumBinsScanCounter = 2;
+    TString sTracksScanCounterLabel[] = {"All","Selected"};
+    
+    fTracksScanCounter = new TH2D("fTracksScanCounter","Tracks: Scan counter; FB; Counts", fNumScanFB,0,fNumScanFB, iNumBinsScanCounter,0,iNumBinsScanCounter);
+    fTracksScanPt = new TH2D("fTracksScanPt","Tracks: #it{p}_T scan; FB; #it{p}_T (GeV/#it{c})", fNumScanFB,0,fNumScanFB, 100,0,10);
+    fTracksScanPhi = new TH2D("fTracksScanPhi","Tracks: #it{#varphi} scan; FB; #it{#varphi}", fNumScanFB,0,fNumScanFB, 100,0,TMath::TwoPi());
+    fTracksScanEta = new TH2D("fTracksScanEta","Tracks: #it{#eta} scan; FB; #it{#eta}", fNumScanFB,0,fNumScanFB, 401,-2,2);
+
+    for(Short_t i(0); i < fNumScanFB; i++)
+    {
+      fTracksScanCounter->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanPt->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanPhi->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanEta->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+    }
+
+    for(Short_t i(0); i < iNumBinsScanCounter; i++)
+    {
+      fTracksScanCounter->GetYaxis()->SetBinLabel(i+1, Form("%s",sTracksScanCounterLabel[i].Data()) );
+    }
+
+    fOutListTracks->Add(fTracksScanCounter);
+    fOutListTracks->Add(fTracksScanPt);
+    fOutListTracks->Add(fTracksScanPhi);
+    fOutListTracks->Add(fTracksScanEta);
+  }
+
   // QA tracks output
  
   Short_t iNTracksCounterBins = 8;
@@ -1449,6 +1490,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   fEventMult->Fill(iTracks);
   
   // === tracks & PID species filtering ====
+  
+  // tracks scanning (pt,eta,phi) of various FBs
+  if(fTracksScan)
+  {
+    ScanTracks();
+  }
+
 
   // cleaning all TClonesArray containers
   fArrTracksFiltered.Clear("C");
@@ -2487,7 +2535,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
  	return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
+Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track, const Bool_t bTestFB)
 {
 	// track selection procedure excluding FilterBit
   //{"Input","Track OK","FB OK","TPC Ncls OK","Eta OK","Pt OK","DCAz OK","Selected"};
@@ -2501,12 +2549,15 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
   
   fTracksCounter->Fill("Track OK",1);
 
-  if( !track->TestFilterBit(fTrackFilterBit) ) 
+  if(!bTestFB)
   {
-    return kFALSE;
+    if( !track->TestFilterBit(fTrackFilterBit) ) 
+    {
+      return kFALSE;
+    }    
+  
+    fTracksCounter->Fill("FB OK",1);
   }
-
-  fTracksCounter->Fill("FB OK",1);
 
   if(fTrackFilterBit != 2) // not stand-alone track  => no TPC info
   {
@@ -2662,6 +2713,42 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackProton(const AliAODTrack* track)
 
   fProtonsCounter->Fill(5); // selected
   return kTRUE;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskFlowPID::ScanTracks()
+{
+  if(!fTracksScan)
+    return;
+
+  const Int_t iNumTracks = fAOD->GetNumberOfTracks();
+
+  Short_t iFB = 0;
+  AliAODTrack* track = 0x0;
+  for(Int_t i(0); i < iNumTracks; i++)
+  {
+    track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
+    if(!track) continue;
+
+    // test filter bit
+    for(Short_t j(0); j < fNumScanFB; j++)
+    {
+      iFB = fTracksScanFB[j];
+
+      if(track->TestFilterBit(iFB))
+      {
+        fTracksScanPt->Fill(Form("%d",iFB),track->Pt(), 1.);
+        fTracksScanPhi->Fill(Form("%d",iFB),track->Phi(),1.);
+        fTracksScanEta->Fill(Form("%d",iFB),track->Eta(),1.);
+        
+        fTracksScanCounter->Fill(Form("%d",iFB),"All",1.);
+        
+        if(IsTrackSelected(track,kTRUE)) // without testing FB for scanning purpose
+          fTracksScanCounter->Fill(Form("%d",iFB),"Selected",1.);    
+      } 
+    }
+  } // end of loop over tracks
+
+  return;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FilterTracks()
