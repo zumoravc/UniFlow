@@ -22,6 +22,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetPbPbAnalysis(Bool_t pbpb) { fPbPb = pbpb; }
         void                    SetPPAnalysis(Bool_t pp) { fPP = pp; }
         void					SetPPbAnalysis(Bool_t ppb) { fPPb = ppb; }
+        void                    SetTrigger(Short_t trigger) { fTrigger = trigger; }
         void                    SetPeriod10h(Bool_t period) { fLHC10h = period; }
         void                    SetRejectPileUpSPD(Bool_t pileSPD) { fRejectPileFromSPD = pileSPD; }
         void                    SetUsePlpMV(Bool_t plpMV) { fUsePlpMV = plpMV; }
@@ -32,6 +33,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; } 
         void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void                    SetPID(Bool_t pid) { fPID = pid; }
+        void                    SetTracksScan(Bool_t qa) { fTracksScan = qa; }
         void                    SetUseBayesPID(Bool_t pidBay) { fUseBayesPID = pidBay; }
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
         void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
@@ -41,6 +43,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
         void                    SetTrackPtMin(Double_t pt) { fTrackPtMin = pt; }
+        void                    SetTrackDCAzMax(Double_t dcaz) {  fTracksDCAzMax = dcaz; }
         void                    SetNumTPCclsMin(UShort_t tpcCls) { fNumTPCclsMin = tpcCls; }
         void                    SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
         void                    SetPionNumSigmasMax(Double_t numSigmas) { fCutPionNumSigmaMax = numSigmas; }
@@ -80,19 +83,22 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
         const static Int_t      fNumMinvFlowBinsLambda = 11;  // number of inv. mass bin for differential flow plots ((A)Lambda)
         static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
-        const static Int_t 		fNumCentBins = 9;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
+        const static Int_t 		fNumCentBins = 3;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
         static Double_t			fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumHarmonics = 3; // number of harmonics
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
         const static Int_t      fNumEtaGap = 4; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
+        const static Int_t      fNumScanFB = 11; // number of scanned FB
+        static Short_t          fTracksScanFB[fNumScanFB]; // values of scanned FBs
         const static Int_t      fMaxNumHarmonics = 8; // maximal number of harmonics for Q,p,q vector arrays
         const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
     private:
         void                    ListParameters();
         Bool_t                  IsEventSelected(const AliAODEvent* event);
+        Bool_t                  IsEventSelectedPP(AliVEvent* event);
         Bool_t                  OldIsEventSelected(const AliAODEvent* event);
-		Bool_t                  IsTrackSelected(const AliAODTrack* track);
+		Bool_t                  IsTrackSelected(const AliAODTrack* track, const Bool_t bTestFB = kFALSE);
         Bool_t                  IsTrackPion(const AliAODTrack* track); 
         Bool_t                  IsTrackKaon(const AliAODTrack* track); 
         Bool_t                  IsTrackProton(const AliAODTrack* track); 
@@ -100,6 +106,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 		void                    IsV0aLambda(const AliAODv0* v0);
 		Bool_t                  IsV0Selected(const AliAODv0* v0);
         
+        void                    ScanTracks(); // tracks scanning of various FBs
         void                    FilterTracks(); // filter all input tracks 
         void                    FilterPIDTracks(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
         void                    FilterPIDTracksBayesPID(); // filter PID tracks (pi,K,p) from (already filtered) Tracks
@@ -177,6 +184,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
     	Double_t                GetWDist(const AliVVertex* v0, const AliVVertex* v1); 
         Bool_t                  plpMV(const AliVEvent *event);
 
+        Short_t                 GetCentBinIndexPP(const Int_t iMult);
         Short_t                 GetPtBinIndex(const Double_t dPt);
         Short_t                 GetMinvFlowBinIndexK0s(const Double_t dMass);
         Short_t                 GetMinvFlowBinIndexLambda(const Double_t dMass);
@@ -187,6 +195,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fPP;                  // is pp analysis?
         Bool_t                  fPPb;                  // is pPb analysis?
         Bool_t                  fLHC10h;        // flag to LHC10h data?
+        Short_t                 fTrigger;   // switch for pp trigger selection / 0: INT7 / 1: kHighMultV0 / 2: kHighMultSPD
         Bool_t                  fRejectPileFromSPD;   // switch for rejection based on is PileFromSPD
         Bool_t                  fUseIsPileUpFromSPD;   // use IsPileupFromSPD method in (old) event selection
         Bool_t                  fUsePlpMV;   // use plpMV method in (old) event selection
@@ -195,6 +204,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  fDoFlow;        // Do flow analysis (if kFALSE: only selection, filtering and QA)
         Bool_t                  fDoV0s;                       // Do V0s analysis?
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
+        Bool_t                  fTracksScan;      // do scan Pt, Phi, eta of various track FBs 
         Bool_t                  fPID;                       // Do PID ?
         Bool_t                  fUseBayesPID;                       // Do Bayes PID ?
         Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
@@ -207,6 +217,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Double_t                fTrackEtaMax;   // () Maximum pseudorapidity range
         Double_t                fTrackPtMax;        // (GeV/c) Maximal track pT
         Double_t                fTrackPtMin;        // (GeV/c) Minimal track pT
+        Double_t                fTracksDCAzMax; //  (cm) Maximal DCA cuts for tracks (pile-up rejection suggested for LHC16)
         Double_t                fCutPionNumSigmaMax;
         Double_t                fCutKaonNumSigmaMax;
         Double_t                fCutProtonNumSigmaMax;
@@ -284,21 +295,13 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TList*                  fOutListTracks;    //! (ref.) tracks related output list
         TList*                  fOutListPID;    //! PID (pi,K,p) tracks related output list
         TList*                  fOutListV0s;    //! V0s (K0s,Lambda) related output list
-        TList*                  fOutListQA;     //! additional QA output list
+        //TList*                  fOutListQA;     //! additional QA output list
 
         // event histos
         TH1D*					fEventMult;			 //! selected events multiplicity distribution
         TH1D*                   fCentralityDis;     //! event centrality distribution
         TH1D*   				fCentDistUnitBin;     //! event centrality distribution 
         TH2D*					fCentSPDvsV0M;      //! V0M vs SPD
-        
-        // tracks histos
-        TH1D*					fMultTracksSelected; //! multiplicity of selected tracks in a given event
-        TH2D*					fTracksPtCent;		//! selected tracks pT vs event centrality
-        TH1D*                   fTracksPt;       //! selected tracks pT distribution
-        TH1D*                   fTracksEta;      //! selected tracks eta distribution
-        TH1D* 				    fTracksPhi;			 //! selected tracks phi distribution
-        TH1D* 					fTracksCharge;			 //! selected tracks charge distribution
         
         // PID histos
         TH1D*                   fPionsCounter; //! 
@@ -309,6 +312,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fPionsTPCdEdx; //! dEdx TPC of selected pions
         TH2D*                   fPionsTOFbeta; //! beta TOF of selected pions
         TH2D*                   fPionsNsigmasTPCTOF; //! number of sigmas of selected pions
+        TH1D*                   fPionsBayesAsPion; //! Bayes PID probability of selected pions being pion
+        TH1D*                   fPionsBayesAsKaon; //! Bayes PID probability of selected pions being kaon
+        TH1D*                   fPionsBayesAsProton; //!  Bayes PID probability of selected pions being proton
+        TH3D*                   fPionsBayes; //! Bayes PID probability of selected pions being pi, K, p
+
         TH1D*                   fKaonsCounter; //! 
         TH1D*                   fKaonsMult; //! event multiplicity of selected Kaons
         TH1D*                   fKaonsPt; //! pT dist of selected Kaons
@@ -317,6 +325,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fKaonsTPCdEdx; //! dEdx TPC of selected Kaons
         TH2D*                   fKaonsTOFbeta; //! beta TOF of selected Kaons
         TH2D*                   fKaonsNsigmasTPCTOF; //! number of sigmas of selected Kaons 
+        TH1D*                   fKaonsBayesAsPion; //! Bayes PID probability of selected kaons being pion
+        TH1D*                   fKaonsBayesAsKaon; //! Bayes PID probability of selected kaons being kaon
+        TH1D*                   fKaonsBayesAsProton; //!  Bayes PID probability of selected kaons being proton
+        TH3D*                   fKaonsBayes; //! Bayes PID probability of selected kaons being pi, K, p
+
         TH1D*                   fProtonsCounter; //! 
         TH1D*                   fProtonsMult; //! event multiplicity of selected Protons
         TH1D*                   fProtonsPt; //! pT dist of selected Protons
@@ -324,11 +337,11 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fProtonsPhi; //! phi dist of selected Protons
         TH2D*                   fProtonsTPCdEdx; //! dEdx TPC of selected Protons
         TH2D*                   fProtonsTOFbeta; //! beta TOF of selected Protons
-        TH2D*                   fProtonsNsigmasTPCTOF; //! number of sigmas of selected Protons 
-        TH1D*                   fBayesProbPion; //! Bayes probability of being the pion
-        TH1D*                   fBayesProbKaon; //! Bayes probability of being the kaon
-        TH1D*                   fBayesProbProton; //! Bayes probability of being the proton
- 
+        TH2D*                   fProtonsNsigmasTPCTOF; //! number of sigmas of selected Protons
+        TH1D*                   fProtonsBayesAsPion; //! Bayes PID probability of selected protons being pion
+        TH1D*                   fProtonsBayesAsKaon; //! Bayes PID probability of selected protons being kaon
+        TH1D*                   fProtonsBayesAsProton; //!  Bayes PID probability of selected protons being proton
+        TH3D*                   fProtonsBayes; //! Bayes PID probability of selected protons being pi, K, p
 
 		// V0s histos
         TH1D*                   fV0sInvMassK0s[fNumEtaGap]; //!
@@ -354,7 +367,13 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TProfile2D*             fV0sDiffTwoPos_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
         TProfile2D*             fV0sDiffTwoNeg_Lambda[fNumCentBins][fNumHarmonics][fNumEtaGap][fNumSampleBins];      //! selected (Anti)Lambda candidates Minv, pT v2 profile
 
-        
+        // Tracks scan histos
+        TH2D*                   fTracksScanCounter; //! counter of all and selected scanned tracks
+        TH2D*                   fTracksScanPt; //! phi distribution of scanned tracks
+        TH2D*                   fTracksScanPhi; //! phi distribution of scanned tracks
+        TH2D*                   fTracksScanEta; //! phi distribution of scanned tracks
+
+
         // QA histos // index 0: before / 1: after cuts
         const static Short_t    fQANumSteps = 2;        // number of various steps (0 before cuts / 1 after cuts / 2 testing) 
         TH1D*                   fEventCounter;  //! event rejection tracker
@@ -363,13 +382,18 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH1D*                   fQAEventsPVz[fQANumSteps];                 //! PV z distance distribution
         TH1D*                   fQAEventsNumContrPV[fQANumSteps];                 //! number of contributors to PV 
         TH1D*                   fQAEventsNumSPDContrPV[fQANumSteps];                 //! number of SPD contributors to PV 
+        TH1D*                   fQAEventsSPDresol[fQANumSteps];              //! SPD vertex resolution
+        TH1D*                   fQAEventsTriggers[fQANumSteps];     //! trigger check for pp 2016 trigger selection (not filled at FillQA but inside event selection)
+        TH1D*                   fQAEventsTriggerSelection[fQANumSteps];     //! trigger mask selection for pp 2016 trigger selection
         TH1D*                   fQAEventsDistPVSPD[fQANumSteps];                 //! z-distance between AOD & SPD PV
         // QA tracks
+        TH1D*                   fTracksCounter;                   //! track counter
         TH1D*                   fQATracksMult[fQANumSteps];       //! number of AOD tracks distribution
         TH1D*                   fQATracksPt[fQANumSteps];         //! pT dist of all tracks in all events
         TH1D*                   fQATracksEta[fQANumSteps];        //! eta dist of all tracks in all events
         TH1D*                   fQATracksPhi[fQANumSteps];        //! phi dist of all tracks in all events
         TH1D*                   fQATracksFilterMap[fQANumSteps];//! filter bit of all tracks
+        TH1D*                   fQATracksFilterMapBit[fQANumSteps];//! filter bits (bit only) of all tracks
         TH1D*                   fQATracksNumTPCcls[fQANumSteps];//! dist of track number of TPC clusters
         TH1D*                   fQATracksDCAxy[fQANumSteps]; //! dist of tracks dca in transverse plane
         TH1D*                   fQATracksDCAz[fQANumSteps]; //! dist of tracks dca in z
@@ -379,15 +403,20 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         TH2D*                   fQATracksTOF[fQANumSteps]; //! TOF PID information
         TH2D*                   fQATracksTOFbeta[fQANumSteps]; //! TOF PID information
         // QA PID tracks
+        TH2D*                   fQAPIDTOFbetaNoTOF; //! beta TOF of particles without TOF info 
         TH2D*                   fQAPIDTPCdEdx[fQANumSteps]; //! dEdx TPC of all selected particles (pi,K,p)
         TH2D*                   fQAPIDTOFbeta[fQANumSteps]; //! beta TOF of all selected particles (pi,K,p) 
-        TH2D*                   fQAPIDTOFbetaNoTOF; //! beta TOF of particles without TOF info 
+        TH2D*                   fQAPIDTOFbetaWithTOF[fQANumSteps]; //! beta TOF of all selected particles with TOF info available
         TH2D*                   fQAPIDNsigmasTPCasPion[fQANumSteps]; //! TPC number of sigmas of selected particles (pi hypothesis)
         TH2D*                   fQAPIDNsigmasTOFasPion[fQANumSteps]; //! TOF number of sigmas dist of selected particles (pi hypothesis)
         TH2D*                   fQAPIDNsigmasTPCasKaon[fQANumSteps]; //! TPC number of sigmas of selected particles (K hypothesis)
         TH2D*                   fQAPIDNsigmasTOFasKaon[fQANumSteps]; //! TOF number of sigmas dist of selected particles (K hypothesis)
         TH2D*                   fQAPIDNsigmasTPCasProton[fQANumSteps]; //! TPC number of sigmas of selected particles (p hypothesis)
         TH2D*                   fQAPIDNsigmasTOFasProton[fQANumSteps]; //! TOF number of sigmas dist of selected particles (p hypothesis)
+        TH1D*                   fQAPIDBayesProbPion[fQANumSteps]; //! Bayes probability of being the pion
+        TH1D*                   fQAPIDBayesProbKaon[fQANumSteps]; //! Bayes probability of being the kaon
+        TH1D*                   fQAPIDBayesProbProton[fQANumSteps]; //! Bayes probability of being the proton
+        TH3D*                   fQAPIDBayesProb[fQANumSteps]; //! Bayes probability of being pi, K, p
 
         // QA V0s
         TH1D*					fQAV0sCounter;		//! V0s counter
@@ -421,7 +450,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 7);
+        ClassDef(AliAnalysisTaskFlowPID, 11);
 };
 
 #endif
