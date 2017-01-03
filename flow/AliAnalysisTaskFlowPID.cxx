@@ -644,6 +644,12 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
   ListParameters();
 
+  if((fPP && fPPb) || (fPP && fPbPb) || (fPPb && fPbPb) )
+  {
+    ::Error("UserCreateOutputObjects","Analysis switch on for more than one colliding system. Terminating!");
+    return; 
+  }
+
   if(fUseBayesPID)
   {
     fPIDCombined = new AliPIDCombined();
@@ -1151,7 +1157,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fQAEventsDistPVSPD[i] = new TH1D(Form("fQAEventsDistPVSPD_%s",sQAlabel[i].Data()),Form("QA Events: #it{z}-istance between SPD vertex & PV (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),50,0,5);
     fOutListEvents->Add(fQAEventsDistPVSPD[i]);
     
-    if(fPP)
+    if(fPP || fPPb)
     {
       fQAEventsSPDresol[i] = new TH1D(Form("fQAEventsSPDresol_%s",sQAlabel[i].Data()),Form("QA Events: SPD vertexer z resolution (%s cuts); #it{z} resolution (?cm);",sQAlabel[i].Data()),150,0,15);
       fOutListEvents->Add(fQAEventsSPDresol[i]);
@@ -1396,7 +1402,6 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     return; 
   }
 
-
 	fEventCounter->Fill(0); // input event
 
   if(fAODAnalysis) // AOD analysis 
@@ -1436,7 +1441,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     }
   }
 
-  if(fPP)
+  if(fPP || fPPb)
   {
     if(!IsEventSelectedPP(fAOD))
       return;
@@ -1623,6 +1628,7 @@ void AliAnalysisTaskFlowPID::ListParameters()
   printf("SetPbPbAnalysis(Bool_t %d)\n",fPbPb);
   printf("SetPPAnalysis(Bool_t %d)\n",fPP);
   printf("SetPPbAnalysis(Bool_t %d)\n",fPPb);
+  printf("SetTrigger(Short_t %d)\n",fTrigger);
   printf("SetPeriod10h(Bool_t %d)\n",fLHC10h);
   printf("SetRejectPileUpSPD(Bool_t %d)\n",fRejectPileFromSPD);
   printf("SetUsePlpMV(Bool_t %d)\n",fUsePlpMV);
@@ -1634,6 +1640,7 @@ void AliAnalysisTaskFlowPID::ListParameters()
   printf("SetDiffFlow(Bool_t %d)\n",fDiffFlow);
   printf("SetPID(Bool_t %d)\n",fPID);
   printf("SetUseBayesPID(Bool_t %d)\n",fUseBayesPID);
+  printf("SetTracksScan(Bool_t %d)",fTracksScan);
   printf("SetDoV0s(Bool_t %d)\n",fDoV0s);
   printf("SetDoFlowGenFramKatarina(Bool_t %d)\n",fDoGenFramKat);
   printf("SetDoOldFlow(Bool_t %d)\n",fOldFlow);
@@ -2401,8 +2408,12 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
 Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 {
 //  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 2 selected tracks","At least 1 V0 candidate"};
-  if(!fPP || !event) // not pp analysis or no valid event
+  if(!fPP && !fPPb) // not pp or pPb analysis
     return kFALSE;   
+
+  if(!event) // not valid event
+    return kFALSE;   
+  
 
   if(!fAODAnalysis) // not impelemted for ESD 
     return kFALSE; 
@@ -2423,8 +2434,6 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
   {
     fQAEventsTriggers[0]->Fill("CVHMV0M-B-SPD2-CENT",1);
   }
-
-
 
   // event / physics selection criteria
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
@@ -2539,6 +2548,30 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
     return kFALSE;
   }
   fEventCounter->Fill("PV #it{z} OK",1);
+
+  // centrality estimation (pPb analysis)
+  
+  if(fPPb)
+  {
+    Float_t lPercentile = 300; 
+    AliMultSelection* MultSelection = 0x0; 
+    MultSelection = (AliMultSelection*) event->FindListObject("MultSelection");
+    
+    if( !MultSelection ) 
+    {
+      //If you get this warning (and lPercentiles 300) please check that the AliMultSelectionTask actually ran (before your task)
+      ::Warning("IsEventSelectedPP","AliMultSelection object not found!");
+    }
+    else
+    {
+      lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
+    }
+
+    fCentPercentile = lPercentile;
+    
+  }
+  
+
 
  	return kTRUE;
 }
@@ -3539,7 +3572,7 @@ void AliAnalysisTaskFlowPID::FillEventQA(const AliAODEvent* event, const Short_t
   fQAEventsNumSPDContrPV[iQAindex]->Fill(iNumContrSPD);
   fQAEventsDistPVSPD[iQAindex]->Fill(TMath::Abs(dVtxZ - spdVtxZ));
 
-  if(fPP) // pp analysis
+  if(fPP || fPPb) // pp OR pPb analysis
   {
     // event / physics selection criteria
     AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();

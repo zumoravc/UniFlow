@@ -33,8 +33,8 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; } 
         void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void                    SetPID(Bool_t pid) { fPID = pid; }
-        void                    SetTracksScan(Bool_t qa) { fTracksScan = qa; }
         void                    SetUseBayesPID(Bool_t pidBay) { fUseBayesPID = pidBay; }
+        void                    SetTracksScan(Bool_t qa) { fTracksScan = qa; }
         void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
         void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
         void                    SetDoOldFlow(Bool_t oldFlow) { fOldFlow = oldFlow; } // do old flow (before Katarinas GFK)
