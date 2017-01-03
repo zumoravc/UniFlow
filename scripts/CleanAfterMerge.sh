@@ -1,8 +1,14 @@
 #!/bin/bash
-tag=11-GFK-PbPb-R1-BayesTest
+tag=pp-2016l-FB32
 
 path=~/NBI/Flow/results
 
 cd ${path}/${tag}/
-mv ./merge/AnalysisResults.root ./
-rm -rfv ./merge
+
+if [ ! -f ./merge/AnalysisResults.root ]; then 
+	echo "File not found"
+	exit
+fi
+
+mv -v ./merge/AnalysisResults.root ./
+rm -rf ./merge
