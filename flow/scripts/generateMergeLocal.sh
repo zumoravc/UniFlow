@@ -6,7 +6,7 @@
 #		1 - output folder where generate
 # ===========================================================
 
-echo "\n##### Generating mergeLocal.sh #####\n"
+echo "##### Generating mergeLocal.sh #####"
 
 # checking parameters
 if [ $# -ne 1 ]; then
@@ -61,7 +61,7 @@ if [ -f ./AnalysisResults.root ]; then
 	rm -rf ./merge
 	echo "Cleaning succesful!"
 fi
-EOT # end of output
+EOT
 
 if [ -f ${output}/mergeLocal.sh ]; then
 	chmod +x ${output}/mergeLocal.sh
