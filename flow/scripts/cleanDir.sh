@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Cleaning directory from task submission generated files 
+cd ~/NBI/Flow/flow/
 
 rm ./*.xml
 rm ./FlowPID*
