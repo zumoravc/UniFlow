@@ -8,6 +8,8 @@
 #   3 - tag
 # ===========================================================
 
+echo "##### Generating mergeOnGrid.sh #####"
+
 # checking parameters
 if [ $# -ne 3 ]; then
 	echo "Wrong number of parameters: $# (3 needed). Exit!"
@@ -68,4 +70,10 @@ do
 done
 EOT
 
-chmod +x ${output}/mergeOnGrid.sh
+if [ -f ${output}/mergeOnGrid.sh ]; then
+	chmod +x ${output}/mergeOnGrid.sh
+	echo "File generated!"
+else
+	echo "File NOT generated!"
+	exit
+fi

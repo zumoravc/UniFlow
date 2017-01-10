@@ -44,10 +44,9 @@ cp -v ${code}/runPPb.C ${path}
 
 # generate maintenance scripts
 . ${code}/scripts/generateMergeOnGrid.sh ${path} ${2} ${1}
+. ${code}/scripts/generateMergeLocal.sh ${path}
 
 #cp -v ${code}/scripts/CleanAfterMerge.sh ${path}
-#cp -v ${code}/scripts/SubmitMergeOnGrid.sh ${path}
-#cp -v ${code}/scripts/SubmitMergeLocal.sh ${path}
 
 ## change directory to $path
 #echo "Change directory to ${path}"
