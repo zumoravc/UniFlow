@@ -229,10 +229,10 @@ void runPP()
 
         alienHandler->SetMasterResubmitThreshold(90);
         // number of files per subjob
-        alienHandler->SetSplitMaxInputFileNumber(50);
+        alienHandler->SetSplitMaxInputFileNumber(30);
         alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
-        alienHandler->SetTTL(36000);
+        alienHandler->SetTTL(50000);
         alienHandler->SetJDLName("FlowPID.jdl");
         alienHandler->SetPrice(1);    
         alienHandler->SetOutputToRunNo(kTRUE);
