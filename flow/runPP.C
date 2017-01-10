@@ -9,18 +9,23 @@ void runPP()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "pp-TracksScan-2016k";
+    TString sWorkDir = "pp-TracksScan-LHC16l";
     TString sOutDir = "outFlow";
-    //TString sPeriod = "LHC16l";
-    TString sPeriod = "LHC16k";
+    TString sPeriod = "LHC16l";
+    //TString sPeriod = "LHC16k";
 
     // run switcher
     // RunList_LHC16l_pass1_CentralBarrelTracking_hadronPID_20161122_v1.txt [75 runs]
+    // all
     //Int_t runNumber[] = {260014, 260011, 260010, 259888, 259868, 259867, 259866, 259860, 259842, 259841, 259822, 259789, 259788, 259781, 259756, 259752, 259751, 259750, 259748, 259747, 259713, 259711, 259705, 259704, 259703, 259700, 259697, 259668, 259650, 259649, 259477, 259473, 259396, 259395, 259394, 259389, 259388, 259382, 259378, 259342, 259341, 259340, 259339, 259336, 259334, 259307, 259305, 259303, 259302, 259274, 259273, 259272, 259271, 259270, 259269, 259264, 259263, 259261, 259257, 259204, 259164, 259162, 259118, 259117, 259099, 259096, 259091, 259090, 259088, 258964, 258962, 258923, 258921, 258920, 258919};
+    // part 1 [40 runs]
+    //Int_t runNumber[] = {260014, 260011, 260010, 259888, 259868, 259867, 259866, 259860, 259842, 259841, 259822, 259789, 259788, 259781, 259756, 259752, 259751, 259750, 259748, 259747, 259713, 259711, 259705, 259704, 259703, 259700, 259697, 259668, 259650, 259649, 259477, 259473, 259396, 259395, 259394, 259389, 259388, 259382, 259378, 259342};
+    // part 2 [45 runs]
+    Int_t runNumber[] = {259341, 259340, 259339, 259336, 259334, 259307, 259305, 259303, 259302, 259274, 259273, 259272, 259271, 259270, 259269, 259264, 259263, 259261, 259257, 259204, 259164, 259162, 259118, 259117, 259099, 259096, 259091, 259090, 259088, 258964, 258962, 258923, 258921, 258920, 258919};
     
     // RunList_LHC16k_pass1_CentralBarrelTracking_hadronPID_20161121_v0.txt [97 runs]
     // part 1 [44 runs]
-    Int_t runNumber[] = {258537, 258499, 258477, 258456, 258454, 258452, 258426, 258393, 258391, 258387, 258359, 258336, 258332, 258307, 258306, 258303, 258302, 258301, 258299, 258278, 258274, 258273, 258271, 258270, 258258, 258257, 258256, 258204, 258203, 258202, 258198, 258197, 258178, 258117, 258114, 258113, 258109, 258108, 258107, 258063, 258062, 258060, 258059, 258053, 258049, 258045, 258042, 258041, 258039};
+    //Int_t runNumber[] = {258537, 258499, 258477, 258456, 258454, 258452, 258426, 258393, 258391, 258387, 258359, 258336, 258332, 258307, 258306, 258303, 258302, 258301, 258299, 258278, 258274, 258273, 258271, 258270, 258258, 258257, 258256, 258204, 258203, 258202, 258198, 258197, 258178, 258117, 258114, 258113, 258109, 258108, 258107, 258063, 258062, 258060, 258059, 258053, 258049, 258045, 258042, 258041, 258039};
     // part 2 [43 runs]
     //Int_t runNumber[] = {258019, 258017, 258014, 258012, 258008, 258003, 257992, 257989, 257986, /*257979,*/ 257963, 257960, 257957, 257939, 257937, 257936, 257892, 257855, 257853, 257851, 257850, 257804, 257803, 257800, 257799, 257798, 257797, 257773, 257765, 257757, 257754, 257737, 257735, 257734, 257733, 257727, 257725, 257724, 257697, 257694, 257692, 257691, 257689, 257688, 257687, 257685, 257684, 257682};
     
@@ -70,7 +75,7 @@ void runPP()
     gROOT->LoadMacro("AddTaskFlowPID.C"); // load the addtask macro
     
 
-    AliAnalysisTaskFlowPID* task1 = AddTaskFlowPID("flowPID_FB64_kINT7");
+    AliAnalysisTaskFlowPID* task1 = AddTaskFlowPID("flowPID_kINT7");
     //task1->SelectCollisionCandidates(AliVEvent::kINT7)
     // analysis cuts & switches
     task1->SetAODAnalysis(kTRUE);
@@ -95,7 +100,7 @@ void runPP()
     task1->SetTrackPtMax(5.);
     task1->SetTrackDCAzMax(0.0);
     task1->SetNumTPCclsMin(70);
-    task1->SetTrackFilterBit(64);
+    task1->SetTrackFilterBit(96);
     task1->SetUseBayesPID(kTRUE);
     task1->SetPIDBayesProbPionMin(0.8);
     task1->SetPIDBayesProbKaonMin(0.8);
@@ -127,12 +132,12 @@ void runPP()
     task1->SetV0sProtonPIDPtMax(1.2); 
     
     
-    AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB64_kHighMultV0");
+    AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_kHighMultV0");
     //task2->SelectCollisionCandidates(AliVEvent::kINT7)
     // analysis cuts & switches
     task2->SetAODAnalysis(kTRUE);
     task2->SetPPAnalysis(kTRUE);
-    task2->SetTrigger(0); // kINT7
+    task2->SetTrigger(1); // kHighMultV0
     task2->SetSampling(kFALSE);
     //task2->SetUseOldCent(kFALSE);
     //task2->SetCentFlag(0);
@@ -152,7 +157,7 @@ void runPP()
     task2->SetTrackPtMax(5.);
     task2->SetTrackDCAzMax(0.);
     task2->SetNumTPCclsMin(70);
-    task2->SetTrackFilterBit(64);
+    task2->SetTrackFilterBit(96);
     task2->SetUseBayesPID(kTRUE);
     task2->SetPIDBayesProbPionMin(0.8);
     task2->SetPIDBayesProbKaonMin(0.8);
