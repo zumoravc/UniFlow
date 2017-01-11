@@ -46,9 +46,9 @@
 #include "AliPIDResponse.h"
 #include "AliPIDCombined.h"
 #include "AliAnalysisTaskFlowPID.h"
-#include "AliLog.h" 
+#include "AliLog.h"
 
-class AliAnalysisTaskFlowPID;    
+class AliAnalysisTaskFlowPID;
 
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
@@ -64,13 +64,13 @@ Int_t AliAnalysisTaskFlowPID::fHarmonics[AliAnalysisTaskFlowPID::fNumHarmonics] 
 Double_t AliAnalysisTaskFlowPID::fEtaGap[AliAnalysisTaskFlowPID::fNumEtaGap] = {-1.,0.,0.5,1.0};
 Short_t AliAnalysisTaskFlowPID::fTracksScanFB[AliAnalysisTaskFlowPID::fNumScanFB] = {1,2,16,32,64,96,128,256,512,768,1024};
 
-AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(), 
+AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fAOD(0),
   fPIDResponse(0),
   fPIDCombined(0),
   fTPCPIDResponse(),
   fEtaCutFlag(0),
-  fHarmFlag(0), 
+  fHarmFlag(0),
   fV0candK0s(0),
   fV0candLambda(0),
   fV0candALambda(0),
@@ -111,6 +111,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fRejectPileFromSPD(kFALSE),
   fUseIsPileUpFromSPD(kFALSE),
   fUsePlpMV(kFALSE),
+  fRejectOutOfBunchPU(kFALSE),
   fCentFlag(0),
   fSampling(0),
   fDoFlow(0),
@@ -182,9 +183,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fPionsTPCdEdx(0x0),
   fPionsTOFbeta(0x0),
   fPionsNsigmasTPCTOF(0x0),
-  fPionsBayesAsPion(0x0), 
-  fPionsBayesAsKaon(0x0), 
-  fPionsBayesAsProton(0x0), 
+  fPionsBayesAsPion(0x0),
+  fPionsBayesAsKaon(0x0),
+  fPionsBayesAsProton(0x0),
   fPionsBayes(0x0),
   fKaonsMult(0x0),
   fKaonsPt(0x0),
@@ -193,9 +194,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fKaonsTPCdEdx(0x0),
   fKaonsTOFbeta(0x0),
   fKaonsNsigmasTPCTOF(0x0),
-  fKaonsBayesAsPion(0x0), 
-  fKaonsBayesAsKaon(0x0), 
-  fKaonsBayesAsProton(0x0),  
+  fKaonsBayesAsPion(0x0),
+  fKaonsBayesAsKaon(0x0),
+  fKaonsBayesAsProton(0x0),
   fKaonsBayes(0x0),
   fProtonsMult(0x0),
   fProtonsPt(0x0),
@@ -203,10 +204,10 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fProtonsPhi(0x0),
   fProtonsTPCdEdx(0x0),
   fProtonsTOFbeta(0x0),
-  fProtonsNsigmasTPCTOF(0x0), 
-  fProtonsBayesAsPion(0x0), 
-  fProtonsBayesAsKaon(0x0), 
-  fProtonsBayesAsProton(0x0), 
+  fProtonsNsigmasTPCTOF(0x0),
+  fProtonsBayesAsPion(0x0),
+  fProtonsBayesAsKaon(0x0),
+  fProtonsBayesAsProton(0x0),
   fProtonsBayes(0x0),
   fQAPIDTOFbetaNoTOF(0x0),
 
@@ -224,7 +225,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fPIDCombined(0),
   fTPCPIDResponse(),
   fEtaCutFlag(0),
-  fHarmFlag(0), 
+  fHarmFlag(0),
 
   fV0candK0s(0),
   fV0candLambda(0),
@@ -233,13 +234,13 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fV0MaxMassK0s(fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s]),
   fV0MinMassLambda(fMinvFlowBinEdgesLambda[0]),
   fV0MaxMassLambda(fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda]),
-  
+
   fCentBinIndex(0),
   fCentPercentile(0),
   fPtBinIndex(0),
   fMinvFlowBinIndex(0),
   fSampleBinIndex(0),
-  
+
   fVecRefPos(0),
   fVecRefNeg(0),
   fCountRefPos(0),
@@ -267,6 +268,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fTrigger(kFALSE),
   fRejectPileFromSPD(kFALSE),
   fUseIsPileUpFromSPD(kFALSE),
+  fRejectOutOfBunchPU(kFALSE),
   fUsePlpMV(kFALSE),
   fCentFlag(0),
   fDoFlow(0),
@@ -293,7 +295,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fCutBayesPIDPionMin(0),
   fCutBayesPIDKaonMin(0),
   fCutBayesPIDProtonMin(0),
-  
+
   fCutV0onFly(kFALSE),
   fCutV0rejectKinks(kFALSE),
   fCutV0refitTPC(kTRUE),
@@ -339,9 +341,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fPionsTPCdEdx(0x0),
   fPionsTOFbeta(0x0),
   fPionsNsigmasTPCTOF(0x0),
-  fPionsBayesAsPion(0x0), 
-  fPionsBayesAsKaon(0x0), 
-  fPionsBayesAsProton(0x0), 
+  fPionsBayesAsPion(0x0),
+  fPionsBayesAsKaon(0x0),
+  fPionsBayesAsProton(0x0),
   fPionsBayes(0x0),
   fKaonsMult(0x0),
   fKaonsPt(0x0),
@@ -350,20 +352,20 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   fKaonsTPCdEdx(0x0),
   fKaonsTOFbeta(0x0),
   fKaonsNsigmasTPCTOF(0x0),
-  fKaonsBayesAsPion(0x0), 
-  fKaonsBayesAsKaon(0x0), 
+  fKaonsBayesAsPion(0x0),
+  fKaonsBayesAsKaon(0x0),
   fKaonsBayesAsProton(0x0),
-  fKaonsBayes(0x0),  
+  fKaonsBayes(0x0),
   fProtonsMult(0x0),
   fProtonsPt(0x0),
   fProtonsEta(0x0),
   fProtonsPhi(0x0),
   fProtonsTPCdEdx(0x0),
   fProtonsTOFbeta(0x0),
-  fProtonsNsigmasTPCTOF(0x0), 
-  fProtonsBayesAsPion(0x0), 
-  fProtonsBayesAsKaon(0x0), 
-  fProtonsBayesAsProton(0x0), 
+  fProtonsNsigmasTPCTOF(0x0),
+  fProtonsBayesAsPion(0x0),
+  fProtonsBayesAsKaon(0x0),
+  fProtonsBayesAsProton(0x0),
   fProtonsBayes(0x0),
   fQAPIDTOFbetaNoTOF(0x0),
 
@@ -390,22 +392,22 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
     {
       Qvector[iharm][ipow] = TComplex(0,0,kFALSE);
-      
+
       for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
       {
         QvectorGap[iVec][iharm][ipow] = TComplex(0,0,kFALSE);
       }
-      
+
       pvector[iharm][ipow] = TComplex(0,0,kFALSE);
       qvector[iharm][ipow] = TComplex(0,0,kFALSE);
-      
+
       for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
       {
         pvectorGap[iVec][iharm][ipow] = TComplex(0,0,kFALSE);
         //qvectorGap[iVec][iharm][ipow][iPt] = TComplex(0,0,kFALSE);
-        
+
       }
-    
+
     }
   }
 
@@ -417,7 +419,7 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
       {
         fcn2Tracks[k][i][j] = 0x0;
         fcn4Tracks[k][i][j] = 0x0;
-      } 
+      }
     }
   }
   for(Int_t m(0); m < fNumEtaGap; m++)
@@ -429,9 +431,9 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
         fInvMassPtK0s[iVec][m][i] = 0x0;
         fInvMassPtLambda[iVec][m][i] = 0x0;
       }
-      
+
       for(Int_t k(0); k < fNumHarmonics; k++)
-      {  
+      {
         for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
         {
           fdn2K0s[iVec][m][k][i] = 0x0;
@@ -515,13 +517,13 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
   for (Int_t i(0); i < fQANumSteps; i++)
   {
     // Events
-    fQAEventsPVz[i] = 0x0; 
+    fQAEventsPVz[i] = 0x0;
     fQAEventsNumContrPV[i] = 0x0;
     fQAEventsNumSPDContrPV[i] = 0x0;
-    fQAEventsDistPVSPD[i] = 0x0; 
+    fQAEventsDistPVSPD[i] = 0x0;
     fQAEventsSPDresol[i] = 0x0;
     fQAEventsTriggers[i] = 0x0;
-    fQAEventsTriggerSelection[i] = 0x0; 
+    fQAEventsTriggerSelection[i] = 0x0;
     // Tracks
     fQATracksMult[i] = 0x0;
     fQATracksPt[i] = 0x0;
@@ -551,47 +553,47 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
     fQAPIDBayesProbKaon[i] = 0x0;
     fQAPIDBayesProbProton[i] = 0x0;
     fQAPIDBayesProb[i] = 0x0;
-        
+
     // V0s
-  	fQAV0sRecoMethod[i] = 0;	
-		fQAV0sTPCRefit[i] = 0;	
-		fQAV0sKinks[i] = 0;	
-		fQAV0sDCAtoPV[i] = 0;	
-		fQAV0sDCADaughters[i] = 0;	
-		fQAV0sDecayRadius[i] = 0;	
-    fQAV0sDaughterPt[i] = 0;  
-		fQAV0sDaughterPhi[i] = 0;	
+  	fQAV0sRecoMethod[i] = 0;
+		fQAV0sTPCRefit[i] = 0;
+		fQAV0sKinks[i] = 0;
+		fQAV0sDCAtoPV[i] = 0;
+		fQAV0sDCADaughters[i] = 0;
+		fQAV0sDecayRadius[i] = 0;
+    fQAV0sDaughterPt[i] = 0;
+		fQAV0sDaughterPhi[i] = 0;
 		fQAV0sDaughterEta[i] = 0;
-    fQAV0sDaughterTPCdEdxPt[i] = 0;	
-    fQAV0sMotherPt[i] = 0;   
-		fQAV0sMotherPhi[i] = 0;	
-		fQAV0sMotherEta[i] = 0;	
+    fQAV0sDaughterTPCdEdxPt[i] = 0;
+    fQAV0sMotherPt[i] = 0;
+		fQAV0sMotherPhi[i] = 0;
+		fQAV0sMotherEta[i] = 0;
 		fQAV0sMotherRapK0s[i] = 0;
 		fQAV0sMotherRapLambda[i] = 0;
     fQAV0sInvMassK0s[i] = 0;
     fQAV0sInvMassLambda[i] = 0;
-		fQAV0sCPAK0s[i] = 0;	
-		fQAV0sCPALambda[i] = 0;	
-		fQAV0sNumTauK0s[i] = 0;	
-		fQAV0sNumTauLambda[i] = 0;	
+		fQAV0sCPAK0s[i] = 0;
+		fQAV0sCPALambda[i] = 0;
+		fQAV0sNumTauK0s[i] = 0;
+		fQAV0sNumTauLambda[i] = 0;
 		fQAV0sArmenterosK0s[i] = 0;
 		fQAV0sArmenterosLambda[i] = 0;
 		fQAV0sProtonNumSigmaPtLambda[i] = 0;
   }
 
   DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
-                                      // this chain is created by the analysis manager, so no need to worry about it, 
+                                      // this chain is created by the analysis manager, so no need to worry about it,
                                       // it does its work automatically
-  DefineOutput(1, TList::Class());    // define the ouptut of the analysis: in this case it's a list of histograms 
+  DefineOutput(1, TList::Class());    // define the ouptut of the analysis: in this case it's a list of histograms
                                       // you can add more output objects by calling DefineOutput(2, classname::Class())
                                       // if you add more output objects, make sure to call PostData for all of them, and to
                                       // make changes to your AddTask macro!
-  DefineOutput(2, TList::Class());  
-  
-  DefineOutput(3, TList::Class());  
-  DefineOutput(4, TList::Class());  
-  DefineOutput(5, TList::Class());  
-  //DefineOutput(6, TList::Class());	
+  DefineOutput(2, TList::Class());
+
+  DefineOutput(3, TList::Class());
+  DefineOutput(4, TList::Class());
+  DefineOutput(5, TList::Class());
+  //DefineOutput(6, TList::Class());
 }
 //_____________________________________________________________________________
 AliAnalysisTaskFlowPID::~AliAnalysisTaskFlowPID()
@@ -607,7 +609,7 @@ AliAnalysisTaskFlowPID::~AliAnalysisTaskFlowPID()
     delete fOutListCumulants;
   }
 
-  if(fOutListEvents) 
+  if(fOutListEvents)
   {
     delete fOutListEvents;
   }
@@ -639,7 +641,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 {
   // create output objects
   // this function is called ONCE at the start of your analysis (RUNTIME)
-  // here you create the histograms that you want to use 
+  // here you create the histograms that you want to use
   // the histograms are in this case added to a TList, this list is in the end saved to an output file
 
   ListParameters();
@@ -647,7 +649,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   if((fPP && fPPb) || (fPP && fPbPb) || (fPPb && fPbPb) )
   {
     ::Error("UserCreateOutputObjects","Analysis switch on for more than one colliding system. Terminating!");
-    return; 
+    return;
   }
 
   if(fUseBayesPID)
@@ -658,7 +660,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
     if(fTrackFilterBit == 2)
     {
-      fPIDCombined->SetDetectorMask(AliPIDResponse::kDetITS); 
+      fPIDCombined->SetDetectorMask(AliPIDResponse::kDetITS);
     }
     else
     {
@@ -666,7 +668,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     }
   }
 
-  
+
   fOutListCumulants = new TList();
   fOutListCumulants->SetOwner(kTRUE);
 
@@ -694,27 +696,27 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
       fListCumRef[i]->SetOwner(kTRUE);
       fListCumRef[i]->SetName(Form("fListRef_Gap%02.2g",10*fEtaGap[i]));
       fOutListCumulants->Add(fListCumRef[i]);
-      
+
       fListCumTracks[i] = new TList();
       fListCumTracks[i]->SetOwner(kTRUE);
       fListCumTracks[i]->SetName(Form("fListTracks_Gap%02.2g",10*fEtaGap[i]));
       fOutListCumulants->Add(fListCumTracks[i]);
-      
+
       fListCumPions[i] = new TList();
       fListCumPions[i]->SetOwner(kTRUE);
       fListCumPions[i]->SetName(Form("fListPions_Gap%02.2g",10*fEtaGap[i]));
       fOutListCumulants->Add(fListCumPions[i]);
-      
+
       fListCumKaons[i] = new TList();
       fListCumKaons[i]->SetOwner(kTRUE);
       fListCumKaons[i]->SetName(Form("fListKaons_Gap%02.2g",10*fEtaGap[i]));
       fOutListCumulants->Add(fListCumKaons[i]);
-      
+
       fListCumProtons[i] = new TList();
       fListCumProtons[i]->SetOwner(kTRUE);
       fListCumProtons[i]->SetName(Form("fListProtons_Gap%02.2g",10*fEtaGap[i]));
       fOutListCumulants->Add(fListCumProtons[i]);
-      
+
       fListCumK0s[i] = new TList();
       fListCumK0s[i]->SetOwner(kTRUE);
       fListCumK0s[i]->SetName(Form("fListK0s_Gap%02.2g",10*fEtaGap[i]));
@@ -742,7 +744,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
           fListCumRef[m]->Add(fcn2Tracks[m][i][j]);
           // four particle cumulants does not have gap
           if(fEtaGap[m] >= -0.) // case with gap
-            continue; 
+            continue;
 
           fcn4Tracks[m][i][j] = new TProfile(Form("fTracksRef_n%d4_gap%02.2g_number%d",fHarmonics[i], fEtaGap[m]*10,j), Form("Tracks: <<4>> ref harmonics %d Gap %g sample %d; cent",fHarmonics[i],fEtaGap[m],j), fNumCentBins,fCentBinEdges);
           fcn4Tracks[m][i][j]->Sumw2();
@@ -780,23 +782,23 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
             fdn2K0s[iVec][m][k][i] = new TProfile2D(Form("fK0s_n%d2_%s_gap%02.2g_cent%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i), Form("K_{S}^{0}: <<2'>> harmonics %d diff Gap %g POI %s cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
             fdn2K0s[iVec][m][k][i]->Sumw2();
             fListCumK0s[m]->Add(fdn2K0s[iVec][m][k][i]);
-            
+
             fdn2Lambda[iVec][m][k][i] = new TProfile2D(Form("fLambda_n%d2_%s_gap%02.2g_cent%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i), Form("#Lambda: <<2'>> harmonics %d diff Gap %g POI %s cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
             fdn2Lambda[iVec][m][k][i]->Sumw2();
             fListCumLambda[m]->Add(fdn2Lambda[iVec][m][k][i]);
           }
-          
+
           if(fEtaGap[m] < 0.) // case with no gap (otherw. no need for 4 cummulants)
           {
             fdn4K0s[m][k][i] = new TProfile2D(Form("fK0s_n%d4_gap%02.2g_cent%d", fHarmonics[k],fEtaGap[m]*10, i), Form("K_{S}^{0}: <<4'>> harmonics %d diff Gap %g cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
             fdn4K0s[m][k][i]->Sumw2();
             fListCumK0s[m]->Add(fdn4K0s[m][k][i]);
-              
+
             fdn4Lambda[m][k][i] = new TProfile2D(Form("fLambda_n%d4_gap%02.2g_cent%d", fHarmonics[k],fEtaGap[m]*10, i), Form("#Lambda: <<4'>> harmonics %d diff Gap %g cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
             fdn4Lambda[m][k][i]->Sumw2();
             fListCumLambda[m]->Add(fdn4Lambda[m][k][i]);
           }
-          
+
           for(Int_t j(0); j < fNumSampleBins; j++)
           {
             if(!fSampling && j > 0)
@@ -810,7 +812,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
               fdn2Tracks[iVec][m][k][i][j] = new TProfile(Form("fTracks_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i, j), Form("#Tracks: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
               fdn2Tracks[iVec][m][k][i][j]->Sumw2();
               fListCumTracks[m]->Add(fdn2Tracks[iVec][m][k][i][j]);
-          
+
               fdn2Pion[iVec][m][k][i][j] = new TProfile(Form("fPion_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i, j), Form("#pi: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
               fdn2Pion[iVec][m][k][i][j]->Sumw2();
               fListCumPions[m]->Add(fdn2Pion[iVec][m][k][i][j]);
@@ -865,13 +867,13 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
             if(!fSampling && k > 0)
               continue;
 
-            fTracksRefTwo[i][j][k] = new TProfile(Form("fTracksRefTwo_n%d_Gap%02.2g_sample%d",fHarmonics[i],fEtaGap[j]*10,k),Form("#LT#LT2#GT#GT_{%d,|#Delta#it{#eta}| > %g} sample %d (ref. flow); centrality;",fHarmonics[i],fEtaGap[j],k),fNumCentBins,fCentBinEdges);    
+            fTracksRefTwo[i][j][k] = new TProfile(Form("fTracksRefTwo_n%d_Gap%02.2g_sample%d",fHarmonics[i],fEtaGap[j]*10,k),Form("#LT#LT2#GT#GT_{%d,|#Delta#it{#eta}| > %g} sample %d (ref. flow); centrality;",fHarmonics[i],fEtaGap[j],k),fNumCentBins,fCentBinEdges);
             fTracksRefTwo[i][j][k]->Sumw2();
             fOutListTracks->Add(fTracksRefTwo[i][j][k]);
           }
         }
       }
-      
+
       // tracks diff
       if(fDiffFlow) // do differential flow switch
       {
@@ -895,39 +897,39 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
                   fPionsDiffTwoPos[i][j][k][m] = new TProfile(Form("fPionsDiffTwoPos_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#pi: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
                   fPionsDiffTwoPos[i][j][k][m]->Sumw2();
                   fOutListPID->Add(fPionsDiffTwoPos[i][j][k][m]);
-     
+
                   fKaonsDiffTwoPos[i][j][k][m] = new TProfile(Form("fKaonsDiffTwoPos_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("K: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
                   fKaonsDiffTwoPos[i][j][k][m]->Sumw2();
                   fOutListPID->Add(fKaonsDiffTwoPos[i][j][k][m]);
-     
+
                   fProtonsDiffTwoPos[i][j][k][m] = new TProfile(Form("fProtonsDiffTwoPos_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("p: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
                   fProtonsDiffTwoPos[i][j][k][m]->Sumw2();
-                  fOutListPID->Add(fProtonsDiffTwoPos[i][j][k][m]); 
+                  fOutListPID->Add(fProtonsDiffTwoPos[i][j][k][m]);
                 }
 
-                if(!(fEtaGap[k] < 0.)) // make only with eta gap 
+                if(!(fEtaGap[k] < 0.)) // make only with eta gap
                 {
                   fTracksDiffTwoNeg[i][j][k][m] = new TProfile(Form("fTracksDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
                   fTracksDiffTwoNeg[i][j][k][m]->Sumw2();
                   fOutListTracks->Add(fTracksDiffTwoNeg[i][j][k][m]);
-                  
+
                   if(fPID)
                   {
                     fPionsDiffTwoNeg[i][j][k][m] = new TProfile(Form("fPionsDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("#pi: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
                     fPionsDiffTwoNeg[i][j][k][m]->Sumw2();
                     fOutListPID->Add(fPionsDiffTwoNeg[i][j][k][m]);
-       
+
                     fKaonsDiffTwoNeg[i][j][k][m] = new TProfile(Form("fKaonsDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("K: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
                     fKaonsDiffTwoNeg[i][j][k][m]->Sumw2();
                     fOutListPID->Add(fKaonsDiffTwoNeg[i][j][k][m]);
-       
+
                     fProtonsDiffTwoNeg[i][j][k][m] = new TProfile(Form("fProtonsDiffTwoNeg_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m),Form("p: #LT#LT2'#GT#GT_{%d, #Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d (diff. flow); #it{p}^{track}_{T} (GeV/#it{c})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges);
                     fProtonsDiffTwoNeg[i][j][k][m]->Sumw2();
-                    fOutListPID->Add(fProtonsDiffTwoNeg[i][j][k][m]); 
+                    fOutListPID->Add(fProtonsDiffTwoNeg[i][j][k][m]);
                   }
 
                 }
-                
+
               }
             }
           }
@@ -952,15 +954,15 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   fOutListEvents->Add(fCentralityDis);
   fCentDistUnitBin = new TH1D("fCentDistUnitBin", "Event centrality distibution (unit binning); centrality percentile; Events", fCentBinEdges[fNumCentBins], 0, fCentBinEdges[fNumCentBins]);
   fOutListEvents->Add(fCentDistUnitBin);
-  
-  
+
+
   // PID tracks histos
   if(fPID)
   {
     // counters
     Int_t iNPIDCounterBins = 6;
     TString sPIDCounterLabel[] = {"Input","PID TPC OK","PID TOF OK","TPC && TOF PID OK","#it{n#sigma}","Selected"};
-    
+
     fPionsCounter = new TH1D("fPionsCounter", "#pi: Counter", iNPIDCounterBins,0,iNPIDCounterBins);
     fKaonsCounter = new TH1D("fKaonsCounter", "K: Counter", iNPIDCounterBins,0,iNPIDCounterBins);
     fProtonsCounter = new TH1D("fProtonsCounter", "p: Counter", iNPIDCounterBins,0,iNPIDCounterBins);
@@ -976,17 +978,17 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
     fPionsMult = new TH1D("fPionsMult","#pi: Event multiplicity (selected); multiplicity",iNumBinsMult,0,iMaxMult);
     fOutListPID->Add(fPionsMult);
-    fPionsPt = new TH1D("fPionsPt", "#pi: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
-    fOutListPID->Add(fPionsPt);          
-    fPionsEta = new TH1D("fPionsEta", "#pi: #it{#eta} (selected); #it{#eta};", 400, -2, 2);    
-    fOutListPID->Add(fPionsEta);          
-    fPionsPhi = new TH1D("fPionsPhi", "#pi: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());    
+    fPionsPt = new TH1D("fPionsPt", "#pi: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);
+    fOutListPID->Add(fPionsPt);
+    fPionsEta = new TH1D("fPionsEta", "#pi: #it{#eta} (selected); #it{#eta};", 400, -2, 2);
+    fOutListPID->Add(fPionsEta);
+    fPionsPhi = new TH1D("fPionsPhi", "#pi: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());
     fOutListPID->Add(fPionsPhi);
-    fPionsTOFbeta = new TH2D("fPionsTOFbeta","#pi: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);          
+    fPionsTOFbeta = new TH2D("fPionsTOFbeta","#pi: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);
     fOutListPID->Add(fPionsTOFbeta);
-    fPionsTPCdEdx = new TH2D("fPionsTPCdEdx","#pi: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);          
+    fPionsTPCdEdx = new TH2D("fPionsTPCdEdx","#pi: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);
     fOutListPID->Add(fPionsTPCdEdx);
-    fPionsNsigmasTPCTOF = new TH2D("fPionsNsigmasTPCTOF","#pi: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
+    fPionsNsigmasTPCTOF = new TH2D("fPionsNsigmasTPCTOF","#pi: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);
     fOutListPID->Add(fPionsNsigmasTPCTOF);
     fPionsBayesAsPion = new TH1D("fPionsBayesAsPion","#pi: Bayes PID (as #pi); probability",100,0,1);
     fOutListPID->Add(fPionsBayesAsPion);
@@ -999,17 +1001,17 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
     fKaonsMult = new TH1D("fKaonsMult","K: Event multiplicity (selected); multiplicity",iNumBinsMult,0,iMaxMult);
     fOutListPID->Add(fKaonsMult);
-    fKaonsPt = new TH1D("fKaonsPt", "K: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
-    fOutListPID->Add(fKaonsPt);          
-    fKaonsEta = new TH1D("fKaonsEta", "K: #it{#eta} (selected); #it{#eta};", 400, -2, 2);    
-    fOutListPID->Add(fKaonsEta);          
-    fKaonsPhi = new TH1D("fKaonsPhi", "K: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());    
+    fKaonsPt = new TH1D("fKaonsPt", "K: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);
+    fOutListPID->Add(fKaonsPt);
+    fKaonsEta = new TH1D("fKaonsEta", "K: #it{#eta} (selected); #it{#eta};", 400, -2, 2);
+    fOutListPID->Add(fKaonsEta);
+    fKaonsPhi = new TH1D("fKaonsPhi", "K: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());
     fOutListPID->Add(fKaonsPhi);
-    fKaonsTOFbeta = new TH2D("fKaonsTOFbeta","K: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);          
+    fKaonsTOFbeta = new TH2D("fKaonsTOFbeta","K: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);
     fOutListPID->Add(fKaonsTOFbeta);
-    fKaonsTPCdEdx = new TH2D("fKaonsTPCdEdx","K: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);          
+    fKaonsTPCdEdx = new TH2D("fKaonsTPCdEdx","K: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);
     fOutListPID->Add(fKaonsTPCdEdx);
-    fKaonsNsigmasTPCTOF = new TH2D("fKaonsNsigmasTPCTOF","K: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
+    fKaonsNsigmasTPCTOF = new TH2D("fKaonsNsigmasTPCTOF","K: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);
     fOutListPID->Add(fKaonsNsigmasTPCTOF);
     fKaonsBayesAsPion = new TH1D("fKaonsBayesAsPion","K: Bayes PID (as #pi); probability",100,0,1);
     fOutListPID->Add(fKaonsBayesAsPion);
@@ -1022,17 +1024,17 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
     fProtonsMult = new TH1D("fProtonsMult","p: Event multiplicity (selected); multiplicity",iNumBinsMult,0,iMaxMult);
     fOutListPID->Add(fProtonsMult);
-    fProtonsPt = new TH1D("fProtonsPt", "p: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);    
-    fOutListPID->Add(fProtonsPt);          
-    fProtonsEta = new TH1D("fProtonsEta", "p: #it{#eta} (selected); #it{#eta};", 400, -2, 2);    
-    fOutListPID->Add(fProtonsEta);          
-    fProtonsPhi = new TH1D("fProtonsPhi", "p: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());    
+    fProtonsPt = new TH1D("fProtonsPt", "p: #it{p}_{T} (selected); #it{p}_{T} (GeV/#it{c});", 100, 0, 10);
+    fOutListPID->Add(fProtonsPt);
+    fProtonsEta = new TH1D("fProtonsEta", "p: #it{#eta} (selected); #it{#eta};", 400, -2, 2);
+    fOutListPID->Add(fProtonsEta);
+    fProtonsPhi = new TH1D("fProtonsPhi", "p: #it{#varphi} (selected); #it{#varphi};", 360, 0., TMath::TwoPi());
     fOutListPID->Add(fProtonsPhi);
-    fProtonsTOFbeta = new TH2D("fProtonsTOFbeta","p: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);          
+    fProtonsTOFbeta = new TH2D("fProtonsTOFbeta","p: TOF #beta (selected); #it{p} (GeV/#it{c}); TOF #beta", 1000,0,10, 100,0,1.5);
     fOutListPID->Add(fProtonsTOFbeta);
-    fProtonsTPCdEdx = new TH2D("fProtonsTPCdEdx","p: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);          
+    fProtonsTPCdEdx = new TH2D("fProtonsTPCdEdx","p: TPC #it{dEdx} (selected); #it{p} (GeV/#it{c}); TPC #it{dEdx}", 1000,0,10, 1000,0,1000);
     fOutListPID->Add(fProtonsTPCdEdx);
-    fProtonsNsigmasTPCTOF = new TH2D("fProtonsNsigmasTPCTOF","p: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);          
+    fProtonsNsigmasTPCTOF = new TH2D("fProtonsNsigmasTPCTOF","p: #it{n#sigma} TPC & TOF (selected); #it{n#sigma}^{TPC}; #it{n#sigma}^{TOF}", 20,-10,10, 20,-10,10);
     fOutListPID->Add(fProtonsNsigmasTPCTOF);
     fProtonsBayesAsPion = new TH1D("fProtonsBayesAsPion","p: Bayes PID (as #pi); probability",100,0,1);
     fOutListPID->Add(fProtonsBayesAsPion);
@@ -1044,19 +1046,19 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListPID->Add(fProtonsBayes);
 
 
-  } 
+  }
 
   if(fOldFlow)
   {
-    // V0s histos  
+    // V0s histos
     if(fPID)
     {
       for(Int_t k(0); k < fNumEtaGap; k++)
       {
-        fV0sInvMassK0s[k] = new TH1D(Form("fV0sInvMass_K0s_Gap%02.2g",10*fEtaGap[k]),Form("K^{0}_{S} InvMass |#Delta#it{#eta}| > %g (selected); #it{m}_{inv} (GeV/#it{c}^{2});",fEtaGap[k]), 200,fV0MinMassK0s,fV0MaxMassK0s);          
+        fV0sInvMassK0s[k] = new TH1D(Form("fV0sInvMass_K0s_Gap%02.2g",10*fEtaGap[k]),Form("K^{0}_{S} InvMass |#Delta#it{#eta}| > %g (selected); #it{m}_{inv} (GeV/#it{c}^{2});",fEtaGap[k]), 200,fV0MinMassK0s,fV0MaxMassK0s);
         fOutListV0s->Add(fV0sInvMassK0s[k]);
 
-        fV0sInvMassLambda[k] = new TH1D(Form("fV0sInvMass_Lambda_Gap%02.2g",10*fEtaGap[k]),Form("#Lambda+#bar{#Lambda} InvMass |#Delta#it{#eta}| > %g (selected); #it{m}_{inv} (GeV/#it{c}^{2});",fEtaGap[k]), 200,fV0MinMassLambda,fV0MaxMassLambda);          
+        fV0sInvMassLambda[k] = new TH1D(Form("fV0sInvMass_Lambda_Gap%02.2g",10*fEtaGap[k]),Form("#Lambda+#bar{#Lambda} InvMass |#Delta#it{#eta}| > %g (selected); #it{m}_{inv} (GeV/#it{c}^{2});",fEtaGap[k]), 200,fV0MinMassLambda,fV0MaxMassLambda);
         fOutListV0s->Add(fV0sInvMassLambda[k]);
 
       }
@@ -1073,8 +1075,8 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
 
             fV0sPtInvMassLambda[i][j][k] = new TH2D(Form("fV0sPtInvMass_Lambda_n%d_Gap%02.2g_Cent%d",fHarmonics[j],10*fEtaGap[k],i),Form("#Lambda+#bar{#Lambda} candidates n=%d |#Delta#it{#eta}| > %g Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fHarmonics[j],fEtaGap[k],fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassLambda, fV0MaxMassLambda);
             fV0sPtInvMassLambda[i][j][k]->Sumw2();
-            fOutListV0s->Add(fV0sPtInvMassLambda[i][j][k]); 
-            
+            fOutListV0s->Add(fV0sPtInvMassLambda[i][j][k]);
+
             for(Int_t m(0); m < fNumSampleBins; m++)
             {
               if(!fSampling && m > 0)
@@ -1083,9 +1085,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
               fV0sDiffTwoPos_K0s[i][j][k][m] = new TProfile2D(Form("fV0sDiffTwoPos_K0s_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m), Form("K^{0}_{S} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
               fV0sDiffTwoPos_K0s[i][j][k][m]->Sumw2();
               fOutListV0s->Add(fV0sDiffTwoPos_K0s[i][j][k][m]);
-        
-              if(!(fEtaGap[k] < 0.)) // make only with eta gap 
-              { 
+
+              if(!(fEtaGap[k] < 0.)) // make only with eta gap
+              {
                 fV0sDiffTwoNeg_K0s[i][j][k][m] = new TProfile2D(Form("fV0sDiffTwoNeg_K0s_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m), Form("K^{0}_{S} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
                 fV0sDiffTwoNeg_K0s[i][j][k][m]->Sumw2();
                 fOutListV0s->Add(fV0sDiffTwoNeg_K0s[i][j][k][m]);
@@ -1095,9 +1097,9 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
               fV0sDiffTwoPos_Lambda[i][j][k][m] = new TProfile2D(Form("fV0sDiffTwoPos_Lambda_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m), Form("#Lambda+#bar{#Lambda} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, #it{#eta}^{POI} > %g} Cent %g-%g%% sample %d; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
               fV0sDiffTwoPos_Lambda[i][j][k][m]->Sumw2();
               fOutListV0s->Add(fV0sDiffTwoPos_Lambda[i][j][k][m]);
-              
-              if(!(fEtaGap[k] < 0.)) // make only with eta gap 
-              { 
+
+              if(!(fEtaGap[k] < 0.)) // make only with eta gap
+              {
                 fV0sDiffTwoNeg_Lambda[i][j][k][m] = new TProfile2D(Form("fV0sDiffTwoNeg_Lambda_n%d_Gap%02.2g_Cent%d_sample%d",fHarmonics[j],10*fEtaGap[k],i,m), Form("#Lambda+#bar{#Lambda} #LT#LT2'#GT#GT_{%d,|#Delta#it{#eta}| > %g, it{#eta}^{POI} < -%g} Cent %g-%g%% sample %d; #it{p}^{V0}_{T} (GeV/#it{c}); #it{M}_{inv}^{V0} (GeV/#it{c}^{2})",fHarmonics[j],fEtaGap[k],fEtaGap[k]/2,fCentBinEdges[i],fCentBinEdges[i+1],m),fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
                 fV0sDiffTwoNeg_Lambda[i][j][k][m]->Sumw2();
                 fOutListV0s->Add(fV0sDiffTwoNeg_Lambda[i][j][k][m]);
@@ -1106,17 +1108,25 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
           }
         }
       }
-    }  
+    }
   }
-  
+
   Int_t iNEventCounterBins = 1;
 
 	TString sQAlabel[fQANumSteps] = {"Before","After"/*,"Test"*/};
   // QA events output
   if(fPP)
   {
-    iNEventCounterBins = 10;
-    TString sEventCounterLabel[] = {"Input","AOD OK","Physics selection OK","PV OK","SPD Vtx OK","Pileup SPD OK","Pileup MV OK","PV #it{z} OK","At least 2 selected tracks","At least 1 V0 candidate"};
+    if(fRejectOutOfBunchPU)
+    {
+      iNEventCounterBins = 14;
+      TString sEventCounterLabel[] = {"Input","AOD OK","Physics selection OK","PV OK","SPD Vtx OK","Pileup SPD OK","Pileup MV OK","OOBPU OK","SPDclTrBg OK","SPDPU OK","Utils OK","PV #it{z} OK","At least 2 selected tracks","At least 1 V0 candidate"};
+    }
+    else
+    {
+      iNEventCounterBins = 10;
+      TString sEventCounterLabel[] = {"Input","AOD OK","Physics selection OK","PV OK","SPD Vtx OK","Pileup SPD OK","Pileup MV OK","PV #it{z} OK","At least 2 selected tracks","At least 1 V0 candidate"};
+    }
     fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
     for(Int_t i = 0; i < iNEventCounterBins; i++)
       fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
@@ -1130,22 +1140,22 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     for(Int_t i = 0; i < iNEventCounterBins; i++)
       fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fOutListEvents->Add(fEventCounter);
-  }  
-  
+  }
+
   fSampleCounter = new TH2D("fSampleCounter","Event distribution if sampling bins; sampling bin index; centrality bin index; events",fNumSampleBins,0,fNumSampleBins, fNumCentBins, 0, fNumCentBins);
   for(Int_t i = 0; i < fNumSampleBins; i++)
     fSampleCounter->GetXaxis()->SetBinLabel(i+1,Form("%d",i));
   fOutListEvents->Add(fSampleCounter);
-  
+
   fCentSPDvsV0M = new TH2D("fCentSPDvsV0M", "V0M-cent vs SPD-cent; V0M; SPD-cent", 100, 0, 100, 100, 0, 100);
   fOutListEvents->Add(fCentSPDvsV0M);
-  
+
   Short_t iNEventTriggerBins = 4;
   TString sEventTriggerLabel[] = {"kINT7","kHighMultV0","kHighMultSPD","Other"};
-  
+
   Short_t iNEventTriggersPresentBins = 4;
   TString sEventTriggersPresentLabel[] = {"kINT7","kHighMultV0","CINT7-B-NOPF-CENT","CVHMV0M-B-SPD2-CENT"};
-  
+
   for(Int_t i(0); i < fQANumSteps; i++)
   {
     fQAEventsPVz[i] = new TH1D(Form("fQAEventsPVz_%s",sQAlabel[i].Data()),Form("QA Events: PV #it{z} (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),101,-50,50);
@@ -1156,7 +1166,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListEvents->Add(fQAEventsNumSPDContrPV[i]);
     fQAEventsDistPVSPD[i] = new TH1D(Form("fQAEventsDistPVSPD_%s",sQAlabel[i].Data()),Form("QA Events: #it{z}-istance between SPD vertex & PV (%s cuts); #it{z} (cm);",sQAlabel[i].Data()),50,0,5);
     fOutListEvents->Add(fQAEventsDistPVSPD[i]);
-    
+
     if(fPP || fPPb)
     {
       fQAEventsSPDresol[i] = new TH1D(Form("fQAEventsSPDresol_%s",sQAlabel[i].Data()),Form("QA Events: SPD vertexer z resolution (%s cuts); #it{z} resolution (?cm);",sQAlabel[i].Data()),150,0,15);
@@ -1183,7 +1193,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   {
     const Short_t iNumBinsScanCounter = 5;
     TString sTracksScanCounterLabel[] = {"All","Selected","ITS PID OK","TPC PID OK","TOF PID OK"};
-    
+
     fTracksScanCounter = new TH2D("fTracksScanCounter","Tracks: Scan counter; FB; ", fNumScanFB,0,fNumScanFB, iNumBinsScanCounter,0,iNumBinsScanCounter);
     fTracksScanPt = new TH2D("fTracksScanPt","Tracks: #it{p}_T scan; FB; #it{p}_T (GeV/#it{c})", fNumScanFB,0,fNumScanFB, 100,0,10);
     fTracksScanPhi = new TH2D("fTracksScanPhi","Tracks: #it{#varphi} scan; FB; #it{#varphi}", fNumScanFB,0,fNumScanFB, 100,0,TMath::TwoPi());
@@ -1209,7 +1219,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   }
 
   // QA tracks output
- 
+
   Short_t iNTracksCounterBins = 8;
   TString sTracksCounterLabel[] = {"Input","Track OK","FB OK","TPC Ncls OK","Eta OK","Pt OK","DCAz OK","Selected"};
   fTracksCounter = new TH1D("fTrackCounter","Track Counter",iNTracksCounterBins,0,iNTracksCounterBins);
@@ -1249,15 +1259,15 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     fOutListTracks->Add(fQATracksTOF[i]);
     fQATracksTOFbeta[i] = new TH2D(Form("fQATracksTOFbeta_%s",sQAlabel[i].Data()),Form("QA Tracks: TOF #beta information (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 500,0, 1.5);
     fOutListTracks->Add(fQATracksTOFbeta[i]);
-    
+
     Int_t iNPIDstatusBins = 4;
     TString sPIDstatus[] = {"kDetNoSignal","kDetPidOk","kDetMismatch","kDetNoParams"};
-    
+
     fQATracksTPCstatus[i] = new TH1D(Form("fQATracksTPCstatus_%s",sQAlabel[i].Data()),Form("QA Tracks: PID status: TPC (%s cuts); isTOFok?",sQAlabel[i].Data()), iNPIDstatusBins,0,iNPIDstatusBins);
     fOutListTracks->Add(fQATracksTPCstatus[i]);
     fQATracksTOFstatus[i] = new TH1D(Form("fQATracksTOFstatus_%s",sQAlabel[i].Data()),Form("QA Tracks: PID status: TOF (%s cuts); isTOFok?",sQAlabel[i].Data()), iNPIDstatusBins,0,iNPIDstatusBins);
     fOutListTracks->Add(fQATracksTOFstatus[i]);
-    
+
     for(Int_t j = 0; j < iNPIDstatusBins; j++)
     {
       fQATracksTOFstatus[i]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
@@ -1268,34 +1278,34 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   // QA tracks PID output
   if(fPID)
   {
-    fQAPIDTOFbetaNoTOF = new TH2D(Form("fQAPIDTOFbetaNoTOF"),Form("#pi,K,p: TOF #beta with NO TOF; #it{p} (GeV/#it{c}); TOF #beta"), 1000,0,10, 100,0,1.5);          
+    fQAPIDTOFbetaNoTOF = new TH2D(Form("fQAPIDTOFbetaNoTOF"),Form("#pi,K,p: TOF #beta with NO TOF; #it{p} (GeV/#it{c}); TOF #beta"), 1000,0,10, 100,0,1.5);
     fOutListPID->Add(fQAPIDTOFbetaNoTOF);
 
     for(Int_t i(0); i < fQANumSteps; i++)
     {
-      fQAPIDTOFbeta[i] = new TH2D(Form("fQAPIDTOFbeta_%s",sQAlabel[i].Data()),Form("#pi,K,p: TOF #beta (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 100,0,1.5);          
+      fQAPIDTOFbeta[i] = new TH2D(Form("fQAPIDTOFbeta_%s",sQAlabel[i].Data()),Form("#pi,K,p: TOF #beta (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 100,0,1.5);
       fOutListPID->Add(fQAPIDTOFbeta[i]);
-      fQAPIDTOFbetaWithTOF[i] = new TH2D(Form("fQAPIDTOFbetaWithTOF_%s",sQAlabel[i].Data()),Form("#pi,K,p: TOF #beta rejecting tracks with no TOF info (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 100,0,1.5);          
+      fQAPIDTOFbetaWithTOF[i] = new TH2D(Form("fQAPIDTOFbetaWithTOF_%s",sQAlabel[i].Data()),Form("#pi,K,p: TOF #beta rejecting tracks with no TOF info (%s cuts); #it{p} (GeV/#it{c}); TOF #beta",sQAlabel[i].Data()), 1000,0,10, 100,0,1.5);
       fOutListPID->Add(fQAPIDTOFbetaWithTOF[i]);
-      fQAPIDTPCdEdx[i] = new TH2D(Form("fQAPIDTPCdEdx_%s",sQAlabel[i].Data()),Form("#pi,K,p: TPC #it{dEdx} (%s cuts); #it{p} (GeV/#it{c}); TPC #it{dEdx}",sQAlabel[i].Data()), 1000,0,10, 1000,0,1000);          
+      fQAPIDTPCdEdx[i] = new TH2D(Form("fQAPIDTPCdEdx_%s",sQAlabel[i].Data()),Form("#pi,K,p: TPC #it{dEdx} (%s cuts); #it{p} (GeV/#it{c}); TPC #it{dEdx}",sQAlabel[i].Data()), 1000,0,10, 1000,0,1000);
       fOutListPID->Add(fQAPIDTPCdEdx[i]);
-      fQAPIDNsigmasTPCasPion[i] = new TH2D(Form("fQAPIDNsigmasTPCasPion_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TPC as #pi (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);          
+      fQAPIDNsigmasTPCasPion[i] = new TH2D(Form("fQAPIDNsigmasTPCasPion_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TPC as #pi (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);
       fOutListPID->Add(fQAPIDNsigmasTPCasPion[i]);
-      fQAPIDNsigmasTOFasPion[i] = new TH2D(Form("fQAPIDNsigmasTOFasPion_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TOF as #pi (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);          
+      fQAPIDNsigmasTOFasPion[i] = new TH2D(Form("fQAPIDNsigmasTOFasPion_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TOF as #pi (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);
       fOutListPID->Add(fQAPIDNsigmasTOFasPion[i]);
-      fQAPIDNsigmasTPCasKaon[i] = new TH2D(Form("fQAPIDNsigmasTPCasKaon_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TPC as K (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);          
+      fQAPIDNsigmasTPCasKaon[i] = new TH2D(Form("fQAPIDNsigmasTPCasKaon_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TPC as K (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);
       fOutListPID->Add(fQAPIDNsigmasTPCasKaon[i]);
-      fQAPIDNsigmasTOFasKaon[i] = new TH2D(Form("fQAPIDNsigmasTOFasKaon_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TOF as K (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);          
-      fOutListPID->Add(fQAPIDNsigmasTOFasKaon[i]);  
-      fQAPIDNsigmasTPCasProton[i] = new TH2D(Form("fQAPIDNsigmasTPCasProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TPC as p (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);          
+      fQAPIDNsigmasTOFasKaon[i] = new TH2D(Form("fQAPIDNsigmasTOFasKaon_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TOF as K (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);
+      fOutListPID->Add(fQAPIDNsigmasTOFasKaon[i]);
+      fQAPIDNsigmasTPCasProton[i] = new TH2D(Form("fQAPIDNsigmasTPCasProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TPC as p (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TPC}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);
       fOutListPID->Add(fQAPIDNsigmasTPCasProton[i]);
-      fQAPIDNsigmasTOFasProton[i] = new TH2D(Form("fQAPIDNsigmasTOFasProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TOF as p (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);          
+      fQAPIDNsigmasTOFasProton[i] = new TH2D(Form("fQAPIDNsigmasTOFasProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: #it{n#sigma} TOF as p (%s cuts); #it{p} (GeV/#it{c}); #it{n#sigma}^{TOF}",sQAlabel[i].Data()), 100,0,10, 100,-10,10);
       fOutListPID->Add(fQAPIDNsigmasTOFasProton[i]);
-      fQAPIDBayesProbPion[i] = new TH1D(Form("fQAPIDBayesProbPion_%s",sQAlabel[i].Data()),Form("#pi,K,p: Bayesian probablibity as #pi (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.); 
+      fQAPIDBayesProbPion[i] = new TH1D(Form("fQAPIDBayesProbPion_%s",sQAlabel[i].Data()),Form("#pi,K,p: Bayesian probablibity as #pi (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.);
       fOutListPID->Add(fQAPIDBayesProbPion[i]);
-      fQAPIDBayesProbKaon[i] = new TH1D(Form("fQAPIDBayesProbKaon_%s",sQAlabel[i].Data()), Form("#pi,K,p: Bayesian probablibity as K (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.); 
+      fQAPIDBayesProbKaon[i] = new TH1D(Form("fQAPIDBayesProbKaon_%s",sQAlabel[i].Data()), Form("#pi,K,p: Bayesian probablibity as K (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.);
       fOutListPID->Add(fQAPIDBayesProbKaon[i]);
-      fQAPIDBayesProbProton[i] = new TH1D(Form("fQAPIDBayesProbProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: Bayesian probablibity as proton (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.); 
+      fQAPIDBayesProbProton[i] = new TH1D(Form("fQAPIDBayesProbProton_%s",sQAlabel[i].Data()),Form("#pi,K,p: Bayesian probablibity as proton (%s cuts); probability",sQAlabel[i].Data()), 200, 0., 1.);
       fOutListPID->Add(fQAPIDBayesProbProton[i]);
       fQAPIDBayesProb[i] = new TH3D(Form("fQAPIDBayesProb_%s",sQAlabel[i].Data()), Form("#pi,K,p: Bayesian probability (%s cuts); probability #pi; probability K; probability p",sQAlabel[i].Data()), 100,0,1, 100,0,1, 100,0,1 );
       fOutListPID->Add(fQAPIDBayesProb[i]);
@@ -1331,49 +1341,49 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     	fQAV0sRecoMethod[i] = new TH1D(Form("fQAV0sRecoMethod_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Reconstruction method (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
     	fQAV0sRecoMethod[i]->GetXaxis()->SetBinLabel(1, "offline");
     	fQAV0sRecoMethod[i]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
-    	fOutListV0s->Add(fQAV0sRecoMethod[i]);	
+    	fOutListV0s->Add(fQAV0sRecoMethod[i]);
   		fQAV0sTPCRefit[i] = new TH1D(Form("fQAV0sTPCRefit_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: TPC refit (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
   		fQAV0sTPCRefit[i]->GetXaxis()->SetBinLabel(1, "not refit");
     	fQAV0sTPCRefit[i]->GetXaxis()->SetBinLabel(2, "refit");
-    	fOutListV0s->Add(fQAV0sTPCRefit[i]);	
+    	fOutListV0s->Add(fQAV0sTPCRefit[i]);
   		fQAV0sKinks[i] = new TH1D(Form("fQAV0sKinks_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Kinks (%s cuts)",sQAlabel[i].Data()), 2,-0.5,1.5);
   		fQAV0sKinks[i]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
     	fQAV0sKinks[i]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
-    	fOutListV0s->Add(fQAV0sKinks[i]);	
-  		fQAV0sDCAtoPV[i] = new TH1D(Form("fQAV0sDCAtoPV_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter DCA to PV (%s cuts); daughter DCA^{PV} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
-    	fOutListV0s->Add(fQAV0sDCAtoPV[i]);	
-  		fQAV0sDCADaughters[i] = new TH1D(Form("fQAV0sDCADaughters_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: DCA among daughters (%s cuts); DCA^{daughters} (cm)",sQAlabel[i].Data()), 100,0.,10.);	
-    	fOutListV0s->Add(fQAV0sDCADaughters[i]);	
-  		fQAV0sDecayRadius[i] = new TH1D(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 200,0.,500.);	
-    	fOutListV0s->Add(fQAV0sDecayRadius[i]);	
-      fQAV0sDaughterPt[i] = new TH1D(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
+    	fOutListV0s->Add(fQAV0sKinks[i]);
+  		fQAV0sDCAtoPV[i] = new TH1D(Form("fQAV0sDCAtoPV_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter DCA to PV (%s cuts); daughter DCA^{PV} (cm)",sQAlabel[i].Data()), 100,0.,10.);
+    	fOutListV0s->Add(fQAV0sDCAtoPV[i]);
+  		fQAV0sDCADaughters[i] = new TH1D(Form("fQAV0sDCADaughters_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: DCA among daughters (%s cuts); DCA^{daughters} (cm)",sQAlabel[i].Data()), 100,0.,10.);
+    	fOutListV0s->Add(fQAV0sDCADaughters[i]);
+  		fQAV0sDecayRadius[i] = new TH1D(Form("fQAV0sDecayRadius_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Decay radius (%s cuts); #it{r_{xy}}^{decay} (cm)",sQAlabel[i].Data()), 200,0.,500.);
+    	fOutListV0s->Add(fQAV0sDecayRadius[i]);
+      fQAV0sDaughterPt[i] = new TH1D(Form("fQAV0sDaughterPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{p}_{T} (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);
       fOutListV0s->Add(fQAV0sDaughterPt[i]);
-      fQAV0sDaughterPhi[i] = new TH1D(Form("fQAV0sDaughterPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#varphi} (%s cuts); #it{#varphi}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
-      fOutListV0s->Add(fQAV0sDaughterPhi[i]);   
+      fQAV0sDaughterPhi[i] = new TH1D(Form("fQAV0sDaughterPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#varphi} (%s cuts); #it{#varphi}^{daughter} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi());
+      fOutListV0s->Add(fQAV0sDaughterPhi[i]);
       fQAV0sDaughterTPCdEdxPt[i] = new TH2D(Form("fQAV0sDaughterTPCdEdxPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: TPC dEdx daughters (%s cuts); #it{p}_{T}^{daughter} (GeV/#it{c}); TPC dEdx (au);",sQAlabel[i].Data()), 100,0.,10,200,0.,200.);
-    	fOutListV0s->Add(fQAV0sDaughterTPCdEdxPt[i]);	
-      fQAV0sDaughterEta[i] = new TH1D(Form("fQAV0sDaughterEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#eta} (%s cuts); #it{#eta}^{daugter}",sQAlabel[i].Data()), 401,-2,2);  
-      fOutListV0s->Add(fQAV0sDaughterEta[i]);  
-      fQAV0sMotherPt[i] = new TH1D(Form("fQAV0sMotherPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{p}_{T} (%s cuts); #it{p}_{T}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);  
-      fOutListV0s->Add(fQAV0sMotherPt[i]); 
-      fQAV0sMotherPhi[i] = new TH1D(Form("fQAV0sMotherPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#varphi} (%s cuts); #it{#varphi}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi()); 
-      fOutListV0s->Add(fQAV0sMotherPhi[i]);  
-      fQAV0sMotherEta[i] = new TH1D(Form("fQAV0sMotherEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#eta} (%s cuts); #it{#eta}^{V0}",sQAlabel[i].Data()), 401,-2,2); 
-      fOutListV0s->Add(fQAV0sMotherEta[i]);  
+    	fOutListV0s->Add(fQAV0sDaughterTPCdEdxPt[i]);
+      fQAV0sDaughterEta[i] = new TH1D(Form("fQAV0sDaughterEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Daughter #it{#eta} (%s cuts); #it{#eta}^{daugter}",sQAlabel[i].Data()), 401,-2,2);
+      fOutListV0s->Add(fQAV0sDaughterEta[i]);
+      fQAV0sMotherPt[i] = new TH1D(Form("fQAV0sMotherPt_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{p}_{T} (%s cuts); #it{p}_{T}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,10.);
+      fOutListV0s->Add(fQAV0sMotherPt[i]);
+      fQAV0sMotherPhi[i] = new TH1D(Form("fQAV0sMotherPhi_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#varphi} (%s cuts); #it{#varphi}^{V0} (GeV/#it{c})",sQAlabel[i].Data()), 100,0.,TMath::TwoPi());
+      fOutListV0s->Add(fQAV0sMotherPhi[i]);
+      fQAV0sMotherEta[i] = new TH1D(Form("fQAV0sMotherEta_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{#eta} (%s cuts); #it{#eta}^{V0}",sQAlabel[i].Data()), 401,-2,2);
+      fOutListV0s->Add(fQAV0sMotherEta[i]);
       fQAV0sMotherRapK0s[i] = new TH1D(Form("fQAV0sMotherRapK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo) (%s cuts); #it{y}^{V0,K0s}",sQAlabel[i].Data()), 400,-2,2);
       fOutListV0s->Add(fQAV0sMotherRapK0s[i]);
       fQAV0sMotherRapLambda[i] = new TH1D(Form("fQAV0sMotherRapLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo) (%s cuts); #it{y}^{V0,#Lambda}",sQAlabel[i].Data()),400,-2,2);
-      fOutListV0s->Add(fQAV0sMotherRapLambda[i]);     
+      fOutListV0s->Add(fQAV0sMotherRapLambda[i]);
       fQAV0sInvMassK0s[i] = new TH1D(Form("fQAV0sInvMassK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: InvMass (%s cuts); #it{m}_{inv} (GeV/#it{c}^{2});",sQAlabel[i].Data()), 200,fV0MinMassK0s,fV0MaxMassK0s);
-      fOutListV0s->Add(fQAV0sInvMassK0s[i]);  
+      fOutListV0s->Add(fQAV0sInvMassK0s[i]);
       fQAV0sInvMassLambda[i] = new TH1D(Form("fQAV0sInvMassLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: InvMass (%s cuts); #it{m}_{inv} (GeV/#it{c}^{2});",sQAlabel[i].Data()), 80,fV0MinMassLambda,fV0MaxMassLambda);
-      fOutListV0s->Add(fQAV0sInvMassLambda[i]);  
-      fQAV0sCPAK0s[i] = new TH1D(Form("fQAV0sCPAK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: CPA (%s cuts); CPA^{K0s}",sQAlabel[i].Data()), 100,0.9,1.);  
-      fOutListV0s->Add(fQAV0sCPAK0s[i]); 
-      fQAV0sCPALambda[i] = new TH1D(Form("fQAV0sCPALambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA (%s cuts); CPA^{#Lambda}",sQAlabel[i].Data()), 100, 0.9,1.); 
-      fOutListV0s->Add(fQAV0sCPALambda[i]);  
+      fOutListV0s->Add(fQAV0sInvMassLambda[i]);
+      fQAV0sCPAK0s[i] = new TH1D(Form("fQAV0sCPAK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: K^{0}_{S}: CPA (%s cuts); CPA^{K0s}",sQAlabel[i].Data()), 100,0.9,1.);
+      fOutListV0s->Add(fQAV0sCPAK0s[i]);
+      fQAV0sCPALambda[i] = new TH1D(Form("fQAV0sCPALambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA (%s cuts); CPA^{#Lambda}",sQAlabel[i].Data()), 100, 0.9,1.);
+      fOutListV0s->Add(fQAV0sCPALambda[i]);
       fQAV0sNumTauK0s[i] = new TH1D(Form("fQAV0sNumTauK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Number of #it{c#tau} (%s cuts); #it{c#tau}^{K0s} (cm)",sQAlabel[i].Data()), 100, 0.,10.);
-      fOutListV0s->Add(fQAV0sNumTauK0s[i]);  
+      fOutListV0s->Add(fQAV0sNumTauK0s[i]);
       fQAV0sNumTauLambda[i] = new TH1D(Form("fQAV0sNumTauLambda_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}: Number of #it{c#tau} (%s cuts); #it{c#tau}^{#Lambda} (cm)",sQAlabel[i].Data()), 300, 0.,30);
       fOutListV0s->Add(fQAV0sNumTauLambda[i]);
       fQAV0sArmenterosK0s[i] = new TH2D(Form("fQAV0sArmenterosK0s_%s",sQAlabel[i].Data()),Form("QA V^{0}_{S}:  K^{0}_{S}: Armenteros-Podolaski plot (%s cuts); #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});",sQAlabel[i].Data()), 100,-1.,1., 100,0.,0.3);
@@ -1385,12 +1395,12 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   	}
   }
 
-  PostData(1, fOutListCumulants);           
-  PostData(2, fOutListEvents);           
-  PostData(3, fOutListTracks);           
-  PostData(4, fOutListPID);           
-	PostData(5, fOutListV0s);          
-	//PostData(6, fOutListQA);           
+  PostData(1, fOutListCumulants);
+  PostData(2, fOutListEvents);
+  PostData(3, fOutListTracks);
+  PostData(4, fOutListPID);
+	PostData(5, fOutListV0s);
+	//PostData(6, fOutListQA);
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::UserExec(Option_t *)
@@ -1399,29 +1409,29 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   if(!fPP && !fPPb && !fPbPb)
   {
     ::Error("UserExec","Neighter pp, pPb nor PbPb analysis switch is on. Terminating!");
-    return; 
+    return;
   }
 
 	fEventCounter->Fill(0); // input event
 
-  if(fAODAnalysis) // AOD analysis 
+  if(fAODAnalysis) // AOD analysis
   {
-    fAOD = dynamic_cast<AliAODEvent*>(InputEvent()); 
+    fAOD = dynamic_cast<AliAODEvent*>(InputEvent());
     if(!fAOD) return;
   }
 
   if( !fAODAnalysis || dynamic_cast<AliESDEvent*>(InputEvent()) ) // ESD analysis
   {
     ::Warning("UserExec","ESD event: not implemented. Terminating!");
-    return; 
+    return;
   }
 
   fEventCounter->Fill(1); // event AOD ok
-  
+
   FillEventQA(fAOD,0); // before cuts event QA
 
   // event selection
-  
+
   if(fPbPb)
   {
     if(fUseOldCent) // as by You Run1
@@ -1431,7 +1441,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
         //printf("Rejected\n");
         return;
       }
-    } 
+    }
     else // Run2 cent selection based on AliMult
     {
       if(!IsEventSelected(fAOD))
@@ -1472,7 +1482,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   {
     TRandom3 rr(0);
     Double_t ranNum = rr.Rndm();
-    
+
     if(fGFKNumSamples == 5)
     {
       // sampling for 5 samples
@@ -1496,18 +1506,18 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       else if (ranNum <= 0.9 && ranNum > 0.8) fSampleBinIndex = 8;
       else fSampleBinIndex = 9;
     }
-  } 
+  }
   else
   {
     fSampleBinIndex = 0;
   }
 
 
-  const Int_t iTracks(fAOD->GetNumberOfTracks());           
+  const Int_t iTracks(fAOD->GetNumberOfTracks());
   fEventMult->Fill(iTracks);
-  
+
   // === tracks & PID species filtering ====
-  
+
   // tracks scanning (pt,eta,phi) of various FBs
   if(fTracksScan)
     ScanTracks();
@@ -1524,24 +1534,24 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     {
       fArrV0sK0sFiltered.Clear("C");
       fArrV0sLambdaFiltered.Clear("C");
-      fArrV0sALambdaFiltered.Clear("C"); 
+      fArrV0sALambdaFiltered.Clear("C");
     }
   }
 
   // filtering objects and filling relevant containers
   FilterTracks(); // filter reference tracks
-  
+
   if(fPID)
   {
     if(fUseBayesPID) // filter PID tracks Using Bayes PID
     {
-      FilterPIDTracksBayesPID(); 
+      FilterPIDTracksBayesPID();
     }
     else
     {
       FilterPIDTracks(); // filter PID tracks (pi,K,p)
     }
-      
+
     if(fDoV0s)
       FilterV0s(); // filter V0s
   }
@@ -1568,7 +1578,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
       Double_t dEtaGap = 0;
       TProfile2D* profV0sPos = 0x0;
       TProfile2D* profV0sNeg = 0x0;
-      
+
 
       for(Int_t indexHarm(0); indexHarm < fNumHarmonics; indexHarm++)
       {
@@ -1583,13 +1593,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
           if(fDiffFlow)
           {
             // tracks
-            EstimatePtDiffCumulant(fArrTracksFiltered,dEtaGap,iHarm,fTracksDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fTracksDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
+            EstimatePtDiffCumulant(fArrTracksFiltered,dEtaGap,iHarm,fTracksDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fTracksDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);
             // PID tracks
-            EstimatePtDiffCumulant(fArrPionFiltered,dEtaGap,iHarm,fPionsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fPionsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
-            EstimatePtDiffCumulant(fArrKaonFiltered,dEtaGap,iHarm,fKaonsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fKaonsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
-            EstimatePtDiffCumulant(fArrProtonFiltered,dEtaGap,iHarm,fProtonsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fProtonsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);  
+            EstimatePtDiffCumulant(fArrPionFiltered,dEtaGap,iHarm,fPionsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fPionsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);
+            EstimatePtDiffCumulant(fArrKaonFiltered,dEtaGap,iHarm,fKaonsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fKaonsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);
+            EstimatePtDiffCumulant(fArrProtonFiltered,dEtaGap,iHarm,fProtonsDiffTwoPos[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex],fProtonsDiffTwoNeg[fCentBinIndex][indexHarm][indexEtaGap][fSampleBinIndex]);
           }
-          
+
           if(fPID)
           {
             if(fDoV0s)
@@ -1601,13 +1611,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   } // end of if(fDoFlow)
 
-  
-  PostData(1, fOutListCumulants);           
-  PostData(2, fOutListEvents);           
-  PostData(3, fOutListTracks);           
-  PostData(4, fOutListPID);           
-  PostData(5, fOutListV0s);          
-  //PostData(6, fOutListQA);         
+
+  PostData(1, fOutListCumulants);
+  PostData(2, fOutListEvents);
+  PostData(3, fOutListTracks);
+  PostData(4, fOutListPID);
+  PostData(5, fOutListV0s);
+  //PostData(6, fOutListQA);
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::Terminate(Option_t *)
@@ -1622,7 +1632,7 @@ void AliAnalysisTaskFlowPID::Terminate(Option_t *)
 void AliAnalysisTaskFlowPID::ListParameters()
 {
   printf("\n======= List of input parameters ======\n");
-  
+
   printf("--------- Analysis & events setters --------\n");
   printf("SetAODAnalysis(Bool_t %d)\n",fAODAnalysis);
   printf("SetPbPbAnalysis(Bool_t %d)\n",fPbPb);
@@ -1632,6 +1642,7 @@ void AliAnalysisTaskFlowPID::ListParameters()
   printf("SetPeriod10h(Bool_t %d)\n",fLHC10h);
   printf("SetRejectPileUpSPD(Bool_t %d)\n",fRejectPileFromSPD);
   printf("SetUsePlpMV(Bool_t %d)\n",fUsePlpMV);
+  printf("SetRejectOutOfBunchPU(Bool_t %d)\n",fRejectOutOfBunchPU);
   printf("SetUseIsPileUpFromSPD(Bool_t %d)\n",fUseIsPileUpFromSPD);
   printf("SetCentFlag(Short_t %d)\n",fCentFlag);
   printf("SetPVtxZMax(Double_t %f)\n",fPVtxCutZ);
@@ -1700,12 +1711,12 @@ void AliAnalysisTaskFlowPID::EstimatePtDiffCumulant(TClonesArray &array, const F
   // POIs
   const Double_t dEtaGapCut = dEtaGap / 2; // eta cut limit for POI
   const Int_t iNumPOIs = array.GetEntries();
-  
+
   TComplex vecPpos[fNumPtBins]; // flow vector for POIs in positive eta (including eta gap cut) [or all POIs with no eta gap]
   TComplex vecPneg[fNumPtBins]; // flow vector for POIs in negative eta (including eta gap cut)
   Int_t iCountPpos[fNumPtBins]; // counter of POIs in positive eta [or all POIs with no eta gap]
   Int_t iCountPneg[fNumPtBins]; // counter of POIs in negative eta
-  
+
   AliAODTrack* track = 0x0;
   Double_t dPhi = 0, dEta = 0;
   Double_t dWeight = 0, dAmp = 0, dVal = 0;
@@ -1774,13 +1785,13 @@ void AliAnalysisTaskFlowPID::EstimatePtDiffCumulant(TClonesArray &array, const F
       dVal = dAmp / dWeight;
       if( TMath::Abs(dVal < 1) && (dWeight > 0))
         profilePos->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, dVal, dWeight);
-      
+
       dWeight = iCountPneg[i] * (fCountRefPos);
       dAmp = (vecPneg[i] * (TComplex::Conjugate(fVecRefPos))).Re();
       dVal = dAmp / dWeight;
       if( TMath::Abs(dVal < 1) && (dWeight > 0))
         profileNeg->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, dVal, dWeight);
-    }    
+    }
   } // end of loop over pt bins
   return;
 }
@@ -1799,7 +1810,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Short_t iEtaGapIndex, cons
   TComplex vecVneg[fNumPtBins]; // flow vector for POIs in negative eta (including eta gap cut)
   Int_t iCountVpos[fNumPtBins]; // counter of POIs in positive eta [or all POIs with no eta gap]
   Int_t iCountVneg[fNumPtBins]; // counter of POIs in negative eta
-  
+
   AliAODv0* v0 = 0x0;
   Double_t dPhi = 0, dEta = 0, dMass = 0;
   Double_t dWeight = 0, dAmp = 0, dVal = 0;
@@ -1827,7 +1838,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Short_t iEtaGapIndex, cons
         iNumMinvFlowBins = fNumMinvFlowBinsK0s;
         dInvMassBinEdges = fMinvFlowBinEdgesK0s;
       break;
-        
+
       case 1: // Lambda
         arrayV0s = fArrV0sLambdaFiltered;
         profV0sPos = fV0sDiffTwoPos_Lambda[fCentBinIndex][iHarmonicsIndex][iEtaGapIndex][iSampleIndex];
@@ -1849,11 +1860,11 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Short_t iEtaGapIndex, cons
       break;
 
       default:
-      break; 
+      break;
     }
 
     iNumV0s = arrayV0s.GetEntries();
-    
+
     // checking if pointers are valid
     if(!profV0sPos)
       return;
@@ -1882,9 +1893,9 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Short_t iEtaGapIndex, cons
         {
           case 0: // K0s
             dMass = v0->MassK0Short();
-            iMinvFlowBinIndex = GetMinvFlowBinIndexK0s(dMass); 
+            iMinvFlowBinIndex = GetMinvFlowBinIndexK0s(dMass);
           break;
-          
+
           case 1: // Lambda
             dMass = v0->MassLambda();
             iMinvFlowBinIndex = GetMinvFlowBinIndexLambda(dMass);
@@ -1898,7 +1909,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Short_t iEtaGapIndex, cons
           default:
           break;
         }
-        
+
         iPtBinIndex = GetPtBinIndex(v0->Pt());
 
         if(iPtBinIndex == -1 || iMinvFlowBinIndex != j)
@@ -1921,7 +1932,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Short_t iEtaGapIndex, cons
           {
             vecVpos[iPtBinIndex] += TComplex(TMath::Cos(iHarm*dPhi),TMath::Sin(iHarm*dPhi),kFALSE);
             iCountVpos[iPtBinIndex]++;
-            hPtInvMass->Fill(v0->Pt(), dMass);     
+            hPtInvMass->Fill(v0->Pt(), dMass);
             hInvMass->Fill(dMass);
           }
 
@@ -1929,7 +1940,7 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Short_t iEtaGapIndex, cons
           {
             vecVneg[iPtBinIndex] += TComplex(TMath::Cos(iHarm*dPhi),TMath::Sin(iHarm*dPhi),kFALSE);
             iCountVneg[iPtBinIndex]++;
-            hPtInvMass->Fill(v0->Pt(), dMass); 
+            hPtInvMass->Fill(v0->Pt(), dMass);
             hInvMass->Fill(dMass);
           }
         }
@@ -1951,23 +1962,23 @@ void AliAnalysisTaskFlowPID::EstimateV0Cumulant(const Short_t iEtaGapIndex, cons
           dWeight = iCountVpos[i] * (fCountRefNeg);
           dAmp = (vecVpos[i] * (TComplex::Conjugate(fVecRefNeg))).Re();
           dVal = dAmp / dWeight;
-          
+
           if( TMath::Abs(dVal < 1) && (dWeight > 0))
             profV0sPos->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (dInvMassBinEdges[j+1] + dInvMassBinEdges[j])/2 ,dVal, dWeight);
-          
+
 
           dWeight = iCountVneg[i] * (fCountRefPos);
           dAmp = (vecVneg[i] * (TComplex::Conjugate(fVecRefPos))).Re();
           dVal = dAmp / dWeight;
-          
+
           if( TMath::Abs(dVal < 1) && (dWeight > 0))
             profV0sNeg->Fill( (fPtBinEdges[i+1] + fPtBinEdges[i])/2, (dInvMassBinEdges[j+1] + dInvMassBinEdges[j])/2 ,dVal, dWeight);
-          
+
         }
       }
     } // end of loop over Minv bins
   }// end of loop over particle species
-  return;   
+  return;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::AreRefFlowVectorsFilled(const Float_t dEtaGap, const Short_t iHarm)
@@ -1981,7 +1992,7 @@ Bool_t AliAnalysisTaskFlowPID::AreRefFlowVectorsFilled(const Float_t dEtaGap, co
   if(dEtaGap != -1 && fVecRefNeg.Re() == 0 && fVecRefNeg.Im() == 0) // if eta gap == -1 -> no eta gap only fVecRefPos & fCountRefPos are filled
     return kFALSE;
 
-  return kTRUE; 
+  return kTRUE;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FillRefFlowVectors(const Float_t dEtaGap, const Short_t iHarm)
@@ -1989,20 +2000,20 @@ void AliAnalysisTaskFlowPID::FillRefFlowVectors(const Float_t dEtaGap, const Sho
   //::Info("FillRefFlowVectors",Form("Filling RFPs flow vectors with eta gap %g & harmonics %d",dEtaGap,iHarm));
 
   fVecRefPos = TComplex(0,0,kFALSE); // flow vector for RFPs in positive eta (including eta gap cut) [or all RFPs with no eta gap]
-  fVecRefNeg = TComplex(0,0,kFALSE); // flow vector for RFPs in negative eta (including eta gap cut) 
+  fVecRefNeg = TComplex(0,0,kFALSE); // flow vector for RFPs in negative eta (including eta gap cut)
   fCountRefPos = 0; // counter of POIs in positive eta [or all RFPs with no eta gap]
-  fCountRefNeg = 0; // counter of POIs in negative eta 
+  fCountRefNeg = 0; // counter of POIs in negative eta
 
   // setting value of flags
   fEtaCutFlag = dEtaGap;
   fHarmFlag = iHarm;
-  
+
   const Double_t dEtaGapCut = dEtaGap / 2; // eta cut limit for RFPs
   const Int_t iNumEntries = fArrTracksFiltered.GetEntries(); // number of entries in RFPs array
 
   AliAODTrack* track = 0x0;
   Double_t dPhi = 0, dEta = 0;
-  
+
   for(Int_t i(0); i < iNumEntries; i++) // loop over RFPs
   {
     track = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
@@ -2013,7 +2024,7 @@ void AliAnalysisTaskFlowPID::FillRefFlowVectors(const Float_t dEtaGap, const Sho
     dPhi = track->Phi();
     dEta = track->Eta();
 
-    if(dEtaGap < 0.) // with no gap -> only positive quantities are filled 
+    if(dEtaGap < 0.) // with no gap -> only positive quantities are filled
     {
       //::Info("FillRefFlowVectors","Filling with NO eta gap");
       fVecRefPos += TComplex(TMath::Cos(iHarm*dPhi),TMath::Sin(iHarm*dPhi),kFALSE);
@@ -2057,7 +2068,7 @@ void AliAnalysisTaskFlowPID::EstimateRefCumulant(const Float_t dEtaGap, const Sh
     if( TMath::Abs(dVal < 1) && (dWeight > 1) && (fCentPercentile > 0) )
       profile->Fill(fCentPercentile, dVal, dWeight);
   }
-  else // with eta gap 
+  else // with eta gap
   {
     dWeight = fCountRefPos * fCountRefNeg;
     dAmp = (fVecRefPos * (TComplex::Conjugate(fVecRefNeg))).Re();
@@ -2079,7 +2090,7 @@ Bool_t AliAnalysisTaskFlowPID::OldIsEventSelected(const AliAODEvent* event)
   {
     return kFALSE;
   }
-  
+
   AliAODEvent* aod = (AliAODEvent*)event;
 
   const AliAODVertex* trkVtx = aod->GetPrimaryVertex();
@@ -2095,7 +2106,7 @@ Bool_t AliAnalysisTaskFlowPID::OldIsEventSelected(const AliAODEvent* event)
       return kFALSE;
 
   vtxz = trkVtx->GetZ();
-  
+
 
   if(vtxz < -990)
   {
@@ -2136,78 +2147,78 @@ Bool_t AliAnalysisTaskFlowPID::OldIsEventSelected(const AliAODEvent* event)
       }
 
       //printf("Vtx & pileup passed\n");
-  
+
       // GetCentrCode()
-      AliAODEvent* aod = (AliAODEvent*)event;  
+      AliAODEvent* aod = (AliAODEvent*)event;
       AliCentrality* centrality = ((AliAODHeader*)aod->GetHeader())->GetCentralityP();
-      
+
       Short_t centrCode = -1;
       Float_t cent = -1.;
-      
+
       if (fCentFlag == 0)
         cent = centrality->GetCentralityPercentile("V0M");
       else if (fCentFlag == 1)
         cent = centrality->GetCentralityPercentile("TRK");
       else if (fCentFlag == 2)
         cent = centrality->GetCentralityPercentile("CL1");
-    
-      Float_t centTrk = centrality->GetCentralityPercentile("TRK"); 
+
+      Float_t centTrk = centrality->GetCentralityPercentile("TRK");
       Float_t centV0 = centrality->GetCentralityPercentile("V0M");
 
-      if (fLHC10h) 
+      if (fLHC10h)
       {
         if (TMath::Abs(centV0 - centTrk) < 5.0 && cent <= 80 && cent > 0)
         {
           if ((cent > 0) && (cent <= 5.0))
-            centrCode = 0; 
+            centrCode = 0;
           else if ((cent > 5.0) && (cent <= 10.0))
             centrCode = 1;
           else if ((cent > 10.0) && (cent <= 20.0))
             centrCode = 2;
           else if ((cent > 20.0) && (cent <= 30.0))
-            centrCode = 3;   
+            centrCode = 3;
           else if ((cent > 30.0) && (cent <= 40.0))
-            centrCode = 4; 
+            centrCode = 4;
           else if ((cent > 40.0) && (cent <= 50.0))
-            centrCode = 5;  
+            centrCode = 5;
           else if ((cent > 50.0) && (cent <= 60.0))
             centrCode = 6;
           else if ((cent > 60.0) && (cent <= 70.0))
-            centrCode = 7;                     
+            centrCode = 7;
           else if ((cent > 70.0) && (cent <= 80.0))
-            centrCode = 8;     
+            centrCode = 8;
         }
       }
-  
-      if (!fLHC10h) 
+
+      if (!fLHC10h)
       {
         if (cent <= 80 && cent > 0)
-        {  
+        {
           if ((cent > 0) && (cent <= 5.0))
-             centrCode = 0; 
+             centrCode = 0;
           else if ((cent > 5.0) && (cent <= 10.0))
              centrCode = 1;
           else if ((cent > 10.0) && (cent <= 20.0))
              centrCode = 2;
           else if ((cent > 20.0) && (cent <= 30.0))
-             centrCode = 3;   
+             centrCode = 3;
           else if ((cent > 30.0) && (cent <= 40.0))
-             centrCode = 4; 
+             centrCode = 4;
           else if ((cent > 40.0) && (cent <= 50.0))
-             centrCode = 5;  
+             centrCode = 5;
           else if ((cent > 50.0) && (cent <= 60.0))
              centrCode = 6;
           else if ((cent > 60.0) && (cent <= 70.0))
-             centrCode = 7;                     
+             centrCode = 7;
           else if ((cent > 70.0) && (cent <= 80.0))
-            centrCode = 8;  
+            centrCode = 8;
         }
       }
 
       Short_t cenAOD = centrCode;
-      
+
       if (cenAOD >= 0)
-      { 
+      {
         fCentralityDis->Fill(fCentPercentile);
         fCentDistUnitBin->Fill(fCentPercentile);
         fEventCounter->Fill(6);
@@ -2225,70 +2236,70 @@ Bool_t AliAnalysisTaskFlowPID::OldIsEventSelected(const AliAODEvent* event)
 //____________________________________________________________________
 Int_t AliAnalysisTaskFlowPID::GetTPCMult(AliVEvent* ev) const
 {
-  
+
   // function to return the tpc only multiplicity as in the flow package; it is used to cut on the event multiplcity to remove outliers in the centrality
-  
+
   Int_t multTPC = 0;
-    
+
   if (fAODAnalysis) {
-    
+
     AliAODEvent* aod = (AliAODEvent*)ev;
     const Int_t nGoodTracks = aod->GetNumberOfTracks();
-    for(Int_t iTracks = 0; iTracks < nGoodTracks; iTracks++) {     
+    for(Int_t iTracks = 0; iTracks < nGoodTracks; iTracks++) {
       AliAODTrack* trackAOD =(AliAODTrack*) aod->GetTrack(iTracks);
-      
+
       if (!trackAOD)
   continue;
-      
+
       if (!(trackAOD->TestFilterBit(1)))
   continue;
-      
+
       if ((trackAOD->Pt() < fTrackPtMin) || (trackAOD->Pt() > fTrackPtMax) || (TMath::Abs(trackAOD->Eta()) > fTrackEtaMax) || (trackAOD->GetTPCNcls() < 70)  || (trackAOD->GetDetPid()->GetTPCsignal() < 10.0) || (trackAOD->Chi2perNDF() < 0.2))
   continue;
-      
+
       multTPC++;
     }//track loop
-    
+
   }//analysis type
-  
+
   return multTPC;
 }
 
 //____________________________________________________________________
 Int_t AliAnalysisTaskFlowPID::GetGlobalMult(AliVEvent* ev) const
 {
-  
+
   // function to return the global multiplicity as in the flow package; it is used to cut on the event multiplcity to remove outliers in the centrality
-  
+
   Int_t multGlobal = 0;
   if (fAODAnalysis) {
-    
+
     AliAODEvent* aod = (AliAODEvent*)ev;
     const Int_t nGoodTracks = aod->GetNumberOfTracks();
-    for(Int_t iTracks = 0; iTracks < nGoodTracks; iTracks++) {     
+    for(Int_t iTracks = 0; iTracks < nGoodTracks; iTracks++) {
       AliAODTrack* trackAOD = (AliAODTrack*)aod->GetTrack(iTracks);
-      
+
       if (!trackAOD)
   continue;
-      
+
       if (!(trackAOD->TestFilterBit(16)))
   continue;
-      
+
       if ((trackAOD->Pt() < fTrackPtMin) || (trackAOD->Pt() > fTrackPtMax) || (TMath::Abs(trackAOD->Eta()) > fTrackEtaMax) || (trackAOD->GetTPCNcls() < 70) || (trackAOD->GetDetPid()->GetTPCsignal() < 10.0) || (trackAOD->Chi2perNDF() < 0.1))
   continue;
-      
-      
+
+
         // clone for constraining
         Double_t b[2] = { -99., -99.};
         Double_t bCov[3] = { -99., -99., -99.};
-        
+
         AliAODTrack* trackAODC = new AliAODTrack(*trackAOD);
         if (!trackAODC) {
             AliWarning("Clone of AOD track failed.");
             delete trackAODC;
             continue;
         }
-        
+
         if (!trackAODC->PropagateToDCA(aod->GetPrimaryVertex(), aod->GetMagneticField(), 100., b, bCov)){
             delete trackAODC;
             continue;
@@ -2296,15 +2307,15 @@ Int_t AliAnalysisTaskFlowPID::GetGlobalMult(AliVEvent* ev) const
             delete trackAODC;
         }
 
-        
+
       if ((TMath::Abs(b[0]) > 0.3) || (TMath::Abs(b[1]) > 0.3))
           continue;
-      
+
       multGlobal++;
     }//track loop
-    
+
   }//analysis type
-  
+
   return multGlobal;
 }
 //_____________________________________________________________________________
@@ -2314,32 +2325,32 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   // event selection criteria
 
   // Pileup rejection
-  if( fRejectPileFromSPD && event->IsPileupFromSPD(3) ) //min contributors ???    
+  if( fRejectPileFromSPD && event->IsPileupFromSPD(3) ) //min contributors ???
   {
     if(fDebug) ::Info("IsEventSelected","Event rejected: SPD pile up");
     return kFALSE;
   }
-  
+
   fEventCounter->Fill(2);
 
   // consider including plpMV pileup code from Katarina?
- 
+
   // Primary vertex criteria
   const AliAODVertex* aodVtx = event->GetPrimaryVertex();
   if(!aodVtx)
   {
-    if(fDebug > 0) 
+    if(fDebug > 0)
       ::Info("IsEventSelected","Event rejected: Primary vertex not found");
     return kFALSE;
   }
 
   Int_t iNContrib = aodVtx->GetNContributors();
-  if(iNContrib <= 0) 
-  { 
+  if(iNContrib <= 0)
+  {
     if(fDebug > 0)
     {
       ::Info("IsEventSelected","Event rejected: Low number of PV contributors");
-    } 
+    }
     return kFALSE;
   }
 
@@ -2356,7 +2367,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   const AliAODVertex* spdVtx = event->GetPrimaryVertexSPD();
   if(!spdVtx)
   {
-    if(fDebug) 
+    if(fDebug)
       ::Info("IsEventSelected","Event rejected: SPD vertex not found");
     return kFALSE;
   }
@@ -2364,7 +2375,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   Int_t iNContribSPD = spdVtx->GetNContributors();
   if(iNContribSPD <= 0)
   {
-    if(fDebug) 
+    if(fDebug)
       ::Info("IsEventSelected","Event rejected: Low number of SPD contributors");
     return kFALSE;
   }
@@ -2373,16 +2384,16 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   const Double_t spdVtxZ = spdVtx->GetZ();
   if(TMath::Abs(aodVtxZ - spdVtxZ) > 0.5)
   {
-    if(fDebug) 
+    if(fDebug)
       ::Info("IsEventSelected","Event rejected: High z-distance diference between AOD and SPD vertex");
     return kFALSE;
-  } 
+  }
 
   fEventCounter->Fill(4);
 
   if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
   {
-    if(fDebug) 
+    if(fDebug)
       ::Info("IsEventSelected","Event rejected: PV z-distance cut");
     return kFALSE;
   }
@@ -2390,14 +2401,14 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelected(const AliAODEvent* event)
   fEventCounter->Fill(5);
 
   // centrality rejection
-  
+
   if(fPbPb)
   {
     EstimateCentrality(fAOD);
     if (fCentBinIndex < 0 || fCentBinIndex > fNumCentBins || fCentPercentile < 0 || fCentPercentile > 80)
       return kFALSE;
   }
-  
+
   fCentralityDis->Fill(fCentPercentile);
   fCentDistUnitBin->Fill(fCentPercentile);
   fEventCounter->Fill(6);
@@ -2409,14 +2420,14 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 {
 //  TString sEventCounterLabel[] = {"Input","AOD OK","Pile-up OK","PV OK","SPD Vtx OK","PV #it{z} OK","Centrality OK","At least 2 selected tracks","At least 1 V0 candidate"};
   if(!fPP && !fPPb) // not pp or pPb analysis
-    return kFALSE;   
+    return kFALSE;
 
   if(!event) // not valid event
-    return kFALSE;   
-  
+    return kFALSE;
 
-  if(!fAODAnalysis) // not impelemted for ESD 
-    return kFALSE; 
+
+  if(!fAODAnalysis) // not impelemted for ESD
+    return kFALSE;
 
   //fEventCounter->Fill("AOD OK",1);
 
@@ -2451,20 +2462,20 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
   }
 
   Bool_t isTriggerSelected = kFALSE;
-  
+
   switch(fTrigger) // check for high multiplicity trigger
   {
-    case 0: 
-      isTriggerSelected = fSelectMask& AliVEvent::kINT7; 
+    case 0:
+      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
       break;
 
     case 1:
-      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0; 
+      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
       break;
 
-    case 2: isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD; break;    
-    default: isTriggerSelected = kFALSE; 
-  } 
+    case 2: isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD; break;
+    default: isTriggerSelected = kFALSE;
+  }
 
   if(!isTriggerSelected)
     return kFALSE;
@@ -2502,7 +2513,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 
   // SPD vertex selection
   const AliAODVertex* vtxSPD = dynamic_cast<const AliAODVertex*>(event->GetPrimaryVertexSPD());
-  
+
   Double_t dMaxResol = 0.25; // suggested from DPG
   Double_t cov[6] = {0};
   vtxSPD->GetCovarianceMatrix(cov);
@@ -2516,14 +2527,14 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
 
   // PileUp rejection included in Physics selection
   // but with values for high mult pp (> 5 contrib) => for low ones: do manually (> 3 contrib)
-  
+
   /*
   if(fTrigger == 0 && fAOD->IsPileupFromSPD(3,0.8) )
   {
     return kFALSE;
   }
   */
-  
+
   fEventCounter->Fill("Pileup SPD OK",1);
 
   // pileup rejection from multivertexer
@@ -2533,15 +2544,42 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
   utils.SetMinWDistMV(15);
   utils.SetCheckPlpFromDifferentBCMV(kFALSE);
   Bool_t isPileupFromMV = utils.IsPileUpMV(event);
-  
+
   if(isPileupFromMV)
   {
     return kFALSE;
   }
-  
+
   fEventCounter->Fill("Pileup MV OK",1);
 
-  // cutting on PV z-distance 
+  if(fRejectOutOfBunchPU) // out-of-bunch rejection (provided by Christian)
+  {
+    //out-of-bunch 11 BC
+    if (utils.IsOutOfBunchPileUp(event)
+    {
+      return kFALSE;
+    }
+    fEventCounter->Fill("OOBPU OK",1);
+
+    if (utils.IsSPDClusterVsTrackletBG(event)
+    {
+      return kFALSE;
+    }
+
+    fEventCounter->Fill("SPDClTrBG OK",1);
+
+    // SPD pileup
+    if (utils.IsPileUpSPD(event)
+    {
+      return kFALSE;
+    }
+
+    fEventCounter->Fill("SPDPU OK",1);
+  }
+
+  fEventCounter->Fill("Utils OK",1);
+
+  // cutting on PV z-distance
   const Double_t aodVtxZ = vtx->GetZ();
   if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
   {
@@ -2550,14 +2588,14 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
   fEventCounter->Fill("PV #it{z} OK",1);
 
   // centrality estimation (pPb analysis)
-  
+
   if(fPPb)
   {
-    Float_t lPercentile = 300; 
-    AliMultSelection* MultSelection = 0x0; 
+    Float_t lPercentile = 300;
+    AliMultSelection* MultSelection = 0x0;
     MultSelection = (AliMultSelection*) event->FindListObject("MultSelection");
-    
-    if( !MultSelection ) 
+
+    if( !MultSelection )
     {
       //If you get this warning (and lPercentiles 300) please check that the AliMultSelectionTask actually ran (before your task)
       ::Warning("IsEventSelectedPP","AliMultSelection object not found!");
@@ -2568,9 +2606,9 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
     }
 
     fCentPercentile = lPercentile;
-    
+
   }
-  
+
 
 
  	return kTRUE;
@@ -2587,16 +2625,16 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track, const B
   {
     return kFALSE;
   }
-  
+
   fTracksCounter->Fill("Track OK",1);
 
   if(!bTestFB)
   {
-    if( !track->TestFilterBit(fTrackFilterBit) ) 
+    if( !track->TestFilterBit(fTrackFilterBit) )
     {
       return kFALSE;
-    }    
-  
+    }
+
     fTracksCounter->Fill("FB OK",1);
   }
 
@@ -2621,7 +2659,7 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track, const B
   {
     return kFALSE;
   }
-  
+
   fTracksCounter->Fill("Pt OK",1);
 
   if( fTracksDCAzMax > 0. && TMath::Abs(track->ZAtDCA()) > fTracksDCAzMax)
@@ -2659,13 +2697,13 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackPion(const AliAODTrack* track)
   if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
     return kFALSE;
 
-  fPionsCounter->Fill(3); // TOF && TPC PID OK 
+  fPionsCounter->Fill(3); // TOF && TPC PID OK
 
   dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
   dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion);
 
   Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
-  
+
   if(dNumSigmaCombined >= fCutPionNumSigmaMax)
   {
     return kFALSE;
@@ -2698,13 +2736,13 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackKaon(const AliAODTrack* track)
   if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
     return kFALSE;
 
-  fKaonsCounter->Fill(3); // TOF && TPC PID OK 
+  fKaonsCounter->Fill(3); // TOF && TPC PID OK
 
   dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
   dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
 
   Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
-  
+
   if(dNumSigmaCombined >= fCutKaonNumSigmaMax)
   {
     return kFALSE;
@@ -2738,13 +2776,13 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackProton(const AliAODTrack* track)
   if( pidStatusTOF != AliPIDResponse::kDetPidOk || pidStatusTPC != AliPIDResponse::kDetPidOk)
     return kFALSE;
 
-  fProtonsCounter->Fill(3); // TOF && TPC PID OK 
+  fProtonsCounter->Fill(3); // TOF && TPC PID OK
 
   dNumSigmaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
   dNumSigmaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton);
 
   Float_t dNumSigmaCombined = TMath::Sqrt(TMath::Power(dNumSigmaTOF,2) + TMath::Power(dNumSigmaTPC,2));
-  
+
   if(dNumSigmaCombined >= fCutProtonNumSigmaMax)
   {
     return kFALSE;
@@ -2780,9 +2818,9 @@ void AliAnalysisTaskFlowPID::ScanTracks()
         fTracksScanPt->Fill(Form("%d",iFB),track->Pt(), 1.);
         fTracksScanPhi->Fill(Form("%d",iFB),track->Phi(),1.);
         fTracksScanEta->Fill(Form("%d",iFB),track->Eta(),1.);
-        
+
         fTracksScanCounter->Fill(Form("%d",iFB),"All",1.);
-        
+
         if(IsTrackSelected(track,kTRUE)) // without testing FB for scanning purpose
           fTracksScanCounter->Fill(Form("%d",iFB),"Selected",1.);
 
@@ -2801,7 +2839,7 @@ void AliAnalysisTaskFlowPID::ScanTracks()
         if(fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF,track) == AliPIDResponse::kDetPidOk) // checking TOF
           fTracksScanCounter->Fill(Form("%d",iFB),"TOF PID OK",1.);
 
-      } 
+      }
     }
   } // end of loop over tracks
 
@@ -2826,7 +2864,7 @@ void AliAnalysisTaskFlowPID::FilterTracks()
       return;
 
     track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));
-    
+
     if(!track)
       continue;
 
@@ -2834,7 +2872,7 @@ void AliAnalysisTaskFlowPID::FilterTracks()
     FillTrackQA(track,0); // tracks QA before cuts
 
     if(IsTrackSelected(track))
-    {  
+    {
       // (ref.) tracks passing all criteria
       new(fArrTracksFiltered[iNumSelected]) AliAODTrack(*track);
       iNumSelected++;
@@ -2857,9 +2895,9 @@ void AliAnalysisTaskFlowPID::FilterTracks()
       fCentralityDis->Fill(fCentPercentile);
       fCentDistUnitBin->Fill(fCentPercentile);
     }
-  } 
+  }
 
-  
+
   return;
 }
 //_____________________________________________________________________________
@@ -2900,12 +2938,12 @@ void AliAnalysisTaskFlowPID::FilterPIDTracks()
       fPionsPhi->Fill(track->Phi());
       fPionsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kPion) );
       fPionsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
-      
+
       track->GetIntegratedTimes(dTOF);
       dBetaTOF = dTOF[0] / track->GetTOFsignal();
       fPionsTOFbeta->Fill(track->P(), dBetaTOF);
     }
-    
+
     if(IsTrackKaon(track))
     {
       bIsEither = kTRUE;
@@ -2917,13 +2955,13 @@ void AliAnalysisTaskFlowPID::FilterPIDTracks()
       fKaonsPhi->Fill(track->Phi());
       fKaonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kKaon) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kKaon) );
       fKaonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
-      
+
       track->GetIntegratedTimes(dTOF);
       dBetaTOF = dTOF[0] / track->GetTOFsignal();
       fKaonsTOFbeta->Fill(track->P(), dBetaTOF);
 
     }
-    
+
     if(IsTrackProton(track))
     {
       bIsEither = kTRUE;
@@ -2935,7 +2973,7 @@ void AliAnalysisTaskFlowPID::FilterPIDTracks()
       fProtonsPhi->Fill(track->Phi());
       fProtonsNsigmasTPCTOF->Fill( fPIDResponse->NumberOfSigmasTPC(track,AliPID::kProton) , fPIDResponse->NumberOfSigmasTOF(track,AliPID::kProton) );
       fProtonsTPCdEdx->Fill(track->P(),track->GetTPCsignal());
-      
+
       track->GetIntegratedTimes(dTOF);
       dBetaTOF = dTOF[0] / track->GetTOFsignal();
       fProtonsTOFbeta->Fill(track->P(), dBetaTOF);
@@ -2985,7 +3023,7 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
     track = static_cast<AliAODTrack*>(fArrTracksFiltered.At(i));
 
     FillPIDQA(track,0);
-    
+
     bIsPion = kFALSE;
     bIsKaon = kFALSE;
     bIsProton = kFALSE;
@@ -3004,13 +3042,13 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
 
     if(dPropPID[4] > fCutBayesPIDProtonMin) // is Proton?
       bIsProton = kTRUE;
-    
+
     //printf("PID: pion %g (%d) / kaon %g (%d) / proton %g (%d) \n", dPropPID[2], bIsPion, dPropPID[3], bIsKaon, dPropPID[4], bIsProton);
 
     if(bIsTOF)
     {
       track->GetIntegratedTimes(dTOF);
-      dBetaTOF = dTOF[0] / track->GetTOFsignal(); 
+      dBetaTOF = dTOF[0] / track->GetTOFsignal();
     }
 
     if(bIsPion)
@@ -3032,7 +3070,7 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       if(bIsTOF)
         fPionsTOFbeta->Fill(track->P(), dBetaTOF);
     }
-    
+
     if(bIsKaon)
     {
       bIsEither = kTRUE;
@@ -3048,12 +3086,12 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
       fKaonsBayesAsKaon->Fill(dPropPID[3]);
       fKaonsBayesAsProton->Fill(dPropPID[4]);
       fKaonsBayes->Fill(dPropPID[2],dPropPID[3],dPropPID[4]);
-      
+
       if(bIsTOF)
         fKaonsTOFbeta->Fill(track->P(), dBetaTOF);
 
     }
-    
+
     if(bIsProton)
     {
       bIsEither = kTRUE;
@@ -3077,7 +3115,7 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
     if(bIsEither) // either PID as pi,K or p
     {
       FillPIDQA(track,1);
-        
+
       if(!bIsTOF) // if no TOF information
         fQAPIDTOFbetaNoTOF->Fill(track->P(), dBetaTOF);
     }
@@ -3093,7 +3131,7 @@ void AliAnalysisTaskFlowPID::FilterPIDTracksBayesPID()
 void AliAnalysisTaskFlowPID::FilterV0s()
 {
   const Int_t iNumV0s = fAOD->GetNumberOfV0s();
-  Int_t iNumK0sSelected = 0, iNumLambdaSelected = 0, iNumALambdaSelected = 0; 
+  Int_t iNumK0sSelected = 0, iNumLambdaSelected = 0, iNumALambdaSelected = 0;
 
   if(iNumV0s < 1)
     return;
@@ -3102,24 +3140,24 @@ void AliAnalysisTaskFlowPID::FilterV0s()
   for(Int_t i(0); i < iNumV0s; i++)
   {
     if(iNumK0sSelected >= 5000 || iNumLambdaSelected >= 5000 || iNumALambdaSelected >= 5000) // checking TClonesArray overflow
-      return; 
+      return;
 
     v0 = static_cast<AliAODv0*>(fAOD->GetV0(i));
-    
+
     if(!v0)
       continue;
 
     fV0candK0s = kTRUE;
     fV0candLambda = kTRUE;
-    fV0candALambda = kTRUE;     
+    fV0candALambda = kTRUE;
 
     FillV0sQA(v0,0); // Filling QA histograms 'Before cuts' for V0s in selected events
-  
+
     if(!IsV0Selected(v0))
       continue;
 
     // !!! after this point value of V0s flags (fV0cand...) should not be changed !!!
-    
+
     FillV0sQA(v0,1); // Filling QA histos after cuts
 
     // Filling the Arrays
@@ -3133,7 +3171,7 @@ void AliAnalysisTaskFlowPID::FilterV0s()
     {
       new(fArrV0sLambdaFiltered[iNumLambdaSelected]) AliAODv0(*v0);
       iNumLambdaSelected++;
-    }    
+    }
 
     if(fV0candALambda)
     {
@@ -3146,7 +3184,7 @@ void AliAnalysisTaskFlowPID::FilterV0s()
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
-{ 
+{
 	Short_t iCounterIndex = 1;
 
   // invalid V0 pointer
@@ -3186,7 +3224,7 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   if(GetPtBinIndex(v0->Pt()) == -1) // check if the Pt is withing range of interest (histos binning)
     return kFALSE;
 
-  if( fCutV0MotherPtMin > 0. && (v0->Pt() < fCutV0MotherPtMin) ) 
+  if( fCutV0MotherPtMin > 0. && (v0->Pt() < fCutV0MotherPtMin) )
   {
     return kFALSE;
   }
@@ -3201,7 +3239,7 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
 
   // radius of decay vertex in transverse plane
   Double_t dSecVtxCoor[3] = {0};
-  v0->GetSecondaryVtx(dSecVtxCoor);  
+  v0->GetSecondaryVtx(dSecVtxCoor);
   Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
   if( fCutV0MinDecayRadius > 0. && (dDecayRadius < fCutV0MinDecayRadius) )
   {
@@ -3245,9 +3283,9 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
     //::Warning("IsV0Selected","Bad charge!");
     return kFALSE;
   }
-  fQAV0sCounter->Fill(iCounterIndex); // daughter charge 
+  fQAV0sCounter->Fill(iCounterIndex); // daughter charge
   iCounterIndex++;
-  
+
   if( fCutV0DaughterPtMin > 0. && ( (trackDaughterNeg->Pt() < fCutV0DaughterPtMin) || (trackDaughterPos->Pt() < fCutV0DaughterPtMin) ) )
   {
     return kFALSE;
@@ -3261,7 +3299,7 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   iCounterIndex++;
 
 
-  // Daughters DCA to PV 
+  // Daughters DCA to PV
   Double_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
   Double_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
   if(fCutV0MinDCAtoPV > 0. && ( dDCAPosToPV < fCutV0MinDCAtoPV || dDCANegToPV < fCutV0MinDCAtoPV ) )
@@ -3303,27 +3341,27 @@ Bool_t AliAnalysisTaskFlowPID::IsV0Selected(const AliAODv0* v0)
   }
 
   fQAV0sCounter->Fill(iCounterIndex); // Selected (K0s or Lambda candidates)
-  iCounterIndex++; 
+  iCounterIndex++;
 
   if(fV0candK0s)
 		fQAV0sCounter->Fill(iCounterIndex); // K0s candidate
-  
-  iCounterIndex++; 
+
+  iCounterIndex++;
 
   if(fV0candLambda)
     fQAV0sCounter->Fill(iCounterIndex); // Lambda candidate
-  
-  iCounterIndex++; 
+
+  iCounterIndex++;
 
   if(fV0candALambda)
 		fQAV0sCounter->Fill(iCounterIndex); // ALambda candidate
-  
-  iCounterIndex++; 
+
+  iCounterIndex++;
 
   if(fV0candLambda && fV0candALambda)
     fQAV0sCounter->Fill(iCounterIndex); // Lambda AND ALambda candidate
-  
-  iCounterIndex++; 
+
+  iCounterIndex++;
 
   if(fV0candK0s && (fV0candLambda || fV0candALambda))
     fQAV0sCounter->Fill(iCounterIndex); //  K0s AND (Lambda OR ALambda) candidates
@@ -3347,7 +3385,7 @@ void AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
     ::Warning("IsV0aK0s","Invalid V0 pointer!");
     fV0candK0s = kFALSE;
     return;
-  } 
+  }
 
   fQAV0sCounterK0s->Fill(iCounterIndex); // input
   iCounterIndex++;
@@ -3387,7 +3425,7 @@ void AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
   iCounterIndex++;
 
   // proper life-time
-  
+
   if( fCutV0NumTauK0sMax > 0. )
   {
     Double_t dPrimVtxCoor[3] = {0}; // primary vertex position {x,y,z}
@@ -3409,12 +3447,12 @@ void AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
       fV0candK0s = kFALSE;
       return;
     }
-  }  
+  }
 
   fQAV0sCounterK0s->Fill(iCounterIndex); // Proper lifetime
   iCounterIndex++;
 
-  
+
   // Armenteros-Podolaski plot
   if(fCutV0K0sArmenterosAlphaMin > 0.)
   {
@@ -3424,7 +3462,7 @@ void AliAnalysisTaskFlowPID::IsV0aK0s(const AliAODv0* v0)
     {
       fV0candK0s = kFALSE;
       return;
-    }    
+    }
   }
 
   fQAV0sCounterK0s->Fill(iCounterIndex); // Armernteros Podolanski
@@ -3516,8 +3554,8 @@ void AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
       fV0candALambda = kFALSE;
       return;
     }
-  }  
- 
+  }
+
   fQAV0sCounterLambda->Fill(iCounterIndex); // proper life-time
   iCounterIndex++;
 
@@ -3529,15 +3567,15 @@ void AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
 
   	Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
   	Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
-    
+
     if(fV0candLambda && (trackDaughterPos->Pt() < fCutV0ProtonPIDPtMax) && (dSigmaProtPos > fCutV0ProtonNumSigmaMax)) // positive daughter is not a proton (within TPC sigmas)
     {
-      fV0candLambda = kFALSE;    
+      fV0candLambda = kFALSE;
     }
-    
+
     if(fV0candALambda && (trackDaughterNeg->Pt() < fCutV0ProtonPIDPtMax) && (dSigmaProtNeg > fCutV0ProtonNumSigmaMax)) // negative daughter is not a proton (within TPC sigmas)
     {
-      fV0candALambda = kFALSE;    
+      fV0candALambda = kFALSE;
     }
 
     if(!fV0candLambda && !fV0candALambda)
@@ -3555,7 +3593,7 @@ void AliAnalysisTaskFlowPID::IsV0aLambda(const AliAODv0* v0)
   iCounterIndex++;
 
   return;
-}              
+}
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FillEventQA(const AliAODEvent* event, const Short_t iQAindex)
 {
@@ -3578,12 +3616,12 @@ void AliAnalysisTaskFlowPID::FillEventQA(const AliAODEvent* event, const Short_t
     AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
     AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
     UInt_t fSelectMask = inputHandler->IsEventSelected();
-  
+
     if( fSelectMask& AliVEvent::kINT7 ) { fQAEventsTriggerSelection[iQAindex]->Fill("kINT7",1); }
     else if (fSelectMask& AliVEvent::kHighMultV0) { fQAEventsTriggerSelection[iQAindex]->Fill("kHighMultV0",1); }
     else if (fSelectMask& AliVEvent::kHighMultSPD) { fQAEventsTriggerSelection[iQAindex]->Fill("kHighMultSPD",1); }
     else { fQAEventsTriggerSelection[iQAindex]->Fill("Other",1); }
-    
+
     // SPD vertexer resolution
     Double_t cov[6] = {0};
     spdVtx->GetCovarianceMatrix(cov);
@@ -3591,7 +3629,7 @@ void AliAnalysisTaskFlowPID::FillEventQA(const AliAODEvent* event, const Short_t
     fQAEventsSPDresol[iQAindex]->Fill(zRes);
   }
 
-	return; 
+	return;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FillTrackQA(const AliAODTrack* track, const Short_t iQAindex)
@@ -3626,9 +3664,9 @@ void AliAnalysisTaskFlowPID::FillTrackQA(const AliAODTrack* track, const Short_t
     fQATracksTPCdEdx[iQAindex]->Fill(track->P(), track->GetTPCsignal());
     //printf("signal TPC (in OK) %g\n",track->GetTPCsignal());
   }
-  
+
   Bool_t bIsTOF = (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME); // checking TOF
-  
+
   if(bIsTOF)
   {
     fQATracksTOF[iQAindex]->Fill(track->P(), track->GetTOFsignal()/1000);
@@ -3638,16 +3676,16 @@ void AliAnalysisTaskFlowPID::FillTrackQA(const AliAODTrack* track, const Short_t
     Double_t dBetaTOF = dTOF[0] / track->GetTOFsignal();
     fQATracksTOFbeta[iQAindex]->Fill(track->P(),dBetaTOF);
   }
-}  
+}
 //_____________________________________________________________________________
 void AliAnalysisTaskFlowPID::FillPIDQA(const AliAODTrack* track, const Short_t iQAindex)
 {
   Double_t dTOF[5] = {-990};
-  
+
   Double_t dBetaTOF = 0.001;
 
   Bool_t bIsTOF = (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME); // checking TOF
-  
+
   if(bIsTOF)
   {
     track->GetIntegratedTimes(dTOF);
@@ -3665,7 +3703,7 @@ void AliAnalysisTaskFlowPID::FillPIDQA(const AliAODTrack* track, const Short_t i
   fQAPIDNsigmasTPCasPion[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kPion));
   fQAPIDNsigmasTPCasKaon[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kKaon));
   fQAPIDNsigmasTPCasProton[iQAindex]->Fill(track->P(),fPIDResponse->NumberOfSigmasTPC(track,AliPID::kProton));
-   
+
   // Fill bayes probability
   Double_t dPropPID[5] = {0};
   UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dPropPID);
@@ -3680,7 +3718,7 @@ void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAinde
 	const Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
 	const Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
 	AliAODVertex* primVtx = fAOD->GetPrimaryVertex();
-  
+
 	Double_t dPrimVtxCoor[3] = {0};
 	primVtx->GetXYZ(dPrimVtxCoor);
 
@@ -3692,39 +3730,39 @@ void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAinde
 	Double_t dPropLife = 0;
 
 	// universal cuts
-	
+
 	for(Int_t i(0); i < 2; i++) // daughters loop
 	{
 		trackDaughter[i] = (AliAODTrack*) v0->GetDaughter(i);
 		if(!trackDaughter[i])
 			continue;
 
-		fQAV0sTPCRefit[iQAindex]->Fill(trackDaughter[i]->IsOn(AliAODTrack::kTPCrefit));	
-    fQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt()); 
-		fQAV0sDaughterPhi[iQAindex]->Fill(trackDaughter[i]->Phi());	
-		fQAV0sDaughterEta[iQAindex]->Fill(trackDaughter[i]->Eta());	
-		
+		fQAV0sTPCRefit[iQAindex]->Fill(trackDaughter[i]->IsOn(AliAODTrack::kTPCrefit));
+    fQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt());
+		fQAV0sDaughterPhi[iQAindex]->Fill(trackDaughter[i]->Phi());
+		fQAV0sDaughterEta[iQAindex]->Fill(trackDaughter[i]->Eta());
+
 		// kinks
 		prodVtxDaughter[i] = (AliAODVertex*) trackDaughter[i]->GetProdVertex();
-		fQAV0sKinks[iQAindex]->Fill( (prodVtxDaughter[i]->GetType() == AliAODVertex::kKink) );	
+		fQAV0sKinks[iQAindex]->Fill( (prodVtxDaughter[i]->GetType() == AliAODVertex::kKink) );
 
     // TPC dEdx
     fQAV0sDaughterTPCdEdxPt[iQAindex]->Fill(trackDaughter[i]->Pt(),fTPCPIDResponse.GetTrackdEdx(trackDaughter[i]));
 	}
 
-	fQAV0sRecoMethod[iQAindex]->Fill(v0->GetOnFlyStatus());	
-  fQAV0sMotherPt[iQAindex]->Fill(v0->Pt()); 
-	fQAV0sMotherPhi[iQAindex]->Fill(v0->Phi());	
-	fQAV0sMotherEta[iQAindex]->Fill(v0->Eta());	
-	fQAV0sDCADaughters[iQAindex]->Fill(TMath::Abs(v0->DcaV0Daughters()));			
-	fQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaPosToPrimVertex());	
+	fQAV0sRecoMethod[iQAindex]->Fill(v0->GetOnFlyStatus());
+  fQAV0sMotherPt[iQAindex]->Fill(v0->Pt());
+	fQAV0sMotherPhi[iQAindex]->Fill(v0->Phi());
+	fQAV0sMotherEta[iQAindex]->Fill(v0->Eta());
+	fQAV0sDCADaughters[iQAindex]->Fill(TMath::Abs(v0->DcaV0Daughters()));
+	fQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaPosToPrimVertex());
 	fQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaNegToPrimVertex());
 
 	//Decay radius
-	v0->GetSecondaryVtx(dSecVtxCoor);  
+	v0->GetSecondaryVtx(dSecVtxCoor);
 	dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
-	fQAV0sDecayRadius[iQAindex]->Fill(dDecayRadius);	
-	
+	fQAV0sDecayRadius[iQAindex]->Fill(dDecayRadius);
+
 
 	for(Int_t i(0); i < 2; i++)
   {
@@ -3736,9 +3774,9 @@ void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAinde
 	{
 		fQAV0sMotherRapK0s[iQAindex]->Fill(v0->RapK0Short());
 		fQAV0sInvMassK0s[iQAindex]->Fill(v0->MassK0Short());
-    fQAV0sCPAK0s[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
+    fQAV0sCPAK0s[iQAindex]->Fill(v0->CosPointingAngle(primVtx));
 		dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
-		fQAV0sNumTauK0s[iQAindex]->Fill(dPropLife);	
+		fQAV0sNumTauK0s[iQAindex]->Fill(dPropLife);
 		fQAV0sArmenterosK0s[iQAindex]->Fill(v0->AlphaV0(),v0->PtArmV0());
 	}
 
@@ -3752,7 +3790,7 @@ void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAinde
         fQAV0sProtonNumSigmaPtLambda[iQAindex]->Fill(trackDaughter[0]->Pt(),TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughter[0], AliPID::kProton)));
       }
     }
-    
+
     if(fV0candALambda)
     {
       fQAV0sInvMassLambda[iQAindex]->Fill(v0->MassAntiLambda());
@@ -3764,9 +3802,9 @@ void AliAnalysisTaskFlowPID::FillV0sQA(const AliAODv0* v0, const Short_t iQAinde
     }
 
     fQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
-		fQAV0sCPALambda[iQAindex]->Fill(v0->CosPointingAngle(primVtx));	
+		fQAV0sCPALambda[iQAindex]->Fill(v0->CosPointingAngle(primVtx));
 		dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
-		fQAV0sNumTauLambda[iQAindex]->Fill(dPropLife);	
+		fQAV0sNumTauLambda[iQAindex]->Fill(dPropLife);
 		fQAV0sArmenterosLambda[iQAindex]->Fill(v0->AlphaV0(),v0->PtArmV0());
 	}
 }
@@ -3776,13 +3814,13 @@ void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)
   Short_t centrCode = -1;
   Float_t lPercentile = -100;
   Float_t V0M_Cent = -100, SPD_Cent = -100;
-  
+
   if (fAODAnalysis)
   {
     AliAODEvent* aod = (AliAODEvent*) ev;
     AliMultSelection* MultSelection = 0;
     MultSelection = (AliMultSelection*) aod->FindListObject("MultSelection");
-    
+
 
     if(!MultSelection)
     {
@@ -3800,26 +3838,26 @@ void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)
 
       if(fCentFlag == 0)
         lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
-      
+
       if(fCentFlag == 1)
         lPercentile = MultSelection->GetMultiplicityPercentile("CL0");
-      
+
       if(fCentFlag == 2)
         lPercentile = MultSelection->GetMultiplicityPercentile("CL1");
-      
+
       V0M_Cent = MultSelection->GetMultiplicityPercentile("V0M");
-      SPD_Cent = MultSelection->GetMultiplicityPercentile("CL1");   
+      SPD_Cent = MultSelection->GetMultiplicityPercentile("CL1");
     }
   }
 
   fCentSPDvsV0M->Fill(V0M_Cent, SPD_Cent);
-  
+
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     if( (lPercentile > fCentBinEdges[i]) && (lPercentile <= fCentBinEdges[i+1]) )
       centrCode = i;
   }
-  
+
   if(centrCode > fNumCentBins)
   {
     fCentPercentile = -100.;
@@ -3836,7 +3874,7 @@ void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)
     {
       fCentPercentile = -100.;
       fCentBinIndex = -1;
-      return;      
+      return;
     }
 
     if( (fCentBinIndex == 0) && !(TMath::Abs(V0M_Cent - SPD_Cent) < 1) ) // 10h check for 0-5% centrality
@@ -3853,13 +3891,13 @@ void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)
       return;
     }
   }
-  
+
   return;
 
   /*
   if (fLHC10h) {
       if (lPercentile <= 80 && lPercentile > 0 && TMath::Abs(V0M_Cent - SPD_Cent) < 5)
-      {  
+      {
         if ((lPercentile > 0) && (lPercentile <= 5.0) && (TMath::Abs(V0M_Cent - SPD_Cent) < 1))
           centrCode = 0;
         else if ((lPercentile > 5.0) && (lPercentile <= 10.0) && (TMath::Abs(V0M_Cent - SPD_Cent) < 1))
@@ -3880,7 +3918,7 @@ void AliAnalysisTaskFlowPID::EstimateCentrality(AliVEvent* ev)
           centrCode = 8;
         else if ((lPercentile > 80.0) && (lPercentile <= 90.0))
           centrCode = 9;
-    }   
+    }
   }
   return centrCode;
   */
@@ -3915,7 +3953,7 @@ Bool_t AliAnalysisTaskFlowPID::plpMV(const AliVEvent *event)
             vtPrm = esd->GetPrimaryVertexTracks();
             if (((AliESDVertex*)vtPrm)->GetStatus()!=1) return kTRUE; // there are pile-up vertices but no primary
         }
-        
+
         //int bcPrim = vtPrm->GetBC();
         //
         for (int ipl=0;ipl<nPlp;ipl++) {
@@ -3937,7 +3975,7 @@ Bool_t AliAnalysisTaskFlowPID::plpMV(const AliVEvent *event)
 }
 //_____________________________________________________________________________
 Double_t AliAnalysisTaskFlowPID::GetWDist(const AliVVertex* v0, const AliVVertex* v1)    {
-        
+
         // calculate sqrt of weighted distance to other vertex
         if (!v0 || !v1) {
             printf("One of vertices is not valid\n");
@@ -3961,7 +3999,7 @@ Double_t AliAnalysisTaskFlowPID::GetWDist(const AliVVertex* v0, const AliVVertex
         dist = vVb(0,0)*dx*dx + vVb(1,1)*dy*dy + vVb(2,2)*dz*dz
         +    2*vVb(0,1)*dx*dy + 2*vVb(0,2)*dx*dz + 2*vVb(1,2)*dy*dz;
         return dist>0 ? TMath::Sqrt(dist) : -1;
-        
+
 }
 //_____________________________________________________________________________
 Short_t AliAnalysisTaskFlowPID::GetPtBinIndex(const Double_t dPt)
@@ -3981,7 +4019,7 @@ Short_t AliAnalysisTaskFlowPID::GetCentBinIndexPP(const Int_t iMult)
   {
     ::Error("GetCentBinIndexPP","Not a pp analysis! Returning -1!");
     return -1;
-  }  
+  }
   for(Int_t i(0); i < fNumCentBins; i++)
   {
     if( (iMult >= fCentBinEdges[i]) && (iMult < fCentBinEdges[i+1]) )
@@ -4029,14 +4067,14 @@ void AliAnalysisTaskFlowPID::DoGenFramKatarina()
     dEtaGap = fEtaGap[iEtaGap];
 
     GFKFillRefVectors(fArrTracksFiltered,dEtaGap);
-   
+
     for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
     {
       GFKDoRefFlow(fcn2Tracks[iEtaGap][iHarm][fSampleBinIndex],fcn4Tracks[iEtaGap][iHarm][fSampleBinIndex],fHarmonics[iHarm],dEtaGap);
     }
-    
+
     //printf("Diff flow \n");
-    // Diff flow 
+    // Diff flow
     if(fDiffFlow)
     {
       for(Int_t iPt(0); iPt < fNumPtBins; iPt++)
@@ -4077,39 +4115,39 @@ void AliAnalysisTaskFlowPID::DoGenFramKatarina()
           for(Int_t iMass(0); iMass < fNumMinvFlowBinsK0s; iMass++)
           {
             dMass = (fMinvFlowBinEdgesK0s[iMass+1]+fMinvFlowBinEdgesK0s[iMass])/2;
-            //printf("fill Kos pre Gap %g pT %d \n",dEtaGap,iPt);  
+            //printf("fill Kos pre Gap %g pT %d \n",dEtaGap,iPt);
             GFKFillVectors(fArrV0sK0sFiltered,iEtaGap,iPt,1,iMass);
-            //printf("fill Kos post\n");  
+            //printf("fill Kos post\n");
 
             for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
             {
-              GFKDoDiffFlowV0s(fdn2K0s[0][iEtaGap][iHarm][fCentBinIndex],fdn2K0s[1][iEtaGap][iHarm][fCentBinIndex],fdn4K0s[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
+              GFKDoDiffFlowV0s(fdn2K0s[0][iEtaGap][iHarm][fCentBinIndex],fdn2K0s[1][iEtaGap][iHarm][fCentBinIndex],fdn4K0s[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass);
             }
           }
-          
+
           //Lambda
           for(Int_t iMass(0); iMass < fNumMinvFlowBinsLambda; iMass++)
           {
             dMass = (fMinvFlowBinEdgesLambda[iMass+1]+fMinvFlowBinEdgesLambda[iMass])/2;
-            
+
             // filling Lambda
             GFKFillVectors(fArrV0sLambdaFiltered,iEtaGap,iPt,2,iMass);
             for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
             {
-              GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
+              GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass);
             }
-            
+
             //Filling antilambdas
             GFKFillVectors(fArrV0sALambdaFiltered,iEtaGap,iPt,3,iMass);
             for(Int_t iHarm = 0; iHarm < fNumHarmonics; iHarm++)
             {
-              GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass); 
+              GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass);
             }
-          }    
+          }
         } // end of DoPID flag
-        
-      } // end of pT bins loop  
-       
+
+      } // end of pT bins loop
+
     } // end of DoDiffFlow flag
 
   } // end of loop over eta gaps
@@ -4124,13 +4162,13 @@ void AliAnalysisTaskFlowPID::GFKFillRefVectors(TClonesArray &array,const Double_
 
   double weight = 1.;
   const Double_t dEtaGapCut = dEtaGap / 2; // eta cut limit for RFPs
-  
+
   Double_t Qcos[fMaxNumHarmonics][fMaxNumWeights] = {0};
   Double_t Qsin[fMaxNumHarmonics][fMaxNumWeights] = {0};
   Double_t QcosGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights] = {0};
   Double_t QsinGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights] = {0};
-  
-  AliAODTrack* aodTrk = 0x0;  
+
+  AliAODTrack* aodTrk = 0x0;
   Double_t dEta = 0;
   //Refs
   for(Int_t i(0); i < array.GetEntriesFast(); i++)
@@ -4142,7 +4180,7 @@ void AliAnalysisTaskFlowPID::GFKFillRefVectors(TClonesArray &array,const Double_
     {
       for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
       {
-        if(dEtaGap < 0.) // with no gap -> only positive quantities are filled 
+        if(dEtaGap < 0.) // with no gap -> only positive quantities are filled
         {
           Qcos[iharm][ipow] += TMath::Power(weight, ipow)*TMath::Cos(iharm*aodTrk->Phi());
           Qsin[iharm][ipow] += TMath::Power(weight, ipow)*TMath::Sin(iharm*aodTrk->Phi());
@@ -4163,14 +4201,14 @@ void AliAnalysisTaskFlowPID::GFKFillRefVectors(TClonesArray &array,const Double_
         }
       }
     }
-  } // end of loop over particles 
-  
+  } // end of loop over particles
+
   for(Int_t iharm = 0; iharm < fMaxNumHarmonics; iharm++)
   {
     for(Int_t ipow = 0; ipow < fMaxNumWeights; ipow++)
     {
       Qvector[iharm][ipow] = TComplex(Qcos[iharm][ipow], Qsin[iharm][ipow]);
-      
+
       for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
       {
         QvectorGap[iVec][iharm][ipow] = TComplex(QcosGap[iVec][iharm][ipow], QsinGap[iVec][iharm][ipow]);
@@ -4191,17 +4229,17 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t iEt
   const Double_t dEtaGapCut = dEtaGap / 2; // eta cut limit for RFPs
 
   const Int_t iNumTracks = array.GetEntriesFast();
-  
+
   Double_t pcosPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
   Double_t psinPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
   Double_t qcosPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
   Double_t qsinPt[fMaxNumHarmonics][fMaxNumWeights] = {0};
-  
+
   Double_t pcosPtGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights] = {0};
   Double_t psinPtGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights] = {0};
   //Double_t qcosPtGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
   //Double_t qsinPtGap[fGFKNumVectors][fMaxNumHarmonics][fMaxNumWeights][fNumPtBins] = {0};
-  
+
   //AliAODTrack* aodTrk = 0x0;
   AliVTrack* aodTrk = 0x0;
   AliAODv0* v0 = 0x0; // only for extracting the mass
@@ -4222,17 +4260,17 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t iEt
     {
       aodTrk = static_cast<AliAODv0*>(array.At(i));
       v0 = static_cast<AliAODv0*>(array.At(i));
-      
+
       if(iV0s == 1) // Kos
       {
         dMass = v0->MassK0Short();
         iMassBinIndex = GetMinvFlowBinIndexK0s(dMass);
       }
       else if(iV0s == 2) // Lambda
-      { 
+      {
         dMass = v0->MassLambda();
         iMassBinIndex = GetMinvFlowBinIndexLambda(dMass);
-      } 
+      }
       else // anti - lambda
       {
         dMass = v0->MassAntiLambda();
@@ -4248,12 +4286,12 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t iEt
 
     if(iV0s && iMass != iMassBinIndex)
       continue;
-    
-  
-    if(dEtaGap < 0.) // with no gap -> only positive quantities are filled 
+
+
+    if(dEtaGap < 0.) // with no gap -> only positive quantities are filled
     {
       // filling V0s Inv Mass distributions
-      
+
       if(iV0s == 1) //K0s
         fInvMassPtK0s[0][iEtaGapIndex][fCentBinIndex]->Fill(aodTrk->Pt(),dMass);
 
@@ -4323,7 +4361,7 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t iEt
     {
       pvector[iharm][ipow] = TComplex(pcosPt[iharm][ipow], psinPt[iharm][ipow]);
       qvector[iharm][ipow] = TComplex(qcosPt[iharm][ipow], qsinPt[iharm][ipow]);
-      
+
       for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
       {
         pvectorGap[iVec][iharm][ipow] = TComplex(pcosPtGap[iVec][iharm][ipow], psinPtGap[iVec][iharm][ipow]);
@@ -4344,22 +4382,22 @@ void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const
   if(dEtaGap < 0.) // no gap
   {
     Double_t Dn2 = Two(0,0)->Re();
-    Double_t Dn4 = Four(0,0,0,0)->Re();  
-    
+    Double_t Dn4 = Four(0,0,0,0)->Re();
+
     //printf("DDn2: %g / DDn4: %g\n",DDn2, DDn4);
 
     if(Dn2 != 0)
-    { 
+    {
       //..v2{2} = <cos2(phi1 - phi2)>
       vector = Two(iHarm, -iHarm);
       dValue = vector->Re()/Dn2;
       if( TMath::Abs(dValue < 1) )
         prof2->Fill(fCentPercentile, dValue, Dn2);
-    } 
+    }
 
     if(Dn4 != 0)
     {
-      //..v2{4} = <cos2(phi1 + phi2 - phi3 - phi4)> 
+      //..v2{4} = <cos2(phi1 + phi2 - phi3 - phi4)>
       vector = Four(iHarm, iHarm, -iHarm, -iHarm);
       dValue = vector->Re()/Dn4;
       if( TMath::Abs(dValue < 1) )
@@ -4370,22 +4408,22 @@ void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const
   {
     Double_t Dn2 = TwoGap(0, 0)->Re();
     Double_t Dn4 = 0; // not implemented
-    //double Dn4 = FourGap(0,0,0,0)->Re();  
-    
+    //double Dn4 = FourGap(0,0,0,0)->Re();
+
     //printf("DDn2: %g / DDn4: %g\n",Dn2, Dn4);
 
     if(Dn2 != 0)
-    { 
+    {
       //..v2{2} = <cos2(phi1 - phi2)>
       vector = TwoGap(iHarm, -iHarm);
-      dValue = vector->Re()/Dn2;  
+      dValue = vector->Re()/Dn2;
       if( TMath::Abs(dValue < 1) )
         prof2->Fill(fCentPercentile, dValue, Dn2);
-    } 
+    }
 
     if(Dn4 != 0)
     {
-      //..v2{4} = <cos2(phi1 + phi2 - phi3 - phi4)> 
+      //..v2{4} = <cos2(phi1 + phi2 - phi3 - phi4)>
       vector = Four(iHarm, iHarm, -iHarm, -iHarm);
       dValue = vector->Re()/Dn4;
       if( TMath::Abs(dValue < 1) )
@@ -4393,7 +4431,7 @@ void AliAnalysisTaskFlowPID::GFKDoRefFlow(TProfile* prof2,TProfile* prof4, const
     }
   }
 
-  return;  
+  return;
 }
 //_____________________________________________________________________
 void AliAnalysisTaskFlowPID::GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Neg, TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap, const Int_t iPtBin)
@@ -4415,10 +4453,10 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Ne
       vector = TwoDiff(iHarm, -iHarm);
       dValue = vector->Re()/DDn2;
       if( TMath::Abs(dValue < 1) )
-        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2); 
+        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2);
 
     }
-    
+
     if(DDn4 != 0)
     {
       //..v2{4}
@@ -4426,7 +4464,7 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Ne
       dValue = vector->Re()/DDn4;
       if( TMath::Abs(dValue < 1) )
         prof4->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn4);
-    } 
+    }
   }
   else
   { // with gap
@@ -4443,9 +4481,9 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Ne
       vector = TwoDiffGapPos(iHarm, -iHarm);
       dValue = vector->Re()/DDn2Pos;
       if( TMath::Abs(dValue < 1))
-        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2Pos); 
+        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2Pos);
 
-    } 
+    }
 
     if(DDn2Neg != 0)
     {
@@ -4453,10 +4491,10 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Ne
       vector = TwoDiffGapNeg(iHarm, -iHarm);
       dValue = vector->Re()/DDn2Neg;
       if( TMath::Abs(dValue < 1))
-        prof2Neg->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2Neg); 
+        prof2Neg->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2Neg);
 
     }
-    
+
     if(DDn4 != 0)
     {
       //..v2{4}
@@ -4464,7 +4502,7 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Ne
       dValue = vector->Re()/DDn4;
       if( TMath::Abs(dValue < 1))
         prof4->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn4);
-    } 
+    }
 
   }
 
@@ -4491,11 +4529,11 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlowV0s(TProfile2D* prof2Pos, TProfile2D* 
       dValue = vector->Re()/DDn2;
       //printf("Filling:[%g][%g]: %g, %g\n", (fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2,dMass, dValue, DDn2);
       if( TMath::Abs(dValue < 1) )
-        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dMass, dValue, DDn2); 
+        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dMass, dValue, DDn2);
 
 
     }
-    
+
     if(DDn4 != 0)
     {
       //..v2{4}
@@ -4504,8 +4542,8 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlowV0s(TProfile2D* prof2Pos, TProfile2D* 
       //printf("Filling:[%g][%g]: %g, %g\n", (fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2,dMass, dValue, DDn4);
       if( TMath::Abs(dValue < 1) )
         prof4->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dMass, dValue, DDn4);
-      
-    } 
+
+    }
   }
   else
   { // with gap
@@ -4523,9 +4561,9 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlowV0s(TProfile2D* prof2Pos, TProfile2D* 
       dValue = vector->Re()/DDn2Pos;
       //printf("Filling:[%g][%g]: %g, %g\n", (fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2,dMass, dValue, DDn2Pos);
       if( TMath::Abs(dValue < 1))
-        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dMass, dValue, DDn2Pos); 
+        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dMass, dValue, DDn2Pos);
 
-    } 
+    }
 
     if(DDn2Neg != 0)
     {
@@ -4534,10 +4572,10 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlowV0s(TProfile2D* prof2Pos, TProfile2D* 
       dValue = vector->Re()/DDn2Neg;
       //printf("Filling:[%g][%g]: %g, %g\n", (fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2,dMass, dValue, DDn2Neg);
       if( TMath::Abs(dValue < 1))
-        prof2Neg->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dMass, dValue, DDn2Neg); 
+        prof2Neg->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dMass, dValue, DDn2Neg);
 
     }
-    
+
     if(DDn4 != 0)
     {
       //..v2{4}
@@ -4546,7 +4584,7 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlowV0s(TProfile2D* prof2Pos, TProfile2D* 
       //printf("Filling:[%g][%g]: %g, %g\n", (fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2,dMass, dValue, DDn4);
       if( TMath::Abs(dValue < 1))
         prof4->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dMass, dValue, DDn4);
-    } 
+    }
 
   }
 
