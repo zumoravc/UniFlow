@@ -42,7 +42,11 @@ if [ ! -f "/Users/vpacik/NBI/Flow/runLists/$2.runlist" ]; then
 	echo "Runlist file '${2}.runlist' (arg. 3) does not exists. Exit!"
 	exit
 fi
-tag=${system}-${2}-${3}
+
+period=${2}
+desc=${3}
+
+tag=${desc}-${system}-${period}
 path=~/NBI/Flow/results/${tag}
 code=~/NBI/Flow/flow/
 
@@ -72,11 +76,11 @@ cp -v ${code}/AddTaskFlowPID.C ${path}
 #fi
 
 # generate maintenance / runnning scripts
-. ${code}/scripts/generateMergeOnGrid.sh ${path} ${2} ${tag}
+. ${code}/scripts/generateMergeOnGrid.sh ${path} ${period} ${tag}
 . ${code}/scripts/generateMergeLocal.sh ${path}
 
 if [ "${system}" = "pp" ]; then
-	. ${code}/scripts/generateRunPP.sh ${path} ${tag} ${2}
+	. ${code}/scripts/generateRunPP.sh ${path} ${tag} ${period}
 fi
 
 #cp -v ${code}/scripts/CleanAfterMerge.sh ${path}

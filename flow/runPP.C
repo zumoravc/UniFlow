@@ -1,6 +1,6 @@
 void runPP()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runPP()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "pp-TracksScan-LHC16l";
+    TString sWorkDir = "pp-TracksScan-test";
     TString sOutDir = "output";
     TString sPeriod = "LHC16l";
     //TString sPeriod = "LHC16k";
@@ -21,7 +21,9 @@ void runPP()
     // part 1 [40 runs]
     //Int_t runNumber[] = {260014, 260011, 260010, 259888, 259868, 259867, 259866, 259860, 259842, 259841, 259822, 259789, 259788, 259781, 259756, 259752, 259751, 259750, 259748, 259747, 259713, 259711, 259705, 259704, 259703, 259700, 259697, 259668, 259650, 259649, 259477, 259473, 259396, 259395, 259394, 259389, 259388, 259382, 259378, 259342};
     // part 2 [45 runs]
-    Int_t runNumber[] = {259341, 259340, 259339, 259336, 259334, 259307, 259305, 259303, 259302, 259274, 259273, 259272, 259271, 259270, 259269, 259264, 259263, 259261, 259257, 259204, 259164, 259162, 259118, 259117, 259099, 259096, 259091, 259090, 259088, 258964, 258962, 258923, 258921, 258920, 258919};
+    //Int_t runNumber[] = {259341, 259340, 259339, 259336, 259334, 259307, 259305, 259303, 259302, 259274, 259273, 259272, 259271, 259270, 259269, 259264, 259263, 259261, 259257, 259204, 259164, 259162, 259118, 259117, 259099, 259096, 259091, 259090, 259088, 258964, 258962, 258923, 258921, 258920, 258919};
+    // test
+    Int_t runNumber[] = {259341};
 
     // RunList_LHC16k_pass1_CentralBarrelTracking_hadronPID_20161121_v0.txt [97 runs]
     // part 1 [44 runs]
@@ -130,63 +132,6 @@ void runPP()
     task1->SetV0sLambdaNumTauMax(3.);
     task1->SetV0sProtonNumSigmaMax(3.);
     task1->SetV0sProtonPIDPtMax(1.2);
-
-
-    AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_kHighMultV0");
-    //task2->SelectCollisionCandidates(AliVEvent::kINT7)
-    // analysis cuts & switches
-    task2->SetAODAnalysis(kTRUE);
-    task2->SetPPAnalysis(kTRUE);
-    task2->SetTrigger(1); // kHighMultV0
-    task2->SetSampling(kFALSE);
-    //task2->SetUseOldCent(kFALSE);
-    //task2->SetCentFlag(0);
-    //task2->SetPeriod10h(kFALSE);
-    //task2->SetRejectPileUpSPD(kFALSE);
-    task2->SetDoFlow(kFALSE);
-    task2->SetDoFlowGenFramKatarina(kFALSE);
-    task2->SetDoOldFlow(kFALSE);
-    task2->SetDiffFlow(kFALSE);
-    task2->SetTracksScan(kTRUE);
-    task2->SetPID(kFALSE);
-    task2->SetDoV0s(kFALSE);
-    // event selection
-    task2->SetPVtxZMax(10);
-    task2->SetTrackEtaMax(0.8);
-    task2->SetTrackPtMin(0.2);
-    task2->SetTrackPtMax(5.);
-    task2->SetTrackDCAzMax(0.);
-    task2->SetNumTPCclsMin(70);
-    task2->SetTrackFilterBit(96);
-    task2->SetUseBayesPID(kTRUE);
-    task2->SetPIDBayesProbPionMin(0.8);
-    task2->SetPIDBayesProbKaonMin(0.8);
-    task2->SetPIDBayesProbProtonMin(0.8);
-    //task2->SetPionNumSigmasMax(3);
-    //task2->SetKaonNumSigmasMax(3);
-    //task2->SetProtonNumSigmasMax(3);
-    // V0 selection cuts
-    task2->SetV0sOnFly(kFALSE);
-    task2->SetV0sTPCRefit(kTRUE);
-    task2->SetV0sRejectKinks(kTRUE);
-    task2->SetV0sDCAPVMin(0.1);
-    task2->SetV0sDCAPVMax(0.);
-    task2->SetV0sDCADaughtersMax(1.);
-    task2->SetV0sDecayRadiusMin(5.);
-    task2->SetV0sDecayRadiusMax(0.);
-    task2->SetV0sDaughterPtMin(0.1);
-    task2->SetV0sDaughterEtaMax(0.8);
-    task2->SetV0sMotherEtaMax(0.8);
-    task2->SetV0sMotherRapMax(0.);
-    task2->SetV0sMotherPtMin(0.2);
-    task2->SetV0sMotherPtMax(10.);
-    task2->SetV0sK0sCPAMin(0.998);
-    task2->SetV0sLambdaCPAMin(0.998);
-    task2->SetV0sK0sNumTauMax(3.);
-    task2->SetV0sK0sArmenterosAlphaMin(0.2);
-    task2->SetV0sLambdaNumTauMax(3.);
-    task2->SetV0sProtonNumSigmaMax(3.);
-    task2->SetV0sProtonPIDPtMax(1.2);
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);
