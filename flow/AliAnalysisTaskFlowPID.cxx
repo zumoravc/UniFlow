@@ -1121,15 +1121,18 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     {
       iNEventCounterBins = 14;
       TString sEventCounterLabel[] = {"Input","AOD OK","Physics selection OK","PV OK","SPD Vtx OK","Pileup SPD OK","Pileup MV OK","OOBPU OK","SPDclTrBg OK","SPDPU OK","Utils OK","PV #it{z} OK","At least 2 selected tracks","At least 1 V0 candidate"};
+      fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
+      for(Int_t i = 0; i < iNEventCounterBins; i++)
+        fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     }
     else
     {
       iNEventCounterBins = 10;
       TString sEventCounterLabel[] = {"Input","AOD OK","Physics selection OK","PV OK","SPD Vtx OK","Pileup SPD OK","Pileup MV OK","PV #it{z} OK","At least 2 selected tracks","At least 1 V0 candidate"};
+      fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
+      for(Int_t i = 0; i < iNEventCounterBins; i++)
+        fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     }
-    fEventCounter = new TH1D("fEventCounter","Event Counter",iNEventCounterBins,0,iNEventCounterBins);
-    for(Int_t i = 0; i < iNEventCounterBins; i++)
-      fEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fOutListEvents->Add(fEventCounter);
   }
   else
@@ -2555,13 +2558,13 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
   if(fRejectOutOfBunchPU) // out-of-bunch rejection (provided by Christian)
   {
     //out-of-bunch 11 BC
-    if (utils.IsOutOfBunchPileUp(event)
+    if (utils.IsOutOfBunchPileUp(event))
     {
       return kFALSE;
     }
     fEventCounter->Fill("OOBPU OK",1);
 
-    if (utils.IsSPDClusterVsTrackletBG(event)
+    if (utils.IsSPDClusterVsTrackletBG(event))
     {
       return kFALSE;
     }
@@ -2569,7 +2572,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
     fEventCounter->Fill("SPDClTrBG OK",1);
 
     // SPD pileup
-    if (utils.IsPileUpSPD(event)
+    if (utils.IsPileUpSPD(event))
     {
       return kFALSE;
     }
