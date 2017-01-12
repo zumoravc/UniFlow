@@ -5,7 +5,7 @@
 # Arguments:
 #   1 - "-system" (-pp / -ppb -pbpb)
 #		2 - tag (witout the runlist)
-#   3 - runlist
+#   3 - period (only full)
 # ===========================================================
 
 # checking the parameters
@@ -65,19 +65,19 @@ mkdir -pv ${path}
 cp -v ${code}/AliAnalysisTaskFlowPID.cxx ${path}
 cp -v ${code}/AliAnalysisTaskFlowPID.h ${path}
 cp -v ${code}/AddTaskFlowPID.C ${path}
+
 #cp -v ${code}/runMC.C ${path}
+#if [ "${system}" = "pPb" ]; then
+	#cp -v ${code}/runPPb.C ${path}
+#fi
 
-if [ "${system}" = "pp" ]; then
-	cp -v ${code}/runPP.C ${path}
-fi
-
-if [ "${system}" = "pPb" ]; then
-	cp -v ${code}/runPPb.C ${path}
-fi
-
-# generate maintenance scripts
+# generate maintenance / runnning scripts
 . ${code}/scripts/generateMergeOnGrid.sh ${path} ${3} ${tag}
 . ${code}/scripts/generateMergeLocal.sh ${path}
+
+if [ "${system}" = "pp" ]; then
+	. ${code}/scripts/generateRunPP.sh ${path} ${tag} ${3}
+fi
 
 #cp -v ${code}/scripts/CleanAfterMerge.sh ${path}
 

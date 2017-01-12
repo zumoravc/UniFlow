@@ -25,13 +25,13 @@ output=$1
 run=~/NBI/Flow/runLists/$2.runlist
 task=$3
 
-if [ ! -d "${output}" ]; then 
+if [ ! -d "${output}" ]; then
 	#path folder does not exist
   echo "Output folder (arg. 1) does not exists. Exit!"
 	exit
 fi
 
-if [ ! -f "${run}" ]; then 
+if [ ! -f "${run}" ]; then
 	# runlist file does not exist
   echo "Runlist file (arg. 2) does not exists. Exit!"
 	exit
@@ -50,7 +50,7 @@ cat > ${output}/mergeOnGrid.sh <<EOT
 #!/bin/bash
 
 # ===========================================================
-# Script for local merging & download output on Grid 
+# Script for local merging & download output on Grid
 # ===========================================================
 
 tag=${task}
@@ -63,8 +63,8 @@ for i in \$(cat \${runList})
 do
 	mkdir -pv merge_\${i}
 	cd merge_\${i}
-	path="/alice/cern.ch/user/v/vpacik/\${tag}/outFlow/000\${i}/"
-	
+	path="/alice/cern.ch/user/v/vpacik/\${tag}/output/000\${i}/"
+
 	root -l -b -q ~/NBI/Flow/macros/mergeOutputOnGrid.C\(\"\${path}\"\) &
 	cd ../
 done

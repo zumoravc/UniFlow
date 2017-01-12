@@ -1,6 +1,48 @@
-void runPPb()
+#!/bin/bash
+
+# ===========================================================
+# Script for generating runPP.C to given folder
+# Arguments:
+#   1 - output
+#		2 - tag
+#   3 - period
+# ===========================================================
+
+echo "##### Generating runPP.sh #####"
+
+# checking parameters
+if [ $# -ne 3 ]; then
+	echo "Wrong number of parameters: $# (3 needed). Exit!"
+	exit
+fi
+
+if [ "$1" = "" ] || [ "$2" = "" ] ||  "$3" = "" ]; then
+	echo "Empty parameter given. Exit!"
+	exit
+fi
+
+output=${1}
+tag=${2}
+period=$(echo "${3}" | tr 'lhc' 'LHC')
+
+if [ ! "${period}" == "LHC16k" ] && [ ! "${period}" == "LHC16l" ]; then
+	# runlist file does not exist
+  echo "Wrong period '${period}' (not LHC16k nor LHC16l). Exit!"
+	exit
+fi
+# arguments passed
+
+echo "--- Listing arguments ---"
+echo "output:\"${output}\""
+echo "tag:\"${tag}\""
+echo "period:\"${period}\""
+echo "-------------------------"
+
+# writing following script into $file
+cat > ${output}/runPP.C <<EOT
+void runPP()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -9,12 +51,26 @@ void runPPb()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "pPb-TracksScan-2016k";
+    TString sWorkDir = "${tag}";
     TString sOutDir = "output";
-    //TString sPeriod = "LHC16l";
-    TString sPeriod = "LHC16k";
+    TString sPeriod = "${period}";
 
     // run switcher
+    // RunList_LHC16l_pass1_CentralBarrelTracking_hadronPID_20161122_v1.txt [75 runs]
+    // all
+    //Int_t runNumber[] = {260014, 260011, 260010, 259888, 259868, 259867, 259866, 259860, 259842, 259841, 259822, 259789, 259788, 259781, 259756, 259752, 259751, 259750, 259748, 259747, 259713, 259711, 259705, 259704, 259703, 259700, 259697, 259668, 259650, 259649, 259477, 259473, 259396, 259395, 259394, 259389, 259388, 259382, 259378, 259342, 259341, 259340, 259339, 259336, 259334, 259307, 259305, 259303, 259302, 259274, 259273, 259272, 259271, 259270, 259269, 259264, 259263, 259261, 259257, 259204, 259164, 259162, 259118, 259117, 259099, 259096, 259091, 259090, 259088, 258964, 258962, 258923, 258921, 258920, 258919};
+    // part 1 [40 runs]
+    //Int_t runNumber[] = {260014, 260011, 260010, 259888, 259868, 259867, 259866, 259860, 259842, 259841, 259822, 259789, 259788, 259781, 259756, 259752, 259751, 259750, 259748, 259747, 259713, 259711, 259705, 259704, 259703, 259700, 259697, 259668, 259650, 259649, 259477, 259473, 259396, 259395, 259394, 259389, 259388, 259382, 259378, 259342};
+    // part 2 [45 runs]
+    //Int_t runNumber[] = {259341, 259340, 259339, 259336, 259334, 259307, 259305, 259303, 259302, 259274, 259273, 259272, 259271, 259270, 259269, 259264, 259263, 259261, 259257, 259204, 259164, 259162, 259118, 259117, 259099, 259096, 259091, 259090, 259088, 258964, 258962, 258923, 258921, 258920, 258919};
+
+    // RunList_LHC16k_pass1_CentralBarrelTracking_hadronPID_20161121_v0.txt [97 runs]
+    // part 1 [44 runs]
+    //Int_t runNumber[] = {258537, 258499, 258477, 258456, 258454, 258452, 258426, 258393, 258391, 258387, 258359, 258336, 258332, 258307, 258306, 258303, 258302, 258301, 258299, 258278, 258274, 258273, 258271, 258270, 258258, 258257, 258256, 258204, 258203, 258202, 258198, 258197, 258178, 258117, 258114, 258113, 258109, 258108, 258107, 258063, 258062, 258060, 258059, 258053, 258049, 258045, 258042, 258041, 258039};
+    // part 2 [43 runs]
+    Int_t runNumber[] = {258019, 258017, 258014, 258012, 258008, 258003, 257992, 257989, 257986, /*257979,*/ 257963, 257960, 257957, 257939, 257937, 257936, 257892, 257855, 257853, 257851, 257850, 257804, 257803, 257800, 257799, 257798, 257797, 257773, 257765, 257757, 257754, 257737, 257735, 257734, 257733, 257727, 257725, 257724, 257697, 257694, 257692, 257691, 257689, 257688, 257687, 257685, 257684, 257682};
+    // lhc16k_test.runlist
+    //Int_t runNumber[] = {258537, 258499, 258477, 258456, 258454};
 
     // since we will compile a class, tell root where to look for headers
     gROOT->ProcessLine(".include $ROOTSYS/include");
@@ -22,7 +78,7 @@ void runPPb()
 
     gSystem->AddIncludePath("-I$ALICE_ROOT/include");
     gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
-    gSystem->AddIncludePath("-I$ALICE_PHYSICS/../src/OADB/COMMON/MULTIPLICITY");
+    //gSystem->AddIncludePath("-I$ALICE_PHYSICS/../src/OADB/COMMON/MULTIPLICITY");
     gSystem->Load("libPhysics.so");
     gSystem->Load("libOADB.so");
     gSystem->Load("libSTEERBase");
@@ -40,9 +96,9 @@ void runPPb()
 
     //Add this here: run before your task, but after definition of manager and input handler
 
-    gROOT->LoadMacro("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
-    AliMultSelectionTask* taskMultSelection = AddTaskMultSelection(kFALSE); // user mode:
-    taskMultSelection->SetSelectedTriggerClass(AliVEvent::kINT7);
+    //gROOT->LoadMacro("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
+    //AliMultSelectionTask* taskMultSelection = AddTaskMultSelection(kFALSE); // user mode:
+    //taskMultSelection->SetSelectedTriggerClass(AliVEvent::kMB);
 
     // Physics selection as suggested by HMTF
     gROOT->ProcessLine(".L $ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C");
@@ -62,11 +118,11 @@ void runPPb()
     gROOT->LoadMacro("AddTaskFlowPID.C"); // load the addtask macro
 
 
-    AliAnalysisTaskFlowPID* task1 = AddTaskFlowPID("flowPID_FB64_kINT7");
+    AliAnalysisTaskFlowPID* task1 = AddTaskFlowPID("flowPID_kINT7");
     //task1->SelectCollisionCandidates(AliVEvent::kINT7)
     // analysis cuts & switches
     task1->SetAODAnalysis(kTRUE);
-    task1->SetPPbAnalysis(kTRUE);
+    task1->SetPPAnalysis(kTRUE);
     task1->SetTrigger(0); // kINT7
     task1->SetSampling(kFALSE);
     //task1->SetUseOldCent(kFALSE);
@@ -77,7 +133,7 @@ void runPPb()
     task1->SetDoFlowGenFramKatarina(kFALSE);
     task1->SetDoOldFlow(kFALSE);
     task1->SetDiffFlow(kFALSE);
-    task1->SetTracksScan(kTRUE);
+    task1->SetTracksScan(kFALSE);
     task1->SetPID(kFALSE);
     task1->SetDoV0s(kFALSE);
     // event selection
@@ -87,7 +143,7 @@ void runPPb()
     task1->SetTrackPtMax(5.);
     task1->SetTrackDCAzMax(0.0);
     task1->SetNumTPCclsMin(70);
-    task1->SetTrackFilterBit(64);
+    task1->SetTrackFilterBit(96);
     task1->SetUseBayesPID(kTRUE);
     task1->SetPIDBayesProbPionMin(0.8);
     task1->SetPIDBayesProbKaonMin(0.8);
@@ -118,13 +174,13 @@ void runPPb()
     task1->SetV0sProtonNumSigmaMax(3.);
     task1->SetV0sProtonPIDPtMax(1.2);
 
-    /*
-    AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_FB64_kHighMultV0");
+
+    AliAnalysisTaskFlowPID* task2 = AddTaskFlowPID("flowPID_kHighMultV0");
     //task2->SelectCollisionCandidates(AliVEvent::kINT7)
     // analysis cuts & switches
     task2->SetAODAnalysis(kTRUE);
-    task2->SetPPbAnalysis(kTRUE);
-    task2->SetTrigger(0); // kINT7
+    task2->SetPPAnalysis(kTRUE);
+    task2->SetTrigger(1); // kHighMultV0
     task2->SetSampling(kFALSE);
     //task2->SetUseOldCent(kFALSE);
     //task2->SetCentFlag(0);
@@ -134,7 +190,7 @@ void runPPb()
     task2->SetDoFlowGenFramKatarina(kFALSE);
     task2->SetDoOldFlow(kFALSE);
     task2->SetDiffFlow(kFALSE);
-    task2->SetTracksScan(kTRUE);
+    task2->SetTracksScan(kFALSE);
     task2->SetPID(kFALSE);
     task2->SetDoV0s(kFALSE);
     // event selection
@@ -144,7 +200,7 @@ void runPPb()
     task2->SetTrackPtMax(5.);
     task2->SetTrackDCAzMax(0.);
     task2->SetNumTPCclsMin(70);
-    task2->SetTrackFilterBit(64);
+    task2->SetTrackFilterBit(96);
     task2->SetUseBayesPID(kTRUE);
     task2->SetPIDBayesProbPionMin(0.8);
     task2->SetPIDBayesProbKaonMin(0.8);
@@ -174,7 +230,6 @@ void runPPb()
     task2->SetV0sLambdaNumTauMax(3.);
     task2->SetV0sProtonNumSigmaMax(3.);
     task2->SetV0sProtonPIDPtMax(1.2);
-    */
 
     if (!mgr->InitAnalysis()) return;
     mgr->SetDebugLevel(2);
@@ -214,13 +269,12 @@ void runPPb()
             alienHandler->AddRunNumber(runNumber[i]);
         }
 
-
         alienHandler->SetMasterResubmitThreshold(90);
         // number of files per subjob
-        alienHandler->SetSplitMaxInputFileNumber(50);
+        alienHandler->SetSplitMaxInputFileNumber(30);
         alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
-        alienHandler->SetTTL(36000);
+        alienHandler->SetTTL(50000);
         alienHandler->SetJDLName("FlowPID.jdl");
         alienHandler->SetPrice(1);
         alienHandler->SetOutputToRunNo(kTRUE);
@@ -248,3 +302,11 @@ void runPPb()
         }
     }
 }
+EOT
+
+if [ -f ${output}/runPP.C ]; then
+	echo "File generated!"
+else
+	echo "File NOT generated!"
+	exit
+fi
