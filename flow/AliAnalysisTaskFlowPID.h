@@ -90,7 +90,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
         const static Int_t      fNumEtaGap = 4; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
-        const static Int_t      fNumScanFB = 11; // number of scanned FB
+        const static Int_t      fNumScanFB = 14; // number of scanned FB
         static Short_t          fTracksScanFB[fNumScanFB]; // values of scanned FBs
         const static Int_t      fMaxNumHarmonics = 8; // maximal number of harmonics for Q,p,q vector arrays
         const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
@@ -99,7 +99,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         Bool_t                  IsEventSelected(const AliAODEvent* event);
         Bool_t                  IsEventSelectedPP(AliVEvent* event);
         Bool_t                  OldIsEventSelected(const AliAODEvent* event);
-		Bool_t                  IsTrackSelected(const AliAODTrack* track, const Bool_t bTestFB = kFALSE);
+		Bool_t                  IsTrackSelected(const AliAODTrack* track);
         Bool_t                  IsTrackPion(const AliAODTrack* track);
         Bool_t                  IsTrackKaon(const AliAODTrack* track);
         Bool_t                  IsTrackProton(const AliAODTrack* track);
@@ -371,9 +371,12 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
         // Tracks scan histos
         TH2D*                   fTracksScanCounter; //! counter of all and selected scanned tracks
-        TH2D*                   fTracksScanPt; //! phi distribution of scanned tracks
-        TH2D*                   fTracksScanPhi; //! phi distribution of scanned tracks
-        TH2D*                   fTracksScanEta; //! phi distribution of scanned tracks
+        TH2D*                   fTracksScanPtAll; //! phi distribution of scanned tracks
+        TH2D*                   fTracksScanPhiAll; //! phi distribution of scanned tracks
+        TH2D*                   fTracksScanEtaAll; //! phi distribution of scanned tracks
+        TH2D*                   fTracksScanPtSelected; //! phi distribution of selected tracks
+        TH2D*                   fTracksScanPhiSelected; //! phi distribution of selected tracks
+        TH2D*                   fTracksScanEtaSelected; //! phi distribution of selected tracks
 
 
         // QA histos // index 0: before / 1: after cuts
@@ -452,7 +455,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 11);
+        ClassDef(AliAnalysisTaskFlowPID, 12);
 };
 
 #endif

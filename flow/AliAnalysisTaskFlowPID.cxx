@@ -1,25 +1,26 @@
 /**************************************************************************
- * Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
- *                                                                        *
- * Author: The ALICE Off-line Project.                                    *
- * Contributors are mentioned in the code where appropriate.              *
- *                                                                        *
- * Permission to use, copy, modify and distribute this software and its   *
- * documentation strictly for non-commercial purposes is hereby granted   *
- * without fee, provided that the above copyright notice appears in all   *
- * copies and that both the copyright notice and this permission notice   *
- * appear in the supporting documentation. The authors make no claims     *
- * about the suitability of this software for any purpose. It is          *
- * provided "as is" without express or implied warranty.                  *
- **************************************************************************/
+* Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
+*                                                                        *
+* Author: The ALICE Off-line Project.                                    *
+* Contributors are mentioned in the code where appropriate.              *
+*                                                                        *
+* Permission to use, copy, modify and distribute this software and its   *
+* documentation strictly for non-commercial purposes is hereby granted   *
+* without fee, provided that the above copyright notice appears in all   *
+* copies and that both the copyright notice and this permission notice   *
+* appear in the supporting documentation. The authors make no claims     *
+* about the suitability of this software for any purpose. It is          *
+* provided "as is" without express or implied warranty.                  *
+**************************************************************************/
 
 /* AliAnaysisTaskFlowPID
- *
- * analysis task for flow study of PID particles
- * Note: So far implemented only for AOD analysis!
- *
- * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
- */
+*
+* analysis task for flow study of PID particles
+* Note: So far implemented only for AOD analysis!
+*
+* Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
+*/
+
 #include <TDatabasePDG.h>
 #include <TPDGCode.h>
 
@@ -62,7 +63,7 @@ Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.425,0.45,0.47,0
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.125,1.13,1.14,1.15,1.16};
 Int_t AliAnalysisTaskFlowPID::fHarmonics[AliAnalysisTaskFlowPID::fNumHarmonics] = {2,3,4};
 Double_t AliAnalysisTaskFlowPID::fEtaGap[AliAnalysisTaskFlowPID::fNumEtaGap] = {-1.,0.,0.5,1.0};
-Short_t AliAnalysisTaskFlowPID::fTracksScanFB[AliAnalysisTaskFlowPID::fNumScanFB] = {1,2,16,32,64,96,128,256,512,768,1024};
+Short_t AliAnalysisTaskFlowPID::fTracksScanFB[AliAnalysisTaskFlowPID::fNumScanFB] = {1,2,4,5,8,16,32,64,96,128,256,512,768,1024};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
   fAOD(0),
@@ -169,9 +170,12 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
 
   fTracksCounter(0x0),
   fTracksScanCounter(0x0),
-  fTracksScanPt(0x0),
-  fTracksScanPhi(0x0),
-  fTracksScanEta(0x0),
+  fTracksScanPtAll(0x0),
+  fTracksScanPhiAll(0x0),
+  fTracksScanEtaAll(0x0),
+  fTracksScanPtSelected(0x0),
+  fTracksScanPhiSelected(0x0),
+  fTracksScanEtaSelected(0x0),
 
   fPionsCounter(0x0),
   fKaonsCounter(0x0),
@@ -327,9 +331,12 @@ AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID(const char* name) : AliAnalysisTa
 
   fTracksCounter(0x0),
   fTracksScanCounter(0x0),
-  fTracksScanPt(0x0),
-  fTracksScanPhi(0x0),
-  fTracksScanEta(0x0),
+  fTracksScanPtAll(0x0),
+  fTracksScanPhiAll(0x0),
+  fTracksScanEtaAll(0x0),
+  fTracksScanPtSelected(0x0),
+  fTracksScanPhiSelected(0x0),
+  fTracksScanEtaSelected(0x0),
 
   fPionsCounter(0x0),
   fKaonsCounter(0x0),
@@ -1198,16 +1205,22 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     TString sTracksScanCounterLabel[] = {"All","Selected","ITS PID OK","TPC PID OK","TOF PID OK"};
 
     fTracksScanCounter = new TH2D("fTracksScanCounter","Tracks: Scan counter; FB; ", fNumScanFB,0,fNumScanFB, iNumBinsScanCounter,0,iNumBinsScanCounter);
-    fTracksScanPt = new TH2D("fTracksScanPt","Tracks: #it{p}_T scan; FB; #it{p}_T (GeV/#it{c})", fNumScanFB,0,fNumScanFB, 100,0,10);
-    fTracksScanPhi = new TH2D("fTracksScanPhi","Tracks: #it{#varphi} scan; FB; #it{#varphi}", fNumScanFB,0,fNumScanFB, 100,0,TMath::TwoPi());
-    fTracksScanEta = new TH2D("fTracksScanEta","Tracks: #it{#eta} scan; FB; #it{#eta}", fNumScanFB,0,fNumScanFB, 401,-2,2);
+    fTracksScanPtAll = new TH2D("fTracksScanPtAll","Tracks: #it{p}_{T} scan (all); FB; #it{p}_{T} (GeV/#it{c})", fNumScanFB,0,fNumScanFB, 100,0,10);
+    fTracksScanPhiAll = new TH2D("fTracksScanPhiAll","Tracks: #it{#varphi} scan (all); FB; #it{#varphi}", fNumScanFB,0,fNumScanFB, 100,0,TMath::TwoPi());
+    fTracksScanEtaAll = new TH2D("fTracksScanEtaAll","Tracks: #it{#eta} scan (all); FB; #it{#eta}", fNumScanFB,0,fNumScanFB, 401,-2,2);
+    fTracksScanPtSelected = new TH2D("fTracksScanPtSelected","Tracks: #it{p}_{T} scan (selected); FB; #it{p}_{T} (GeV/#it{c})", fNumScanFB,0,fNumScanFB, 100,0,10);
+    fTracksScanPhiSelected = new TH2D("fTracksScanPhiSelected","Tracks: #it{#varphi} scan (selected); FB; #it{#varphi}", fNumScanFB,0,fNumScanFB, 100,0,TMath::TwoPi());
+    fTracksScanEtaSelected = new TH2D("fTracksScanEtaSelected","Tracks: #it{#eta} scan (selected); FB; #it{#eta}", fNumScanFB,0,fNumScanFB, 401,-2,2);
 
     for(Short_t i(0); i < fNumScanFB; i++)
     {
       fTracksScanCounter->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
-      fTracksScanPt->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
-      fTracksScanPhi->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
-      fTracksScanEta->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanPtAll->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanPhiAll->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanEtaAll->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanPtSelected->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanPhiSelected->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
+      fTracksScanEtaSelected->GetXaxis()->SetBinLabel(i+1, Form("%d",fTracksScanFB[i]));
     }
 
     for(Short_t i(0); i < iNumBinsScanCounter; i++)
@@ -1216,16 +1229,19 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     }
 
     fOutListTracks->Add(fTracksScanCounter);
-    fOutListTracks->Add(fTracksScanPt);
-    fOutListTracks->Add(fTracksScanPhi);
-    fOutListTracks->Add(fTracksScanEta);
+    fOutListTracks->Add(fTracksScanPtAll);
+    fOutListTracks->Add(fTracksScanPhiAll);
+    fOutListTracks->Add(fTracksScanEtaAll);
+    fOutListTracks->Add(fTracksScanPtSelected);
+    fOutListTracks->Add(fTracksScanPhiSelected);
+    fOutListTracks->Add(fTracksScanEtaSelected);
   }
 
   // QA tracks output
 
   Short_t iNTracksCounterBins = 8;
   TString sTracksCounterLabel[] = {"Input","Track OK","FB OK","TPC Ncls OK","Eta OK","Pt OK","DCAz OK","Selected"};
-  fTracksCounter = new TH1D("fTrackCounter","Track Counter",iNTracksCounterBins,0,iNTracksCounterBins);
+  fTracksCounter = new TH1D("fTracksCounter","Track Counter",iNTracksCounterBins,0,iNTracksCounterBins);
   for(Int_t i = 0; i < iNTracksCounterBins; i++)
     fTracksCounter->GetXaxis()->SetBinLabel(i+1, sTracksCounterLabel[i].Data() );
   fOutListTracks->Add(fTracksCounter);
@@ -1523,7 +1539,10 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
 
   // tracks scanning (pt,eta,phi) of various FBs
   if(fTracksScan)
+  {
     ScanTracks();
+    return; // exit UserExec (do only track scanning)
+  }
 
 
   // cleaning all TClonesArray containers
@@ -2617,7 +2636,7 @@ Bool_t AliAnalysisTaskFlowPID::IsEventSelectedPP(AliVEvent* event)
  	return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track, const Bool_t bTestFB)
+Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track)
 {
 	// track selection procedure excluding FilterBit
   //{"Input","Track OK","FB OK","TPC Ncls OK","Eta OK","Pt OK","DCAz OK","Selected"};
@@ -2631,7 +2650,7 @@ Bool_t AliAnalysisTaskFlowPID::IsTrackSelected(const AliAODTrack* track, const B
 
   fTracksCounter->Fill("Track OK",1);
 
-  if(!bTestFB)
+  if(!fTracksScan)
   {
     if( !track->TestFilterBit(fTrackFilterBit) )
     {
@@ -2818,14 +2837,19 @@ void AliAnalysisTaskFlowPID::ScanTracks()
 
       if(track->TestFilterBit(iFB))
       {
-        fTracksScanPt->Fill(Form("%d",iFB),track->Pt(), 1.);
-        fTracksScanPhi->Fill(Form("%d",iFB),track->Phi(),1.);
-        fTracksScanEta->Fill(Form("%d",iFB),track->Eta(),1.);
+        fTracksScanPtAll->Fill(Form("%d",iFB),track->Pt(), 1.);
+        fTracksScanPhiAll->Fill(Form("%d",iFB),track->Phi(),1.);
+        fTracksScanEtaAll->Fill(Form("%d",iFB),track->Eta(),1.);
 
         fTracksScanCounter->Fill(Form("%d",iFB),"All",1.);
 
-        if(IsTrackSelected(track,kTRUE)) // without testing FB for scanning purpose
+        if(IsTrackSelected(track)) // without testing FB for scanning purpose
+        {
           fTracksScanCounter->Fill(Form("%d",iFB),"Selected",1.);
+          fTracksScanPtSelected->Fill(Form("%d",iFB),track->Pt(), 1.);
+          fTracksScanPhiSelected->Fill(Form("%d",iFB),track->Phi(),1.);
+          fTracksScanEtaSelected->Fill(Form("%d",iFB),track->Eta(),1.);
+        }
 
         if(!fPIDResponse)
         {
