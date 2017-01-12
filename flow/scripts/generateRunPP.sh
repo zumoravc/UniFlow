@@ -23,7 +23,13 @@ fi
 
 output=${1}
 tag=${2}
-period=$(echo "${3}" | tr 'lhc' 'LHC')
+period="$(tr '[:lower:]' '[:upper:]' <<< ${3:0:3})${3:3}"
+
+if [ ! -d "${output}" ]; then
+	#path folder does not exist
+  echo "Output folder (arg. 1) does not exists. Exit!"
+	exit
+fi
 
 if [ ! "${period}" == "LHC16k" ] && [ ! "${period}" == "LHC16l" ]; then
 	# runlist file does not exist
@@ -31,7 +37,6 @@ if [ ! "${period}" == "LHC16k" ] && [ ! "${period}" == "LHC16l" ]; then
 	exit
 fi
 # arguments passed
-
 echo "--- Listing arguments ---"
 echo "output:\"${output}\""
 echo "tag:\"${tag}\""

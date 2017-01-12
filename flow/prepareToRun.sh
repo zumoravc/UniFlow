@@ -4,8 +4,8 @@
 # Script copying code to path tag
 # Arguments:
 #   1 - "-system" (-pp / -ppb -pbpb)
-#		2 - tag (witout the runlist)
-#   3 - period (only full)
+#   2 - period (only full)
+#		3 - tag (witout the runlist)
 # ===========================================================
 
 # checking the parameters
@@ -38,11 +38,11 @@ case ${1} in
 	;;
 esac
 
-if [ ! -f "/Users/vpacik/NBI/Flow/runLists/$3.runlist" ]; then
-	echo "Runlist file '${3}.runlist' (arg. 3) does not exists. Exit!"
+if [ ! -f "/Users/vpacik/NBI/Flow/runLists/$2.runlist" ]; then
+	echo "Runlist file '${2}.runlist' (arg. 3) does not exists. Exit!"
 	exit
 fi
-tag=${system}-${3}-${2}
+tag=${system}-${2}-${3}
 path=~/NBI/Flow/results/${tag}
 code=~/NBI/Flow/flow/
 
@@ -72,11 +72,11 @@ cp -v ${code}/AddTaskFlowPID.C ${path}
 #fi
 
 # generate maintenance / runnning scripts
-. ${code}/scripts/generateMergeOnGrid.sh ${path} ${3} ${tag}
+. ${code}/scripts/generateMergeOnGrid.sh ${path} ${2} ${tag}
 . ${code}/scripts/generateMergeLocal.sh ${path}
 
 if [ "${system}" = "pp" ]; then
-	. ${code}/scripts/generateRunPP.sh ${path} ${tag} ${3}
+	. ${code}/scripts/generateRunPP.sh ${path} ${tag} ${2}
 fi
 
 #cp -v ${code}/scripts/CleanAfterMerge.sh ${path}
