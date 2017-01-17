@@ -1,7 +1,7 @@
 /* ProcessFlow
  *
  * Class implemented for processing AliAnalysisTaskFlowPID results.
- * 
+ *
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
  */
 
@@ -27,15 +27,13 @@ public:
     void	SetOutputFileName(TString name) { fsOutputFileName = name; }
     void	SetTag(TString sTag) { fsTag = sTag; }
     void	SetNumSamples(Short_t numSamples) { fiNumSamples = numSamples; }
-    //void	SetNumBinsCentrality(Short_t numCent) { fiNumBinsCent = numCent; }
-    //void	SetNumEtaGaps(Short_t numGaps) { fiNumEtaGaps = numGaps; }
     void	SetBinsCentArray(Double_t* array, Short_t iSize = 0);
     void	SetHarmonicsArray(Short_t* array, Short_t iSize = 0);
     void	SetEtaGapsArray(Double_t* array, Short_t iSize = 0);
-    void	SetSamplingSpread(Bool_t bSpread) { fbSamplingSpread = bSpread; }
-    
+		void	SetSamplingSpread(Bool_t bSpread) { fbSamplingSpread = bSpread; }
+		void  SetDoV0s(Bool_t doV0s) { fbDoV0s = doV0s; }
 
-    void	Run();
+    void	Run(); //
 
 
 	private:
@@ -62,10 +60,10 @@ public:
 		static const Short_t fiMaxNumBinsCent = 10; // used for array initialization
 		static const Short_t fiMaxNumHarmonics = 10; // used for array initialization
 		static const Short_t fiMaxNumEtaGaps = 10; // used for array initialization
-		
+
 		TFile* ffInputFile; //! input file with AliAnalysisTaskFlowPID results
-		TFile* ffOutputFile; //! output file 
-		
+		TFile* ffOutputFile; //! output file
+
 		TH1D* fHistTest; //! testing
 
 		Short_t	fiNumHarmonics; // number of eta gaps
@@ -85,9 +83,10 @@ public:
 		Short_t fiNumSamples; // number of samples
 		Short_t fiNumBinsCent; // number of centrality bins
 		Bool_t fbSamplingSpread; // flag for plotting spread of values during de-sampling
+		Bool_t fbDoV0s; // flag for analysing K0s, Lambda particles
 
 
-		
+
 };
 
 //_____________________________________________________________________________
@@ -96,14 +95,15 @@ ProcessFlow::ProcessFlow()
 	// default constructor
 	fbDebug = kFALSE;
 	fsInputFilePath = TString("/Users/vpacik/NBI/Flow/flow");
-	fsInputFileName = TString("AnalysisResults.root"); 
-	fsOutputFilePath = TString("/Users/vpacik/NBI/Flow/temp"); 
-	fsOutputFileName = TString("Flow.root"); 
-	fsTag = TString("FB768"); 
+	fsInputFileName = TString("AnalysisResults.root");
+	fsOutputFilePath = TString("/Users/vpacik/NBI/Flow/temp");
+	fsOutputFileName = TString("Flow.root");
+	fsTag = TString("FB768");
 	fiNumSamples = 0;
 	fiNumBinsCent = 0;
 	fiNumEtaGaps = 0;
 	fbSamplingSpread = kFALSE;
+	fbDoV0s = kFALSE;
 
 	ffInputFile = 0x0;
 	ffOutputFile = 0x0;
@@ -118,7 +118,7 @@ ProcessFlow::ProcessFlow()
 
 	for(Short_t i(0); i < fiMaxNumBinsCent; i++)
 		fdBinsCent[i] = -9999;
-	
+
 }
 //_____________________________________________________________________________
 ProcessFlow::~ProcessFlow()
@@ -146,13 +146,13 @@ void ProcessFlow::SetBinsCentArray(Double_t* array, Short_t iSize)
 		Error("SetBinsCentArray","Number of centrality bins is greater then initialized array: change value of fiMaxNumBinsCent accordingly! ");
 		return;
 	}
-	
+
 	for(Short_t i(0); i < fiNumBinsCent; i++)
 	{
 		fdBinsCent[i] = array[i];
 		Debug("SetBinsCentArray",Form("%d : %g",i,array[i]));
 	}
-	
+
 	return;
 }
 //_____________________________________________________________________________
@@ -168,13 +168,13 @@ void ProcessFlow::SetHarmonicsArray(Short_t* array, Short_t iSize)
 		Error("SetHarmonicsArray","Number of harmonics is greater then initialized array: change value of fiMaxNumHarmonics accordingly! ");
 		return;
 	}
-	
+
 	for(Short_t i(0); i < fiNumHarmonics; i++)
 	{
 		fiHarmonics[i] = array[i];
 		Debug("SetHarmonicsArray",Form("%d : %d",i,array[i]));
 	}
-	
+
 	return;
 }
 //_____________________________________________________________________________
@@ -190,14 +190,14 @@ void ProcessFlow::SetEtaGapsArray(Double_t* array, Short_t iSize)
 		Error("SetEtaGapsArray","Number of eta gaps is greater then initialized array: change value of fiMaxNumEtaGaps accordingly! ");
 		return;
 	}
-	
+
 	for(Short_t i(0); i < fiNumEtaGaps; i++)
 	{
 		fdEtaGaps[i] = array[i];
 		fsEtaGaps[i] = Form("Gap%02.2g", 10*array[i]);
 		Debug("SetEtaGapsArray",Form("%d : %g / %s",i,array[i], fsEtaGaps[i].Data()));
 	}
-	
+
 	return;
 }
 //_____________________________________________________________________________
@@ -217,7 +217,7 @@ void ProcessFlow::SetEtaGapsArray(Double_t* array, Short_t iSize)
 Bool_t ProcessFlow::Initialize()
 {
 	Debug("Initialize","Running");
-	
+
 	// checking array size
 	if(fiNumBinsCent > fiMaxNumBinsCent)
 	{
@@ -256,7 +256,7 @@ void ProcessFlow::Run()
 	if(Initialize() == kFALSE)
 		return;
 
-	// loading TList 
+	// loading TLists
 	ffInputFile->cd(Form("flowPID_%s",fsTag.Data()));
 	TList* listCumulants = (TList*) gDirectory->Get(Form("Cumulants_flowPID_%s",fsTag.Data()));
 	//listCumulants->ls();
@@ -275,51 +275,55 @@ void ProcessFlow::Run()
 		if(!listRef[i])
 		{
 			Fatal("Run",Form("List \"fListRef_%s\" does not exists",fsEtaGaps[i].Data()));
-			return; 
+			return;
 		}
 
 		listTracks[i] = (TList*) listCumulants->FindObject(Form("fListTracks_%s",fsEtaGaps[i].Data()) );
 		if(!listTracks[i])
 		{
 			Fatal("Run",Form("List \"fListTracks_%s\" does not exists",fsEtaGaps[i].Data()));
-			return; 
+			return;
 		}
 
 		listPions[i] = (TList*) listCumulants->FindObject(Form("fListPions_%s",fsEtaGaps[i].Data()) );
 		if(!listPions[i])
 		{
 			Fatal("Run",Form("List \"fListPions_%s\" does not exists",fsEtaGaps[i].Data()));
-			return; 
+			return;
 		}
 
 		listKaons[i] = (TList*) listCumulants->FindObject(Form("fListKaons_%s",fsEtaGaps[i].Data()) );
 		if(!listKaons[i])
 		{
 			Fatal("Run",Form("List \"fListKaons_%s\" does not exists",fsEtaGaps[i].Data()));
-			return; 
+			return;
 		}
-		
+
 		listProtons[i] = (TList*) listCumulants->FindObject(Form("fListProtons_%s",fsEtaGaps[i].Data()) );
 		if(!listProtons[i])
 		{
 			Fatal("Run",Form("List \"fListProtons_%s\" does not exists",fsEtaGaps[i].Data()));
-			return; 
+			return;
 		}
-		
-		listK0s[i] = (TList*) listCumulants->FindObject(Form("fListK0s_%s",fsEtaGaps[i].Data()) );
-		if(!listK0s[i])
+
+		if(fbDoV0s)
 		{
-			Fatal("Run",Form("List \"fListK0s_%s\" does not exists",fsEtaGaps[i].Data()));
-			return; 
-		}
-		
-		listLambda[i] = (TList*) listCumulants->FindObject(Form("fListLambda_%s",fsEtaGaps[i].Data()) );
-		if(!listLambda[i])
-		{
-			Fatal("Run",Form("List \"fListLambda_%s\" does not exists",fsEtaGaps[i].Data()));
-			return; 
+			listK0s[i] = (TList*) listCumulants->FindObject(Form("fListK0s_%s",fsEtaGaps[i].Data()) );
+			if(!listK0s[i])
+			{
+				Fatal("Run",Form("List \"fListK0s_%s\" does not exists",fsEtaGaps[i].Data()));
+				return;
+			}
+
+			listLambda[i] = (TList*) listCumulants->FindObject(Form("fListLambda_%s",fsEtaGaps[i].Data()) );
+			if(!listLambda[i])
+			{
+				Fatal("Run",Form("List \"fListLambda_%s\" does not exists",fsEtaGaps[i].Data()));
+				return;
+			}
 		}
 	}
+
 	Debug("Run","List with cumulants loaded");
 	// lists loaded
 
@@ -333,7 +337,7 @@ void ProcessFlow::Run()
 	TList* listOutK0s = new TList();
 	TList* listOutLambda = new TList();
 	*/
-	
+
 	TList* listOutRef[fiMaxNumHarmonics][fiMaxNumEtaGaps];
 	TList* listOutTracks[fiMaxNumHarmonics][fiMaxNumEtaGaps];
 	TList* listOutPions[fiMaxNumHarmonics][fiMaxNumEtaGaps];
@@ -342,7 +346,6 @@ void ProcessFlow::Run()
 	TList* listOutK0s[fiMaxNumHarmonics][fiMaxNumEtaGaps];
 	TList* listOutLambda[fiMaxNumHarmonics][fiMaxNumEtaGaps];
 
-	
 	for(Short_t i(0); i < fiNumHarmonics; i++)
 	{
 		for(Short_t j(0); j < fiNumEtaGaps; j++)
@@ -364,7 +367,7 @@ void ProcessFlow::Run()
 
 	for(Short_t iHarmonics(0); iHarmonics < fiNumHarmonics; iHarmonics++)
 	{
-			
+
 		for(Short_t iEtaGap(0); iEtaGap < fiNumEtaGaps; iEtaGap++)
 		{
 			Debug("","");
@@ -382,7 +385,7 @@ void ProcessFlow::Run()
 			{
 				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Track", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
 			}
-			
+
 			bStatusProcess = ProcessList(listPions[iEtaGap], listOutPions[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Pion");
 			if(bStatusProcess == kFALSE)
 			{
@@ -406,17 +409,17 @@ void ProcessFlow::Run()
 			if(fdEtaGaps[iEtaGap] < 0.) // NoGap case = Four particle cumulats are last (not the two = before last)
 			{
 				listOutRef[iHarmonics][iEtaGap]->Last()->Write(Form("hRef_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ));
-				listOutRef[iHarmonics][iEtaGap]->RemoveLast(); // should remove the last one from TList => now the cn2 is last 
+				listOutRef[iHarmonics][iEtaGap]->RemoveLast(); // should remove the last one from TList => now the cn2 is last
 				/*
 				listOutTracks[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 				listOutTracks[iHarmonics][iEtaGap]->RemoveLast();
-				
+
 				listOutPions[iHarmonics][iEtaGap]->Write(Form("Pions_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 				listOutPions[iHarmonics][iEtaGap]->RemoveLast();
-				
+
 				listOutKaons[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 				listOutKaons[iHarmonics][iEtaGap]->RemoveLast();
-				
+
 				listOutProtons[iHarmonics][iEtaGap]->Write(Form("Protons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 				listOutProtons[iHarmonics][iEtaGap]->RemoveLast();
 				*/
@@ -485,7 +488,7 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 
 
 		histTemp2 = (TH1D*) profRef2->ProjectionX()->Clone();
-		
+
 		// making Cn out of <<2>>
 		iNumBinsX = profRef2->GetNbinsX();
 		for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
@@ -511,7 +514,7 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 				return kFALSE;
 			}
 			histTemp4 = (TH1D*) profRef4->ProjectionX()->Clone();
-		
+
 			// making Cn out of <<4>>
 			iNumBinsX = profRef4->GetNbinsX();
 			for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
@@ -526,7 +529,7 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 
 				histTemp4->SetBinError(iBinX, 0);
 			}
-			
+
 			listTemp4->Add(histTemp4);
 		} // end of if NoGap
 
@@ -547,8 +550,8 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 			Error("ProcessRefFlow",Form("Desampling cn{4} FAILED!"));
 			return kFALSE;
 		}
-		
-		listOut->Add(listTemp4->Last()); 
+
+		listOut->Add(listTemp4->Last());
 	}
 
 
@@ -596,6 +599,8 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 	TProfile* profRef2 = 0x0;
 	TProfile* profRef4 = 0x0;
 	TProfile* profTemp = 0x0;
+	TProfile* profRebin = 0x0;
+
 	TProfile* profTemp4 = 0x0;
 	TH1D* histTemp = 0x0;
 	TH1D* histTemp4 = 0x0;
@@ -640,18 +645,24 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 					Error("ProcessList",Form("Input POIs %s <<2>> TProfile not found!",sSpecies.Data()));
 					return kFALSE;
 				}
-				
+
 				profTemp->SetName(Form("f%s_n%d2_gap%02.2g_cent%d_number%d_%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iSample,iRap));
 
+				/*
+				// make projections on pT / rebinning
+				Double_t dNewBinEdges[] = {0};
+				Int_t iNumNewBins = dNewBinEdges/dNewBinEdges[0];
+				profRebin = profTemp->Rebin(iNumNewBins,"profRebin",dNewBinEdges);
+				*/
 
 				iNumBinsX = profTemp->GetNbinsX(); // number of pT (X) bins
 				histTemp = (TH1D*) profTemp->ProjectionX()->Clone();
-				
+
 				for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
 				{
 					dValue = histTemp->GetBinContent(iBinX);
-					dValue = dValue / dRef; 
-					histTemp->SetBinContent(iBinX, dValue);	
+					dValue = dValue / dRef;
+					histTemp->SetBinContent(iBinX, dValue);
 					histTemp->SetBinError(iBinX,0);
 				} // end of loop over pt (X) bins
 
@@ -678,7 +689,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 
 						dValue = dCum4 - 2 * dCum2 * dRefCum2; // dn{4}
 						dRef = dRefCum4 - 2 * TMath::Power(dRefCum2,2);// cn{4}
-						
+
 						if(dRef < 0.)
 							histTemp4->SetBinContent(iBinX, -1 * dValue / TMath::Power(-dRef, 0.75) ); // vn{4}
 						else
@@ -688,7 +699,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 					} // end of loop over pt (X) bins
 
 					listTemp4[iCent]->Add(histTemp4);
-				
+
 
 				} // end of if NoGap case
 
@@ -696,12 +707,12 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 			} // end of loop over centralities
 		} // end of loop over rapidity sign (POS / NEG)
 	} // end of loop over samples
-		
 
-	// listTemp[fiNumBinsCent] should be full of flow based on samples	
+
+	// listTemp[fiNumBinsCent] should be full of flow based on samples
 	Bool_t bStatusDesample = kFALSE;
 	Short_t iNumSamples = fiNumSamples;
-	
+
 	if(dEtaGap >= 0.) // if NoGap case include both POS & Neg POIs (2xiNumSamples)
 		iNumSamples = iNumSamples*2;
 
@@ -709,21 +720,21 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 	{
 		bStatusDesample = DesampleList(listTemp[iCent],iNumSamples);
 		if(bStatusDesample == kFALSE)
-		{	
+		{
 			Error("ProcessList",Form("Desampling: cent %d status %d (FAILED)!",iCent,bStatusDesample));
 			return kFALSE;
 		}
 
 		listOut->Add(listTemp[iCent]->Last());
-		
-		
+
+
 		if(dEtaGap < 0.)
 		{
 
 
 			bStatusDesample = DesampleList(listTemp4[iCent],iNumSamples);
 			if(bStatusDesample == kFALSE)
-			{	
+			{
 				Error("ProcessList",Form("Desampling: cent %d status %d (FAILED)!",iCent,bStatusDesample));
 				return kFALSE;
 			}
@@ -732,7 +743,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 			listOut->Add(listTemp4[iCent]->Last());
 
 		}
-		
+
 
 		delete listTemp[iCent];
 		delete listTemp4[iCent];
@@ -744,7 +755,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 {
 	Debug("DesampleList",Form("Desampling list with %d entries (first: %s)",inList->GetEntries(), inList->First()->GetName()));
-	
+
 	// checking in/out lists
 	if(!inList)
 	{
@@ -778,7 +789,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 
 
 	const Short_t iNumBinsX = histOut->GetNbinsX();
-	
+
 	TH2D* hValues = new TH2D(Form("Desampling_%s",sName.Data()),"Desampling values spread;values;axisX bin",1000,-0.5,0.5,iNumBinsX,1,iNumBinsX+1);
 
 	TH1D* histTemp = 0x0;
@@ -820,7 +831,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 		histOut->SetBinContent(i, dMean);
 
 		// estimating error
-		
+
 		for(Short_t j(0); j < iNumSamples; j++)
 		{
 			histTemp = (TH1D*) inList->At(j);
@@ -830,31 +841,31 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 				dSigma += TMath::Power(dValue - dMean, 2);
 			}
 		}
-		
+
 		if(iNumSamples - iWrongSamples > 0)
 		{
 			histOut->SetBinError(i, TMath::Sqrt(dSigma) / (iNumSamples - iWrongSamples));
 		}
 		else
 		{
-			histOut->SetBinError(i, TMath::Sqrt(dSigma));	
+			histOut->SetBinError(i, TMath::Sqrt(dSigma));
 		}
 	}
 
 	inList->Add(histOut);
-	
+
 	if(fbSamplingSpread)
 	{
 		ffOutputFile->cd();
-		hValues->Write();	
+		hValues->Write();
 	}
-	
+
 	return kTRUE;
 }
 //_____________________________________________________________________________
 // void ProcessFlow::Run()
 // {
-// 	return; 
+// 	return;
 // 	ffInputFile = new TFile(Form("%s/%s",fsInputFilePath.Data(), fsInputFileName.Data()),"READ");
 // 	if(!ffInputFile->IsOpen())
 // 	{
@@ -869,32 +880,32 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 		return;
 // 	}
 
-// 	// loading files 
+// 	// loading files
 // 	ffInputFile->cd(Form("flowPID_%s",fsTag.Data()));
-	
+
 // 	//TList* lTracks = (TList*) gDirectory->Get(Form("Tracks_flowPID_%s",fsTag.Data()));
 // 	TList* lPID = (TList*) gDirectory->Get(Form("PID_flowPID_%s",fsTag.Data()));
-	
+
 // 	TH1D* hGFKTracksRefTwo[10] = {0x0}; // reference <<2>> = cn2
 // 	TH1D* hGFKTracksRefTwoGap00[10] = {0x0}; // reference <<2>> = cn2
 // 	TH1D* hGFKTracksRefTwoGap10[10] = {0x0}; // reference <<2>> = cn2
 // 	TH1D* hGFKTracksRefTwo3[10] = {0x0}; // reference <<2>> = cn2
 // 	TH1D* hGFKTracksRefTwo4[10] = {0x0}; // reference <<2>> = cn2
-// 	TH1D* hGFKTracksRefFour[10] = {0x0};	// reference <<4>> 
-// 	TH1D* hGFKTracksRefFour3[10] = {0x0};	// reference <<4>> 
-// 	TH1D* hGFKTracksRefFour4[10] = {0x0};	// reference <<4>> 
-	
+// 	TH1D* hGFKTracksRefFour[10] = {0x0};	// reference <<4>>
+// 	TH1D* hGFKTracksRefFour3[10] = {0x0};	// reference <<4>>
+// 	TH1D* hGFKTracksRefFour4[10] = {0x0};	// reference <<4>>
+
 // 	TH1D* hGFKPionsTwo[10][10] = {0x0}; // pt diff <<2'>> (pions) = dn2
 // 	TH1D* hGFKPionsFour[10][10] = {0x0}; // pt diff <<4'>> (pions)
 // 	TH1D* hGFKKaonsTwo[10][10] = {0x0}; // pt diff <<2'>> (pions) = dn2
 // 	TH1D* hGFKKaonsFour[10][10] = {0x0}; // pt diff <<4'>> (pions)
 // 	TH1D* hGFKProtonsTwo[10][10] = {0x0}; // pt diff <<2'>> (pions) = dn2
 // 	TH1D* hGFKProtonsFour[10][10] = {0x0}; // pt diff <<4'>> (pions)
-	
+
 // 	ffOutputFile->cd();
 
 // 	TProfile* profTemp = 0x0;
-// 	TH1D* dummyHist = 0x0; // temporary hist 
+// 	TH1D* dummyHist = 0x0; // temporary hist
 
 
 // 	for(Short_t j(0); j < fiNumSamples; j++)
@@ -926,7 +937,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 
 // 		profTemp = (TProfile*) lPID->FindObject(Form("fc44Tracks_gap-1_number%d",j));
 // 		hGFKTracksRefFour4[j] = (TH1D*) profTemp->ProjectionX();
-		
+
 // 		for(Short_t i(0); i < fiNumBinsCent; i++)
 // 		{
 // 			profTemp = (TProfile*) lPID->FindObject(Form("fd22Pion_gap-1_cent%d_number%d",i,j));
@@ -939,30 +950,30 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 
 // 			profTemp = (TProfile*) lPID->FindObject(Form("fd22Kaon_gap-1_cent%d_number%d",i,j));
 // 			hGFKKaonsTwo[i][j] = (TH1D*) profTemp->ProjectionX();
-			
+
 // 			profTemp = (TProfile*) lPID->FindObject(Form("fd24Kaon_gap-1_cent%d_number%d",i,j));
 // 			hGFKKaonsFour[i][j] = (TH1D*) profTemp->ProjectionX();
 
 // 			profTemp = (TProfile*) lPID->FindObject(Form("fd22Proton_gap-1_cent%d_number%d",i,j));
 // 			hGFKProtonsTwo[i][j] = (TH1D*) profTemp->ProjectionX();
-			
+
 // 			profTemp = (TProfile*) lPID->FindObject(Form("fd24Proton_gap-1_cent%d_number%d",i,j));
 // 			hGFKProtonsFour[i][j] = (TH1D*) profTemp->ProjectionX();
 // 		}
 
-// 	}		
+// 	}
 
 // 	// loaded
 
 // 	// estimating 4 particle cummulants dn4, cn4
-// 	TH1D* hGFKTracksCn4[10] = {0x0};	// reference cn4 
-// 	TH1D* hGFKTracksC34[10] = {0x0};	// reference cn4 
-// 	TH1D* hGFKTracksC44[10] = {0x0};	// reference cn4 
+// 	TH1D* hGFKTracksCn4[10] = {0x0};	// reference cn4
+// 	TH1D* hGFKTracksC34[10] = {0x0};	// reference cn4
+// 	TH1D* hGFKTracksC44[10] = {0x0};	// reference cn4
 
 // 	TH1D* hGFKPionsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
 // 	TH1D* hGFKKaonsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
 // 	TH1D* hGFKProtonsDn4[10][10] = {0x0};	// pt diff dn4 (pions)
-	
+
 // 	for(Short_t j(0); j < fiNumSamples; j++)
 // 	{
 // 		hGFKTracksCn4[j] = EstimateCn4(hGFKTracksRefTwo[j], hGFKTracksRefFour[j]);
@@ -978,7 +989,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 			//hGFKPionsDn4[i][j]->Write(Form("GFKPionsDn4_cent%d_sample%d",i,j));
 // 		}
 // 	}
-	
+
 // 	// estimating v22, v24, v'22, v'24
 // 	TH1D* hGFKRefv22[10] = {0x0};
 // 	TH1D* hGFKRefv22Gap00[10] = {0x0};
@@ -1041,7 +1052,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 			hGFKRefv24[j]->SetBinContent(i+1,TMath::Power(-dValue,0.25));
 // 			hGFKRefv24[j]->SetBinError(i+1,0);
 
-// 			dValue = hGFKTracksC34[j]->GetBinContent(i+1);		
+// 			dValue = hGFKTracksC34[j]->GetBinContent(i+1);
 // 			if(dValue < 0)
 // 			{
 // 				hGFKRefv34[j]->SetBinContent(i+1,TMath::Power(-dValue,0.25));
@@ -1145,7 +1156,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 	TList* lProtonsDiffv22 = new TList();
 // 	TList* lProtonsDiffv24 = new TList();
 
-// 	// output list by flow harmonics & particle species 
+// 	// output list by flow harmonics & particle species
 // 	TList* lFinalPionsDiffv22 = new TList();
 // 	TList* lFinalKaonsDiffv22 = new TList();
 // 	TList* lFinalProtonsDiffv22 = new TList();
@@ -1154,8 +1165,8 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 	TList* lFinalProtonsDiffv24 = new TList();
 
 // 	ffOutputFile->cd();
-// 	// filling the lists 
-// 	// reference	
+// 	// filling the lists
+// 	// reference
 // 	for(Short_t j(0); j < fiNumSamples; j++)
 // 	{
 // 		lRefv22->Add(hGFKRefv22[j]);
@@ -1185,7 +1196,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 	(lRefv24->Last())->Write("Refv24_Tracks");
 // 	(lRefv34->Last())->Write("Refv34_Tracks");
 // 	(lRefv44->Last())->Write("Refv44_Tracks");
-	
+
 // 	// pt diff
 // 	for(Short_t i(0); i < fiNumBinsCent; i++)
 // 	{
@@ -1205,14 +1216,14 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 			lProtonsDiffv22->Add(hGFKProtonsDiffv22[i][j]);
 // 			lProtonsDiffv24->Add(hGFKProtonsDiffv24[i][j]);
 // 		}
-		
-// 		DesampleList(lPionsDiffv22,fiNumSamples);		
-// 		DesampleList(lPionsDiffv24,fiNumSamples);		
-// 		DesampleList(lKaonsDiffv22,fiNumSamples);		
-// 		DesampleList(lKaonsDiffv24,fiNumSamples);		
-// 		DesampleList(lProtonsDiffv22,fiNumSamples);		
-// 		DesampleList(lProtonsDiffv24,fiNumSamples);		
-		
+
+// 		DesampleList(lPionsDiffv22,fiNumSamples);
+// 		DesampleList(lPionsDiffv24,fiNumSamples);
+// 		DesampleList(lKaonsDiffv22,fiNumSamples);
+// 		DesampleList(lKaonsDiffv24,fiNumSamples);
+// 		DesampleList(lProtonsDiffv22,fiNumSamples);
+// 		DesampleList(lProtonsDiffv24,fiNumSamples);
+
 // 		//lPionsDiffv22->Write(Form("lPionsDiffv22_cent%d",i),TObject::kSingleKey);
 // 		//lPionsDiffv24->Write(Form("lPionsDiffv24_cent%d",i),TObject::kSingleKey);
 // 		//lKaonsDiffv22->Write(Form("lKaonsDiffv22_cent%d",i),TObject::kSingleKey);
@@ -1239,7 +1250,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 		dummyHist = (TH1D*)lProtonsDiffv22->Last();
 // 		dummyHist->SetName(Form("Diffv22_Protons_cent%d",i));
 // 		lFinalProtonsDiffv22->Add(dummyHist);
-		
+
 // 		dummyHist = (TH1D*) lPionsDiffv24->Last();
 // 		dummyHist->SetName(Form("Diffv24_Pions_cent%d",i));
 // 		lFinalPionsDiffv24->Add(dummyHist);
@@ -1251,7 +1262,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 		lFinalProtonsDiffv24->Add(dummyHist);
 
 // 	}
-	
+
 // 	delete lRefv22;
 // 	delete lRefv22Gap00;
 // 	delete lRefv22Gap10;
@@ -1272,16 +1283,16 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 	lFinalPionsDiffv22->Write("Diffv22_Pions",TObject::kSingleKey);
 // 	lFinalKaonsDiffv22->Write("Diffv22_Kaons",TObject::kSingleKey);
 // 	lFinalProtonsDiffv22->Write("Diffv22_Protons",TObject::kSingleKey);
-	
+
 // 	lFinalPionsDiffv24->Write("Diffv24_Pions",TObject::kSingleKey);
 // 	lFinalKaonsDiffv24->Write("Diffv24_Kaons",TObject::kSingleKey);
 // 	lFinalProtonsDiffv24->Write("Diffv24_Protons",TObject::kSingleKey);
-	
+
 // 	//lDiffv22->Write("Diffv22",TObject::kSingleKey);
 // 	//lDiffv24->Write("Diffv24",TObject::kSingleKey);
 
 
-	
+
 // 	Terminate();
 
 // 	return;
@@ -1322,7 +1333,7 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // 		dValue2 = hCum2->GetBinContent(i);
 // 		dValue4 = hCum4->GetBinContent(i);
 // 		dOutValue = dValue4 - 2*TMath::Power(dValue2,2);
-	
+
 // 		hOut->SetBinContent(i,dOutValue);
 // 		hOut->SetBinError(i,0);
 // 	}
@@ -1333,16 +1344,16 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // TH1D* ProcessFlow::EstimateDn4(const Double_t dRef2, const TH1D* hDiff2, const TH1D* hDiff4)
 // {
 // 	TH1D* hOut = (TH1D*) hDiff4->Clone();
-	
+
 // 	const Short_t iNumBinsPt = hOut->GetNbinsX();
-	
+
 // 	Double_t dValue2 = 0, dValue4 = 0, dOutValue = 0;
 // 	for(Int_t i(1); i < iNumBinsPt+1; i++)
 // 	{
 // 		dValue2 = hDiff2->GetBinContent(i);
 // 		dValue4 = hDiff4->GetBinContent(i);
 // 		dOutValue = dValue4 - 2 * dValue2 * dRef2;
-	
+
 // 		hOut->SetBinContent(i,dOutValue);
 // 		hOut->SetBinError(i,0);
 // 	}
@@ -1352,8 +1363,8 @@ Bool_t ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // //_____________________________________________________________________________
 // void ProcessFlow::DesampleList(TList* inList, const Short_t iNumSamples)
 // {
-// 	// init 
-	
+// 	// init
+
 // 	TString sName = inList->First()->GetName();
 // 	TString sTitle = inList->First()->GetTitle();
 
@@ -1428,3 +1439,4 @@ void ProcessFlow::Debug(TString sMethod, TString sMsg)
 	if(fbDebug)
 		printf("Debug-ProcessFlow::%s: %s\n", sMethod.Data(), sMsg.Data());
 }
+//_____________________________________________________________________________
