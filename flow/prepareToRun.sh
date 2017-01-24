@@ -3,7 +3,7 @@
 # ===========================================================
 # Script copying code to path tag
 # Arguments:
-#   1 - "-system" (-pp / -ppb -pbpb)
+#   1 - system (pp / ppb pbpb)
 #   2 - period (only full)
 #		3 - tag (witout the runlist)
 # ===========================================================
@@ -11,6 +11,7 @@
 # checking the parameters
 if [ $# -ne 3 ]; then
 	echo "Wrong number of parameters: $# (3 needed). Exit!"
+	echo "Arguments: system period tag !"
 	exit
 fi
 
@@ -20,15 +21,15 @@ if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ]; then
 fi
 
 case ${1} in
-	-pp|-PP )
+	pp|PP )
 	echo "Analysis on PP"
 	system="pp"
 	;;
-	-pPb|-PPB|-ppb|-PPb )
+	pPb|PPB|ppb|PPb )
 	echo "Analysis on pPb"
 	system="pPb"
 	;;
-	-pbpb|-PbPb|-PBPB )
+	pbpb|PbPb|PBPB )
 	echo "Analysis on PbPb"
 	system="PbPb"
 	;;
@@ -71,17 +72,23 @@ cp -v ${code}/AliAnalysisTaskFlowPID.h ${path}
 cp -v ${code}/AddTaskFlowPID.C ${path}
 
 #cp -v ${code}/runMC.C ${path}
-#if [ "${system}" = "pPb" ]; then
-	#cp -v ${code}/runPPb.C ${path}
-#fi
+
+if [ "${system}" = "pp" ]; then
+	#cp -v ${code}/runPP.C ${path}
+	. ${code}/scripts/generateRunPP.sh ${path} ${tag} ${period}
+fi
+
+if [ "${system}" = "pPb" ]; then
+	cp -v ${code}/runPPb.C ${path}
+fi
 
 # generate maintenance / runnning scripts
 . ${code}/scripts/generateMergeOnGrid.sh ${path} ${period} ${tag}
 . ${code}/scripts/generateMergeLocal.sh ${path}
 
-if [ "${system}" = "pp" ]; then
-	. ${code}/scripts/generateRunPP.sh ${path} ${tag} ${period}
-fi
+#if [ "${system}" = "pp" ]; then
+#	. ${code}/scripts/generateRunPP.sh ${path} ${tag} ${period}
+#fi
 
 #cp -v ${code}/scripts/CleanAfterMerge.sh ${path}
 
