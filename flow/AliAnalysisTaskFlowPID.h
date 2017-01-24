@@ -78,7 +78,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
 
 
         //const static Int_t      fNumPtBins = 29;            // number of pT bins used for pT-differential flow // mine
-        const static Int_t 		  fNumPtBins = 13;			// number of pT bins used for pT-differential flow // you, katarina
+        const static Int_t 		  fNumPtBins = 33;			// number of pT bins used for pT-differential flow // you, katarina
         static Double_t			    fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
         const static Int_t      fNumMinvFlowBinsK0s = 12;  // number of inv. mass bin for differential flow plots (K0s)
         static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
@@ -86,9 +86,9 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
         const static Int_t 		  fNumCentBins = 3;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
         static Double_t			    fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
-        const static Int_t      fNumHarmonics = 3; // number of harmonics
+        const static Int_t      fNumHarmonics = 1; // number of harmonics
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-        const static Int_t      fNumEtaGap = 4; // number of harmonics
+        const static Int_t      fNumEtaGap = 3; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
         const static Int_t      fNumScanFB = 14; // number of scanned FB
         static Short_t          fTracksScanFB[fNumScanFB]; // values of scanned FBs
@@ -141,7 +141,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         void GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Neg, TProfile* prof4, const Short_t iHarm, const Double_t dEtaGap, const Int_t iPtBin);
         void GFKDoDiffFlowV0s(TProfile2D* prof2Pos, TProfile2D* prof2Neg, TProfile2D* prof4, const Short_t iHarm, const Double_t dEtaGap, const Int_t iPtBin, const Double_t dMassBin);
         void DoGenFramKatarina();
-        const static Int_t fGFKNumSamples = 10;
+        const static Int_t fGFKNumSamples = 5;
 
         const static Int_t fGFKNumVectors = 2; // pos and negative part of Q & p & q vectors
         TComplex Qvector[fMaxNumHarmonics][fMaxNumWeights]; //
@@ -455,7 +455,7 @@ class AliAnalysisTaskFlowPID : public AliAnalysisTaskSE
         AliAnalysisTaskFlowPID(const AliAnalysisTaskFlowPID&); // not implemented
         AliAnalysisTaskFlowPID& operator=(const AliAnalysisTaskFlowPID&); // not implemented
 
-        ClassDef(AliAnalysisTaskFlowPID, 12);
+        ClassDef(AliAnalysisTaskFlowPID, 13);
 };
 
 #endif

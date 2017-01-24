@@ -53,16 +53,17 @@ class AliAnalysisTaskFlowPID;
 
 ClassImp(AliAnalysisTaskFlowPID) // classimp: necessary for root
 
-Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0}; // You, Katarina binning
+//Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0}; // You, Katarina binning
 //Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8,4.2,4.6,5.,5.5,6}; // PID flow v2 JHEP paper
+Double_t AliAnalysisTaskFlowPID::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.,4.2,4.4,4.6,4.8,5.};
 
 //Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.}; # PbPb
-Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,30.,50.,150.};
+Double_t AliAnalysisTaskFlowPID::fCentBinEdges[] = {0.,50.,70.,150};
 //Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesK0s[] = {0.4,0.425,0.45,0.47,0.49,0.495,0.5,0.505,0.51,0.53,0.55,0.575,0.6};
 Double_t AliAnalysisTaskFlowPID::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.125,1.13,1.14,1.15,1.16};
-Int_t AliAnalysisTaskFlowPID::fHarmonics[AliAnalysisTaskFlowPID::fNumHarmonics] = {2,3,4};
-Double_t AliAnalysisTaskFlowPID::fEtaGap[AliAnalysisTaskFlowPID::fNumEtaGap] = {-1.,0.,0.5,1.0};
+Int_t AliAnalysisTaskFlowPID::fHarmonics[AliAnalysisTaskFlowPID::fNumHarmonics] = {2};
+Double_t AliAnalysisTaskFlowPID::fEtaGap[AliAnalysisTaskFlowPID::fNumEtaGap] = {-1.,0.,0.8};
 Short_t AliAnalysisTaskFlowPID::fTracksScanFB[AliAnalysisTaskFlowPID::fNumScanFB] = {1,2,4,5,8,16,32,64,96,128,256,512,768,1024};
 
 AliAnalysisTaskFlowPID::AliAnalysisTaskFlowPID() : AliAnalysisTaskSE(),
@@ -709,30 +710,36 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
       fListCumTracks[i]->SetName(Form("fListTracks_Gap%02.2g",10*fEtaGap[i]));
       fOutListCumulants->Add(fListCumTracks[i]);
 
-      fListCumPions[i] = new TList();
-      fListCumPions[i]->SetOwner(kTRUE);
-      fListCumPions[i]->SetName(Form("fListPions_Gap%02.2g",10*fEtaGap[i]));
-      fOutListCumulants->Add(fListCumPions[i]);
+      if(fPID)
+      {
+        fListCumPions[i] = new TList();
+        fListCumPions[i]->SetOwner(kTRUE);
+        fListCumPions[i]->SetName(Form("fListPions_Gap%02.2g",10*fEtaGap[i]));
+        fOutListCumulants->Add(fListCumPions[i]);
 
-      fListCumKaons[i] = new TList();
-      fListCumKaons[i]->SetOwner(kTRUE);
-      fListCumKaons[i]->SetName(Form("fListKaons_Gap%02.2g",10*fEtaGap[i]));
-      fOutListCumulants->Add(fListCumKaons[i]);
+        fListCumKaons[i] = new TList();
+        fListCumKaons[i]->SetOwner(kTRUE);
+        fListCumKaons[i]->SetName(Form("fListKaons_Gap%02.2g",10*fEtaGap[i]));
+        fOutListCumulants->Add(fListCumKaons[i]);
 
-      fListCumProtons[i] = new TList();
-      fListCumProtons[i]->SetOwner(kTRUE);
-      fListCumProtons[i]->SetName(Form("fListProtons_Gap%02.2g",10*fEtaGap[i]));
-      fOutListCumulants->Add(fListCumProtons[i]);
+        fListCumProtons[i] = new TList();
+        fListCumProtons[i]->SetOwner(kTRUE);
+        fListCumProtons[i]->SetName(Form("fListProtons_Gap%02.2g",10*fEtaGap[i]));
+        fOutListCumulants->Add(fListCumProtons[i]);
+      }
 
-      fListCumK0s[i] = new TList();
-      fListCumK0s[i]->SetOwner(kTRUE);
-      fListCumK0s[i]->SetName(Form("fListK0s_Gap%02.2g",10*fEtaGap[i]));
-      fOutListCumulants->Add(fListCumK0s[i]);
+      if(fDoV0s)
+      {
+        fListCumK0s[i] = new TList();
+        fListCumK0s[i]->SetOwner(kTRUE);
+        fListCumK0s[i]->SetName(Form("fListK0s_Gap%02.2g",10*fEtaGap[i]));
+        fOutListCumulants->Add(fListCumK0s[i]);
 
-      fListCumLambda[i] = new TList();
-      fListCumLambda[i]->SetOwner(kTRUE);
-      fListCumLambda[i]->SetName(Form("fListLambda_Gap%02.2g",10*fEtaGap[i]));
-      fOutListCumulants->Add(fListCumLambda[i]);
+        fListCumLambda[i] = new TList();
+        fListCumLambda[i]->SetOwner(kTRUE);
+        fListCumLambda[i]->SetName(Form("fListLambda_Gap%02.2g",10*fEtaGap[i]));
+        fOutListCumulants->Add(fListCumLambda[i]);
+      }
     }
 
     // Katarina GF
@@ -741,7 +748,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     {
       for(Int_t i(0); i < fNumHarmonics; i++)
       {
-        for(Int_t j(0); j < fNumSampleBins; j++)
+        for(Int_t j(0); j < fGFKNumSamples; j++)
         {
           if(!fSampling && j > 0)
             continue;
@@ -765,48 +772,56 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
     {
       for(Int_t i(0); i < fNumCentBins; i++)
       {
-        for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
-        {
-          if(fEtaGap[m] < 0. && iVec == 1) //only positive vectors for No Gap situation
-            continue;
 
-          fInvMassPtK0s[iVec][m][i] = new TH2D(Form("fInvMassPtK0s_%s_Gap%02.2g_Cent%d",sVec[iVec].Data(),10*fEtaGap[m],i),Form("K^{0}_{S} candidates |#Delta#it{#eta}| > %g POI %s Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fEtaGap[m],sVec[iVec].Data(),fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassK0s, fV0MaxMassK0s);
-          fInvMassPtK0s[iVec][m][i]->Sumw2();
-          fListCumK0s[m]->Add(fInvMassPtK0s[iVec][m][i]);
-
-          fInvMassPtLambda[iVec][m][i] = new TH2D(Form("fInvMassPtLambda_%s_Gap%02.2g_Cent%d",sVec[iVec].Data(),10*fEtaGap[m],i),Form("#Lambda candidates |#Delta#it{#eta}| > %g POI %s Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fEtaGap[m],sVec[iVec].Data(),fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassLambda, fV0MaxMassLambda);
-          fInvMassPtLambda[iVec][m][i]->Sumw2();
-          fListCumLambda[m]->Add(fInvMassPtLambda[iVec][m][i]);
-        }
-
-        for(Int_t k(0); k < fNumHarmonics; k++)
+        if(fDoV0s)
         {
           for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
           {
             if(fEtaGap[m] < 0. && iVec == 1) //only positive vectors for No Gap situation
-              continue;
+            continue;
 
-            fdn2K0s[iVec][m][k][i] = new TProfile2D(Form("fK0s_n%d2_%s_gap%02.2g_cent%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i), Form("K_{S}^{0}: <<2'>> harmonics %d diff Gap %g POI %s cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
-            fdn2K0s[iVec][m][k][i]->Sumw2();
-            fListCumK0s[m]->Add(fdn2K0s[iVec][m][k][i]);
+            fInvMassPtK0s[iVec][m][i] = new TH2D(Form("fInvMassPtK0s_%s_Gap%02.2g_Cent%d",sVec[iVec].Data(),10*fEtaGap[m],i),Form("K^{0}_{S} candidates |#Delta#it{#eta}| > %g POI %s Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fEtaGap[m],sVec[iVec].Data(),fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassK0s, fV0MaxMassK0s);
+            fInvMassPtK0s[iVec][m][i]->Sumw2();
+            fListCumK0s[m]->Add(fInvMassPtK0s[iVec][m][i]);
 
-            fdn2Lambda[iVec][m][k][i] = new TProfile2D(Form("fLambda_n%d2_%s_gap%02.2g_cent%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i), Form("#Lambda: <<2'>> harmonics %d diff Gap %g POI %s cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
-            fdn2Lambda[iVec][m][k][i]->Sumw2();
-            fListCumLambda[m]->Add(fdn2Lambda[iVec][m][k][i]);
+            fInvMassPtLambda[iVec][m][i] = new TH2D(Form("fInvMassPtLambda_%s_Gap%02.2g_Cent%d",sVec[iVec].Data(),10*fEtaGap[m],i),Form("#Lambda candidates |#Delta#it{#eta}| > %g POI %s Cent %g-%g%%; #it{p}^{V0}_{T} (GeV/#it{c}); #it{m}^{V0}_{inv} (GeV/#it{c}^{2});",fEtaGap[m],sVec[iVec].Data(),fCentBinEdges[i],fCentBinEdges[i+1]),fNumPtBins, fPtBinEdges, 200, fV0MinMassLambda, fV0MaxMassLambda);
+            fInvMassPtLambda[iVec][m][i]->Sumw2();
+            fListCumLambda[m]->Add(fInvMassPtLambda[iVec][m][i]);
           }
+        }
 
-          if(fEtaGap[m] < 0.) // case with no gap (otherw. no need for 4 cummulants)
+        for(Int_t k(0); k < fNumHarmonics; k++)
+        {
+          if(fDoV0s)
           {
-            fdn4K0s[m][k][i] = new TProfile2D(Form("fK0s_n%d4_gap%02.2g_cent%d", fHarmonics[k],fEtaGap[m]*10, i), Form("K_{S}^{0}: <<4'>> harmonics %d diff Gap %g cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
-            fdn4K0s[m][k][i]->Sumw2();
-            fListCumK0s[m]->Add(fdn4K0s[m][k][i]);
+            for(Int_t iVec(0); iVec < fGFKNumVectors; iVec++)
+            {
+              if(fEtaGap[m] < 0. && iVec == 1) //only positive vectors for No Gap situation
+                continue;
 
-            fdn4Lambda[m][k][i] = new TProfile2D(Form("fLambda_n%d4_gap%02.2g_cent%d", fHarmonics[k],fEtaGap[m]*10, i), Form("#Lambda: <<4'>> harmonics %d diff Gap %g cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
-            fdn4Lambda[m][k][i]->Sumw2();
-            fListCumLambda[m]->Add(fdn4Lambda[m][k][i]);
+
+                fdn2K0s[iVec][m][k][i] = new TProfile2D(Form("fK0s_n%d2_%s_gap%02.2g_cent%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i), Form("K_{S}^{0}: <<2'>> harmonics %d diff Gap %g POI %s cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+                fdn2K0s[iVec][m][k][i]->Sumw2();
+                fListCumK0s[m]->Add(fdn2K0s[iVec][m][k][i]);
+
+                fdn2Lambda[iVec][m][k][i] = new TProfile2D(Form("fLambda_n%d2_%s_gap%02.2g_cent%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i), Form("#Lambda: <<2'>> harmonics %d diff Gap %g POI %s cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+                fdn2Lambda[iVec][m][k][i]->Sumw2();
+                fListCumLambda[m]->Add(fdn2Lambda[iVec][m][k][i]);
+            }
+
+            if(fEtaGap[m] < 0.) // case with no gap (otherw. no need for 4 cummulants)
+            {
+              fdn4K0s[m][k][i] = new TProfile2D(Form("fK0s_n%d4_gap%02.2g_cent%d", fHarmonics[k],fEtaGap[m]*10, i), Form("K_{S}^{0}: <<4'>> harmonics %d diff Gap %g cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsK0s,fMinvFlowBinEdgesK0s);
+              fdn4K0s[m][k][i]->Sumw2();
+              fListCumK0s[m]->Add(fdn4K0s[m][k][i]);
+
+              fdn4Lambda[m][k][i] = new TProfile2D(Form("fLambda_n%d4_gap%02.2g_cent%d", fHarmonics[k],fEtaGap[m]*10, i), Form("#Lambda: <<4'>> harmonics %d diff Gap %g cent %d; pT; Minv;",fHarmonics[k],fEtaGap[m],i), fNumPtBins,fPtBinEdges,fNumMinvFlowBinsLambda,fMinvFlowBinEdgesLambda);
+              fdn4Lambda[m][k][i]->Sumw2();
+              fListCumLambda[m]->Add(fdn4Lambda[m][k][i]);
+            }
           }
 
-          for(Int_t j(0); j < fNumSampleBins; j++)
+          for(Int_t j(0); j < fGFKNumSamples; j++)
           {
             if(!fSampling && j > 0)
               continue;
@@ -820,18 +835,20 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
               fdn2Tracks[iVec][m][k][i][j]->Sumw2();
               fListCumTracks[m]->Add(fdn2Tracks[iVec][m][k][i][j]);
 
-              fdn2Pion[iVec][m][k][i][j] = new TProfile(Form("fPion_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i, j), Form("#pi: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
-              fdn2Pion[iVec][m][k][i][j]->Sumw2();
-              fListCumPions[m]->Add(fdn2Pion[iVec][m][k][i][j]);
+              if(fPID)
+              {
+                fdn2Pion[iVec][m][k][i][j] = new TProfile(Form("fPion_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10, i, j), Form("#pi: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
+                fdn2Pion[iVec][m][k][i][j]->Sumw2();
+                fListCumPions[m]->Add(fdn2Pion[iVec][m][k][i][j]);
 
-              fdn2Kaon[iVec][m][k][i][j] = new TProfile(Form("fKaon_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10,i, j), Form("K: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
-              fdn2Kaon[iVec][m][k][i][j]->Sumw2();
-              fListCumKaons[m]->Add(fdn2Kaon[iVec][m][k][i][j]);
+                fdn2Kaon[iVec][m][k][i][j] = new TProfile(Form("fKaon_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10,i, j), Form("K: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
+                fdn2Kaon[iVec][m][k][i][j]->Sumw2();
+                fListCumKaons[m]->Add(fdn2Kaon[iVec][m][k][i][j]);
 
-              fdn2Proton[iVec][m][k][i][j] = new TProfile(Form("fProton_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10,i, j), Form("p: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d ; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
-              fdn2Proton[iVec][m][k][i][j]->Sumw2();
-              fListCumProtons[m]->Add(fdn2Proton[iVec][m][k][i][j]);
-
+                fdn2Proton[iVec][m][k][i][j] = new TProfile(Form("fProton_n%d2_%s_gap%02.2g_cent%d_number%d", fHarmonics[k],sVec[iVec].Data(),fEtaGap[m]*10,i, j), Form("p: <<2'>> harmonics %d diff Gap %g POI %s cent %d sample %d ; pT",fHarmonics[k],fEtaGap[m],sVec[iVec].Data(),i,j), fNumPtBins,fPtBinEdges);
+                fdn2Proton[iVec][m][k][i][j]->Sumw2();
+                fListCumProtons[m]->Add(fdn2Proton[iVec][m][k][i][j]);
+              }
             }
 
             // four particle cumulants does not have gap
@@ -842,19 +859,20 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
             fdn4Tracks[m][k][i][j]->Sumw2();
             fListCumTracks[m]->Add(fdn4Tracks[m][k][i][j]);
 
-            fdn4Pion[m][k][i][j] = new TProfile(Form("fPion_n%d4_gap%02.2g_cent%d_number%d", fHarmonics[k],fEtaGap[m]*10,i, j), Form("#pi: <<4'>> harmonics %d Gap %g cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],i,j), fNumPtBins,fPtBinEdges);
-            fdn4Pion[m][k][i][j]->Sumw2();
-            fListCumPions[m]->Add(fdn4Pion[m][k][i][j]);
+            if(fPID)
+            {
+              fdn4Pion[m][k][i][j] = new TProfile(Form("fPion_n%d4_gap%02.2g_cent%d_number%d", fHarmonics[k],fEtaGap[m]*10,i, j), Form("#pi: <<4'>> harmonics %d Gap %g cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],i,j), fNumPtBins,fPtBinEdges);
+              fdn4Pion[m][k][i][j]->Sumw2();
+              fListCumPions[m]->Add(fdn4Pion[m][k][i][j]);
 
-            fdn4Kaon[m][k][i][j] = new TProfile(Form("fKaon_n%d4_gap%02.2g_cent%d_number%d", fHarmonics[k],fEtaGap[m]*10,i, j), Form("K: <<4'>> harmonics %d diff Gap %g cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],i,j), fNumPtBins,fPtBinEdges);
-            fdn4Kaon[m][k][i][j]->Sumw2();
-            fListCumKaons[m]->Add(fdn4Kaon[m][k][i][j]);
+              fdn4Kaon[m][k][i][j] = new TProfile(Form("fKaon_n%d4_gap%02.2g_cent%d_number%d", fHarmonics[k],fEtaGap[m]*10,i, j), Form("K: <<4'>> harmonics %d diff Gap %g cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],i,j), fNumPtBins,fPtBinEdges);
+              fdn4Kaon[m][k][i][j]->Sumw2();
+              fListCumKaons[m]->Add(fdn4Kaon[m][k][i][j]);
 
-            fdn4Proton[m][k][i][j] = new TProfile(Form("fProton_n%d4_gap%02.2g_cent%d_number%d", fHarmonics[k],fEtaGap[m]*10,i, j), Form("p: <<4'>> harmonics %d diff Gap %0g cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],i,j), fNumPtBins,fPtBinEdges);
-            fdn4Proton[m][k][i][j]->Sumw2();
-            fListCumProtons[m]->Add(fdn4Proton[m][k][i][j]);
-
-
+              fdn4Proton[m][k][i][j] = new TProfile(Form("fProton_n%d4_gap%02.2g_cent%d_number%d", fHarmonics[k],fEtaGap[m]*10,i, j), Form("p: <<4'>> harmonics %d diff Gap %0g cent %d sample %d; pT",fHarmonics[k],fEtaGap[m],i,j), fNumPtBins,fPtBinEdges);
+              fdn4Proton[m][k][i][j]->Sumw2();
+              fListCumProtons[m]->Add(fdn4Proton[m][k][i][j]);
+            }
           }
         }
       }
@@ -1058,7 +1076,7 @@ void AliAnalysisTaskFlowPID::UserCreateOutputObjects()
   if(fOldFlow)
   {
     // V0s histos
-    if(fPID)
+    if(fDoV0s)
     {
       for(Int_t k(0); k < fNumEtaGap; k++)
       {
@@ -1552,12 +1570,13 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     fArrPionFiltered.Clear("C");
     fArrKaonFiltered.Clear("C");
     fArrProtonFiltered.Clear("C");
-    if(fDoV0s)
-    {
-      fArrV0sK0sFiltered.Clear("C");
-      fArrV0sLambdaFiltered.Clear("C");
-      fArrV0sALambdaFiltered.Clear("C");
-    }
+  }
+
+  if(fDoV0s)
+  {
+    fArrV0sK0sFiltered.Clear("C");
+    fArrV0sLambdaFiltered.Clear("C");
+    fArrV0sALambdaFiltered.Clear("C");
   }
 
   // filtering objects and filling relevant containers
@@ -1573,8 +1592,10 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     {
       FilterPIDTracks(); // filter PID tracks (pi,K,p)
     }
+  }
 
-    if(fDoV0s)
+  if(fDoV0s)
+  {
       FilterV0s(); // filter V0s
   }
 
@@ -4136,8 +4157,10 @@ void AliAnalysisTaskFlowPID::DoGenFramKatarina()
           {
             GFKDoDiffFlow(fdn2Proton[0][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn2Proton[1][iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fdn4Proton[iEtaGap][iHarm][fCentBinIndex][fSampleBinIndex],fHarmonics[iHarm],dEtaGap,iPt);
           }
+        } // end of DoPID flag
 
-
+        if(fDoV0s)
+        {
           // K0s
           for(Int_t iMass(0); iMass < fNumMinvFlowBinsK0s; iMass++)
           {
@@ -4171,7 +4194,7 @@ void AliAnalysisTaskFlowPID::DoGenFramKatarina()
               GFKDoDiffFlowV0s(fdn2Lambda[0][iEtaGap][iHarm][fCentBinIndex],fdn2Lambda[1][iEtaGap][iHarm][fCentBinIndex],fdn4Lambda[iEtaGap][iHarm][fCentBinIndex],fHarmonics[iHarm],dEtaGap,iPt,dMass);
             }
           }
-        } // end of DoPID flag
+        } // end of fDoV0s
 
       } // end of pT bins loop
 
@@ -4479,9 +4502,12 @@ void AliAnalysisTaskFlowPID::GFKDoDiffFlow(TProfile* prof2Pos, TProfile* prof2Ne
       //..v2{2}
       vector = TwoDiff(iHarm, -iHarm);
       dValue = vector->Re()/DDn2;
-      if( TMath::Abs(dValue < 1) )
-        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2);
 
+      if( TMath::Abs(dValue < 1) )
+      {
+        //printf("Filling:[%g]: %g, %g\n", (fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2);
+        prof2Pos->Fill((fPtBinEdges[iPtBin+1] + fPtBinEdges[iPtBin])/2, dValue, DDn2);
+      }
     }
 
     if(DDn4 != 0)
