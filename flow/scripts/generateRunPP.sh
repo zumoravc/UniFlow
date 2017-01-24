@@ -31,11 +31,11 @@ if [ ! -d "${output}" ]; then
 	exit
 fi
 
-if [ ! "${period}" == "LHC16k" ] && [ ! "${period}" == "LHC16l" ]; then
-	# runlist file does not exist
-  echo "Wrong period '${period}' (not LHC16k nor LHC16l). Exit!"
-	exit
-fi
+# if [[ ! "${period}" == "LHC16k"* ]] && [ ! "${period}" == "LHC16l"* ]]; then
+# 	# runlist file does not exist
+#   echo "Wrong period '${period}' (not LHC16k nor LHC16l). Exit!"
+# 	exit
+# fi
 # arguments passed
 echo "--- Listing arguments ---"
 echo "output:\"${output}\""
@@ -47,7 +47,7 @@ echo "-------------------------"
 cat > ${output}/runPP.C <<EOT
 void runPP()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -73,17 +73,26 @@ void runPP()
     // part 1 [44 runs]
     //Int_t runNumber[] = {258537, 258499, 258477, 258456, 258454, 258452, 258426, 258393, 258391, 258387, 258359, 258336, 258332, 258307, 258306, 258303, 258302, 258301, 258299, 258278, 258274, 258273, 258271, 258270, 258258, 258257, 258256, 258204, 258203, 258202, 258198, 258197, 258178, 258117, 258114, 258113, 258109, 258108, 258107, 258063, 258062, 258060, 258059, 258053, 258049, 258045, 258042, 258041, 258039};
     // part 2 [43 runs]
-    Int_t runNumber[] = {258019, 258017, 258014, 258012, 258008, 258003, 257992, 257989, 257986, /*257979,*/ 257963, 257960, 257957, 257939, 257937, 257936, 257892, 257855, 257853, 257851, 257850, 257804, 257803, 257800, 257799, 257798, 257797, 257773, 257765, 257757, 257754, 257737, 257735, 257734, 257733, 257727, 257725, 257724, 257697, 257694, 257692, 257691, 257689, 257688, 257687, 257685, 257684, 257682};
+    //Int_t runNumber[] = {258019, 258017, 258014, 258012, 258008, 258003, 257992, 257989, 257986, /*257979,*/ 257963, 257960, 257957, 257939, 257937, 257936, 257892, 257855, 257853, 257851, 257850, 257804, 257803, 257800, 257799, 257798, 257797, 257773, 257765, 257757, 257754, 257737, 257735, 257734, 257733, 257727, 257725, 257724, 257697, 257694, 257692, 257691, 257689, 257688, 257687, 257685, 257684, 257682};
+
+    // added in RunList_LHC16k_pass1_CentralBarrelTracking_hadronPID_20170119_v1.txt [96 new runs]
+    // part 3 [48 runs]
+    //Int_t runNumber[] = {257644, 257642,257636,257635,257632,257630,257606,257605,257604,257601,257595,257594,257592,257590,257588,257587,257566,257562,257561,257560,257541,257540,257539,257537,257531,257530,257492,257491,257490,257488,257487,257474,257468,257457,257433,257364,257358,257330,257322,257320,257318,257260,257224,257209,257206,257204,257144,257141};
+    // part 4 [47 runs]
+    //Int_t runNumber[] = {257139,257138,257137,257136,257100,257095,257092,257086,257084,257082,257080,257077,257026,257021,257012,257011,256944,256942,256941,256697,256695,256694,256692,256691,256684,256681,256677,256676,256658,256620,256619,256591,256589,256567,256565,256564,256562,256560,256557,256556,256554,256552,256514,256512,256510,256506,256504};
+    
     // lhc16k_test.runlist
     //Int_t runNumber[] = {258537, 258499, 258477, 258456, 258454};
 
-    // since we will compile a class, tell root where to look for headers
-    gROOT->ProcessLine(".include $ROOTSYS/include");
-    gROOT->ProcessLine(".include $ALICE_ROOT/include");
 
-    gSystem->AddIncludePath("-I$ALICE_ROOT/include");
-    gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
-    //gSystem->AddIncludePath("-I$ALICE_PHYSICS/../src/OADB/COMMON/MULTIPLICITY");
+
+    // since we will compile a class, tell root where to look for headers
+    gROOT->ProcessLine(".include \$ROOTSYS/include");
+    gROOT->ProcessLine(".include \$ALICE_ROOT/include");
+
+    gSystem->AddIncludePath("-I\$ALICE_ROOT/include");
+    gSystem->AddIncludePath("-I\$ALICE_PHYSICS/include");
+    //gSystem->AddIncludePath("-I\$ALICE_PHYSICS/../src/OADB/COMMON/MULTIPLICITY");
     gSystem->Load("libPhysics.so");
     gSystem->Load("libOADB.so");
     gSystem->Load("libSTEERBase");
@@ -101,21 +110,21 @@ void runPP()
 
     //Add this here: run before your task, but after definition of manager and input handler
 
-    //gROOT->LoadMacro("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
+    //gROOT->LoadMacro("\$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
     //AliMultSelectionTask* taskMultSelection = AddTaskMultSelection(kFALSE); // user mode:
     //taskMultSelection->SetSelectedTriggerClass(AliVEvent::kMB);
 
     // Physics selection as suggested by HMTF
-    gROOT->ProcessLine(".L $ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C");
+    gROOT->ProcessLine(".L \$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C");
     AliPhysicsSelectionTask* physSelTask = AddTaskPhysicsSelection(kFALSE,kTRUE);
 
     // PID response needed for PID
-    gROOT->LoadMacro("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C");
+    gROOT->LoadMacro("\$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C");
     AliAnalysisTaskPIDResponse* taskPIDResponse = AddTaskPIDResponse(kFALSE); // not MC
 
     /*
     // PID response QA by ALICE
-    gROOT->LoadMacro("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDqa.C");
+    gROOT->LoadMacro("\$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDqa.C");
     AliAnalysisTaskPIDqa* taskPIDqa = AddTaskPIDqa("PID_QA.root");
     */
 
@@ -251,7 +260,7 @@ void runPP()
         // if we want to run on grid, we create and configure the plugin
         AliAnalysisAlien *alienHandler = new AliAnalysisAlien();
         // also specify the include (header) paths on grid
-        alienHandler->AddIncludePath("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include");
+        alienHandler->AddIncludePath("-I\$ROOTSYS/include -I\$ALICE_ROOT/include -I\$ALICE_PHYSICS/include");
         // make sure your source files get copied to grid
         alienHandler->SetAdditionalLibs("AliAnalysisTaskFlowPID.cxx AliAnalysisTaskFlowPID.h");
         alienHandler->SetAnalysisSource("AliAnalysisTaskFlowPID.cxx");
