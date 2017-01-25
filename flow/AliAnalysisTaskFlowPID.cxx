@@ -4354,8 +4354,12 @@ void AliAnalysisTaskFlowPID::GFKFillVectors(TClonesArray &array, const Int_t iEt
         {
           pcosPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
           psinPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
-          qcosPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
-          qsinPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
+
+          if(iV0s == 0) // not  V0s : ie. tracks (charged / pions / kaons / protons)
+          {
+            qcosPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Cos(iharm*aodTrk->Phi());
+            qsinPt[iharm][ipow] += TMath::Power(weightPt, ipow)*TMath::Sin(iharm*aodTrk->Phi());
+          }
         }
       }
     }
