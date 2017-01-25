@@ -1501,8 +1501,8 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
   FillEventQA(fAOD,1); // after cuts events QA
 
   // loading PID response for protons
-  if(fTracksScan || fPID || ( (fCutV0ProtonNumSigmaMax > 0.) && (fCutV0ProtonPIDPtMax > 0.) ) )
-  {
+  //if(fTracksScan || fPID || ( (fCutV0ProtonNumSigmaMax > 0.) && (fCutV0ProtonPIDPtMax > 0.) ) )
+  //{
     AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
     AliInputEventHandler* inputHandler = (AliInputEventHandler*)mgr->GetInputEventHandler();
     fPIDResponse = inputHandler->GetPIDResponse();
@@ -1513,7 +1513,7 @@ void AliAnalysisTaskFlowPID::UserExec(Option_t *)
     }
 
     fTPCPIDResponse = fPIDResponse->GetTPCResponse();
-  }
+  //}
 
   if(fSampling) // randomly assign sampling bin index for stat. uncertanity estimation
   {
