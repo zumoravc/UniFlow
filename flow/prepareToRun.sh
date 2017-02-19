@@ -29,6 +29,14 @@ case ${1} in
 	echo "Analysis on pPb"
 	system="pPb"
 	;;
+	pPbRun1|PPBRun1|ppbrun1|PPbRun1 )
+	echo "Analysis on pPb (Run1)"
+	system="pPbRun1"
+	;;
+	pPbRun2|PPBRun2|ppbrun2|PPbRun2 )
+	echo "Analysis on pPb (Run2)"
+	system="pPbRun2"
+	;;
 	pbpb|PbPb|PBPB )
 	echo "Analysis on PbPb"
 	system="PbPb"
@@ -80,6 +88,15 @@ fi
 
 if [ "${system}" = "pPb" ]; then
 	cp -v ${code}/runPPb.C ${path}
+fi
+
+if [ "${system}" = "pPbRun1" ]; then
+	cp -v ${code}/runPPbRun1.C ${path}
+fi
+
+if [ "${system}" = "pPbRun2" ]; then
+	#cp -v ${code}/runPPbRun2.C ${path}
+	. ${code}/scripts/generateRunPPbRun2.sh ${path} ${tag} ${period}
 fi
 
 # generate maintenance / runnning scripts
