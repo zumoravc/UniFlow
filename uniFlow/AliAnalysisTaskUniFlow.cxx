@@ -67,9 +67,13 @@ Short_t AliAnalysisTaskUniFlow::fTracksScanFB[AliAnalysisTaskUniFlow::fNumScanFB
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fInit(kFALSE),
+  fIndexSampling(0),
   fAnalType(kAOD),
   fColSystem(kPP),
   fPeriod(kNon),
+  fSampling(kFALSE),
+  fNumSamples(10),
+
   fLHC10h(kTRUE),
   fTrigger(kFALSE),
   fRejectPileFromSPD(kFALSE),
@@ -77,7 +81,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fUsePlpMV(kFALSE),
   fRejectOutOfBunchPU(kFALSE),
   fCentFlag(0),
-  fSampling(0),
   fDoFlow(0),
   fDiffFlow(0),
   fTracksScan(0),
@@ -122,7 +125,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0K0sArmenterosAlphaMin(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
-  fCutV0ProtonPIDPtMax(0.)
+  fCutV0ProtonPIDPtMax(0.),
+
+  fhEventSampling(0x0)
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
@@ -130,9 +135,13 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
   fInit(kFALSE),
+  fIndexSampling(0),
   fAnalType(kAOD),
   fColSystem(kPP),
   fPeriod(kNon),
+  fSampling(kFALSE),
+  fNumSamples(10),
+
   fLHC10h(kTRUE),
   fTrigger(kFALSE),
   fRejectPileFromSPD(kFALSE),
@@ -141,7 +150,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fUsePlpMV(kFALSE),
   fCentFlag(0),
   fDoFlow(0),
-  fSampling(0),
   fDiffFlow(0),
   fTracksScan(0),
   fPID(0),
@@ -185,9 +193,13 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0K0sArmenterosAlphaMin(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
-  fCutV0ProtonPIDPtMax(0.)
-{
+  fCutV0ProtonPIDPtMax(0.),
 
+  fhEventSampling(0x0)
+{
+  // defining input/output
+  DefineInput(0, TChain::Class());
+  DefineOutput(1, TList::Class());
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
@@ -236,13 +248,25 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // create output objects
   // this function is called ONCE at the start of your analysis (RUNTIME)
 
+  // list all parameters used in this analysis
   ListParameters();
 
   // task initialization
   fInit = InitializeTask();
   if(!fInit) return;
 
-  return; // temporary end
+  // creating output lists
+  fOutListEvents = new TList();
+  fOutListEvents->SetOwner(kTRUE);
+
+  // creating histograms
+  fhEventSampling = new TH1D("fhEventSampling","Event sampling",fNumSamples, 0, fNumSamples);
+  fOutListEvents->Add(fhEventSampling);
+
+  // posting data (mandatory)
+  PostData(1, fOutListEvents);
+
+  return;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::ListParameters()
@@ -284,6 +308,15 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   // TODO check if period corresponds to selected collisional system
 
+  if(fSampling && fNumSamples == 0)
+  {
+    ::Error("InitializeTask","Sampling used, but number of samples is 0! Terminating!");
+    return kFALSE;
+  }
+
+  if(!fSampling)
+    fNumSamples = 1;
+
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -304,10 +337,16 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // TODO
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
+  fIndexSampling = GetSamplingIndex();
+  fhEventSampling->Fill(fIndexSampling);
   // TODO implement
+
 
   // processing of selected event
   if(!ProcessEvent(event)) return;
+
+  // posting data (mandatory)
+  PostData(1, fOutListEvents);
 
   return;
 }
@@ -326,10 +365,34 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent(const AliAODEvent* event)
   // main method for processing of (selected) event
   // returns kTRUE if succesfull
 
-  
+
 
 
   return kTRUE;
+}
+//_____________________________________________________________________________
+Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
+{
+  Short_t index = 0;
+
+  if(fSampling && fNumSamples > 0)
+  {
+    TRandom3 rr(0);
+    Double_t ranNum = rr.Rndm(); // getting random number in (0,1)
+    Double_t generated = ranNum * fNumSamples; // getting random number in range (0, fNumSamples)
+
+    // finding right index for sampling based on generated number and total number of samples
+    for(Short_t i(0); i < fNumSamples; i++)
+    {
+      if(generated < (i+1) )
+      {
+        index = i;
+        break;
+      }
+    }
+  }
+
+  return index;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::Terminate(Option_t* option)

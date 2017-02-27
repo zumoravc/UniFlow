@@ -25,6 +25,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    SetColisionSystem(ColSystem colSystem) {fColSystem = colSystem; }
         void					          SetAnalysisType(AnalType type) { fAnalType = type; }
         void                    SetPeriod(DataPeriod period) { fPeriod = period; }
+        void                    SetSampling(Bool_t sample) { fSampling = sample; }
+        void                    SetNumberOfSamples(Short_t numSamples) { fNumSamples = numSamples; }
 
         void                    SetOldPeriod10h(Bool_t period) { fLHC10h = period; }
 
@@ -35,7 +37,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void					          SetUseIsPileUpFromSPD(Bool_t IsPileUp) { fUseIsPileUpFromSPD = IsPileUp; }
         void					SetCentFlag(Short_t flag) { fCentFlag = flag; }
         void					SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
-        void                    SetSampling(Bool_t sample) { fSampling = sample; }
         void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; }
         void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
         void                    SetPID(Bool_t pid) { fPID = pid; }
@@ -107,14 +108,19 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  ProcessEvent(const AliAODEvent* event); // main (envelope) method for processing events passing selection
         void                    ListParameters();
 
+        Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
+
         // properties
         Bool_t                  fInit; // initialization check
+        Short_t                 fIndexSampling; // sampling index (randomly generated)
 
 
         //cuts & selection: analysis
         AnalType                fAnalType; // analysis type: AOD / ESD
         ColSystem               fColSystem; // collisional system
         DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
+        Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
+        Short_t                 fNumSamples; // overall number of samples (from random sampling) used
 
         Bool_t                  fLHC10h;        // flag to LHC10h data?
         Short_t                 fTrigger;   // switch for pp trigger selection / 0: INT7 / 1: kHighMultV0 / 2: kHighMultSPD
@@ -123,7 +129,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  fUsePlpMV;   // use plpMV method in (old) event selection
         Bool_t                  fRejectOutOfBunchPU; // use AliUtils out-of-bunch pile-up rejection (provided by Christian)
         Short_t                 fCentFlag;          // centrality flag
-        Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
         Bool_t                  fDoFlow;        // Do flow analysis (if kFALSE: only selection, filtering and QA)
         Bool_t                  fDoV0s;                       // Do V0s analysis?
         Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
@@ -169,6 +174,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Double_t				fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
         Double_t                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) --- both MUST be on --- max number of TPC sigma for proton PID (Lambda candidates)
         Double_t				fCutV0ProtonPIDPtMax;	// (GeV/c) --- both MUST be on --- max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
+
+        // output lists
+        TList*      fOutListEvents; //! events list
+
+        // histograms
+        TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
 
         AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
         AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
