@@ -52,8 +52,6 @@ class AliAnalysisTaskUniFlow;
 
 ClassImp(AliAnalysisTaskUniFlow) // classimp: necessary for root
 
-enum ColSystem {kPP, kPPb, kPbPb};
-
 //Double_t AliAnalysisTaskUniFlow::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0}; // You, Katarina binning
 //Double_t AliAnalysisTaskUniFlow::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8,4.2,4.6,5.,5.5,6}; // PID flow v2 JHEP paper
 Double_t AliAnalysisTaskUniFlow::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.,4.2,4.4,4.6,4.8,5.};
@@ -68,10 +66,10 @@ Double_t AliAnalysisTaskUniFlow::fEtaGap[AliAnalysisTaskUniFlow::fNumEtaGap] = {
 Short_t AliAnalysisTaskUniFlow::fTracksScanFB[AliAnalysisTaskUniFlow::fNumScanFB] = {1,2,4,5,8,16,32,64,96,128,256,512,768,1024};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
-  fAODAnalysis(kTRUE),
-  fPbPb(kFALSE),
-  fPP(kFALSE),
-  fPPb(kFALSE),
+  fInit(kFALSE),
+  fAnalType(kAOD),
+  fColSystem(kPP),
+  fPeriod(kNon),
   fLHC10h(kTRUE),
   fTrigger(kFALSE),
   fRejectPileFromSPD(kFALSE),
@@ -131,10 +129,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
-  fAODAnalysis(kTRUE),
-  fPbPb(kFALSE),
-  fPP(kFALSE),
-  fPPb(kFALSE),
+  fInit(kFALSE),
+  fAnalType(kAOD),
+  fColSystem(kPP),
+  fPeriod(kNon),
   fLHC10h(kTRUE),
   fTrigger(kFALSE),
   fRejectPileFromSPD(kFALSE),
@@ -241,7 +239,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   ListParameters();
 
   // task initialization
-  if(!InitializeTask()) return;
+  fInit = InitializeTask();
+  if(!fInit) return;
 
   return; // temporary end
 }
@@ -256,7 +255,34 @@ void AliAnalysisTaskUniFlow::ListParameters()
 Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 {
   // called once on beginning of task (within UserCreateOutputObjects method)
+  // check if task parameters are specified and valid
   // returns kTRUE if succesfull
+
+  if(fAnalType != kESD && fAnalType != kAOD)
+  {
+    ::Error("InitializeTask","Analysis type not specified! Terminating!");
+    return kFALSE;
+  }
+
+  if(fAnalType == kESD)
+  {
+    ::Error("InitializeTask","Analysis type: ESD not implemented! Terminating!");
+    return kFALSE;
+  }
+
+  if(fColSystem != kPP && fColSystem != kPP && fColSystem != kPbPb)
+  {
+    ::Error("InitializeTask","Collisional system not specified! Terminating!");
+    return kFALSE;
+  }
+
+  if(fPeriod == kNon)
+  {
+    ::Error("InitializeTask","Period of data sample not selected! Terminating!");
+    return kFALSE;
+  }
+
+  // TODO check if period corresponds to selected collisional system
 
   return kTRUE;
 }
@@ -265,11 +291,13 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 {
   // main method called for each event (event loop)
 
+  if(!fInit) return; // check if initialization succesfull
+
   // Fill event QA BEFORE cuts
   // TODO
-  
+
   // event selection
-  AliAODEvent* event = 0x0;
+  AliAODEvent* event = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!EventSelection(event)) return;
 
   // Fill event QA AFTER cuts
@@ -297,6 +325,9 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent(const AliAODEvent* event)
 {
   // main method for processing of (selected) event
   // returns kTRUE if succesfull
+
+  
+
 
   return kTRUE;
 }

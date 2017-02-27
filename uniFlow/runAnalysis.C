@@ -76,11 +76,10 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_FB768_Bayes");
     // tracks & event selection cuts
-    task1->SetAODAnalysis(kTRUE);
-    task1->SetPbPbAnalysis(kTRUE);
-    task1->SetPPbAnalysis(kFALSE);
-    task1->SetPPAnalysis(kFALSE);
-    task1->SetPeriod10h(kFALSE);
+    task1->SetAnalysisType(kAOD);
+    task1->SetColisionSystem(kPP);
+    task1->SetPeriod(k16k);
+    //task1->SetPeriod10h(kFALSE);
     task1->SetCentFlag(0);
     task1->SetPVtxZMax(10);
     task1->SetTrackEtaMax(0.8);

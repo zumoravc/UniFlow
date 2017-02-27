@@ -7,6 +7,10 @@
 
 #include "AliAnalysisTaskSE.h"
 
+enum ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
+enum AnalType {kAOD, kESD}; // tag for analysis type
+enum DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
+
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
     public:
@@ -18,13 +22,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         virtual void            UserExec(Option_t* option); // main methond - called for each event
         virtual void            Terminate(Option_t* option); // called after all events are processed
         // event setters
-        void          SetColSystem(ColSystem colSystem) {fColSystem = colSystem; }
-        void					SetAODAnalysis(Bool_t aod) { fAODAnalysis = aod; }
-        void                    SetPbPbAnalysis(Bool_t pbpb) { fPbPb = pbpb; }
-        void                    SetPPAnalysis(Bool_t pp) { fPP = pp; }
-        void					SetPPbAnalysis(Bool_t ppb) { fPPb = ppb; }
+        void                    SetColisionSystem(ColSystem colSystem) {fColSystem = colSystem; }
+        void					          SetAnalysisType(AnalType type) { fAnalType = type; }
+        void                    SetPeriod(DataPeriod period) { fPeriod = period; }
+
+        void                    SetOldPeriod10h(Bool_t period) { fLHC10h = period; }
+
         void                    SetTrigger(Short_t trigger) { fTrigger = trigger; }
-        void                    SetPeriod10h(Bool_t period) { fLHC10h = period; }
         void                    SetRejectPileUpSPD(Bool_t pileSPD) { fRejectPileFromSPD = pileSPD; }
         void                    SetUsePlpMV(Bool_t plpMV) { fUsePlpMV = plpMV; }
         void                    SetRejectOutOfBunchPU(Bool_t oobpu) { fRejectOutOfBunchPU = oobpu; }
@@ -78,6 +82,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void					SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
 
+
         //const static Int_t      fNumPtBins = 29;            // number of pT bins used for pT-differential flow // mine
         const static Int_t 		  fNumPtBins = 33;			// number of pT bins used for pT-differential flow // you, katarina
         static Double_t			    fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
@@ -102,12 +107,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  ProcessEvent(const AliAODEvent* event); // main (envelope) method for processing events passing selection
         void                    ListParameters();
 
+        // properties
+        Bool_t                  fInit; // initialization check
+
+
         //cuts & selection: analysis
-        ColSystem fColSystem; // collisional system
-        Bool_t                  fAODAnalysis;       // is AOD analysis?
-        Bool_t                  fPbPb;                  // is PbPb analysis?
-        Bool_t                  fPP;                  // is pp analysis?
-        Bool_t                  fPPb;                  // is pPb analysis?
+        AnalType                fAnalType; // analysis type: AOD / ESD
+        ColSystem               fColSystem; // collisional system
+        DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
+
         Bool_t                  fLHC10h;        // flag to LHC10h data?
         Short_t                 fTrigger;   // switch for pp trigger selection / 0: INT7 / 1: kHighMultV0 / 2: kHighMultSPD
         Bool_t                  fRejectPileFromSPD;   // switch for rejection based on is PileFromSPD
