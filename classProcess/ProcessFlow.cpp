@@ -45,9 +45,10 @@ public:
 		void Debug(TString sMethod, TString sMsg); // printf the msg as info
 
     Bool_t	Initialize(); // check array size, etc.
-    Bool_t DesampleList(TList* inList, const Short_t iNumSamples); // estimate average of sigma from list of samples
-    Bool_t ProcessRefFlow(const TList* listIn, TList* listOut, const Short_t iHarmonics, const Double_t dEtaGap); // desample reference flow (indipendent on ProcessList / not needed to run first)
-    Bool_t 	ProcessList(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
+    Bool_t  DesampleList(TList* inList, const Short_t iNumSamples); // estimate average of sigma from list of samples
+    Bool_t  ProcessRefFlow(const TList* listIn, TList* listOut, const Short_t iHarmonics, const Double_t dEtaGap); // desample reference flow (indipendent on ProcessList / not needed to run first)
+    Bool_t 	ProcessList(const TList* listIn, TList* listOut, TList* listOut4, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
+		Bool_t  ProcessListV0s(const TList* listIn, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
     //TH1D*	EstimateCn2(const TH1D* hCum2); // estimate cn{2} out of <<2>>
     //TH1D*	EstimateCn4(const TH1D* hCum2, const TH1D* hCum4); // estimate cn{4} out of <<2>>,<<4>>
     //TH1D*	EstimateDn4(const Double_t dRef2, const TH1D* hDiff2, const TH1D* hDiff4); // estimate cn{4} out of <<2>>,<<4>>
@@ -346,6 +347,14 @@ void ProcessFlow::Run()
 	TList* listOutK0s[fiMaxNumHarmonics][fiMaxNumEtaGaps];
 	TList* listOutLambda[fiMaxNumHarmonics][fiMaxNumEtaGaps];
 
+	TList* listOutRef4[fiMaxNumHarmonics][fiMaxNumEtaGaps];
+	TList* listOutTracks4[fiMaxNumHarmonics][fiMaxNumEtaGaps];
+	TList* listOutPions4[fiMaxNumHarmonics][fiMaxNumEtaGaps];
+	TList* listOutKaons4[fiMaxNumHarmonics][fiMaxNumEtaGaps];
+	TList* listOutProtons4[fiMaxNumHarmonics][fiMaxNumEtaGaps];
+	TList* listOutK0s4[fiMaxNumHarmonics][fiMaxNumEtaGaps];
+	TList* listOutLambda4[fiMaxNumHarmonics][fiMaxNumEtaGaps];
+
 	for(Short_t i(0); i < fiNumHarmonics; i++)
 	{
 		for(Short_t j(0); j < fiNumEtaGaps; j++)
@@ -357,11 +366,16 @@ void ProcessFlow::Run()
 			listOutProtons[i][j] = new TList();
 			listOutK0s[i][j] = new TList();
 			listOutLambda[i][j] = new TList();
+
+			listOutRef4[i][j] = new TList();
+			listOutTracks4[i][j] = new TList();
+			listOutPions4[i][j] = new TList();
+			listOutKaons4[i][j] = new TList();
+			listOutProtons4[i][j] = new TList();
+			listOutK0s4[i][j] = new TList();
+			listOutLambda4[i][j] = new TList();
 		}
 	}
-
-
-	TString sSpecies = "Pion";
 
 	Bool_t bStatusProcess = kFALSE;
 
@@ -380,29 +394,43 @@ void ProcessFlow::Run()
 			}
 
 			// estiamte PID flow
-			bStatusProcess = ProcessList(listTracks[iEtaGap], listOutTracks[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Tracks");
+			bStatusProcess = ProcessList(listTracks[iEtaGap], listOutTracks[iHarmonics][iEtaGap], listOutTracks4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Tracks");
 			if(bStatusProcess == kFALSE)
 			{
 				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Track", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
 			}
 
-			bStatusProcess = ProcessList(listPions[iEtaGap], listOutPions[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Pion");
+			bStatusProcess = ProcessList(listPions[iEtaGap], listOutPions[iHarmonics][iEtaGap], listOutPions4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Pion");
 			if(bStatusProcess == kFALSE)
 			{
 				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Pion", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
 			}
 
-			bStatusProcess = ProcessList(listKaons[iEtaGap], listOutKaons[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Kaon");
+			bStatusProcess = ProcessList(listKaons[iEtaGap], listOutKaons[iHarmonics][iEtaGap],listOutKaons4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Kaon");
 			if(bStatusProcess == kFALSE)
 			{
 				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Kaon", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
 			}
 
-			bStatusProcess = ProcessList(listProtons[iEtaGap], listOutProtons[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Proton");
+			bStatusProcess = ProcessList(listProtons[iEtaGap], listOutProtons[iHarmonics][iEtaGap], listOutProtons4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Proton");
 			if(bStatusProcess == kFALSE)
 			{
 				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Proton", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
 			}
+
+			/*
+			bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
+			if(bStatusProcess == kFALSE)
+			{
+				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+			}
+
+			bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
+			if(bStatusProcess == kFALSE)
+			{
+				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+			}
+			*/
 
 			ffOutputFile->cd();
 
@@ -431,6 +459,11 @@ void ProcessFlow::Run()
 			listOutKaons[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 			listOutProtons[iHarmonics][iEtaGap]->Write(Form("Protons_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 
+			listOutTracks4[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			listOutPions4[iHarmonics][iEtaGap]->Write(Form("Pions_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			listOutKaons4[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			listOutProtons4[iHarmonics][iEtaGap]->Write(Form("Protons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+
 		} // end of loop over eta gaps
 	} // end of loop over harmonics
 
@@ -445,6 +478,14 @@ void ProcessFlow::Run()
 			delete listOutProtons[i][j];
 			delete listOutK0s[i][j];
 			delete listOutLambda[i][j];
+
+			delete listOutRef4[i][j];
+			delete listOutTracks4[i][j];
+			delete listOutPions4[i][j];
+			delete listOutKaons4[i][j];
+			delete listOutProtons4[i][j];
+			delete listOutK0s4[i][j];
+			delete listOutLambda4[i][j];
 		}
 	}
 
@@ -489,7 +530,7 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 
 		histTemp2 = (TH1D*) profRef2->ProjectionX()->Clone();
 
-		// making Cn out of <<2>>
+		// making Vn out of <<2>>
 		iNumBinsX = profRef2->GetNbinsX();
 		for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
 		{
@@ -565,7 +606,7 @@ Bool_t ProcessFlow::ProcessRefFlow(const TList* listIn, TList* listOut, const Sh
 	return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies)
+Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, TList* listOut4, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies)
 {
 	Debug("ProcessList",Form("Processing list with %d entries. First \"%s\"",listIn->GetEntries(),listIn->First()->GetName()));
 	// checking in/out lists
@@ -578,6 +619,12 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 	if(!listOut)
 	{
 		Error("ProcessList","Output list does not exists!");
+		return kFALSE;
+	}
+
+	if(!listOut4)
+	{
+		Error("ProcessList","Output list 4 does not exists!");
 		return kFALSE;
 	}
 
@@ -646,7 +693,13 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 					return kFALSE;
 				}
 
+				// rebinning the profiles
+				profTemp->Rebin(3);
+
+
 				profTemp->SetName(Form("f%s_n%d2_gap%02.2g_cent%d_number%d_%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iSample,iRap));
+
+
 
 				/*
 				// make projections on pT / rebinning
@@ -676,16 +729,19 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 						Error("ProcessList",Form("Input POIs %s <<4>> TProfile not found! Name: \"f%s_n%d4_gap%02.2g_cent%d_number%d\"",sSpecies.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iSample));
 						return kFALSE;
 					}
+					// rebinning the profiles
+					profTemp4->Rebin(3);
 
 					histTemp4 = (TH1D*) profTemp4->ProjectionX()->Clone();
 					iNumBinsX = histTemp4->GetNbinsX();
 
+					dRefCum2 = profRef2->GetBinContent(iCent+1);
+					dRefCum4 = profRef4->GetBinContent(iCent+1);
+					
 					for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
 					{
 						dCum4 = profTemp4->GetBinContent(iBinX);
 						dCum2 = profTemp->GetBinContent(iBinX);
-						dRefCum2 = profRef2->GetBinContent(iCent+1);
-						dRefCum4 = profRef4->GetBinContent(iCent+1);
 
 						dValue = dCum4 - 2 * dCum2 * dRefCum2; // dn{4}
 						dRef = dRefCum4 - 2 * TMath::Power(dRefCum2,2);// cn{4}
@@ -693,7 +749,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 						if(dRef < 0.)
 							histTemp4->SetBinContent(iBinX, -1 * dValue / TMath::Power(-dRef, 0.75) ); // vn{4}
 						else
-							histTemp4->SetBinContent(iBinX, -9. ); // vn{4}
+							histTemp4->SetBinContent(iBinX, -99. ); // vn{4}
 
 						histTemp4->SetBinError(iBinX,0);
 					} // end of loop over pt (X) bins
@@ -740,7 +796,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 			}
 
 			//listTemp4[iCent]->ls();
-			listOut->Add(listTemp4[iCent]->Last());
+			listOut4->Add(listTemp4[iCent]->Last());
 
 		}
 
@@ -748,6 +804,22 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, const TList
 		delete listTemp[iCent];
 		delete listTemp4[iCent];
 	}
+
+	return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies)
+{
+	Debug("ProcessList",Form("Processing list with %d entries. First \"%s\"",listIn->GetEntries(),listIn->First()->GetName()));
+	// checking in/out lists
+	if(!listIn)
+	{
+		Error("ProcessList","Input list does not exists!");
+		return kFALSE;
+	}
+
+	listIn->ls();
+
 
 	return kTRUE;
 }

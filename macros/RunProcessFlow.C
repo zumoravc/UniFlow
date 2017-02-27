@@ -27,9 +27,11 @@ void RunProcessFlow()
 
 	ProcessFlow* process = new ProcessFlow();
 	process->SetDebug(1);
-	process->SetInputFilePath("~/NBI/Flow/results/v2-full-pPbRun2-lhc16rs-noSampling/");
-	process->SetOutputFilePath("~/NBI/Flow/results/v2-full-pPbRun2-lhc16rs-noSampling/");
+	process->SetInputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
+	process->SetOutputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
 	process->SetOutputFileName("Flow_CENT_wSDD.root");
+	//process->SetOutputFileName("Flow_kINT7.root");
+	//process->SetTag("kINT7");
 	process->SetTag("CENT_wSDD");
 	process->SetHarmonicsArray(harmonics,sizeHarmonics);
 	process->SetEtaGapsArray(etaGaps,sizeEtaGaps);
@@ -43,7 +45,7 @@ void RunProcessFlow()
 	//process->SetNumBinsCentrality(9);
 	//process->SetNumSamples(5);
 	//process->Run();
-	delete process;
+	//delete process;
 
 	return;
 }
