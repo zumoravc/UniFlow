@@ -22,14 +22,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         virtual void            UserExec(Option_t* option); // main methond - called for each event
         virtual void            Terminate(Option_t* option); // called after all events are processed
         // event setters
-        void                    SetColisionSystem(ColSystem colSystem) {fColSystem = colSystem; }
-        void					          SetAnalysisType(AnalType type) { fAnalType = type; }
-        void                    SetPeriod(DataPeriod period) { fPeriod = period; }
-        void                    SetSampling(Bool_t sample) { fSampling = sample; }
-        void                    SetNumberOfSamples(Short_t numSamples) { fNumSamples = numSamples; }
-        void                    SetFilterCharged(Bool_t filter) { fFilterCharged = filter; }
-        void                    SetFilterPID(Bool_t filter) { fFilterPID = filter; }
-        void                    SetFilterV0s(Bool_t filter) { fFilterV0s = filter; }
+        void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
+        void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
+        void                    SetPeriod(DataPeriod period = k16k) { fPeriod = period; }
+        void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
+        void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; }
+        void                    SetFilterCharged(Bool_t filter = kTRUE) { fFilterCharged = filter; }
+        void                    SetFilterPID(Bool_t filter = kTRUE) { fFilterPID = filter; }
+        void                    SetFilterV0s(Bool_t filter = kTRUE) { fFilterV0s = filter; }
 
         void                    SetOldPeriod10h(Bool_t period) { fLHC10h = period; }
 
