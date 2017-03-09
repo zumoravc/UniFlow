@@ -68,11 +68,25 @@ Short_t AliAnalysisTaskUniFlow::fTracksScanFB[AliAnalysisTaskUniFlow::fNumScanFB
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fInit(kFALSE),
   fIndexSampling(0),
+  fIndexCentrality(0),
   fAnalType(kAOD),
   fColSystem(kPP),
   fPeriod(kNon),
   fSampling(kFALSE),
   fNumSamples(10),
+  fFilterCharged(kFALSE),
+  fFilterPID(kFALSE),
+  fFilterV0s(kFALSE),
+
+  fArrTrackRPF(0x0),
+  fArrTrackPOI(0x0),
+  fArrPion(0x0),
+  fArrKaon(0x0),
+  fArrProton(0x0),
+  fArrK0s(0x0),
+  fArrLambda(0x0),
+  fArrALambda(0x0),
+
 
   fLHC10h(kTRUE),
   fTrigger(kFALSE),
@@ -136,11 +150,25 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
   fInit(kFALSE),
   fIndexSampling(0),
+  fIndexCentrality(0),
+
   fAnalType(kAOD),
   fColSystem(kPP),
   fPeriod(kNon),
   fSampling(kFALSE),
   fNumSamples(10),
+  fFilterCharged(kFALSE),
+  fFilterPID(kFALSE),
+  fFilterV0s(kFALSE),
+
+  fArrTrackRPF(0x0),
+  fArrTrackPOI(0x0),
+  fArrPion(0x0),
+  fArrKaon(0x0),
+  fArrProton(0x0),
+  fArrK0s(0x0),
+  fArrLambda(0x0),
+  fArrALambda(0x0),
 
   fLHC10h(kTRUE),
   fTrigger(kFALSE),
@@ -336,11 +364,16 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // Fill event QA AFTER cuts
   // TODO
 
+  // filter all particle of interest in given (selected) events
+  // FilterTracks();
+
+
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
   fIndexSampling = GetSamplingIndex();
   fhEventSampling->Fill(fIndexSampling);
-  // TODO implement
 
+  fIndexCentrality = GetCentralityIndex();
+  // TODO implement
 
   // processing of selected event
   if(!ProcessEvent(event)) return;
@@ -360,12 +393,36 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection(const AliAODEvent* event)
   return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::Filtering()
+{
+  // main (envelope) method for filtering all particles of interests (POIs) in selected events
+  // All POIs passing selection criteria are saved to relevant TClonesArray for further processing
+  // return kTRUE if succesfull (no errors in process)
+
+  if(fFilterCharged)
+  {
+        // TODO :: implement§
+  }
+
+  if(fFilterPID)
+  {
+    // TODO:: implelemt
+  }
+
+  if(fFilterV0s)
+  {
+    // TODO implement
+  }
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::ProcessEvent(const AliAODEvent* event)
 {
   // main method for processing of (selected) event
   // returns kTRUE if succesfull
 
-
+  if(!Filtering()) return kFALSE;
 
 
   return kTRUE;
@@ -373,6 +430,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent(const AliAODEvent* event)
 //_____________________________________________________________________________
 Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
 {
+  // Assing sampling index based on generated random number
+  // returns centrality index
   Short_t index = 0;
 
   if(fSampling && fNumSamples > 0)
@@ -391,6 +450,16 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
       }
     }
   }
+
+  return index;
+}
+//_____________________________________________________________________________
+Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
+{
+  Short_t index = 0;
+  // Assing centrality index based on provided method (centrality estimator / number of selected tracks)
+  // If number of selected track method is selected, track filtering must be done first
+  // returns centrality index
 
   return index;
 }

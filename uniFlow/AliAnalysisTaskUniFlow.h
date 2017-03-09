@@ -27,6 +27,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    SetPeriod(DataPeriod period) { fPeriod = period; }
         void                    SetSampling(Bool_t sample) { fSampling = sample; }
         void                    SetNumberOfSamples(Short_t numSamples) { fNumSamples = numSamples; }
+        void                    SetFilterCharged(Bool_t filter) { fFilterCharged = filter; }
+        void                    SetFilterPID(Bool_t filter) { fFilterPID = filter; }
+        void                    SetFilterV0s(Bool_t filter) { fFilterV0s = filter; }
 
         void                    SetOldPeriod10h(Bool_t period) { fLHC10h = period; }
 
@@ -105,15 +108,26 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
     private:
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
         Bool_t                  EventSelection(const AliAODEvent* event); // main method for event selection (specific event selection is applied within)
+        Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
         Bool_t                  ProcessEvent(const AliAODEvent* event); // main (envelope) method for processing events passing selection
         void                    ListParameters();
 
         Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
+        Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
 
         // properties
         Bool_t                  fInit; // initialization check
         Short_t                 fIndexSampling; // sampling index (randomly generated)
-
+        Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
+        // selected POIs containers
+        TClonesArray*           fArrChargedRPF; // container for filtered RFPs tracks
+        TClonesArray*           fArrChargedPOI; // container for filtered POIs tracks
+        TClonesArray*           fArrPion; // container for filtered pions
+        TClonesArray*           fArrKaon; // container for filtered kaons
+        TClonesArray*           fArrProton; // container for filtered protons
+        TClonesArray*           fArrK0s; // container for filtered K0s candidates
+        TClonesArray*           fArrLambda; // container for filtered Lambda candidates
+        TClonesArray*           fArrALambda; // container for filtered ALambda candidates
 
         //cuts & selection: analysis
         AnalType                fAnalType; // analysis type: AOD / ESD
@@ -121,6 +135,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
         Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
         Short_t                 fNumSamples; // overall number of samples (from random sampling) used
+        Bool_t                  fFilterCharged; // flag for filtering charged tracks (both RPF and POIs)
+        Bool_t                  fFilterPID; // flag for filtering PID tracks (pi,K,p)
+        Bool_t                  fFilterV0s; // flag for filtering V0 candidates (K0s, Lambda/ALambda)
 
         Bool_t                  fLHC10h;        // flag to LHC10h data?
         Short_t                 fTrigger;   // switch for pp trigger selection / 0: INT7 / 1: kHighMultV0 / 2: kHighMultSPD
