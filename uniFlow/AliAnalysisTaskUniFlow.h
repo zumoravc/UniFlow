@@ -24,31 +24,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // event setters
         void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
         void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
-        void                    SetPeriod(DataPeriod period = k16k) { fPeriod = period; }
+        void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
         void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
         void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; }
-        void                    SetFilterCharged(Bool_t filter = kTRUE) { fFilterCharged = filter; }
-        void                    SetFilterPID(Bool_t filter = kTRUE) { fFilterPID = filter; }
-        void                    SetFilterV0s(Bool_t filter = kTRUE) { fFilterV0s = filter; }
+        void                    SetFilterCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
+        void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
+        void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
 
-        void                    SetOldPeriod10h(Bool_t period) { fLHC10h = period; }
-
-        void                    SetTrigger(Short_t trigger) { fTrigger = trigger; }
-        void                    SetRejectPileUpSPD(Bool_t pileSPD) { fRejectPileFromSPD = pileSPD; }
-        void                    SetUsePlpMV(Bool_t plpMV) { fUsePlpMV = plpMV; }
-        void                    SetRejectOutOfBunchPU(Bool_t oobpu) { fRejectOutOfBunchPU = oobpu; }
-        void					          SetUseIsPileUpFromSPD(Bool_t IsPileUp) { fUseIsPileUpFromSPD = IsPileUp; }
-        void					SetCentFlag(Short_t flag) { fCentFlag = flag; }
         void					SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
-        void                    SetDoFlow(Bool_t doFlow) { fDoFlow = doFlow; }
-        void                    SetDiffFlow(Bool_t diff) { fDiffFlow = diff; }
-        void                    SetPID(Bool_t pid) { fPID = pid; }
-        void                    SetUseBayesPID(Bool_t pidBay) { fUseBayesPID = pidBay; }
-        void                    SetTracksScan(Bool_t qa) { fTracksScan = qa; }
-        void					SetDoV0s(Bool_t pidV0s) { fDoV0s = pidV0s; }
-        void                    SetDoFlowGenFramKatarina(Bool_t genFlow) { fDoGenFramKat = genFlow; } // do Gen Frame with Katarina's code
-        void                    SetDoOldFlow(Bool_t oldFlow) { fOldFlow = oldFlow; } // do old flow (before Katarinas GFK)
-        void                    SetUseOldCent(Bool_t oldCent) { fUseOldCent = oldCent; } // use old cent framework
         // track setters
         void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
         void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
@@ -85,31 +68,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
         void					SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
-
-
-        //const static Int_t      fNumPtBins = 29;            // number of pT bins used for pT-differential flow // mine
-        const static Int_t 		  fNumPtBins = 33;			// number of pT bins used for pT-differential flow // you, katarina
-        static Double_t			    fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
-        const static Int_t      fNumMinvFlowBinsK0s = 12;  // number of inv. mass bin for differential flow plots (K0s)
-        static Double_t         fMinvFlowBinEdgesK0s[fNumMinvFlowBinsK0s+1]; // pointer to array of Minv bin edges (K0s)
-        const static Int_t      fNumMinvFlowBinsLambda = 11;  // number of inv. mass bin for differential flow plots ((A)Lambda)
-        static Double_t         fMinvFlowBinEdgesLambda[fNumMinvFlowBinsLambda+1]; // pointer to array of Minv bin edges ((A)Lambda)
-        const static Int_t 		  fNumCentBins = 9;			// number of centrality bins used for pT-differential flow (so far independently of reference flow)
-        static Double_t			    fCentBinEdges[fNumCentBins+1];				// pointer for array of pT bin edges
-        const static Int_t      fNumHarmonics = 1; // number of harmonics
-        static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-        const static Int_t      fNumEtaGap = 3; // number of harmonics
-        static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
-        const static Int_t      fNumScanFB = 14; // number of scanned FB
-        static Short_t          fTracksScanFB[fNumScanFB]; // values of scanned FBs
-        const static Int_t      fMaxNumHarmonics = 8; // maximal number of harmonics for Q,p,q vector arrays
-        const static Int_t      fMaxNumWeights = 8; // maximal number of weights for Q,p,q vector arrays
-
     private:
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
-        Bool_t                  EventSelection(const AliAODEvent* event); // main method for event selection (specific event selection is applied within)
+        Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
         Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
-        Bool_t                  ProcessEvent(const AliAODEvent* event); // main (envelope) method for processing events passing selection
+        Bool_t                  FilterPID(); // pi,K,p filtering
+        Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
+        Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
         void                    ListParameters();
 
         Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
@@ -119,6 +84,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  fInit; // initialization check
         Short_t                 fIndexSampling; // sampling index (randomly generated)
         Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
+        AliAODEvent*            fEventAOD; // AOD event countainer
         // selected POIs containers
         TClonesArray*           fArrChargedRPF; // container for filtered RFPs tracks
         TClonesArray*           fArrChargedPOI; // container for filtered POIs tracks
@@ -135,26 +101,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
         Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
         Short_t                 fNumSamples; // overall number of samples (from random sampling) used
-        Bool_t                  fFilterCharged; // flag for filtering charged tracks (both RPF and POIs)
-        Bool_t                  fFilterPID; // flag for filtering PID tracks (pi,K,p)
-        Bool_t                  fFilterV0s; // flag for filtering V0 candidates (K0s, Lambda/ALambda)
+        Bool_t                  fProcessCharged; // flag for processing charged tracks (both RPF and POIs)
+        Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
+        Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
 
-        Bool_t                  fLHC10h;        // flag to LHC10h data?
-        Short_t                 fTrigger;   // switch for pp trigger selection / 0: INT7 / 1: kHighMultV0 / 2: kHighMultSPD
-        Bool_t                  fRejectPileFromSPD;   // switch for rejection based on is PileFromSPD
-        Bool_t                  fUseIsPileUpFromSPD;   // use IsPileupFromSPD method in (old) event selection
-        Bool_t                  fUsePlpMV;   // use plpMV method in (old) event selection
-        Bool_t                  fRejectOutOfBunchPU; // use AliUtils out-of-bunch pile-up rejection (provided by Christian)
-        Short_t                 fCentFlag;          // centrality flag
-        Bool_t                  fDoFlow;        // Do flow analysis (if kFALSE: only selection, filtering and QA)
-        Bool_t                  fDoV0s;                       // Do V0s analysis?
-        Bool_t                  fDiffFlow;          // Do differential flow ? (or reference only)
-        Bool_t                  fTracksScan;      // do scan Pt, Phi, eta of various track FBs
-        Bool_t                  fPID;                       // Do PID ?
-        Bool_t                  fUseBayesPID;                       // Do Bayes PID ?
-        Bool_t                  fDoGenFramKat; // switch gen frame. by Katarina
-        Bool_t                  fOldFlow; // switch to old flow analysis
-        Bool_t                  fUseOldCent; // switch for old (Run1) centrality selection
         //cuts & selection: events & tracks
         Double_t                fPVtxCutZ;          // (cm) PV z cut
         UInt_t                  fTrackFilterBit; // tracks filter bit

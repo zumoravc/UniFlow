@@ -79,8 +79,12 @@ void runAnalysis()
     task1->SetAnalysisType(kAOD);
     task1->SetColisionSystem(kPP);
     task1->SetPeriod(k16k);
+    //task1->SetSampling(kTRUE);
+    task1->SetSampling(kFALSE);
+    //task1->SetNumberOfSamples(10);
+    task1->SetProcessV0s(kTRUE);
+
     //task1->SetPeriod10h(kFALSE);
-    task1->SetCentFlag(0);
     task1->SetPVtxZMax(10);
     task1->SetTrackEtaMax(0.8);
     task1->SetTrackPtMin(0.2);
@@ -90,14 +94,6 @@ void runAnalysis()
     task1->SetPionNumSigmasMax(3);
     task1->SetKaonNumSigmasMax(3);
     task1->SetProtonNumSigmasMax(3);
-    task1->SetDoFlow(kTRUE);
-    task1->SetDiffFlow(kTRUE);
-    task1->SetPID(kTRUE);
-    task1->SetDoV0s(kTRUE);
-    task1->SetSampling(kTRUE);
-    task1->SetDoFlowGenFramKatarina(kTRUE);
-    task1->SetDoOldFlow(kFALSE);
-    task1->SetUseBayesPID(kTRUE);
     task1->SetPIDBayesProbPionMin(0.95);
     task1->SetPIDBayesProbKaonMin(0.8);
     task1->SetPIDBayesProbProtonMin(0.8);

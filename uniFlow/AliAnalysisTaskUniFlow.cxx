@@ -52,20 +52,8 @@ class AliAnalysisTaskUniFlow;
 
 ClassImp(AliAnalysisTaskUniFlow) // classimp: necessary for root
 
-//Double_t AliAnalysisTaskUniFlow::fPtBinEdges[] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0}; // You, Katarina binning
-//Double_t AliAnalysisTaskUniFlow::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8,4.2,4.6,5.,5.5,6}; // PID flow v2 JHEP paper
-Double_t AliAnalysisTaskUniFlow::fPtBinEdges[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.,4.2,4.4,4.6,4.8,5.};
-
-Double_t AliAnalysisTaskUniFlow::fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.}; //# PbPb
-//Double_t AliAnalysisTaskUniFlow::fCentBinEdges[] = {0.,50.,100.,150};
-//Double_t AliAnalysisTaskUniFlow::fMinvFlowBinEdgesK0s[] = {0.4,0.42,0.44,0.46,0.47,0.48,0.49,0.5,0.51,0.52,0.54,0.56,0.58,0.6};
-Double_t AliAnalysisTaskUniFlow::fMinvFlowBinEdgesK0s[] = {0.4,0.425,0.45,0.47,0.49,0.495,0.5,0.505,0.51,0.53,0.55,0.575,0.6};
-Double_t AliAnalysisTaskUniFlow::fMinvFlowBinEdgesLambda[] = {1.08,1.09,1.10,1.105,1.11,1.115,1.12,1.125,1.13,1.14,1.15,1.16};
-Int_t AliAnalysisTaskUniFlow::fHarmonics[AliAnalysisTaskUniFlow::fNumHarmonics] = {2};
-Double_t AliAnalysisTaskUniFlow::fEtaGap[AliAnalysisTaskUniFlow::fNumEtaGap] = {-1.,0.,0.8};
-Short_t AliAnalysisTaskUniFlow::fTracksScanFB[AliAnalysisTaskUniFlow::fNumScanFB] = {1,2,4,5,8,16,32,64,96,128,256,512,768,1024};
-
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
+  fEventAOD(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(0),
@@ -74,36 +62,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPeriod(kNon),
   fSampling(kFALSE),
   fNumSamples(10),
-  fFilterCharged(kFALSE),
-  fFilterPID(kFALSE),
-  fFilterV0s(kFALSE),
+  fProcessCharged(kFALSE),
+  fProcessPID(kFALSE),
+  fProcessV0s(kFALSE),
 
-  fArrTrackRPF(0x0),
-  fArrTrackPOI(0x0),
+  fArrChargedRPF(0x0),
+  fArrChargedPOI(0x0),
   fArrPion(0x0),
   fArrKaon(0x0),
   fArrProton(0x0),
   fArrK0s(0x0),
   fArrLambda(0x0),
   fArrALambda(0x0),
-
-
-  fLHC10h(kTRUE),
-  fTrigger(kFALSE),
-  fRejectPileFromSPD(kFALSE),
-  fUseIsPileUpFromSPD(kFALSE),
-  fUsePlpMV(kFALSE),
-  fRejectOutOfBunchPU(kFALSE),
-  fCentFlag(0),
-  fDoFlow(0),
-  fDiffFlow(0),
-  fTracksScan(0),
-  fPID(0),
-  fUseBayesPID(0),
-  fDoV0s(0),
-  fOldFlow(0),
-  fUseOldCent(0),
-  fDoGenFramKat(0),
 
   fPVtxCutZ(0.),
   fTrackEtaMax(0),
@@ -148,6 +118,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
+  fEventAOD(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(0),
@@ -157,35 +128,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPeriod(kNon),
   fSampling(kFALSE),
   fNumSamples(10),
-  fFilterCharged(kFALSE),
-  fFilterPID(kFALSE),
-  fFilterV0s(kFALSE),
+  fProcessCharged(kFALSE),
+  fProcessPID(kFALSE),
+  fProcessV0s(kFALSE),
 
-  fArrTrackRPF(0x0),
-  fArrTrackPOI(0x0),
+  fArrChargedRPF(0x0),
+  fArrChargedPOI(0x0),
   fArrPion(0x0),
   fArrKaon(0x0),
   fArrProton(0x0),
   fArrK0s(0x0),
   fArrLambda(0x0),
   fArrALambda(0x0),
-
-  fLHC10h(kTRUE),
-  fTrigger(kFALSE),
-  fRejectPileFromSPD(kFALSE),
-  fUseIsPileUpFromSPD(kFALSE),
-  fRejectOutOfBunchPU(kFALSE),
-  fUsePlpMV(kFALSE),
-  fCentFlag(0),
-  fDoFlow(0),
-  fDiffFlow(0),
-  fTracksScan(0),
-  fPID(0),
-  fUseBayesPID(0),
-  fDoV0s(0),
-  fOldFlow(0),
-  fDoGenFramKat(0),
-  fUseOldCent(0),
 
   fPVtxCutZ(0.),
   fTrackEtaMax(0),
@@ -283,6 +237,16 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fInit = InitializeTask();
   if(!fInit) return;
 
+  // Creating arrays for particles
+  fArrChargedRPF = new TClonesArray("AliAODTrack",10000);
+  fArrChargedPOI = new TClonesArray("AliAODTrack",10000);
+  fArrPion = new TClonesArray("AliAODTrack",5000);
+  fArrKaon = new TClonesArray("AliAODTrack",5000);
+  fArrProton = new TClonesArray("AliAODTrack",5000);
+  fArrK0s = new TClonesArray("AliAODv0",5000);
+  fArrLambda = new TClonesArray("AliAODv0",5000);
+  fArrALambda = new TClonesArray("AliAODv0",5000);
+
   // creating output lists
   fOutListEvents = new TList();
   fOutListEvents->SetOwner(kTRUE);
@@ -358,15 +322,14 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // TODO
 
   // event selection
-  AliAODEvent* event = dynamic_cast<AliAODEvent*>(InputEvent());
-  if(!EventSelection(event)) return;
+  fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
+  if(!EventSelection()) return;
 
   // Fill event QA AFTER cuts
   // TODO
 
   // filter all particle of interest in given (selected) events
   // FilterTracks();
-
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
   fIndexSampling = GetSamplingIndex();
@@ -376,7 +339,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // TODO implement
 
   // processing of selected event
-  if(!ProcessEvent(event)) return;
+  if(!ProcessEvent()) return;
 
   // posting data (mandatory)
   PostData(1, fOutListEvents);
@@ -384,11 +347,14 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   return;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::EventSelection(const AliAODEvent* event)
+Bool_t AliAnalysisTaskUniFlow::EventSelection()
 {
   // main (envelope) method for event selection
   // Specific event selection methods are called from here
   // returns kTRUE if event pass all selection criteria
+
+  if(!fEventAOD) return kFALSE;
+
 
   return kTRUE;
 }
@@ -399,25 +365,70 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
   // All POIs passing selection criteria are saved to relevant TClonesArray for further processing
   // return kTRUE if succesfull (no errors in process)
 
-  if(fFilterCharged)
+  if(!fProcessCharged && !fProcessPID && !fProcessV0s) // if neither is ON, filtering is skipped
+    return kFALSE;
+
+  fArrChargedRPF->Clear("C");
+
+  if(fProcessCharged)
   {
-        // TODO :: implement§
+    fArrChargedPOI->Clear("C");
+    // TODO
   }
 
-  if(fFilterPID)
+  if(fProcessPID)
   {
-    // TODO:: implelemt
+    fArrPion->Clear("C");
+    fArrKaon->Clear("C");
+    fArrProton->Clear("C");
+
+    if(!FilterPID())
+      return kFALSE;
+
   }
 
-  if(fFilterV0s)
+  if(fProcessV0s)
   {
-    // TODO implement
+    fArrK0s->Clear("C");
+    fArrLambda->Clear("C");
+    fArrALambda->Clear("C");
+
+    if(!FilterV0s())
+      return kFALSE;
   }
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::ProcessEvent(const AliAODEvent* event)
+Bool_t AliAnalysisTaskUniFlow::FilterV0s()
+{
+  Short_t iNumLambdaSelected = 0;
+
+  const Short_t iNumV0s = fEventAOD->GetNumberOfV0s();
+  if(iNumV0s < 1)
+    return kFALSE;
+
+  AliAODv0* v0 = 0x0;
+  for(Short_t iV0(0); iV0 < iNumV0s; iV0++)
+  {
+    // the minimalistic dynamic allocation of the TClonesArray*
+    v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
+    printf("%d",iNumLambdaSelected);
+    new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
+  }
+  printf("Lambda selected: %d\n", iNumLambdaSelected);
+
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::FilterPID()
+{
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 {
   // main method for processing of (selected) event
   // returns kTRUE if succesfull
