@@ -250,7 +250,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 {
   // create output objects
   // this function is called ONCE at the start of your analysis (RUNTIME)
-
+  // *************************************************************
+  
   // list all parameters used in this analysis
   ListParameters();
 
@@ -309,6 +310,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 void AliAnalysisTaskUniFlow::ListParameters()
 {
   // lists all task parameters
+  // *************************************************************
 
   return;
 }
@@ -318,6 +320,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // called once on beginning of task (within UserCreateOutputObjects method)
   // check if task parameters are specified and valid
   // returns kTRUE if succesfull
+  // *************************************************************
 
   if(fAnalType != kESD && fAnalType != kAOD)
   {
@@ -360,6 +363,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 {
   // main method called for each event (event loop)
+  // *************************************************************
 
   if(!fInit) return; // check if initialization succesfull
 
@@ -394,6 +398,7 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   // main (envelope) method for event selection
   // Specific event selection methods are called from here
   // returns kTRUE if event pass all selection criteria
+  // *************************************************************
 
   Bool_t eventSelected = kFALSE;
 
@@ -418,6 +423,8 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
   // Event selection for small system collision recorder in Run 2 year 2016
   // pp (LHC16kl), pPb (LHC16rqts)
   // return kTRUE if event passes all criteria, kFALSE otherwise
+  // *************************************************************
+
 
   fhEventCounter->Fill("Input",1);
 
@@ -533,6 +540,8 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
 void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
 {
   // Filling various QA plots related with event selection
+  // *************************************************************
+
 
   const AliAODVertex* aodVtx = fEventAOD->GetPrimaryVertex();
   const Double_t dVtxZ = aodVtx->GetZ();
@@ -570,6 +579,8 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
   // main (envelope) method for filtering all particles of interests (POIs) in selected events
   // All POIs passing selection criteria are saved to relevant TClonesArray for further processing
   // return kTRUE if succesfull (no errors in process)
+  // *************************************************************
+
 
   if(!fProcessCharged && !fProcessPID && !fProcessV0s) // if neither is ON, filtering is skipped
     return kFALSE;
@@ -608,6 +619,10 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::FilterV0s()
 {
+  // Filtering V0s candidates
+  // returns kFALSE if any complications occurs
+  // *************************************************************
+
   Short_t iNumLambdaSelected = 0;
 
   const Short_t iNumV0s = fEventAOD->GetNumberOfV0s();
@@ -636,6 +651,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 {
   // main method for processing of (selected) event
   // returns kTRUE if succesfull
+  // *************************************************************
 
   if(!Filtering()) return kFALSE;
 
@@ -648,6 +664,8 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
 {
   // Assing sampling index based on generated random number
   // returns centrality index
+  // *************************************************************
+
   Short_t index = 0;
 
   if(fSampling && fNumSamples > 0)
@@ -675,6 +693,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   // Assing centrality index based on provided method (centrality estimator / number of selected tracks)
   // If number of selected track method is selected, track filtering must be done first
   // returns centrality index
+  // *************************************************************
 
   Short_t index = 0;
 
@@ -708,6 +727,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
 void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
 {
   // called on end of task, after all events are processed
+  // *************************************************************
 
   return;
 }
