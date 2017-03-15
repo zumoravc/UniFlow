@@ -75,6 +75,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
         Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
         Bool_t                  IsEventSelected_2016(); // event selection for LHC2016 pp & pPb data
+        void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
+
         Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
         Bool_t                  FilterPID(); // pi,K,p filtering
         Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
@@ -156,6 +158,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // histograms
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection
+
+        // QA: events
+        static const Short_t   fiNumIndexQA = 2; // 0: before cuts // 1: after cuts§
+        TH1D*           fhQAEventsPVz[fiNumIndexQA]; //!
+        TH1D*           fhQAEventsNumContrPV[fiNumIndexQA]; //!
+        TH1D*           fhQAEventsNumSPDContrPV[fiNumIndexQA]; //!
+        TH1D*           fhQAEventsDistPVSPD[fiNumIndexQA]; //!
+        TH1D*           fhQAEventsSPDresol[fiNumIndexQA]; //!
 
         AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
         AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented

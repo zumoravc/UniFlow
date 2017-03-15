@@ -189,6 +189,17 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhEventCounter(0x0)
 
 {
+  // QA histograms
+  for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
+  {
+    // Event histograms
+    fhQAEventsPVz[iQA] = 0x0;
+    fhQAEventsNumContrPV[iQA] = 0x0;
+    fhQAEventsNumSPDContrPV[iQA] = 0x0;
+    fhQAEventsDistPVSPD[iQA] = 0x0;
+    fhQAEventsSPDresol[iQA] = 0x0;
+  }
+
   // defining input/output
   DefineInput(0, TChain::Class());
   DefineOutput(1, TList::Class());
@@ -272,6 +283,30 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     for(Short_t i = 0; i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fOutListEvents->Add(fhEventCounter);
 
+    // QA events
+    TString sQAindex[fiNumIndexQA] = {"Before", "After"};
+
+    for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
+    {
+      fhQAEventsPVz[iQA] = new TH1D(Form("fhQAEventsPVz_%s",sQAindex[iQA].Data()), "QA Events: PV-#it{z}", 101,-50,50);
+      fOutListEvents->Add(fhQAEventsPVz[iQA]);
+      fhQAEventsNumContrPV[iQA] = new TH1D(Form("fhQAEventsNumContrPV_%s",sQAindex[iQA].Data()), "QA Events: Number of contributors to AOD PV", 20,0,20);
+      fOutListEvents->Add(fhQAEventsNumContrPV[iQA]);
+      fhQAEventsNumSPDContrPV[iQA] = new TH1D(Form("fhQAEventsNumSPDContrPV_%s",sQAindex[iQA].Data()), "QA Events: SPD contributors to PV", 20,0,20);
+      fOutListEvents->Add(fhQAEventsNumSPDContrPV[iQA]);
+      fhQAEventsDistPVSPD[iQA] = new TH1D(Form("fhQAEventsDistPVSPD_%s",sQAindex[iQA].Data()), "QA Events: PV SPD vertex", 50,0,5);
+      fOutListEvents->Add(fhQAEventsDistPVSPD[iQA]);
+      fhQAEventsSPDresol[iQA] = new TH1D(Form("fhQAEventsSPDresol_%s",sQAindex[iQA].Data()), "QA Events: SPD resolution", 150,0,15);
+      fOutListEvents->Add(fhQAEventsSPDresol[iQA]);
+
+
+    }
+
+    // QA: events
+
+
+
+
   // posting data (mandatory)
   PostData(1, fOutListEvents);
 
@@ -338,15 +373,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
   if(fRunMode == kTest && fEventCounter > 50) return;
 
-  // Fill event QA BEFORE cuts
-  // TODO
-
   // event selection
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!EventSelection()) return;
-
-  // Fill event QA AFTER cuts
-  // TODO
 
   // filter all particle of interest in given (selected) events
   // FilterTracks();
@@ -373,16 +402,22 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   // Specific event selection methods are called from here
   // returns kTRUE if event pass all selection criteria
 
+  Bool_t eventSelected = kFALSE;
+
   if(!fEventAOD) return kFALSE;
 
-  // dataset (system, period) dependent selection
+  // Fill event QA BEFORE cuts
+  FillEventsQA(0);
 
-  // event selection for small systems in Run2 (2016)
+  // event selection for small systems pp, pPb in Run2 (2016)
   if( (fColSystem == kPP || fColSystem == kPPb)
       && (fPeriod == k16k || fPeriod == k16l || fPeriod == k16q || fPeriod == k16r || fPeriod == k16s || fPeriod == k16t)
-    ) return IsEventSelected_2016();
+    ) eventSelected = IsEventSelected_2016();
 
-  return kTRUE;
+  // Fill event QA AFTER cuts
+  FillEventsQA(1);
+
+  return eventSelected;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
@@ -500,6 +535,41 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
 
   fhEventCounter->Fill("Selected",1);
   return kTRUE;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
+{
+  // Filling various QA plots related with event selection
+
+  const AliAODVertex* aodVtx = fEventAOD->GetPrimaryVertex();
+  const Double_t dVtxZ = aodVtx->GetZ();
+  const Int_t iNumContr = aodVtx->GetNContributors();
+  const AliAODVertex* spdVtx = fEventAOD->GetPrimaryVertexSPD();
+  const Int_t iNumContrSPD = spdVtx->GetNContributors();
+  const Double_t spdVtxZ = spdVtx->GetZ();
+
+  fhQAEventsPVz[iQAindex]->Fill(dVtxZ);
+  fhQAEventsNumContrPV[iQAindex]->Fill(iNumContr);
+  fhQAEventsNumSPDContrPV[iQAindex]->Fill(iNumContrSPD);
+  fhQAEventsDistPVSPD[iQAindex]->Fill(TMath::Abs(dVtxZ - spdVtxZ));
+
+  // // event / physics selection criteria
+  // AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+  // AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
+  // UInt_t fSelectMask = inputHandler->IsEventSelected();
+  //
+  // if( fSelectMask& AliVEvent::kINT7 ) { fQAEventsTriggerSelection[iQAindex]->Fill("kINT7",1); }
+  // else if (fSelectMask& AliVEvent::kHighMultV0) { fQAEventsTriggerSelection[iQAindex]->Fill("kHighMultV0",1); }
+  // else if (fSelectMask& AliVEvent::kHighMultSPD) { fQAEventsTriggerSelection[iQAindex]->Fill("kHighMultSPD",1); }
+  // else { fQAEventsTriggerSelection[iQAindex]->Fill("Other",1); }
+
+  // SPD vertexer resolution
+  Double_t cov[6] = {0};
+  spdVtx->GetCovarianceMatrix(cov);
+  Double_t zRes = TMath::Sqrt(cov[5]);
+  fhQAEventsSPDresol[iQAindex]->Fill(zRes);
+
+  return;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::Filtering()
