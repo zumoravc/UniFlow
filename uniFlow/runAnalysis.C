@@ -56,6 +56,10 @@ void runAnalysis()
     AliAODInputHandler *aodH = new AliAODInputHandler();
     mgr->SetInputEventHandler(aodH);
 
+    // Physics selection as suggested by HMTF
+    gROOT->ProcessLine(".L $ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C");
+    AliPhysicsSelectionTask* physSelTask = AddTaskPhysicsSelection(kFALSE,kTRUE);
+
     //Add this here: run before your task, but after definition of manager and input handler
     gROOT->LoadMacro("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
     AliMultSelectionTask* taskMultSelection = AddTaskMultSelection(kFALSE); // user mode:
@@ -76,12 +80,12 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_FB768_Bayes");
     // tracks & event selection cuts
+    task1->SetRunMode(kTest);
+    task1->SetTrigger(0);
     task1->SetAnalysisType(kAOD);
     task1->SetColisionSystem(kPP);
-    task1->SetPeriod(k16k);
-    //task1->SetSampling(kTRUE);
+    task1->SetPeriod(k16l);
     task1->SetSampling(kFALSE);
-    //task1->SetNumberOfSamples(10);
     task1->SetProcessV0s(kTRUE);
 
     //task1->SetPeriod10h(kFALSE);
@@ -173,15 +177,15 @@ void runAnalysis()
     task2->SetV0sProtonPIDPtMax(1.2);
     */
     if (!mgr->InitAnalysis()) return;
-    mgr->SetDebugLevel(2);
-    mgr->PrintStatus();
-    mgr->SetUseProgressBar(1, 100);
+    //mgr->SetDebugLevel(2);
+    //mgr->PrintStatus();
+    mgr->SetUseProgressBar(1, 500);
 
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
         //chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
-        chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138870/ESDs/pass2/AOD160/0058/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
+        chain->Add("~/NBI/Flow/flow/testData/2016/LHC16l/000259888/pass1/AOD/015/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
         // if we want to run on grid, we create and configure the plugin

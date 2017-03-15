@@ -7,6 +7,7 @@
 
 #include "AliAnalysisTaskSE.h"
 
+enum RunMode {kTest, kFull}; // task running mode (NOT GRID MODE)
 enum ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
 enum AnalType {kAOD, kESD}; // tag for analysis type
 enum DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
@@ -22,9 +23,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         virtual void            UserExec(Option_t* option); // main methond - called for each event
         virtual void            Terminate(Option_t* option); // called after all events are processed
         // event setters
+        void                    SetRunMode(RunMode mode = kFull) { fRunMode = mode; }
         void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
         void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
         void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
+        void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
         void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
         void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; }
         void                    SetFilterCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
@@ -71,6 +74,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
     private:
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
         Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
+        Bool_t                  IsEventSelected_2016(); // event selection for LHC2016 pp & pPb data
         Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
         Bool_t                  FilterPID(); // pi,K,p filtering
         Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
@@ -81,10 +85,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
 
         // properties
+        AliAODEvent*            fEventAOD; // AOD event countainer
         Bool_t                  fInit; // initialization check
         Short_t                 fIndexSampling; // sampling index (randomly generated)
         Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
-        AliAODEvent*            fEventAOD; // AOD event countainer
+        Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
+
         // selected POIs containers
         TClonesArray*           fArrChargedRPF; // container for filtered RFPs tracks
         TClonesArray*           fArrChargedPOI; // container for filtered POIs tracks
@@ -96,10 +102,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TClonesArray*           fArrALambda; // container for filtered ALambda candidates
 
         //cuts & selection: analysis
+        RunMode                 fRunMode; // running mode (not grid related)
         AnalType                fAnalType; // analysis type: AOD / ESD
         ColSystem               fColSystem; // collisional system
         DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
         Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
+        Short_t                 fTrigger; // physics selection trigger
         Short_t                 fNumSamples; // overall number of samples (from random sampling) used
         Bool_t                  fProcessCharged; // flag for processing charged tracks (both RPF and POIs)
         Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
@@ -147,6 +155,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
         // histograms
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
+        TH1D*           fhEventCounter; //! counter following event selection
 
         AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
         AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented

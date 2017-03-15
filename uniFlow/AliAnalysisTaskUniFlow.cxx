@@ -57,9 +57,13 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(0),
+  fEventCounter(0),
+
+  fRunMode(kFull),
   fAnalType(kAOD),
   fColSystem(kPP),
   fPeriod(kNon),
+  fTrigger(0),
   fSampling(kFALSE),
   fNumSamples(10),
   fProcessCharged(kFALSE),
@@ -111,7 +115,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
 
-  fhEventSampling(0x0)
+  fhEventSampling(0x0),
+  fhEventCounter(0x0)
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
@@ -122,10 +127,13 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(0),
+  fEventCounter(0),
 
+  fRunMode(kFull),
   fAnalType(kAOD),
   fColSystem(kPP),
   fPeriod(kNon),
+  fTrigger(0),
   fSampling(kFALSE),
   fNumSamples(10),
   fProcessCharged(kFALSE),
@@ -177,7 +185,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
 
-  fhEventSampling(0x0)
+  fhEventSampling(0x0),
+  fhEventCounter(0x0)
+
 {
   // defining input/output
   DefineInput(0, TChain::Class());
@@ -252,8 +262,15 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fOutListEvents->SetOwner(kTRUE);
 
   // creating histograms
-  fhEventSampling = new TH1D("fhEventSampling","Event sampling",fNumSamples, 0, fNumSamples);
-  fOutListEvents->Add(fhEventSampling);
+    // event histogram
+    fhEventSampling = new TH1D("fhEventSampling","Event sampling",fNumSamples, 0, fNumSamples);
+    fOutListEvents->Add(fhEventSampling);
+
+    const Short_t iEventCounterBins = 7;
+    TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","PV OK","SPD Vtx OK","Pileup MV OK","PV #it{z} OK","Selected"};
+    fhEventCounter = new TH1D("fhEventCounter","Event Counter",iEventCounterBins,0,iEventCounterBins);
+    for(Short_t i = 0; i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
+    fOutListEvents->Add(fhEventCounter);
 
   // posting data (mandatory)
   PostData(1, fOutListEvents);
@@ -318,6 +335,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   if(!fInit) return; // check if initialization succesfull
 
+  // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
+  if(fRunMode == kTest && fEventCounter > 50) return;
+
   // Fill event QA BEFORE cuts
   // TODO
 
@@ -355,7 +375,130 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
 
   if(!fEventAOD) return kFALSE;
 
+  // dataset (system, period) dependent selection
 
+  // event selection for small systems in Run2 (2016)
+  if( (fColSystem == kPP || fColSystem == kPPb)
+      && (fPeriod == k16k || fPeriod == k16l || fPeriod == k16q || fPeriod == k16r || fPeriod == k16s || fPeriod == k16t)
+    ) return IsEventSelected_2016();
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
+{
+  // Event selection for small system collision recorder in Run 2 year 2016
+  // pp (LHC16kl), pPb (LHC16rqts)
+  // return kTRUE if event passes all criteria, kFALSE otherwise
+
+  fhEventCounter->Fill("Input",1);
+
+  // Physics selection (trigger)
+  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
+  UInt_t fSelectMask = inputHandler->IsEventSelected();
+
+  Bool_t isTriggerSelected = kFALSE;
+  switch(fTrigger) // check for high multiplicity trigger
+  {
+    case 0:
+      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
+      break;
+
+    case 1:
+      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
+      break;
+
+    case 2:
+      isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
+      break;
+
+    default: isTriggerSelected = kFALSE;
+  }
+
+  if(!isTriggerSelected)
+    return kFALSE;
+
+  // events passing physics selection
+
+  fhEventCounter->Fill("Physics selection OK",1);
+
+  // primary vertex selection
+  const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertex());
+  if(!vtx || vtx->GetNContributors() < 1)
+    return kFALSE;
+
+  fhEventCounter->Fill("PV OK",1);
+
+  // SPD vertex selection
+  const AliAODVertex* vtxSPD = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertexSPD());
+
+  Double_t dMaxResol = 0.25; // suggested from DPG
+  Double_t cov[6] = {0};
+  vtxSPD->GetCovarianceMatrix(cov);
+  Double_t zRes = TMath::Sqrt(cov[5]);
+  if ( vtxSPD->IsFromVertexerZ() && (zRes > dMaxResol)) return kFALSE;
+  fhEventCounter->Fill("SPD Vtx OK",1);
+
+  // PileUp rejection included in Physics selection
+  // but with values for high mult pp (> 5 contrib) => for low ones: do manually (> 3 contrib)
+
+  /*
+  if(fTrigger == 0 && fAOD->IsPileupFromSPD(3,0.8) )
+  {
+    return kFALSE;
+  }
+  */
+
+  //fhEventCounter->Fill("Pileup SPD OK",1);
+
+  // pileup rejection from multivertexer
+  AliAnalysisUtils utils;
+  utils.SetMinPlpContribMV(5);
+  utils.SetMaxPlpChi2MV(5);
+  utils.SetMinWDistMV(15);
+  utils.SetCheckPlpFromDifferentBCMV(kFALSE);
+  Bool_t isPileupFromMV = utils.IsPileUpMV(fEventAOD);
+
+  if(isPileupFromMV) return kFALSE;
+  fhEventCounter->Fill("Pileup MV OK",1);
+
+  // if(fRejectOutOfBunchPU) // out-of-bunch rejection (provided by Christian)
+  // {
+  //   //out-of-bunch 11 BC
+  //   if (utils.IsOutOfBunchPileUp(fEventAOD))
+  //   {
+  //     return kFALSE;
+  //   }
+  //   fhEventCounter->Fill("OOBPU OK",1);
+  //
+  //   if (utils.IsSPDClusterVsTrackletBG(fEventAOD))
+  //   {
+  //     return kFALSE;
+  //   }
+  //
+  //   fhEventCounter->Fill("SPDClTrBG OK",1);
+  //
+  //   // SPD pileup
+  //   if (utils.IsPileUpSPD(fEventAOD))
+  //   {
+  //     return kFALSE;
+  //   }
+  //
+  //   fhEventCounter->Fill("SPDPU OK",1);
+  // }
+
+  //fhEventCounter->Fill("Utils OK",1);
+
+  // cutting on PV z-distance
+  const Double_t aodVtxZ = vtx->GetZ();
+  if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
+  {
+    return kFALSE;
+  }
+  fhEventCounter->Fill("PV #it{z} OK",1);
+
+  fhEventCounter->Fill("Selected",1);
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -413,11 +556,9 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
   {
     // the minimalistic dynamic allocation of the TClonesArray*
     v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
-    printf("%d",iNumLambdaSelected);
     new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
   }
   printf("Lambda selected: %d\n", iNumLambdaSelected);
-
 
   return kTRUE;
 }
@@ -435,6 +576,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   if(!Filtering()) return kFALSE;
 
+  fEventCounter++; // counter of processed events
 
   return kTRUE;
 }
@@ -467,10 +609,35 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
 //_____________________________________________________________________________
 Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
 {
-  Short_t index = 0;
   // Assing centrality index based on provided method (centrality estimator / number of selected tracks)
   // If number of selected track method is selected, track filtering must be done first
   // returns centrality index
+
+  Short_t index = 0;
+
+  // centrality estimation for pPb analysis in Run2
+  // TODO : just moved from flow Event selection for 2016
+  if(fColSystem == kPPb)
+  {
+    Float_t lPercentile = 900;
+    AliMultSelection* MultSelection = 0x0;
+    MultSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
+
+    if(!MultSelection)
+    {
+      //If you get this warning (and lPercentiles 900) please check that the AliMultSelectionTask actually ran (before your task)
+      ::Warning("GetCentralityIndex","AliMultSelection object not found!");
+    }
+    else
+    {
+      lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
+    }
+
+    // TODO implement centrality selection based on lPercentile
+    ::Warning("GetCentralityIndex","Centrality selection not implemented");
+  }
+
+
 
   return index;
 }
