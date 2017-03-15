@@ -283,11 +283,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     for(Short_t i = 0; i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fOutListEvents->Add(fhEventCounter);
 
-    // QA events
+    // QA histograms
     TString sQAindex[fiNumIndexQA] = {"Before", "After"};
-
     for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
     {
+      // EVENTs QA histograms
       fhQAEventsPVz[iQA] = new TH1D(Form("fhQAEventsPVz_%s",sQAindex[iQA].Data()), "QA Events: PV-#it{z}", 101,-50,50);
       fOutListEvents->Add(fhQAEventsPVz[iQA]);
       fhQAEventsNumContrPV[iQA] = new TH1D(Form("fhQAEventsNumContrPV_%s",sQAindex[iQA].Data()), "QA Events: Number of contributors to AOD PV", 20,0,20);
@@ -298,14 +298,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListEvents->Add(fhQAEventsDistPVSPD[iQA]);
       fhQAEventsSPDresol[iQA] = new TH1D(Form("fhQAEventsSPDresol_%s",sQAindex[iQA].Data()), "QA Events: SPD resolution", 150,0,15);
       fOutListEvents->Add(fhQAEventsSPDresol[iQA]);
-
-
     }
-
-    // QA: events
-
-
-
 
   // posting data (mandatory)
   PostData(1, fOutListEvents);
