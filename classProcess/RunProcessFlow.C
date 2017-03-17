@@ -38,8 +38,8 @@ void RunProcessFlow()
 	process->SetBinsCentArray(cent,sizeCent);
 	process->SetNumSamples(1);
 	process->SetDoCharged(kFALSE);
-	process->SetDoPID();
-	process->SetDoV0s(kFALSE);
+	process->SetDoPID(kFALSE);
+	process->SetDoV0s(kTRUE);
 
 	process->Run();
 
