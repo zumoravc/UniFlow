@@ -251,7 +251,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // create output objects
   // this function is called ONCE at the start of your analysis (RUNTIME)
   // *************************************************************
-  
+
   // list all parameters used in this analysis
   ListParameters();
 
@@ -542,7 +542,6 @@ void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
   // Filling various QA plots related with event selection
   // *************************************************************
 
-
   const AliAODVertex* aodVtx = fEventAOD->GetPrimaryVertex();
   const Double_t dVtxZ = aodVtx->GetZ();
   const Int_t iNumContr = aodVtx->GetNContributors();
@@ -581,7 +580,6 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
   // return kTRUE if succesfull (no errors in process)
   // *************************************************************
 
-
   if(!fProcessCharged && !fProcessPID && !fProcessV0s) // if neither is ON, filtering is skipped
     return kFALSE;
 
@@ -601,7 +599,6 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
 
     if(!FilterPID())
       return kFALSE;
-
   }
 
   if(fProcessV0s)
@@ -619,7 +616,7 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::FilterV0s()
 {
-  // Filtering V0s candidates
+  // Filtering of V0s candidates
   // returns kFALSE if any complications occurs
   // *************************************************************
 
@@ -634,9 +631,22 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
   {
     // the minimalistic dynamic allocation of the TClonesArray*
     v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
-    new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
+    if(IsV0Selected(v0))
+      new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
   }
-  printf("Lambda selected: %d\n", iNumLambdaSelected);
+  printf("Lambda selected: %d / clones: %d\n", iNumLambdaSelected, fArrLambda->GetEntriesFast());
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
+{
+  // Topological reconstruction and selection of V0 candidates
+  // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
+  // *************************************************************
+
+  if(!v0) return kFALSE;
+
 
   return kTRUE;
 }

@@ -80,6 +80,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
         Bool_t                  FilterPID(); // pi,K,p filtering
         Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
+        Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // V0 selection
+
         Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
         void                    ListParameters();
 
