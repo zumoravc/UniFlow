@@ -968,7 +968,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		cTemp->cd();
 		hFlowMassProj_flow[iPt]->Draw();
 		cTemp->Print(Form("%s/InvMass/FlowMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
-		listOut->Add(hFlowMassProj[iPt]);
+		listOut->Add(hFlowMassProj_proj[iPt]);
 		cTempFlow2->Print(Form("%s/InvMass/FlowTemp2_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
 	}
 
