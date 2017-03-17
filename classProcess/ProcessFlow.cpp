@@ -12,6 +12,7 @@
 #include "TH2.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
+#include "TF1.h"
 #include "TString.h"
 #include "TCanvas.h"
 
@@ -921,6 +922,97 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		cTemp->Print(Form("%s/InvMass/FlowMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
 		listOut->Add(hFlowMassProj[iPt]);
 	}
+
+	// now the inv mass & flow mass plots are ready
+
+
+	// Fitting K0s
+	const Short_t iNumSigmas = 7;
+	Double_t dMeanShot = 0;
+	Double_t dSigmaShot = 0;
+	Double_t dMassLow = 0;
+	Double_t dMassHigh = 0;
+
+	TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
+	canFitInvMass->Divide(2,2);
+
+	TH1D* hInvMass_side = 0x0;
+	TH1D* hInvMass_residual = 0x0;
+	TH1D* hInvMass_ratio = 0x0;
+
+	TF1* fitShot = 0x0;
+	TF1* fitSide = 0x0;
+	TF1* fitRatio = 0x0;
+	for(Short_t iPt(0); iPt < iNumBinsPt; iPt++)
+	{
+		hInvMass_side = (TH1D*) hInvMassProj[iPt]->Clone("hInvMass_side");
+		hInvMass_residual = (TH1D*) hInvMassProj[iPt]->Clone("hInvMass_residual");
+
+		canFitInvMass->cd(1);
+		fitShot = new TF1("fitShot","gaus(0)+pol2(3)",0.4,0.6);
+		fitShot->SetNpx(10000);
+		fitShot->SetParameter(1,0.5);
+		fitShot->SetParameter(2,0.05);
+		hInvMassProj[iPt]->Fit("fitShot","R");
+
+		// TODO checking the fitting results
+
+		// extract mean & sigma for sidebands fitting reagion
+		dMeanShot = fitShot->GetParameter(1);
+		dSigmaShot = fitShot->GetParameter(2);
+		dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
+		dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
+		printf("=========================\nFitting region: %f - %f \n==========================\n", dMassLow,dMassHigh);
+
+		canFitInvMass->cd(2);
+		for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+		{
+			// Excluding mass peak window (setting errors to inf)
+			if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh)
+			{
+				hInvMass_side->SetBinError(iMass,9999999999999);
+			}
+		}
+		hInvMass_side->SetMaximum(hInvMassProj[iPt]->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
+		hInvMass_side->SetMinimum(0);
+		hInvMass_side->Draw();
+
+		canFitInvMass->Print(Form("%s/FitInvMass/InvMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
+
+		// fitting background in sidebands
+		fitSide = new TF1("fitSide","pol2(0)",0.4,0.6);
+		fitSide->SetNpx(10000);
+		hInvMass_side->Fit("fitSide","R");
+
+
+		Double_t dContent = 0;
+		for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+		{
+			dContent = hInvMass_side->GetBinContent(iMass) - fitSide->Eval(hInvMass_side->GetBinCenter(iMass));
+			hInvMass_residual->SetBinContent(iMass,dContent);
+		}
+
+		canFitInvMass->cd(3);
+		hInvMass_residual->Draw();
+
+		hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
+		hInvMass_ratio->Sumw2();
+		hInvMass_ratio->Divide(hInvMassProj[iPt]);
+
+		canFitInvMass->cd(4);
+		//hInvMass_ratio->Draw();
+		fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",0.4,0.6);
+		fitRatio->SetNpx(1000);
+		fitRatio->SetParameter(0,0.98);
+		fitRatio->SetParameter(1,0.5);
+		fitRatio->SetParameter(2,0.1);
+		hInvMass_ratio->Fit("fitRatio","R");
+
+		// flow mass Fitting
+		// TODO flow mass have to be divided by reference flow
+	}
+
+
 
 
 	Info("ProcessListV0s","\n==========================================\n");
