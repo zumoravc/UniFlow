@@ -503,7 +503,7 @@ void ProcessFlow::Run()
 
 
 	//testing
-	bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listRef[0], fiHarmonics[0], fdEtaGaps[0], "K0s");
+	bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "K0s");
 	listOutK0s[0][0]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
 
 
@@ -863,7 +863,14 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		return kFALSE;
 	}
 
+	if(!listRef)
+	{
+		Error("ProcessListV0s","Input list with reference does not exists!");
+		return kFALSE;
+	}
+
 	listIn->ls();
+	listRef->ls();
 
 	Info("ProcessListV0s","\n==========================================\n");
 	// testing
@@ -872,11 +879,15 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 	TH2D* hInvMass = 0x0;
 	TProfile2D* hFlowMass = 0x0;
+	TH1D* hRefFlow = 0x0;
 
 	if(dEtaGap != -1.) return kFALSE;
 
+	const Short_t iBinCent = 0; // centrality bin (from 0)
+
 	hInvMass = (TH2D*) listIn->FindObject("fInvMassPtK0s_Pos_Gap-10_Cent0");
 	hFlowMass = (TProfile2D*) listIn->FindObject("fK0s_n22_Pos_gap-10_cent0");
+	hRefFlow = (TH1D*) listRef->FindObject("fTracksRef_n22_gap-10_number0_px_desampled");
 
 	if(!hInvMass)
 	{
@@ -887,6 +898,12 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	if(!hFlowMass)
 	{
 		Error("ProcessListV0s","Input hFlowMass profile does not exits!");
+		return kFALSE;
+	}
+
+	if(!hRefFlow)
+	{
+		Error("ProcessListV0s","Input hRefFlow histrogram does not exits!");
 		return kFALSE;
 	}
 
@@ -903,11 +920,20 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	const Short_t iNumBinsMass = hInvMass->GetNbinsY();
 	printf("BinsPt: %d / BinsMass: %d\n", iNumBinsPt,iNumBinsMass );
 
+
+	TCanvas* cTempFlow2 = new TCanvas("cTempFlow2","FlowTemp2",1200,400);
+	cTempFlow2->Divide(3,1);
+
 	TCanvas* cTemp = new TCanvas("cTemp","Temp",500,500);
 	cTemp->cd();
 
 	TH1D* hInvMassProj[iNumBinsPt];
 	TH1D* hFlowMassProj[iNumBinsPt];
+	TH1D* hFlowMassProj_flow[iNumBinsPt];
+	Double_t dContent = 0, dError = 0;
+	Double_t dRef = hRefFlow->GetBinContent(iBinCent+1);
+	Double_t dRefErr = hRefFlow->GetBinError(iBinCent+1);
+
 	for(Short_t iPt(0); iPt < iNumBinsPt; iPt++)
 	{
 		hInvMassProj[iPt] = (TH1D*) hInvMass->ProjectionY(Form("hInvMass_K0s_Cent_pt%d",iPt),iPt+1,iPt+1,"e");
@@ -918,9 +944,32 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 		hFlowMassProj[iPt] = (TH1D*) hFlowMass->ProjectionY(Form("hFlowMass_K0s_Cent_pt%d",iPt),iPt+1,iPt+1,"e");
 		hFlowMassProj[iPt]->SetTitle(Form("K_{S}^{0}: FlowMass Pt bin %d",iPt));
+
+		hFlowMassProj_flow[iPt] = (TH1D*) hFlowMassProj[iPt]->Clone(Form("hFlowMassProj_flow_%d",iPt));
+
+		// making flow out of <2>
+		for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+		{
+			dContent = hFlowMassProj[iPt]->GetBinContent(iMass);
+			dError = hFlowMassProj[iPt]->GetBinError(iMass);
+			hFlowMassProj_flow[iPt]->SetBinContent(iMass, dContent / dRef);
+			hFlowMassProj_flow[iPt]->SetBinError(iMass, TMath::Sqrt(TMath::Power(dError/dRef,2) + TMath::Power(dContent*dRefErr/(dRef*dRef),2)) );
+		}
+
+		cTempFlow2->cd(1);
 		hFlowMassProj[iPt]->Draw();
+
+		cTempFlow2->cd(2);
+		hFlowMassProj_flow[iPt]->Draw();
+
+		cTempFlow2->cd(3);
+		hRefFlow->Draw();
+
+		cTemp->cd();
+		hFlowMassProj_flow[iPt]->Draw();
 		cTemp->Print(Form("%s/InvMass/FlowMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
 		listOut->Add(hFlowMassProj[iPt]);
+		cTempFlow2->Print(Form("%s/InvMass/FlowTemp2_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
 	}
 
 	// now the inv mass & flow mass plots are ready
