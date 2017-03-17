@@ -31,7 +31,9 @@ public:
     void	SetHarmonicsArray(Short_t* array, Short_t iSize = 0);
     void	SetEtaGapsArray(Double_t* array, Short_t iSize = 0);
 		void	SetSamplingSpread(Bool_t bSpread) { fbSamplingSpread = bSpread; }
-		void  SetDoV0s(Bool_t doV0s) { fbDoV0s = doV0s; }
+		void  SetDoCharged(Bool_t doCharged = kTRUE) { fbDoCharged = doCharged; }
+		void  SetDoPID(Bool_t doPID = kTRUE) { fbDoPID = doPID; }
+		void  SetDoV0s(Bool_t doV0s = kTRUE) { fbDoV0s = doV0s; }
 
     void	Run(); //
 
@@ -84,6 +86,8 @@ public:
 		Short_t fiNumSamples; // number of samples
 		Short_t fiNumBinsCent; // number of centrality bins
 		Bool_t fbSamplingSpread; // flag for plotting spread of values during de-sampling
+		Bool_t fbDoCharged; // flag for analysing charged hadrons
+		Bool_t fbDoPID; // flag for analysing pi,K,p
 		Bool_t fbDoV0s; // flag for analysing K0s, Lambda particles
 
 
@@ -104,6 +108,8 @@ ProcessFlow::ProcessFlow()
 	fiNumBinsCent = 0;
 	fiNumEtaGaps = 0;
 	fbSamplingSpread = kFALSE;
+	fbDoCharged = kFALSE;
+	fbDoPID = kFALSE;
 	fbDoV0s = kFALSE;
 
 	ffInputFile = 0x0;
@@ -393,47 +399,56 @@ void ProcessFlow::Run()
 				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Reference", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
 			}
 
+			// estimate charged hardons flow
+			if(fbDoCharged)
+			{
+				bStatusProcess = ProcessList(listTracks[iEtaGap], listOutTracks[iHarmonics][iEtaGap], listOutTracks4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Tracks");
+				if(bStatusProcess == kFALSE)
+				{
+					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Track", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				}
+			}
+
 			// estiamte PID flow
-			bStatusProcess = ProcessList(listTracks[iEtaGap], listOutTracks[iHarmonics][iEtaGap], listOutTracks4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Tracks");
-			if(bStatusProcess == kFALSE)
+			if(fbDoPID)
 			{
-				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Track", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				bStatusProcess = ProcessList(listPions[iEtaGap], listOutPions[iHarmonics][iEtaGap], listOutPions4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Pion");
+				if(bStatusProcess == kFALSE)
+				{
+					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Pion", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				}
+
+				bStatusProcess = ProcessList(listKaons[iEtaGap], listOutKaons[iHarmonics][iEtaGap],listOutKaons4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Kaon");
+				if(bStatusProcess == kFALSE)
+				{
+					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Kaon", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				}
+
+				bStatusProcess = ProcessList(listProtons[iEtaGap], listOutProtons[iHarmonics][iEtaGap], listOutProtons4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Proton");
+				if(bStatusProcess == kFALSE)
+				{
+					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Proton", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				}
 			}
 
-			bStatusProcess = ProcessList(listPions[iEtaGap], listOutPions[iHarmonics][iEtaGap], listOutPions4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Pion");
-			if(bStatusProcess == kFALSE)
+			if(fbDoV0s)
 			{
-				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Pion", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-			}
+				bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
+				if(bStatusProcess == kFALSE)
+				{
+					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				}
 
-			bStatusProcess = ProcessList(listKaons[iEtaGap], listOutKaons[iHarmonics][iEtaGap],listOutKaons4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Kaon");
-			if(bStatusProcess == kFALSE)
-			{
-				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Kaon", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
+				if(bStatusProcess == kFALSE)
+				{
+					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				}
 			}
-
-			bStatusProcess = ProcessList(listProtons[iEtaGap], listOutProtons[iHarmonics][iEtaGap], listOutProtons4[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Proton");
-			if(bStatusProcess == kFALSE)
-			{
-				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Proton", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-			}
-
-			/*
-			bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
-			if(bStatusProcess == kFALSE)
-			{
-				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-			}
-
-			bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
-			if(bStatusProcess == kFALSE)
-			{
-				Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-			}
-			*/
 
 			ffOutputFile->cd();
 
+			listOutRef[iHarmonics][iEtaGap]->Last()->Write(Form("hRef_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ));
 			if(fdEtaGaps[iEtaGap] < 0.) // NoGap case = Four particle cumulats are last (not the two = before last)
 			{
 				listOutRef[iHarmonics][iEtaGap]->Last()->Write(Form("hRef_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ));
@@ -453,16 +468,33 @@ void ProcessFlow::Run()
 				*/
 			}
 
-			listOutRef[iHarmonics][iEtaGap]->Last()->Write(Form("hRef_n%d2_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ));
-			listOutTracks[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutPions[iHarmonics][iEtaGap]->Write(Form("Pions_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutKaons[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutProtons[iHarmonics][iEtaGap]->Write(Form("Protons_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 
-			listOutTracks4[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutPions4[iHarmonics][iEtaGap]->Write(Form("Pions_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutKaons4[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-			listOutProtons4[iHarmonics][iEtaGap]->Write(Form("Protons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			if(fbDoCharged)
+			{
+				listOutTracks[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				//listOutTracks4[iHarmonics][iEtaGap]->Write(Form("Tracks_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			}
+
+			if(fbDoPID)
+			{
+				listOutPions[iHarmonics][iEtaGap]->Write(Form("Pions_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				listOutKaons[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				listOutProtons[iHarmonics][iEtaGap]->Write(Form("Protons_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+
+				// listOutPions4[iHarmonics][iEtaGap]->Write(Form("Pions_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				// listOutKaons4[iHarmonics][iEtaGap]->Write(Form("Kaons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				// listOutProtons4[iHarmonics][iEtaGap]->Write(Form("Protons_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			}
+
+			if(fbDoV0s)
+			{
+				listOutK0s[iHarmonics][iEtaGap]->Write(Form("K0s_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				listOutLambda[iHarmonics][iEtaGap]->Write(Form("Lambda_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+
+				// listOutK0s4[iHarmonics][iEtaGap]->Write(Form("K0s_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				// listOutLambda4[iHarmonics][iEtaGap]->Write(Form("Lambda_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+			}
+
 
 		} // end of loop over eta gaps
 	} // end of loop over harmonics
@@ -488,8 +520,6 @@ void ProcessFlow::Run()
 			delete listOutLambda4[i][j];
 		}
 	}
-
-
 
 	return;
 }
@@ -737,7 +767,7 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, TList* list
 
 					dRefCum2 = profRef2->GetBinContent(iCent+1);
 					dRefCum4 = profRef4->GetBinContent(iCent+1);
-					
+
 					for(Int_t iBinX(1); iBinX < iNumBinsX+1; iBinX++)
 					{
 						dCum4 = profTemp4->GetBinContent(iBinX);

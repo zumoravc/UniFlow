@@ -29,7 +29,7 @@ void RunProcessFlow()
 	process->SetDebug(1);
 	process->SetInputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
 	process->SetOutputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
-	process->SetOutputFileName("Flow_CENT_wSDD.root");
+	process->SetOutputFileName("Flow_CENT_wSDD_ver2.root");
 	//process->SetOutputFileName("Flow_kINT7.root");
 	//process->SetTag("kINT7");
 	process->SetTag("CENT_wSDD");
@@ -37,7 +37,9 @@ void RunProcessFlow()
 	process->SetEtaGapsArray(etaGaps,sizeEtaGaps);
 	process->SetBinsCentArray(cent,sizeCent);
 	process->SetNumSamples(1);
-	process->SetDoV0s(kTRUE);
+	process->SetDoCharged(kFALSE);
+	process->SetDoPID();
+	process->SetDoV0s(kFALSE);
 
 	process->Run();
 
