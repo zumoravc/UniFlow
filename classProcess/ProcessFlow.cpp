@@ -11,6 +11,7 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TProfile.h"
+#include "TProfile2D.h"
 #include "TString.h"
 #include "TCanvas.h"
 
@@ -50,7 +51,7 @@ public:
     Bool_t  DesampleList(TList* inList, const Short_t iNumSamples); // estimate average of sigma from list of samples
     Bool_t  ProcessRefFlow(const TList* listIn, TList* listOut, const Short_t iHarmonics, const Double_t dEtaGap); // desample reference flow (indipendent on ProcessList / not needed to run first)
     Bool_t 	ProcessList(const TList* listIn, TList* listOut, TList* listOut4, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
-		Bool_t  ProcessListV0s(const TList* listIn, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
+		Bool_t  ProcessListV0s(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
     //TH1D*	EstimateCn2(const TH1D* hCum2); // estimate cn{2} out of <<2>>
     //TH1D*	EstimateCn4(const TH1D* hCum2, const TH1D* hCum4); // estimate cn{4} out of <<2>>,<<4>>
     //TH1D*	EstimateDn4(const Double_t dRef2, const TH1D* hDiff2, const TH1D* hDiff4); // estimate cn{4} out of <<2>>,<<4>>
@@ -433,17 +434,17 @@ void ProcessFlow::Run()
 
 			if(fbDoV0s)
 			{
-				bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
-				if(bStatusProcess == kFALSE)
-				{
-					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-				}
-
-				bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
-				if(bStatusProcess == kFALSE)
-				{
-					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-				}
+				// bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listOutK0s[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
+				// if(bStatusProcess == kFALSE)
+				// {
+				// 	Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				// }
+				//
+				// bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listOutLambda[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
+				// if(bStatusProcess == kFALSE)
+				// {
+				// 	Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				// }
 			}
 
 			ffOutputFile->cd();
@@ -488,8 +489,8 @@ void ProcessFlow::Run()
 
 			if(fbDoV0s)
 			{
-				listOutK0s[iHarmonics][iEtaGap]->Write(Form("K0s_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
-				listOutLambda[iHarmonics][iEtaGap]->Write(Form("Lambda_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				//listOutK0s[iHarmonics][iEtaGap]->Write(Form("K0s_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
+				//listOutLambda[iHarmonics][iEtaGap]->Write(Form("Lambda_n%d_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 
 				// listOutK0s4[iHarmonics][iEtaGap]->Write(Form("K0s_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
 				// listOutLambda4[iHarmonics][iEtaGap]->Write(Form("Lambda_n%d4_%s",fiHarmonics[iHarmonics], fsEtaGaps[iEtaGap].Data() ),TObject::kSingleKey);
@@ -498,6 +499,13 @@ void ProcessFlow::Run()
 
 		} // end of loop over eta gaps
 	} // end of loop over harmonics
+
+
+	//testing
+	bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listRef[0], fiHarmonics[0], fdEtaGaps[0], "K0s");
+	listOutK0s[0][0]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
+
+
 
 	for(Short_t i(0); i < fiNumHarmonics; i++)
 	{
@@ -838,18 +846,84 @@ Bool_t ProcessFlow::ProcessList(const TList* listIn, TList* listOut, TList* list
 	return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies)
+Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies)
 {
 	Debug("ProcessList",Form("Processing list with %d entries. First \"%s\"",listIn->GetEntries(),listIn->First()->GetName()));
 	// checking in/out lists
 	if(!listIn)
 	{
-		Error("ProcessList","Input list does not exists!");
+		Error("ProcessListV0s","Input list does not exists!");
+		return kFALSE;
+	}
+
+	if(!listOut)
+	{
+		Error("ProcessListV0s","Output list does not exists!");
 		return kFALSE;
 	}
 
 	listIn->ls();
 
+	Info("ProcessListV0s","\n==========================================\n");
+	// testing
+
+	TString sOutputFormat = "pdf";
+
+	TH2D* hInvMass = 0x0;
+	TProfile2D* hFlowMass = 0x0;
+
+	if(dEtaGap != -1.) return kFALSE;
+
+	hInvMass = (TH2D*) listIn->FindObject("fInvMassPtK0s_Pos_Gap-10_Cent0");
+	hFlowMass = (TProfile2D*) listIn->FindObject("fK0s_n22_Pos_gap-10_cent0");
+
+	if(!hInvMass)
+	{
+		Error("ProcessListV0s","Input hInvMass histogram does not exits!");
+		return kFALSE;
+	}
+
+	if(!hFlowMass)
+	{
+		Error("ProcessListV0s","Input hFlowMass profile does not exits!");
+		return kFALSE;
+	}
+
+	TCanvas* canInvMass = new TCanvas("canInvMass","InvMass");
+	canInvMass->cd();
+	hInvMass->Draw("colz");
+
+	TCanvas* canFlowMass = new TCanvas("canFlowMass","FlowMass");
+	canFlowMass->cd();
+	hFlowMass->Draw("colz");
+
+	// making projections
+	const Short_t iNumBinsPt = hInvMass->GetNbinsX();
+	const Short_t iNumBinsMass = hInvMass->GetNbinsY();
+	printf("BinsPt: %d / BinsMass: %d\n", iNumBinsPt,iNumBinsMass );
+
+	TCanvas* cTemp = new TCanvas("cTemp","Temp",500,500);
+	cTemp->cd();
+
+	TH1D* hInvMassProj[iNumBinsPt];
+	TH1D* hFlowMassProj[iNumBinsPt];
+	for(Short_t iPt(0); iPt < iNumBinsPt; iPt++)
+	{
+		hInvMassProj[iPt] = (TH1D*) hInvMass->ProjectionY(Form("hInvMass_K0s_Cent_pt%d",iPt),iPt+1,iPt+1,"e");
+		hInvMassProj[iPt]->SetTitle(Form("K_{S}^{0}: InvMass Pt bin %d",iPt));
+		hInvMassProj[iPt]->Draw();
+		cTemp->Print(Form("%s/InvMass/InvMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
+		listOut->Add(hInvMassProj[iPt]);
+
+		hFlowMassProj[iPt] = (TH1D*) hFlowMass->ProjectionY(Form("hFlowMass_K0s_Cent_pt%d",iPt),iPt+1,iPt+1,"e");
+		hFlowMassProj[iPt]->SetTitle(Form("K_{S}^{0}: FlowMass Pt bin %d",iPt));
+		hFlowMassProj[iPt]->Draw();
+		cTemp->Print(Form("%s/InvMass/FlowMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
+		listOut->Add(hFlowMassProj[iPt]);
+	}
+
+
+	Info("ProcessListV0s","\n==========================================\n");
 
 	return kTRUE;
 }
