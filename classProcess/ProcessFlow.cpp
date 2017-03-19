@@ -983,15 +983,25 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	Double_t dMassHigh = 0;
 
 	TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
-	canFitInvMass->Divide(2,2);
+	canFitInvMass->Divide(3,2);
 
 	TH1D* hInvMass_side = 0x0;
 	TH1D* hInvMass_residual = 0x0;
 	TH1D* hInvMass_ratio = 0x0;
 
+	TH1D* hFlowMass_side = 0x0;
+
+	const Short_t iNumBinsMassFlow = hFlowMass->GetNbinsX();
+
+	// inv mass fitts
 	TF1* fitShot = 0x0;
 	TF1* fitSide = 0x0;
 	TF1* fitRatio = 0x0;
+
+	// flow mass fits
+	TF1* fitFlowSide = 0x0;
+	TF1* fitFlowTot = 0x0;
+
 	for(Short_t iPt(0); iPt < iNumBinsPt; iPt++)
 	{
 		hInvMass_side = (TH1D*) hInvMassProj[iPt]->Clone("hInvMass_side");
@@ -1013,7 +1023,6 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
 		printf("=========================\nFitting region: %f - %f \n==========================\n", dMassLow,dMassHigh);
 
-		canFitInvMass->cd(2);
 		for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
 		{
 			// Excluding mass peak window (setting errors to inf)
@@ -1022,6 +1031,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 				hInvMass_side->SetBinError(iMass,9999999999999);
 			}
 		}
+		canFitInvMass->cd(2);
 		hInvMass_side->SetMaximum(hInvMassProj[iPt]->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
 		hInvMass_side->SetMinimum(0);
 		hInvMass_side->Draw();
@@ -1058,8 +1068,42 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		hInvMass_ratio->Fit("fitRatio","R");
 
 		// flow mass Fitting
-		// TODO flow mass have to be divided by reference flow
-	}
+		hFlowMass_side = (TH1D*) hFlowMassProj_flow[iPt]->Clone("hFlowMass_side");
+		hFlowMass_side->SetMaximum(1.);
+		hFlowMass_side->SetMinimum(0.);
+
+
+		// fitting side bands
+		for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
+		{
+			// Excluding mass peak window (setting errors to inf)
+			if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
+			{
+				hFlowMass_side->SetBinError(iMass,9999999999999);
+			}
+		}
+
+		canFitInvMass->cd(6);
+		fitFlowSide = new TF1("fitFlowSide","pol1(0)",0.4,0.6);
+		hFlowMass_side->Fit("fitFlowSide","R");
+
+		canFitInvMass->cd(5);
+		fitFlowTot = new TF1("fitFlowTot","[0]*gaus(1)+pol2(4) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",0.4,0.6);
+		// Inv mass ratio signal/total
+		fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
+		fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
+		fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
+		fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
+		fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
+		fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+		// FlowMass backround / sidebands
+		fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
+		fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
+		hFlowMassProj_flow[iPt]->Fit("fitFlowTot","R");
+
+		//hFlowMassProj_flow[iPt]->Draw();
+
+	} // end of loop over pT bins (iPt)
 
 
 
