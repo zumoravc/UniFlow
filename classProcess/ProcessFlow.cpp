@@ -974,6 +974,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 	// now the inv mass & flow mass plots are ready
 
+	TH1D* hFlow = new TH1D("hFlow","K0s: Flow; #it{p}_{T} (GeV/#it{c}); v2",hInvMass->GetNbinsX(),hInvMass->GetXaxis()->GetXmin(),hInvMass->GetXaxis()->GetXmax());
 
 	// Fitting K0s
 	const Short_t iNumSigmas = 7;
@@ -1103,7 +1104,14 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 		//hFlowMassProj_flow[iPt]->Draw();
 
+		hFlow->SetBinContent(iPt+1,fitFlowTot->GetParameter(0));
+		hFlow->SetBinError(iPt+1,fitFlowTot->GetParError(0));
+
 	} // end of loop over pT bins (iPt)
+
+	TCanvas* canFlow = new TCanvas("canFlow","Flow",600,600);
+	canFlow->cd();
+	hFlow->Draw();
 
 
 
