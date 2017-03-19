@@ -992,6 +992,9 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		}
 	}
 
+	// writing pt-diff flow to output file
+	ffOutputFile->cd();
+	hFlow->Write("hFlow_K0s");
 
 	TCanvas* canFlow = new TCanvas("canFlow","Flow",600,600);
 	canFlow->cd();
