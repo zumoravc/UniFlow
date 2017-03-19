@@ -990,11 +990,12 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		if(ExtractFlowK0s(hInvMassProj[iPt],hFlowMassProj_flow[iPt],&dFlow,&dFlowError, canFitInvMass))
 		{
 			printf("Success! Flow %f ± %f\n==========================================\n",dFlow,dFlowError);
+			canFitInvMass->Print(Form("%s/FitInvMass/FlowMass_K0s_cent_%d_pt_%d.%s",fsOutputFilePath.Data(),0,iPt,sOutputFormat.Data()),sOutputFormat.Data());
 			hFlow->SetBinContent(iPt+1,dFlow);
 			hFlow->SetBinError(iPt+1,dFlowError);
 		}
 	}
-	
+
 	// writing pt-diff flow to output file
 	ffOutputFile->cd();
 	hFlow->Write("hFlow_K0s");
@@ -1021,6 +1022,15 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 		Error("ExtractFlowK0s","Flow Mass histogram does not exists!");
 		return kFALSE;
 	}
+
+	if(!canFitInvMass)
+	{
+		Error("ExtractFlowK0s","Canvas not found!");
+		return kFALSE;
+	}
+
+	// Reseting the canvas (removing drawn things)
+	canFitInvMass->Clear();
 
 	// Fitting K0s
 	const TString sOutputFormat = "pdf";
@@ -1145,12 +1155,9 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
 	hFlowMass->Fit("fitFlowTot","R");
 
-
 	*dFlow = fitFlowTot->GetParameter(0);
 	*dFlowError = fitFlowTot->GetParError(0);
 
-	canFitInvMass->Print(Form("%s/FitInvMass/%s.%s",fsOutputFilePath.Data(),hInvMass->GetName(),sOutputFormat.Data()),sOutputFormat.Data());
-	//delete canFitInvMass;
 	return kTRUE;
 }
 //_____________________________________________________________________________
