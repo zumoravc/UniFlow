@@ -53,6 +53,8 @@ public:
     Bool_t  ProcessRefFlow(const TList* listIn, TList* listOut, const Short_t iHarmonics, const Double_t dEtaGap); // desample reference flow (indipendent on ProcessList / not needed to run first)
     Bool_t 	ProcessList(const TList* listIn, TList* listOut, TList* listOut4, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
 		Bool_t  ProcessListV0s(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
+		Bool_t 	ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError); // extract flow via flow-mass method for K0s candidates
+
     //TH1D*	EstimateCn2(const TH1D* hCum2); // estimate cn{2} out of <<2>>
     //TH1D*	EstimateCn4(const TH1D* hCum2, const TH1D* hCum4); // estimate cn{4} out of <<2>>,<<4>>
     //TH1D*	EstimateDn4(const Double_t dRef2, const TH1D* hDiff2, const TH1D* hDiff4); // estimate cn{4} out of <<2>>,<<4>>
@@ -976,6 +978,15 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 	TH1D* hFlow = new TH1D("hFlow","K0s: Flow; #it{p}_{T} (GeV/#it{c}); v2",hInvMass->GetNbinsX(),hInvMass->GetXaxis()->GetXmin(),hInvMass->GetXaxis()->GetXmax());
 
+	// here is the function
+	Double_t dFlow = 0;
+	Double_t dFlowError = 0;
+	if(ExtractFlowK0s(hInvMassProj[3],hFlowMassProj_flow[3],&dFlow,&dFlowError))
+	{
+		printf("Success\n");
+	}
+
+
 	// Fitting K0s
 	const Short_t iNumSigmas = 7;
 	Double_t dMeanShot = 0;
@@ -1117,6 +1128,28 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 
 	Info("ProcessListV0s","\n==========================================\n");
+
+	return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError)
+{
+	if(!hInvMass)
+	{
+		Error("ExtractFlowK0s","Inv. Mass histogram does not exists!");
+		return kFALSE;
+	}
+
+	if(!hFlowMass)
+	{
+		Error("ExtractFlowK0s","Flow Mass histogram does not exists!");
+		return kFALSE;
+	}
+
+
+
+
+
 
 	return kTRUE;
 }
