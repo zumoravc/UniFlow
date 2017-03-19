@@ -28,7 +28,8 @@ void RunProcessFlow()
 	ProcessFlow* process = new ProcessFlow();
 	process->SetDebug(1);
 	process->SetInputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
-	process->SetOutputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
+	process->SetOutputFilePath("~/NBI/Flow/classProcess/");
+	// process->SetOutputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
 	process->SetOutputFileName("Flow_CENT_wSDD_ver2.root");
 	//process->SetOutputFileName("Flow_kINT7.root");
 	//process->SetTag("kINT7");
