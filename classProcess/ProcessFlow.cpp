@@ -5,6 +5,8 @@
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
  */
 
+#include "TROOT.h"
+#include "TSystem.h"
 #include "TMath.h"
 #include "TFile.h"
 #include "TList.h"
@@ -53,7 +55,7 @@ public:
     Bool_t  ProcessRefFlow(const TList* listIn, TList* listOut, const Short_t iHarmonics, const Double_t dEtaGap); // desample reference flow (indipendent on ProcessList / not needed to run first)
     Bool_t 	ProcessList(const TList* listIn, TList* listOut, TList* listOut4, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
 		Bool_t  ProcessListV0s(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
-		Bool_t 	ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError); // extract flow via flow-mass method for K0s candidates
+		Bool_t 	ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 
     //TH1D*	EstimateCn2(const TH1D* hCum2); // estimate cn{2} out of <<2>>
     //TH1D*	EstimateCn4(const TH1D* hCum2, const TH1D* hCum4); // estimate cn{4} out of <<2>>,<<4>>
@@ -982,16 +984,17 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	Double_t dFlow = 0;
 	Double_t dFlowError = 0;
 
+	TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
 	for(Short_t iPt = 0; iPt < iNumBinsPt; iPt++)
 	{
-		if(ExtractFlowK0s(hInvMassProj[iPt],hFlowMassProj_flow[iPt],&dFlow,&dFlowError))
+		if(ExtractFlowK0s(hInvMassProj[iPt],hFlowMassProj_flow[iPt],&dFlow,&dFlowError, canFitInvMass))
 		{
 			printf("Success! Flow %f ± %f\n==========================================\n",dFlow,dFlowError);
 			hFlow->SetBinContent(iPt+1,dFlow);
 			hFlow->SetBinError(iPt+1,dFlowError);
 		}
 	}
-
+	
 	// writing pt-diff flow to output file
 	ffOutputFile->cd();
 	hFlow->Write("hFlow_K0s");
@@ -1005,7 +1008,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError)
+Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass)
 {
 	if(!hInvMass)
 	{
@@ -1027,7 +1030,7 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	Double_t dMassLow = 0;
 	Double_t dMassHigh = 0;
 
-	TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
+	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
 	canFitInvMass->Divide(3,2);
 
 	TH1D* hInvMass_side = 0x0;
@@ -1147,7 +1150,7 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	*dFlowError = fitFlowTot->GetParError(0);
 
 	canFitInvMass->Print(Form("%s/FitInvMass/%s.%s",fsOutputFilePath.Data(),hInvMass->GetName(),sOutputFormat.Data()),sOutputFormat.Data());
-	delete canFitInvMass;
+	//delete canFitInvMass;
 	return kTRUE;
 }
 //_____________________________________________________________________________
