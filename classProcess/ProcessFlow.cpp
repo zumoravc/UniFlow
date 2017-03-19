@@ -1068,7 +1068,9 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",0.4,0.6);
 	fitShot->SetNpx(10000);
 	fitShot->SetParameter(1,0.5);
-	fitShot->SetParameter(2,0.05);
+	fitShot->SetParLimits(1,0.485,0.515);
+	fitShot->SetParameter(2,0.01);
+	fitShot->SetParLimits(2,0.,0.05);
 	hInvMass->Fit("fitShot","R");
 
 	// TODO checking the fitting results
