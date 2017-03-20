@@ -440,17 +440,17 @@ void ProcessFlow::Run()
 
 			if(fbDoV0s)
 			{
-				bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listOutK0s[iHarmonics][iEtaGap], listOutRef[iHarmonics][iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
-				if(bStatusProcess == kFALSE)
-				{
-					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-				}
-
-				bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listOutLambda[iHarmonics][iEtaGap], listOutRef[iHarmonics][iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
-				if(bStatusProcess == kFALSE)
-				{
-					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-				}
+				// bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listOutK0s[iHarmonics][iEtaGap], listOutRef[iHarmonics][iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
+				// if(bStatusProcess == kFALSE)
+				// {
+				// 	Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				// }
+				//
+				// bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listOutLambda[iHarmonics][iEtaGap], listOutRef[iHarmonics][iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
+				// if(bStatusProcess == kFALSE)
+				// {
+				// 	Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				// }
 			}
 
 			ffOutputFile->cd();
@@ -508,11 +508,11 @@ void ProcessFlow::Run()
 
 
 	//testing
-	// bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "K0s");
-	// listOutK0s[0][0]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
-	//
-	// bStatusProcess = ProcessListV0s(listLambda[0], listOutLambda[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "Lambda");
-	// listOutLambda[0][0]->Write(Form("Lambda_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
+	bStatusProcess = ProcessListV0s(listK0s[1], listOutK0s[0][1], listOutRef[0][1], fiHarmonics[0], fdEtaGaps[1], "K0s");
+	listOutK0s[0][1]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[1].Data() ),TObject::kSingleKey);
+
+	bStatusProcess = ProcessListV0s(listLambda[1], listOutLambda[0][1], listOutRef[0][1], fiHarmonics[0], fdEtaGaps[1], "Lambda");
+	listOutLambda[0][1]->Write(Form("Lambda_n%d_%s",fiHarmonics[0], fsEtaGaps[1].Data() ),TObject::kSingleKey);
 
 
 	for(Short_t i(0); i < fiNumHarmonics; i++)
@@ -876,12 +876,6 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		return kFALSE;
 	}
 
-	if(dEtaGap != -1.)
-	{
-		Warning("ProcessListV0s","EtaGaps not implemented yet!");
-		return kFALSE;
-	}
-
 	Info("ProcessListV0s"," ==== ListIn ====================");
 	listIn->ls();
 	Info("ProcessListV0s"," ==== ListRef ====================");
@@ -898,6 +892,14 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	TProfile2D* hFlowMass = 0x0;
 	TH1D* hFlow = 0x0;
 
+	// for merging POS & NEG together for cases with EtaGap != -1
+	TList* listMergeInv = new TList();
+	TH2D* hInvMass_POS = 0x0;
+	TH2D* hInvMass_NEG = 0x0;
+	TList* listMergeFlow = new TList();
+	TProfile2D* hFlowMass_POS = 0x0;
+	TProfile2D* hFlowMass_NEG = 0x0;
+
 	Short_t iNumBinsPt = 0;
 	Short_t iNumBinsMass = 0;
 
@@ -912,8 +914,79 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 	for(Short_t iCent(0); iCent < fiNumBinsCent; iCent++)
 	{
-		hInvMass = (TH2D*) listIn->FindObject(Form("fInvMassPt%s_Pos_Gap%02.2g_Cent%d",sSpecies.Data(),10*dEtaGap,iCent));
-		hFlowMass = (TProfile2D*) listIn->FindObject(Form("f%s_n%d2_Pos_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
+		// loading when No Eta gap
+		if(dEtaGap == -1)
+		{
+			hInvMass = (TH2D*) listIn->FindObject(Form("fInvMassPt%s_Pos_Gap%02.2g_Cent%d",sSpecies.Data(),10*dEtaGap,iCent));
+			hFlowMass = (TProfile2D*) listIn->FindObject(Form("f%s_n%d2_Pos_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
+		}
+
+		// merging POS & NEG when Eta gap
+		if(dEtaGap != -1)
+		{
+			hFlowMass_POS = (TProfile2D*) listIn->FindObject(Form("f%s_n%d2_Pos_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
+			hFlowMass_NEG = (TProfile2D*) listIn->FindObject(Form("f%s_n%d2_Neg_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
+
+			hInvMass_POS = (TH2D*) listIn->FindObject(Form("fInvMassPt%s_Pos_Gap%02.2g_Cent%d",sSpecies.Data(),10*dEtaGap,iCent));
+			hInvMass_NEG = (TH2D*) listIn->FindObject(Form("fInvMassPt%s_Neg_Gap%02.2g_Cent%d",sSpecies.Data(),10*dEtaGap,iCent));
+
+			if(!hFlowMass_NEG || !hFlowMass_POS)
+			{
+				Error("ProcessListV0s","One of the hFlowMass profiles for merging does not exists!");
+				return kFALSE;
+			}
+
+			if(!hInvMass_NEG || !hInvMass_POS)
+			{
+				Error("ProcessListV0s","One of the hInvMass histograms for merging does not exists!");
+				return kFALSE;
+			}
+
+			listMergeFlow->Add(hFlowMass_POS);
+			listMergeFlow->Add(hFlowMass_NEG);
+
+			hFlowMass = (TProfile2D*) hFlowMass_POS->Clone();
+		  hFlowMass->Reset();
+			if(hFlowMass->Merge(listMergeFlow) == -1)
+			{
+				Error("ProcessListV0s","Merging procedure of hFlowMass unsuccesfull!");
+				return kFALSE;
+			}
+
+			listMergeInv->Add(hInvMass_POS);
+			listMergeInv->Add(hInvMass_NEG);
+
+			hInvMass = (TH2D*) hInvMass_POS->Clone();
+		  hInvMass->Reset();
+			if(hInvMass->Merge(listMergeInv) == -1)
+			{
+				Error("ProcessListV0s","Merging procedure of hInvMass unsuccesfull!");
+				return kFALSE;
+			}
+
+			// just for merge testing purpose 
+			//printf("Merging test hInv: %g ± %g & %g ± %g = %g ± %g\n",hInvMass_POS->GetBinContent(120),hInvMass_POS->GetBinError(120),hInvMass_NEG->GetBinContent(120),hInvMass_NEG->GetBinError(120),hInvMass->GetBinContent(120),hInvMass->GetBinError(120));
+			//printf("Merging test hFlow: %g ± %g & %g ± %g = %g ± %g\n",hFlowMass_POS->GetBinContent(120),hFlowMass_POS->GetBinError(120),hFlowMass_NEG->GetBinContent(120),hFlowMass_NEG->GetBinError(120),hFlowMass->GetBinContent(120),hFlowMass->GetBinError(120));
+
+			// TCanvas* cMerge = new TCanvas("cMerge","Merge",1200,400);
+			// cMerge->Divide(3,1);
+			// cMerge->cd(1);
+			// hInvMass_POS->Draw("colz");
+			// cMerge->cd(2);
+			// hInvMass_NEG->Draw("colz");
+			// cMerge->cd(3);
+			// hInvMass->Draw("colz");
+
+			// TCanvas* cMerge = new TCanvas("cMerge","Merge",1200,400);
+			// cMerge->Divide(3,1);
+			// cMerge->cd(1);
+			// hFlowMass_POS->Draw("colz");
+			// cMerge->cd(2);
+			// hFlowMass_NEG->Draw("colz");
+			// cMerge->cd(3);
+			// hFlowMass->Draw("colz");
+
+		} // end of merging if
 
 		if(!hInvMass)
 		{
@@ -941,6 +1014,11 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		canFlowMass->cd();
 		hFlowMass->Draw("colz");
 
+		if(dEtaGap != -1.)
+		{
+			Warning("ProcessListV0s","Merging Succesfull!");
+			return kFALSE;
+		}
 
 
 		iNumBinsPt = hInvMass->GetNbinsX();
