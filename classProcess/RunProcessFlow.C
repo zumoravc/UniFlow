@@ -22,7 +22,7 @@ void RunProcessFlow()
 	Short_t sizeEtaGaps = sizeof(etaGaps) / sizeof(etaGaps[0]);
 
 	//Double_t cent[] = {0.,5.,10.,20,30,40,50,60,70,80}; //edges
-	Double_t cent[] = {0,50,100,150}; // edges
+	Double_t cent[] = {0,50,100}; // edges
 	Short_t sizeCent = sizeof(cent) / sizeof(cent[0]) - 1;
 
 	ProcessFlow* process = new ProcessFlow();
@@ -41,6 +41,7 @@ void RunProcessFlow()
 	process->SetDoCharged(kFALSE);
 	process->SetDoPID(kFALSE);
 	process->SetDoV0s(kTRUE);
+	process->SetRebinV0s(kTRUE);
 
 	process->Run();
 

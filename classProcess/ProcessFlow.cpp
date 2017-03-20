@@ -38,6 +38,7 @@ public:
 		void  SetDoCharged(Bool_t doCharged = kTRUE) { fbDoCharged = doCharged; }
 		void  SetDoPID(Bool_t doPID = kTRUE) { fbDoPID = doPID; }
 		void  SetDoV0s(Bool_t doV0s = kTRUE) { fbDoV0s = doV0s; }
+		void  SetRebinV0s(Bool_t doV0s = kTRUE) { fbRebinV0s = doV0s; }
 
     void	Run(); //
 
@@ -96,6 +97,7 @@ public:
 		Bool_t fbDoCharged; // flag for analysing charged hadrons
 		Bool_t fbDoPID; // flag for analysing pi,K,p
 		Bool_t fbDoV0s; // flag for analysing K0s, Lambda particles
+		Bool_t fbRebinV0s; // flag for rebinning pT bins in flowmass / invmass plots
 
 
 
@@ -118,6 +120,7 @@ ProcessFlow::ProcessFlow()
 	fbDoCharged = kFALSE;
 	fbDoPID = kFALSE;
 	fbDoV0s = kFALSE;
+	fbRebinV0s = kFALSE;
 
 	ffInputFile = 0x0;
 	ffOutputFile = 0x0;
@@ -394,11 +397,8 @@ void ProcessFlow::Run()
 
 	for(Short_t iHarmonics(0); iHarmonics < fiNumHarmonics; iHarmonics++)
 	{
-
 		for(Short_t iEtaGap(0); iEtaGap < fiNumEtaGaps; iEtaGap++)
 		{
-			Debug("","");
-
 			// estimate (desample) reference flow
 			bStatusProcess = ProcessRefFlow(listRef[iEtaGap], listOutRef[iHarmonics][iEtaGap],fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap]);
 			if(!bStatusProcess)
@@ -506,14 +506,12 @@ void ProcessFlow::Run()
 		} // end of loop over eta gaps
 	} // end of loop over harmonics
 
-
 	//testing
 	// bStatusProcess = ProcessListV0s(listK0s[1], listOutK0s[0][1], listOutRef[0][1], fiHarmonics[0], fdEtaGaps[1], "K0s");
 	// listOutK0s[0][1]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[1].Data() ),TObject::kSingleKey);
 	//
 	// bStatusProcess = ProcessListV0s(listLambda[1], listOutLambda[0][1], listOutRef[0][1], fiHarmonics[0], fdEtaGaps[1], "Lambda");
 	// listOutLambda[0][1]->Write(Form("Lambda_n%d_%s",fiHarmonics[0], fsEtaGaps[1].Data() ),TObject::kSingleKey);
-
 
 	for(Short_t i(0); i < fiNumHarmonics; i++)
 	{
@@ -991,6 +989,19 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		canFlowMass->cd();
 		hFlowMass->Draw("colz");
 
+		// rebinning pt bins
+		if(fbRebinV0s)
+		{
+			hInvMass->RebinX(3);
+			hFlowMass->RebinX(3);
+		}
+
+		if(hInvMass->GetNbinsX() != hFlowMass->GetNbinsX())
+		{
+			Error("ProcessListV0s","Different pT binning for InvMass and FlowMass plots!");
+			return kFALSE;
+		}
+
 		iNumBinsPt = hInvMass->GetNbinsX();
 		iNumBinsMass = hInvMass->GetNbinsY();
 		printf("BinsPt: %d / BinsMass: %d\n", iNumBinsPt,iNumBinsMass );
@@ -1086,7 +1097,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 		// writing pt-diff flow to output file
 		ffOutputFile->cd();
-		hFlow->Write(Form("h_%s_n%d2_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
+		hFlow->Write(Form("h%s_n%d2_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
 
 	} // end of loop over centrality bins (iCent)
 
