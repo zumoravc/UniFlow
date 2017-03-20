@@ -1,6 +1,6 @@
 /* ProcessFlow
- *
  * Class implemented for processing AliAnalysisTaskFlowPID results.
+ *
  *
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
  */
@@ -876,11 +876,17 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		return kFALSE;
 	}
 
-	listIn->ls();
-	listRef->ls();
+	if(dEtaGap > -1.)
+	{
+		Warning("ProcessListV0s","EtaGaps not implemented yet!");
+		return kFALSE;
+	}
 
+	Info("ProcessListV0s"," ==== ListIn ====================");
+	listIn->ls();
+	Info("ProcessListV0s"," ==== ListRef ====================");
+	listRef->ls();
 	Info("ProcessListV0s","\n==========================================\n");
-	// testing
 
 	TString sOutputFormat = "pdf";
 
