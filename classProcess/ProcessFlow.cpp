@@ -1,10 +1,12 @@
 /* ProcessFlow
- *
  * Class implemented for processing AliAnalysisTaskFlowPID results.
+ *
  *
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
  */
 
+#include "TROOT.h"
+#include "TSystem.h"
 #include "TMath.h"
 #include "TFile.h"
 #include "TList.h"
@@ -53,6 +55,9 @@ public:
     Bool_t  ProcessRefFlow(const TList* listIn, TList* listOut, const Short_t iHarmonics, const Double_t dEtaGap); // desample reference flow (indipendent on ProcessList / not needed to run first)
     Bool_t 	ProcessList(const TList* listIn, TList* listOut, TList* listOut4, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
 		Bool_t  ProcessListV0s(const TList* listIn, TList* listOut, const TList* listRef, const Short_t iHarmonics, const Double_t dEtaGap, const TString sSpecies); // made flow out of cumulant list
+		Bool_t 	ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
+		Bool_t 	ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
+
     //TH1D*	EstimateCn2(const TH1D* hCum2); // estimate cn{2} out of <<2>>
     //TH1D*	EstimateCn4(const TH1D* hCum2, const TH1D* hCum4); // estimate cn{4} out of <<2>>,<<4>>
     //TH1D*	EstimateDn4(const Double_t dRef2, const TH1D* hDiff2, const TH1D* hDiff4); // estimate cn{4} out of <<2>>,<<4>>
@@ -506,6 +511,8 @@ void ProcessFlow::Run()
 	bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "K0s");
 	listOutK0s[0][0]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
 
+	bStatusProcess = ProcessListV0s(listLambda[0], listOutLambda[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "Lambda");
+	listOutLambda[0][0]->Write(Form("Lambda_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
 
 
 	for(Short_t i(0); i < fiNumHarmonics; i++)
@@ -869,121 +876,213 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		return kFALSE;
 	}
 
-	listIn->ls();
-	listRef->ls();
+	if(dEtaGap != -1.)
+	{
+		Warning("ProcessListV0s","EtaGaps not implemented yet!");
+		return kFALSE;
+	}
 
+	Info("ProcessListV0s"," ==== ListIn ====================");
+	listIn->ls();
+	Info("ProcessListV0s"," ==== ListRef ====================");
+	listRef->ls();
 	Info("ProcessListV0s","\n==========================================\n");
-	// testing
 
 	TString sOutputFormat = "pdf";
 
+	// loading reference flow (not dependent on centrality)
+	TH1D* hRefFlow = (TH1D*) listRef->FindObject(Form("fTracksRef_n%d2_gap%02.2g_number0_px_desampled",iHarmonics,10*dEtaGap));
+
+	// initiliazing variable set in loop
 	TH2D* hInvMass = 0x0;
 	TProfile2D* hFlowMass = 0x0;
-	TH1D* hRefFlow = 0x0;
+	TH1D* hFlow = 0x0;
 
-	if(dEtaGap != -1.) return kFALSE;
+	Short_t iNumBinsPt = 0;
+	Short_t iNumBinsMass = 0;
 
-	const Short_t iBinCent = 0; // centrality bin (from 0)
+	Double_t dContent = 0, dError = 0;
+	Double_t dRef = 0, dRefErr = 0;
+	Double_t dFlow = 0, dFlowError = 0;
 
-	hInvMass = (TH2D*) listIn->FindObject("fInvMassPtK0s_Pos_Gap-10_Cent0");
-	hFlowMass = (TProfile2D*) listIn->FindObject("fK0s_n22_Pos_gap-10_cent0");
-	hRefFlow = (TH1D*) listRef->FindObject("fTracksRef_n22_gap-10_number0_px_desampled");
+	TCanvas* canInvMass = 0x0;
+	TCanvas* canFlowMass = 0x0;
+	TCanvas* cTemp = 0x0;
+	TCanvas* cTempFlow2 = 0x0;
 
+	for(Short_t iCent(0); iCent < fiNumBinsCent; iCent++)
+	{
+		hInvMass = (TH2D*) listIn->FindObject(Form("fInvMassPt%s_Pos_Gap%02.2g_Cent%d",sSpecies.Data(),10*dEtaGap,iCent));
+		hFlowMass = (TProfile2D*) listIn->FindObject(Form("f%s_n%d2_Pos_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
+
+		if(!hInvMass)
+		{
+			Error("ProcessListV0s","Input hInvMass histogram does not exits!");
+			return kFALSE;
+		}
+
+		if(!hFlowMass)
+		{
+			Error("ProcessListV0s","Input hFlowMass profile does not exits!");
+			return kFALSE;
+		}
+
+		if(!hRefFlow)
+		{
+			Error("ProcessListV0s","Input hRefFlow histrogram does not exits!");
+			return kFALSE;
+		}
+
+		canInvMass = new TCanvas("canInvMass","InvMass");
+		canInvMass->cd();
+		hInvMass->Draw("colz");
+
+		canFlowMass = new TCanvas("canFlowMass","FlowMass");
+		canFlowMass->cd();
+		hFlowMass->Draw("colz");
+
+		cTempFlow2 = new TCanvas("cTempFlow2","FlowTemp2",1200,400);
+		cTempFlow2->Divide(3,1);
+
+		cTemp = new TCanvas("cTemp","Temp",500,500);
+		cTemp->cd();
+
+		iNumBinsPt = hInvMass->GetNbinsX();
+		iNumBinsMass = hInvMass->GetNbinsY();
+		printf("BinsPt: %d / BinsMass: %d\n", iNumBinsPt,iNumBinsMass );
+
+		TH1D* hInvMassProj[iNumBinsPt];
+		TH1D* hFlowMassProj[iNumBinsPt];
+		TH1D* hFlowMassProj_flow[iNumBinsPt];
+
+		dRef = hRefFlow->GetBinContent(iCent+1);
+		dRefErr = hRefFlow->GetBinError(iCent+1);
+
+		// making projections
+		for(Short_t iPt(0); iPt < iNumBinsPt; iPt++)
+		{
+			dContent = 0;
+			dError = 0;
+			dFlow = 0;
+			dFlowError = 0;
+
+			hInvMassProj[iPt] = (TH1D*) hInvMass->ProjectionY(Form("hInvMass_%s_cent%d_pt%d",sSpecies.Data(),iCent,iPt),iPt+1,iPt+1,"e");
+			hInvMassProj[iPt]->SetTitle(Form("%s: InvMass / n%d{2} / Gap%02.2g / Cent %d / Pt %d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt));
+			hInvMassProj[iPt]->Draw();
+			cTemp->Print(Form("%s/InvMass/InvMass_%s_n%d_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+			listOut->Add(hInvMassProj[iPt]);
+
+			hFlowMassProj[iPt] = (TH1D*) hFlowMass->ProjectionY(Form("hFlowMass_%s_cent%d_pt%d",sSpecies.Data(),iCent,iPt),iPt+1,iPt+1,"e");
+			hFlowMassProj[iPt]->SetTitle(Form("%s: FlowMass / n%d{2} / Gap%02.2g / Cent %d / Pt %d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt));
+
+			hFlowMassProj_flow[iPt] = (TH1D*) hFlowMassProj[iPt]->Clone(Form("hFlowMassProj_flow_%d",iPt));
+
+			// making flow out of <2>
+			for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+			{
+				dContent = hFlowMassProj[iPt]->GetBinContent(iMass);
+				dError = hFlowMassProj[iPt]->GetBinError(iMass);
+				hFlowMassProj_flow[iPt]->SetBinContent(iMass, dContent / dRef);
+				hFlowMassProj_flow[iPt]->SetBinError(iMass, TMath::Sqrt(TMath::Power(dError/dRef,2) + TMath::Power(dContent*dRefErr/(dRef*dRef),2)) );
+			}
+
+			cTempFlow2->cd(1);
+			hFlowMassProj[iPt]->Draw();
+
+			cTempFlow2->cd(2);
+			hFlowMassProj_flow[iPt]->Draw();
+
+			cTempFlow2->cd(3);
+			hRefFlow->Draw();
+
+			cTemp->cd();
+			hFlowMassProj_flow[iPt]->Draw();
+			cTemp->Print(Form("%s/InvMass/FlowMass_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+			listOut->Add(hFlowMassProj_flow[iPt]);
+			cTempFlow2->Print(Form("%s/InvMass/FlowTemp2_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+		} // end of loop over pt bins (iPt): making projections
+
+		// now the inv mass & flow mass plots are ready
+		const Double_t* dPtBins = hInvMass->GetXaxis()->GetXbins()->GetArray(); // getting X axis bin edges for pt diff flow plot
+		hFlow = new TH1D("hFlow",Form("%s Flow; #it{p}_{T} (GeV/#it{c}); v2",sSpecies.Data()),hInvMass->GetNbinsX(),dPtBins);
+		// TH1D* hFlow = new TH1D("hFlow","K0s: Flow; #it{p}_{T} (GeV/#it{c}); v2",hInvMass->GetNbinsX(),hInvMass->GetXaxis()->GetXmin(),hInvMass->GetXaxis()->GetXmax());
+
+		TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
+		for(Short_t iPt = 0; iPt < iNumBinsPt; iPt++)
+		{
+			if(sSpecies.EqualTo("K0s"))
+			{
+				// K0s fitting
+				if(ExtractFlowK0s(hInvMassProj[iPt],hFlowMassProj_flow[iPt],&dFlow,&dFlowError, canFitInvMass))
+				{
+					printf("Success! Flow %f ± %f\n==========================================\n",dFlow,dFlowError);
+					canFitInvMass->Print(Form("%s/FitInvMass/FlowMass_K0s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+					hFlow->SetBinContent(iPt+1,dFlow);
+					hFlow->SetBinError(iPt+1,dFlowError);
+				}
+			}
+
+			if(sSpecies.EqualTo("Lambda"))
+			{
+				// Lambda fitting
+				if(ExtractFlowLambda(hInvMassProj[iPt],hFlowMassProj_flow[iPt],&dFlow,&dFlowError, canFitInvMass))
+				{
+					printf("Success! Flow %f ± %f\n==========================================\n",dFlow,dFlowError);
+					canFitInvMass->Print(Form("%s/FitInvMass/FlowMass_Lambda_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+					hFlow->SetBinContent(iPt+1,dFlow);
+					hFlow->SetBinError(iPt+1,dFlowError);
+				}
+			}
+		} // end of loop over pt bins (iPt): flow extractions
+
+		// writing pt-diff flow to output file
+		ffOutputFile->cd();
+		hFlow->Write(Form("hFlow_%s_n%d2_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
+
+	} // end of loop over centrality bins (iCent)
+
+
+	// TCanvas* canFlow = new TCanvas("canFlow","Flow",600,600);
+	// canFlow->cd();
+	// hFlow->Draw();
+
+	Info("ProcessListV0s","\n==========================================\n");
+
+	return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass)
+{
 	if(!hInvMass)
 	{
-		Error("ProcessListV0s","Input hInvMass histogram does not exits!");
+		Error("ExtractFlowK0s","Inv. Mass histogram does not exists!");
 		return kFALSE;
 	}
 
 	if(!hFlowMass)
 	{
-		Error("ProcessListV0s","Input hFlowMass profile does not exits!");
+		Error("ExtractFlowK0s","Flow Mass histogram does not exists!");
 		return kFALSE;
 	}
 
-	if(!hRefFlow)
+	if(!canFitInvMass)
 	{
-		Error("ProcessListV0s","Input hRefFlow histrogram does not exits!");
+		Error("ExtractFlowK0s","Canvas not found!");
 		return kFALSE;
 	}
 
-	TCanvas* canInvMass = new TCanvas("canInvMass","InvMass");
-	canInvMass->cd();
-	hInvMass->Draw("colz");
-
-	TCanvas* canFlowMass = new TCanvas("canFlowMass","FlowMass");
-	canFlowMass->cd();
-	hFlowMass->Draw("colz");
-
-	// making projections
-	const Short_t iNumBinsPt = hInvMass->GetNbinsX();
-	const Short_t iNumBinsMass = hInvMass->GetNbinsY();
-	printf("BinsPt: %d / BinsMass: %d\n", iNumBinsPt,iNumBinsMass );
-
-
-	TCanvas* cTempFlow2 = new TCanvas("cTempFlow2","FlowTemp2",1200,400);
-	cTempFlow2->Divide(3,1);
-
-	TCanvas* cTemp = new TCanvas("cTemp","Temp",500,500);
-	cTemp->cd();
-
-	TH1D* hInvMassProj[iNumBinsPt];
-	TH1D* hFlowMassProj[iNumBinsPt];
-	TH1D* hFlowMassProj_flow[iNumBinsPt];
-	Double_t dContent = 0, dError = 0;
-	Double_t dRef = hRefFlow->GetBinContent(iBinCent+1);
-	Double_t dRefErr = hRefFlow->GetBinError(iBinCent+1);
-
-	for(Short_t iPt(0); iPt < iNumBinsPt; iPt++)
-	{
-		hInvMassProj[iPt] = (TH1D*) hInvMass->ProjectionY(Form("hInvMass_K0s_Cent_pt%d",iPt),iPt+1,iPt+1,"e");
-		hInvMassProj[iPt]->SetTitle(Form("K_{S}^{0}: InvMass Pt bin %d",iPt));
-		hInvMassProj[iPt]->Draw();
-		cTemp->Print(Form("%s/InvMass/InvMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
-		listOut->Add(hInvMassProj[iPt]);
-
-		hFlowMassProj[iPt] = (TH1D*) hFlowMass->ProjectionY(Form("hFlowMass_K0s_Cent_pt%d",iPt),iPt+1,iPt+1,"e");
-		hFlowMassProj[iPt]->SetTitle(Form("K_{S}^{0}: FlowMass Pt bin %d",iPt));
-
-		hFlowMassProj_flow[iPt] = (TH1D*) hFlowMassProj[iPt]->Clone(Form("hFlowMassProj_flow_%d",iPt));
-
-		// making flow out of <2>
-		for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
-		{
-			dContent = hFlowMassProj[iPt]->GetBinContent(iMass);
-			dError = hFlowMassProj[iPt]->GetBinError(iMass);
-			hFlowMassProj_flow[iPt]->SetBinContent(iMass, dContent / dRef);
-			hFlowMassProj_flow[iPt]->SetBinError(iMass, TMath::Sqrt(TMath::Power(dError/dRef,2) + TMath::Power(dContent*dRefErr/(dRef*dRef),2)) );
-		}
-
-		cTempFlow2->cd(1);
-		hFlowMassProj[iPt]->Draw();
-
-		cTempFlow2->cd(2);
-		hFlowMassProj_flow[iPt]->Draw();
-
-		cTempFlow2->cd(3);
-		hRefFlow->Draw();
-
-		cTemp->cd();
-		hFlowMassProj_flow[iPt]->Draw();
-		cTemp->Print(Form("%s/InvMass/FlowMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
-		listOut->Add(hFlowMassProj_flow[iPt]);
-		cTempFlow2->Print(Form("%s/InvMass/FlowTemp2_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
-	}
-
-	// now the inv mass & flow mass plots are ready
-
-	TH1D* hFlow = new TH1D("hFlow","K0s: Flow; #it{p}_{T} (GeV/#it{c}); v2",hInvMass->GetNbinsX(),hInvMass->GetXaxis()->GetXmin(),hInvMass->GetXaxis()->GetXmax());
+	// Reseting the canvas (removing drawn things)
+	canFitInvMass->Clear();
 
 	// Fitting K0s
+	const TString sOutputFormat = "pdf";
 	const Short_t iNumSigmas = 7;
 	Double_t dMeanShot = 0;
 	Double_t dSigmaShot = 0;
 	Double_t dMassLow = 0;
 	Double_t dMassHigh = 0;
 
-	TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
+	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
 	canFitInvMass->Divide(3,2);
 
 	TH1D* hInvMass_side = 0x0;
@@ -1003,120 +1102,261 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	TF1* fitFlowSide = 0x0;
 	TF1* fitFlowTot = 0x0;
 
-	for(Short_t iPt(0); iPt < iNumBinsPt; iPt++)
+
+	hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side");
+	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
+
+	canFitInvMass->cd(1);
+	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",0.4,0.6);
+	fitShot->SetNpx(10000);
+	fitShot->SetParameter(1,0.5);
+	fitShot->SetParLimits(1,0.485,0.515);
+	fitShot->SetParameter(2,0.01);
+	fitShot->SetParLimits(2,0.,0.05);
+	hInvMass->Fit("fitShot","R");
+
+	// TODO checking the fitting results
+
+	// extract mean & sigma for sidebands fitting reagion
+	dMeanShot = fitShot->GetParameter(1);
+	dSigmaShot = fitShot->GetParameter(2);
+	dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
+	dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
+	printf("=========================\nFitting region: %f - %f \n==========================\n", dMassLow,dMassHigh);
+
+	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
+	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
 	{
-		hInvMass_side = (TH1D*) hInvMassProj[iPt]->Clone("hInvMass_side");
-		hInvMass_residual = (TH1D*) hInvMassProj[iPt]->Clone("hInvMass_residual");
-
-		canFitInvMass->cd(1);
-		fitShot = new TF1("fitShot","gaus(0)+pol2(3)",0.4,0.6);
-		fitShot->SetNpx(10000);
-		fitShot->SetParameter(1,0.5);
-		fitShot->SetParameter(2,0.05);
-		hInvMassProj[iPt]->Fit("fitShot","R");
-
-		// TODO checking the fitting results
-
-		// extract mean & sigma for sidebands fitting reagion
-		dMeanShot = fitShot->GetParameter(1);
-		dSigmaShot = fitShot->GetParameter(2);
-		dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
-		dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
-		printf("=========================\nFitting region: %f - %f \n==========================\n", dMassLow,dMassHigh);
-
-		for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+		// Excluding mass peak window (setting errors to inf)
+		if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh)
 		{
-			// Excluding mass peak window (setting errors to inf)
-			if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh)
-			{
-				hInvMass_side->SetBinError(iMass,9999999999999);
-			}
+			hInvMass_side->SetBinError(iMass,9999999999999);
 		}
-		canFitInvMass->cd(2);
-		hInvMass_side->SetMaximum(hInvMassProj[iPt]->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
-		hInvMass_side->SetMinimum(0);
-		hInvMass_side->Draw();
+	}
+	canFitInvMass->cd(2);
+	hInvMass_side->SetMaximum(hInvMass->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
+	hInvMass_side->SetMinimum(0);
+	hInvMass_side->Draw();
 
-		canFitInvMass->Print(Form("%s/FitInvMass/InvMass_K0s_Cent_pt%d.%s",fsOutputFilePath.Data(),iPt,sOutputFormat.Data()),sOutputFormat.Data());
+	// fitting background in sidebands
+	fitSide = new TF1("fitSide","pol2(0)",0.4,0.6);
+	fitSide->SetNpx(10000);
+	hInvMass_side->Fit("fitSide","R");
 
-		// fitting background in sidebands
-		fitSide = new TF1("fitSide","pol2(0)",0.4,0.6);
-		fitSide->SetNpx(10000);
-		hInvMass_side->Fit("fitSide","R");
+	Double_t dContent = 0;
+	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+	{
+		dContent = hInvMass_side->GetBinContent(iMass) - fitSide->Eval(hInvMass_side->GetBinCenter(iMass));
+		hInvMass_residual->SetBinContent(iMass,dContent);
+	}
 
+	canFitInvMass->cd(3);
+	hInvMass_residual->Draw();
 
-		Double_t dContent = 0;
-		for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+	hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
+	hInvMass_ratio->Sumw2();
+	hInvMass_ratio->Divide(hInvMass);
+
+	canFitInvMass->cd(4);
+	//hInvMass_ratio->Draw();
+	fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",0.4,0.6);
+	fitRatio->SetNpx(1000);
+	fitRatio->SetParameter(0,0.98);
+	fitRatio->SetParameter(1,0.5);
+	fitRatio->SetParameter(2,0.1);
+	hInvMass_ratio->Fit("fitRatio","R");
+
+	// flow mass Fitting
+	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
+	hFlowMass_side->SetMaximum(1.5*hFlowMass->GetMaximum());
+	hFlowMass_side->SetMinimum(0.5*hFlowMass->GetMinimum());
+
+	// fitting side bands
+	for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
+	{
+		// Excluding mass peak window (setting errors to inf)
+		if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
 		{
-			dContent = hInvMass_side->GetBinContent(iMass) - fitSide->Eval(hInvMass_side->GetBinCenter(iMass));
-			hInvMass_residual->SetBinContent(iMass,dContent);
+			hFlowMass_side->SetBinError(iMass,9999999999999);
 		}
+	}
 
-		canFitInvMass->cd(3);
-		hInvMass_residual->Draw();
+	canFitInvMass->cd(6);
+	fitFlowSide = new TF1("fitFlowSide","pol1(0)",0.4,0.6);
+	hFlowMass_side->Fit("fitFlowSide","R");
 
-		hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
-		hInvMass_ratio->Sumw2();
-		hInvMass_ratio->Divide(hInvMassProj[iPt]);
+	canFitInvMass->cd(5);
+	fitFlowTot = new TF1("fitFlowTot","[0]*gaus(1)+pol2(4) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",0.4,0.6);
+	// Inv mass ratio signal/total
+	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
+	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
+	fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
+	fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
+	fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
+	fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+	// FlowMass backround / sidebands
+	fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
+	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
+	hFlowMass->Fit("fitFlowTot","R");
 
-		canFitInvMass->cd(4);
-		//hInvMass_ratio->Draw();
-		fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",0.4,0.6);
-		fitRatio->SetNpx(1000);
-		fitRatio->SetParameter(0,0.98);
-		fitRatio->SetParameter(1,0.5);
-		fitRatio->SetParameter(2,0.1);
-		hInvMass_ratio->Fit("fitRatio","R");
+	*dFlow = fitFlowTot->GetParameter(0);
+	*dFlowError = fitFlowTot->GetParError(0);
 
-		// flow mass Fitting
-		hFlowMass_side = (TH1D*) hFlowMassProj_flow[iPt]->Clone("hFlowMass_side");
-		hFlowMass_side->SetMaximum(1.);
-		hFlowMass_side->SetMinimum(0.);
+	return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass)
+{
+	if(!hInvMass)
+	{
+		Error("ExtractFlowLambda","Inv. Mass histogram does not exists!");
+		return kFALSE;
+	}
+
+	if(!hFlowMass)
+	{
+		Error("ExtractFlowLambda","Flow Mass histogram does not exists!");
+		return kFALSE;
+	}
+
+	if(!canFitInvMass)
+	{
+		Error("ExtractFlowLambda","Canvas not found!");
+		return kFALSE;
+	}
+
+	// Reseting the canvas (removing drawn things)
+	canFitInvMass->Clear();
+
+	// Fitting K0s
+	const TString sOutputFormat = "pdf";
+	const Short_t iNumSigmas = 5;
+	Double_t dMeanShot = 0;
+	Double_t dSigmaShot = 0;
+	Double_t dMassLow = 0;
+	Double_t dMassHigh = 0;
+
+	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
+	canFitInvMass->Divide(3,2);
+
+	TH1D* hInvMass_side = 0x0;
+	TH1D* hInvMass_residual = 0x0;
+	TH1D* hInvMass_ratio = 0x0;
+
+	TH1D* hFlowMass_side = 0x0;
+
+	const Short_t iNumBinsMassFlow = hFlowMass->GetNbinsX();
+
+	// inv mass fitts
+	TF1* fitShot = 0x0;
+	TF1* fitSide = 0x0;
+	TF1* fitRatio = 0x0;
+
+	// flow mass fits
+	TF1* fitFlowSide = 0x0;
+	TF1* fitFlowTot = 0x0;
 
 
-		// fitting side bands
-		for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
+	hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side");
+	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
+
+	canFitInvMass->cd(1);
+	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",1.095,1.135);
+	fitShot->SetNpx(10000);
+	fitShot->SetParameter(1,1.115);
+	fitShot->SetParLimits(1,1.113,1.12);
+	fitShot->SetParameter(2,0.01);
+  fitShot->SetParLimits(2,0.,0.002);
+	hInvMass->Fit("fitShot","R");
+
+	// TODO checking the fitting results
+
+	// extract mean & sigma for sidebands fitting reagion
+	dMeanShot = fitShot->GetParameter(1);
+	dSigmaShot = fitShot->GetParameter(2);
+	dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
+	dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
+	printf("=========================\nFitting region: %f - %f \n==========================\n", dMassLow,dMassHigh);
+
+	// return kTRUE; // testing
+
+	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
+	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+	{
+		// Excluding mass peak window (setting errors to inf)
+		if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh)
 		{
-			// Excluding mass peak window (setting errors to inf)
-			if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
-			{
-				hFlowMass_side->SetBinError(iMass,9999999999999);
-			}
+			hInvMass_side->SetBinError(iMass,9999999999999);
 		}
+	}
+	canFitInvMass->cd(2);
+	hInvMass_side->SetMaximum(hInvMass->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
+	hInvMass_side->SetMinimum(0);
+	hInvMass_side->Draw();
 
-		canFitInvMass->cd(6);
-		fitFlowSide = new TF1("fitFlowSide","pol1(0)",0.4,0.6);
-		hFlowMass_side->Fit("fitFlowSide","R");
+	// fitting background in sidebands
+	fitSide = new TF1("fitSide","pol2(0)",1.08,1.16);
+	fitSide->SetNpx(10000);
+	hInvMass_side->Fit("fitSide","R");
 
-		canFitInvMass->cd(5);
-		fitFlowTot = new TF1("fitFlowTot","[0]*gaus(1)+pol2(4) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",0.4,0.6);
-		// Inv mass ratio signal/total
-		fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-		fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-		fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-		fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-		fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-		fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-		// FlowMass backround / sidebands
-		fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
-		fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
-		hFlowMassProj_flow[iPt]->Fit("fitFlowTot","R");
+	Double_t dContent = 0;
+	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+	{
+		dContent = hInvMass_side->GetBinContent(iMass) - fitSide->Eval(hInvMass_side->GetBinCenter(iMass));
+		hInvMass_residual->SetBinContent(iMass,dContent);
+	}
 
-		//hFlowMassProj_flow[iPt]->Draw();
+	canFitInvMass->cd(3);
+	hInvMass_residual->Draw();
 
-		hFlow->SetBinContent(iPt+1,fitFlowTot->GetParameter(0));
-		hFlow->SetBinError(iPt+1,fitFlowTot->GetParError(0));
+	hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
+	hInvMass_ratio->Sumw2();
+	hInvMass_ratio->Divide(hInvMass);
 
-	} // end of loop over pT bins (iPt)
+	canFitInvMass->cd(4);
+	//hInvMass_ratio->Draw();
+	fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",1.08,1.16);
+	fitRatio->SetNpx(1000);
+	fitRatio->SetParameter(0,0.98);
+	fitRatio->SetParameter(1,1.115);
+	fitRatio->SetParameter(2,0.001);
+	hInvMass_ratio->Fit("fitRatio","R");
 
-	TCanvas* canFlow = new TCanvas("canFlow","Flow",600,600);
-	canFlow->cd();
-	hFlow->Draw();
+	// flow mass Fitting
+	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
+	hFlowMass_side->SetMaximum(1.5*hFlowMass->GetMaximum());
+	hFlowMass_side->SetMinimum(0.5*hFlowMass->GetMinimum());
 
+	// fitting side bands
+	for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
+	{
+		// Excluding mass peak window (setting errors to inf)
+		if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
+		{
+			hFlowMass_side->SetBinError(iMass,9999999999999);
+		}
+	}
 
+	canFitInvMass->cd(6);
+	fitFlowSide = new TF1("fitFlowSide","pol1(0)",1.08,1.16);
+	hFlowMass_side->Fit("fitFlowSide","R");
 
+	canFitInvMass->cd(5);
+	fitFlowTot = new TF1("fitFlowTot","[0]*gaus(1)+pol2(4) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",1.08,1.16);
+	// Inv mass ratio signal/total
+	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
+	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
+	fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
+	fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
+	fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
+	fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+	// FlowMass backround / sidebands
+	fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
+	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
+	hFlowMass->Fit("fitFlowTot","R");
 
-	Info("ProcessListV0s","\n==========================================\n");
+	*dFlow = fitFlowTot->GetParameter(0);
+	*dFlowError = fitFlowTot->GetParError(0);
 
 	return kTRUE;
 }
