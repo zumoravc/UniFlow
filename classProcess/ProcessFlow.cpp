@@ -508,8 +508,8 @@ void ProcessFlow::Run()
 
 
 	//testing
-	// bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "K0s");
-	// listOutK0s[0][0]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
+	bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "K0s");
+	listOutK0s[0][0]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
 
 	bStatusProcess = ProcessListV0s(listLambda[0], listOutLambda[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "Lambda");
 	listOutLambda[0][0]->Write(Form("Lambda_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
@@ -1011,6 +1011,8 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 			{
 				printf("Success! Flow %f ± %f\n==========================================\n",dFlow,dFlowError);
 				canFitInvMass->Print(Form("%s/FitInvMass/FlowMass_Lambda_cent_%d_pt_%d.%s",fsOutputFilePath.Data(),0,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+				hFlow->SetBinContent(iPt+1,dFlow);
+				hFlow->SetBinError(iPt+1,dFlowError);
 			}
 		}
 	}
@@ -1207,7 +1209,7 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 
 	// Fitting K0s
 	const TString sOutputFormat = "pdf";
-	const Short_t iNumSigmas = 7;
+	const Short_t iNumSigmas = 5;
 	Double_t dMeanShot = 0;
 	Double_t dSigmaShot = 0;
 	Double_t dMassLow = 0;
@@ -1255,7 +1257,7 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
 	printf("=========================\nFitting region: %f - %f \n==========================\n", dMassLow,dMassHigh);
 
-	return kTRUE; // testing
+	// return kTRUE; // testing
 
 	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
 	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
@@ -1272,7 +1274,7 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	hInvMass_side->Draw();
 
 	// fitting background in sidebands
-	fitSide = new TF1("fitSide","pol2(0)",0.4,0.6);
+	fitSide = new TF1("fitSide","pol2(0)",1.08,1.16);
 	fitSide->SetNpx(10000);
 	hInvMass_side->Fit("fitSide","R");
 
@@ -1292,11 +1294,11 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 
 	canFitInvMass->cd(4);
 	//hInvMass_ratio->Draw();
-	fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",0.4,0.6);
+	fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",1.08,1.16);
 	fitRatio->SetNpx(1000);
 	fitRatio->SetParameter(0,0.98);
-	fitRatio->SetParameter(1,1.11);
-	fitRatio->SetParameter(2,0.1);
+	fitRatio->SetParameter(1,1.115);
+	fitRatio->SetParameter(2,0.001);
 	hInvMass_ratio->Fit("fitRatio","R");
 
 	// flow mass Fitting
@@ -1315,11 +1317,11 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	}
 
 	canFitInvMass->cd(6);
-	fitFlowSide = new TF1("fitFlowSide","pol1(0)",0.4,0.6);
+	fitFlowSide = new TF1("fitFlowSide","pol1(0)",1.08,1.16);
 	hFlowMass_side->Fit("fitFlowSide","R");
 
 	canFitInvMass->cd(5);
-	fitFlowTot = new TF1("fitFlowTot","[0]*gaus(1)+pol2(4) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",0.4,0.6);
+	fitFlowTot = new TF1("fitFlowTot","[0]*gaus(1)+pol2(4) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",1.08,1.16);
 	// Inv mass ratio signal/total
 	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
 	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
