@@ -994,25 +994,6 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		{
 			hInvMass->RebinX(3);
 			hFlowMass->RebinX(3);
-			// testing purposes
-			//TH2D* hInvMass_rebin = (TH2D*) hInvMass->RebinX(3,"hInvMass_rebin");
-			//printf("BinsPt: %d (orig) / %d (rebin)\n", hInvMass->GetNbinsX(),hInvMass_rebin->GetNbinsX() );
-			//printf("Rebin: %g (orig) / %g (rebin)\n",hInvMass->GetBinContent(6,10),hInvMass_rebin->GetBinContent(3,10));
-
-			//TProfile2D* hFlowMass_rebin = (TProfile2D*) hFlowMass->RebinX(3,"hFlowMass_rebin");
-			//printf("BinsPt: %d (orig) / %d (rebin)\n", hFlowMass->GetNbinsX(),hFlowMass_rebin->GetNbinsX() );
-			//printf("Rebin: %g (orig) / %g (rebin)\n",hFlowMass->GetBinContent(6,10),hFlowMass_rebin->GetBinContent(2,10));
-
-			// TCanvas* canRebin = new TCanvas("canRebin","Rebin");
-			// canRebin->Divide(2,2);
-			// canRebin->cd(1);
-			// hFlowMass->Draw("colz");
-			// canRebin->cd(2);
-			// hFlowMass_rebin->Draw("colz");
-			// canRebin->cd(3);
-			// hInvMass->Draw("colz");
-			// canRebin->cd(4);
-			// hInvMass_rebin->Draw("colz");
 		}
 
 		if(hInvMass->GetNbinsX() != hFlowMass->GetNbinsX())
