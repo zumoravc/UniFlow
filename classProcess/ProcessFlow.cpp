@@ -880,7 +880,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	listRef->ls();
 	Info("ProcessListV0s","\n==========================================\n");
 
-	TString sOutputFormat = "pdf";
+	TString sOutputFormat = "png";
 
 	// loading reference flow (not dependent on centrality)
 	TH1D* hRefFlow = (TH1D*) listRef->FindObject(Form("fTracksRef_n%d2_gap%02.2g_number0_px_desampled",iHarmonics,10*dEtaGap));
@@ -1029,7 +1029,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 			hInvMassProj[iPt] = (TH1D*) hInvMass->ProjectionY(Form("hInvMass_%s_cent%d_pt%d",sSpecies.Data(),iCent,iPt),iPt+1,iPt+1,"e");
 			hInvMassProj[iPt]->SetTitle(Form("%s: InvMass / n%d{2} / Gap%02.2g / Cent %d / Pt %d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt));
 			hInvMassProj[iPt]->Draw();
-			cTemp->Print(Form("%s/InvMass/InvMass_%s_n%d_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+			// cTemp->Print(Form("%s/InvMass/InvMass_%s_n%d_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
 			listOut->Add(hInvMassProj[iPt]);
 
 			hFlowMassProj[iPt] = (TH1D*) hFlowMass->ProjectionY(Form("hFlowMass_%s_cent%d_pt%d",sSpecies.Data(),iCent,iPt),iPt+1,iPt+1,"e");
@@ -1057,9 +1057,9 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 			cTemp->cd();
 			hFlowMassProj_flow[iPt]->Draw();
-			cTemp->Print(Form("%s/InvMass/FlowMass_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+			// cTemp->Print(Form("%s/InvMass/FlowMass_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
 			listOut->Add(hFlowMassProj_flow[iPt]);
-			cTempFlow2->Print(Form("%s/InvMass/FlowTemp2_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+			// cTempFlow2->Print(Form("%s/InvMass/FlowTemp2_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
 		} // end of loop over pt bins (iPt): making projections
 
 		// now the inv mass & flow mass plots are ready
@@ -1076,7 +1076,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 				if(ExtractFlowK0s(hInvMassProj[iPt],hFlowMassProj_flow[iPt],&dFlow,&dFlowError, canFitInvMass))
 				{
 					printf("Success! Flow %f ± %f\n==========================================\n",dFlow,dFlowError);
-					canFitInvMass->Print(Form("%s/FitInvMass/FlowMass_K0s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+					canFitInvMass->Print(Form("%s/FitMassK0s/FlowMass_K0s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
 					hFlow->SetBinContent(iPt+1,dFlow);
 					hFlow->SetBinError(iPt+1,dFlowError);
 				}
@@ -1088,7 +1088,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 				if(ExtractFlowLambda(hInvMassProj[iPt],hFlowMassProj_flow[iPt],&dFlow,&dFlowError, canFitInvMass))
 				{
 					printf("Success! Flow %f ± %f\n==========================================\n",dFlow,dFlowError);
-					canFitInvMass->Print(Form("%s/FitInvMass/FlowMass_Lambda_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
+					canFitInvMass->Print(Form("%s/FitMassLambda/FlowMass_Lambda_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),iHarmonics,10*dEtaGap,iCent,iPt,sOutputFormat.Data()),sOutputFormat.Data());
 					hFlow->SetBinContent(iPt+1,dFlow);
 					hFlow->SetBinError(iPt+1,dFlowError);
 				}
@@ -1246,7 +1246,7 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	hFlowMass_side->Fit("fitFlowSide","R");
 
 	canFitInvMass->cd(5);
-	fitFlowTot = new TF1("fitFlowTot","[0]*gaus(1)+pol2(4) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",0.4,0.6);
+	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",0.4,0.6);
 	// Inv mass ratio signal/total
 	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
 	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
@@ -1402,7 +1402,7 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	hFlowMass_side->Fit("fitFlowSide","R");
 
 	canFitInvMass->cd(5);
-	fitFlowTot = new TF1("fitFlowTot","[0]*gaus(1)+pol2(4) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",1.08,1.16);
+	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",1.08,1.16);
 	// Inv mass ratio signal/total
 	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
 	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
