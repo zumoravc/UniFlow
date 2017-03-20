@@ -440,17 +440,17 @@ void ProcessFlow::Run()
 
 			if(fbDoV0s)
 			{
-				// bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listOutK0s[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
-				// if(bStatusProcess == kFALSE)
-				// {
-				// 	Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-				// }
-				//
-				// bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listOutLambda[iHarmonics][iEtaGap], listRef[iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
-				// if(bStatusProcess == kFALSE)
-				// {
-				// 	Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
-				// }
+				bStatusProcess = ProcessListV0s(listK0s[iEtaGap], listOutK0s[iHarmonics][iEtaGap], listOutRef[iHarmonics][iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "K0s");
+				if(bStatusProcess == kFALSE)
+				{
+					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "K0s", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				}
+
+				bStatusProcess = ProcessListV0s(listLambda[iEtaGap], listOutLambda[iHarmonics][iEtaGap], listOutRef[iHarmonics][iEtaGap], fiHarmonics[iHarmonics], fdEtaGaps[iEtaGap], "Lambda");
+				if(bStatusProcess == kFALSE)
+				{
+					Error("Run",Form("Processing of list: %s: Gap %g n=%d: Status %d (FAILED)!", "Lambda", fdEtaGaps[iEtaGap], iHarmonics, bStatusProcess));
+				}
 			}
 
 			ffOutputFile->cd();
@@ -508,11 +508,11 @@ void ProcessFlow::Run()
 
 
 	//testing
-	bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "K0s");
-	listOutK0s[0][0]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
-
-	bStatusProcess = ProcessListV0s(listLambda[0], listOutLambda[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "Lambda");
-	listOutLambda[0][0]->Write(Form("Lambda_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
+	// bStatusProcess = ProcessListV0s(listK0s[0], listOutK0s[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "K0s");
+	// listOutK0s[0][0]->Write(Form("K0s_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
+	//
+	// bStatusProcess = ProcessListV0s(listLambda[0], listOutLambda[0][0], listOutRef[0][0], fiHarmonics[0], fdEtaGaps[0], "Lambda");
+	// listOutLambda[0][0]->Write(Form("Lambda_n%d_%s",fiHarmonics[0], fsEtaGaps[0].Data() ),TObject::kSingleKey);
 
 
 	for(Short_t i(0); i < fiNumHarmonics; i++)
@@ -941,11 +941,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		canFlowMass->cd();
 		hFlowMass->Draw("colz");
 
-		cTempFlow2 = new TCanvas("cTempFlow2","FlowTemp2",1200,400);
-		cTempFlow2->Divide(3,1);
 
-		cTemp = new TCanvas("cTemp","Temp",500,500);
-		cTemp->cd();
 
 		iNumBinsPt = hInvMass->GetNbinsX();
 		iNumBinsMass = hInvMass->GetNbinsY();
@@ -958,6 +954,10 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		dRef = hRefFlow->GetBinContent(iCent+1);
 		dRefErr = hRefFlow->GetBinError(iCent+1);
 
+		cTemp = new TCanvas("cTemp","Temp",500,500);
+		cTempFlow2 = new TCanvas("cTempFlow2","FlowTemp2",1200,400);
+		cTempFlow2->Divide(3,1);
+
 		// making projections
 		for(Short_t iPt(0); iPt < iNumBinsPt; iPt++)
 		{
@@ -966,6 +966,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 			dFlow = 0;
 			dFlowError = 0;
 
+			cTemp->cd();
 			hInvMassProj[iPt] = (TH1D*) hInvMass->ProjectionY(Form("hInvMass_%s_cent%d_pt%d",sSpecies.Data(),iCent,iPt),iPt+1,iPt+1,"e");
 			hInvMassProj[iPt]->SetTitle(Form("%s: InvMass / n%d{2} / Gap%02.2g / Cent %d / Pt %d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt));
 			hInvMassProj[iPt]->Draw();
@@ -1037,7 +1038,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 		// writing pt-diff flow to output file
 		ffOutputFile->cd();
-		hFlow->Write(Form("hFlow_%s_n%d2_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
+		hFlow->Write(Form("h_%s_n%d2_gap%02.2g_cent%d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent));
 
 	} // end of loop over centrality bins (iCent)
 
