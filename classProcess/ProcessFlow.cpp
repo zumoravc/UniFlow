@@ -992,8 +992,8 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		// rebinning pt bins
 		if(fbRebinV0s)
 		{
-			hInvMass->RebinX(3);
-			hFlowMass->RebinX(3);
+			hInvMass->RebinX(2);
+			hFlowMass->RebinX(2);
 		}
 
 		if(hInvMass->GetNbinsX() != hFlowMass->GetNbinsX())
@@ -1166,6 +1166,7 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side");
 	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
 
+	printf("\n====== K0s: Fitting InvMass first shot ========\n");
 	canFitInvMass->cd(1);
 	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",0.4,0.6);
 	fitShot->SetNpx(10000);
@@ -1199,6 +1200,7 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	hInvMass_side->Draw();
 
 	// fitting background in sidebands
+	printf("\n====== K0s: Fitting InvMass side bands ========\n");
 	fitSide = new TF1("fitSide","pol2(0)",0.4,0.6);
 	fitSide->SetNpx(10000);
 	hInvMass_side->Fit("fitSide","R");
@@ -1217,13 +1219,17 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	hInvMass_ratio->Sumw2();
 	hInvMass_ratio->Divide(hInvMass);
 
+	printf("\n====== K0s: Fitting InvMass sig/tot ratio ========\n");
 	canFitInvMass->cd(4);
+
 	//hInvMass_ratio->Draw();
-	fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",0.4,0.6);
+	fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",0.4,0.6);
 	fitRatio->SetNpx(1000);
 	fitRatio->SetParameter(0,0.98);
 	fitRatio->SetParameter(1,0.5);
-	fitRatio->SetParameter(2,0.1);
+	fitRatio->SetParLimits(1,0.48,0.51);
+	fitRatio->SetParameter(2,0.01);
+	fitRatio->SetParLimits(2,0.,0.05);
 	hInvMass_ratio->Fit("fitRatio","R");
 
 	// flow mass Fitting
@@ -1241,12 +1247,14 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 		}
 	}
 
+	printf("\n====== K0s: Fitting FlowMass sidebands ========\n");
 	canFitInvMass->cd(6);
-	fitFlowSide = new TF1("fitFlowSide","pol1(0)",0.4,0.6);
+	fitFlowSide = new TF1("fitFlowSide","pol2(0)",0.4,0.6);
 	hFlowMass_side->Fit("fitFlowSide","R");
 
 	canFitInvMass->cd(5);
-	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",0.4,0.6);
+	printf("\n====== K0s: Fitting FlowMass total flow ========\n");
+	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.4,0.6);
 	// Inv mass ratio signal/total
 	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
 	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
@@ -1254,9 +1262,11 @@ Bool_t ProcessFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlo
 	fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
 	fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
 	fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+	fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
 	// FlowMass backround / sidebands
-	fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
-	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
+	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
+	fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
+	fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
 	hFlowMass->Fit("fitFlowTot","R");
 
 	*dFlow = fitFlowTot->GetParameter(0);
@@ -1321,6 +1331,7 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
 
 	canFitInvMass->cd(1);
+	printf("\n====== Lambda: Fitting InvMass first shot ========\n");
 	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",1.095,1.135);
 	fitShot->SetNpx(10000);
 	fitShot->SetParameter(1,1.115);
@@ -1355,6 +1366,7 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	hInvMass_side->Draw();
 
 	// fitting background in sidebands
+	printf("\n====== Lambda: Fitting InvMass sidebands ========\n");
 	fitSide = new TF1("fitSide","pol2(0)",1.08,1.16);
 	fitSide->SetNpx(10000);
 	hInvMass_side->Fit("fitSide","R");
@@ -1374,6 +1386,7 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	hInvMass_ratio->Divide(hInvMass);
 
 	canFitInvMass->cd(4);
+	printf("\n====== Lambda: Fitting InvMass sig/total ratio ========\n");
 	//hInvMass_ratio->Draw();
 	fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",1.08,1.16);
 	fitRatio->SetNpx(1000);
@@ -1398,11 +1411,14 @@ Bool_t ProcessFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	}
 
 	canFitInvMass->cd(6);
+	printf("\n====== Lambda: Fitting FlowMass sidebands ========\n");
 	fitFlowSide = new TF1("fitFlowSide","pol1(0)",1.08,1.16);
 	hFlowMass_side->Fit("fitFlowSide","R");
 
 	canFitInvMass->cd(5);
+	printf("\n====== Lambda: Fitting FlowMass total flow ========\n");
 	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",1.08,1.16);
+
 	// Inv mass ratio signal/total
 	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
 	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
