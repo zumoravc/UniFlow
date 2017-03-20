@@ -896,6 +896,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 	// initiliazing variable set in loop
 	TH2D* hInvMass = 0x0;
 	TProfile2D* hFlowMass = 0x0;
+	TH1D* hFlow = 0x0;
 
 	Short_t iNumBinsPt = 0;
 	Short_t iNumBinsMass = 0;
@@ -962,6 +963,8 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 		{
 			dContent = 0;
 			dError = 0;
+			dFlow = 0;
+			dFlowError = 0;
 
 			hInvMassProj[iPt] = (TH1D*) hInvMass->ProjectionY(Form("hInvMass_%s_cent%d_pt%d",sSpecies.Data(),iCent,iPt),iPt+1,iPt+1,"e");
 			hInvMassProj[iPt]->SetTitle(Form("%s: InvMass / n%d{2} / Gap%02.2g / Cent %d / Pt %d",sSpecies.Data(),iHarmonics,10*dEtaGap,iCent,iPt));
@@ -1001,12 +1004,8 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 
 		// now the inv mass & flow mass plots are ready
 		const Double_t* dPtBins = hInvMass->GetXaxis()->GetXbins()->GetArray(); // getting X axis bin edges for pt diff flow plot
-		TH1D* hFlow = new TH1D("hFlow",Form("%s Flow; #it{p}_{T} (GeV/#it{c}); v2",sSpecies.Data()),hInvMass->GetNbinsX(),dPtBins);
+		hFlow = new TH1D("hFlow",Form("%s Flow; #it{p}_{T} (GeV/#it{c}); v2",sSpecies.Data()),hInvMass->GetNbinsX(),dPtBins);
 		// TH1D* hFlow = new TH1D("hFlow","K0s: Flow; #it{p}_{T} (GeV/#it{c}); v2",hInvMass->GetNbinsX(),hInvMass->GetXaxis()->GetXmin(),hInvMass->GetXaxis()->GetXmax());
-
-		// here is the function
-		dFlow = 0;
-		dFlowError = 0;
 
 		TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
 		for(Short_t iPt = 0; iPt < iNumBinsPt; iPt++)
