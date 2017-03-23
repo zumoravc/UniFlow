@@ -160,7 +160,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
         // output lists
         TList*      fOutListEvents; //! events list
-
+        TList*      fOutListCharged; //! events list
+        
         // histograms
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection

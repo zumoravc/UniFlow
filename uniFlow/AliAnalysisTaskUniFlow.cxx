@@ -116,6 +116,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
 
+  fOutListEvents(0x0),
+  fOutListCharged(0x0),
+
   fhEventSampling(0x0),
   fhEventCounter(0x0)
 {
@@ -187,6 +190,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
 
+  fOutListEvents(0x0),
+  fOutListCharged(0x0),
+
   fhEventSampling(0x0),
   fhEventCounter(0x0)
 
@@ -205,11 +211,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // defining input/output
   DefineInput(0, TChain::Class());
   DefineOutput(1, TList::Class());
+  DefineOutput(2, TList::Class());
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
 {
-  // // destructor
+  // destructor
   // if(fPIDCombined)
   // {
   //   delete fPIDCombined;
@@ -220,15 +227,11 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   //   delete fOutListCumulants;
   // }
   //
-  // if(fOutListEvents)
-  // {
-  //   delete fOutListEvents;
-  // }
-  //
-  // if(fOutListTracks)
-  // {
-  //   delete fOutListTracks;
-  // }
+
+  // deleting output lists
+  if(fOutListEvents) delete fOutListEvents;
+  if(fOutListCharged) delete fOutListCharged;
+
   //
   // if(fOutListPID)
   // {
@@ -275,6 +278,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // creating output lists
   fOutListEvents = new TList();
   fOutListEvents->SetOwner(kTRUE);
+  fOutListCharged = new TList();
+  fOutListCharged->SetOwner(kTRUE);
 
   // creating histograms
     // event histogram
@@ -306,6 +311,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   // posting data (mandatory)
   PostData(1, fOutListEvents);
+  PostData(2, fOutListCharged);
 
   return;
 }
@@ -392,6 +398,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   // posting data (mandatory)
   PostData(1, fOutListEvents);
+  PostData(2, fOutListCharged);
 
   return;
 }
