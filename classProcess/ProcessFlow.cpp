@@ -6,6 +6,7 @@
  */
 
 #include "TROOT.h"
+#include "TStyle.h"
 #include "TSystem.h"
 #include "TMath.h"
 #include "TFile.h"
@@ -269,6 +270,8 @@ Bool_t ProcessFlow::Initialize()
 void ProcessFlow::Run()
 {
 	Debug("Run","Running");
+
+	gStyle->SetOptFit(1100);
 
 	if(Initialize() == kFALSE)
 		return;
@@ -1089,7 +1092,7 @@ Bool_t ProcessFlow::ProcessListV0s(const TList* listIn, TList* listOut, const TL
 			if(sSpecies.EqualTo("Lambda"))
 			{
 				if(iPt == 0) continue;
-				
+
 				// Lambda fitting
 				if(ExtractFlowLambda(hInvMassProj[iPt],hFlowMassProj_flow[iPt],&dFlow,&dFlowError, canFitInvMass))
 				{
