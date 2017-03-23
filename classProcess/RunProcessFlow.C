@@ -22,14 +22,15 @@ void RunProcessFlow()
 	Short_t sizeEtaGaps = sizeof(etaGaps) / sizeof(etaGaps[0]);
 
 	//Double_t cent[] = {0.,5.,10.,20,30,40,50,60,70,80}; //edges
-	Double_t cent[] = {0,50,100,150}; // edges
+	Double_t cent[] = {0,50,100}; // edges
 	Short_t sizeCent = sizeof(cent) / sizeof(cent[0]) - 1;
 
 	ProcessFlow* process = new ProcessFlow();
 	process->SetDebug(1);
 	process->SetInputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
 	process->SetOutputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
-	process->SetOutputFileName("Flow_CENT_wSDD.root");
+	// process->SetOutputFilePath("~/NBI/Flow/results/v2-full-ver2-pPbRun2-lhc16q/");
+	process->SetOutputFileName("Flow_CENT_wSDD_ver2-3.root");
 	//process->SetOutputFileName("Flow_kINT7.root");
 	//process->SetTag("kINT7");
 	process->SetTag("CENT_wSDD");
@@ -37,7 +38,10 @@ void RunProcessFlow()
 	process->SetEtaGapsArray(etaGaps,sizeEtaGaps);
 	process->SetBinsCentArray(cent,sizeCent);
 	process->SetNumSamples(1);
+	process->SetDoCharged(kTRUE);
+	process->SetDoPID(kTRUE);
 	process->SetDoV0s(kTRUE);
+	process->SetRebinV0s(kTRUE);
 
 	process->Run();
 
