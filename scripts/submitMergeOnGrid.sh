@@ -1,5 +1,5 @@
 #!/bin/bash
-outPath=~/NBI/Flow/results/V0s/10/
+outPath=~/NBI/Flow/results/V0s/QA/
 
 mkdir -pv ${outPath}
 cd ${outPath}
@@ -10,7 +10,7 @@ for i in $(cat ~/NBI/Flow/runLists/lhc10h_plusplus.runlist)
 do
 	mkdir -pv merge_${i}
 	cd merge_${i}
-	path="/alice/cern.ch/user/v/vpacik/V0s/10/outFlow/000${i}/"
+	path="/alice/cern.ch/user/v/vpacik/V0s/QApid/outFlow/000${i}/"
 	
 	#echo $path
 

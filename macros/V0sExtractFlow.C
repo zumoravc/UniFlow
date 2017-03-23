@@ -1,4 +1,10 @@
-TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2,const Short_t iPartSpecies = 0);
+TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t* dConV2Err, Double_t* dConChi2, Int_t* iConNDF, const Short_t iPartSpecies = 0);
+
+const static Int_t iNumPtBins = 22; // pT bins
+const static Int_t iNumCentBins = 9; // centrality bins
+	
+static TH1D* fhChi2Ndf_K0s[iNumCentBins];
+static TH1D* fhChi2Ndf_Lambda[iNumCentBins];
 
 void V0sExtractFlow(
 		const TString sInput = "~/NBI/Codes/results/V0s/8/plusplus_part1/plots/V0sFlow.root",
@@ -8,16 +14,19 @@ void V0sExtractFlow(
 		const TString sOutputFormat = "png"
 	)
 {
-
-
-	const Int_t iNumPtBins = 22; // pT bins
-	const Int_t iNumCentBins = 9; // centrality bins
 	// bins edges
-	Double_t fPtBinEdges[] = {0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.2,2.4,2.6,2.8,3.0,3.4}; 
+	Double_t fPtBinEdges[] = {0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.4,3.8}; 
 	Double_t fCentBinEdges[] = {0.,5.,10.,20.,30.,40.,50.,60.,70.,80.};
 
 	// =======================================
-	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatio.C");
+	
+	for(Int_t i(0); i < iNumCentBins; i++)
+	{
+		fhChi2Ndf_K0s[i] = new TH1D(Form("fhChi2Ndf_K0s%d",i),Form("K0s: Chi2 / NDF Cent %d",i),iNumPtBins,fPtBinEdges);
+		fhChi2Ndf_Lambda[i] = new TH1D(Form("fhChi2Ndf_Lambda%d",i),Form("Lambda: Chi2 / NDF Cent %d",i),iNumPtBins,fPtBinEdges);	
+	}
+
+	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareRatios.C");
 	gROOT->LoadMacro("~/NBI/Flow/macros/func/CompareHistos.C");
 
 	TFile* fInput = new TFile(sInput.Data(),"READ");
@@ -65,7 +74,13 @@ void V0sExtractFlow(
 	TH1D* hFlowPt_K0s[iNumCentBins]; 
 	TH1D* hFlowPt_Lambda[iNumCentBins]; 
 	Double_t dExtractedV2_K0s[iNumPtBins] = {0};
+	Double_t dExtractedV2Err_K0s[iNumPtBins] = {0};
 	Double_t dExtractedV2_Lambda[iNumPtBins] = {0};
+	Double_t dExtractedV2Err_Lambda[iNumPtBins] = {0};
+	Double_t dChi2_K0s[iNumPtBins] = {0};
+	Int_t iNDF_K0s[iNumPtBins] = {0};
+	Double_t dChi2_Lambda[iNumPtBins] = {0};
+	Int_t iNDF_Lambda[iNumPtBins] = {0};
 	for(Int_t i(0); i < iNumCentBins; i++)
 	{
 		hFlowPt_K0s[i] = new TH1D(Form("hFlowPt_K0s_%s_Cent%d",sEtaGap.Data(),i),Form("K0s: v2 %s Cent %d; #it{p}_{T} (GeV/#it{c}); #it{v_2}",sEtaGap.Data(),i),iNumPtBins,fPtBinEdges);
@@ -73,31 +88,42 @@ void V0sExtractFlow(
 		
 		for(Int_t j(0); j < iNumPtBins; j++)
 		{
-			cCan = ExtractFlow(hInvMassK0s[i][j],hFlowMassK0s[i][j],&dExtractedV2_K0s[j],0);
+			cCan = ExtractFlow(hInvMassK0s[i][j],hFlowMassK0s[i][j],&dExtractedV2_K0s[j],&dExtractedV2Err_K0s[j],&dChi2_K0s[j],&iNDF_K0s[j],0);
 			cCan->Print(Form("%s/fitK0s/fit_K0s_Cent_%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
 			hFlowPt_K0s[i]->SetBinContent(j+1,dExtractedV2_K0s[j]);
+			hFlowPt_K0s[i]->SetBinError(j+1,dExtractedV2Err_K0s[j]);
 			
-			//cCan = ExtractFlow(hInvMassLambda[i][j],hFlowMassLambda[i][j],&dExtractedV2_Lambda[j],1);
-			//cCan->Print(Form("%s/fitLambda/fit_Lambda_Cent_%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
-			//hFlowPt_Lambda[i]->SetBinContent(j+1,dExtractedV2_Lambda[j]);
+			cCan = ExtractFlow(hInvMassLambda[i][j],hFlowMassLambda[i][j],&dExtractedV2_Lambda[j],&dExtractedV2Err_Lambda[j],&dChi2_Lambda[j],&iNDF_Lambda[j],1);
+			cCan->Print(Form("%s/fitLambda/fit_Lambda_Cent_%d_pt%d.%s",sOutput.Data(),i,j,sOutputFormat.Data()),sOutputFormat.Data());
+			hFlowPt_Lambda[i]->SetBinContent(j+1,dExtractedV2_Lambda[j]);
+			hFlowPt_Lambda[i]->SetBinError(j+1,dExtractedV2Err_Lambda[j]);
+
+			fhChi2Ndf_K0s[i]->SetBinContent(j+1, dChi2_K0s[j] / iNDF_K0s[j]);
+			fhChi2Ndf_Lambda[i]->SetBinContent(j+1, dChi2_Lambda[j] / iNDF_Lambda[j]);
 		}
 
 		// writing to output root file
 		fOutput->cd();
 		hFlowPt_K0s[i]->Write();
 		hFlowPt_Lambda[i]->Write();
+		fhChi2Ndf_K0s[i]->Write();
+		fhChi2Ndf_Lambda[i]->Write();
 
 		cPtFlow->cd();
 		hFlowPt_K0s[i]->Draw();
 		cPtFlow->Print(Form("%s/PtFlow/flowPt_K0s_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
-
+		fhChi2Ndf_K0s[i]->Draw();
+		cPtFlow->Print(Form("%s/PtFlow/Chi2NDF_K0s_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+		
 		cPtFlow->cd();
 		hFlowPt_Lambda[i]->Draw();
 		cPtFlow->Print(Form("%s/PtFlow/flowPt_Lambda_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
+		fhChi2Ndf_Lambda[i]->Draw();
+		cPtFlow->Print(Form("%s/PtFlow/Chi2NDF_Lambda_%s_Cent_%d.%s",sOutput.Data(),sEtaGap.Data(),i,sOutputFormat.Data()),sOutputFormat.Data());
 	}
 }
 
-TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Short_t iPartSpecies)
+TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, Double_t* dConV2Err, Double_t* dConChi2, Int_t* iConNDF, const Short_t iPartSpecies)
 {
 	const Short_t dNumSigma = 5;
 
@@ -110,6 +136,7 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	}
 	
 	Double_t dMassPeak = 0., dMassPeakLimit = 0.;
+	Double_t dSigmaMin = 0, dSigmaMax = 0;
 	Double_t dFitRange[2] = {0};
 	TString sPartName;
 
@@ -119,6 +146,8 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 			sPartName = TString("K0s");
 			dMassPeak = 0.49;
 			dMassPeakLimit = 0.03;
+			dSigmaMin = 0.01;
+			dSigmaMax = 0.03;
 			dFitRange[0] = 0.4;
 			dFitRange[1] = 0.6;
 
@@ -126,9 +155,11 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 
 		case 1: //Lambda
 			sPartName = TString("Lambda");
-			dMassPeak = 1.116;
+			dMassPeak = 1.11;
 			dMassPeakLimit = 0.01;
-			dFitRange[0] = 1.09;
+			dSigmaMin = 0.002;
+			dSigmaMax = 0.006;
+			dFitRange[0] = 1.08;
 			dFitRange[1] = 1.16;
 		break;
 
@@ -227,12 +258,12 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	fFitInvMassRatioSigTot->SetParameter(1,dMassPeak);
 	fFitInvMassRatioSigTot->SetParLimits(1,dMassPeak-dMassPeakLimit,dMassPeak+dMassPeakLimit);
 	fFitInvMassRatioSigTot->SetParameter(2,0.02);
-	fFitInvMassRatioSigTot->SetParLimits(2,0.01,0.03);
+	fFitInvMassRatioSigTot->SetParLimits(2,dSigmaMin,dSigmaMax);
 	fFitInvMassRatioSigTot->SetParameter(3,0.7);
 	fFitInvMassRatioSigTot->SetParameter(4,dMassPeak);
 	fFitInvMassRatioSigTot->SetParLimits(4,dMassPeak-dMassPeakLimit,dMassPeak+dMassPeakLimit);
 	fFitInvMassRatioSigTot->SetParameter(5,0.02);
-	fFitInvMassRatioSigTot->SetParLimits(5,0.01,0.03);
+	fFitInvMassRatioSigTot->SetParLimits(5,dSigmaMin, dSigmaMax);
 	hInvMass_RatioSigTot->Fit("fFitInvMassRatioSigTot","R");
 
 	// ==== Fitting flow mass dist ====
@@ -262,10 +293,17 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	printf("-----------------------------------------\n");
 
 	TF1* fFitFlowMassTot = new TF1("fFitFlowMassTot","[11]*(gaus(0)+gaus(3)+pol2(6))+(1-(gaus(0)+gaus(3)+pol2(6)))*pol1(9)",dFitRange[0],dFitRange[1]);
+	Double_t dParValue = 0;
+	Double_t dParError = 0;
 	// inv mass fit parameters
 	for(Int_t i(0); i < 9; i++)
 	{
-		fFitFlowMassTot->FixParameter(i,fFitInvMassRatioSigTot->GetParameter(i));
+		dParValue = fFitInvMassRatioSigTot->GetParameter(i);
+		//dParError = TMath::Abs(fFitInvMassRatioSigTot->GetParError(i));
+
+		//fFitFlowMassTot->SetParameter(i,dParValue);
+		//fFitFlowMassTot->SetParLimits(i,dParValue-dParError,dParValue+dParError);
+		fFitFlowMassTot->FixParameter(i,dParValue);
 	}
 	// vn bg fit parameters
 	fFitFlowMassTot->FixParameter(9,fFitFlowMass_side->GetParameter(0));
@@ -274,6 +312,9 @@ TCanvas* ExtractFlow(TH1D* hInvMass, TH1D* hFlowMass, Double_t* dConV2, const Sh
 	hFlowMass_temp->Fit("fFitFlowMassTot","R0");
 
 	*dConV2 = fFitFlowMassTot->GetParameter(11);
+	*dConV2Err = fFitFlowMassTot->GetParError(11);
+	*dConChi2 = fFitFlowMassTot->GetChisquare();
+	*iConNDF = fFitFlowMassTot->GetNDF();
 	
 	TLatex* latex = new TLatex();
 	latex->SetNDC();

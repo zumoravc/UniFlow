@@ -22,13 +22,13 @@ TCanvas* CompareHistos(
 	Bool_t bLog
 )
 {
-	Color_t colors[] = {kBlack, kRed, kBlue, kMagenta, kYellow+2,kGreen,kViolet-4};
+	Color_t colors[] = {kBlack, kRed, kBlue, kYellow+2,kGreen,kViolet-4,kMagenta};
 
 	const Int_t iNEntries = lList->GetEntries();
 	
 	//lList->ls();
 
-	TLegend* tLeg = new TLegend(0.3,0.5,0.5,0.8);
+	TLegend* tLeg = new TLegend(0.15,0.6,0.35,0.9);
 	tLeg->SetBorderSize(0);
 
 	TCanvas* cCan = new TCanvas();
