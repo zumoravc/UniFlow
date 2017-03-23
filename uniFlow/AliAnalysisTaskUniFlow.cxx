@@ -116,11 +116,17 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
 
+  // output lists
   fOutListEvents(0x0),
   fOutListCharged(0x0),
 
+  // event histograms
   fhEventSampling(0x0),
-  fhEventCounter(0x0)
+  fhEventCounter(0x0),
+
+  // charged histogram
+  fhChargedCounter(0x0)
+
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
@@ -190,11 +196,16 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
 
+  // output lists
   fOutListEvents(0x0),
   fOutListCharged(0x0),
 
+  // event histograms
   fhEventSampling(0x0),
-  fhEventCounter(0x0)
+  fhEventCounter(0x0),
+
+  // charged histogram
+  fhChargedCounter(0x0)
 
 {
   // QA histograms
@@ -221,34 +232,10 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   // {
   //   delete fPIDCombined;
   // }
-  //
-  // if(fOutListCumulants)
-  // {
-  //   delete fOutListCumulants;
-  // }
-  //
 
   // deleting output lists
   if(fOutListEvents) delete fOutListEvents;
   if(fOutListCharged) delete fOutListCharged;
-
-  //
-  // if(fOutListPID)
-  // {
-  //   delete fOutListPID;
-  // }
-  //
-  // if(fOutListV0s)
-  // {
-  //   delete fOutListV0s;
-  // }
-  //
-  // /*
-  // if(fOutListQA)
-  // {
-  //   delete fOutListQA;
-  // }
-  // */
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
@@ -289,8 +276,15 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     const Short_t iEventCounterBins = 7;
     TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","PV OK","SPD Vtx OK","Pileup MV OK","PV #it{z} OK","Selected"};
     fhEventCounter = new TH1D("fhEventCounter","Event Counter",iEventCounterBins,0,iEventCounterBins);
-    for(Short_t i = 0; i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
+    for(Short_t i(0); i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fOutListEvents->Add(fhEventCounter);
+
+    // charged (tracks) histograms
+    TString sChargedCounterLabel[] = {"Input","FB","TPC #cls","DCA-z","Selected"};
+    const Short_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
+    fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
+    for(Short_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
+    fOutListCharged->Add(fhChargedCounter);
 
     // QA histograms
     TString sQAindex[fiNumIndexQA] = {"Before", "After"};
@@ -651,16 +645,21 @@ Bool_t AliAnalysisTaskUniFlow::IsTrackSelected(const AliAODTrack* track)
   // returns kTRUE if track pass all requirements, kFALSE otherwise
   // *************************************************************
   if(!track) return kFALSE;
+  fhChargedCounter->Fill("Input",1);
 
   // filter bit
   if( !track->TestFilterBit(fTrackFilterBit) ) return kFALSE;
+  fhChargedCounter->Fill("FB",1);
 
   // number of TPC clusters (additional check for not ITS-standalone tracks)
   if( track->GetTPCNcls() < fNumTPCclsMin && fTrackFilterBit != 2) return kFALSE;
+  fhChargedCounter->Fill("TPC #cls",1);
 
   // track DCA-z coordinate
   if( fTracksDCAzMax > 0. && TMath::Abs(track->ZAtDCA()) > fTracksDCAzMax) return kFALSE;
+  fhChargedCounter->Fill("DCA-z",1);
 
+  fhChargedCounter->Fill("Selected",1);
   return kTRUE;
 }
 //_____________________________________________________________________________
