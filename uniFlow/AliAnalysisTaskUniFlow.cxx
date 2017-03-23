@@ -70,6 +70,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
 
+  fArrCharged(0x0),
   fArrChargedRPF(0x0),
   fArrChargedPOI(0x0),
   fArrPion(0x0),
@@ -140,6 +141,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
 
+  fArrCharged(0x0),
   fArrChargedRPF(0x0),
   fArrChargedPOI(0x0),
   fArrPion(0x0),
@@ -260,6 +262,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   if(!fInit) return;
 
   // Creating arrays for particles
+  fArrCharged = new TClonesArray("AliAODTrack",10000);
   fArrChargedRPF = new TClonesArray("AliAODTrack",10000);
   fArrChargedPOI = new TClonesArray("AliAODTrack",10000);
   fArrPion = new TClonesArray("AliAODTrack",5000);
@@ -583,12 +586,14 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
   if(!fProcessCharged && !fProcessPID && !fProcessV0s) // if neither is ON, filtering is skipped
     return kFALSE;
 
-  fArrChargedRPF->Clear("C");
 
   if(fProcessCharged)
   {
-    fArrChargedPOI->Clear("C");
-    // TODO
+    fArrCharged->Clear("C");
+    //fArrChargedRPF->Clear("C");
+    //fArrChargedPOI->Clear("C");
+    if(FilterCharged()) return kFALSE;
+
   }
 
   if(fProcessPID)
@@ -610,6 +615,44 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
     if(!FilterV0s())
       return kFALSE;
   }
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::FilterCharged()
+{
+  Short_t iNumTrackSelected = 0; // selected charged track counter
+
+  const Short_t iNumTracks = fEventAOD->GetNumberOfTracks();
+  if(iNumTracks < 1) return kFALSE;
+
+  AliAODTrack* track = 0x0;
+  for(Short_t iTrack(0); iTrack < iNumTracks; iTrack++)
+  {
+    track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
+    if(IsTrackSelected(track))
+      new((*fArrCharged)[iNumTrackSelected++]) AliAODTrack(*track);
+  }
+  printf("Tracks selected: %d / clones: %d\n", iNumTrackSelected, fArrCharged->GetEntriesFast());
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsTrackSelected(const AliAODTrack* track)
+{
+  // Selection of charged track
+  // returns kTRUE if track pass all requirements, kFALSE otherwise
+  // *************************************************************
+  if(!track) return kFALSE;
+
+  // filter bit
+  if( !track->TestFilterBit(fTrackFilterBit) ) return kFALSE;
+
+  // number of TPC clusters (additional check for not ITS-standalone tracks)
+  if( track->GetTPCNcls() < fNumTPCclsMin && fTrackFilterBit != 2) return kFALSE;
+
+  // track DCA-z coordinate
+  if( fTracksDCAzMax > 0. && TMath::Abs(track->ZAtDCA()) > fTracksDCAzMax) return kFALSE;
 
   return kTRUE;
 }

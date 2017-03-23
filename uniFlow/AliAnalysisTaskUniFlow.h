@@ -30,7 +30,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
         void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
         void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; }
-        void                    SetFilterCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
+        void                    SetProcessCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
         void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
         void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
 
@@ -42,6 +42,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    SetTrackDCAzMax(Double_t dcaz) {  fTracksDCAzMax = dcaz; }
         void                    SetNumTPCclsMin(UShort_t tpcCls) { fNumTPCclsMin = tpcCls; }
         void                    SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
+        // PID (pi,K,p) setters
         void                    SetPionNumSigmasMax(Double_t numSigmas) { fCutPionNumSigmaMax = numSigmas; }
         void                    SetKaonNumSigmasMax(Double_t numSigmas) { fCutKaonNumSigmaMax = numSigmas; }
         void                    SetProtonNumSigmasMax(Double_t numSigmas) { fCutProtonNumSigmaMax = numSigmas; }
@@ -78,8 +79,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
 
         Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
+        Bool_t                  FilterCharged(); // charged tracks filtering
         Bool_t                  FilterPID(); // pi,K,p filtering
         Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
+        Bool_t                  IsTrackSelected(const AliAODTrack* track = 0x0); // track selection
         Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // V0 selection
 
         Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
@@ -96,6 +99,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
 
         // selected POIs containers
+        TClonesArray*           fArrCharged; // container for filtered (all) charged tracks
         TClonesArray*           fArrChargedRPF; // container for filtered RFPs tracks
         TClonesArray*           fArrChargedPOI; // container for filtered POIs tracks
         TClonesArray*           fArrPion; // container for filtered pions
