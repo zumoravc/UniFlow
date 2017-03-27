@@ -59,6 +59,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fIndexSampling(0),
   fIndexCentrality(0),
   fEventCounter(0),
+  fNumEventsAnalyse(50),
 
   fRunMode(kFull),
   fAnalType(kAOD),
@@ -142,6 +143,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fIndexSampling(0),
   fIndexCentrality(0),
   fEventCounter(0),
+  fNumEventsAnalyse(50),
 
   fRunMode(kFull),
   fAnalType(kAOD),
@@ -445,14 +447,11 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(!fInit) return; // check if initialization succesfull
 
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
-  if(fRunMode == kTest && fEventCounter > 50) return;
+  if(fRunMode == kTest && fEventCounter >= fNumEventsAnalyse) return;
 
   // event selection
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!EventSelection()) return;
-
-  // filter all particle of interest in given (selected) events
-  // FilterTracks();
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
   fIndexSampling = GetSamplingIndex();
@@ -661,14 +660,12 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
   if(!fProcessCharged && !fProcessPID && !fProcessV0s) // if neither is ON, filtering is skipped
     return kFALSE;
 
-
   if(fProcessCharged)
   {
     fArrCharged->Clear("C");
     //fArrChargedRPF->Clear("C");
     //fArrChargedPOI->Clear("C");
-    if(FilterCharged()) return kFALSE;
-
+    if(!FilterCharged()) return kFALSE;
   }
 
   if(fProcessPID)
@@ -889,7 +886,6 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   if(!Filtering()) return kFALSE;
 
   fEventCounter++; // counter of processed events
-
   return kTRUE;
 }
 //_____________________________________________________________________________

@@ -24,6 +24,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         virtual void            Terminate(Option_t* option); // called after all events are processed
         // event setters
         void                    SetRunMode(RunMode mode = kFull) { fRunMode = mode; }
+        void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
         void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
         void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
         void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
@@ -100,6 +101,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 fIndexSampling; // sampling index (randomly generated)
         Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
         Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
+        Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
 
         // selected POIs containers
         TClonesArray*           fArrCharged; //! container for filtered (all) charged tracks
