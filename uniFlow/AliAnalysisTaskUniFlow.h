@@ -36,12 +36,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
         void					SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
         // track setters
-        void                    SetTrackEtaMax(Double_t eta) { fTrackEtaMax = eta; }
-        void                    SetTrackPtMax(Double_t pt) { fTrackPtMax = pt; }
-        void                    SetTrackPtMin(Double_t pt) { fTrackPtMin = pt; }
-        void                    SetTrackDCAzMax(Double_t dcaz) {  fTracksDCAzMax = dcaz; }
-        void                    SetNumTPCclsMin(UShort_t tpcCls) { fNumTPCclsMin = tpcCls; }
-        void                    SetTrackFilterBit(UInt_t filter) { fTrackFilterBit = filter; }
+        void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
+        void                    SetChargedPtMax(Double_t pt) { fCutChargedPtMax = pt; }
+        void                    SetChargedPtMin(Double_t pt) { fCutChargedPtMin = pt; }
+        void                    SetChargedDCAzMax(Double_t dcaz) {  fCutChargedDCAzMax = dcaz; }
+        void                    SetChargedDCAxyMax(Double_t dcaxy) {  fCutChargedDCAxyMax = dcaxy; }
+        void                    SetChargedNumTPCclsMin(UShort_t tpcCls) { fCutChargedNumTPCclsMin = tpcCls; }
+        void                    SetChargedTrackFilterBit(UInt_t filter) { fCutChargedTrackFilterBit = filter; }
         // PID (pi,K,p) setters
         void                    SetPionNumSigmasMax(Double_t numSigmas) { fCutPionNumSigmaMax = numSigmas; }
         void                    SetKaonNumSigmasMax(Double_t numSigmas) { fCutKaonNumSigmaMax = numSigmas; }
@@ -82,8 +83,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  FilterCharged(); // charged tracks filtering
         Bool_t                  FilterPID(); // pi,K,p filtering
         Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
-        Bool_t                  IsTrackSelected(const AliAODTrack* track = 0x0); // track selection
+        Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
         Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // V0 selection
+        void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
 
         Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
         void                    ListParameters();
@@ -92,22 +94,23 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
 
         // properties
-        AliAODEvent*            fEventAOD; // AOD event countainer
+        AliAODEvent*            fEventAOD; //! AOD event countainer
+        AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
         Bool_t                  fInit; // initialization check
         Short_t                 fIndexSampling; // sampling index (randomly generated)
         Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
         Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
 
         // selected POIs containers
-        TClonesArray*           fArrCharged; // container for filtered (all) charged tracks
-        TClonesArray*           fArrChargedRPF; // container for filtered RFPs tracks
-        TClonesArray*           fArrChargedPOI; // container for filtered POIs tracks
-        TClonesArray*           fArrPion; // container for filtered pions
-        TClonesArray*           fArrKaon; // container for filtered kaons
-        TClonesArray*           fArrProton; // container for filtered protons
-        TClonesArray*           fArrK0s; // container for filtered K0s candidates
-        TClonesArray*           fArrLambda; // container for filtered Lambda candidates
-        TClonesArray*           fArrALambda; // container for filtered ALambda candidates
+        TClonesArray*           fArrCharged; //! container for filtered (all) charged tracks
+        TClonesArray*           fArrChargedRPF; //! container for filtered RFPs tracks
+        TClonesArray*           fArrChargedPOI; //! container for filtered POIs tracks
+        TClonesArray*           fArrPion; //! container for filtered pions
+        TClonesArray*           fArrKaon; //! container for filtered kaons
+        TClonesArray*           fArrProton; //! container for filtered protons
+        TClonesArray*           fArrK0s; //! container for filtered K0s candidates
+        TClonesArray*           fArrLambda; //! container for filtered Lambda candidates
+        TClonesArray*           fArrALambda; //! container for filtered ALambda candidates
 
         //cuts & selection: analysis
         RunMode                 fRunMode; // running mode (not grid related)
@@ -123,12 +126,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
         //cuts & selection: events & tracks
         Double_t                fPVtxCutZ;          // (cm) PV z cut
-        UInt_t                  fTrackFilterBit; // tracks filter bit
-        UShort_t                fNumTPCclsMin;  // () Minimal number of TPC clusters used for track reconstruction
-        Double_t                fTrackEtaMax;   // () Maximum pseudorapidity range
-        Double_t                fTrackPtMax;        // (GeV/c) Maximal track pT
-        Double_t                fTrackPtMin;        // (GeV/c) Minimal track pT
-        Double_t                fTracksDCAzMax; //  (cm) Maximal DCA cuts for tracks (pile-up rejection suggested for LHC16)
+        UInt_t                  fCutChargedTrackFilterBit; // tracks filter bit
+        UShort_t                fCutChargedNumTPCclsMin;  // () Minimal number of TPC clusters used for track reconstruction
+        Double_t                fCutChargedEtaMax;   // () Maximum pseudorapidity range
+        Double_t                fCutChargedPtMax;        // (GeV/c) Maximal track pT
+        Double_t                fCutChargedPtMin;        // (GeV/c) Minimal track pT
+        Double_t                fCutChargedDCAzMax; //  (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
+        Double_t                fCutChargedDCAxyMax; //  (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
+
         Double_t                fCutPionNumSigmaMax;
         Double_t                fCutKaonNumSigmaMax;
         Double_t                fCutProtonNumSigmaMax;
@@ -136,14 +141,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Double_t                fCutBayesPIDKaonMin; // minimal value of Bayes PID probability for Kaon
         Double_t                fCutBayesPIDProtonMin; // minimal value of Bayes PID probability for proton
         //cuts & selection: V0 reconstruction
-		Bool_t 					fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
-		Bool_t					fCutV0refitTPC; // Check TPC refit of V0 daughters ?
-		Bool_t					fCutV0rejectKinks; // Reject Kink V0 daughter tracks ?
-		Double_t                fCutV0MinDCAtoPV;   // (cm) min DCA of V0 daughter to PV
+		    Bool_t 					fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
+    		Bool_t					fCutV0refitTPC; // Check TPC refit of V0 daughters ?
+    		Bool_t					fCutV0rejectKinks; // Reject Kink V0 daughter tracks ?
+    		Double_t                fCutV0MinDCAtoPV;   // (cm) min DCA of V0 daughter to PV
         Double_t				fCutV0MaxDCAtoPV;	// (cm) max DCA of V0 daughter to PV
-		Double_t				fCutV0MaxDCADaughters;	// (cm) max DCA of V0 daughters among themselves
+  		  Double_t				fCutV0MaxDCADaughters;	// (cm) max DCA of V0 daughters among themselves
         Double_t                fCutV0MinDecayRadius; // (cm) min distance of secondary vertex from z-axis in transverse plane
-		Double_t				fCutV0MaxDecayRadius; // (cm) max distance of secondary vertex from z-axis in transverse plane
+  		  Double_t				fCutV0MaxDecayRadius; // (cm) max distance of secondary vertex from z-axis in transverse plane
         Double_t                fCutV0DaughterPtMin; // (GeV/c) minimum pT of V0 daughters
         Double_t                fCutV0DaughterEtaMax; // () max value of Eta of V0 daughters
         Double_t                fCutV0MotherEtaMax; // () max eta value of V0 mother
@@ -167,13 +172,27 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH1D*           fhEventCounter; //! counter following event selection
         TH1D*           fhChargedCounter; //! counter following charged track selection
 
+        static const Short_t   fiNumIndexQA = 2; // 0: before cuts // 1: after cuts
         // QA: events
-        static const Short_t   fiNumIndexQA = 2; // 0: before cuts // 1: after cuts§
         TH1D*           fhQAEventsPVz[fiNumIndexQA]; //!
         TH1D*           fhQAEventsNumContrPV[fiNumIndexQA]; //!
         TH1D*           fhQAEventsNumSPDContrPV[fiNumIndexQA]; //!
         TH1D*           fhQAEventsDistPVSPD[fiNumIndexQA]; //!
         TH1D*           fhQAEventsSPDresol[fiNumIndexQA]; //!
+        // QA: charged tracks
+        TH1D*           fhQAChargedMult[fiNumIndexQA];       //! number of AOD charged tracks distribution
+        TH1D*           fhQAChargedPt[fiNumIndexQA];         //! pT dist of charged tracks
+        TH1D*           fhQAChargedEta[fiNumIndexQA];        //! eta dist of charged tracks
+        TH1D*           fhQAChargedPhi[fiNumIndexQA];        //! phi dist of charged tracks
+        TH1D*           fhQAChargedCharge[fiNumIndexQA];     //! charge dist of charged tracks
+        TH1D*           fhQAChargedFilterBit[fiNumIndexQA];  //! filter bit distribution of charged tracks
+        TH1D*           fhQAChargedNumTPCcls[fiNumIndexQA];  //! dist of track number of TPC clusters
+        TH1D*           fhQAChargedDCAxy[fiNumIndexQA];      //! dist of Charged DCA in transverse plane
+        TH1D*           fhQAChargedDCAz[fiNumIndexQA];       //! dist of charged DCA in z coordinate
+        TH1D*           fhQAChargedTPCstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
+        TH1D*           fhQAChargedTOFstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
+        TH2D*           fhQAChargedTPCdEdx[fiNumIndexQA];    //! TPC PID information
+        TH2D*           fhQAChargedTOFbeta[fiNumIndexQA];    //! TOF PID information
 
         AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
         AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented

@@ -78,7 +78,7 @@ void runAnalysis()
     gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskUniFlow.C"); // load the addtask macro
 
-    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_FB768_Bayes");
+    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
     // tracks & event selection cuts
     task1->SetRunMode(kTest);
     task1->SetTrigger(0);
@@ -86,15 +86,19 @@ void runAnalysis()
     task1->SetColisionSystem(kPP);
     task1->SetPeriod(k16l);
     task1->SetSampling(kFALSE);
-    task1->SetProcessV0s(kTRUE);
+    task1->SetProcessCharged(kTRUE);
+    task1->SetProcessV0s(kFALSE);
 
     //task1->SetPeriod10h(kFALSE);
     task1->SetPVtxZMax(10);
-    task1->SetTrackEtaMax(0.8);
-    task1->SetTrackPtMin(0.2);
-    task1->SetTrackPtMax(5.);
-    task1->SetNumTPCclsMin(70);
-    task1->SetTrackFilterBit(768);
+    task1->SetChargedEtaMax(0.8);
+    // task1->SetChargedPtMin(0.2);
+    // task1->SetChargedPtMax(5.);
+    // task1->SetChargedDCAzMax(0.1);
+    // task1->SetChargedDCAxyMax(0.2);
+    task1->SetChargedNumTPCclsMin(70);
+    task1->SetChargedTrackFilterBit(96);
+
     task1->SetPionNumSigmasMax(3);
     task1->SetKaonNumSigmasMax(3);
     task1->SetProtonNumSigmasMax(3);

@@ -54,6 +54,7 @@ ClassImp(AliAnalysisTaskUniFlow) // classimp: necessary for root
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventAOD(0x0),
+  fPIDResponse(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(0),
@@ -81,12 +82,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fArrALambda(0x0),
 
   fPVtxCutZ(0.),
-  fTrackEtaMax(0),
-  fTrackPtMax(0),
-  fTrackPtMin(0),
-  fTracksDCAzMax(0),
-  fNumTPCclsMin(0),
-  fTrackFilterBit(0),
+  fCutChargedEtaMax(0),
+  fCutChargedPtMax(0),
+  fCutChargedPtMin(0),
+  fCutChargedDCAzMax(0),
+  fCutChargedDCAxyMax(0),
+  fCutChargedNumTPCclsMin(0),
+  fCutChargedTrackFilterBit(0),
+
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
@@ -134,6 +137,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
   fEventAOD(0x0),
+  fPIDResponse(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(0),
@@ -161,12 +165,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fArrALambda(0x0),
 
   fPVtxCutZ(0.),
-  fTrackEtaMax(0),
-  fTrackPtMax(0),
-  fTrackPtMin(0),
-  fTracksDCAzMax(0),
-  fNumTPCclsMin(0),
-  fTrackFilterBit(0),
+  fCutChargedEtaMax(0),
+  fCutChargedPtMax(0),
+  fCutChargedPtMin(0),
+  fCutChargedDCAzMax(0),
+  fCutChargedDCAxyMax(0),
+  fCutChargedTrackFilterBit(0),
+  fCutChargedNumTPCclsMin(0),
+
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
@@ -217,6 +223,21 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fhQAEventsNumSPDContrPV[iQA] = 0x0;
     fhQAEventsDistPVSPD[iQA] = 0x0;
     fhQAEventsSPDresol[iQA] = 0x0;
+
+    // charged
+    fhQAChargedMult[iQA] = 0x0;
+    fhQAChargedPt[iQA] = 0x0;
+    fhQAChargedEta[iQA] = 0x0;
+    fhQAChargedPhi[iQA] = 0x0;
+    fhQAChargedCharge[iQA] = 0x0;
+    fhQAChargedFilterBit[iQA] = 0x0;
+    fhQAChargedNumTPCcls[iQA] = 0x0;
+    fhQAChargedDCAxy[iQA] = 0x0;
+    fhQAChargedDCAz[iQA] = 0x0;
+    fhQAChargedTPCstatus[iQA] = 0x0;
+    fhQAChargedTOFstatus[iQA] = 0x0;
+    fhQAChargedTPCdEdx[iQA] = 0x0;
+    fhQAChargedTOFbeta[iQA] = 0x0;
   }
 
   // defining input/output
@@ -280,7 +301,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fOutListEvents->Add(fhEventCounter);
 
     // charged (tracks) histograms
-    TString sChargedCounterLabel[] = {"Input","FB","TPC #cls","DCA-z","Selected"};
+    TString sChargedCounterLabel[] = {"Input","FB","#TPC-Cls","DCA-z","DCA-xy","Eta","Selected"};
     const Short_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
     fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
     for(Short_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
@@ -301,6 +322,49 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListEvents->Add(fhQAEventsDistPVSPD[iQA]);
       fhQAEventsSPDresol[iQA] = new TH1D(Form("fhQAEventsSPDresol_%s",sQAindex[iQA].Data()), "QA Events: SPD resolution", 150,0,15);
       fOutListEvents->Add(fhQAEventsSPDresol[iQA]);
+
+      // Charged tracks QA
+      const Short_t iNBinsPIDstatus = 4;
+      TString sPIDstatus[iNBinsPIDstatus] = {"kDetNoSignal","kDetPidOk","kDetMismatch","kDetNoParams"};
+
+      fhQAChargedMult[iQA] = new TH1D(Form("fhQAChargedMult_%s",sQAindex[iQA].Data()),"QA Charged: Number of Charged in selected events; #it{N}^{Charged}", 1500,0,1500);
+      fOutListCharged->Add(fhQAChargedMult[iQA]);
+
+      fhQAChargedCharge[iQA] = new TH1D(Form("fhQAChargedCharge_%s",sQAindex[iQA].Data()),"QA Charged: Track charge; charge;", 3,-1.5,1.5);
+      fOutListCharged->Add(fhQAChargedCharge[iQA]);
+      fhQAChargedPt[iQA] = new TH1D(Form("fhQAChargedPt_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 300,0.,30.);
+      fOutListCharged->Add(fhQAChargedPt[iQA]);
+      fhQAChargedEta[iQA] = new TH1D(Form("fhQAChargedEta_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#eta}; #it{#eta}", 301,-3,3);
+      fOutListCharged->Add(fhQAChargedEta[iQA]);
+      fhQAChargedPhi[iQA] = new TH1D(Form("fhQAChargedPhi_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#varphi}; #it{#varphi}", 100,0.,TMath::TwoPi());
+      fOutListCharged->Add(fhQAChargedPhi[iQA]);
+
+      const Short_t iNFilterMapBinBins = 32;
+      fhQAChargedFilterBit[iQA] = new TH1D(Form("fhQAChargedFilterBit_%s",sQAindex[iQA].Data()), "QA Charged: Filter bit",iNFilterMapBinBins,0,iNFilterMapBinBins);
+      fOutListCharged->Add(fhQAChargedFilterBit[iQA]);
+      for(Int_t j = 0; j < iNFilterMapBinBins; j++) fhQAChargedFilterBit[iQA]->GetXaxis()->SetBinLabel(j+1, Form("%g",TMath::Power(2,j)));
+      fOutListCharged->Add(fhQAChargedFilterBit[iQA]);
+
+      fhQAChargedNumTPCcls[iQA] = new TH1D(Form("fhQAChargedNumTPCcls_%s",sQAindex[iQA].Data()),"QA Charged: Track number of TPC clusters; #it{N}^{TPC clusters}", 160,0,160);
+      fOutListCharged->Add(fhQAChargedNumTPCcls[iQA]);
+      fhQAChargedDCAxy[iQA] = new TH1D(Form("fhQAChargedDCAxy_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-xy; DCA_{#it{xy}} (cm)", 100,0.,10);
+      fOutListCharged->Add(fhQAChargedDCAxy[iQA]);
+      fhQAChargedDCAz[iQA] = new TH1D(Form("fhQAChargedDCAz_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-z; DCA_{#it{z}} (cm)", 200,-10.,10.);
+      fOutListCharged->Add(fhQAChargedDCAz[iQA]);
+      fhQAChargedTPCstatus[iQA] = new TH1D(Form("fhQAChargedTPCstatus_%s",sQAindex[iQA].Data()),"QA Charged: PID status: TPC;", iNBinsPIDstatus,0,iNBinsPIDstatus);
+      fOutListCharged->Add(fhQAChargedTPCstatus[iQA]);
+      fhQAChargedTPCdEdx[iQA] = new TH2D(Form("fhQAChargedTPCdEdx_%s",sQAindex[iQA].Data()),"QA Charged: TPC PID information; #it{p} (GeV/#it{c}); TPC dEdx (au)", 50,0,10, 101,-10,1000);
+      fOutListCharged->Add(fhQAChargedTPCdEdx[iQA]);
+      fhQAChargedTOFstatus[iQA] = new TH1D(Form("fhQAChargedTOFstatus_%s",sQAindex[iQA].Data()),"QA Charged: PID status: TOF;", iNBinsPIDstatus,0,iNBinsPIDstatus);
+      fOutListCharged->Add(fhQAChargedTOFstatus[iQA]);
+      fhQAChargedTOFbeta[iQA] = new TH2D(Form("fhQAChargedTOFbeta_%s",sQAindex[iQA].Data()),"QA Charged: TOF #beta information; #it{p} (GeV/#it{c}); TOF #beta", 50,0,10, 80,-0.1,1.5);
+      fOutListCharged->Add(fhQAChargedTOFbeta[iQA]);
+
+      for(Int_t j = 0; j < iNBinsPIDstatus; j++)
+      {
+        fhQAChargedTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+        fhQAChargedTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+      }
     }
 
   // posting data (mandatory)
@@ -351,6 +415,16 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   // TODO check if period corresponds to selected collisional system
 
+  // checking PID response
+  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+  AliInputEventHandler* inputHandler = (AliInputEventHandler*)mgr->GetInputEventHandler();
+  fPIDResponse = inputHandler->GetPIDResponse();
+  if(!fPIDResponse)
+  {
+    ::Error("InitializeTask","AliPIDResponse object not found! Terminating!");
+    return kFALSE;
+  }
+
   if(fSampling && fNumSamples == 0)
   {
     ::Error("InitializeTask","Sampling used, but number of samples is 0! Terminating!");
@@ -358,7 +432,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   if(!fSampling)
-    fNumSamples = 1;
+  fNumSamples = 1;
 
   return kTRUE;
 }
@@ -631,15 +705,23 @@ Bool_t AliAnalysisTaskUniFlow::FilterCharged()
   for(Short_t iTrack(0); iTrack < iNumTracks; iTrack++)
   {
     track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
-    if(IsTrackSelected(track))
+    FillQACharged(0,track); // QA before selection
+
+    if(IsChargedSelected(track))
+    {
       new((*fArrCharged)[iNumTrackSelected++]) AliAODTrack(*track);
+      FillQACharged(1,track); // QA after selection
+    }
   }
-  printf("Tracks selected: %d / clones: %d\n", iNumTrackSelected, fArrCharged->GetEntriesFast());
+
+  // fill QA charged multiplicity
+  fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
+  fhQAChargedMult[1]->Fill(fArrCharged->GetEntriesFast());
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsTrackSelected(const AliAODTrack* track)
+Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
 {
   // Selection of charged track
   // returns kTRUE if track pass all requirements, kFALSE otherwise
@@ -648,19 +730,112 @@ Bool_t AliAnalysisTaskUniFlow::IsTrackSelected(const AliAODTrack* track)
   fhChargedCounter->Fill("Input",1);
 
   // filter bit
-  if( !track->TestFilterBit(fTrackFilterBit) ) return kFALSE;
+  if( !track->TestFilterBit(fCutChargedTrackFilterBit) ) return kFALSE;
   fhChargedCounter->Fill("FB",1);
 
   // number of TPC clusters (additional check for not ITS-standalone tracks)
-  if( track->GetTPCNcls() < fNumTPCclsMin && fTrackFilterBit != 2) return kFALSE;
-  fhChargedCounter->Fill("TPC #cls",1);
+  if( track->GetTPCNcls() < fCutChargedNumTPCclsMin && fCutChargedTrackFilterBit != 2) return kFALSE;
+  fhChargedCounter->Fill("#TPC-Cls",1);
 
-  // track DCA-z coordinate
-  if( fTracksDCAzMax > 0. && TMath::Abs(track->ZAtDCA()) > fTracksDCAzMax) return kFALSE;
+  // track DCA coordinates
+  // note AliAODTrack::XYZAtDCA() works only for constrained tracks
+  Double_t dTrackXYZ[3] = {0};
+  Double_t dVertexXYZ[3] = {0.};
+  Double_t dDCAXYZ[3] = {0.};
+  if( fCutChargedDCAzMax > 0. || fCutChargedDCAxyMax > 0.)
+  {
+    const AliAODVertex* vertex = fEventAOD->GetPrimaryVertex();
+    if(!vertex) return kFALSE; // event does not have a PV
+
+    track->GetXYZ(dTrackXYZ);
+    vertex->GetXYZ(dVertexXYZ);
+
+    for(Short_t i(0); i < 3; i++)
+      dDCAXYZ[i] = dTrackXYZ[i] - dVertexXYZ[i];
+  }
+
+  if(fCutChargedDCAzMax > 0. && TMath::Abs(dDCAXYZ[2]) > fCutChargedDCAzMax) return kFALSE;
   fhChargedCounter->Fill("DCA-z",1);
 
+  if(fCutChargedDCAxyMax > 0. && TMath::Sqrt(dDCAXYZ[0]*dDCAXYZ[0] + dDCAXYZ[1]*dDCAXYZ[1]) > fCutChargedDCAxyMax) return kFALSE;
+  fhChargedCounter->Fill("DCA-xy",1);
+
+  // pseudorapidity (eta)
+  if(fCutChargedEtaMax > 0. && TMath::Abs(track->Eta()) > fCutChargedEtaMax) return kFALSE;
+  fhChargedCounter->Fill("Eta",1);
+
+  // track passing all criteria
   fhChargedCounter->Fill("Selected",1);
   return kTRUE;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillQACharged(const Short_t iQAindex, const AliAODTrack* track)
+{
+  // Filling various QA plots related to charged track selection
+  // *************************************************************
+  if(!track) return;
+
+  // filter bit testing
+  for(Short_t i(0); i < 32; i++)
+  {
+    if(track->TestFilterBit(TMath::Power(2.,i)))
+      fhQAChargedFilterBit[iQAindex]->Fill(i);
+  }
+
+  // track charge
+  fhQAChargedCharge[iQAindex]->Fill(track->Charge());
+
+  // number of TPC clusters
+  fhQAChargedNumTPCcls[iQAindex]->Fill(track->GetTPCNcls());
+
+  // track DCA
+  Double_t dDCAXYZ[3] = {-999., -999., -999.};
+  const AliAODVertex* vertex = fEventAOD->GetPrimaryVertex();
+  if(vertex)
+  {
+    Double_t dTrackXYZ[3] = {-999., -999., -999.};
+    Double_t dVertexXYZ[3] = {-999., -999., -999.};
+
+    track->GetXYZ(dTrackXYZ);
+    vertex->GetXYZ(dVertexXYZ);
+
+    for(Short_t i(0); i < 3; i++)
+      dDCAXYZ[i] = dTrackXYZ[i] - dVertexXYZ[i];
+  }
+  fhQAChargedDCAxy[iQAindex]->Fill(TMath::Sqrt(dDCAXYZ[0]*dDCAXYZ[0] + dDCAXYZ[1]*dDCAXYZ[1]));
+  fhQAChargedDCAz[iQAindex]->Fill(dDCAXYZ[2]);
+
+  // TPC & TOF statuses & measures
+  if(fPIDResponse)
+  {
+    AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
+    AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
+
+    fhQAChargedTOFstatus[iQAindex]->Fill((Int_t) pidStatusTOF );
+    fhQAChargedTPCstatus[iQAindex]->Fill((Int_t) pidStatusTPC );
+
+    if(pidStatusTPC == AliPIDResponse::kDetPidOk)
+    fhQAChargedTPCdEdx[iQAindex]->Fill(track->P(), track->GetTPCsignal());
+    else // TPC status not OK
+    fhQAChargedTPCdEdx[iQAindex]->Fill(track->P(), -5.);
+
+    if(pidStatusTOF == AliPIDResponse::kDetPidOk && (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME))
+    {
+      Double_t dTOF[5];
+      track->GetIntegratedTimes(dTOF);
+      Double_t dBetaTOF = dTOF[0] / track->GetTOFsignal();
+      fhQAChargedTOFbeta[iQAindex]->Fill(track->P(),dBetaTOF);
+    }
+    else // TOF status not OK
+    fhQAChargedTOFbeta[iQAindex]->Fill(track->P(),-0.05);
+  }
+
+  // kinematics
+  fhQAChargedPt[iQAindex]->Fill(track->Pt());
+  fhQAChargedPhi[iQAindex]->Fill(track->Phi());
+  fhQAChargedEta[iQAindex]->Fill(track->Eta());
+
+  return;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::FilterV0s()
@@ -683,7 +858,6 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
     if(IsV0Selected(v0))
       new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
   }
-  printf("Lambda selected: %d / clones: %d\n", iNumLambdaSelected, fArrLambda->GetEntriesFast());
 
   return kTRUE;
 }
