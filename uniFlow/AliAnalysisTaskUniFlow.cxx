@@ -342,7 +342,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     TString sV0sLambdaCounterLabel[] = {"Input","Selected"};
     const Short_t iNBinsV0sLambdaCounter = sizeof(sV0sLambdaCounterLabel)/sizeof(sV0sLambdaCounterLabel[0]);
-    fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #{Lambda}/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
+    fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #Lambda/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
     for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
     fOutListV0s->Add(fhV0sCounterLambda);
 
@@ -895,6 +895,9 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
   if(iNumV0s < 1)
     return kFALSE;
 
+  Bool_t bIsK0s = kFALSE;
+  Bool_t bIsLambda = kFALSE;
+
   AliAODv0* v0 = 0x0;
   for(Short_t iV0(0); iV0 < iNumV0s; iV0++)
   {
@@ -902,14 +905,26 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
     v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
     if(!v0) continue;
 
-    if(IsV0aK0s(v0))
-      new((*fArrK0s)[iNumK0sSelected++]) AliAODv0(*v0);
+    bIsK0s = kFALSE;
+    bIsLambda = kFALSE;
 
-    if(IsV0aLambda(v0))
-      new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
+    if(IsV0Selected(v0))
+    {
+      if(IsV0aK0s(v0))
+      {
+        bIsK0s = kTRUE;
+        new((*fArrK0s)[iNumK0sSelected++]) AliAODv0(*v0);
+      }
 
-    if(IsV0aK0s(v0) && IsV0aLambda(v0))
-      ::Warning("FilterV0s","V0 passing selection for both K0s and (A)Lambda");
+      if(IsV0aLambda(v0))
+      {
+        bIsLambda = kTRUE;
+        new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
+      }
+
+      if(bIsK0s && bIsLambda)
+        ::Warning("FilterV0s","V0 passing selection for both K0s and (A)Lambda");
+    }
   }
 
   return kTRUE;
@@ -922,8 +937,6 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
   // *************************************************************
   if(!v0) return kFALSE;
-
-  if(!IsV0Selected(v0)) return kFALSE; // not passing common selection
   fhV0sCounterK0s->Fill("Input",1);
 
   // K0s specific criteria
@@ -941,8 +954,6 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
   // *************************************************************
   if(!v0) return kFALSE;
-
-  if(!IsV0Selected(v0)) return kFALSE; // not passing common selection
   fhV0sCounterLambda->Fill("Input",1);
 
   // (Anti-)Lambda specific criteria
