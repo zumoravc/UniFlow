@@ -380,6 +380,18 @@ void AliAnalysisTaskUniFlow::ListParameters()
 {
   // lists all task parameters
   // *************************************************************
+  printf("\n======= List of parameters ==================\n");
+  printf("   -------- Analysis task ------------------\n");
+  printf("   -------- Events -------------------------\n");
+  printf("   -------- Charge tracks ------------------\n");
+  printf("   fCutChargedTrackFilterBit: (UInt) %d\n", fCutChargedTrackFilterBit);
+  printf("   fCutChargedNumTPCclsMin: (UShort_t) %d\n", fCutChargedNumTPCclsMin);
+  printf("   fCutChargedEtaMax: (Float_t) %g\n", fCutChargedEtaMax);
+  printf("   fCutChargedPtMin: (Float_t) %g (GeV/c)\n", fCutChargedPtMin);
+  printf("   fCutChargedPtMax: (Float_t) %g (GeV/c)\n", fCutChargedPtMax);
+  printf("   fCutChargedDCAzMax: (Float_t) %g (cm)\n", fCutChargedDCAzMax);
+  printf("   fCutChargedDCAxyMax: (Float_t) %g (cm)\n", fCutChargedDCAxyMax);
+  printf("=============================================\n\n");
 
   return;
 }
@@ -502,7 +514,6 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
   // return kTRUE if event passes all criteria, kFALSE otherwise
   // *************************************************************
 
-
   fhEventCounter->Fill("Input",1);
 
   // Physics selection (trigger)
@@ -532,14 +543,12 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
     return kFALSE;
 
   // events passing physics selection
-
   fhEventCounter->Fill("Physics selection OK",1);
 
   // primary vertex selection
   const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertex());
   if(!vtx || vtx->GetNContributors() < 1)
     return kFALSE;
-
   fhEventCounter->Fill("PV OK",1);
 
   // SPD vertex selection
@@ -883,6 +892,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // returns kTRUE if succesfull
   // *************************************************************
 
+  // filtering particles
   if(!Filtering()) return kFALSE;
 
   fEventCounter++; // counter of processed events

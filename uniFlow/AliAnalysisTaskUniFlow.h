@@ -127,14 +127,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
 
         //cuts & selection: events & tracks
-        Double_t                fPVtxCutZ;          // (cm) PV z cut
+        Float_t                fPVtxCutZ;          // (cm) PV z cut
         UInt_t                  fCutChargedTrackFilterBit; // tracks filter bit
         UShort_t                fCutChargedNumTPCclsMin;  // () Minimal number of TPC clusters used for track reconstruction
-        Double_t                fCutChargedEtaMax;   // () Maximum pseudorapidity range
-        Double_t                fCutChargedPtMax;        // (GeV/c) Maximal track pT
-        Double_t                fCutChargedPtMin;        // (GeV/c) Minimal track pT
-        Double_t                fCutChargedDCAzMax; //  (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
-        Double_t                fCutChargedDCAxyMax; //  (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
+        Float_t                 fCutChargedEtaMax;   // () Maximum pseudorapidity range
+        Float_t                 fCutChargedPtMax;        // (GeV/c) Maximal track pT
+        Float_t                 fCutChargedPtMin;        // (GeV/c) Minimal track pT
+        Float_t                 fCutChargedDCAzMax; //  (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
+        Float_t                 fCutChargedDCAxyMax; //  (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
 
         Double_t                fCutPionNumSigmaMax;
         Double_t                fCutKaonNumSigmaMax;
