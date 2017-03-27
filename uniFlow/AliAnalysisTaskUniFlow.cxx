@@ -833,7 +833,7 @@ void AliAnalysisTaskUniFlow::FillQACharged(const Short_t iQAindex, const AliAODT
       fhQAChargedTOFbeta[iQAindex]->Fill(track->P(),dBetaTOF);
     }
     else // TOF status not OK
-    fhQAChargedTOFbeta[iQAindex]->Fill(track->P(),-0.05);
+      fhQAChargedTOFbeta[iQAindex]->Fill(track->P(),-0.05);
   }
 
   // kinematics
@@ -851,6 +851,7 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
   // *************************************************************
 
   Short_t iNumLambdaSelected = 0;
+  Short_t iNumK0sSelected = 0;
 
   const Short_t iNumV0s = fEventAOD->GetNumberOfV0s();
   if(iNumV0s < 1)
@@ -861,16 +862,55 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
   {
     // the minimalistic dynamic allocation of the TClonesArray*
     v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
-    if(IsV0Selected(v0))
+
+    if(IsV0aK0s(v0))
+      new((*fArrK0s)[iNumK0sSelected++]) AliAODv0(*v0);
+
+    if(IsV0aLambda(v0))
       new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
   }
 
   return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
+{
+  // Topological reconstruction and selection of V0 candidates
+  // specific for K0s candidates
+  // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
+  // *************************************************************
+  if(!v0) return kFALSE;
+
+  if(!IsV0Selected(v0)) return kFALSE; // not passing common selection
+
+  // K0s specific criteria
+
+
+  // passing all criteria
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
+{
+  // Topological reconstruction and selection of V0 candidates
+  // specific for Lambda candidates
+  // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
+  // *************************************************************
+  if(!v0) return kFALSE;
+
+  if(!IsV0Selected(v0)) return kFALSE; // not passing common selection
+
+  // (Anti-)Lambda specific criteria
+
+
+  // passing all criteria
+  return kTRUE;
+}
+//_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
 {
   // Topological reconstruction and selection of V0 candidates
+  // common for both K0s and (Anti)-Lambdas
   // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
   // *************************************************************
 

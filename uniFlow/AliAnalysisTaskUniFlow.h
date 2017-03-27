@@ -82,10 +82,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
         Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
         Bool_t                  FilterCharged(); // charged tracks filtering
+        Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
         Bool_t                  FilterPID(); // pi,K,p filtering
         Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
-        Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
-        Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // V0 selection
+        Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
+        Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
+        Bool_t                  IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
         void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
 
         Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection

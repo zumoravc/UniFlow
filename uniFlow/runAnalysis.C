@@ -81,13 +81,14 @@ void runAnalysis()
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
     // tracks & event selection cuts
     task1->SetRunMode(kTest);
+    task1->SetNumEventsAnalyse(10);
     task1->SetTrigger(0);
     task1->SetAnalysisType(kAOD);
     task1->SetColisionSystem(kPP);
     task1->SetPeriod(k16l);
     task1->SetSampling(kFALSE);
-    task1->SetProcessCharged(kTRUE);
-    task1->SetProcessV0s(kFALSE);
+    task1->SetProcessCharged(kFALSE);
+    task1->SetProcessV0s(kTRUE);
 
     //task1->SetPeriod10h(kFALSE);
     task1->SetPVtxZMax(10);
@@ -98,7 +99,7 @@ void runAnalysis()
     // task1->SetChargedDCAxyMax(0.2);
     task1->SetChargedNumTPCclsMin(70);
     task1->SetChargedTrackFilterBit(96);
-
+    // PID selection
     task1->SetPionNumSigmasMax(3);
     task1->SetKaonNumSigmasMax(3);
     task1->SetProtonNumSigmasMax(3);
