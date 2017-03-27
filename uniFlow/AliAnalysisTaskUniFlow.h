@@ -91,6 +91,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
         Bool_t                  IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
         void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
+        void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0); // filling QA plots for V0s candidates
 
         Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
         void                    ListParameters();
@@ -174,13 +175,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
         // output lists
         TList*      fOutListEvents; //! events list
-        TList*      fOutListCharged; //! events list
+        TList*      fOutListCharged; //! charged tracks list
+        TList*      fOutListV0s; //! V0s candidates list
 
         // histograms
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection
         TH1D*           fhChargedCounter; //! counter following charged track selection
-        TH1D*           fhV0sCounter; //! counter following V0s selection
+        TH1D*           fhV0sCounterCommon; //! counter following V0s selection
+        TH1D*           fhV0sCounterK0s; //! counter following K0s selection
+        TH1D*           fhV0sCounterLambda; //! counter following (Anti-)Lambda selection
 
         static const Short_t   fiNumIndexQA = 2; // 0: before cuts // 1: after cuts
         // QA: events

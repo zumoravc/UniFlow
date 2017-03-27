@@ -125,6 +125,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // output lists
   fOutListEvents(0x0),
   fOutListCharged(0x0),
+  fOutListV0s(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -134,8 +135,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhChargedCounter(0x0),
 
   // V0s histogram
-  fhV0sCounter(0x0)
-
+  fhV0sCounterCommon(0x0),
+  fhV0sCounterK0s(0x0),
+  fhV0sCounterLambda(0x0)
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
@@ -214,6 +216,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // output lists
   fOutListEvents(0x0),
   fOutListCharged(0x0),
+  fOutListV0s(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -223,8 +226,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhChargedCounter(0x0),
 
   // V0s histogram
-  fhV0sCounter(0x0)
-
+  fhV0sCounterCommon(0x0),
+  fhV0sCounterK0s(0x0),
+  fhV0sCounterLambda(0x0)
 {
   // QA histograms
   for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
@@ -256,6 +260,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   DefineInput(0, TChain::Class());
   DefineOutput(1, TList::Class());
   DefineOutput(2, TList::Class());
+  DefineOutput(3, TList::Class());
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
@@ -269,6 +274,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   // deleting output lists
   if(fOutListEvents) delete fOutListEvents;
   if(fOutListCharged) delete fOutListCharged;
+  if(fOutListV0s) delete fOutListV0s;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
@@ -300,6 +306,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fOutListEvents->SetOwner(kTRUE);
   fOutListCharged = new TList();
   fOutListCharged->SetOwner(kTRUE);
+  fOutListV0s = new TList();
+  fOutListV0s->SetOwner(kTRUE);
 
   // creating histograms
     // event histogram
@@ -318,6 +326,25 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
     for(Short_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
     fOutListCharged->Add(fhChargedCounter);
+
+    // V0 candidates histograms
+    TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","DCA to PV","Daughters DCA","Decay radius","Acceptance","Passed"};
+    const Short_t iNBinsV0sCounter = sizeof(sV0sCounterLabel)/sizeof(sV0sCounterLabel[0]);
+    fhV0sCounterCommon = new TH1D("fhV0sCounterCommon","V^{0}: Counter",iNBinsV0sCounter,0,iNBinsV0sCounter);
+    for(Short_t i(0); i < iNBinsV0sCounter; i++) fhV0sCounterCommon->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
+    fOutListV0s->Add(fhV0sCounterCommon);
+
+    TString sV0sK0sCounterLabel[] = {"Input","Selected"};
+    const Short_t iNBinsV0sK0sCounter = sizeof(sV0sK0sCounterLabel)/sizeof(sV0sK0sCounterLabel[0]);
+    fhV0sCounterK0s = new TH1D("fhV0sCounterK0s","V^{0}: K^{0}_{S} Counter",iNBinsV0sK0sCounter,0,iNBinsV0sK0sCounter);
+    for(Short_t i(0); i < iNBinsV0sK0sCounter; i++) fhV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sK0sCounterLabel[i].Data() );
+    fOutListV0s->Add(fhV0sCounterK0s);
+
+    TString sV0sLambdaCounterLabel[] = {"Input","Selected"};
+    const Short_t iNBinsV0sLambdaCounter = sizeof(sV0sLambdaCounterLabel)/sizeof(sV0sLambdaCounterLabel[0]);
+    fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #{Lambda}/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
+    for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
+    fOutListV0s->Add(fhV0sCounterLambda);
 
     // QA histograms
     TString sQAindex[fiNumIndexQA] = {"Before", "After"};
@@ -382,6 +409,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // posting data (mandatory)
   PostData(1, fOutListEvents);
   PostData(2, fOutListCharged);
+  PostData(3, fOutListV0s);
 
   return;
 }
@@ -896,11 +924,13 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   if(!v0) return kFALSE;
 
   if(!IsV0Selected(v0)) return kFALSE; // not passing common selection
+  fhV0sCounterK0s->Fill("Input",1);
 
   // K0s specific criteria
 
 
   // passing all criteria
+  fhV0sCounterK0s->Fill("Selected",1);
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -913,11 +943,13 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   if(!v0) return kFALSE;
 
   if(!IsV0Selected(v0)) return kFALSE; // not passing common selection
+  fhV0sCounterLambda->Fill("Input",1);
 
   // (Anti-)Lambda specific criteria
 
 
   // passing all criteria
+  fhV0sCounterLambda->Fill("Selected",1);
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -928,38 +960,46 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
   // *************************************************************
   if(!v0) return kFALSE;
+  fhV0sCounterCommon->Fill("Input",1);
 
   const AliAODTrack* daughterPos = (AliAODTrack*) v0->GetDaughter(0);
   const AliAODTrack* daughterNeg = (AliAODTrack*) v0->GetDaughter(1);
 
   // daughter track check
   if(!daughterPos || !daughterNeg) return kFALSE;
+  fhV0sCounterCommon->Fill("Daughters OK",1);
 
   // daughters & mother charge checks
   if( (TMath::Abs(daughterPos->Charge()) != 1) || (TMath::Abs(daughterNeg->Charge()) != 1) ) return kFALSE;
   if(daughterPos->Charge() == daughterNeg->Charge()) return kFALSE;
   if(v0->Charge() != 0) return kFALSE;
+  fhV0sCounterCommon->Fill("Charge",1);
 
   // reconstruction method: online (on-the-fly) OR offline
   if(v0->GetOnFlyStatus() != fCutV0onFly) return kFALSE;
+  fhV0sCounterCommon->Fill("Reconstruction method",1);
 
   // TPC refit
   if(fCutV0refitTPC && ( !daughterPos->IsOn(AliAODTrack::kTPCrefit) || !daughterNeg->IsOn(AliAODTrack::kTPCrefit) ) ) return kFALSE;
+  fhV0sCounterCommon->Fill("TPC refit",1);
 
   // Kinks
   const AliAODVertex* prodVtxDaughterPos = (AliAODVertex*) daughterPos->GetProdVertex(); // production vertex of the positive daughter track
   const AliAODVertex* prodVtxDaughterNeg = (AliAODVertex*) daughterNeg->GetProdVertex(); // production vertex of the negative daughter track
   if(fCutV0rejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) ) return kFALSE;
+  fhV0sCounterCommon->Fill("Kinks",1);
 
   // Daughters DCA to PV
   const Float_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
   const Float_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
   if(fCutV0MinDCAtoPV > 0. && ( dDCAPosToPV < fCutV0MinDCAtoPV || dDCANegToPV < fCutV0MinDCAtoPV ) ) return kFALSE;
   if(fCutV0MaxDCAtoPV > 0. && ( dDCAPosToPV > fCutV0MaxDCAtoPV || dDCANegToPV > fCutV0MaxDCAtoPV ) ) return kFALSE;
+  fhV0sCounterCommon->Fill("DCA to PV",1);
 
   // Daughter DCA among themselves
   if(fCutV0MinDCADaughters > 0. && TMath::Abs(v0->DcaV0Daughters()) < fCutV0MinDCADaughters) return kFALSE;
   if(fCutV0MaxDCADaughters > 0. && TMath::Abs(v0->DcaV0Daughters()) > fCutV0MaxDCADaughters) return kFALSE;
+  fhV0sCounterCommon->Fill("Daughters DCA",1);
 
   // radius of decay vertex in transverse plane
   Double_t dSecVtxCoor[3] = {0};
@@ -967,6 +1007,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
   if( fCutV0MinDecayRadius > 0. && (dDecayRadius < fCutV0MinDecayRadius) ) return kFALSE;
   if( fCutV0MaxDecayRadius > 0. && (dDecayRadius > fCutV0MaxDecayRadius) ) return kFALSE;
+  fhV0sCounterCommon->Fill("Decay radius",1);
 
   // acceptance checks
   if(fCutV0DaughterEtaMax > 0. && ( (TMath::Abs(daughterNeg->Eta()) > fCutV0DaughterEtaMax) || (TMath::Abs(daughterPos->Eta()) > fCutV0DaughterEtaMax) ) ) return kFALSE;
@@ -976,9 +1017,22 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if(fCutV0MotherEtaMax > 0. && TMath::Abs(v0->Eta()) > fCutV0DaughterEtaMax ) return kFALSE;
   if(fCutV0MotherPtMin > 0. && v0->Pt() < fCutV0MotherPtMin) return kFALSE;
   if(fCutV0MotherPtMax > 0. && v0->Pt() > fCutV0MotherPtMax) return kFALSE;
+  fhV0sCounterCommon->Fill("Acceptance",1);
 
   // passing all common criteria
+  fhV0sCounterCommon->Fill("Passed",1);
   return kTRUE;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v0)
+{
+  // Filling various QA plots related to V0 candidate selection
+  // *************************************************************
+  if(!v0) return;
+
+
+
+  return;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::FilterPID()
