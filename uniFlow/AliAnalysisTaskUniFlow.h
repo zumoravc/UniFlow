@@ -57,10 +57,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void					SetV0sRejectKinks(Bool_t reject) { fCutV0rejectKinks = reject; }
         void					SetV0sDCAPVMin(Double_t dca) { fCutV0MinDCAtoPV = dca; }
         void					SetV0sDCAPVMax(Double_t dca) { fCutV0MaxDCAtoPV = dca; }
+        void					SetV0sDCADaughtersMin(Double_t dca) { fCutV0MinDCADaughters = dca; }
         void					SetV0sDCADaughtersMax(Double_t dca) { fCutV0MaxDCADaughters = dca; }
         void					SetV0sDecayRadiusMin(Double_t radius) { fCutV0MinDecayRadius = radius; }
         void					SetV0sDecayRadiusMax(Double_t radius) { fCutV0MaxDecayRadius = radius; }
         void					SetV0sDaughterPtMin(Double_t pt) { fCutV0DaughterPtMin = pt; }
+        void					SetV0sDaughterPtMax(Double_t pt) { fCutV0DaughterPtMax = pt; }
         void					SetV0sDaughterEtaMax(Double_t eta) { fCutV0DaughterEtaMax = eta; }
         void					SetV0sMotherEtaMax(Double_t eta) { fCutV0MotherEtaMax = eta; }
         void                    SetV0sMotherRapMax(Double_t rap) { fCutV0MotherRapMax = rap; }
@@ -129,7 +131,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
 
         //cuts & selection: events & tracks
-        Float_t                fPVtxCutZ;          // (cm) PV z cut
+        Float_t                 fPVtxCutZ;          // (cm) PV z cut
+
         UInt_t                  fCutChargedTrackFilterBit; // tracks filter bit
         UShort_t                fCutChargedNumTPCclsMin;  // () Minimal number of TPC clusters used for track reconstruction
         Float_t                 fCutChargedEtaMax;   // () Maximum pseudorapidity range
@@ -145,15 +148,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Double_t                fCutBayesPIDKaonMin; // minimal value of Bayes PID probability for Kaon
         Double_t                fCutBayesPIDProtonMin; // minimal value of Bayes PID probability for proton
         //cuts & selection: V0 reconstruction
-		    Bool_t 					fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
-    		Bool_t					fCutV0refitTPC; // Check TPC refit of V0 daughters ?
-    		Bool_t					fCutV0rejectKinks; // Reject Kink V0 daughter tracks ?
+		    Bool_t 					        fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
+    		Bool_t					        fCutV0refitTPC; // Check TPC refit of V0 daughters ?
+    		Bool_t					        fCutV0rejectKinks; // Reject Kink V0 daughter tracks ?
     		Double_t                fCutV0MinDCAtoPV;   // (cm) min DCA of V0 daughter to PV
-        Double_t				fCutV0MaxDCAtoPV;	// (cm) max DCA of V0 daughter to PV
-  		  Double_t				fCutV0MaxDCADaughters;	// (cm) max DCA of V0 daughters among themselves
+        Double_t				        fCutV0MaxDCAtoPV;	// (cm) max DCA of V0 daughter to PV
+  		  Double_t				        fCutV0MinDCADaughters;	// (cm) min DCA of V0 daughters among themselves
+  		  Double_t				        fCutV0MaxDCADaughters;	// (cm) max DCA of V0 daughters among themselves
         Double_t                fCutV0MinDecayRadius; // (cm) min distance of secondary vertex from z-axis in transverse plane
-  		  Double_t				fCutV0MaxDecayRadius; // (cm) max distance of secondary vertex from z-axis in transverse plane
-        Double_t                fCutV0DaughterPtMin; // (GeV/c) minimum pT of V0 daughters
+  		  Double_t				        fCutV0MaxDecayRadius; // (cm) max distance of secondary vertex from z-axis in transverse plane
+        Double_t                fCutV0DaughterPtMin; // (GeV/c) min pT of V0 daughters
+        Double_t                fCutV0DaughterPtMax; // (GeV/c) max pT of V0 daughters
         Double_t                fCutV0DaughterEtaMax; // () max value of Eta of V0 daughters
         Double_t                fCutV0MotherEtaMax; // () max eta value of V0 mother
         Double_t                fCutV0MotherRapMax; // () max rapidity value of V0 mother
@@ -163,9 +168,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Double_t                fCutV0MinCPALambda; // () min cosine of pointing angle of K0s candidate to PV
         Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
         Double_t                fCutV0NumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
-        Double_t				fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
+        Double_t				        fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
         Double_t                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) --- both MUST be on --- max number of TPC sigma for proton PID (Lambda candidates)
-        Double_t				fCutV0ProtonPIDPtMax;	// (GeV/c) --- both MUST be on --- max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
+        Double_t				        fCutV0ProtonPIDPtMax;	// (GeV/c) --- both MUST be on --- max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
 
         // output lists
         TList*      fOutListEvents; //! events list
@@ -175,6 +180,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection
         TH1D*           fhChargedCounter; //! counter following charged track selection
+        TH1D*           fhV0sCounter; //! counter following V0s selection
 
         static const Short_t   fiNumIndexQA = 2; // 0: before cuts // 1: after cuts
         // QA: events
@@ -197,6 +203,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH1D*           fhQAChargedTOFstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
         TH2D*           fhQAChargedTPCdEdx[fiNumIndexQA];    //! TPC PID information
         TH2D*           fhQAChargedTOFbeta[fiNumIndexQA];    //! TOF PID information
+        // QA: V0s candidates
 
         AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
         AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented

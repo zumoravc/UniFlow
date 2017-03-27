@@ -105,10 +105,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0MinCPAK0s(0.),
   fCutV0MinDCAtoPV(0.),
   fCutV0MaxDCAtoPV(0.),
+  fCutV0MinDCADaughters(0.),
   fCutV0MaxDCADaughters(0.),
   fCutV0MinDecayRadius(0.),
   fCutV0MaxDecayRadius(0.),
   fCutV0DaughterPtMin(0.),
+  fCutV0DaughterPtMax(0.),
   fCutV0DaughterEtaMax(0.),
   fCutV0MotherEtaMax(0.),
   fCutV0MotherRapMax(0.),
@@ -129,7 +131,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhEventCounter(0x0),
 
   // charged histogram
-  fhChargedCounter(0x0)
+  fhChargedCounter(0x0),
+
+  // V0s histogram
+  fhV0sCounter(0x0)
 
 {
   // default constructor, don't allocate memory here!
@@ -189,10 +194,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0MinCPAK0s(0.),
   fCutV0MinDCAtoPV(0.),
   fCutV0MaxDCAtoPV(0.),
+  fCutV0MinDCADaughters(0.),
   fCutV0MaxDCADaughters(0.),
   fCutV0MinDecayRadius(0.),
   fCutV0MaxDecayRadius(0.),
   fCutV0DaughterPtMin(0.),
+  fCutV0DaughterPtMax(0.),
   fCutV0DaughterEtaMax(0.),
   fCutV0MotherEtaMax(0.),
   fCutV0MotherRapMax(0.),
@@ -213,7 +220,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhEventCounter(0x0),
 
   // charged histogram
-  fhChargedCounter(0x0)
+  fhChargedCounter(0x0),
+
+  // V0s histogram
+  fhV0sCounter(0x0)
 
 {
   // QA histograms
@@ -862,12 +872,16 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
   {
     // the minimalistic dynamic allocation of the TClonesArray*
     v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
+    if(!v0) continue;
 
     if(IsV0aK0s(v0))
       new((*fArrK0s)[iNumK0sSelected++]) AliAODv0(*v0);
 
     if(IsV0aLambda(v0))
       new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
+
+    if(IsV0aK0s(v0) && IsV0aLambda(v0))
+      ::Warning("FilterV0s","V0 passing selection for both K0s and (A)Lambda");
   }
 
   return kTRUE;
@@ -913,10 +927,57 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   // common for both K0s and (Anti)-Lambdas
   // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
   // *************************************************************
-
   if(!v0) return kFALSE;
 
+  const AliAODTrack* daughterPos = (AliAODTrack*) v0->GetDaughter(0);
+  const AliAODTrack* daughterNeg = (AliAODTrack*) v0->GetDaughter(1);
 
+  // daughter track check
+  if(!daughterPos || !daughterNeg) return kFALSE;
+
+  // daughters & mother charge checks
+  if( (TMath::Abs(daughterPos->Charge()) != 1) || (TMath::Abs(daughterNeg->Charge()) != 1) ) return kFALSE;
+  if(daughterPos->Charge() == daughterNeg->Charge()) return kFALSE;
+  if(v0->Charge() != 0) return kFALSE;
+
+  // reconstruction method: online (on-the-fly) OR offline
+  if(v0->GetOnFlyStatus() != fCutV0onFly) return kFALSE;
+
+  // TPC refit
+  if(fCutV0refitTPC && ( !daughterPos->IsOn(AliAODTrack::kTPCrefit) || !daughterNeg->IsOn(AliAODTrack::kTPCrefit) ) ) return kFALSE;
+
+  // Kinks
+  const AliAODVertex* prodVtxDaughterPos = (AliAODVertex*) daughterPos->GetProdVertex(); // production vertex of the positive daughter track
+  const AliAODVertex* prodVtxDaughterNeg = (AliAODVertex*) daughterNeg->GetProdVertex(); // production vertex of the negative daughter track
+  if(fCutV0rejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) ) return kFALSE;
+
+  // Daughters DCA to PV
+  const Float_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
+  const Float_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
+  if(fCutV0MinDCAtoPV > 0. && ( dDCAPosToPV < fCutV0MinDCAtoPV || dDCANegToPV < fCutV0MinDCAtoPV ) ) return kFALSE;
+  if(fCutV0MaxDCAtoPV > 0. && ( dDCAPosToPV > fCutV0MaxDCAtoPV || dDCANegToPV > fCutV0MaxDCAtoPV ) ) return kFALSE;
+
+  // Daughter DCA among themselves
+  if(fCutV0MinDCADaughters > 0. && TMath::Abs(v0->DcaV0Daughters()) < fCutV0MinDCADaughters) return kFALSE;
+  if(fCutV0MaxDCADaughters > 0. && TMath::Abs(v0->DcaV0Daughters()) > fCutV0MaxDCADaughters) return kFALSE;
+
+  // radius of decay vertex in transverse plane
+  Double_t dSecVtxCoor[3] = {0};
+  v0->GetSecondaryVtx(dSecVtxCoor);
+  Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
+  if( fCutV0MinDecayRadius > 0. && (dDecayRadius < fCutV0MinDecayRadius) ) return kFALSE;
+  if( fCutV0MaxDecayRadius > 0. && (dDecayRadius > fCutV0MaxDecayRadius) ) return kFALSE;
+
+  // acceptance checks
+  if(fCutV0DaughterEtaMax > 0. && ( (TMath::Abs(daughterNeg->Eta()) > fCutV0DaughterEtaMax) || (TMath::Abs(daughterPos->Eta()) > fCutV0DaughterEtaMax) ) ) return kFALSE;
+  if(fCutV0DaughterPtMin > 0. && (daughterPos->Pt() < fCutV0DaughterPtMin  || daughterNeg->Pt() < fCutV0DaughterPtMin) ) return kFALSE;
+  if(fCutV0DaughterPtMax > 0. && (daughterPos->Pt() > fCutV0DaughterPtMax  || daughterNeg->Pt() > fCutV0DaughterPtMax) ) return kFALSE;
+
+  if(fCutV0MotherEtaMax > 0. && TMath::Abs(v0->Eta()) > fCutV0DaughterEtaMax ) return kFALSE;
+  if(fCutV0MotherPtMin > 0. && v0->Pt() < fCutV0MotherPtMin) return kFALSE;
+  if(fCutV0MotherPtMax > 0. && v0->Pt() > fCutV0MotherPtMax) return kFALSE;
+
+  // passing all common criteria
   return kTRUE;
 }
 //_____________________________________________________________________________
