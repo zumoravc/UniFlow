@@ -170,6 +170,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
         Double_t                fCutV0NumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
         Double_t				        fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
+        Double_t                fCutV0K0sInvMassMin; // [0.4] (GeV/c2) min inv. mass window for selected K0s candidates
+        Double_t                fCutV0K0sInvMassMax; // [0.6] (GeV/c2) max inv. mass window for selected K0s candidates
+        Double_t                fCutV0LambdaInvMassMin; // [1.08] (GeV/c2) min inv. mass window for selected (Anti)Lambda candidates
+        Double_t                fCutV0LambdaInvMassMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
         Double_t                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) --- both MUST be on --- max number of TPC sigma for proton PID (Lambda candidates)
         Double_t				        fCutV0ProtonPIDPtMax;	// (GeV/c) --- both MUST be on --- max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
 

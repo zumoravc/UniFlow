@@ -117,6 +117,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0MotherPtMin(0.),
   fCutV0MotherPtMax(0.),
   fCutV0NumTauK0sMax(0.),
+  fCutV0K0sInvMassMin(0.4),
+  fCutV0K0sInvMassMax(0.6),
+  fCutV0LambdaInvMassMin(1.08),
+  fCutV0LambdaInvMassMax(1.16),
   fCutV0K0sArmenterosAlphaMin(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
@@ -209,6 +213,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0MotherPtMax(0.),
   fCutV0NumTauK0sMax(0.),
   fCutV0K0sArmenterosAlphaMin(0.),
+  fCutV0K0sInvMassMin(0.4),
+  fCutV0K0sInvMassMax(0.6),
+  fCutV0LambdaInvMassMin(1.08),
+  fCutV0LambdaInvMassMax(1.16),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
@@ -328,13 +336,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fOutListCharged->Add(fhChargedCounter);
 
     // V0 candidates histograms
-    TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","DCA to PV","Daughters DCA","Decay radius","Acceptance","Passed"};
+    TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","DCA to PV","Daughters DCA","Decay radius","Acceptance","Passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
     const Short_t iNBinsV0sCounter = sizeof(sV0sCounterLabel)/sizeof(sV0sCounterLabel[0]);
     fhV0sCounterCommon = new TH1D("fhV0sCounterCommon","V^{0}: Counter",iNBinsV0sCounter,0,iNBinsV0sCounter);
     for(Short_t i(0); i < iNBinsV0sCounter; i++) fhV0sCounterCommon->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
     fOutListV0s->Add(fhV0sCounterCommon);
 
-    TString sV0sK0sCounterLabel[] = {"Input","Selected"};
+    TString sV0sK0sCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Selected"};
     const Short_t iNBinsV0sK0sCounter = sizeof(sV0sK0sCounterLabel)/sizeof(sV0sK0sCounterLabel[0]);
     fhV0sCounterK0s = new TH1D("fhV0sCounterK0s","V^{0}: K^{0}_{S} Counter",iNBinsV0sK0sCounter,0,iNBinsV0sK0sCounter);
     for(Short_t i(0); i < iNBinsV0sK0sCounter; i++) fhV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sK0sCounterLabel[i].Data() );
@@ -913,17 +921,19 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
       if(IsV0aK0s(v0))
       {
         bIsK0s = kTRUE;
+        fhV0sCounterCommon->Fill("K^{0}_{S}",1);
         new((*fArrK0s)[iNumK0sSelected++]) AliAODv0(*v0);
       }
 
       if(IsV0aLambda(v0))
       {
         bIsLambda = kTRUE;
+        fhV0sCounterCommon->Fill("#Lambda/#bar{#Lambda}",1);
         new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
       }
 
       if(bIsK0s && bIsLambda)
-        ::Warning("FilterV0s","V0 passing selection for both K0s and (A)Lambda");
+        fhV0sCounterCommon->Fill("K^{0}_{S} && #Lambda/#bar{#Lambda}",1);
     }
   }
 
@@ -939,8 +949,52 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   if(!v0) return kFALSE;
   fhV0sCounterK0s->Fill("Input",1);
 
-  // K0s specific criteria
+  // cosine of pointing angle (CPA)
+  if(fCutV0MinCPAK0s > 0.)
+  {
+    AliAODVertex* primVtx = fEventAOD->GetPrimaryVertex();
+    Double_t dCPA = v0->CosPointingAngle(primVtx);
+    if( dCPA < fCutV0MinCPAK0s ) return kFALSE;
+  }
+  fhV0sCounterK0s->Fill("CPA",1);
 
+  // proper life-time
+  if( fCutV0NumTauK0sMax > 0. )
+  {
+    AliAODVertex* primVtx2 = fEventAOD->GetPrimaryVertex();
+    Double_t dPrimVtxCoor[3] = {0}; // primary vertex position {x,y,z}
+    Double_t dSecVtxCoor[3] = {0}; // secondary vertex position {x,y,z}
+    Double_t dDecayCoor[3] = {0}; // decay vector coor {xyz}
+    primVtx2->GetXYZ(dPrimVtxCoor);
+    v0->GetSecondaryVtx(dSecVtxCoor);
+
+    for(Int_t i(0); i < 2; i++)
+      dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
+
+    Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
+
+    Double_t dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    if( dPropLife > (fCutV0NumTauK0sMax * 2.68) ) return kFALSE;
+  }
+  fhV0sCounterK0s->Fill("c#tau",1);
+
+  // Armenteros-Podolaski plot
+  if(fCutV0K0sArmenterosAlphaMin > 0.)
+  {
+    Double_t dPtArm = v0->PtArmV0();
+    Double_t dAlpha = v0->AlphaV0();
+    if(dPtArm < (fCutV0K0sArmenterosAlphaMin * TMath::Abs(dAlpha))) return kFALSE;
+  }
+  fhV0sCounterK0s->Fill("Armenteros-Podolanski",1);
+
+  // rapidity selection
+  if(fCutV0MotherRapMax > 0. && ( TMath::Abs(v0->RapK0Short()) > fCutV0MotherRapMax ) ) return kFALSE;
+  fhV0sCounterK0s->Fill("#it{y}",1);
+
+  // inv. mass window
+  Double_t dMass = v0->MassK0Short();
+  if( dMass < fCutV0K0sInvMassMin || dMass > fCutV0K0sInvMassMax ) return kFALSE;
+  fhV0sCounterK0s->Fill("InvMass",1);
 
   // passing all criteria
   fhV0sCounterK0s->Fill("Selected",1);
