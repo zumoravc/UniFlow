@@ -122,6 +122,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0LambdaInvMassMin(1.08),
   fCutV0LambdaInvMassMax(1.16),
   fCutV0K0sArmenterosAlphaMin(0.),
+  fCutV0LambdaArmenterosAlphaMax(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
@@ -217,6 +218,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0K0sInvMassMax(0.6),
   fCutV0LambdaInvMassMin(1.08),
   fCutV0LambdaInvMassMax(1.16),
+  fCutV0LambdaArmenterosAlphaMax(0.),
   fCutV0NumTauLambdaMax(0.),
   fCutV0ProtonNumSigmaMax(0),
   fCutV0ProtonPIDPtMax(0.),
@@ -348,7 +350,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     for(Short_t i(0); i < iNBinsV0sK0sCounter; i++) fhV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sK0sCounterLabel[i].Data() );
     fOutListV0s->Add(fhV0sCounterK0s);
 
-    TString sV0sLambdaCounterLabel[] = {"Input","Selected"};
+    TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Proton PID","Selected"};
     const Short_t iNBinsV0sLambdaCounter = sizeof(sV0sLambdaCounterLabel)/sizeof(sV0sLambdaCounterLabel[0]);
     fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #Lambda/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
     for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
@@ -972,7 +974,6 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
       dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
 
     Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
-
     Double_t dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     if( dPropLife > (fCutV0NumTauK0sMax * 2.68) ) return kFALSE;
   }
@@ -1010,8 +1011,72 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   if(!v0) return kFALSE;
   fhV0sCounterLambda->Fill("Input",1);
 
-  // (Anti-)Lambda specific criteria
+  // cosine of pointing angle (CPA)
+  if( fCutV0MinCPALambda > 0. )
+  {
+    AliAODVertex* primVtx = fEventAOD->GetPrimaryVertex();
+    Double_t dCPA = v0->CosPointingAngle(primVtx);
+    if( dCPA < fCutV0MinCPALambda ) return kFALSE;
+  }
+  fhV0sCounterLambda->Fill("CPA",1);
 
+  // proper life-time
+  if( fCutV0NumTauLambdaMax > 0. )
+  {
+    Double_t dPrimVtxCoor[3] = {0}; // primary vertex position {x,y,z}
+    Double_t dSecVtxCoor[3] = {0}; // secondary vertex position {x,y,z}
+    Double_t dDecayCoor[3] = {0}; // decay vector coor {xyz}
+    AliAODVertex* primVtx2 = fEventAOD->GetPrimaryVertex();
+    primVtx2->GetXYZ(dPrimVtxCoor);
+    v0->GetSecondaryVtx(dSecVtxCoor);
+
+    for(Int_t i(0); i < 2; i++)
+      dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
+
+    Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
+    Double_t dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    if( dPropLife > (fCutV0NumTauLambdaMax * 7.89) ) return kFALSE;
+  }
+  fhV0sCounterLambda->Fill("c#tau",1);
+
+  // Armenteros-Podolaski plot
+  if(fCutV0LambdaArmenterosAlphaMax > 0.)
+  {
+    Double_t dPtArm = v0->PtArmV0();
+    Double_t dAlpha = v0->AlphaV0();
+    if(dPtArm > (fCutV0LambdaArmenterosAlphaMax * TMath::Abs(dAlpha))) return kFALSE;
+  }
+  fhV0sCounterLambda->Fill("Armenteros-Podolanski",1);
+
+  // rapidity selection
+  if(fCutV0MotherRapMax > 0. && ( TMath::Abs(v0->RapLambda()) > fCutV0MotherRapMax) ) return kFALSE;
+  fhV0sCounterLambda->Fill("#it{y}",1);
+
+  // inv. mass window
+  Double_t dMassLambda = v0->MassLambda();
+  Double_t dMassALambda = v0->MassAntiLambda();
+  if( (dMassLambda < fCutV0LambdaInvMassMin || dMassLambda > fCutV0LambdaInvMassMax) && (dMassALambda < fCutV0LambdaInvMassMin || dMassALambda > fCutV0LambdaInvMassMax) )
+    return kFALSE;
+  fhV0sCounterLambda->Fill("InvMass",1);
+
+  // proton PID of Lambda Candidates
+  if( (fCutV0ProtonNumSigmaMax > 0.) && (fCutV0ProtonPIDPtMax > 0.) && fPIDResponse)
+  {
+    const AliAODTrack* trackDaughterPos = (AliAODTrack*) v0->GetDaughter(0);
+    const AliAODTrack* trackDaughterNeg = (AliAODTrack*) v0->GetDaughter(1);
+
+    Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
+    Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
+
+    // positive daughter is not a proton (within TPC sigmas)
+    if( (trackDaughterPos->Pt() < fCutV0ProtonPIDPtMax) && (dSigmaProtPos > fCutV0ProtonNumSigmaMax) )
+      return kFALSE;
+
+    // negative daughter is not a proton (within TPC sigmas)
+    if( (trackDaughterNeg->Pt() < fCutV0ProtonPIDPtMax) && (dSigmaProtNeg > fCutV0ProtonNumSigmaMax) )
+      return kFALSE;
+  }
+  fhV0sCounterLambda->Fill("Proton PID",1);
 
   // passing all criteria
   fhV0sCounterLambda->Fill("Selected",1);

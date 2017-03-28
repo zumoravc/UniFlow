@@ -134,13 +134,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         //cuts & selection: events & tracks
         Float_t                 fPVtxCutZ;          // (cm) PV z cut
 
-        UInt_t                  fCutChargedTrackFilterBit; // tracks filter bit
-        UShort_t                fCutChargedNumTPCclsMin;  // () Minimal number of TPC clusters used for track reconstruction
-        Float_t                 fCutChargedEtaMax;   // () Maximum pseudorapidity range
-        Float_t                 fCutChargedPtMax;        // (GeV/c) Maximal track pT
-        Float_t                 fCutChargedPtMin;        // (GeV/c) Minimal track pT
-        Float_t                 fCutChargedDCAzMax; //  (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
-        Float_t                 fCutChargedDCAxyMax; //  (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
+        UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
+        UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
+        Float_t                 fCutChargedEtaMax; // (-) Maximum pseudorapidity range
+        Float_t                 fCutChargedPtMax; // (GeV/c) Maximal track pT
+        Float_t                 fCutChargedPtMin; // (GeV/c) Minimal track pT
+        Float_t                 fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
+        Float_t                 fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
 
         Double_t                fCutPionNumSigmaMax;
         Double_t                fCutKaonNumSigmaMax;
@@ -160,22 +160,24 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
   		  Double_t				        fCutV0MaxDecayRadius; // (cm) max distance of secondary vertex from z-axis in transverse plane
         Double_t                fCutV0DaughterPtMin; // (GeV/c) min pT of V0 daughters
         Double_t                fCutV0DaughterPtMax; // (GeV/c) max pT of V0 daughters
-        Double_t                fCutV0DaughterEtaMax; // () max value of Eta of V0 daughters
-        Double_t                fCutV0MotherEtaMax; // () max eta value of V0 mother
-        Double_t                fCutV0MotherRapMax; // () max rapidity value of V0 mother
-        Double_t                fCutV0MotherPtMin; // () min transverse momentum value of V0 mother
-        Double_t                fCutV0MotherPtMax; // () max transverse momentum value of V0 mother
-        Double_t                fCutV0MinCPAK0s;    // () min cosine of pointing angle of K0s candidate to PV
-        Double_t                fCutV0MinCPALambda; // () min cosine of pointing angle of K0s candidate to PV
+        Double_t                fCutV0DaughterEtaMax; // (-) max value of Eta of V0 daughters
+        Double_t                fCutV0MotherEtaMax; // (-) max eta value of V0 mother
+        Double_t                fCutV0MotherRapMax; // (-) max rapidity value of V0 mother
+        Double_t                fCutV0MotherPtMin; // (GeV/c) min transverse momentum value of V0 mother
+        Double_t                fCutV0MotherPtMax; // (GeV/c) max transverse momentum value of V0 mother
+        Double_t                fCutV0MinCPAK0s;    // (-) min cosine of pointing angle of K0s candidate to PV
+        Double_t                fCutV0MinCPALambda; // (-) min cosine of pointing angle of K0s candidate to PV
         Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
         Double_t                fCutV0NumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
-        Double_t				        fCutV0K0sArmenterosAlphaMin; // (alpha) max Armenteros alpha for K0s
+        Double_t				        fCutV0K0sArmenterosAlphaMin; // (alpha) min Armenteros alpha for K0s
         Double_t                fCutV0K0sInvMassMin; // [0.4] (GeV/c2) min inv. mass window for selected K0s candidates
         Double_t                fCutV0K0sInvMassMax; // [0.6] (GeV/c2) max inv. mass window for selected K0s candidates
         Double_t                fCutV0LambdaInvMassMin; // [1.08] (GeV/c2) min inv. mass window for selected (Anti)Lambda candidates
         Double_t                fCutV0LambdaInvMassMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
-        Double_t                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) --- both MUST be on --- max number of TPC sigma for proton PID (Lambda candidates)
-        Double_t				        fCutV0ProtonPIDPtMax;	// (GeV/c) --- both MUST be on --- max pT of proton for PID (Lambda candidates) - only protons with smaller will be checked for num sigma TPC
+        Double_t                fCutV0LambdaArmenterosAlphaMax; // (alpha) max Armenteros alpha for (Anti)Lambda
+        Double_t                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
+        Double_t				        fCutV0ProtonPIDPtMin;	// (GeV/c) min pT of proton for PID (Lambda candidates) - only protons within pT range will be checked for num sigma TPC
+        Double_t				        fCutV0ProtonPIDPtMax;	// (GeV/c) max pT of proton for PID (Lambda candidates) - only protons within pT range will be checked for num sigma TPC
 
         // output lists
         TList*      fOutListEvents; //! events list
@@ -212,6 +214,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH2D*           fhQAChargedTPCdEdx[fiNumIndexQA];    //! TPC PID information
         TH2D*           fhQAChargedTOFbeta[fiNumIndexQA];    //! TOF PID information
         // QA: V0s candidates
+        
 
         AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
         AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
