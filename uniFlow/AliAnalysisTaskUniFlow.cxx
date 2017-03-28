@@ -140,7 +140,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhChargedCounter(0x0),
 
   // V0s histogram
-  fhV0sCounterCommon(0x0),
+  fhV0sCounter(0x0),
   fhV0sCounterK0s(0x0),
   fhV0sCounterLambda(0x0)
 {
@@ -236,7 +236,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhChargedCounter(0x0),
 
   // V0s histogram
-  fhV0sCounterCommon(0x0),
+  fhV0sCounter(0x0),
   fhV0sCounterK0s(0x0),
   fhV0sCounterLambda(0x0)
 {
@@ -264,6 +264,32 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fhQAChargedTOFstatus[iQA] = 0x0;
     fhQAChargedTPCdEdx[iQA] = 0x0;
     fhQAChargedTOFbeta[iQA] = 0x0;
+
+    // V0s
+  	fhQAV0sRecoMethod[iQA] = 0x0;
+		fhQAV0sTPCRefit[iQA] = 0x0;
+		fhQAV0sKinks[iQA] = 0x0;
+		fhQAV0sDCAtoPV[iQA] = 0x0;
+		fhQAV0sDCADaughters[iQA] = 0x0;
+		fhQAV0sDecayRadius[iQA] = 0x0;
+    fhQAV0sDaughterPt[iQA] = 0x0;
+		fhQAV0sDaughterPhi[iQA] = 0x0;
+		fhQAV0sDaughterEta[iQA] = 0x0;
+    fhQAV0sDaughterTPCdEdxP[iQA] = 0x0;
+    fhQAV0sMotherPt[iQA] = 0x0;
+		fhQAV0sMotherPhi[iQA] = 0x0;
+		fhQAV0sMotherEta[iQA] = 0x0;
+		fhQAV0sMotherRapK0s[iQA] = 0x0;
+		fhQAV0sMotherRapLambda[iQA] = 0x0;
+    fhQAV0sInvMassK0s[iQA] = 0x0;
+    fhQAV0sInvMassLambda[iQA] = 0x0;
+		fhQAV0sCPAK0s[iQA] = 0x0;
+		fhQAV0sCPALambda[iQA] = 0x0;
+		fhQAV0sNumTauK0s[iQA] = 0x0;
+		fhQAV0sNumTauLambda[iQA] = 0x0;
+		fhQAV0sArmenterosK0s[iQA] = 0x0;
+		fhQAV0sArmenterosLambda[iQA] = 0x0;
+		fhQAV0sProtonNumSigmaPtLambda[iQA] = 0x0;
   }
 
   // defining input/output
@@ -340,9 +366,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // V0 candidates histograms
     TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","DCA to PV","Daughters DCA","Decay radius","Acceptance","Passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
     const Short_t iNBinsV0sCounter = sizeof(sV0sCounterLabel)/sizeof(sV0sCounterLabel[0]);
-    fhV0sCounterCommon = new TH1D("fhV0sCounterCommon","V^{0}: Counter",iNBinsV0sCounter,0,iNBinsV0sCounter);
-    for(Short_t i(0); i < iNBinsV0sCounter; i++) fhV0sCounterCommon->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
-    fOutListV0s->Add(fhV0sCounterCommon);
+    fhV0sCounter = new TH1D("fhV0sCounter","V^{0}: Counter",iNBinsV0sCounter,0,iNBinsV0sCounter);
+    for(Short_t i(0); i < iNBinsV0sCounter; i++) fhV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
+    fOutListV0s->Add(fhV0sCounter);
 
     TString sV0sK0sCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Selected"};
     const Short_t iNBinsV0sK0sCounter = sizeof(sV0sK0sCounterLabel)/sizeof(sV0sK0sCounterLabel[0]);
@@ -391,7 +417,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       const Short_t iNFilterMapBinBins = 32;
       fhQAChargedFilterBit[iQA] = new TH1D(Form("fhQAChargedFilterBit_%s",sQAindex[iQA].Data()), "QA Charged: Filter bit",iNFilterMapBinBins,0,iNFilterMapBinBins);
       fOutListCharged->Add(fhQAChargedFilterBit[iQA]);
-      for(Int_t j = 0; j < iNFilterMapBinBins; j++) fhQAChargedFilterBit[iQA]->GetXaxis()->SetBinLabel(j+1, Form("%g",TMath::Power(2,j)));
+      for(Int_t j = 0x0; j < iNFilterMapBinBins; j++) fhQAChargedFilterBit[iQA]->GetXaxis()->SetBinLabel(j+1, Form("%g",TMath::Power(2,j)));
       fOutListCharged->Add(fhQAChargedFilterBit[iQA]);
 
       fhQAChargedNumTPCcls[iQA] = new TH1D(Form("fhQAChargedNumTPCcls_%s",sQAindex[iQA].Data()),"QA Charged: Track number of TPC clusters; #it{N}^{TPC clusters}", 160,0,160);
@@ -409,11 +435,67 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fhQAChargedTOFbeta[iQA] = new TH2D(Form("fhQAChargedTOFbeta_%s",sQAindex[iQA].Data()),"QA Charged: TOF #beta information; #it{p} (GeV/#it{c}); TOF #beta", 50,0,10, 80,-0.1,1.5);
       fOutListCharged->Add(fhQAChargedTOFbeta[iQA]);
 
-      for(Int_t j = 0; j < iNBinsPIDstatus; j++)
+      for(Int_t j = 0x0; j < iNBinsPIDstatus; j++)
       {
         fhQAChargedTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
         fhQAChargedTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
       }
+
+      // V0s QA
+      fhQAV0sRecoMethod[iQA] = new TH1D(Form("fhQAV0sRecoMethod_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Reconstruction method", 2,-0.5,1.5);
+      fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(1, "offline");
+      fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
+      fOutListV0s->Add(fhQAV0sRecoMethod[iQA]);
+      fhQAV0sTPCRefit[iQA] = new TH1D(Form("fhQAV0sTPCRefit_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: TPC refit", 2,-0.5,1.5);
+      fhQAV0sTPCRefit[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODTrack::kTPCrefit");
+      fhQAV0sTPCRefit[iQA]->GetXaxis()->SetBinLabel(2, "AliAODTrack::kTPCrefit");
+      fOutListV0s->Add(fhQAV0sTPCRefit[iQA]);
+      fhQAV0sKinks[iQA] = new TH1D(Form("fhQAV0sKinks_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Kinks", 2,-0.5,1.5);
+      fhQAV0sKinks[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
+      fhQAV0sKinks[iQA]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
+      fOutListV0s->Add(fhQAV0sKinks[iQA]);
+      fhQAV0sDCAtoPV[iQA] = new TH1D(Form("fhQAV0sDCAtoPV_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter DCA to PV; daughter DCA^{PV} (cm)", 100,0.,10.);
+      fOutListV0s->Add(fhQAV0sDCAtoPV[iQA]);
+      fhQAV0sDCADaughters[iQA] = new TH1D(Form("fhQAV0sDCADaughters_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: DCA among daughters; DCA^{daughters} (cm)", 100,0.,10.);
+      fOutListV0s->Add(fhQAV0sDCADaughters[iQA]);
+      fhQAV0sDecayRadius[iQA] = new TH1D(Form("fhQAV0sDecayRadius_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Decay radius; #it{r_{xy}}^{decay} (cm)", 200,0.,500.);
+      fOutListV0s->Add(fhQAV0sDecayRadius[iQA]);
+      fhQAV0sDaughterPt[iQA] = new TH1D(Form("fhQAV0sDaughterPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{p}_{T}; #it{p}_{T}^{daughter} (GeV/#it{c})", 100,0.,10.);
+      fOutListV0s->Add(fhQAV0sDaughterPt[iQA]);
+      fhQAV0sDaughterPhi[iQA] = new TH1D(Form("fhQAV0sDaughterPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#varphi}; #it{#varphi}^{daughter} (GeV/#it{c})", 100,0.,TMath::TwoPi());
+      fOutListV0s->Add(fhQAV0sDaughterPhi[iQA]);
+      fhQAV0sDaughterTPCdEdxP[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxP_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,10,200,0.,200.);
+      fOutListV0s->Add(fhQAV0sDaughterTPCdEdxP[iQA]);
+      fhQAV0sDaughterEta[iQA] = new TH1D(Form("fhQAV0sDaughterEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#eta}; #it{#eta}^{daugter}", 401,-2,2);
+      fOutListV0s->Add(fhQAV0sDaughterEta[iQA]);
+      fhQAV0sMotherPt[iQA] = new TH1D(Form("fhQAV0sMotherPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{p}_{T}; #it{p}_{T}^{V0} (GeV/#it{c})", 100,0.,10.);
+      fOutListV0s->Add(fhQAV0sMotherPt[iQA]);
+      fhQAV0sMotherPhi[iQA] = new TH1D(Form("fhQAV0sMotherPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#varphi}; #it{#varphi}^{V0} (GeV/#it{c})", 100,0.,TMath::TwoPi());
+      fOutListV0s->Add(fhQAV0sMotherPhi[iQA]);
+      fhQAV0sMotherEta[iQA] = new TH1D(Form("fhQAV0sMotherEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#eta}; #it{#eta}^{V0}", 401,-2,2);
+      fOutListV0s->Add(fhQAV0sMotherEta[iQA]);
+      fhQAV0sMotherRapK0s[iQA] = new TH1D(Form("fhQAV0sMotherRapK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo); #it{y}^{V0,K0s}", 400,-2,2);
+      fOutListV0s->Add(fhQAV0sMotherRapK0s[iQA]);
+      fhQAV0sMotherRapLambda[iQA] = new TH1D(Form("fhQAV0sMotherRapLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo); #it{y}^{V0,#Lambda}",400,-2,2);
+      fOutListV0s->Add(fhQAV0sMotherRapLambda[iQA]);
+      fhQAV0sInvMassK0s[iQA] = new TH1D(Form("fhQAV0sInvMassK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: InvMass; #it{m}_{inv} (GeV/#it{c}^{2});", 200,fCutV0K0sInvMassMin,fCutV0K0sInvMassMax);
+      fOutListV0s->Add(fhQAV0sInvMassK0s[iQA]);
+      fhQAV0sInvMassLambda[iQA] = new TH1D(Form("fhQAV0sInvMassLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: InvMass; #it{m}_{inv} (GeV/#it{c}^{2});", 80,fCutV0LambdaInvMassMin,fCutV0LambdaInvMassMax);
+      fOutListV0s->Add(fhQAV0sInvMassLambda[iQA]);
+      fhQAV0sCPAK0s[iQA] = new TH1D(Form("fhQAV0sCPAK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: CPA; CPA^{K0s}", 100,0.9,1.);
+      fOutListV0s->Add(fhQAV0sCPAK0s[iQA]);
+      fhQAV0sCPALambda[iQA] = new TH1D(Form("fhQAV0sCPALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA; CPA^{#Lambda}", 100, 0.9,1.);
+      fOutListV0s->Add(fhQAV0sCPALambda[iQA]);
+      fhQAV0sNumTauK0s[iQA] = new TH1D(Form("fhQAV0sNumTauK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}:  K^{0}_{S}: Number of #it{c#tau}; #it{c#tau}^{K0s} (cm)", 100, 0.,10.);
+      fOutListV0s->Add(fhQAV0sNumTauK0s[iQA]);
+      fhQAV0sNumTauLambda[iQA] = new TH1D(Form("fhQAV0sNumTauLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #it{c#tau}; #it{c#tau}^{#Lambda} (cm)", 300, 0.,30);
+      fOutListV0s->Add(fhQAV0sNumTauLambda[iQA]);
+      fhQAV0sArmenterosK0s[iQA] = new TH2D(Form("fhQAV0sArmenterosK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}:  K^{0}_{S}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
+      fOutListV0s->Add(fhQAV0sArmenterosK0s[iQA]);
+      fhQAV0sArmenterosLambda[iQA] = new TH2D(Form("fhQAV0sArmenterosLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
+      fOutListV0s->Add(fhQAV0sArmenterosLambda[iQA]);
+      fhQAV0sProtonNumSigmaPtLambda[iQA] = new TH2D(Form("fhQAV0sProtonNumSigmaPtLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: (anti-)proton PID; #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 100,0.,10,100,-10.,10.);
+      fOutListV0s->Add(fhQAV0sProtonNumSigmaPtLambda[iQA]);
     }
 
   // posting data (mandatory)
@@ -750,7 +832,7 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::FilterCharged()
 {
-  Short_t iNumTrackSelected = 0; // selected charged track counter
+  Short_t iNumTrackSelected = 0x0; // selected charged track counter
 
   const Short_t iNumTracks = fEventAOD->GetNumberOfTracks();
   if(iNumTracks < 1) return kFALSE;
@@ -898,8 +980,8 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
   // returns kFALSE if any complications occurs
   // *************************************************************
 
-  Short_t iNumLambdaSelected = 0;
-  Short_t iNumK0sSelected = 0;
+  Short_t iNumLambdaSelected = 0x0;
+  Short_t iNumK0sSelected = 0x0;
 
   const Short_t iNumV0s = fEventAOD->GetNumberOfV0s();
   if(iNumV0s < 1)
@@ -915,27 +997,27 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
     v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
     if(!v0) continue;
 
-    bIsK0s = kFALSE;
-    bIsLambda = kFALSE;
-
+    FillQAV0s(0,v0); // QA BEFORE selection
     if(IsV0Selected(v0))
     {
-      if(IsV0aK0s(v0))
+      bIsK0s = IsV0aK0s(v0);
+      bIsLambda = IsV0aLambda(v0);
+      FillQAV0s(1,v0,bIsK0s,bIsLambda); // QA AFTER selection
+
+      if(bIsK0s)
       {
-        bIsK0s = kTRUE;
-        fhV0sCounterCommon->Fill("K^{0}_{S}",1);
         new((*fArrK0s)[iNumK0sSelected++]) AliAODv0(*v0);
+        fhV0sCounter->Fill("K^{0}_{S}",1);
       }
 
-      if(IsV0aLambda(v0))
+      if(bIsLambda)
       {
-        bIsLambda = kTRUE;
-        fhV0sCounterCommon->Fill("#Lambda/#bar{#Lambda}",1);
         new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
+        fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
       }
 
       if(bIsK0s && bIsLambda)
-        fhV0sCounterCommon->Fill("K^{0}_{S} && #Lambda/#bar{#Lambda}",1);
+        fhV0sCounter->Fill("K^{0}_{S} && #Lambda/#bar{#Lambda}",1);
     }
   }
 
@@ -1090,46 +1172,46 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   // return kTRUE if a candidate fulfill all requirements, kFALSE otherwise
   // *************************************************************
   if(!v0) return kFALSE;
-  fhV0sCounterCommon->Fill("Input",1);
+  fhV0sCounter->Fill("Input",1);
 
   const AliAODTrack* daughterPos = (AliAODTrack*) v0->GetDaughter(0);
   const AliAODTrack* daughterNeg = (AliAODTrack*) v0->GetDaughter(1);
 
   // daughter track check
   if(!daughterPos || !daughterNeg) return kFALSE;
-  fhV0sCounterCommon->Fill("Daughters OK",1);
+  fhV0sCounter->Fill("Daughters OK",1);
 
   // daughters & mother charge checks
   if( (TMath::Abs(daughterPos->Charge()) != 1) || (TMath::Abs(daughterNeg->Charge()) != 1) ) return kFALSE;
   if(daughterPos->Charge() == daughterNeg->Charge()) return kFALSE;
   if(v0->Charge() != 0) return kFALSE;
-  fhV0sCounterCommon->Fill("Charge",1);
+  fhV0sCounter->Fill("Charge",1);
 
   // reconstruction method: online (on-the-fly) OR offline
   if(v0->GetOnFlyStatus() != fCutV0onFly) return kFALSE;
-  fhV0sCounterCommon->Fill("Reconstruction method",1);
+  fhV0sCounter->Fill("Reconstruction method",1);
 
   // TPC refit
   if(fCutV0refitTPC && ( !daughterPos->IsOn(AliAODTrack::kTPCrefit) || !daughterNeg->IsOn(AliAODTrack::kTPCrefit) ) ) return kFALSE;
-  fhV0sCounterCommon->Fill("TPC refit",1);
+  fhV0sCounter->Fill("TPC refit",1);
 
   // Kinks
   const AliAODVertex* prodVtxDaughterPos = (AliAODVertex*) daughterPos->GetProdVertex(); // production vertex of the positive daughter track
   const AliAODVertex* prodVtxDaughterNeg = (AliAODVertex*) daughterNeg->GetProdVertex(); // production vertex of the negative daughter track
   if(fCutV0rejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) ) return kFALSE;
-  fhV0sCounterCommon->Fill("Kinks",1);
+  fhV0sCounter->Fill("Kinks",1);
 
   // Daughters DCA to PV
   const Float_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
   const Float_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
   if(fCutV0MinDCAtoPV > 0. && ( dDCAPosToPV < fCutV0MinDCAtoPV || dDCANegToPV < fCutV0MinDCAtoPV ) ) return kFALSE;
   if(fCutV0MaxDCAtoPV > 0. && ( dDCAPosToPV > fCutV0MaxDCAtoPV || dDCANegToPV > fCutV0MaxDCAtoPV ) ) return kFALSE;
-  fhV0sCounterCommon->Fill("DCA to PV",1);
+  fhV0sCounter->Fill("DCA to PV",1);
 
   // Daughter DCA among themselves
   if(fCutV0MinDCADaughters > 0. && TMath::Abs(v0->DcaV0Daughters()) < fCutV0MinDCADaughters) return kFALSE;
   if(fCutV0MaxDCADaughters > 0. && TMath::Abs(v0->DcaV0Daughters()) > fCutV0MaxDCADaughters) return kFALSE;
-  fhV0sCounterCommon->Fill("Daughters DCA",1);
+  fhV0sCounter->Fill("Daughters DCA",1);
 
   // radius of decay vertex in transverse plane
   Double_t dSecVtxCoor[3] = {0};
@@ -1137,7 +1219,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
   if( fCutV0MinDecayRadius > 0. && (dDecayRadius < fCutV0MinDecayRadius) ) return kFALSE;
   if( fCutV0MaxDecayRadius > 0. && (dDecayRadius > fCutV0MaxDecayRadius) ) return kFALSE;
-  fhV0sCounterCommon->Fill("Decay radius",1);
+  fhV0sCounter->Fill("Decay radius",1);
 
   // acceptance checks
   if(fCutV0DaughterEtaMax > 0. && ( (TMath::Abs(daughterNeg->Eta()) > fCutV0DaughterEtaMax) || (TMath::Abs(daughterPos->Eta()) > fCutV0DaughterEtaMax) ) ) return kFALSE;
@@ -1147,20 +1229,111 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if(fCutV0MotherEtaMax > 0. && TMath::Abs(v0->Eta()) > fCutV0DaughterEtaMax ) return kFALSE;
   if(fCutV0MotherPtMin > 0. && v0->Pt() < fCutV0MotherPtMin) return kFALSE;
   if(fCutV0MotherPtMax > 0. && v0->Pt() > fCutV0MotherPtMax) return kFALSE;
-  fhV0sCounterCommon->Fill("Acceptance",1);
+  fhV0sCounter->Fill("Acceptance",1);
 
   // passing all common criteria
-  fhV0sCounterCommon->Fill("Passed",1);
+  fhV0sCounter->Fill("Passed",1);
   return kTRUE;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v0)
+void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v0, const Bool_t bIsK0s, const Bool_t bIsLambda)
 {
   // Filling various QA plots related to V0 candidate selection
   // *************************************************************
+  // checking mother & daughters
   if(!v0) return;
+  AliAODTrack* trackDaughter[2] = {(AliAODTrack*) v0->GetDaughter(0), (AliAODTrack*) v0->GetDaughter(1)};
+  if(!trackDaughter[0] || !trackDaughter[1]) return;
 
+  // reconstruction method
+  fhQAV0sRecoMethod[iQAindex]->Fill(v0->GetOnFlyStatus());
 
+  // DCA between daughters and PV
+  fhQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaPosToPrimVertex());
+  fhQAV0sDCAtoPV[iQAindex]->Fill(v0->DcaNegToPrimVertex());
+
+  // Daughter DCA among themselves
+  fhQAV0sDCADaughters[iQAindex]->Fill(v0->DcaV0Daughters());
+
+  // radius of decay vertex in transverse plane
+  Double_t dSecVtxCoor[3] = {0};
+  v0->GetSecondaryVtx(dSecVtxCoor);
+  Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
+  fhQAV0sDecayRadius[iQAindex]->Fill(dDecayRadius);
+
+  // mother kinematics
+  fhQAV0sMotherPt[iQAindex]->Fill(v0->Pt());
+  fhQAV0sMotherPhi[iQAindex]->Fill(v0->Phi());
+  fhQAV0sMotherEta[iQAindex]->Fill(v0->Eta());
+
+  // proper lifetime preparation (to be filled in particle dependent if scope)
+  Double_t dPrimVtxCoor[3] = {0};
+  Double_t dDecayCoor[3] = {0};
+  AliAODVertex* primVtx2 = fEventAOD->GetPrimaryVertex();
+  primVtx2->GetXYZ(dPrimVtxCoor);
+  for(Int_t i(0); i < 2; i++)
+    dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
+
+  // particle dependent
+  if(bIsK0s || iQAindex == 0)
+  {
+    fhQAV0sMotherRapK0s[iQAindex]->Fill(v0->RapK0Short());
+    fhQAV0sInvMassK0s[iQAindex]->Fill(v0->MassK0Short());
+
+    // CPA
+    AliAODVertex* primVtx = fEventAOD->GetPrimaryVertex();
+    fhQAV0sCPAK0s[iQAindex]->Fill(v0->CosPointingAngle(primVtx));
+
+    // Armenteros-Podolanski
+    fhQAV0sArmenterosK0s[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0());
+
+    // proper lifetime
+    Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
+    Double_t dPropLifeK0s = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    fhQAV0sNumTauK0s[iQAindex]->Fill(dPropLifeK0s);
+  }
+  if(bIsLambda || iQAindex == 0)
+  {
+    fhQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
+    fhQAV0sInvMassLambda[iQAindex]->Fill(v0->MassLambda());
+    fhQAV0sInvMassLambda[iQAindex]->Fill(v0->MassAntiLambda());
+
+    // CPA
+    AliAODVertex* primVtx = fEventAOD->GetPrimaryVertex();
+    fhQAV0sCPALambda[iQAindex]->Fill(v0->CosPointingAngle(primVtx));
+
+    // Armenteros-Podolanski
+    fhQAV0sArmenterosLambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0());
+
+    // proper lifetime
+    Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
+    Double_t dPropLifeLambda = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    fhQAV0sNumTauLambda[iQAindex]->Fill(dPropLifeLambda);
+  }
+
+  // daughters properties
+  AliAODVertex* prodVtxDaughter = 0x0;
+  for(Short_t i(0); i < 2; i++)
+  {
+    // TPC refit
+    fhQAV0sTPCRefit[iQAindex]->Fill(trackDaughter[i]->IsOn(AliAODTrack::kTPCrefit));
+
+    // kinks
+    prodVtxDaughter = (AliAODVertex*) trackDaughter[i]->GetProdVertex();
+    fhQAV0sKinks[iQAindex]->Fill(prodVtxDaughter->GetType() == AliAODVertex::kKink);
+
+    // daughter kinematics
+    fhQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt());
+    fhQAV0sDaughterPhi[iQAindex]->Fill(trackDaughter[i]->Phi());
+    fhQAV0sDaughterEta[iQAindex]->Fill(trackDaughter[i]->Eta());
+
+    // daughter PID
+    fhQAV0sDaughterTPCdEdxP[iQAindex]->Fill(trackDaughter[i]->P(), trackDaughter[i]->GetTPCsignal());
+
+    // Proton PID for Lambda candidates
+    if( (bIsLambda || iQAindex == 0) && fPIDResponse)
+      fhQAV0sProtonNumSigmaPtLambda[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[i], AliPID::kProton));
+  }
 
   return;
 }
@@ -1190,7 +1363,7 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
   // returns centrality index
   // *************************************************************
 
-  Short_t index = 0;
+  Short_t index = 0x0;
 
   if(fSampling && fNumSamples > 0)
   {
@@ -1219,7 +1392,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   // returns centrality index
   // *************************************************************
 
-  Short_t index = 0;
+  Short_t index = 0x0;
 
   // centrality estimation for pPb analysis in Run2
   // TODO : just moved from flow Event selection for 2016

@@ -52,29 +52,35 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutBayesPIDKaonMin = probK; }
         void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutBayesPIDProtonMin = probP; }
         // V0s setters
-        void					SetV0sOnFly(Bool_t onFly) { fCutV0onFly = onFly; }
-        void					SetV0sTPCRefit(Bool_t refit) { fCutV0refitTPC = refit; }
-        void					SetV0sRejectKinks(Bool_t reject) { fCutV0rejectKinks = reject; }
-        void					SetV0sDCAPVMin(Double_t dca) { fCutV0MinDCAtoPV = dca; }
-        void					SetV0sDCAPVMax(Double_t dca) { fCutV0MaxDCAtoPV = dca; }
-        void					SetV0sDCADaughtersMin(Double_t dca) { fCutV0MinDCADaughters = dca; }
-        void					SetV0sDCADaughtersMax(Double_t dca) { fCutV0MaxDCADaughters = dca; }
-        void					SetV0sDecayRadiusMin(Double_t radius) { fCutV0MinDecayRadius = radius; }
-        void					SetV0sDecayRadiusMax(Double_t radius) { fCutV0MaxDecayRadius = radius; }
-        void					SetV0sDaughterPtMin(Double_t pt) { fCutV0DaughterPtMin = pt; }
-        void					SetV0sDaughterPtMax(Double_t pt) { fCutV0DaughterPtMax = pt; }
-        void					SetV0sDaughterEtaMax(Double_t eta) { fCutV0DaughterEtaMax = eta; }
-        void					SetV0sMotherEtaMax(Double_t eta) { fCutV0MotherEtaMax = eta; }
+        void					          SetV0sOnFly(Bool_t onFly) { fCutV0onFly = onFly; }
+        void					          SetV0sTPCRefit(Bool_t refit) { fCutV0refitTPC = refit; }
+        void					          SetV0sRejectKinks(Bool_t reject) { fCutV0rejectKinks = reject; }
+        void					          SetV0sDCAPVMin(Double_t dca) { fCutV0MinDCAtoPV = dca; }
+        void					          SetV0sDCAPVMax(Double_t dca) { fCutV0MaxDCAtoPV = dca; }
+        void					          SetV0sDCADaughtersMin(Double_t dca) { fCutV0MinDCADaughters = dca; }
+        void					          SetV0sDCADaughtersMax(Double_t dca) { fCutV0MaxDCADaughters = dca; }
+        void					          SetV0sDecayRadiusMin(Double_t radius) { fCutV0MinDecayRadius = radius; }
+        void					          SetV0sDecayRadiusMax(Double_t radius) { fCutV0MaxDecayRadius = radius; }
+        void					          SetV0sDaughterPtMin(Double_t pt) { fCutV0DaughterPtMin = pt; }
+        void					          SetV0sDaughterPtMax(Double_t pt) { fCutV0DaughterPtMax = pt; }
+        void					          SetV0sDaughterEtaMax(Double_t eta) { fCutV0DaughterEtaMax = eta; }
+        void					          SetV0sMotherEtaMax(Double_t eta) { fCutV0MotherEtaMax = eta; }
         void                    SetV0sMotherRapMax(Double_t rap) { fCutV0MotherRapMax = rap; }
         void                    SetV0sMotherPtMin(Double_t pt) { fCutV0MotherPtMin = pt; }
-        void					SetV0sMotherPtMax(Double_t pt) { fCutV0MotherPtMax = pt; }
-        void					SetV0sK0sCPAMin(Double_t cpa) { fCutV0MinCPAK0s = cpa; }
-        void					SetV0sLambdaCPAMin(Double_t cpa) { fCutV0MinCPALambda = cpa; }
-        void					SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
-        void					SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0NumTauLambdaMax = nTau; }
-        void					SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0K0sArmenterosAlphaMin = alpha; }
+        void					          SetV0sK0sInvMassMin(Double_t mass) { fCutV0K0sInvMassMin = mass; }
+        void					          SetV0sK0sInvMassMax(Double_t mass) { fCutV0K0sInvMassMax = mass; }
+        void					          SetV0sLambdaInvMassMin(Double_t mass) { fCutV0LambdaInvMassMin = mass; }
+        void					          SetV0sLambdaInvMassMax(Double_t mass) { fCutV0LambdaInvMassMax = mass; }
+        void					          SetV0sMotherPtMax(Double_t pt) { fCutV0MotherPtMax = pt; }
+        void					          SetV0sK0sCPAMin(Double_t cpa) { fCutV0MinCPAK0s = cpa; }
+        void					          SetV0sLambdaCPAMin(Double_t cpa) { fCutV0MinCPALambda = cpa; }
+        void					          SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
+        void					          SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0NumTauLambdaMax = nTau; }
+        void					          SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0K0sArmenterosAlphaMin = alpha; }
+        void					          SetV0sLambdaArmenterosAlphaMax(Double_t alpha) { fCutV0LambdaArmenterosAlphaMax = alpha; }
         void                    SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
-        void					SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
+        void					          SetV0sProtonPIDPtMin(Double_t pt) { fCutV0ProtonPIDPtMin = pt; }
+        void					          SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
 
     private:
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
@@ -91,7 +97,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
         Bool_t                  IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
         void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
-        void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0); // filling QA plots for V0s candidates
+        void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kFALSE, const Bool_t bIsLambda = kFALSE); // filling QA plots for V0s candidates
 
         Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
         void                    ListParameters();
@@ -188,7 +194,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection
         TH1D*           fhChargedCounter; //! counter following charged track selection
-        TH1D*           fhV0sCounterCommon; //! counter following V0s selection
+        TH1D*           fhV0sCounter; //! counter following V0s selection
         TH1D*           fhV0sCounterK0s; //! counter following K0s selection
         TH1D*           fhV0sCounterLambda; //! counter following (Anti-)Lambda selection
 
@@ -214,7 +220,31 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH2D*           fhQAChargedTPCdEdx[fiNumIndexQA];    //! TPC PID information
         TH2D*           fhQAChargedTOFbeta[fiNumIndexQA];    //! TOF PID information
         // QA: V0s candidates
-        
+        TH1D*					fhQAV0sRecoMethod[fiNumIndexQA];	//! offline/online V0 reconstruction method
+        TH1D*					fhQAV0sTPCRefit[fiNumIndexQA];	//! TPC refit true/false
+        TH1D*					fhQAV0sKinks[fiNumIndexQA];	//! V0 kinks true/false
+        TH1D*					fhQAV0sDCAtoPV[fiNumIndexQA];	//! V0 DCA to PV
+        TH1D*					fhQAV0sDCADaughters[fiNumIndexQA];	//! DCA between V0 daughters
+        TH1D*					fhQAV0sDecayRadius[fiNumIndexQA];	//! Distance between PV and Secondary vertex in transverse plane
+        TH1D*         fhQAV0sDaughterPt[fiNumIndexQA];    //! pT dist of V0 daughters
+        TH1D*					fhQAV0sDaughterPhi[fiNumIndexQA];	//! pT dist of V0 daughters
+        TH1D*         fhQAV0sDaughterEta[fiNumIndexQA];   //! pseudorapidity dist of V0 daughters
+        TH2D*					fhQAV0sDaughterTPCdEdxP[fiNumIndexQA];	//! TPC dEdx vs p of V0 daughters
+        TH1D*         fhQAV0sMotherPt[fiNumIndexQA];  //! pT dist of V0s
+        TH1D*					fhQAV0sMotherPhi[fiNumIndexQA];	//! azimuthal dist of V0s
+        TH1D*         fhQAV0sMotherEta[fiNumIndexQA]; //! pseudorapidity dist of V0s
+        TH1D*         fhQAV0sMotherRapK0s[fiNumIndexQA];  //! rapidity dist of V0s (K0s mass hypothesis)
+        TH1D*         fhQAV0sMotherRapLambda[fiNumIndexQA];   //! rapidity dist of V0s (Lambda mass hypothesis)
+        TH1D*         fhQAV0sInvMassK0s[fiNumIndexQA];    //! inv. mass dist of V0s (K0s mass hypothesis)
+        TH1D*					fhQAV0sInvMassLambda[fiNumIndexQA];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
+        TH1D*					fhQAV0sCPAK0s[fiNumIndexQA];	//! cosine of pointing angle of K0s candidates
+        TH1D*					fhQAV0sCPALambda[fiNumIndexQA];	//! cosine of pointing angle of Lambda candidates
+        TH1D*					fhQAV0sNumTauK0s[fiNumIndexQA];	//! number of c*tau of K0s candidates
+        TH1D*					fhQAV0sNumTauLambda[fiNumIndexQA];	//! number of c*tau of Lambda candidates
+        TH2D*					fhQAV0sArmenterosK0s[fiNumIndexQA];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2D*					fhQAV0sArmenterosLambda[fiNumIndexQA];	//! Armenteros-Podolanski plot for K0s candidates
+        TH2D*         fhQAV0sProtonNumSigmaPtLambda[fiNumIndexQA];  //! number of TPC sigmas and pT of proton (Lambda candidates)
+
 
         AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
         AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
