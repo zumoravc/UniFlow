@@ -147,7 +147,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Float_t                 fCutChargedPtMin; // (GeV/c) Minimal track pT
         Float_t                 fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
         Float_t                 fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
-
+        // cuts & selection: PID selection
         Double_t                fCutPionNumSigmaMax;
         Double_t                fCutKaonNumSigmaMax;
         Double_t                fCutProtonNumSigmaMax;
