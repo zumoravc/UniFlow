@@ -276,7 +276,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 		fhQAV0sDaughterPhi[iQA] = 0x0;
 		fhQAV0sDaughterEta[iQA] = 0x0;
     fhQAV0sDaughterCharge[iQA] = 0x0;
-    fhQAV0sDaughterTPCdEdxP[iQA] = 0x0;
+    fhQAV0sDaughterTPCdEdxK0s[iQA] = 0x0;
+    fhQAV0sDaughterNumSigmaPionK0s[iQA] = 0x0;
+    fhQAV0sDaughterTPCdEdxLambda[iQA] = 0x0;
     fhQAV0sMotherPt[iQA] = 0x0;
 		fhQAV0sMotherPhi[iQA] = 0x0;
 		fhQAV0sMotherEta[iQA] = 0x0;
@@ -486,8 +488,12 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListV0s->Add(fhQAV0sDaughterEta[iQA]);
       fhQAV0sDaughterCharge[iQA] = new TH1D(Form("fhQAV0sDaughterCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter charge; daughter charge", 3,-1.5,1.5);
       fOutListV0s->Add(fhQAV0sDaughterCharge[iQA]);
-      fhQAV0sDaughterTPCdEdxP[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxP_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
-      fOutListV0s->Add(fhQAV0sDaughterTPCdEdxP[iQA]);
+      fhQAV0sDaughterTPCdEdxK0s[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
+      fOutListV0s->Add(fhQAV0sDaughterTPCdEdxK0s[iQA]);
+      fhQAV0sDaughterNumSigmaPionK0s[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: Daughter PID (#pi); #it{p}_{T}^{daughter} (GeV/#it{c}); #pi PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+      fOutListV0s->Add(fhQAV0sDaughterNumSigmaPionK0s[iQA]);
+      fhQAV0sDaughterTPCdEdxLambda[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
+      fOutListV0s->Add(fhQAV0sDaughterTPCdEdxLambda[iQA]);
       fhQAV0sCPAK0s[iQA] = new TH1D(Form("fhQAV0sCPAK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: CPA; CPA^{K0s}", 100,0.9,1.);
       fOutListV0s->Add(fhQAV0sCPAK0s[iQA]);
       fhQAV0sCPALambda[iQA] = new TH1D(Form("fhQAV0sCPALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA; CPA^{#Lambda}", 100, 0.9,1.);
@@ -1286,6 +1292,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
   // particle dependent
   if(bIsK0s || iQAindex == 0)
   {
+    // K0s
     fhQAV0sMotherRapK0s[iQAindex]->Fill(v0->RapK0Short());
     fhQAV0sInvMassK0s[iQAindex]->Fill(v0->MassK0Short());
 
@@ -1303,6 +1310,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
   }
   if(bIsLambda || iQAindex == 0)
   {
+    // (Anti)Lambda
     fhQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
     fhQAV0sInvMassLambda[iQAindex]->Fill(v0->MassLambda());
     fhQAV0sInvMassLambda[iQAindex]->Fill(v0->MassAntiLambda());
@@ -1339,12 +1347,27 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     // daughter charge
     fhQAV0sDaughterCharge[iQAindex]->Fill(trackDaughter[i]->Charge());
 
-    // daughter PID
-    fhQAV0sDaughterTPCdEdxP[iQAindex]->Fill(trackDaughter[i]->P(), trackDaughter[i]->GetTPCsignal());
+    // particle species dependent
+    if(bIsK0s)
+    {
+      // daughter PID
+      fhQAV0sDaughterTPCdEdxK0s[iQAindex]->Fill(trackDaughter[i]->P(), trackDaughter[i]->GetTPCsignal());
 
-    // Proton PID for Lambda candidates
-    if( (bIsLambda || iQAindex == 0) && fPIDResponse)
-      fhQAV0sProtonNumSigmaPtLambda[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[i], AliPID::kProton));
+      if(fPIDResponse)
+        fhQAV0sDaughterNumSigmaPionK0s[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[i], AliPID::kPion));
+
+    }
+
+
+    if(bIsLambda)
+    {
+      // daughter PID
+      fhQAV0sDaughterTPCdEdxLambda[iQAindex]->Fill(trackDaughter[i]->P(), trackDaughter[i]->GetTPCsignal());
+
+      // Proton PID for Lambda candidates
+      if(fPIDResponse)
+        fhQAV0sProtonNumSigmaPtLambda[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[i], AliPID::kProton));
+    }
   }
 
   return;
