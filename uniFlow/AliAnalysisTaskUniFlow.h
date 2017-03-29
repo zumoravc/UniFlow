@@ -95,9 +95,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
         Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
         Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
-        Bool_t                  IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
+        Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
         void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
-        void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Bool_t bIsLambda = kTRUE); // filling QA plots for V0s candidates
+        void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 1); // filling QA plots for V0s candidates
 
         Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
         void                    ListParameters();
