@@ -279,6 +279,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fhQAV0sDaughterTPCdEdxK0s[iQA] = 0x0;
     fhQAV0sDaughterNumSigmaPionK0s[iQA] = 0x0;
     fhQAV0sDaughterTPCdEdxLambda[iQA] = 0x0;
+    fhQAV0sDaughterNumSigmaPionLambda[iQA] = 0x0;
+    fhQAV0sDaughterNumSigmaProtonLambda[iQA] = 0x0;
+    fhQAV0sDaughterNumSigmaPionALambda[iQA] = 0x0;
+    fhQAV0sDaughterNumSigmaProtonALambda[iQA] = 0x0;
     fhQAV0sMotherPt[iQA] = 0x0;
 		fhQAV0sMotherPhi[iQA] = 0x0;
 		fhQAV0sMotherEta[iQA] = 0x0;
@@ -293,10 +297,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 		fhQAV0sNumTauLambda[iQA] = 0x0;
 		fhQAV0sArmenterosK0s[iQA] = 0x0;
 		fhQAV0sArmenterosLambda[iQA] = 0x0;
-		fhQAV0sDaughterNumSigmaPionLambda[iQA] = 0x0;
-		fhQAV0sDaughterNumSigmaProtonLambda[iQA] = 0x0;
-		fhQAV0sDaughterNumSigmaPionALambda[iQA] = 0x0;
-		fhQAV0sDaughterNumSigmaProtonALambda[iQA] = 0x0;
+		fhQAV0sArmenterosALambda[iQA] = 0x0;
   }
 
   // defining input/output
@@ -515,8 +516,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListV0s->Add(fhQAV0sNumTauLambda[iQA]);
       fhQAV0sArmenterosK0s[iQA] = new TH2D(Form("fhQAV0sArmenterosK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}:  K^{0}_{S}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
       fOutListV0s->Add(fhQAV0sArmenterosK0s[iQA]);
-      fhQAV0sArmenterosLambda[iQA] = new TH2D(Form("fhQAV0sArmenterosLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
+      fhQAV0sArmenterosLambda[iQA] = new TH2D(Form("fhQAV0sArmenterosLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
       fOutListV0s->Add(fhQAV0sArmenterosLambda[iQA]);
+      fhQAV0sArmenterosALambda[iQA] = new TH2D(Form("fhQAV0sArmenterosALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
+      fOutListV0s->Add(fhQAV0sArmenterosALambda[iQA]);
     }
 
   // posting data (mandatory)
@@ -1398,7 +1401,11 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     fhQAV0sCPALambda[iQAindex]->Fill(v0->CosPointingAngle(primVtx));
 
     // Armenteros-Podolanski
-    fhQAV0sArmenterosLambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0());
+    if(bCandLambda)
+      fhQAV0sArmenterosLambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0());
+
+    if(bCandAntiLambda)
+      fhQAV0sArmenterosALambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0());
 
     // proper lifetime
     Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
