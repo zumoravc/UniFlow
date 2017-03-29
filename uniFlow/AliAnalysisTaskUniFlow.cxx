@@ -293,7 +293,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 		fhQAV0sNumTauLambda[iQA] = 0x0;
 		fhQAV0sArmenterosK0s[iQA] = 0x0;
 		fhQAV0sArmenterosLambda[iQA] = 0x0;
-		fhQAV0sProtonNumSigmaPtLambda[iQA] = 0x0;
+		fhQAV0sDaughterNumSigmaPionLambda[iQA] = 0x0;
+		fhQAV0sDaughterNumSigmaProtonLambda[iQA] = 0x0;
+		fhQAV0sDaughterNumSigmaPionALambda[iQA] = 0x0;
+		fhQAV0sDaughterNumSigmaProtonALambda[iQA] = 0x0;
   }
 
   // defining input/output
@@ -494,6 +497,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListV0s->Add(fhQAV0sDaughterNumSigmaPionK0s[iQA]);
       fhQAV0sDaughterTPCdEdxLambda[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
       fOutListV0s->Add(fhQAV0sDaughterTPCdEdxLambda[iQA]);
+      fhQAV0sDaughterNumSigmaPionLambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Daughter PID (#pi); #it{p}_{T}^{pion} (GeV/#it{c}); pion PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+      fOutListV0s->Add(fhQAV0sDaughterNumSigmaPionLambda[iQA]);
+      fhQAV0sDaughterNumSigmaProtonLambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+      fOutListV0s->Add(fhQAV0sDaughterNumSigmaProtonLambda[iQA]);
+      fhQAV0sDaughterNumSigmaPionALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (#pi); #it{p}_{T}^{pion} (GeV/#it{c}); pion PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+      fOutListV0s->Add(fhQAV0sDaughterNumSigmaPionALambda[iQA]);
+      fhQAV0sDaughterNumSigmaProtonALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+      fOutListV0s->Add(fhQAV0sDaughterNumSigmaProtonALambda[iQA]);
       fhQAV0sCPAK0s[iQA] = new TH1D(Form("fhQAV0sCPAK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: CPA; CPA^{K0s}", 100,0.9,1.);
       fOutListV0s->Add(fhQAV0sCPAK0s[iQA]);
       fhQAV0sCPALambda[iQA] = new TH1D(Form("fhQAV0sCPALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA; CPA^{#Lambda}", 100, 0.9,1.);
@@ -506,8 +517,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListV0s->Add(fhQAV0sArmenterosK0s[iQA]);
       fhQAV0sArmenterosLambda[iQA] = new TH2D(Form("fhQAV0sArmenterosLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
       fOutListV0s->Add(fhQAV0sArmenterosLambda[iQA]);
-      fhQAV0sProtonNumSigmaPtLambda[iQA] = new TH2D(Form("fhQAV0sProtonNumSigmaPtLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: (anti-)proton PID; #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
-      fOutListV0s->Add(fhQAV0sProtonNumSigmaPtLambda[iQA]);
     }
 
   // posting data (mandatory)
@@ -1172,6 +1181,11 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
     const AliAODTrack* trackDaughterPos = (AliAODTrack*) v0->GetDaughter(0); // positive charge
     const AliAODTrack* trackDaughterNeg = (AliAODTrack*) v0->GetDaughter(1); // negative charge
 
+    // checking detector status
+    AliPIDResponse::EDetPidStatus pidStatusTPCpos = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughterPos);
+    AliPIDResponse::EDetPidStatus pidStatusTPCneg = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughterNeg);
+    if(pidStatusTPCpos != AliPIDResponse::kDetPidOk || pidStatusTPCneg != AliPIDResponse::kDetPidOk) return 0;
+
     Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
     Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
 
@@ -1290,6 +1304,37 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
   AliAODTrack* trackDaughter[2] = {(AliAODTrack*) v0->GetDaughter(0), (AliAODTrack*) v0->GetDaughter(1)};
   if(!trackDaughter[0] || !trackDaughter[1]) return;
 
+  // setting internal flags for Lambdas and Anti-Lambdas
+  Bool_t bCandLambda;
+  Bool_t bCandAntiLambda;
+
+  switch (bIsLambda)
+  {
+    case 1:
+    {
+      bCandLambda = kTRUE;
+      bCandAntiLambda = kFALSE;
+      break;
+    }
+    case -1:
+    {
+      bCandLambda = kFALSE;
+      bCandAntiLambda = kTRUE;
+      break;
+    }
+    case 2:
+    {
+      bCandLambda = kTRUE;
+      bCandAntiLambda = kTRUE;
+      break;
+    }
+    default:
+    {
+      bCandLambda = kFALSE;
+      bCandAntiLambda = kFALSE;
+    }
+  }
+
   // reconstruction method
   fhQAV0sRecoMethod[iQAindex]->Fill(v0->GetOnFlyStatus());
 
@@ -1341,7 +1386,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     Double_t dPropLifeK0s = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     fhQAV0sNumTauK0s[iQAindex]->Fill(dPropLifeK0s);
   }
-  if(bIsLambda != 0)
+  if(bCandLambda || bCandAntiLambda)
   {
     // (Anti)Lambda
     fhQAV0sMotherRapLambda[iQAindex]->Fill(v0->RapLambda());
@@ -1361,6 +1406,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     fhQAV0sNumTauLambda[iQAindex]->Fill(dPropLifeLambda);
   }
 
+
   // daughters properties
   AliAODVertex* prodVtxDaughter = 0x0;
   for(Short_t i(0); i < 2; i++)
@@ -1379,26 +1425,46 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
 
     // daughter charge
     fhQAV0sDaughterCharge[iQAindex]->Fill(trackDaughter[i]->Charge());
+  }
 
-    // particle species dependent
-    if(bIsK0s)
+  // PID checks
+  if(fPIDResponse)
+  {
+    // checking the detector status
+    AliPIDResponse::EDetPidStatus pidStatusTPCpos = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughter[0]);
+    AliPIDResponse::EDetPidStatus pidStatusTPCneg = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughter[1]);
+
+    if(pidStatusTPCpos == AliPIDResponse::kDetPidOk && pidStatusTPCneg == AliPIDResponse::kDetPidOk)
     {
-      // daughter PID
-      fhQAV0sDaughterTPCdEdxK0s[iQAindex]->Fill(trackDaughter[i]->P(), trackDaughter[i]->GetTPCsignal());
+      if(bIsK0s)
+      {
+        // daughter PID
+        fhQAV0sDaughterTPCdEdxK0s[iQAindex]->Fill(trackDaughter[0]->P(), trackDaughter[0]->GetTPCsignal());
+        fhQAV0sDaughterTPCdEdxK0s[iQAindex]->Fill(trackDaughter[1]->P(), trackDaughter[1]->GetTPCsignal());
 
-      // Pion PID for daughters
-      if(fPIDResponse)
-        fhQAV0sDaughterNumSigmaPionK0s[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[i], AliPID::kPion));
-    }
+        // Pion PID for daughters
+        fhQAV0sDaughterNumSigmaPionK0s[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[0], AliPID::kPion));
+        fhQAV0sDaughterNumSigmaPionK0s[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[1], AliPID::kPion));
+      }
 
-    if(bIsLambda != 0)
-    {
-      // daughter PID
-      fhQAV0sDaughterTPCdEdxLambda[iQAindex]->Fill(trackDaughter[i]->P(), trackDaughter[i]->GetTPCsignal());
+      if(bCandLambda || bCandAntiLambda)
+      {
+        // daughter PID
+        fhQAV0sDaughterTPCdEdxLambda[iQAindex]->Fill(trackDaughter[0]->P(), trackDaughter[0]->GetTPCsignal());
+        fhQAV0sDaughterTPCdEdxLambda[iQAindex]->Fill(trackDaughter[1]->P(), trackDaughter[1]->GetTPCsignal());
 
-      // Proton PID for Lambda candidates
-      if(fPIDResponse)
-        fhQAV0sProtonNumSigmaPtLambda[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[i], AliPID::kProton));
+        if(bCandLambda)
+        {
+          fhQAV0sDaughterNumSigmaProtonLambda[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[0], AliPID::kProton));
+          fhQAV0sDaughterNumSigmaPionLambda[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[1], AliPID::kPion));
+        }
+
+        if(bCandAntiLambda)
+        {
+          fhQAV0sDaughterNumSigmaProtonALambda[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[1], AliPID::kProton));
+          fhQAV0sDaughterNumSigmaPionALambda[iQAindex]->Fill(v0->Pt(), fPIDResponse->NumberOfSigmasTPC(trackDaughter[0], AliPID::kPion));
+        }
+      }
     }
   }
 
