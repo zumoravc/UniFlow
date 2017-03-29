@@ -52,35 +52,35 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutBayesPIDKaonMin = probK; }
         void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutBayesPIDProtonMin = probP; }
         // V0s setters
-        void					          SetV0sOnFly(Bool_t onFly) { fCutV0onFly = onFly; }
-        void					          SetV0sTPCRefit(Bool_t refit) { fCutV0refitTPC = refit; }
-        void					          SetV0sRejectKinks(Bool_t reject) { fCutV0rejectKinks = reject; }
-        void					          SetV0sDCAPVMin(Double_t dca) { fCutV0MinDCAtoPV = dca; }
-        void					          SetV0sDCAPVMax(Double_t dca) { fCutV0MaxDCAtoPV = dca; }
-        void					          SetV0sDCADaughtersMin(Double_t dca) { fCutV0MinDCADaughters = dca; }
-        void					          SetV0sDCADaughtersMax(Double_t dca) { fCutV0MaxDCADaughters = dca; }
-        void					          SetV0sDecayRadiusMin(Double_t radius) { fCutV0MinDecayRadius = radius; }
-        void					          SetV0sDecayRadiusMax(Double_t radius) { fCutV0MaxDecayRadius = radius; }
-        void					          SetV0sDaughterPtMin(Double_t pt) { fCutV0DaughterPtMin = pt; }
-        void					          SetV0sDaughterPtMax(Double_t pt) { fCutV0DaughterPtMax = pt; }
-        void					          SetV0sDaughterEtaMax(Double_t eta) { fCutV0DaughterEtaMax = eta; }
-        void					          SetV0sMotherEtaMax(Double_t eta) { fCutV0MotherEtaMax = eta; }
-        void                    SetV0sMotherRapMax(Double_t rap) { fCutV0MotherRapMax = rap; }
-        void                    SetV0sMotherPtMin(Double_t pt) { fCutV0MotherPtMin = pt; }
-        void					          SetV0sK0sInvMassMin(Double_t mass) { fCutV0K0sInvMassMin = mass; }
-        void					          SetV0sK0sInvMassMax(Double_t mass) { fCutV0K0sInvMassMax = mass; }
-        void					          SetV0sLambdaInvMassMin(Double_t mass) { fCutV0LambdaInvMassMin = mass; }
-        void					          SetV0sLambdaInvMassMax(Double_t mass) { fCutV0LambdaInvMassMax = mass; }
-        void					          SetV0sMotherPtMax(Double_t pt) { fCutV0MotherPtMax = pt; }
-        void					          SetV0sK0sCPAMin(Double_t cpa) { fCutV0MinCPAK0s = cpa; }
-        void					          SetV0sLambdaCPAMin(Double_t cpa) { fCutV0MinCPALambda = cpa; }
-        void					          SetV0sK0sNumTauMax(Double_t nTau) { fCutV0NumTauK0sMax = nTau; }
-        void					          SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0NumTauLambdaMax = nTau; }
-        void					          SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0K0sArmenterosAlphaMin = alpha; }
-        void					          SetV0sLambdaArmenterosAlphaMax(Double_t alpha) { fCutV0LambdaArmenterosAlphaMax = alpha; }
-        void                    SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0ProtonNumSigmaMax = nSigma; }
-        void					          SetV0sProtonPIDPtMin(Double_t pt) { fCutV0ProtonPIDPtMin = pt; }
-        void					          SetV0sProtonPIDPtMax(Double_t pt) { fCutV0ProtonPIDPtMax = pt; }
+        void					          SetV0sOnFly(Bool_t onFly) { fCutV0sOnFly = onFly; }
+        void					          SetV0sTPCRefit(Bool_t refit) { fCutV0srefitTPC = refit; }
+        void					          SetV0sRejectKinks(Bool_t reject) { fCutV0srejectKinks = reject; }
+        void					          SetV0sDCAPVMin(Double_t dca) { fCutV0sDCAtoPVMin = dca; }
+        void					          SetV0sDCAPVMax(Double_t dca) { fCutV0sDCAtoPVMax = dca; }
+        void					          SetV0sDCADaughtersMin(Double_t dca) { fCutV0sDCADaughtersMin = dca; }
+        void					          SetV0sDCADaughtersMax(Double_t dca) { fCutV0sDCADaughtersMax = dca; }
+        void					          SetV0sDecayRadiusMin(Double_t radius) { fCutV0sDecayRadiusMin = radius; }
+        void					          SetV0sDecayRadiusMax(Double_t radius) { fCutV0sDecayRadiusMax = radius; }
+        void					          SetV0sDaughterPtMin(Double_t pt) { fCutV0sDaughterPtMin = pt; }
+        void					          SetV0sDaughterPtMax(Double_t pt) { fCutV0sDaughterPtMax = pt; }
+        void					          SetV0sDaughterEtaMax(Double_t eta) { fCutV0sDaughterEtaMax = eta; }
+        void					          SetV0sMotherEtaMax(Double_t eta) { fCutV0sMotherEtaMax = eta; }
+        void                    SetV0sMotherRapMax(Double_t rap) { fCutV0sMotherRapMax = rap; }
+        void                    SetV0sMotherPtMin(Double_t pt) { fCutV0sMotherPtMin = pt; }
+        void					          SetV0sK0sInvMassMin(Double_t mass) { fCutV0sInvMassK0sMin = mass; }
+        void					          SetV0sK0sInvMassMax(Double_t mass) { fCutV0sInvMassK0sMax = mass; }
+        void					          SetV0sLambdaInvMassMin(Double_t mass) { fCutV0sInvMassLambdaMin = mass; }
+        void					          SetV0sLambdaInvMassMax(Double_t mass) { fCutV0sInvMassLambdaMax = mass; }
+        void					          SetV0sMotherPtMax(Double_t pt) { fCutV0sMotherPtMax = pt; }
+        void					          SetV0sK0sCPAMin(Double_t cpa) { fCutV0sCPAK0sMin = cpa; }
+        void					          SetV0sLambdaCPAMin(Double_t cpa) { fCutV0sCPALambdaMin = cpa; }
+        void					          SetV0sK0sNumTauMax(Double_t nTau) { fCutV0sNumTauK0sMax = nTau; }
+        void					          SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0sNumTauLambdaMax = nTau; }
+        void					          SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0sArmenterosAlphaK0sMin = alpha; }
+        void					          SetV0sLambdaArmenterosAlphaMax(Double_t alpha) { fCutV0sArmenterosAlphaLambdaMax = alpha; }
+        void                    SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0sProtonNumSigmaMax = nSigma; }
+        void					          SetV0sProtonPIDPtMin(Double_t pt) { fCutV0sProtonPIDPtMin = pt; }
+        void					          SetV0sProtonPIDPtMax(Double_t pt) { fCutV0sProtonPIDPtMax = pt; }
 
     private:
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
@@ -155,35 +155,35 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Double_t                fCutBayesPIDKaonMin; // minimal value of Bayes PID probability for Kaon
         Double_t                fCutBayesPIDProtonMin; // minimal value of Bayes PID probability for proton
         //cuts & selection: V0 reconstruction
-		    Bool_t 					        fCutV0onFly;		// V0 reconstruction method: is On-the-fly? (or offline)
-    		Bool_t					        fCutV0refitTPC; // Check TPC refit of V0 daughters ?
-    		Bool_t					        fCutV0rejectKinks; // Reject Kink V0 daughter tracks ?
-    		Double_t                fCutV0MinDCAtoPV;   // (cm) min DCA of V0 daughter to PV
-        Double_t				        fCutV0MaxDCAtoPV;	// (cm) max DCA of V0 daughter to PV
-  		  Double_t				        fCutV0MinDCADaughters;	// (cm) min DCA of V0 daughters among themselves
-  		  Double_t				        fCutV0MaxDCADaughters;	// (cm) max DCA of V0 daughters among themselves
-        Double_t                fCutV0MinDecayRadius; // (cm) min distance of secondary vertex from z-axis in transverse plane
-  		  Double_t				        fCutV0MaxDecayRadius; // (cm) max distance of secondary vertex from z-axis in transverse plane
-        Double_t                fCutV0DaughterPtMin; // (GeV/c) min pT of V0 daughters
-        Double_t                fCutV0DaughterPtMax; // (GeV/c) max pT of V0 daughters
-        Double_t                fCutV0DaughterEtaMax; // (-) max value of Eta of V0 daughters
-        Double_t                fCutV0MotherEtaMax; // (-) max eta value of V0 mother
-        Double_t                fCutV0MotherRapMax; // (-) max rapidity value of V0 mother
-        Double_t                fCutV0MotherPtMin; // (GeV/c) min transverse momentum value of V0 mother
-        Double_t                fCutV0MotherPtMax; // (GeV/c) max transverse momentum value of V0 mother
-        Double_t                fCutV0MinCPAK0s;    // (-) min cosine of pointing angle of K0s candidate to PV
-        Double_t                fCutV0MinCPALambda; // (-) min cosine of pointing angle of K0s candidate to PV
-        Double_t                fCutV0NumTauK0sMax; // (c*tau) max number of c*tau (K0s)
-        Double_t                fCutV0NumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
-        Double_t				        fCutV0K0sArmenterosAlphaMin; // (alpha) min Armenteros alpha for K0s
-        Double_t                fCutV0K0sInvMassMin; // [0.4] (GeV/c2) min inv. mass window for selected K0s candidates
-        Double_t                fCutV0K0sInvMassMax; // [0.6] (GeV/c2) max inv. mass window for selected K0s candidates
-        Double_t                fCutV0LambdaInvMassMin; // [1.08] (GeV/c2) min inv. mass window for selected (Anti)Lambda candidates
-        Double_t                fCutV0LambdaInvMassMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
-        Double_t                fCutV0LambdaArmenterosAlphaMax; // (alpha) max Armenteros alpha for (Anti)Lambda
-        Double_t                fCutV0ProtonNumSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
-        Double_t				        fCutV0ProtonPIDPtMin;	// (GeV/c) min pT of proton for PID (Lambda candidates) - only protons within pT range will be checked for num sigma TPC
-        Double_t				        fCutV0ProtonPIDPtMax;	// (GeV/c) max pT of proton for PID (Lambda candidates) - only protons within pT range will be checked for num sigma TPC
+		    Bool_t 					        fCutV0sOnFly;		// V0 reconstruction method: is On-the-fly? (or offline)
+    		Bool_t					        fCutV0srefitTPC; // Check TPC refit of V0 daughters ?
+    		Bool_t					        fCutV0srejectKinks; // Reject Kink V0 daughter tracks ?
+    		Double_t                fCutV0sDCAtoPVMin;   // (cm) min DCA of V0 daughter to PV
+        Double_t				        fCutV0sDCAtoPVMax;	// (cm) max DCA of V0 daughter to PV
+  		  Double_t				        fCutV0sDCADaughtersMin;	// (cm) min DCA of V0 daughters among themselves
+  		  Double_t				        fCutV0sDCADaughtersMax;	// (cm) max DCA of V0 daughters among themselves
+        Double_t                fCutV0sDecayRadiusMin; // (cm) min distance of secondary vertex from z-axis in transverse plane
+  		  Double_t				        fCutV0sDecayRadiusMax; // (cm) max distance of secondary vertex from z-axis in transverse plane
+        Double_t                fCutV0sDaughterPtMin; // (GeV/c) min pT of V0 daughters
+        Double_t                fCutV0sDaughterPtMax; // (GeV/c) max pT of V0 daughters
+        Double_t                fCutV0sDaughterEtaMax; // (-) max value of Eta of V0 daughters
+        Double_t                fCutV0sMotherEtaMax; // (-) max eta value of V0 mother
+        Double_t                fCutV0sMotherRapMax; // (-) max rapidity value of V0 mother
+        Double_t                fCutV0sMotherPtMin; // (GeV/c) min transverse momentum value of V0 mother
+        Double_t                fCutV0sMotherPtMax; // (GeV/c) max transverse momentum value of V0 mother
+        Double_t                fCutV0sCPAK0sMin;    // (-) min cosine of pointing angle of K0s candidate to PV
+        Double_t                fCutV0sCPALambdaMin; // (-) min cosine of pointing angle of K0s candidate to PV
+        Double_t                fCutV0sNumTauK0sMax; // (c*tau) max number of c*tau (K0s)
+        Double_t                fCutV0sNumTauLambdaMax; // (c*tau) max number of c*tau ((A)Lambda)
+        Double_t                fCutV0sInvMassK0sMin; // [0.4] (GeV/c2) min inv. mass window for selected K0s candidates
+        Double_t                fCutV0sInvMassK0sMax; // [0.6] (GeV/c2) max inv. mass window for selected K0s candidates
+        Double_t                fCutV0sInvMassLambdaMin; // [1.08] (GeV/c2) min inv. mass window for selected (Anti)Lambda candidates
+        Double_t                fCutV0sInvMassLambdaMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
+        Double_t				        fCutV0sArmenterosAlphaK0sMin; // (alpha) min Armenteros alpha for K0s
+        Double_t                fCutV0sArmenterosAlphaLambdaMax; // (alpha) max Armenteros alpha for (Anti)Lambda
+        Double_t                fCutV0sProtonNumSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
+        Double_t				        fCutV0sProtonPIDPtMin;	// (GeV/c) min pT of proton for PID (Lambda candidates) - only protons within pT range will be checked for num sigma TPC
+        Double_t				        fCutV0sProtonPIDPtMax;	// (GeV/c) max pT of proton for PID (Lambda candidates) - only protons within pT range will be checked for num sigma TPC
 
         // output lists
         TList*      fOutListEvents; //! events list
