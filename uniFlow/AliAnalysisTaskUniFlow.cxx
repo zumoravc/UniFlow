@@ -275,10 +275,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fhQAV0sDaughterPt[iQA] = 0x0;
 		fhQAV0sDaughterPhi[iQA] = 0x0;
 		fhQAV0sDaughterEta[iQA] = 0x0;
+    fhQAV0sDaughterCharge[iQA] = 0x0;
     fhQAV0sDaughterTPCdEdxP[iQA] = 0x0;
     fhQAV0sMotherPt[iQA] = 0x0;
 		fhQAV0sMotherPhi[iQA] = 0x0;
 		fhQAV0sMotherEta[iQA] = 0x0;
+    fhQAV0sMotherCharge[iQA] = 0x0;
 		fhQAV0sMotherRapK0s[iQA] = 0x0;
 		fhQAV0sMotherRapLambda[iQA] = 0x0;
     fhQAV0sInvMassK0s[iQA] = 0x0;
@@ -470,6 +472,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListV0s->Add(fhQAV0sMotherPhi[iQA]);
       fhQAV0sMotherEta[iQA] = new TH1D(Form("fhQAV0sMotherEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#eta}; #it{#eta}^{V0}", 301,-3,3);
       fOutListV0s->Add(fhQAV0sMotherEta[iQA]);
+      fhQAV0sMotherCharge[iQA] = new TH1D(Form("fhQAV0sMotherCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother charge; V^{0} charge", 3,-1.5,1.5);
+      fOutListV0s->Add(fhQAV0sMotherCharge[iQA]);
       fhQAV0sMotherRapK0s[iQA] = new TH1D(Form("fhQAV0sMotherRapK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo); #it{y}^{V0,K0s}", 301,-3,3);
       fOutListV0s->Add(fhQAV0sMotherRapK0s[iQA]);
       fhQAV0sMotherRapLambda[iQA] = new TH1D(Form("fhQAV0sMotherRapLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo); #it{y}^{V0,#Lambda}", 301,-3.,3.);
@@ -480,6 +484,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListV0s->Add(fhQAV0sDaughterPhi[iQA]);
       fhQAV0sDaughterEta[iQA] = new TH1D(Form("fhQAV0sDaughterEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#eta}; #it{#eta}^{daugter}", 301,-3.,3);
       fOutListV0s->Add(fhQAV0sDaughterEta[iQA]);
+      fhQAV0sDaughterCharge[iQA] = new TH1D(Form("fhQAV0sDaughterCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter charge; daughter charge", 3,-1.5,1.5);
+      fOutListV0s->Add(fhQAV0sDaughterCharge[iQA]);
       fhQAV0sDaughterTPCdEdxP[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxP_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
       fOutListV0s->Add(fhQAV0sDaughterTPCdEdxP[iQA]);
       fhQAV0sCPAK0s[iQA] = new TH1D(Form("fhQAV0sCPAK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: CPA; CPA^{K0s}", 100,0.9,1.);
@@ -1255,6 +1261,9 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
   // Daughter DCA among themselves
   fhQAV0sDCADaughters[iQAindex]->Fill(v0->DcaV0Daughters());
 
+  // charge
+  fhQAV0sMotherCharge[iQAindex]->Fill(v0->Charge());
+
   // radius of decay vertex in transverse plane
   Double_t dSecVtxCoor[3] = {0};
   v0->GetSecondaryVtx(dSecVtxCoor);
@@ -1326,6 +1335,9 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     fhQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt());
     fhQAV0sDaughterPhi[iQAindex]->Fill(trackDaughter[i]->Phi());
     fhQAV0sDaughterEta[iQAindex]->Fill(trackDaughter[i]->Eta());
+
+    // daughter charge
+    fhQAV0sDaughterCharge[iQAindex]->Fill(trackDaughter[i]->Charge());
 
     // daughter PID
     fhQAV0sDaughterTPCdEdxP[iQAindex]->Fill(trackDaughter[i]->P(), trackDaughter[i]->GetTPCsignal());

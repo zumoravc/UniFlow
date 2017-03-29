@@ -226,17 +226,19 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH1D*					fhQAV0sDCAtoPV[fiNumIndexQA];	//! V0 DCA to PV
         TH1D*					fhQAV0sDCADaughters[fiNumIndexQA];	//! DCA between V0 daughters
         TH1D*					fhQAV0sDecayRadius[fiNumIndexQA];	//! Distance between PV and Secondary vertex in transverse plane
-        TH1D*         fhQAV0sDaughterPt[fiNumIndexQA];    //! pT dist of V0 daughters
-        TH1D*					fhQAV0sDaughterPhi[fiNumIndexQA];	//! pT dist of V0 daughters
-        TH1D*         fhQAV0sDaughterEta[fiNumIndexQA];   //! pseudorapidity dist of V0 daughters
-        TH2D*					fhQAV0sDaughterTPCdEdxP[fiNumIndexQA];	//! TPC dEdx vs p of V0 daughters
+        TH1D*         fhQAV0sInvMassK0s[fiNumIndexQA];    //! inv. mass dist of V0s (K0s mass hypothesis)
+        TH1D*					fhQAV0sInvMassLambda[fiNumIndexQA];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
         TH1D*         fhQAV0sMotherPt[fiNumIndexQA];  //! pT dist of V0s
         TH1D*					fhQAV0sMotherPhi[fiNumIndexQA];	//! azimuthal dist of V0s
         TH1D*         fhQAV0sMotherEta[fiNumIndexQA]; //! pseudorapidity dist of V0s
+        TH1D*         fhQAV0sMotherCharge[fiNumIndexQA]; //! charge distribution of mothers
         TH1D*         fhQAV0sMotherRapK0s[fiNumIndexQA];  //! rapidity dist of V0s (K0s mass hypothesis)
-        TH1D*         fhQAV0sMotherRapLambda[fiNumIndexQA];   //! rapidity dist of V0s (Lambda mass hypothesis)
-        TH1D*         fhQAV0sInvMassK0s[fiNumIndexQA];    //! inv. mass dist of V0s (K0s mass hypothesis)
-        TH1D*					fhQAV0sInvMassLambda[fiNumIndexQA];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
+        TH1D*         fhQAV0sMotherRapLambda[fiNumIndexQA]; //! rapidity dist of V0s (Lambda mass hypothesis)
+        TH1D*         fhQAV0sDaughterPt[fiNumIndexQA];    //! pT dist of V0 daughters
+        TH1D*					fhQAV0sDaughterPhi[fiNumIndexQA];	//! pT dist of V0 daughters
+        TH1D*         fhQAV0sDaughterEta[fiNumIndexQA];   //! pseudorapidity dist of V0 daughters
+        TH1D*         fhQAV0sDaughterCharge[fiNumIndexQA]; //! charge distribution of daughters
+        TH2D*					fhQAV0sDaughterTPCdEdxP[fiNumIndexQA];	//! TPC dEdx vs p of V0 daughters
         TH1D*					fhQAV0sCPAK0s[fiNumIndexQA];	//! cosine of pointing angle of K0s candidates
         TH1D*					fhQAV0sCPALambda[fiNumIndexQA];	//! cosine of pointing angle of Lambda candidates
         TH1D*					fhQAV0sNumTauK0s[fiNumIndexQA];	//! number of c*tau of K0s candidates
