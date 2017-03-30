@@ -105,6 +105,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
         void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
 
+        void                    FillRFPsVector(); // fill flow vector Q with RFPs for reference flow
+        void                    FillPOIsVectors(); // fill flow vectors p and q with POIs for differential flow
+
         Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
         Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
 

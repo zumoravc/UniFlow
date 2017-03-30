@@ -1665,15 +1665,79 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // *************************************************************
 
   // filtering particles
-  if(!Filtering()) return kFALSE;
+  if(!Filtering())
+  {
+    ::Error("ProcessEvent","Filtering unsuccesfull!");
+    return kFALSE;
+  }
+
+  // at this point, all particles fullfiling relevant POIs (and REFs) criteria are filled in TClonesArrays
+  // >>>> flow starts here <<<<
+  // >>>> Flow a la General Framework <<<<
+
+  // Filling flow vectors
+  FillRFPsVector();
+  FillPOIsVectors();
 
   fEventCounter++; // counter of processed events
   return kTRUE;
 }
 //_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillRFPsVector()
+{
+  // Filling Q flow vector with REFs
+  // *************************************************************
+  const Short_t iNumHarmonics = 2;
+  const Short_t iNumWeightPower = 1;
+
+  const Double_t dWeight = 1.;  // for generic framework != 1
+
+  Double_t dQcos[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dQsin[iNumHarmonics][iNumWeightPower] = {0};
+  TComplex vecQ[iNumHarmonics][iNumWeightPower];
+
+  const Int_t iNumTracks = fArrCharged->GetEntriesFast();
+
+  AliAODTrack* track = 0x0;
+  for(Int_t i(0); i < iNumTracks; i++)
+  {
+    track = static_cast<AliAODTrack*>(fArrCharged->At(i));
+    if(!track) continue;
+
+    // TODO: track selection based on PT (and eta maybe for gaps)
+
+    for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+    {
+      for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+      {
+        dQcos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * track->Phi());
+        dQsin[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * track->Phi());
+      } // endfor {iPower}
+    } // endfor {iHarm}
+  } // endfor {tracks}
+
+  for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+  {
+    for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+    {
+      vecQ[iHarm][iPower] = TComplex(dQcos[iHarm][iPower],dQsin[iHarm][iPower],kFALSE);
+    } // endfor {iPower}
+  } // endfor {iHarm}
+
+  return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillPOIsVectors()
+{
+  // Filling p and q flow vectors with POIs for differential flow calculation
+  // *************************************************************
+
+  return;
+}
+//_____________________________________________________________________________
 Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
 {
-  // Assing sampling index based on generated random number
+  // Assessing sampling index based on generated random number
   // returns centrality index
   // *************************************************************
 
