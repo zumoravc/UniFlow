@@ -22,7 +22,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         virtual void            UserCreateOutputObjects(); //
         virtual void            UserExec(Option_t* option); // main methond - called for each event
         virtual void            Terminate(Option_t* option); // called after all events are processed
-        // event setters
+        // analysis & event setters
         void                    SetRunMode(RunMode mode = kFull) { fRunMode = mode; }
         void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
         void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
@@ -34,8 +34,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    SetProcessCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
         void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
         void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
-
-        void					SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
+        void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
         // track setters
         void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
         void                    SetChargedPtMax(Double_t pt) { fCutChargedPtMax = pt; }
@@ -87,23 +86,24 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
     private:
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
+        void                    ListParameters(); // list all task parameters
+
         Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
         Bool_t                  IsEventSelected_2016(); // event selection for LHC2016 pp & pPb data
         void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
 
+        Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
+
         Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
         Bool_t                  FilterCharged(); // charged tracks filtering
         Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
+        void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
         Bool_t                  FilterPID(); // pi,K,p filtering
         Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
         Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
         Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
         Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
-        void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
         void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
-
-        Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
-        void                    ListParameters();
 
         Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
         Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
