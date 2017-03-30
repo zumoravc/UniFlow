@@ -359,11 +359,15 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // creating arrays for particles and output
   fOutListEvents = new TList();
   fOutListEvents->SetOwner(kTRUE);
+  fOutListCharged = new TList();
+  fOutListCharged->SetOwner(kTRUE);
+  fOutListPID = new TList();
+  fOutListPID->SetOwner(kTRUE);
+  fOutListV0s = new TList();
+  fOutListV0s->SetOwner(kTRUE);
 
   if(fProcessCharged)
   {
-    fOutListCharged = new TList();
-    fOutListCharged->SetOwner(kTRUE);
 
     fArrCharged = new TClonesArray("AliAODTrack",10000);
     fArrChargedRPF = new TClonesArray("AliAODTrack",10000);
@@ -372,8 +376,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   if(fProcessPID)
   {
-    fOutListPID = new TList();
-    fOutListPID->SetOwner(kTRUE);
 
     fArrPion = new TClonesArray("AliAODTrack",5000);
     fArrKaon = new TClonesArray("AliAODTrack",5000);
@@ -382,8 +384,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   if(fProcessV0s)
   {
-    fOutListV0s = new TList();
-    fOutListV0s->SetOwner(kTRUE);
 
     fArrK0s = new TClonesArray("AliAODv0",5000);
     fArrLambda = new TClonesArray("AliAODv0",5000);
@@ -605,6 +605,8 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0srefitTPC: (Bool_t) %s\n",     fCutV0srefitTPC ? "kTRUE" : "kFALSE");
   printf("      fCutV0srejectKinks: (Bool_t) %s\n",     fCutV0srejectKinks ? "kTRUE" : "kFALSE");
   printf("      fCutV0sCrossMassRejection: (Bool_t) %s\n",     fCutV0sCrossMassRejection ? "kTRUE" : "kFALSE");
+  printf("      fCutV0sCrossMassCutK0s: (Double_t) %g (GeV/c2)\n",     fCutV0sCrossMassCutK0s);
+  printf("      fCutV0sCrossMassCutLambda: (Double_t) %g (GeV/c2)\n",     fCutV0sCrossMassCutLambda);
   printf("      fCutV0sDCAtoPVMin: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVMin);
   printf("      fCutV0sDCAtoPVMax: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVMax);
   printf("      fCutV0sDCADaughtersMin: (Double_t) %g (cm)\n",    fCutV0sDCADaughtersMin);
