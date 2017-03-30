@@ -298,6 +298,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fhQAV0sDaughterCharge[iQA] = 0x0;
     fhQAV0sDaughterTPCdEdxK0s[iQA] = 0x0;
     fhQAV0sDaughterNumSigmaPionK0s[iQA] = 0x0;
+    fhQAV0sDaughterTPCstatus[iQA] = 0x0;
+    fhQAV0sDaughterTOFstatus[iQA] = 0x0;
     fhQAV0sDaughterTPCdEdxLambda[iQA] = 0x0;
     fhQAV0sDaughterNumSigmaPionLambda[iQA] = 0x0;
     fhQAV0sDaughterNumSigmaProtonLambda[iQA] = 0x0;
@@ -414,7 +416,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // V0 candidates histograms
     if(fProcessV0s)
     {
-      TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","DCA to PV","Daughters DCA","Decay radius","Acceptance","Passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
+      TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","DCA to PV","Daughters DCA","Decay radius","Acceptance","Common passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
       const Short_t iNBinsV0sCounter = sizeof(sV0sCounterLabel)/sizeof(sV0sCounterLabel[0]);
       fhV0sCounter = new TH1D("fhV0sCounter","V^{0}: Counter",iNBinsV0sCounter,0,iNBinsV0sCounter);
       for(Short_t i(0); i < iNBinsV0sCounter; i++) fhV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
@@ -438,6 +440,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListV0s->Add(fhV0sCompetingInvMassLambda);
     } // endif {fProcessV0s}
 
+    const Short_t iNBinsPIDstatus = 4;
+    TString sPIDstatus[iNBinsPIDstatus] = {"kDetNoSignal","kDetPidOk","kDetMismatch","kDetNoParams"};
+    const Short_t iNFilterMapBinBins = 32;
+
     // QA histograms
     TString sQAindex[fiNumIndexQA] = {"Before", "After"};
     for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
@@ -457,12 +463,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       // Charged tracks QA
       if(fProcessCharged)
       {
-        const Short_t iNBinsPIDstatus = 4;
-        TString sPIDstatus[iNBinsPIDstatus] = {"kDetNoSignal","kDetPidOk","kDetMismatch","kDetNoParams"};
-
         fhQAChargedMult[iQA] = new TH1D(Form("fhQAChargedMult_%s",sQAindex[iQA].Data()),"QA Charged: Number of Charged in selected events; #it{N}^{Charged}", 1500,0,1500);
         fOutListCharged->Add(fhQAChargedMult[iQA]);
-
         fhQAChargedCharge[iQA] = new TH1D(Form("fhQAChargedCharge_%s",sQAindex[iQA].Data()),"QA Charged: Track charge; charge;", 3,-1.5,1.5);
         fOutListCharged->Add(fhQAChargedCharge[iQA]);
         fhQAChargedPt[iQA] = new TH1D(Form("fhQAChargedPt_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 300,0.,30.);
@@ -471,13 +473,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fOutListCharged->Add(fhQAChargedEta[iQA]);
         fhQAChargedPhi[iQA] = new TH1D(Form("fhQAChargedPhi_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#varphi}; #it{#varphi}", 100,0.,TMath::TwoPi());
         fOutListCharged->Add(fhQAChargedPhi[iQA]);
-
-        const Short_t iNFilterMapBinBins = 32;
         fhQAChargedFilterBit[iQA] = new TH1D(Form("fhQAChargedFilterBit_%s",sQAindex[iQA].Data()), "QA Charged: Filter bit",iNFilterMapBinBins,0,iNFilterMapBinBins);
-        fOutListCharged->Add(fhQAChargedFilterBit[iQA]);
         for(Int_t j = 0x0; j < iNFilterMapBinBins; j++) fhQAChargedFilterBit[iQA]->GetXaxis()->SetBinLabel(j+1, Form("%g",TMath::Power(2,j)));
         fOutListCharged->Add(fhQAChargedFilterBit[iQA]);
-
         fhQAChargedNumTPCcls[iQA] = new TH1D(Form("fhQAChargedNumTPCcls_%s",sQAindex[iQA].Data()),"QA Charged: Track number of TPC clusters; #it{N}^{TPC clusters}", 160,0,160);
         fOutListCharged->Add(fhQAChargedNumTPCcls[iQA]);
         fhQAChargedDCAxy[iQA] = new TH1D(Form("fhQAChargedDCAxy_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-xy; DCA_{#it{xy}} (cm)", 100,0.,10);
@@ -559,6 +557,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fOutListV0s->Add(fhQAV0sDaughterEta[iQA]);
         fhQAV0sDaughterCharge[iQA] = new TH1D(Form("fhQAV0sDaughterCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter charge; daughter charge", 3,-1.5,1.5);
         fOutListV0s->Add(fhQAV0sDaughterCharge[iQA]);
+        fhQAV0sDaughterTPCstatus[iQA] = new TH1D(Form("fhQAV0sDaughterTPCstatus_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: PID status: TPC;", iNBinsPIDstatus,0,iNBinsPIDstatus);
+        fOutListV0s->Add(fhQAV0sDaughterTPCstatus[iQA]);
+        fhQAV0sDaughterTOFstatus[iQA] = new TH1D(Form("fhQAV0sDaughterTOFstatus_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: PID status: TOF;", iNBinsPIDstatus,0,iNBinsPIDstatus);
+        fOutListV0s->Add(fhQAV0sDaughterTOFstatus[iQA]);
         fhQAV0sDaughterTPCdEdxK0s[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
         fOutListV0s->Add(fhQAV0sDaughterTPCdEdxK0s[iQA]);
         fhQAV0sDaughterNumSigmaPionK0s[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: Daughter PID (#pi); #it{p}_{T}^{daughter} (GeV/#it{c}); #pi PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
@@ -573,6 +575,12 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fOutListV0s->Add(fhQAV0sDaughterNumSigmaPionALambda[iQA]);
         fhQAV0sDaughterNumSigmaProtonALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
         fOutListV0s->Add(fhQAV0sDaughterNumSigmaProtonALambda[iQA]);
+
+        for(Int_t j = 0x0; j < iNBinsPIDstatus; j++)
+        {
+          fhQAV0sDaughterTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+          fhQAV0sDaughterTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+        }
       } // endif {fProcessV0s}
     }
 
@@ -1449,7 +1457,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   fhV0sCounter->Fill("Acceptance",1);
 
   // passing all common criteria
-  fhV0sCounter->Fill("Passed",1);
+  fhV0sCounter->Fill("Common passed",1);
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -1568,6 +1576,8 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     fhQAV0sNumTauLambda[iQAindex]->Fill(dPropLifeLambda);
   }
 
+  AliPIDResponse::EDetPidStatus pidStatusTPC;
+  AliPIDResponse::EDetPidStatus pidStatusTOF;
 
   // daughters properties
   AliAODVertex* prodVtxDaughter = 0x0;
@@ -1580,6 +1590,12 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     prodVtxDaughter = (AliAODVertex*) trackDaughter[i]->GetProdVertex();
     fhQAV0sDaughterKinks[iQAindex]->Fill(prodVtxDaughter->GetType() == AliAODVertex::kKink);
 
+    // detector status
+    pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughter[i]);
+    pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, trackDaughter[i]);
+    fhQAV0sDaughterTPCstatus[iQAindex]->Fill((Int_t) pidStatusTPC );
+    fhQAV0sDaughterTOFstatus[iQAindex]->Fill((Int_t) pidStatusTOF );
+
     // daughter kinematics
     fhQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt());
     fhQAV0sDaughterPhi[iQAindex]->Fill(trackDaughter[i]->Phi());
@@ -1589,12 +1605,15 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     fhQAV0sDaughterCharge[iQAindex]->Fill(trackDaughter[i]->Charge());
   }
 
+  AliPIDResponse::EDetPidStatus pidStatusTPCpos;
+  AliPIDResponse::EDetPidStatus pidStatusTPCneg;
+
   // PID checks
   if(fPIDResponse)
   {
     // checking the detector status
-    AliPIDResponse::EDetPidStatus pidStatusTPCpos = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughter[0]);
-    AliPIDResponse::EDetPidStatus pidStatusTPCneg = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughter[1]);
+    pidStatusTPCpos = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughter[0]);
+    pidStatusTPCneg = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughter[1]);
 
     if(pidStatusTPCpos == AliPIDResponse::kDetPidOk && pidStatusTPCneg == AliPIDResponse::kDetPidOk)
     {
