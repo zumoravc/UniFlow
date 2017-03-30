@@ -55,6 +55,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void					          SetV0sOnFly(Bool_t onFly) { fCutV0sOnFly = onFly; }
         void					          SetV0sTPCRefit(Bool_t refit) { fCutV0srefitTPC = refit; }
         void					          SetV0sRejectKinks(Bool_t reject) { fCutV0srejectKinks = reject; }
+        void					          SetV0sUseCrossMassRejection(Bool_t reject) { fCutV0sCrossMassRejection = reject; }
+        void					          SetV0sCrossMassCutK0s(Double_t mass) { fCutV0sCrossMassCutK0s = mass; }
+        void					          SetV0sCrossMassCutLambda(Double_t mass) { fCutV0sCrossMassCutLambda = mass; }
         void					          SetV0sDCAPVMin(Double_t dca) { fCutV0sDCAtoPVMin = dca; }
         void					          SetV0sDCAPVMax(Double_t dca) { fCutV0sDCAtoPVMax = dca; }
         void					          SetV0sDCADaughtersMin(Double_t dca) { fCutV0sDCADaughtersMin = dca; }
@@ -113,6 +116,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
         Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
         Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
+        const Double_t          fV0sPDGMassK0s; // [DPGMass] DPG mass of K0s
+        const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
 
         // selected POIs containers
         TClonesArray*           fArrCharged; //! container for filtered (all) charged tracks
@@ -158,6 +163,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 		    Bool_t 					        fCutV0sOnFly;		// V0 reconstruction method: is On-the-fly? (or offline)
     		Bool_t					        fCutV0srefitTPC; // Check TPC refit of V0 daughters ?
     		Bool_t					        fCutV0srejectKinks; // Reject Kink V0 daughter tracks ?
+    		Bool_t					        fCutV0sCrossMassRejection; // competing V0 rejection based on InvMass
+        Double_t                fCutV0sCrossMassCutK0s; // [0.005] (GeV/c2) InvMass range of cross contamination for K0s candidates
+        Double_t                fCutV0sCrossMassCutLambda; // [0.010] (GeV/c2) InvMass range of cross contamination for (Anti-)Lambda candidates
     		Double_t                fCutV0sDCAtoPVMin;   // (cm) min DCA of V0 daughter to PV
         Double_t				        fCutV0sDCAtoPVMax;	// (cm) max DCA of V0 daughter to PV
   		  Double_t				        fCutV0sDCADaughtersMin;	// (cm) min DCA of V0 daughters among themselves
@@ -192,12 +200,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TList*      fOutListV0s; //! V0s candidates list
 
         // histograms
+        // Events
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection
+        // Charged
         TH1D*           fhChargedCounter; //! counter following charged track selection
+        // V0s
         TH1D*           fhV0sCounter; //! counter following V0s selection
         TH1D*           fhV0sCounterK0s; //! counter following K0s selection
         TH1D*           fhV0sCounterLambda; //! counter following (Anti-)Lambda selection
+        TH2D*           fhV0sCompetingInvMassK0s; //! dist of InvMass of rejected K0s candidates in (Anti-)Lambda peak
+        TH2D*           fhV0sCompetingInvMassLambda; //! dist of InvMass of rejected (Anti-)Lambda candidates in K0s peak
 
         static const Short_t   fiNumIndexQA = 2; // 0: before cuts // 1: after cuts
         // QA: events

@@ -60,6 +60,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fIndexCentrality(0),
   fEventCounter(0),
   fNumEventsAnalyse(50),
+  fV0sPDGMassK0s(TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass()),
+  fV0sPDGMassLambda(TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass()),
+
 
   fRunMode(kFull),
   fAnalType(kAOD),
@@ -100,7 +103,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 
   fCutV0sOnFly(kFALSE),
   fCutV0srejectKinks(kFALSE),
-  fCutV0srefitTPC(kTRUE),
+  fCutV0srefitTPC(kFALSE),
+  fCutV0sCrossMassRejection(kFALSE),
+  fCutV0sCrossMassCutK0s(0.005),
+  fCutV0sCrossMassCutLambda(0.010),
   fCutV0sCPAK0sMin(0.),
   fCutV0sCPALambdaMin(0.),
   fCutV0sDCAtoPVMin(0.),
@@ -144,7 +150,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // V0s histogram
   fhV0sCounter(0x0),
   fhV0sCounterK0s(0x0),
-  fhV0sCounterLambda(0x0)
+  fhV0sCounterLambda(0x0),
+  fhV0sCompetingInvMassK0s(0x0),
+  fhV0sCompetingInvMassLambda(0x0)
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
@@ -158,6 +166,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fIndexCentrality(0),
   fEventCounter(0),
   fNumEventsAnalyse(50),
+  fV0sPDGMassK0s(TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass()),
+  fV0sPDGMassLambda(TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass()),
+
 
   fRunMode(kFull),
   fAnalType(kAOD),
@@ -198,7 +209,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
   fCutV0sOnFly(kFALSE),
   fCutV0srejectKinks(kFALSE),
-  fCutV0srefitTPC(kTRUE),
+  fCutV0srefitTPC(kFALSE),
+  fCutV0sCrossMassRejection(kFALSE),
+  fCutV0sCrossMassCutK0s(0.005),
+  fCutV0sCrossMassCutLambda(0.010),
   fCutV0sCPAK0sMin(0.),
   fCutV0sCPALambdaMin(0.),
   fCutV0sDCAtoPVMin(0.),
@@ -242,7 +256,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // V0s histogram
   fhV0sCounter(0x0),
   fhV0sCounterK0s(0x0),
-  fhV0sCounterLambda(0x0)
+  fhV0sCounterLambda(0x0),
+  fhV0sCompetingInvMassK0s(0x0),
+  fhV0sCompetingInvMassLambda(0x0)
 {
   // QA histograms
   for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
@@ -404,17 +420,22 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       for(Short_t i(0); i < iNBinsV0sCounter; i++) fhV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
       fOutListV0s->Add(fhV0sCounter);
 
-      TString sV0sK0sCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Selected"};
+      TString sV0sK0sCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Competing InvMass","Selected"};
       const Short_t iNBinsV0sK0sCounter = sizeof(sV0sK0sCounterLabel)/sizeof(sV0sK0sCounterLabel[0]);
       fhV0sCounterK0s = new TH1D("fhV0sCounterK0s","V^{0}: K^{0}_{S} Counter",iNBinsV0sK0sCounter,0,iNBinsV0sK0sCounter);
       for(Short_t i(0); i < iNBinsV0sK0sCounter; i++) fhV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sK0sCounterLabel[i].Data() );
       fOutListV0s->Add(fhV0sCounterK0s);
 
-      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Proton PID","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
+      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Competing InvMass","Proton PID","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
       const Short_t iNBinsV0sLambdaCounter = sizeof(sV0sLambdaCounterLabel)/sizeof(sV0sLambdaCounterLabel[0]);
       fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #Lambda/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
       for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
       fOutListV0s->Add(fhV0sCounterLambda);
+
+      fhV0sCompetingInvMassK0s = new TH2D("fhV0sCompetingInvMassK0s","V^{0}: K^{0}_{S}: Competing InvMass rejection; K^{0}_{S} #it{m}_{inv} (GeV/#it{c}^{2}); #Lambda/#bar{#Lambda} #it{m}_{inv} (GeV/#it{c}^{2})", 110,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax, 50,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+      fOutListV0s->Add(fhV0sCompetingInvMassK0s);
+      fhV0sCompetingInvMassLambda = new TH2D("fhV0sCompetingInvMassLambda","V^{0}: #Lambda/#bar{#Lambda}: Competing InvMass rejection; #Lambda/#bar{#Lambda} #it{m}_{inv} (GeV/#it{c}^{2}); K^{0}_{S} #it{m}_{inv} (GeV/#it{c}^{2})", 50,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax, 110,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+      fOutListV0s->Add(fhV0sCompetingInvMassLambda);
     } // endif {fProcessV0s}
 
     // QA histograms
@@ -583,6 +604,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sOnFly: (Bool_t) %s\n",    fCutV0sOnFly ? "kTRUE" : "kFALSE");
   printf("      fCutV0srefitTPC: (Bool_t) %s\n",     fCutV0srefitTPC ? "kTRUE" : "kFALSE");
   printf("      fCutV0srejectKinks: (Bool_t) %s\n",     fCutV0srejectKinks ? "kTRUE" : "kFALSE");
+  printf("      fCutV0sCrossMassRejection: (Bool_t) %s\n",     fCutV0sCrossMassRejection ? "kTRUE" : "kFALSE");
   printf("      fCutV0sDCAtoPVMin: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVMin);
   printf("      fCutV0sDCAtoPVMax: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVMax);
   printf("      fCutV0sDCADaughtersMin: (Double_t) %g (cm)\n",    fCutV0sDCADaughtersMin);
@@ -1163,8 +1185,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
     for(Int_t i(0); i < 2; i++)
       dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
 
-    Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
-    Double_t dPropLife = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    Double_t dPropLife = ( (fV0sPDGMassK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     if( dPropLife > (fCutV0sNumTauK0sMax * 2.68) ) return kFALSE;
   }
   fhV0sCounterK0s->Fill("c#tau",1);
@@ -1186,6 +1207,29 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   Double_t dMass = v0->MassK0Short();
   if( dMass < fCutV0sInvMassK0sMin || dMass > fCutV0sInvMassK0sMax ) return kFALSE;
   fhV0sCounterK0s->Fill("InvMass",1);
+
+  // competing V0 rejection based on InvMass
+  if(fCutV0sCrossMassRejection)
+  {
+    Double_t dMassLambda = v0->MassLambda();
+    Double_t dMassALambda = v0->MassAntiLambda();
+
+    // K0s candidate is within 10 MeV of (Anti)Lambda InvMass physSelTask
+    if(TMath::Abs(dMassLambda - fV0sPDGMassLambda) < fCutV0sCrossMassCutK0s)
+    {
+      // in Lambda peak
+      fhV0sCompetingInvMassK0s->Fill(dMass,dMassLambda);
+      return kFALSE;
+    }
+
+    if(TMath::Abs(dMassALambda - fV0sPDGMassLambda) < fCutV0sCrossMassCutK0s)
+    {
+      // in Anti-Lambda peak
+      fhV0sCompetingInvMassK0s->Fill(dMass,dMassALambda);
+      return kFALSE;
+    }
+  }
+  fhV0sCounterK0s->Fill("Competing InvMass",1);
 
   // passing all criteria
   fhV0sCounterK0s->Fill("Selected",1);
@@ -1226,8 +1270,7 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
     for(Int_t i(0); i < 2; i++)
       dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
 
-    Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
-    Double_t dPropLife = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    Double_t dPropLife = ( (fV0sPDGMassLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     if( dPropLife > (fCutV0sNumTauLambdaMax * 7.89) ) return 0;
   }
   fhV0sCounterLambda->Fill("c#tau",1);
@@ -1268,6 +1311,25 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
     if(v0->AlphaV0() < 0.) bIsLambda = kFALSE;
     if(v0->AlphaV0() > 0.) bIsALambda = kFALSE;
   }
+
+  // competing V0 rejection based on InvMass
+  if(fCutV0sCrossMassRejection)
+  {
+    Double_t dMassK0s = v0->MassK0Short();
+    if( TMath::Abs(dMassK0s - fV0sPDGMassK0s) < fCutV0sCrossMassCutLambda)
+    {
+      // Lambda candidate is within 5 MeV of K0s InvMass physSelTask
+
+      Double_t dMass = 0;
+      if(bIsLambda) dMass = dMassLambda;
+      if(bIsALambda) dMass = dMassALambda;
+
+      fhV0sCompetingInvMassLambda->Fill(dMass,dMassK0s);
+      return kFALSE;
+    }
+  }
+  fhV0sCounterLambda->Fill("Competing InvMass",1);
+
 
   // proton PID of Lambda Candidates
   if( (fCutV0sProtonNumSigmaMax > 0.) && (fCutV0sProtonPIDPtMax > 0. || fCutV0sProtonPIDPtMin > 0.) && fPIDResponse)
