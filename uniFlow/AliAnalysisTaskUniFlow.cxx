@@ -1262,6 +1262,13 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
     return 0;
   fhV0sCounterLambda->Fill("InvMass",1);
 
+  // Armenteros-Podolanski for candidates fullfilling both Lambda and Anti-Lambda selection
+  if(bIsLambda && bIsALambda)
+  {
+    if(v0->AlphaV0() < 0.) bIsLambda = kFALSE;
+    if(v0->AlphaV0() > 0.) bIsALambda = kFALSE;
+  }
+
   // proton PID of Lambda Candidates
   if( (fCutV0sProtonNumSigmaMax > 0.) && (fCutV0sProtonPIDPtMax > 0. || fCutV0sProtonPIDPtMin > 0.) && fPIDResponse)
   {
