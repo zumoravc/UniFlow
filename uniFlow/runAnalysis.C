@@ -87,7 +87,8 @@ void runAnalysis()
     task1->SetColisionSystem(kPP);
     task1->SetPeriod(k16l);
     task1->SetSampling(kFALSE);
-    task1->SetProcessCharged(kFALSE);
+    task1->SetProcessCharged(kTRUE);
+    // task1->SetProcessPID(kTRUE);
     task1->SetProcessV0s(kTRUE);
 
     //task1->SetPeriod10h(kFALSE);

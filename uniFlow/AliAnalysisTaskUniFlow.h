@@ -188,6 +188,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // output lists
         TList*      fOutListEvents; //! events list
         TList*      fOutListCharged; //! charged tracks list
+        TList*      fOutListPID; //! pi,K,p list
         TList*      fOutListV0s; //! V0s candidates list
 
         // histograms
