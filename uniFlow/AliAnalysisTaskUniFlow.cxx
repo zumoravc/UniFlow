@@ -271,11 +271,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
     // V0s
   	fhQAV0sRecoMethod[iQA] = 0x0;
-		fhQAV0sTPCRefit[iQA] = 0x0;
-		fhQAV0sKinks[iQA] = 0x0;
 		fhQAV0sDCAtoPV[iQA] = 0x0;
 		fhQAV0sDCADaughters[iQA] = 0x0;
 		fhQAV0sDecayRadius[iQA] = 0x0;
+    fhQAV0sDaughterTPCRefit[iQA] = 0x0;
+    fhQAV0sDaughterKinks[iQA] = 0x0;
     fhQAV0sDaughterPt[iQA] = 0x0;
 		fhQAV0sDaughterPhi[iQA] = 0x0;
 		fhQAV0sDaughterEta[iQA] = 0x0;
@@ -410,7 +410,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       for(Short_t i(0); i < iNBinsV0sK0sCounter; i++) fhV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sK0sCounterLabel[i].Data() );
       fOutListV0s->Add(fhV0sCounterK0s);
 
-      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Proton PID","Selected","#Lambda","#bar{#Lambda}","#Lambda && #bar{#Lambda}"};
+      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Proton PID","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
       const Short_t iNBinsV0sLambdaCounter = sizeof(sV0sLambdaCounterLabel)/sizeof(sV0sLambdaCounterLabel[0]);
       fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #Lambda/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
       for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
@@ -486,14 +486,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(1, "offline");
         fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
         fOutListV0s->Add(fhQAV0sRecoMethod[iQA]);
-        fhQAV0sTPCRefit[iQA] = new TH1D(Form("fhQAV0sTPCRefit_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: TPC refit", 2,-0.5,1.5);
-        fhQAV0sTPCRefit[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODTrack::kTPCrefit");
-        fhQAV0sTPCRefit[iQA]->GetXaxis()->SetBinLabel(2, "AliAODTrack::kTPCrefit");
-        fOutListV0s->Add(fhQAV0sTPCRefit[iQA]);
-        fhQAV0sKinks[iQA] = new TH1D(Form("fhQAV0sKinks_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Kinks", 2,-0.5,1.5);
-        fhQAV0sKinks[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
-        fhQAV0sKinks[iQA]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
-        fOutListV0s->Add(fhQAV0sKinks[iQA]);
         fhQAV0sDCAtoPV[iQA] = new TH1D(Form("fhQAV0sDCAtoPV_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter DCA to PV; daughter DCA^{PV} (cm)", 200,0.,20.);
         fOutListV0s->Add(fhQAV0sDCAtoPV[iQA]);
         fhQAV0sDCADaughters[iQA] = new TH1D(Form("fhQAV0sDCADaughters_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: DCA among daughters; DCA^{daughters} (cm)", 200,0.,20.);
@@ -530,6 +522,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fOutListV0s->Add(fhQAV0sMotherRapK0s[iQA]);
         fhQAV0sMotherRapLambda[iQA] = new TH1D(Form("fhQAV0sMotherRapLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo); #it{y}^{V0,#Lambda}", 301,-3.,3.);
         fOutListV0s->Add(fhQAV0sMotherRapLambda[iQA]);
+        fhQAV0sDaughterTPCRefit[iQA] = new TH1D(Form("fhQAV0sDaughterTPCRefit_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter TPC refit", 2,-0.5,1.5);
+        fhQAV0sDaughterTPCRefit[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODTrack::kTPCrefit");
+        fhQAV0sDaughterTPCRefit[iQA]->GetXaxis()->SetBinLabel(2, "AliAODTrack::kTPCrefit");
+        fOutListV0s->Add(fhQAV0sDaughterTPCRefit[iQA]);
+        fhQAV0sDaughterKinks[iQA] = new TH1D(Form("fhQAV0sDaughterKinks_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter Kinks", 2,-0.5,1.5);
+        fhQAV0sDaughterKinks[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
+        fhQAV0sDaughterKinks[iQA]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
+        fOutListV0s->Add(fhQAV0sDaughterKinks[iQA]);
         fhQAV0sDaughterPt[iQA] = new TH1D(Form("fhQAV0sDaughterPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{p}_{T}; #it{p}_{T}^{daughter} (GeV/#it{c})", 200,0.,20.);
         fOutListV0s->Add(fhQAV0sDaughterPt[iQA]);
         fhQAV0sDaughterPhi[iQA] = new TH1D(Form("fhQAV0sDaughterPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#varphi}; #it{#varphi}^{daughter} (GeV/#it{c})", 100,0.,TMath::TwoPi());
@@ -1108,7 +1108,9 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
     {
       bIsK0s = IsV0aK0s(v0);
       bIsLambda = IsV0aLambda(v0);
-      FillQAV0s(1,v0,bIsK0s,bIsLambda); // QA AFTER selection
+
+      if(bIsK0s || bIsLambda != 0)
+        FillQAV0s(1,v0,bIsK0s,bIsLambda); // QA AFTER selection
 
       if(bIsK0s)
       {
@@ -1295,13 +1297,13 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
 
   if(bIsLambda) // only Lambda
   {
-    fhV0sCounterLambda->Fill("#Lambda",1);
+    fhV0sCounterLambda->Fill("only #Lambda",1);
     return 1;
   }
 
   if(bIsALambda) // only Anti-Lambda
   {
-    fhV0sCounterLambda->Fill("#bar{#Lambda}",1);
+    fhV0sCounterLambda->Fill("only #bar{#Lambda}",1);
     return -1;
   }
 
@@ -1501,11 +1503,11 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
   for(Short_t i(0); i < 2; i++)
   {
     // TPC refit
-    fhQAV0sTPCRefit[iQAindex]->Fill(trackDaughter[i]->IsOn(AliAODTrack::kTPCrefit));
+    fhQAV0sDaughterTPCRefit[iQAindex]->Fill(trackDaughter[i]->IsOn(AliAODTrack::kTPCrefit));
 
     // kinks
     prodVtxDaughter = (AliAODVertex*) trackDaughter[i]->GetProdVertex();
-    fhQAV0sKinks[iQAindex]->Fill(prodVtxDaughter->GetType() == AliAODVertex::kKink);
+    fhQAV0sDaughterKinks[iQAindex]->Fill(prodVtxDaughter->GetType() == AliAODVertex::kKink);
 
     // daughter kinematics
     fhQAV0sDaughterPt[iQAindex]->Fill(trackDaughter[i]->Pt());
