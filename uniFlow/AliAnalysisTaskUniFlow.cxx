@@ -1695,30 +1695,13 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillRFPsVector()
 {
-  // Filling Q flow vector with REFs
+  // Filling Q flow vector with RFPs
   // *************************************************************
 
-  // clearing output (global) flowvector
-
-  //testing
-  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
-  {
-    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
-    {
-      fFlowVecQpos[iHarm][iPower] = TComplex(3*iHarm+1,TMath::Power(2,iPower+1),kFALSE);
-    }
-  }
-
-  ListFlowVector(fFlowVecQpos);
+  // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecQpos);
-  ListFlowVector(fFlowVecQpos);
-
-  printf("==================================\n");
-  printf("==================================\n");
-
-  return;
-
-
+  ResetFlowVector(fFlowVecQneg);
+  
   const Short_t iNumHarmonics = 2;
   const Short_t iNumWeightPower = 1;
 
@@ -1726,7 +1709,6 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
 
   Double_t dQcos[iNumHarmonics][iNumWeightPower] = {0};
   Double_t dQsin[iNumHarmonics][iNumWeightPower] = {0};
-  //TComplex vecQ[iNumHarmonics][iNumWeightPower];
 
   const Int_t iNumTracks = fArrCharged->GetEntriesFast();
 
