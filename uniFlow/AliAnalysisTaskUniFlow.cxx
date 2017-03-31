@@ -1689,16 +1689,6 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   FillRFPsVector();
   FillPOIsVectors();
 
-  // list vectors
-  // printf("=============== Listing Q (part %d) =================\n",fArrCharged->GetEntriesFast());
-  // for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
-  // {
-  //   for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
-  //   {
-  //     printf("harm: %d / power: %d  |%g+i%g\n",iHarm,iPower,fFlowVecQ[iHarm][iPower].Re(),fFlowVecQ[iHarm][iPower].Im());
-  //   }
-  // }
-
   fEventCounter++; // counter of processed events
   return kTRUE;
 }
@@ -1709,14 +1699,24 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
   // *************************************************************
 
   // clearing output (global) flowvector
+
+  //testing
   for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
   {
     for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
     {
-      fFlowVecQpos[iHarm][iPower] = TComplex(0,0,kFALSE);
-      fFlowVecQneg[iHarm][iPower] = TComplex(0,0,kFALSE);
+      fFlowVecQpos[iHarm][iPower] = TComplex(3*iHarm+1,TMath::Power(2,iPower+1),kFALSE);
     }
   }
+
+  ListFlowVector(fFlowVecQpos);
+  ResetFlowVector(fFlowVecQpos);
+  ListFlowVector(fFlowVecQpos);
+
+  printf("==================================\n");
+  printf("==================================\n");
+
+  return;
 
 
   const Short_t iNumHarmonics = 2;
@@ -1764,6 +1764,33 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors()
   // Filling p and q flow vectors with POIs for differential flow calculation
   // *************************************************************
 
+  return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
+{
+  // Reset array values to TComplex(0,0,kFALSE) for given array
+  // *************************************************************
+  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
+    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
+      array[iHarm][iPower] = TComplex(0,0,kFALSE);
+  return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
+{
+  // List all values of given flow vector TComplex array
+  // *************************************************************
+  printf(" ### Listing (TComplex) flow vector array ###########################\n");
+  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
+  {
+    printf("Harm %d (power):",iHarm);
+    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
+    {
+        printf("|(%d) %g+%g(i)",iPower, array[iHarm][iPower].Re(), array[iHarm][iPower].Im());
+    }
+    printf("\n");
+  }
   return;
 }
 //_____________________________________________________________________________

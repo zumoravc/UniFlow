@@ -85,6 +85,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void					          SetV0sProtonPIDPtMax(Double_t pt) { fCutV0sProtonPIDPtMax = pt; }
 
     private:
+        static const Short_t    fFlowNumHarmonicsMax = 3; // maximum harmonics length of flow vector array
+        static const Short_t    fFlowNumWeightPowersMax = 3; // maximum weight power length of flow vector array
+        static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
+
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
         void                    ListParameters(); // list all task parameters
 
@@ -109,6 +113,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // Flow related methods
         void                    FillRFPsVector(); // fill flow vector Q with RFPs for reference flow
         void                    FillPOIsVectors(); // fill flow vectors p and q with POIs for differential flow
+        void                    ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
+        void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
         TComplex                Q(Short_t n, Short_t p);
         TComplex                QGapPos(Short_t n, Short_t p);
         TComplex                QGapNeg(Short_t n, Short_t p);
@@ -116,7 +122,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TComplex                PGapPos(Short_t n, Short_t p);
         TComplex                PGapNeg(Short_t n, Short_t p);
         TComplex                S(Short_t n, Short_t p);
-        
+
         // properties
         AliAODEvent*            fEventAOD; //! AOD event countainer
         AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
@@ -128,8 +134,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         const Double_t          fV0sPDGMassK0s; // [DPGMass] DPG mass of K0s
         const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
 
-        static const Short_t    fFlowNumHarmonicsMax = 10; // maximum harmonics length of flow vector array
-        static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
         TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
         TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
         TComplex                fFlowVecPpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
@@ -229,7 +233,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH2D*           fhV0sCompetingInvMassK0s; //! dist of InvMass of rejected K0s candidates in (Anti-)Lambda peak
         TH2D*           fhV0sCompetingInvMassLambda; //! dist of InvMass of rejected (Anti-)Lambda candidates in K0s peak
 
-        static const Short_t   fiNumIndexQA = 2; // 0: before cuts // 1: after cuts
         // QA: events
         TH1D*           fhQAEventsPVz[fiNumIndexQA]; //!
         TH1D*           fhQAEventsNumContrPV[fiNumIndexQA]; //!
