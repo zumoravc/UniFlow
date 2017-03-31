@@ -52,7 +52,7 @@ class AliAnalysisTaskUniFlow;
 
 ClassImp(AliAnalysisTaskUniFlow); // classimp: necessary for root
 
-Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2};
+Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2,3};
 Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {-1.,0.,0.8};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
@@ -304,9 +304,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
   // Flow profiles & histograms
   for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
-  {
-    fcn2Tracks[iGap] = 0x0;
-  }
+    for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+    {
+      fcn2Tracks[iGap][iHarm] = 0x0;
+    }
 
   // QA histograms
   for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
@@ -455,10 +456,12 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // flow histograms & profiles
     Double_t dCentEdges[] = {0,50,100,150};
     for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
-    {
-      fcn2Tracks[iGap] = new TProfile(Form("fcn2Tracks_gap%g",fEtaGap[iGap]),Form("Ref: <<2>> (Gap %g); centrality/multiplicity;",fEtaGap[iGap]), 3,dCentEdges);
-      fOutListFlow->Add(fcn2Tracks[iGap]);
-    }
+      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      {
+        fcn2Tracks[iGap][iHarm] = new TProfile(Form("fcn2Tracks_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]),Form("Ref: <<2>> (Gap %g | Harm %d); centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm]), 3,dCentEdges);
+        fcn2Tracks[iGap][iHarm]->Sumw2(kTRUE);
+        fOutListFlow->Add(fcn2Tracks[iGap][iHarm]);
+      }
 
     // charged (tracks) histograms
     if(fProcessCharged)
@@ -1750,6 +1753,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   TComplex vector;
   Float_t dEtaGap = -1;
+  Short_t iHarmonics = 2;
   Double_t dValue = 0;
   Double_t Dn2 = 0;
 
@@ -1758,31 +1762,42 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
     dEtaGap = fEtaGap[iGap];
     if(!FillRFPsVector(dEtaGap)) return kFALSE;
 
-    // once filled loop over harmonics can start
-
-    if(dEtaGap== -1)
+    if(dEtaGap == -1)
     {
       Dn2 = Two(0,0).Re(); // multiplicity of RFPs
-      vector = Two(2,-2);
     }
     else
     {
       Dn2 = TwoGap(0,0).Re();
-      vector = TwoGap(2,-2);
     }
 
-    printf("Gap: %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n",dEtaGap,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
+    // once filled loop over harmonics can start
+    if(Dn2 != 0)
+    {
+      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      {
+        iHarmonics = fHarmonics[iHarm];
+
+        if(dEtaGap == -1)
+        {
+          vector = Two(iHarmonics,-iHarmonics);
+        }
+        else
+        {
+          vector = TwoGap(iHarmonics,-iHarmonics);
+        }
+
+        //..v2{2} = <cos2(phi1 - phi2)>
+        dValue = vector.Re()/Dn2;
+        printf("dValue %g\n",dValue);
+        if( TMath::Abs(dValue < 1) )
+          fcn2Tracks[iGap][iHarm]->Fill(fIndexCentrality, dValue, Dn2);
+        printf("Gap: %g Harm %d | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n", dEtaGap,iHarmonics,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
+      }
+    }
 
     // Filling profile
     // v2{2}
-    if(Dn2 != 0)
-    {
-      //..v2{2} = <cos2(phi1 - phi2)>
-      dValue = vector.Re()/Dn2;
-      printf("dValue %g\n",dValue);
-      if( TMath::Abs(dValue < 1) )
-        fcn2Tracks[iGap]->Fill(fIndexCentrality, dValue, Dn2);
-    }
 
   } // endfor {iGap} // loop over gaps
 

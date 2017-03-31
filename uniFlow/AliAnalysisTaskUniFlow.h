@@ -96,7 +96,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
         static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
-        const static Int_t      fNumHarmonics = 1; // number of harmonics
+        const static Int_t      fNumHarmonics = 2; // number of harmonics
         static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
         const static Int_t      fNumEtaGap = 3; // number of harmonics
         static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
@@ -240,7 +240,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // histograms & profiles
 
         // Flow
-        TProfile*       fcn2Tracks[fNumEtaGap]; //! testing cumulant for c2{2}
+        TProfile*       fcn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for c2{2}
         // Events
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection
