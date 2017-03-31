@@ -169,7 +169,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fV0sPDGMassK0s(TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass()),
   fV0sPDGMassLambda(TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass()),
 
-
   fRunMode(kFull),
   fAnalType(kAOD),
   fColSystem(kPP),
@@ -260,6 +259,20 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhV0sCompetingInvMassK0s(0x0),
   fhV0sCompetingInvMassLambda(0x0)
 {
+  // Flow vectors
+  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
+  {
+    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
+    {
+      fFlowVecQpos[iHarm][iPower] = TComplex(0,0,kFALSE);
+      fFlowVecQneg[iHarm][iPower] = TComplex(0,0,kFALSE);
+      fFlowVecPpos[iHarm][iPower] = TComplex(0,0,kFALSE);
+      fFlowVecPneg[iHarm][iPower] = TComplex(0,0,kFALSE);
+      fFlowVecS[iHarm][iPower] = TComplex(0,0,kFALSE);
+    }
+  }
+
+
   // QA histograms
   for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
   {
@@ -370,7 +383,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   if(fProcessCharged)
   {
-
     fArrCharged = new TClonesArray("AliAODTrack",10000);
     fArrChargedRPF = new TClonesArray("AliAODTrack",10000);
     fArrChargedPOI = new TClonesArray("AliAODTrack",10000);
@@ -378,7 +390,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   if(fProcessPID)
   {
-
     fArrPion = new TClonesArray("AliAODTrack",5000);
     fArrKaon = new TClonesArray("AliAODTrack",5000);
     fArrProton = new TClonesArray("AliAODTrack",5000);
@@ -386,7 +397,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   if(fProcessV0s)
   {
-
     fArrK0s = new TClonesArray("AliAODv0",5000);
     fArrLambda = new TClonesArray("AliAODv0",5000);
     fArrALambda = new TClonesArray("AliAODv0",5000);
@@ -1679,6 +1689,16 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   FillRFPsVector();
   FillPOIsVectors();
 
+  // list vectors
+  // printf("=============== Listing Q (part %d) =================\n",fArrCharged->GetEntriesFast());
+  // for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
+  // {
+  //   for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
+  //   {
+  //     printf("harm: %d / power: %d  |%g+i%g\n",iHarm,iPower,fFlowVecQ[iHarm][iPower].Re(),fFlowVecQ[iHarm][iPower].Im());
+  //   }
+  // }
+
   fEventCounter++; // counter of processed events
   return kTRUE;
 }
@@ -1687,6 +1707,18 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
 {
   // Filling Q flow vector with REFs
   // *************************************************************
+
+  // clearing output (global) flowvector
+  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
+  {
+    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
+    {
+      fFlowVecQpos[iHarm][iPower] = TComplex(0,0,kFALSE);
+      fFlowVecQneg[iHarm][iPower] = TComplex(0,0,kFALSE);
+    }
+  }
+
+
   const Short_t iNumHarmonics = 2;
   const Short_t iNumWeightPower = 1;
 
@@ -1694,7 +1726,7 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
 
   Double_t dQcos[iNumHarmonics][iNumWeightPower] = {0};
   Double_t dQsin[iNumHarmonics][iNumWeightPower] = {0};
-  TComplex vecQ[iNumHarmonics][iNumWeightPower];
+  //TComplex vecQ[iNumHarmonics][iNumWeightPower];
 
   const Int_t iNumTracks = fArrCharged->GetEntriesFast();
 
@@ -1720,7 +1752,7 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
   {
     for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
     {
-      vecQ[iHarm][iPower] = TComplex(dQcos[iHarm][iPower],dQsin[iHarm][iPower],kFALSE);
+      fFlowVecQpos[iHarm][iPower] = TComplex(dQcos[iHarm][iPower],dQsin[iHarm][iPower],kFALSE);
     } // endfor {iPower}
   } // endfor {iHarm}
 
@@ -1806,3 +1838,134 @@ void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
 
   return;
 }
+//_____________________________________________________________________________
+// Set of methods returning given complex flow vector based on flow harmonics (n) and weight power indexes (p)
+// a la General Framework implementation.
+// Q: flow vector of RFPs (with/out eta gap)
+// P: flow vector of POIs (with/out eta gap) (in usual notation p)
+// S: flow vector of overlaping RFPs and POIs (in usual notation q)
+
+TComplex AliAnalysisTaskUniFlow::Q(Short_t n, Short_t p)
+{
+  if (n < 0) return TComplex::Conjugate(fFlowVecQpos[-n][p]);
+  else return fFlowVecQpos[n][p];
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::QGapPos(Short_t n, Short_t p)
+{
+  if (n < 0) return TComplex::Conjugate(fFlowVecQpos[-n][p]);
+  else return fFlowVecQpos[n][p];
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::QGapNeg(Short_t n, Short_t p)
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecQneg[-n][p]);
+  else return fFlowVecQneg[n][p];
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::P(Short_t n, Short_t p)
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecPpos[-n][p]);
+  else return fFlowVecPpos[n][p];
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::PGapPos(Short_t n, Short_t p)
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecPpos[-n][p]);
+  else return fFlowVecPpos[n][p];
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::PGapNeg(Short_t n, Short_t p)
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecPneg[-n][p]);
+  else return fFlowVecPneg[n][p];
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::S(Short_t n, Short_t p)
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecS[-n][p]);
+  else return fFlowVecS[n][p];
+}
+//____________________________________________________________________
+
+// // Set of flow calculation methods for cumulants of different orders with/out eta gap
+//
+//
+// TComplex* AliAnalysisTaskUniFlow::Two(int n1, int n2)
+// {
+//   TComplex formula = Q(n1,1)*Q(n2,1) - Q(n1+n2,2);
+//   TComplex *out = (TComplex*) &formula;
+//   return out;
+// }
+// //____________________________________________________________________
+// TComplex* AliAnalysisTaskUniFlow::TwoGap(int n1, int n2)
+// {
+//   TComplex formula = QGapPos(n1,1)*QGapNeg(n2,1);
+//   TComplex *out = (TComplex*) &formula;
+//   return out;
+// }
+// //____________________________________________________________________
+// TComplex* AliAnalysisTaskUniFlow::TwoDiff(int n1, int n2)
+// {
+//
+//   TComplex formula = P(n1,1)*Q(n2,1) - S(n1+n2,1);
+//   TComplex *out = (TComplex*) &formula;
+//   return out;
+// }
+// //____________________________________________________________________
+// TComplex* AliAnalysisTaskUniFlow::TwoDiffGapPos(int n1, int n2)
+// {
+//
+//   TComplex formula = PGapPos(n1,1)*QGapNeg(n2,1);
+//   TComplex *out = (TComplex*) &formula;
+//   return out;
+// }
+// //____________________________________________________________________
+// TComplex* AliAnalysisTaskUniFlow::TwoDiffGapNeg(int n1, int n2)
+// {
+//
+//   TComplex formula = PGapNeg(n1,1)*QGapPos(n2,1);
+//   TComplex *out = (TComplex*) &formula;
+//   return out;
+// }
+// //____________________________________________________________________
+// TComplex* AliAnalysisTaskUniFlow::Four(int n1, int n2, int n3, int n4)
+// {
+//
+//   TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-Q(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*Q(n1+n3,2)*Q(n4,1)
+//                     - Q(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.*Q(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*Q(n1+n4,2)
+//                     + Q(n2+n3,2)*Q(n1+n4,2)-Q(n1,1)*Q(n3,1)*Q(n2+n4,2)+Q(n1+n3,2)*Q(n2+n4,2)
+//                     + 2.*Q(n3,1)*Q(n1+n2+n4,3)-Q(n1,1)*Q(n2,1)*Q(n3+n4,2)+Q(n1+n2,2)*Q(n3+n4,2)
+//                     + 2.*Q(n2,1)*Q(n1+n3+n4,3)+2.*Q(n1,1)*Q(n2+n3+n4,3)-6.*Q(n1+n2+n3+n4,4);
+//   TComplex *out = (TComplex*) &formula;
+//   return out;
+//
+// }
+// //____________________________________________________________________
+// TComplex* AliAnalysisTaskUniFlow::FourGap(int n1, int n2, int n3, int n4)
+// {
+//
+//   TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-Q(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*Q(n1+n3,2)*Q(n4,1)
+//                     - Q(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.*Q(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*Q(n1+n4,2)
+//                     + Q(n2+n3,2)*Q(n1+n4,2)-Q(n1,1)*Q(n3,1)*Q(n2+n4,2)+Q(n1+n3,2)*Q(n2+n4,2)
+//                     + 2.*Q(n3,1)*Q(n1+n2+n4,3)-Q(n1,1)*Q(n2,1)*Q(n3+n4,2)+Q(n1+n2,2)*Q(n3+n4,2)
+//                     + 2.*Q(n2,1)*Q(n1+n3+n4,3)+2.*Q(n1,1)*Q(n2+n3+n4,3)-6.*Q(n1+n2+n3+n4,4);
+//   TComplex *out = (TComplex*) &formula;
+//   return out;
+//
+// }
+// //____________________________________________________________________
+// TComplex* AliAnalysisTaskUniFlow::FourDiff(int n1, int n2, int n3, int n4)
+// {
+//
+//
+//   TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-S(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*S(n1+n3,2)*Q(n4,1)
+//                     - P(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.*S(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*S(n1+n4,2)
+//                     + Q(n2+n3,2)*S(n1+n4,2)-P(n1,1)*Q(n3,1)*Q(n2+n4,2)+S(n1+n3,2)*Q(n2+n4,2)
+//                     + 2.*Q(n3,1)*S(n1+n2+n4,3)-P(n1,1)*Q(n2,1)*Q(n3+n4,2)+S(n1+n2,2)*Q(n3+n4,2)
+//                     + 2.*Q(n2,1)*S(n1+n3+n4,3)+2.*P(n1,1)*Q(n2+n3+n4,3)-6.*S(n1+n2+n3+n4,4);
+//   TComplex *out = (TComplex*) &formula;
+//   return out;
+//
+// }
+// //____________________________________________________________________

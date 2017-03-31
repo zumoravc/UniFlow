@@ -91,6 +91,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
         Bool_t                  IsEventSelected_2016(); // event selection for LHC2016 pp & pPb data
         void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
+        Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
+        Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
 
         Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
 
@@ -104,13 +106,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
         Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
         void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
-
+        // Flow related methods
         void                    FillRFPsVector(); // fill flow vector Q with RFPs for reference flow
         void                    FillPOIsVectors(); // fill flow vectors p and q with POIs for differential flow
-
-        Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
-        Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
-
+        TComplex                Q(Short_t n, Short_t p);
+        TComplex                QGapPos(Short_t n, Short_t p);
+        TComplex                QGapNeg(Short_t n, Short_t p);
+        TComplex                P(Short_t n, Short_t p);
+        TComplex                PGapPos(Short_t n, Short_t p);
+        TComplex                PGapNeg(Short_t n, Short_t p);
+        TComplex                S(Short_t n, Short_t p);
+        
         // properties
         AliAODEvent*            fEventAOD; //! AOD event countainer
         AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
@@ -121,6 +127,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
         const Double_t          fV0sPDGMassK0s; // [DPGMass] DPG mass of K0s
         const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
+
+        static const Short_t    fFlowNumHarmonicsMax = 10; // maximum harmonics length of flow vector array
+        static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
+        TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+        TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+        TComplex                fFlowVecPpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+        TComplex                fFlowVecPneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+        TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
 
         // selected POIs containers
         TClonesArray*           fArrCharged; //! container for filtered (all) charged tracks
