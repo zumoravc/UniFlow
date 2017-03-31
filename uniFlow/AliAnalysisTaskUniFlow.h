@@ -90,11 +90,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
     private:
         // array lenghts & constants
+        const Double_t          fV0sPDGMassK0s; // [DPGMass] DPG mass of K0s
+        const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
         static const Short_t    fFlowNumHarmonicsMax = 10; // maximum harmonics length of flow vector array
         static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
         static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
-        const Double_t          fV0sPDGMassK0s; // [DPGMass] DPG mass of K0s
-        const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
+
+        const static Int_t      fNumHarmonics = 1; // number of harmonics
+        static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
+        const static Int_t      fNumEtaGap = 3; // number of harmonics
+        static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
 
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
         void                    ListParameters(); // list all task parameters
@@ -118,8 +123,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
         void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
         // Flow related methods
-        Bool_t                  FillRFPsVector(); // fill flow vector Q with RFPs for reference flow
-        Bool_t                  FillPOIsVectors(); // fill flow vectors p and q with POIs for differential flow
+        Bool_t                  FillRFPsVector(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
+        Bool_t                  FillPOIsVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs for differential flow
         void                    ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
         void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
 
@@ -132,6 +137,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TComplex                S(Short_t n, Short_t p);
 
         TComplex                Two(Short_t n1, Short_t n2); // Two particle reference correlation calculations (no eta gap)
+        TComplex                TwoGap(Short_t n1, Short_t n2); // Two particle reference correlation calculations (with eta gap)
 
         // properties
         AliAODEvent*            fEventAOD; //! AOD event countainer
@@ -234,7 +240,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // histograms & profiles
 
         // Flow
-        TProfile*       fcn2Tracks; //! testing cumulant for c2{2}
+        TProfile*       fcn2Tracks[fNumEtaGap]; //! testing cumulant for c2{2}
         // Events
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection

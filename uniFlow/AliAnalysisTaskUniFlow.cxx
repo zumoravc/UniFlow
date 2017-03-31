@@ -50,7 +50,10 @@
 
 class AliAnalysisTaskUniFlow;
 
-ClassImp(AliAnalysisTaskUniFlow) // classimp: necessary for root
+ClassImp(AliAnalysisTaskUniFlow); // classimp: necessary for root
+
+Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2};
+Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {-1.,0.,0.8};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventAOD(0x0),
@@ -151,7 +154,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fOutListV0s(0x0),
 
   // flow histograms & profiles
-  fcn2Tracks(0x0),
+  // fcn2Tracks(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -270,7 +273,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fOutListV0s(0x0),
 
   // flow histograms & profiles
-  fcn2Tracks(0x0),
+  // fcn2Tracks(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -299,6 +302,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     }
   }
 
+  // Flow profiles & histograms
+  for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+  {
+    fcn2Tracks[iGap] = 0x0;
+  }
 
   // QA histograms
   for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
@@ -446,8 +454,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     // flow histograms & profiles
     Double_t dCentEdges[] = {0,50,100,150};
-    fcn2Tracks = new TProfile("fcn2Tracks","Ref: <<2>>; centrality/multiplicity;", 3,dCentEdges);
-    fOutListFlow->Add(fcn2Tracks);
+    for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+    {
+      fcn2Tracks[iGap] = new TProfile(Form("fcn2Tracks_gap%g",fEtaGap[iGap]),Form("Ref: <<2>> (Gap %g); centrality/multiplicity;",fEtaGap[iGap]), 3,dCentEdges);
+      fOutListFlow->Add(fcn2Tracks[iGap]);
+    }
 
     // charged (tracks) histograms
     if(fProcessCharged)
@@ -1731,36 +1742,64 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
 
-  // Filling flow vectors
-  if(!FillRFPsVector()) return kFALSE;
-  if(!FillPOIsVectors()) return kFALSE;
+  // Reference Flow
+  // Filling ref. flow vectors
+
 
   printf("===========\n");
-  Double_t Dn2 = Two(0,0).Re(); // multiplicity of RFPs
-  printf("Dn2: %g\n",Dn2);
-  printf("fFlowVecQpos[0][0]: %g | fIndexCentrality %d\n",fFlowVecQpos[0][0].Re(),fIndexCentrality);
 
   TComplex vector;
+  Float_t dEtaGap = -1;
   Double_t dValue = 0;
-  if(Dn2 != 0)
+  Double_t Dn2 = 0;
+
+  for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
   {
-    //..v2{2} = <cos2(phi1 - phi2)>
-    vector = Two(2,-2);
-    dValue = vector.Re()/Dn2;
-    printf("dValue %g\n",dValue);
-    if( TMath::Abs(dValue < 1) )
-      fcn2Tracks->Fill(fIndexCentrality, dValue, Dn2);
-  }
+    dEtaGap = fEtaGap[iGap];
+    if(!FillRFPsVector(dEtaGap)) return kFALSE;
+
+    // once filled loop over harmonics can start
+
+    if(dEtaGap== -1)
+    {
+      Dn2 = Two(0,0).Re(); // multiplicity of RFPs
+      vector = Two(2,-2);
+    }
+    else
+    {
+      Dn2 = TwoGap(0,0).Re();
+      vector = TwoGap(2,-2);
+    }
+
+    printf("Gap: %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n",dEtaGap,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
+
+    // Filling profile
+    // v2{2}
+    if(Dn2 != 0)
+    {
+      //..v2{2} = <cos2(phi1 - phi2)>
+      dValue = vector.Re()/Dn2;
+      printf("dValue %g\n",dValue);
+      if( TMath::Abs(dValue < 1) )
+        fcn2Tracks[iGap]->Fill(fIndexCentrality, dValue, Dn2);
+    }
+
+  } // endfor {iGap} // loop over gaps
+
+
+  // if(!FillPOIsVectors()) return kFALSE;
 
   fEventCounter++; // counter of processed events
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::FillRFPsVector()
+Bool_t AliAnalysisTaskUniFlow::FillRFPsVector(const Float_t dEtaGap)
 {
   // Filling Q flow vector with RFPs
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
+
+  printf("EtaGap %g\n", dEtaGap);
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecQpos);
@@ -1777,8 +1816,10 @@ Bool_t AliAnalysisTaskUniFlow::FillRFPsVector()
 
   const Double_t dWeight = 1.;  // for generic framework != 1
 
-  Double_t dQcos[iNumHarmonics][iNumWeightPower] = {0};
-  Double_t dQsin[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dQcosPos[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dQcosNeg[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dQsinPos[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dQsinNeg[iNumHarmonics][iNumWeightPower] = {0};
 
   const Int_t iNumTracks = fArrCharged->GetEntriesFast();
 
@@ -1795,17 +1836,48 @@ Bool_t AliAnalysisTaskUniFlow::FillRFPsVector()
     if(fCutFlowRFPsPtMax > 0. && track->Pt() > fCutFlowRFPsPtMax)
         continue;
 
-    // TODO: track selection based on eta maybe for gaps
-
     // RPF candidate passing all criteria: start filling flow vectors
-    for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+
+    if(dEtaGap > -1) // with eta gap case
     {
-      for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+      // printf("EtaGap %g applied (eta cut %g)\n",dEtaGap,dEtaGap/2);
+      if(track->Eta() > dEtaGap/2 )
       {
-        dQcos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * track->Phi());
-        dQsin[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * track->Phi());
-      } // endfor {iPower}
-    } // endfor {iHarm}
+        // RFP in positive eta acceptance
+        for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+        {
+          for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+          {
+            dQcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * track->Phi());
+            dQsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * track->Phi());
+          } // endfor {iPower}
+        } // endfor {iHarm}
+      }
+      if(track->Eta() < -dEtaGap/2 )
+      {
+        // RFP in negative eta acceptance
+        for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+        {
+          for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+          {
+            dQcosNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * track->Phi());
+            dQsinNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * track->Phi());
+          } // endfor {iPower}
+        } // endfor {iHarm}
+      }
+    }
+    else // without eta gap case
+    {
+      for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+      {
+        for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+        {
+          dQcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * track->Phi());
+          dQsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * track->Phi());
+        } // endfor {iPower}
+      } // endfor {iHarm}
+    } // endelse {dEtaGap}
+
   } // endfor {tracks}
 
   // pushing filling results to global flow vector arrays
@@ -1813,14 +1885,16 @@ Bool_t AliAnalysisTaskUniFlow::FillRFPsVector()
   {
     for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
     {
-      fFlowVecQpos[iHarm][iPower] = TComplex(dQcos[iHarm][iPower],dQsin[iHarm][iPower],kFALSE);
+      fFlowVecQpos[iHarm][iPower] = TComplex(dQcosPos[iHarm][iPower],dQsinPos[iHarm][iPower],kFALSE);
+      if(dEtaGap > -1)
+        fFlowVecQneg[iHarm][iPower] = TComplex(dQcosNeg[iHarm][iPower],dQsinNeg[iHarm][iPower],kFALSE);
     } // endfor {iPower}
   } // endfor {iHarm}
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::FillPOIsVectors()
+Bool_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Float_t dEtaGap)
 {
   // Filling p and q flow vectors with POIs for differential flow calculation
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
@@ -1984,14 +2058,13 @@ TComplex AliAnalysisTaskUniFlow::Two(Short_t n1, Short_t n2)
   TComplex formula = Q(n1,1)*Q(n2,1) - Q(n1+n2,2);
   return formula;
 }
-// //____________________________________________________________________
-// TComplex* AliAnalysisTaskUniFlow::TwoGap(int n1, int n2)
-// {
-//   TComplex formula = QGapPos(n1,1)*QGapNeg(n2,1);
-//   TComplex *out = (TComplex*) &formula;
-//   return out;
-// }
-// //____________________________________________________________________
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::TwoGap(Short_t n1, Short_t n2)
+{
+  TComplex formula = QGapPos(n1,1)*QGapNeg(n2,1);
+  return formula;
+}
+//____________________________________________________________________
 // TComplex* AliAnalysisTaskUniFlow::TwoDiff(int n1, int n2)
 // {
 //
