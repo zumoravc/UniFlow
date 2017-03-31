@@ -79,20 +79,23 @@ void runAnalysis()
     gROOT->LoadMacro("AddTaskUniFlow.C"); // load the addtask macro
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
-    // tracks & event selection cuts
+    // Analysis
     task1->SetRunMode(kFull);
     task1->SetNumEventsAnalyse(10);
-    task1->SetTrigger(0);
     task1->SetAnalysisType(kAOD);
-    task1->SetColisionSystem(kPP);
-    task1->SetPeriod(k16l);
     task1->SetSampling(kFALSE);
     task1->SetProcessCharged(kTRUE);
     // task1->SetProcessPID(kTRUE);
     task1->SetProcessV0s(kTRUE);
-
-    //task1->SetPeriod10h(kFALSE);
+    // Flow
+    task1->SetFlowRFPsPtMin(0.2);
+    task1->SetFlowRFPsPtMax(5.);
+    // Events selection
+    task1->SetTrigger(0);
+    task1->SetColisionSystem(kPP);
+    task1->SetPeriod(k16l);
     task1->SetPVtxZMax(10);
+    // Charged selection
     task1->SetChargedEtaMax(0.8);
     // task1->SetChargedPtMin(0.2);
     // task1->SetChargedPtMax(5.);

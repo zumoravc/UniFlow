@@ -144,10 +144,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sProtonPIDPtMax(0.),
 
   // output lists
+  fOutListFlow(0x0),
   fOutListEvents(0x0),
   fOutListCharged(0x0),
   fOutListPID(0x0),
   fOutListV0s(0x0),
+
+  // flow histograms & profiles
+  fcn2Tracks(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -259,10 +263,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sProtonPIDPtMax(0.),
 
   // output lists
+  fOutListFlow(0x0),
   fOutListEvents(0x0),
   fOutListCharged(0x0),
   fOutListPID(0x0),
   fOutListV0s(0x0),
+
+  // flow histograms & profiles
+  fcn2Tracks(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -360,6 +368,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   DefineOutput(2, TList::Class());
   DefineOutput(3, TList::Class());
   DefineOutput(4, TList::Class());
+  DefineOutput(5, TList::Class());
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
@@ -371,6 +380,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   // }
 
   // deleting output lists
+  if(fOutListFlow) delete fOutListFlow;
   if(fOutListEvents) delete fOutListEvents;
   if(fOutListCharged) delete fOutListCharged;
   if(fOutListPID) delete fOutListPID;
@@ -391,6 +401,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   if(!fInit) return;
 
   // creating arrays for particles and output
+  fOutListFlow = new TList();
+  fOutListFlow->SetOwner(kTRUE);
   fOutListEvents = new TList();
   fOutListEvents->SetOwner(kTRUE);
   fOutListCharged = new TList();
@@ -431,6 +443,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fhEventCounter = new TH1D("fhEventCounter","Event Counter",iEventCounterBins,0,iEventCounterBins);
     for(Short_t i(0); i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fOutListEvents->Add(fhEventCounter);
+
+    // flow histograms & profiles
+    Double_t dCentEdges[] = {0,50,100,150};
+    fcn2Tracks = new TProfile("fcn2Tracks","Ref: <<2>>; centrality/multiplicity;", 3,dCentEdges);
+    fOutListFlow->Add(fcn2Tracks);
 
     // charged (tracks) histograms
     if(fProcessCharged)
@@ -614,10 +631,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     }
 
   // posting data (mandatory)
-  PostData(1, fOutListEvents);
-  PostData(2, fOutListCharged);
-  PostData(3, fOutListPID);
-  PostData(4, fOutListV0s);
+  PostData(1, fOutListFlow);
+  PostData(2, fOutListEvents);
+  PostData(3, fOutListCharged);
+  PostData(4, fOutListPID);
+  PostData(5, fOutListV0s);
 
   return;
 }
@@ -777,10 +795,11 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(!ProcessEvent()) return;
 
   // posting data (mandatory)
-  PostData(1, fOutListEvents);
-  PostData(2, fOutListCharged);
-  PostData(3, fOutListPID);
-  PostData(4, fOutListV0s);
+  PostData(1, fOutListFlow);
+  PostData(2, fOutListEvents);
+  PostData(3, fOutListCharged);
+  PostData(4, fOutListPID);
+  PostData(5, fOutListV0s);
 
   return;
 }
@@ -1707,28 +1726,54 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   }
 
   // at this point, all particles fullfiling relevant POIs (and REFs) criteria are filled in TClonesArrays
+  fIndexCentrality = fArrCharged->GetEntriesFast();
+
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
 
   // Filling flow vectors
-  FillRFPsVector();
-  FillPOIsVectors();
+  if(!FillRFPsVector()) return kFALSE;
+  if(!FillPOIsVectors()) return kFALSE;
+
+  printf("===========\n");
+  Double_t Dn2 = Two(0,0).Re(); // multiplicity of RFPs
+  printf("Dn2: %g\n",Dn2);
+  printf("fFlowVecQpos[0][0]: %g | fIndexCentrality %d\n",fFlowVecQpos[0][0].Re(),fIndexCentrality);
+
+  TComplex vector;
+  Double_t dValue = 0;
+  if(Dn2 != 0)
+  {
+    //..v2{2} = <cos2(phi1 - phi2)>
+    vector = Two(2,-2);
+    dValue = vector.Re()/Dn2;
+    printf("dValue %g\n",dValue);
+    if( TMath::Abs(dValue < 1) )
+      fcn2Tracks->Fill(fIndexCentrality, dValue, Dn2);
+  }
 
   fEventCounter++; // counter of processed events
   return kTRUE;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillRFPsVector()
+Bool_t AliAnalysisTaskUniFlow::FillRFPsVector()
 {
   // Filling Q flow vector with RFPs
+  // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecQpos);
   ResetFlowVector(fFlowVecQneg);
 
-  const Short_t iNumHarmonics = 2;
-  const Short_t iNumWeightPower = 1;
+  const Short_t iNumHarmonics = 5;
+  const Short_t iNumWeightPower = 5; // cumulant order +1
+
+  if(iNumHarmonics > fFlowNumHarmonicsMax || iNumWeightPower > fFlowNumWeightPowersMax)
+  {
+    ::Error("FillRefFlowVectors","Harmonics or weight power overflow array!");
+    return kFALSE;
+  }
 
   const Double_t dWeight = 1.;  // for generic framework != 1
 
@@ -1752,6 +1797,7 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
 
     // TODO: track selection based on eta maybe for gaps
 
+    // RPF candidate passing all criteria: start filling flow vectors
     for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
     {
       for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
@@ -1762,6 +1808,7 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
     } // endfor {iHarm}
   } // endfor {tracks}
 
+  // pushing filling results to global flow vector arrays
   for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
   {
     for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
@@ -1770,15 +1817,16 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
     } // endfor {iPower}
   } // endfor {iHarm}
 
-  return;
+  return kTRUE;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillPOIsVectors()
+Bool_t AliAnalysisTaskUniFlow::FillPOIsVectors()
 {
   // Filling p and q flow vectors with POIs for differential flow calculation
+  // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
 
-  return;
+  return kTRUE;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
@@ -1929,15 +1977,13 @@ TComplex AliAnalysisTaskUniFlow::S(Short_t n, Short_t p)
 }
 //____________________________________________________________________
 
-// // Set of flow calculation methods for cumulants of different orders with/out eta gap
-//
-//
-// TComplex* AliAnalysisTaskUniFlow::Two(int n1, int n2)
-// {
-//   TComplex formula = Q(n1,1)*Q(n2,1) - Q(n1+n2,2);
-//   TComplex *out = (TComplex*) &formula;
-//   return out;
-// }
+// Set of flow calculation methods for cumulants of different orders with/out eta gap
+
+TComplex AliAnalysisTaskUniFlow::Two(Short_t n1, Short_t n2)
+{
+  TComplex formula = Q(n1,1)*Q(n2,1) - Q(n1+n2,2);
+  return formula;
+}
 // //____________________________________________________________________
 // TComplex* AliAnalysisTaskUniFlow::TwoGap(int n1, int n2)
 // {
