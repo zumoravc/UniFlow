@@ -63,18 +63,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fV0sPDGMassK0s(TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass()),
   fV0sPDGMassLambda(TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass()),
 
-
-  fRunMode(kFull),
-  fAnalType(kAOD),
-  fColSystem(kPP),
-  fPeriod(kNon),
-  fTrigger(0),
-  fSampling(kFALSE),
-  fNumSamples(10),
-  fProcessCharged(kFALSE),
-  fProcessPID(kFALSE),
-  fProcessV0s(kFALSE),
-
   fArrCharged(0x0),
   fArrChargedRPF(0x0),
   fArrChargedPOI(0x0),
@@ -85,15 +73,35 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fArrLambda(0x0),
   fArrALambda(0x0),
 
+  // analysis selection
+  fRunMode(kFull),
+  fAnalType(kAOD),
+  fSampling(kFALSE),
+  fNumSamples(10),
+  fProcessCharged(kFALSE),
+  fProcessPID(kFALSE),
+  fProcessV0s(kFALSE),
+
+  // flow related selection
+  fCutFlowRFPsPtMin(0),
+  fCutFlowRFPsPtMax(0),
+
+  // events selection
   fPVtxCutZ(0.),
+  fColSystem(kPP),
+  fPeriod(kNon),
+  fTrigger(0),
+
+  // charged tracks selection
   fCutChargedEtaMax(0),
   fCutChargedPtMax(0),
   fCutChargedPtMin(0),
   fCutChargedDCAzMax(0),
   fCutChargedDCAxyMax(0),
-  fCutChargedNumTPCclsMin(0),
   fCutChargedTrackFilterBit(0),
+  fCutChargedNumTPCclsMin(0),
 
+  // PID tracks selection
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
@@ -101,6 +109,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutBayesPIDKaonMin(0),
   fCutBayesPIDProtonMin(0),
 
+  // V0s selection
   fCutV0sOnFly(kFALSE),
   fCutV0srejectKinks(kFALSE),
   fCutV0srefitTPC(kFALSE),
@@ -169,17 +178,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fV0sPDGMassK0s(TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass()),
   fV0sPDGMassLambda(TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass()),
 
-  fRunMode(kFull),
-  fAnalType(kAOD),
-  fColSystem(kPP),
-  fPeriod(kNon),
-  fTrigger(0),
-  fSampling(kFALSE),
-  fNumSamples(10),
-  fProcessCharged(kFALSE),
-  fProcessPID(kFALSE),
-  fProcessV0s(kFALSE),
-
   fArrCharged(0x0),
   fArrChargedRPF(0x0),
   fArrChargedPOI(0x0),
@@ -190,7 +188,26 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fArrLambda(0x0),
   fArrALambda(0x0),
 
+  // analysis selection
+  fRunMode(kFull),
+  fAnalType(kAOD),
+  fSampling(kFALSE),
+  fNumSamples(10),
+  fProcessCharged(kFALSE),
+  fProcessPID(kFALSE),
+  fProcessV0s(kFALSE),
+
+  // flow related selection
+  fCutFlowRFPsPtMin(0),
+  fCutFlowRFPsPtMax(0),
+
+  // events selection
   fPVtxCutZ(0.),
+  fColSystem(kPP),
+  fPeriod(kNon),
+  fTrigger(0),
+
+  // charged tracks selection
   fCutChargedEtaMax(0),
   fCutChargedPtMax(0),
   fCutChargedPtMin(0),
@@ -199,6 +216,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutChargedTrackFilterBit(0),
   fCutChargedNumTPCclsMin(0),
 
+  // PID tracks selection
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
@@ -206,6 +224,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutBayesPIDKaonMin(0),
   fCutBayesPIDProtonMin(0),
 
+  // V0s selection
   fCutV0sOnFly(kFALSE),
   fCutV0srejectKinks(kFALSE),
   fCutV0srefitTPC(kFALSE),
@@ -711,6 +730,12 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   fNumSamples = 1;
 
   // checking cut setting
+  ::Info("InitializeTask","Checking task parameters setting conflicts (ranges, etc)");
+  if(fCutFlowRFPsPtMin > 0. && fCutFlowRFPsPtMax > 0. && fCutFlowRFPsPtMin > fCutFlowRFPsPtMax)
+  {
+    ::Error("InitializeTask","Cut: RFPs Pt range wrong!");
+    return kFALSE;
+  }
   if(fCutV0sInvMassK0sMin > fCutV0sInvMassK0sMax || fCutV0sInvMassK0sMin < 0. || fCutV0sInvMassK0sMax < 0.)
   {
     ::Error("InitializeTask","Cut: InvMass (K0s) range wrong!");
@@ -1701,7 +1726,7 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecQpos);
   ResetFlowVector(fFlowVecQneg);
-  
+
   const Short_t iNumHarmonics = 2;
   const Short_t iNumWeightPower = 1;
 
@@ -1718,7 +1743,14 @@ void AliAnalysisTaskUniFlow::FillRFPsVector()
     track = static_cast<AliAODTrack*>(fArrCharged->At(i));
     if(!track) continue;
 
-    // TODO: track selection based on PT (and eta maybe for gaps)
+    // RFPs pT check
+    if(fCutFlowRFPsPtMin > 0. && track->Pt() < fCutFlowRFPsPtMin)
+      continue;
+
+    if(fCutFlowRFPsPtMax > 0. && track->Pt() > fCutFlowRFPsPtMax)
+        continue;
+
+    // TODO: track selection based on eta maybe for gaps
 
     for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
     {

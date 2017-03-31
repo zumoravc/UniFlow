@@ -22,18 +22,22 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         virtual void            UserCreateOutputObjects(); //
         virtual void            UserExec(Option_t* option); // main methond - called for each event
         virtual void            Terminate(Option_t* option); // called after all events are processed
-        // analysis & event setters
+        // analysis setters
         void                    SetRunMode(RunMode mode = kFull) { fRunMode = mode; }
         void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
-        void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
         void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
-        void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
-        void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
         void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
         void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; }
         void                    SetProcessCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
         void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
         void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
+        // flow related setters
+        void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
+        void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
+        // events setters
+        void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
+        void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
+        void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
         void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
         // track setters
         void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
@@ -85,9 +89,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void					          SetV0sProtonPIDPtMax(Double_t pt) { fCutV0sProtonPIDPtMax = pt; }
 
     private:
+        // array lenghts & constants
         static const Short_t    fFlowNumHarmonicsMax = 3; // maximum harmonics length of flow vector array
         static const Short_t    fFlowNumWeightPowersMax = 3; // maximum weight power length of flow vector array
         static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
+        const Double_t          fV0sPDGMassK0s; // [DPGMass] DPG mass of K0s
+        const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
 
         Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
         void                    ListParameters(); // list all task parameters
@@ -131,8 +138,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
         Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
         Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
-        const Double_t          fV0sPDGMassK0s; // [DPGMass] DPG mass of K0s
-        const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
 
         TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
         TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
@@ -154,18 +159,20 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         //cuts & selection: analysis
         RunMode                 fRunMode; // running mode (not grid related)
         AnalType                fAnalType; // analysis type: AOD / ESD
-        ColSystem               fColSystem; // collisional system
-        DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
         Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
-        Short_t                 fTrigger; // physics selection trigger
         Short_t                 fNumSamples; // overall number of samples (from random sampling) used
         Bool_t                  fProcessCharged; // flag for processing charged tracks (both RPF and POIs)
         Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
         Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
-
-        //cuts & selection: events & tracks
+        // cuts & selection: flow related
+        Float_t                 fCutFlowRFPsPtMin; // (GeV/c) min pT treshold for RFPs particle for reference flow
+        Float_t                 fCutFlowRFPsPtMax; // (GeV/c) max pT treshold for RFPs particle for reference flow
+        //cuts & selection: events
+        ColSystem               fColSystem; // collisional system
+        DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
+        Short_t                 fTrigger; // physics selection trigger
         Float_t                 fPVtxCutZ;          // (cm) PV z cut
-
+        //cuts & selection: tracks
         UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
         UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
         Float_t                 fCutChargedEtaMax; // (-) Maximum pseudorapidity range
