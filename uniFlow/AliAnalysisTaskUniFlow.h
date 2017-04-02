@@ -34,6 +34,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // flow related setters
         void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
         void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
+        void                    SetFlowChargedPtMin(Float_t pt) { fCutFlowChargedPtMin = pt; }
+        void                    SetFlowChargedPtMax(Float_t pt) { fCutFlowChargedPtMax = pt; }
         // events setters
         void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
         void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
@@ -123,8 +125,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
         void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
         // Flow related methods
-        Bool_t                  FillRFPsVector(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
-        Bool_t                  FillPOIsVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs for differential flow
+        Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
+        Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs for differential flow
         void                    ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
         void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
 
@@ -174,8 +176,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
         Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
         // cuts & selection: flow related
-        Float_t                 fCutFlowRFPsPtMin; // (GeV/c) min pT treshold for RFPs particle for reference flow
-        Float_t                 fCutFlowRFPsPtMax; // (GeV/c) max pT treshold for RFPs particle for reference flow
+        Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
+        Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
+        Float_t                 fCutFlowChargedPtMin; // [0] (GeV/c) min pT treshold for charged tracks (POIs) for differential flow
+        Float_t                 fCutFlowChargedPtMax; // [20] (GeV/c) max pT treshold for charged tracks (POIs) for differential flow
         //cuts & selection: events
         ColSystem               fColSystem; // collisional system
         DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
@@ -241,6 +245,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
         // Flow
         TProfile*       fcn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for c2{2}
+        TProfile*       fdn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for d2{2}
         // Events
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection
