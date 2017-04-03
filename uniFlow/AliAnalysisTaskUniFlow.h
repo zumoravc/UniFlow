@@ -132,6 +132,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
         Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs for differential flow
         void                    DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
+        void                    DoFlowCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2> for reference flow
 
         TComplex                Q(Short_t n, Short_t p);
         TComplex                QGapPos(Short_t n, Short_t p);
