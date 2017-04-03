@@ -1912,9 +1912,10 @@ Bool_t AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
   ResetFlowVector(fFlowVecQpos);
   ResetFlowVector(fFlowVecQneg);
 
-  const Short_t iNumHarmonics = 5; // TODO ???
-  const Short_t iNumWeightPower = 5; // cumulant order +1
+  const Short_t iNumHarmonics = fFlowNumHarmonicsMax;
+  const Short_t iNumWeightPower = fFlowNumWeightPowersMax;
 
+  // Currently redundant / TODO: implement based on orders and stuff of interest
   if(iNumHarmonics > fFlowNumHarmonicsMax || iNumWeightPower > fFlowNumWeightPowersMax)
   {
     ::Error("FillRefsVectors","Harmonics or weight power overflow array!");
@@ -2001,9 +2002,10 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectors(const Float_t dEtaGap, const S
   ResetFlowVector(fFlowVecPneg);
   ResetFlowVector(fFlowVecS);
 
-  const Short_t iNumHarmonics = 5; // TODO???
-  const Short_t iNumWeightPower = 5; // cumulant order +1
+  const Short_t iNumHarmonics = fFlowNumHarmonicsMax;
+  const Short_t iNumWeightPower = fFlowNumWeightPowersMax;
 
+  // Currently redundant / TODO: implement based on orders and stuff of interest
   if(iNumHarmonics > fFlowNumHarmonicsMax || iNumWeightPower > fFlowNumWeightPowersMax)
   {
     ::Error("FillChargedVectors","Harmonics or weight power overflow array!");
