@@ -286,6 +286,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH2D*           fhQAChargedTPCdEdx[fiNumIndexQA];    //! TPC PID information
         TH2D*           fhQAChargedTOFbeta[fiNumIndexQA];    //! TOF PID information
         // QA: V0s candidates
+        TH1D*			  		fhQAV0sMultK0s[fiNumIndexQA];	//! number of K0s candidates 
+        TH1D*			  		fhQAV0sMultLambda[fiNumIndexQA];	//! number of Lambda/Anti-Lambda candidates
         TH1D*			  		fhQAV0sRecoMethod[fiNumIndexQA];	//! offline/online V0 reconstruction method
         TH1D*			  		fhQAV0sDaughterTPCRefit[fiNumIndexQA];	//! Daughters TPC refit true/false
         TH1D*			  		fhQAV0sDaughterKinks[fiNumIndexQA];	//! Daughters kinks true/false

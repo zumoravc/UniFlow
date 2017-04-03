@@ -341,6 +341,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fhQAChargedTOFbeta[iQA] = 0x0;
 
     // V0s
+    fhQAV0sMultK0s[iQA] = 0x0;
+    fhQAV0sMultLambda[iQA] = 0x0;
   	fhQAV0sRecoMethod[iQA] = 0x0;
 		fhQAV0sDCAtoPV[iQA] = 0x0;
 		fhQAV0sDCADaughters[iQA] = 0x0;
@@ -574,6 +576,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       // V0s QA
       if(fProcessV0s)
       {
+        fhQAV0sMultK0s[iQA] = new TH1D(Form("fhQAV0sMultK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of K^{0}_{S} candidates", 1000,0,1000);
+        fOutListV0s->Add(fhQAV0sMultK0s[iQA]);
+        fhQAV0sMultLambda[iQA] = new TH1D(Form("fhQAV0sMultLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #Lambda/#bar{#Lambda} candidates", 1000,0,1000);
+        fOutListV0s->Add(fhQAV0sMultLambda[iQA]);
         fhQAV0sRecoMethod[iQA] = new TH1D(Form("fhQAV0sRecoMethod_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Reconstruction method", 2,-0.5,1.5);
         fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(1, "offline");
         fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
@@ -1247,6 +1253,12 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
         fhV0sCounter->Fill("K^{0}_{S} && #Lambda/#bar{#Lambda}",1);
     }
   }
+
+  // fill QA charged multiplicity
+  fhQAV0sMultK0s[0]->Fill(fEventAOD->GetNumberOfV0s());
+  fhQAV0sMultK0s[1]->Fill(fArrK0s->GetEntriesFast());
+  fhQAV0sMultLambda[0]->Fill(fEventAOD->GetNumberOfV0s());
+  fhQAV0sMultLambda[1]->Fill(fArrLambda->GetEntriesFast());
 
   return kTRUE;
 }
