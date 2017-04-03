@@ -673,6 +673,11 @@ void AliAnalysisTaskUniFlow::ListParameters()
   // *************************************************************
   printf("\n======= List of parameters ========================================\n");
   printf("   -------- Analysis task ---------------------------------------\n");
+  printf("   -------- Flow related ----------------------------------------\n");
+  printf("      fCutFlowRFPsPtMin: (Float_t) %g (GeV/c)\n",    fCutFlowRFPsPtMin);
+  printf("      fCutFlowRFPsPtMax: (Float_t) %g (GeV/c)\n",    fCutFlowRFPsPtMax);
+  printf("      fCutFlowChargedPtMin: (Float_t) %g (GeV/c)\n",    fCutFlowChargedPtMin);
+  printf("      fCutFlowChargedPtMax: (Float_t) %g (GeV/c)\n",    fCutFlowChargedPtMax);
   printf("   -------- Events ----------------------------------------------\n");
   printf("   -------- Charge tracks ---------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
