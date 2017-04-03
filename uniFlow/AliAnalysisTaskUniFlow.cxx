@@ -1783,7 +1783,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
     // Reference (pT integrated) flow
     if(!DoFlowRefs(iGap))
     {
-      Error("ProcessEvent","DoFlowRefs not succesfull (Flow vectors not filled)!");
+      Error("ProcessEvent","DoFlowRefs not succesfull!");
       return kFALSE;
     }
 
@@ -1795,10 +1795,20 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
         // charged track flow
         if(!DoFlowCharged(iGap,iPt))
         {
-          Error("ProcessEvent","DoFlowCharged not succesfull (Flow vectors not filled)!");
+          Error("ProcessEvent","DoFlowCharged not succesfull!");
           return kFALSE;
         }
-      } // endif {fProcessCharged} charged tracks
+      }
+
+      if(fProcessV0s)
+      {
+        // V0s (K0s, Lambda/ALambda) flow
+        if(!DoFlowV0s(iGap,iPt))
+        {
+          Error("ProcessEvent","DoFlowV0s not succesfull!");
+          return kFALSE;
+        }
+      }
     } // endfor {iPt} pT bins
   } // endfor {iGap} eta gaps
 
@@ -1916,6 +1926,22 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex, const S
           fdn2Tracks[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
       }
   } // endif {dEtaGap}
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t DoFlowV0s(const Short_t iEtaGapIndex, const Short_t iPtIndex)
+{
+  // Estimate <2> for pT diff flow of V0s for all harmonics based on relevant flow vectors
+  // return kTRUE if succesfull, kFALSE otherwise
+  // *************************************************************
+
+  // filling POIs (P,S) flow vectors
+  if(!FillChargedVectors(dEtaGap,iPtIndex))
+  {
+    Error("DoFlowV0s","V0s flow vectors not filled properly!");
+    return kFALSE;
+  }
+
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -2104,6 +2130,19 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectors(const Float_t dEtaGap, const S
     }
 
   // printf("POIs charged EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Float_t dEtaGap, const Short_t iPtIndex)
+{
+  // Filling p and q flow vectors with V0s (POIs) for differential flow calculation
+  // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
+  // *************************************************************
+  // clearing output (global) flow vectors
+  ResetFlowVector(fFlowVecPpos);
+  ResetFlowVector(fFlowVecPneg);
+  ResetFlowVector(fFlowVecS);
+
   return kTRUE;
 }
 //_____________________________________________________________________________

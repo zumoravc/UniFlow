@@ -128,9 +128,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
         // Flow related methods
         Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
-        Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2> for reference flow
+        Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
+        Bool_t                  DoV0sCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of V0 particles
         Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
-        Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs for differential flow
+        Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (charged tracks) for differential flow
+        Bool_t                  FillV0sVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (V0s) for differential flow
         void                    ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
         void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
 
@@ -286,7 +288,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         TH2D*           fhQAChargedTPCdEdx[fiNumIndexQA];    //! TPC PID information
         TH2D*           fhQAChargedTOFbeta[fiNumIndexQA];    //! TOF PID information
         // QA: V0s candidates
-        TH1D*			  		fhQAV0sMultK0s[fiNumIndexQA];	//! number of K0s candidates 
+        TH1D*			  		fhQAV0sMultK0s[fiNumIndexQA];	//! number of K0s candidates
         TH1D*			  		fhQAV0sMultLambda[fiNumIndexQA];	//! number of Lambda/Anti-Lambda candidates
         TH1D*			  		fhQAV0sRecoMethod[fiNumIndexQA];	//! offline/online V0 reconstruction method
         TH1D*			  		fhQAV0sDaughterTPCRefit[fiNumIndexQA];	//! Daughters TPC refit true/false
