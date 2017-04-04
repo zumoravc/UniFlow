@@ -26,6 +26,7 @@
 
 #include "TChain.h"
 #include "TH1D.h"
+#include "TH2D.h"
 #include "TH3D.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
@@ -310,16 +311,19 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
   // Flow profiles & histograms
   for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+  {
+    fh3V0sEntriesK0s[iGap] = 0x0;
+    fh3V0sEntriesLambda[iGap] = 0x0;
+
     for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
     {
       fcn2Tracks[iGap][iHarm] = 0x0;
       fdn2Tracks[iGap][iHarm] = 0x0;
 
       fp3V0sCorrK0s[iGap][iHarm] = 0x0;
-      fp3V0sEntriesK0s[iGap][iHarm] = 0x0;
       fp3V0sCorrLambda[iGap][iHarm] = 0x0;
-      fp3V0sEntriesLambda[iGap][iHarm] = 0x0;
     }
+  }
 
   // QA histograms
   for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
@@ -470,6 +474,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // flow histograms & profiles
     Double_t dCentEdges[] = {0,50,100,150};
     for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+    {
       for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
       {
         fcn2Tracks[iGap][iHarm] = new TProfile(Form("fcn2Tracks_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]),Form("Ref: <<2>> (Gap %g | Harm %d); centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm]), 3,dCentEdges);
@@ -485,20 +490,25 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
         if(fProcessV0s)
         {
-          fp3V0sEntriesK0s[iGap][iHarm] = new TProfile3D(Form("fp3V0sEntriesK0s_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]), Form("K_{S}^{0}: Distribution (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), 150,0,150, 200,0,20, 30,0.4,0.6);
-          fp3V0sEntriesK0s[iGap][iHarm]->Sumw2();
-          fOutListFlow->Add(fp3V0sEntriesK0s[iGap][iHarm]);
           fp3V0sCorrK0s[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrK0s_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]), Form("K_{S}^{0}: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), 150,0,150, 200,0,20, 30,0.4,0.6);
           fp3V0sCorrK0s[iGap][iHarm]->Sumw2();
           fOutListFlow->Add(fp3V0sCorrK0s[iGap][iHarm]);
-          fp3V0sEntriesLambda[iGap][iHarm] = new TProfile3D(Form("fp3V0sEntriesLambda_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]), Form("#Lambda/#bar{#Lambda}: Distribution (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), 150,0,150, 200,0,20, 30,1.08,1.16);
-          fp3V0sEntriesLambda[iGap][iHarm]->Sumw2();
-          fOutListFlow->Add(fp3V0sEntriesLambda[iGap][iHarm]);
           fp3V0sCorrLambda[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrLambda_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]), Form("#Lambda/#bar{#Lambda}: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), 150,0,150, 200,0,20, 30,1.08,1.16);
           fp3V0sCorrLambda[iGap][iHarm]->Sumw2();
           fOutListFlow->Add(fp3V0sCorrLambda[iGap][iHarm]);
         }
       }
+
+      if(fProcessV0s)
+      {
+        fh3V0sEntriesK0s[iGap] = new TH3D(Form("fh3V0sEntriesK0s_gap%g",fEtaGap[iGap]), Form("K_{S}^{0}: Distribution (Gap %g); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap]), 150,0,150, 200,0,20, 30,0.4,0.6);
+        fh3V0sEntriesK0s[iGap]->Sumw2();
+        fOutListFlow->Add(fh3V0sEntriesK0s[iGap]);
+        fh3V0sEntriesLambda[iGap] = new TH3D(Form("fh3V0sEntriesLambda_gap%g",fEtaGap[iGap]), Form("#Lambda/#bar{#Lambda}: Distribution (Gap %g); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap]), 150,0,150, 200,0,20, 30,1.08,1.16);
+        fh3V0sEntriesLambda[iGap]->Sumw2();
+        fOutListFlow->Add(fh3V0sEntriesLambda[iGap]);
+      }
+    }
 
     // charged (tracks) histograms
     if(fProcessCharged)
@@ -1961,7 +1971,7 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
 
   // filling POIs (P,S) flow vectors
-  if(!FillV0sVectors(dEtaGap,iPtIndex))
+  if(!FillV0sVectors(iEtaGapIndex,iPtIndex))
   {
     Error("DoFlowV0s","V0s flow vectors not filled properly!");
     return kFALSE;
@@ -2158,14 +2168,14 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectors(const Float_t dEtaGap, const S
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Float_t dEtaGap, const Short_t iPtIndex)
+Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Short_t iEtaGapIndex, const Short_t iPtIndex)
 {
   // Filling p and q flow vectors with V0s (POIs) for differential flow calculation
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
 
   // TODO!!!! Implemented for K0s only so far ...
-
+  const Double_t dEtaGap = fEtaGap[iEtaGapIndex];
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecPpos);
@@ -2204,6 +2214,7 @@ Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Float_t dEtaGap, const Short
     // POIs candidate passing all criteria: start filling flow vectors
     if(dEtaGap == -1) // no eta gap
     {
+      fh3V0sEntriesK0s[iEtaGapIndex]->Fill(fIndexCentrality,v0->Pt(),v0->MassK0Short());
       for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
         for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
         {
@@ -2216,6 +2227,7 @@ Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Float_t dEtaGap, const Short
       if(v0->Eta() > dEtaGap / 2 )
       {
         // particle in positive eta acceptance
+        fh3V0sEntriesK0s[iEtaGapIndex]->Fill(fIndexCentrality,v0->Pt(),v0->MassK0Short());
         for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
           for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
           {
@@ -2226,6 +2238,7 @@ Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Float_t dEtaGap, const Short
       if(v0->Eta() < - dEtaGap / 2 )
       {
         // particle in negative eta acceptance
+        fh3V0sEntriesK0s[iEtaGapIndex]->Fill(fIndexCentrality,v0->Pt(),v0->MassK0Short());
         for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
           for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
           {
