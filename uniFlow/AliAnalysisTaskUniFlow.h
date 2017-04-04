@@ -129,7 +129,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // Flow related methods
         Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
         Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
-        Bool_t                  DoV0sCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of V0 particles
+        Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of V0 particles
         Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
         Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (charged tracks) for differential flow
         Bool_t                  FillV0sVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (V0s) for differential flow
@@ -255,6 +255,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
         // Flow
         TProfile*       fcn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for c2{2}
         TProfile2D*     fdn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for d2{2}
+        TProfile3D*     fp3V0sCorrK0s[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
+        TProfile3D*     fp3V0sEntriesK0s[fNumEtaGap][fNumHarmonics]; //! distribution of K0s candidates (cent, pT, InvMass)
+        TProfile3D*     fp3V0sCorrLambda[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
+        TProfile3D*     fp3V0sEntriesLambda[fNumEtaGap][fNumHarmonics]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
+
         // Events
         TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
         TH1D*           fhEventCounter; //! counter following event selection
