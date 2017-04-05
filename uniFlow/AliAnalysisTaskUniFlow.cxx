@@ -200,6 +200,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fArrLambda(0x0),
   fArrALambda(0x0),
 
+  fVectorCharged(0x0),
+
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
@@ -444,6 +446,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fArrCharged = new TClonesArray("AliAODTrack",10000);
     fArrChargedRPF = new TClonesArray("AliAODTrack",10000);
     fArrChargedPOI = new TClonesArray("AliAODTrack",10000);
+    fVectorCharged = new std::vector<FlowPart>;
+    fVectorCharged->reserve(1000);
   }
 
   if(fProcessPID)
@@ -1067,6 +1071,7 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
   if(fProcessCharged)
   {
     fArrCharged->Clear("C");
+    fVectorCharged->clear();
     //fArrChargedRPF->Clear("C");
     //fArrChargedPOI->Clear("C");
     if(!FilterCharged()) return kFALSE;
@@ -1099,6 +1104,8 @@ Bool_t AliAnalysisTaskUniFlow::FilterCharged()
 {
   Short_t iNumTrackSelected = 0x0; // selected charged track counter
 
+  printf(" ====== \n");
+
   const Short_t iNumTracks = fEventAOD->GetNumberOfTracks();
   if(iNumTracks < 1) return kFALSE;
 
@@ -1110,9 +1117,19 @@ Bool_t AliAnalysisTaskUniFlow::FilterCharged()
 
     if(IsChargedSelected(track))
     {
+      printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
       new((*fArrCharged)[iNumTrackSelected++]) AliAODTrack(*track);
+      fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kCharged) );
       FillQACharged(1,track); // QA after selection
     }
+  }
+
+  printf("Charged vector: %lu\n",fVectorCharged->size());
+
+  for (auto it = fVectorCharged->begin(); it != fVectorCharged->end(); it++)
+  {
+    it->PrintPart();
+    // printf("pt %g | phi %g | eta %g\n",it->pt,it->phi,it->eta);
   }
 
   // fill QA charged multiplicity
