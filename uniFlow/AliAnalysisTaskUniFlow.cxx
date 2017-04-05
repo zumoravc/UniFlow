@@ -610,8 +610,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       {
         fhQAV0sMultK0s[iQA] = new TH1D(Form("fhQAV0sMultK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of K^{0}_{S} candidates", 1000,0,1000);
         fOutListV0s->Add(fhQAV0sMultK0s[iQA]);
-        fhQAV0sMultLambda[iQA] = new TH1D(Form("fhQAV0sMultLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #Lambda/#bar{#Lambda} candidates", 1000,0,1000);
+        fhQAV0sMultLambda[iQA] = new TH1D(Form("fhQAV0sMultLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #Lambda candidates", 1000,0,1000);
         fOutListV0s->Add(fhQAV0sMultLambda[iQA]);
+        fhQAV0sMultALambda[iQA] = new TH1D(Form("fhQAV0sMultALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #bar{#Lambda} candidates", 1000,0,1000);
+        fOutListV0s->Add(fhQAV0sMultALambda[iQA]);
         fhQAV0sRecoMethod[iQA] = new TH1D(Form("fhQAV0sRecoMethod_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Reconstruction method", 2,-0.5,1.5);
         fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(1, "offline");
         fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
@@ -1251,7 +1253,7 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
     return kFALSE;
 
   Bool_t bIsK0s = kFALSE;
-  Short_t bIsLambda = 0;
+  Short_t iIsLambda = 0;
 
   AliAODv0* v0 = 0x0;
   for(Short_t iV0(0); iV0 < iNumV0s; iV0++)
@@ -1264,10 +1266,10 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
     if(IsV0Selected(v0))
     {
       bIsK0s = IsV0aK0s(v0);
-      bIsLambda = IsV0aLambda(v0);
+      iIsLambda = IsV0aLambda(v0);
 
-      if(bIsK0s || bIsLambda != 0)
-        FillQAV0s(1,v0,bIsK0s,bIsLambda); // QA AFTER selection
+      if(bIsK0s || iIsLambda != 0)
+        FillQAV0s(1,v0,bIsK0s,iIsLambda); // QA AFTER selection
 
       if(bIsK0s)
       {
@@ -1275,13 +1277,19 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
         fhV0sCounter->Fill("K^{0}_{S}",1);
       }
 
-      if(bIsLambda != 0) // both lambda + anti-lambdas
+      if(iIsLambda == 1) // lambda
       {
         new((*fArrLambda)[iNumLambdaSelected++]) AliAODv0(*v0);
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
       }
 
-      if(bIsK0s && bIsLambda != 0)
+      if(iIsLambda == -1) // anti-lambda
+      {
+        new((*fArrALambda)[iNumLambdaSelected++]) AliAODv0(*v0);
+        fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
+      }
+
+      if(bIsK0s && iIsLambda != 0)
         fhV0sCounter->Fill("K^{0}_{S} && #Lambda/#bar{#Lambda}",1);
     }
   }
@@ -1291,6 +1299,8 @@ Bool_t AliAnalysisTaskUniFlow::FilterV0s()
   fhQAV0sMultK0s[1]->Fill(fArrK0s->GetEntriesFast());
   fhQAV0sMultLambda[0]->Fill(fEventAOD->GetNumberOfV0s());
   fhQAV0sMultLambda[1]->Fill(fArrLambda->GetEntriesFast());
+  fhQAV0sMultALambda[0]->Fill(fEventAOD->GetNumberOfV0s());
+  fhQAV0sMultALambda[1]->Fill(fArrALambda->GetEntriesFast());
 
   return kTRUE;
 }
@@ -1835,9 +1845,15 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
       if(fProcessV0s)
       {
         // V0s (K0s, Lambda/ALambda) flow
-        if(!DoFlowV0s(iGap,iPt))
+        if(!DoFlowV0s(iGap,iPt,kK0s))
         {
-          Error("ProcessEvent","DoFlowV0s not succesfull!");
+          Error("ProcessEvent","DoFlowV0s with K0s not succesfull!");
+          return kFALSE;
+        }
+
+        if(!DoFlowV0s(iGap,iPt,kLambda))
+        {
+          Error("ProcessEvent","DoFlowV0s with Lambdas not succesfull!");
           return kFALSE;
         }
       }
@@ -1961,21 +1977,30 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex, const S
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t iPtIndex)
+Bool_t AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t iPtIndex, const PartSpecies species)
 {
   // Estimate <2> for pT diff flow of V0s for all harmonics based on relevant flow vectors
   // return kTRUE if succesfull, kFALSE otherwise
   // *************************************************************
 
+  // check if particles are V0s
+  if(species != kK0s && species != kLambda)
+  {
+    ::Error("DoFlowV0s","Selected particles are not K0s nor Lambdas!");
+    return kFALSE;
+  }
+
   Float_t dPt = (fPtBinEdges[iPtIndex] + fPtBinEdges[iPtIndex+1]) / 2;
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
 
   // filling POIs (P,S) flow vectors
-  if(!FillV0sVectors(iEtaGapIndex,iPtIndex))
+  if(!FillV0sVectors(iEtaGapIndex,iPtIndex,species))
   {
-    Error("DoFlowV0s","V0s flow vectors not filled properly!");
+    ::Error("DoFlowV0s","V0s flow vectors not filled properly!");
     return kFALSE;
   }
+
+
 
   return kTRUE;
 }
@@ -2168,20 +2193,42 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectors(const Float_t dEtaGap, const S
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Short_t iEtaGapIndex, const Short_t iPtIndex)
+Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Short_t iEtaGapIndex, const Short_t iPtIndex, const PartSpecies species)
 {
   // Filling p and q flow vectors with V0s (POIs) for differential flow calculation
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
 
-  // TODO!!!! Implemented for K0s only so far ...
-  const Double_t dEtaGap = fEtaGap[iEtaGapIndex];
+  // TODO: a little bit stubborn with the Lambda/ALambda candidates: thing about it a bit more
+  // TODO: remimplement on struct/class after all ? (with species member?)
+
+  TClonesArray* array = 0x0; // array of input (selected) particles§
+  TH3D* hist = 0x0; // histogram for filling particle distibution (pt,Min,cent)
+
+  // swich based on species
+  switch (species)
+  {
+    case kK0s:
+      array = fArrK0s;
+      hist = fh3V0sEntriesK0s[iEtaGapIndex];
+      break;
+
+    case kLambda: // if a Lambda/ALambda candidates: first go through Lambda array and then goes through ALambda array
+      array = fArrLambda;
+      hist = fh3V0sEntriesLambda[iEtaGapIndex];
+      break;
+
+    default:
+      ::Error("FillV0sVectors","Selected species is neither kK0s nor kLambda nor kALambda.");
+      return kFALSE;
+  }
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecPpos);
   ResetFlowVector(fFlowVecPneg);
   ResetFlowVector(fFlowVecS);
 
+  const Double_t dEtaGap = fEtaGap[iEtaGapIndex];
   const Short_t iNumHarmonics = fFlowNumHarmonicsMax;
   const Short_t iNumWeightPower = fFlowNumWeightPowersMax;
 
@@ -2199,22 +2246,28 @@ Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Short_t iEtaGapIndex, const 
   Double_t dPsinPos[iNumHarmonics][iNumWeightPower] = {0};
   Double_t dPsinNeg[iNumHarmonics][iNumWeightPower] = {0};
 
-  const Int_t iNumPart = fArrK0s->GetEntriesFast();
-
   AliAODv0* v0 = 0x0;
+  Double_t dPt = 0;
+  Double_t dMass = 0;
+
+  const Int_t iNumPart = array->GetEntriesFast();
   for(Int_t i(0); i < iNumPart; i++)
   {
-    v0 = static_cast<AliAODv0*>(fArrK0s->At(i));
+    v0 = static_cast<AliAODv0*>(array->At(i));
     if(!v0) continue;
 
+    dPt = v0->Pt();
+    if(species == kK0s) dMass = v0->MassK0Short();
+    if(species == kLambda) dMass = v0->MassLambda(); // goes only through Lambda array first
+
     // POIs pT bin check (for pT diff. flow filling)
-    if( v0->Pt() < fPtBinEdges[iPtIndex] || v0->Pt() > fPtBinEdges[iPtIndex+1] )
+    if( dPt < fPtBinEdges[iPtIndex] || dPt > fPtBinEdges[iPtIndex+1] )
       continue;
 
     // POIs candidate passing all criteria: start filling flow vectors
     if(dEtaGap == -1) // no eta gap
     {
-      fh3V0sEntriesK0s[iEtaGapIndex]->Fill(fIndexCentrality,v0->Pt(),v0->MassK0Short());
+      hist->Fill(fIndexCentrality,dPt,dMass);
       for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
         for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
         {
@@ -2227,7 +2280,7 @@ Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Short_t iEtaGapIndex, const 
       if(v0->Eta() > dEtaGap / 2 )
       {
         // particle in positive eta acceptance
-        fh3V0sEntriesK0s[iEtaGapIndex]->Fill(fIndexCentrality,v0->Pt(),v0->MassK0Short());
+        hist->Fill(fIndexCentrality,dPt,dMass);
         for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
           for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
           {
@@ -2238,7 +2291,7 @@ Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Short_t iEtaGapIndex, const 
       if(v0->Eta() < - dEtaGap / 2 )
       {
         // particle in negative eta acceptance
-        fh3V0sEntriesK0s[iEtaGapIndex]->Fill(fIndexCentrality,v0->Pt(),v0->MassK0Short());
+        hist->Fill(fIndexCentrality,dPt,dMass);
         for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
           for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
           {
@@ -2248,6 +2301,63 @@ Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Short_t iEtaGapIndex, const 
       }
     } // endif {dEtaGap}
   } // endfor {tracks}
+
+  // now if the candidates are kLambda: goes through the ALambda array now
+  if(species == kLambda)
+  {
+    array = fArrALambda;
+    hist = fh3V0sEntriesLambda[iEtaGapIndex];
+    const Int_t iNumPart = array->GetEntriesFast();
+    for(Int_t i(0); i < iNumPart; i++)
+    {
+      v0 = static_cast<AliAODv0*>(array->At(i));
+      if(!v0) continue;
+
+      dPt = v0->Pt();
+      dMass = v0->MassAntiLambda(); // goes only through Lambda array first
+
+      // POIs pT bin check (for pT diff. flow filling)
+      if( dPt < fPtBinEdges[iPtIndex] || dPt > fPtBinEdges[iPtIndex+1] )
+        continue;
+
+      // POIs candidate passing all criteria: start filling flow vectors
+      if(dEtaGap == -1) // no eta gap
+      {
+        hist->Fill(fIndexCentrality,dPt,dMass);
+        for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+          for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+          {
+            dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
+            dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
+          }
+      }
+      else // with eta gap
+      {
+        if(v0->Eta() > dEtaGap / 2 )
+        {
+          // particle in positive eta acceptance
+          hist->Fill(fIndexCentrality,dPt,dMass);
+          for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+            for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+            {
+              dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
+              dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
+            }
+        }
+        if(v0->Eta() < - dEtaGap / 2 )
+        {
+          // particle in negative eta acceptance
+          hist->Fill(fIndexCentrality,dPt,dMass);
+          for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+            for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+            {
+              dPcosNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
+              dPsinNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
+            }
+        }
+      } // endif {dEtaGap}
+    } // endfor {tracks}
+  } // endif {species}
 
   // pushing filling results to global flow vector arrays
   for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
