@@ -100,6 +100,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
       const static Int_t 		  fNumPtBins = 33;			// number of pT bins used for pT-differential flow // you, katarina
       static Double_t			    fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
+      static const Short_t    fV0sNumBinsMass = 30; // number of bins for V0s distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
       const static Int_t      fNumHarmonics = 2; // number of harmonics
@@ -131,10 +132,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // Flow related methods
       Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
-      Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
+      Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
       Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
       Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (charged tracks) for differential flow
-      Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
+      Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
       void                    ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
       void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
 
