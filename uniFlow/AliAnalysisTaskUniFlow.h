@@ -17,6 +17,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
       enum    PartSpecies {kUnknown, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
+      struct FlowPart // representation of selected particle (species independent) storing only basic properties for flow calculations
+      {
+                FlowPart(Double_t dPt, Double_t dPhi, Double_t dEta, PartSpecies sSpecies = kUnknown, Double_t dMass = 0) :
+                  pt(dPt), phi(dPhi), eta(dEta), mass(dMass), species(sSpecies) {} // constructor
+
+        void    PrintPart() { printf("pt %g | phi %g | eta %g | mass %g | species %d \n",pt,phi,eta,mass,species); } // print struct members
+
+        Double_t pt, phi, eta, mass;
+        PartSpecies species;
+      };
                               AliAnalysisTaskUniFlow(); // constructor
                               AliAnalysisTaskUniFlow(const char *name); // named (primary) constructor
       virtual                 ~AliAnalysisTaskUniFlow(); // destructor
@@ -169,15 +179,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
 
       // selected POIs containers
-      TClonesArray*           fArrCharged; //! container for filtered (all) charged tracks
-      TClonesArray*           fArrChargedRPF; //! container for filtered RFPs tracks
-      TClonesArray*           fArrChargedPOI; //! container for filtered POIs tracks
-      TClonesArray*           fArrPion; //! container for filtered pions
-      TClonesArray*           fArrKaon; //! container for filtered kaons
-      TClonesArray*           fArrProton; //! container for filtered protons
-      TClonesArray*           fArrK0s; //! container for filtered K0s candidates
-      TClonesArray*           fArrLambda; //! container for filtered Lambda candidates
-      TClonesArray*           fArrALambda; //! container for filtered ALambda candidates
+      std::vector<FlowPart>*  fVectorCharged; //! container for selected charged particles
+      std::vector<FlowPart>*  fVectorPion; //! container for selected pion candidates
+      std::vector<FlowPart>*  fVectorKaon; //! container for selected kaon candidates
+      std::vector<FlowPart>*  fVectorProton; //! container for selected proton candidates
+      std::vector<FlowPart>*  fVectorK0s; //! container for selected K0s candidates
+      std::vector<FlowPart>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
