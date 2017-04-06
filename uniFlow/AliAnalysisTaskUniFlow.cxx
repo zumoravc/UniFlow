@@ -90,6 +90,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutFlowRFPsPtMax(0),
   fFlowPOIsPtMin(0),
   fFlowPOIsPtMax(20.),
+  fFlowCentMin(0),
+  fFlowCentMax(150),
+  fFlowCentNumBins(150),
 
   // events selection
   fPVtxCutZ(0.),
@@ -209,6 +212,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutFlowRFPsPtMax(0),
   fFlowPOIsPtMin(0),
   fFlowPOIsPtMax(20.),
+  fFlowCentMin(0),
+  fFlowCentMax(150),
+  fFlowCentNumBins(150),
 
   // events selection
   fPVtxCutZ(0.),
@@ -482,28 +488,27 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fOutListEvents->Add(fhEventCounter);
 
     // flow histograms & profiles
-    Double_t dCentEdges[] = {0,50,100,150};
     for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
     {
       for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
       {
-        fcn2Tracks[iGap][iHarm] = new TProfile(Form("fcn2Tracks_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]),Form("Ref: <<2>> (Gap %g | Harm %d); centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm]), 3,dCentEdges);
+        fcn2Tracks[iGap][iHarm] = new TProfile(Form("fcn2Tracks_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]),Form("Ref: <<2>> (Gap %g | Harm %d); centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax);
         fcn2Tracks[iGap][iHarm]->Sumw2(kTRUE);
         fOutListFlow->Add(fcn2Tracks[iGap][iHarm]);
 
         if(fProcessCharged)
         {
-          fdn2Tracks[iGap][iHarm] = new TProfile2D(Form("fdn2Tracks_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]),Form("Charged: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), 3,dCentEdges, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+          fdn2Tracks[iGap][iHarm] = new TProfile2D(Form("fdn2Tracks_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]),Form("Charged: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
           fdn2Tracks[iGap][iHarm]->Sumw2(kTRUE);
           fOutListFlow->Add(fdn2Tracks[iGap][iHarm]);
         }
 
         if(fProcessV0s)
         {
-          fp3V0sCorrK0s[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrK0s_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]), Form("K_{S}^{0}: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), 150,0,150, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+          fp3V0sCorrK0s[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrK0s_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]), Form("K_{S}^{0}: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
           fp3V0sCorrK0s[iGap][iHarm]->Sumw2();
           fOutListFlow->Add(fp3V0sCorrK0s[iGap][iHarm]);
-          fp3V0sCorrLambda[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrLambda_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]), Form("#Lambda/#bar{#Lambda}: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), 150,0,150, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+          fp3V0sCorrLambda[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrLambda_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]), Form("#Lambda/#bar{#Lambda}: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
           fp3V0sCorrLambda[iGap][iHarm]->Sumw2();
           fOutListFlow->Add(fp3V0sCorrLambda[iGap][iHarm]);
         }
@@ -511,10 +516,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
       if(fProcessV0s)
       {
-        fh3V0sEntriesK0s[iGap] = new TH3D(Form("fh3V0sEntriesK0s_gap%g",fEtaGap[iGap]), Form("K_{S}^{0}: Distribution (Gap %g); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap]), 150,0,150, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+        fh3V0sEntriesK0s[iGap] = new TH3D(Form("fh3V0sEntriesK0s_gap%g",fEtaGap[iGap]), Form("K_{S}^{0}: Distribution (Gap %g); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
         fh3V0sEntriesK0s[iGap]->Sumw2();
         fOutListFlow->Add(fh3V0sEntriesK0s[iGap]);
-        fh3V0sEntriesLambda[iGap] = new TH3D(Form("fh3V0sEntriesLambda_gap%g",fEtaGap[iGap]), Form("#Lambda/#bar{#Lambda}: Distribution (Gap %g); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap]), 150,0,150, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+        fh3V0sEntriesLambda[iGap] = new TH3D(Form("fh3V0sEntriesLambda_gap%g",fEtaGap[iGap]), Form("#Lambda/#bar{#Lambda}: Distribution (Gap %g); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
         fh3V0sEntriesLambda[iGap]->Sumw2();
         fOutListFlow->Add(fh3V0sEntriesLambda[iGap]);
       }
