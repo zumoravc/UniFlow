@@ -266,8 +266,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // histograms & profiles
 
       // Flow
-      TProfile*       fcn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for c2{2}
-      TProfile2D*     fdn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for d2{2}
+      TProfile*       fpRefs[fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
+      TProfile2D*     fp2Charged[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
       TProfile3D*     fp3V0sCorrK0s[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambda[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
       TH3D*           fh3V0sEntriesK0s[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
