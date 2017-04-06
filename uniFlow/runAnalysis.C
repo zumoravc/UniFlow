@@ -80,7 +80,7 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
     task1->SetNumEventsAnalyse(10);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kFALSE);
@@ -90,8 +90,6 @@ void runAnalysis()
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
     task1->SetFlowRFPsPtMax(5.);
-    task1->SetFlowChargedPtMin(0.2);
-    task1->SetFlowChargedPtMax(5.);
     // Events selection
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPP);

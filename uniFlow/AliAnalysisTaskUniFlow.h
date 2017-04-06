@@ -46,8 +46,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // flow related setters
       void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
-      void                    SetFlowChargedPtMin(Float_t pt) { fCutFlowChargedPtMin = pt; }
-      void                    SetFlowChargedPtMax(Float_t pt) { fCutFlowChargedPtMax = pt; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
@@ -108,8 +106,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
       static const Short_t    fFlowNumHarmonicsMax = 10; // maximum harmonics length of flow vector array
       static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
-      const static Int_t 		  fNumPtBins = 33;			// number of pT bins used for pT-differential flow // you, katarina
-      static Double_t			    fPtBinEdges[fNumPtBins+1];				// pointer for array of pT bin edges
+      static const Short_t    fFlowPOIsPtNumBins = 200; // number of pT bins for POIs
+      const Float_t           fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
+      const Float_t           fFlowPOIsPtMax; // [20] (GeV/c) max pT treshold for POIs for differential flow
+
       static const Short_t    fV0sNumBinsMass = 30; // number of bins for V0s distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
@@ -141,27 +141,29 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
       // Flow related methods
       Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
-      Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
-      Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
+      Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
+      Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
       Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
-      Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (charged tracks) for differential flow
-      Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
-      void                    ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
+      Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs (charged tracks) for differential flow
+      Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
+      Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
+      void                    ResetRFPsVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
+      void                    ResetPOIsVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]); // set values to TComplex(0,0,0) for given array
       void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
 
-      TComplex                Q(Short_t n, Short_t p);
-      TComplex                QGapPos(Short_t n, Short_t p);
-      TComplex                QGapNeg(Short_t n, Short_t p);
-      TComplex                P(Short_t n, Short_t p);
-      TComplex                PGapPos(Short_t n, Short_t p);
-      TComplex                PGapNeg(Short_t n, Short_t p);
-      TComplex                S(Short_t n, Short_t p);
+      TComplex                Q(const Short_t n, const Short_t p);
+      TComplex                QGapPos(const Short_t n, const Short_t p);
+      TComplex                QGapNeg(const Short_t n, const Short_t p);
+      TComplex                P(const Short_t n, const Short_t p, const Short_t pt);
+      TComplex                PGapPos(const Short_t n, const Short_t p, const Short_t pt);
+      TComplex                PGapNeg(const Short_t n, const Short_t p, const Short_t pt);
+      TComplex                S(const Short_t n, const Short_t p, const Short_t pt);
 
-      TComplex                Two(Short_t n1, Short_t n2); // Two particle reference correlation calculations (no eta gap)
-      TComplex                TwoGap(Short_t n1, Short_t n2); // Two particle reference correlation calculations (with eta gap)
-      TComplex                TwoDiff(Short_t n1, Short_t n2); // Two particle diff. correlation calculations (no eta gap)
-      TComplex                TwoDiffGapPos(Short_t n1, Short_t n2); // Two particle diff. correlation calculations (with eta gap)
-      TComplex                TwoDiffGapNeg(Short_t n1, Short_t n2); // Two particle diff. correlation calculations (with eta gap)
+      TComplex                Two(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (no eta gap)
+      TComplex                TwoGap(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (with eta gap)
+      TComplex                TwoDiff(const Short_t n1, const Short_t n2, const Short_t pt); // Two particle diff. correlation calculations (no eta gap)
+      TComplex                TwoDiffGapPos(const Short_t n1, const Short_t n2, const Short_t pt); // Two particle diff. correlation calculations (with eta gap)
+      TComplex                TwoDiffGapNeg(const Short_t n1, const Short_t n2, const Short_t pt); // Two particle diff. correlation calculations (with eta gap)
 
       // properties
       AliAODEvent*            fEventAOD; //! AOD event countainer
@@ -174,9 +176,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
-      TComplex                fFlowVecPpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
-      TComplex                fFlowVecPneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
-      TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+      TComplex                fFlowVecPpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]; // flow vector array for flow calculation
+      TComplex                fFlowVecPneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]; // flow vector array for flow calculation
+      TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]; // flow vector array for flow calculation
 
       // selected POIs containers
       std::vector<FlowPart>*  fVectorCharged; //! container for selected charged particles
@@ -197,8 +199,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // cuts & selection: flow related
       Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
-      Float_t                 fCutFlowChargedPtMin; // [0] (GeV/c) min pT treshold for charged tracks (POIs) for differential flow
-      Float_t                 fCutFlowChargedPtMax; // [20] (GeV/c) max pT treshold for charged tracks (POIs) for differential flow
+
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
       DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
