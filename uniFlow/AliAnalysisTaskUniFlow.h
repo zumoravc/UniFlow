@@ -142,11 +142,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // Flow related methods
       Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
-      Bool_t                  DoFlowChargedWithVector(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
       Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
       Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
       Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (charged tracks) for differential flow
-      Bool_t                  FillChargedVectorsWithVector(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (charged tracks) for differential flow
       Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
       void                    ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
       void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
@@ -181,16 +179,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
 
       // selected POIs containers
-      TClonesArray*           fArrCharged; //! container for filtered (all) charged tracks
-      TClonesArray*           fArrChargedRPF; //! container for filtered RFPs tracks
-      TClonesArray*           fArrChargedPOI; //! container for filtered POIs tracks
-      TClonesArray*           fArrPion; //! container for filtered pions
-      TClonesArray*           fArrKaon; //! container for filtered kaons
-      TClonesArray*           fArrProton; //! container for filtered protons
-      TClonesArray*           fArrK0s; //! container for filtered K0s candidates
-      TClonesArray*           fArrLambda; //! container for filtered Lambda candidates
-      TClonesArray*           fArrALambda; //! container for filtered ALambda candidates
-      std::vector<FlowPart>*  fVectorCharged; //! vector for storing FlowPart structs (flow particles)
+      std::vector<FlowPart>*  fVectorCharged; //! container for selected charged particles
+      std::vector<FlowPart>*  fVectorPion; //! container for selected pion candidates
+      std::vector<FlowPart>*  fVectorKaon; //! container for selected kaon candidates
+      std::vector<FlowPart>*  fVectorProton; //! container for selected proton candidates
+      std::vector<FlowPart>*  fVectorK0s; //! container for selected K0s candidates
+      std::vector<FlowPart>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
@@ -271,7 +265,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // Flow
       TProfile*       fcn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for c2{2}
       TProfile2D*     fdn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for d2{2}
-      TProfile2D*     fdn2TracksVector[fNumEtaGap][fNumHarmonics]; //! testing cumulant for d2{2}
       TProfile3D*     fp3V0sCorrK0s[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambda[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
       TH3D*           fh3V0sEntriesK0s[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
