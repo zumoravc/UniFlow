@@ -1109,8 +1109,6 @@ Bool_t AliAnalysisTaskUniFlow::FilterCharged()
 {
   Short_t iNumTrackSelected = 0x0; // selected charged track counter
 
-  printf(" ====== \n");
-
   const Short_t iNumTracks = fEventAOD->GetNumberOfTracks();
   if(iNumTracks < 1) return kFALSE;
 
@@ -1128,14 +1126,6 @@ Bool_t AliAnalysisTaskUniFlow::FilterCharged()
       FillQACharged(1,track); // QA after selection
     }
   }
-
-  printf("Charged vector: %lu\n",fVectorCharged->size());
-
-  // for (auto it = fVectorCharged->begin(); it != fVectorCharged->end(); it++)
-  // {
-  //   it->PrintPart();
-  //   // printf("pt %g | phi %g | eta %g\n",it->pt,it->phi,it->eta);
-  // }
 
   // fill QA charged multiplicity
   fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
@@ -1837,7 +1827,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   }
 
   // at this point, all particles fullfiling relevant POIs (and REFs) criteria are filled in TClonesArrays
-  fIndexCentrality = fArrCharged->GetEntriesFast();
+  fIndexCentrality = fVectorCharged->size();
 
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
@@ -2013,8 +2003,6 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowChargedWithVector(const Short_t iEtaGapInde
   // Testing method for std::vector<FlowPart> handling
   // *************************************************************
 
-  ::Info("DoFlowChargedWithVector"," ===========================================");
-
   Float_t dPt = (fPtBinEdges[iPtIndex] + fPtBinEdges[iPtIndex+1]) / 2;
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
   Short_t iHarmonics = 0;
@@ -2072,8 +2060,6 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowChargedWithVector(const Short_t iEtaGapInde
           fdn2TracksVector[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
       }
   } // endif {dEtaGap}
-  return kTRUE;
-
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -2356,7 +2342,7 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectors(const Float_t dEtaGap, const S
         fFlowVecS[iHarm][iPower] = TComplex(dScos[iHarm][iPower],dSsin[iHarm][iPower],kFALSE);
     }
 
-  printf("POIs charged (TClonesArray) EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
+  // printf("POIs charged (TClonesArray) EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -2389,12 +2375,11 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectorsWithVector(const Float_t dEtaGa
   Double_t dScos[iNumHarmonics][iNumWeightPower] = {0};
   Double_t dSsin[iNumHarmonics][iNumWeightPower] = {0};
 
-  const Int_t iNumPart = fVectorCharged->size();
-  // printf("====== Filing ======\n number %d\n", iNumPart);
-
   for (auto part = fVectorCharged->begin(); part != fVectorCharged->end(); part++)
   {
-    // part->PrintPart();
+    // checking species of used particles (just for double checking purpose)
+    if( part->species != kCharged)
+      continue;
 
     // POIs pT bin check (for pT diff. flow filling)
     if( part->pt < fPtBinEdges[iPtIndex] || part->pt > fPtBinEdges[iPtIndex+1] )
@@ -2442,9 +2427,6 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectorsWithVector(const Float_t dEtaGa
     } // endif {dEtaGap}
   } // endfor {part} particles in vector
 
-
-  // printf("====== End of filling ====\n");
-
   // pushing filling results to global flow vector arrays
   for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
     for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
@@ -2456,7 +2438,7 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectorsWithVector(const Float_t dEtaGa
         fFlowVecS[iHarm][iPower] = TComplex(dScos[iHarm][iPower],dSsin[iHarm][iPower],kFALSE);
     }
 
-  printf("POIs charged (vector) EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
+  // printf("POIs charged (vector) EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
   return kTRUE;
 }
 //_____________________________________________________________________________
