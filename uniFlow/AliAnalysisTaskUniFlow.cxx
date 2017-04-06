@@ -2010,92 +2010,91 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short
   // return kTRUE if succesfull, kFALSE otherwise
   // *************************************************************
 
-  // TProfile3D** profArr = 0x0;
-  // Double_t dMass = 0;
-  // // TODO: again do a Lambda ALAmbda distinguition
-  //
-  // // switch based on particle species
-  // switch (species)
-  // {
-  //   case kK0s:
-  //     profArr = fp3V0sCorrK0s[iEtaGapIndex];
-  //     dMass = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
-  //     break;
-  //
-  //   case kLambda:
-  //     profArr = fp3V0sCorrLambda[iEtaGapIndex];
-  //     dMass = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
-  //     break;
-  //
-  //   default:
-  //     ::Error("DoFlowV0s","Selected particles are not K0s nor Lambdas!");
-  //     return kFALSE;
-  // }
-  //
-  // // filling POIs (P,S) flow vectors
-  // if(!FillV0sVectors(iEtaGapIndex,iPtIndex,iMassIndex,species))
-  // {
-  //   ::Error("DoFlowV0s","V0s flow vectors not filled properly!");
-  //   return kFALSE;
-  // }
-  //
-  // Float_t dPt = (fPtBinEdges[iPtIndex] + fPtBinEdges[iPtIndex+1]) / 2;
-  // Float_t dEtaGap = fEtaGap[iEtaGapIndex];
-  // Short_t iHarmonics = 0;
-  // Double_t Dn2 = 0;
-  // TComplex vector = TComplex(0,0,kFALSE);
-  // Double_t dValue = 999;
-  // TProfile3D* prof = 0x0;
-  //
-  // // estimating <2'>
-  // if(dEtaGap == -1) // no eta gap
-  // {
-  //   Dn2 = TwoDiff(0,0).Re();
-  //
-  //   if(Dn2 != 0)
-  //     for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
-  //     {
-  //       prof = profArr[iHarm];
-  //       iHarmonics = fHarmonics[iHarm];
-  //       vector = TwoDiff(iHarmonics,-iHarmonics);
-  //       dValue = vector.Re()/Dn2;
-  //       // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
-  //       if( TMath::Abs(dValue < 1) )
-  //         prof->Fill(fIndexCentrality, dPt, dMass, dValue, Dn2);
-  //     }
-  // }
-  // else // eta gap
-  // {
-  //   // POIs in positive eta
-  //   Dn2 = TwoDiffGapPos(0,0).Re();
-  //
-  //   if(Dn2 != 0)
-  //     for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
-  //     {
-  //       prof = profArr[iHarm];
-  //       iHarmonics = fHarmonics[iHarm];
-  //       vector = TwoDiffGapPos(iHarmonics,-iHarmonics);
-  //       dValue = vector.Re()/Dn2;
-  //       // printf("Gap (Pos): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
-  //       if( TMath::Abs(dValue < 1) )
-  //         prof->Fill(fIndexCentrality, dPt, dMass, dValue, Dn2);
-  //     }
-  //
-  //   // POIs in negative eta
-  //   Dn2 = TwoDiffGapNeg(0,0).Re();
-  //
-  //   if(Dn2 != 0)
-  //     for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
-  //     {
-  //       prof = profArr[iHarm];
-  //       iHarmonics = fHarmonics[iHarm];
-  //       vector = TwoDiffGapNeg(iHarmonics,-iHarmonics);
-  //       dValue = vector.Re()/Dn2;
-  //       // printf("Gap (Neg): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
-  //       if( TMath::Abs(dValue < 1) )
-  //         prof->Fill(fIndexCentrality, dPt, dMass, dValue, Dn2);
-  //     }
-  // } // endif {dEtaGap}
+  // filling POIs (P,S) flow vectors
+  if(!FillV0sVectors(iEtaGapIndex,iPtIndex,iMassIndex,species))
+  {
+    ::Error("DoFlowV0s","V0s flow vectors not filled properly!");
+    return kFALSE;
+  }
+
+  Float_t dPt = (fPtBinEdges[iPtIndex] + fPtBinEdges[iPtIndex+1]) / 2;
+  Float_t dEtaGap = fEtaGap[iEtaGapIndex];
+  Short_t iHarmonics = 0;
+  Double_t Dn2 = 0;
+  TComplex vector = TComplex(0,0,kFALSE);
+  Double_t dValue = 999;
+  TProfile3D* prof = 0x0;
+  Double_t dMass = 0;
+  TProfile3D** profArr = 0x0;
+
+  // switch based on particle species
+  switch (species)
+  {
+    case kK0s:
+      profArr = fp3V0sCorrK0s[iEtaGapIndex];
+      dMass = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
+      break;
+
+    case kLambda:
+      profArr = fp3V0sCorrLambda[iEtaGapIndex];
+      dMass = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
+      break;
+
+    default:
+      ::Error("DoFlowV0s","Selected particles are not K0s nor Lambdas!");
+      return kFALSE;
+  }
+
+
+  // estimating <2'>
+  if(dEtaGap == -1) // no eta gap
+  {
+    Dn2 = TwoDiff(0,0).Re();
+
+    if(Dn2 != 0)
+      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      {
+        prof = profArr[iHarm];
+        iHarmonics = fHarmonics[iHarm];
+        vector = TwoDiff(iHarmonics,-iHarmonics);
+        dValue = vector.Re()/Dn2;
+        // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
+        if( TMath::Abs(dValue < 1) )
+          prof->Fill(fIndexCentrality, dPt, dMass, dValue, Dn2);
+      }
+  }
+  else // eta gap
+  {
+    // POIs in positive eta
+    Dn2 = TwoDiffGapPos(0,0).Re();
+
+    if(Dn2 != 0)
+      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      {
+        prof = profArr[iHarm];
+        iHarmonics = fHarmonics[iHarm];
+        vector = TwoDiffGapPos(iHarmonics,-iHarmonics);
+        dValue = vector.Re()/Dn2;
+        // printf("Gap (Pos): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
+        if( TMath::Abs(dValue < 1) )
+          prof->Fill(fIndexCentrality, dPt, dMass, dValue, Dn2);
+      }
+
+    // POIs in negative eta
+    Dn2 = TwoDiffGapNeg(0,0).Re();
+
+    if(Dn2 != 0)
+      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      {
+        prof = profArr[iHarm];
+        iHarmonics = fHarmonics[iHarm];
+        vector = TwoDiffGapNeg(iHarmonics,-iHarmonics);
+        dValue = vector.Re()/Dn2;
+        // printf("Gap (Neg): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
+        if( TMath::Abs(dValue < 1) )
+          prof->Fill(fIndexCentrality, dPt, dMass, dValue, Dn2);
+      }
+  } // endif {dEtaGap}
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -2130,7 +2129,10 @@ Bool_t AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
   {
     // checking species of used particles (just for double checking purpose)
     if( part->species != kCharged)
+    {
+      ::Warning("FillRefsVectors","Unexpected part. species (%d) in selected sample (expected %d)",part->species,kCharged);
       continue;
+    }
 
     // RFPs pT check
     if(fCutFlowRFPsPtMin > 0. && part->pt < fCutFlowRFPsPtMin)
@@ -2220,7 +2222,10 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectors(const Float_t dEtaGap, const S
   {
     // checking species of used particles (just for double checking purpose)
     if( part->species != kCharged)
+    {
+      ::Warning("FillChargedVectors","Unexpected part. species (%d) in selected sample (expected %d)",part->species,kCharged);
       continue;
+    }
 
     // POIs pT bin check (for pT diff. flow filling)
     if( part->pt < fPtBinEdges[iPtIndex] || part->pt > fPtBinEdges[iPtIndex+1] )
@@ -2289,191 +2294,122 @@ Bool_t AliAnalysisTaskUniFlow::FillV0sVectors(const Short_t iEtaGapIndex, const 
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
 
-  // TODO: a little bit stubborn with the Lambda/ALambda candidates: thing about it a bit more
-  // TODO: remimplement on struct/class after all ? (with species member?)
+  // clearing output (global) flow vectors
+  ResetFlowVector(fFlowVecPpos);
+  ResetFlowVector(fFlowVecPneg);
+  ResetFlowVector(fFlowVecS);
 
+  std::vector<FlowPart>* vector = 0x0;
+  TH3D* hist = 0x0;
+  Double_t dMassLow = 0, dMassHigh = 0;
 
-  // TClonesArray* array = 0x0; // array of input (selected) particles§
-  // TH3D* hist = 0x0; // histogram for filling particle distibution (pt,Min,cent)
-  // Double_t dMassLow = 0; // low edge of InvMass bin
-  // Double_t dMassHigh = 0; // high edge of InvMass bin
-  //
-  // // swich based on species
-  // switch (species)
-  // {
-  //   case kK0s:
-  //     array = fArrK0s;
-  //     hist = fh3V0sEntriesK0s[iEtaGapIndex];
-  //     dMassLow = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
-  //     dMassHigh = fCutV0sInvMassK0sMin + (iMassIndex+1)*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
-  //     break;
-  //
-  //   case kLambda: // if a Lambda/ALambda candidates: first go through Lambda array and then goes through ALambda array
-  //     array = fArrLambda;
-  //     hist = fh3V0sEntriesLambda[iEtaGapIndex];
-  //     dMassLow = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
-  //     dMassHigh = fCutV0sInvMassLambdaMin + (iMassIndex+1)*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
-  //     break;
-  //
-  //   default:
-  //     ::Error("FillV0sVectors","Selected species is neither kK0s nor kLambda nor kALambda.");
-  //     return kFALSE;
-  // }
-  //
-  //
-  //
-  // // clearing output (global) flow vectors
-  // ResetFlowVector(fFlowVecPpos);
-  // ResetFlowVector(fFlowVecPneg);
-  // ResetFlowVector(fFlowVecS);
-  //
-  // const Double_t dEtaGap = fEtaGap[iEtaGapIndex];
-  // const Short_t iNumHarmonics = fFlowNumHarmonicsMax;
-  // const Short_t iNumWeightPower = fFlowNumWeightPowersMax;
-  //
-  // // Currently redundant / TODO: implement based on orders and stuff of interest
-  // if(iNumHarmonics > fFlowNumHarmonicsMax || iNumWeightPower > fFlowNumWeightPowersMax)
-  // {
-  //   ::Error("FillV0sVectors","Harmonics or weight power overflow array!");
-  //   return kFALSE;
-  // }
-  //
-  // const Double_t dWeight = 1.;  // for generic framework != 1
-  //
-  // Double_t dPcosPos[iNumHarmonics][iNumWeightPower] = {0};
-  // Double_t dPcosNeg[iNumHarmonics][iNumWeightPower] = {0};
-  // Double_t dPsinPos[iNumHarmonics][iNumWeightPower] = {0};
-  // Double_t dPsinNeg[iNumHarmonics][iNumWeightPower] = {0};
-  //
-  // AliAODv0* v0 = 0x0;
-  // Double_t dPt = 0;
-  // Double_t dMass = 0;
-  //
-  // const Int_t iNumPart = array->GetEntriesFast();
-  // for(Int_t i(0); i < iNumPart; i++)
-  // {
-  //   v0 = static_cast<AliAODv0*>(array->At(i));
-  //   if(!v0) continue;
-  //
-  //   // POIs pT bin check (for pT diff. flow filling)
-  //   dPt = v0->Pt();
-  //   if( dPt < fPtBinEdges[iPtIndex] || dPt > fPtBinEdges[iPtIndex+1] )
-  //     continue;
-  //
-  //   // POIs mass bin check (for pT diff. flow filling)
-  //   if(species == kK0s) dMass = v0->MassK0Short();
-  //   if(species == kLambda) dMass = v0->MassLambda(); // goes only through Lambda array first
-  //   if(dMass < dMassLow || dMass >= dMassHigh)
-  //     continue;
-  //
-  //   // POIs candidate passing all criteria: start filling flow vectors
-  //   if(dEtaGap == -1) // no eta gap
-  //   {
-  //     hist->Fill(fIndexCentrality,dPt,dMass);
-  //     for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
-  //       for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
-  //       {
-  //         dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
-  //         dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
-  //       }
-  //   }
-  //   else // with eta gap
-  //   {
-  //     if(v0->Eta() > dEtaGap / 2 )
-  //     {
-  //       // particle in positive eta acceptance
-  //       hist->Fill(fIndexCentrality,dPt,dMass);
-  //       for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
-  //         for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
-  //         {
-  //           dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
-  //           dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
-  //         }
-  //     }
-  //     if(v0->Eta() < - dEtaGap / 2 )
-  //     {
-  //       // particle in negative eta acceptance
-  //       hist->Fill(fIndexCentrality,dPt,dMass);
-  //       for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
-  //         for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
-  //         {
-  //           dPcosNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
-  //           dPsinNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
-  //         }
-  //     }
-  //   } // endif {dEtaGap}
-  // } // endfor {tracks}
-  //
-  // // now if the candidates are kLambda: goes through the ALambda array now
-  // if(species == kLambda)
-  // {
-  //   array = fArrALambda;
-  //   hist = fh3V0sEntriesLambda[iEtaGapIndex];
-  //   const Int_t iNumPart = array->GetEntriesFast();
-  //   for(Int_t i(0); i < iNumPart; i++)
-  //   {
-  //     v0 = static_cast<AliAODv0*>(array->At(i));
-  //     if(!v0) continue;
-  //
-  //     dPt = v0->Pt();
-  //     dMass = v0->MassAntiLambda(); // goes only through Lambda array first
-  //
-  //     // POIs pT bin check (for pT diff. flow filling)
-  //     if( dPt < fPtBinEdges[iPtIndex] || dPt > fPtBinEdges[iPtIndex+1] )
-  //       continue;
-  //
-  //     if(dMass < dMassLow || dMass >= dMassHigh)
-  //       continue;
-  //
-  //     // POIs candidate passing all criteria: start filling flow vectors
-  //     if(dEtaGap == -1) // no eta gap
-  //     {
-  //       hist->Fill(fIndexCentrality,dPt,dMass);
-  //       for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
-  //         for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
-  //         {
-  //           dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
-  //           dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
-  //         }
-  //     }
-  //     else // with eta gap
-  //     {
-  //       if(v0->Eta() > dEtaGap / 2 )
-  //       {
-  //         // particle in positive eta acceptance
-  //         hist->Fill(fIndexCentrality,dPt,dMass);
-  //         for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
-  //           for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
-  //           {
-  //             dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
-  //             dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
-  //           }
-  //       }
-  //       if(v0->Eta() < - dEtaGap / 2 )
-  //       {
-  //         // particle in negative eta acceptance
-  //         hist->Fill(fIndexCentrality,dPt,dMass);
-  //         for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
-  //           for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
-  //           {
-  //             dPcosNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * v0->Phi());
-  //             dPsinNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * v0->Phi());
-  //           }
-  //       }
-  //     } // endif {dEtaGap}
-  //   } // endfor {tracks}
-  // } // endif {species}
-  //
-  // // pushing filling results to global flow vector arrays
-  // for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
-  //   for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
-  //   {
-  //     fFlowVecPpos[iHarm][iPower] = TComplex(dPcosPos[iHarm][iPower],dPsinPos[iHarm][iPower],kFALSE);
-  //     if(dEtaGap > -1) // filling negative eta region
-  //       fFlowVecPneg[iHarm][iPower] = TComplex(dPcosNeg[iHarm][iPower],dPsinNeg[iHarm][iPower],kFALSE);
-  //   }
-  //
-  // // printf("POIs V0s EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
+  // swich based on species
+  switch (species)
+  {
+    case kK0s:
+      vector = fVectorK0s;
+      hist = fh3V0sEntriesK0s[iEtaGapIndex];
+      dMassLow = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
+      dMassHigh = fCutV0sInvMassK0sMin + (iMassIndex+1)*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
+      break;
+
+    case kLambda: // if a Lambda/ALambda candidates: first go through Lambda array and then goes through ALambda array
+      vector = fVectorLambda;
+      hist = fh3V0sEntriesLambda[iEtaGapIndex];
+      dMassLow = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
+      dMassHigh = fCutV0sInvMassLambdaMin + (iMassIndex+1)*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
+      break;
+
+    default:
+      ::Error("FillV0sVectors","Selected species is neither kK0s nor kLambda.");
+      return kFALSE;
+  }
+
+  const Double_t dEtaGap = fEtaGap[iEtaGapIndex];
+  const Float_t dPt = (fPtBinEdges[iPtIndex] + fPtBinEdges[iPtIndex+1]) / 2;
+  const Double_t dMass = (dMassLow+dMassHigh)/2;
+  const Short_t iNumHarmonics = fFlowNumHarmonicsMax;
+  const Short_t iNumWeightPower = fFlowNumWeightPowersMax;
+
+  // Currently redundant / TODO: implement based on orders and stuff of interest
+  if(iNumHarmonics > fFlowNumHarmonicsMax || iNumWeightPower > fFlowNumWeightPowersMax)
+  {
+    ::Error("FillV0sVectors","Harmonics or weight power overflow array!");
+    return kFALSE;
+  }
+
+  const Double_t dWeight = 1.;  // for generic framework != 1
+
+  Double_t dPcosPos[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dPcosNeg[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dPsinPos[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dPsinNeg[iNumHarmonics][iNumWeightPower] = {0};
+
+  for (auto part = vector->begin(); part != vector->end(); part++)
+  {
+    // checking species of used particles (just for double checking purpose)
+    if( part->species != species)
+    {
+      ::Warning("FillV0sVectors","Unexpected part. species (%d) in selected sample (expected %d)",part->species,species);
+      continue;
+    }
+
+    // POIs pT bin check (for pT diff. flow filling)
+    if( part->pt < fPtBinEdges[iPtIndex] || part->pt > fPtBinEdges[iPtIndex+1] )
+       continue;
+
+     // POIs mass bin check (for pT diff. flow filling)
+     if(part->mass < dMassLow || part->mass >= dMassHigh)
+       continue;
+
+     // POIs candidate passing all criteria: start filling flow vectors
+     if(dEtaGap == -1) // no eta gap
+     {
+       hist->Fill(fIndexCentrality,dPt,dMass);
+       for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+         for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+         {
+           dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * part->phi);
+           dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * part->phi);
+         }
+     }
+     else // with eta gap
+     {
+       if(part->eta > dEtaGap / 2 )
+       {
+         // particle in positive eta acceptance
+         hist->Fill(fIndexCentrality,dPt,dMass);
+         for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+           for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+           {
+             dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * part->phi);
+             dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * part->phi);
+           }
+       }
+       if(part->eta < - dEtaGap / 2 )
+       {
+         // particle in negative eta acceptance
+         hist->Fill(fIndexCentrality,dPt,dMass);
+         for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+           for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+           {
+             dPcosNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * part->phi);
+             dPsinNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * part->phi);
+           }
+       }
+     } // endif {dEtaGap}
+   } // endfor {tracks}
+
+  // pushing filling results to global flow vector arrays
+  for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+    for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+    {
+      fFlowVecPpos[iHarm][iPower] = TComplex(dPcosPos[iHarm][iPower],dPsinPos[iHarm][iPower],kFALSE);
+      if(dEtaGap > -1) // filling negative eta region
+        fFlowVecPneg[iHarm][iPower] = TComplex(dPcosNeg[iHarm][iPower],dPsinNeg[iHarm][iPower],kFALSE);
+    }
+
+  // printf("POIs V0s EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
   return kTRUE;
 }
 //_____________________________________________________________________________
