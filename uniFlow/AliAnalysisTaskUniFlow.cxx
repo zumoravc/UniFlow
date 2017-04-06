@@ -321,6 +321,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     {
       fcn2Tracks[iGap][iHarm] = 0x0;
       fdn2Tracks[iGap][iHarm] = 0x0;
+      fdn2TracksVector[iGap][iHarm] = 0x0;
 
       fp3V0sCorrK0s[iGap][iHarm] = 0x0;
       fp3V0sCorrLambda[iGap][iHarm] = 0x0;
@@ -490,6 +491,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           fdn2Tracks[iGap][iHarm] = new TProfile2D(Form("fdn2Tracks_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]),Form("Charged: <<2'>> (Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), 3,dCentEdges,  fNumPtBins,fPtBinEdges);
           fdn2Tracks[iGap][iHarm]->Sumw2(kTRUE);
           fOutListFlow->Add(fdn2Tracks[iGap][iHarm]);
+
+          fdn2TracksVector[iGap][iHarm] = new TProfile2D(Form("fdn2TracksVector_gap%g_harm%d",fEtaGap[iGap],fHarmonics[iHarm]),Form("Charged: <<2'>> Vector(Gap %g | Harm %d); centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), 3,dCentEdges,  fNumPtBins,fPtBinEdges);
+          fdn2TracksVector[iGap][iHarm]->Sumw2(kTRUE);
+          fOutListFlow->Add(fdn2TracksVector[iGap][iHarm]);
         }
 
         if(fProcessV0s)
@@ -1117,7 +1122,7 @@ Bool_t AliAnalysisTaskUniFlow::FilterCharged()
 
     if(IsChargedSelected(track))
     {
-      printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
+      //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
       new((*fArrCharged)[iNumTrackSelected++]) AliAODTrack(*track);
       fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kCharged) );
       FillQACharged(1,track); // QA after selection
@@ -1126,11 +1131,11 @@ Bool_t AliAnalysisTaskUniFlow::FilterCharged()
 
   printf("Charged vector: %lu\n",fVectorCharged->size());
 
-  for (auto it = fVectorCharged->begin(); it != fVectorCharged->end(); it++)
-  {
-    it->PrintPart();
-    // printf("pt %g | phi %g | eta %g\n",it->pt,it->phi,it->eta);
-  }
+  // for (auto it = fVectorCharged->begin(); it != fVectorCharged->end(); it++)
+  // {
+  //   it->PrintPart();
+  //   // printf("pt %g | phi %g | eta %g\n",it->pt,it->phi,it->eta);
+  // }
 
   // fill QA charged multiplicity
   fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
@@ -1857,6 +1862,12 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
           Error("ProcessEvent","DoFlowCharged not succesfull!");
           return kFALSE;
         }
+
+        if(!DoFlowChargedWithVector(iGap,iPt))
+        {
+          Error("ProcessEvent","DoFlowCharged not succesfull!");
+          return kFALSE;
+        }
       }
 
       if(fProcessV0s)
@@ -1994,6 +2005,75 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex, const S
           fdn2Tracks[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
       }
   } // endif {dEtaGap}
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::DoFlowChargedWithVector(const Short_t iEtaGapIndex, const Short_t iPtIndex)
+{
+  // Testing method for std::vector<FlowPart> handling
+  // *************************************************************
+
+  ::Info("DoFlowChargedWithVector"," ===========================================");
+
+  Float_t dPt = (fPtBinEdges[iPtIndex] + fPtBinEdges[iPtIndex+1]) / 2;
+  Float_t dEtaGap = fEtaGap[iEtaGapIndex];
+  Short_t iHarmonics = 0;
+  Double_t Dn2 = 0;
+  TComplex vector = TComplex(0,0,kFALSE);
+  Double_t dValue = 999;
+
+  // filling POIs (P,S) flow vectors
+  if(!FillChargedVectorsWithVector(dEtaGap,iPtIndex))
+  {
+    Error("DoFlowChargedWithVector","Charged flow vectors not filled properly!");
+    return kFALSE;
+  }
+
+  // estimating <2'>
+  if(dEtaGap == -1) // no eta gap
+  {
+    Dn2 = TwoDiff(0,0).Re();
+    if(Dn2 != 0)
+      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      {
+        iHarmonics = fHarmonics[iHarm];
+        vector = TwoDiff(iHarmonics,-iHarmonics);
+        dValue = vector.Re()/Dn2;
+        // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
+        if( TMath::Abs(dValue < 1) )
+          fdn2TracksVector[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
+      }
+  }
+  else // eta gap
+  {
+    // POIs in positive eta
+    Dn2 = TwoDiffGapPos(0,0).Re();
+    if(Dn2 != 0)
+      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      {
+        iHarmonics = fHarmonics[iHarm];
+        vector = TwoDiffGapPos(iHarmonics,-iHarmonics);
+        dValue = vector.Re()/Dn2;
+        // printf("Gap (Pos): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
+        if( TMath::Abs(dValue < 1) )
+          fdn2TracksVector[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
+      }
+
+    // POIs in negative eta
+    Dn2 = TwoDiffGapNeg(0,0).Re();
+    if(Dn2 != 0)
+      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      {
+        iHarmonics = fHarmonics[iHarm];
+        vector = TwoDiffGapNeg(iHarmonics,-iHarmonics);
+        dValue = vector.Re()/Dn2;
+        // printf("Gap (Neg): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
+        if( TMath::Abs(dValue < 1) )
+          fdn2TracksVector[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
+      }
+  } // endif {dEtaGap}
+  return kTRUE;
+
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -2276,7 +2356,107 @@ Bool_t AliAnalysisTaskUniFlow::FillChargedVectors(const Float_t dEtaGap, const S
         fFlowVecS[iHarm][iPower] = TComplex(dScos[iHarm][iPower],dSsin[iHarm][iPower],kFALSE);
     }
 
-  // printf("POIs charged EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
+  printf("POIs charged (TClonesArray) EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::FillChargedVectorsWithVector(const Float_t dEtaGap, const Short_t iPtIndex)
+{
+  // Filling p and q flow vectors with charged (POIs) for differential flow calculation
+  // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
+  // *************************************************************
+  // clearing output (global) flow vectors
+  ResetFlowVector(fFlowVecPpos);
+  ResetFlowVector(fFlowVecPneg);
+  ResetFlowVector(fFlowVecS);
+
+  const Short_t iNumHarmonics = fFlowNumHarmonicsMax;
+  const Short_t iNumWeightPower = fFlowNumWeightPowersMax;
+
+  // Currently redundant / TODO: implement based on orders and stuff of interest
+  if(iNumHarmonics > fFlowNumHarmonicsMax || iNumWeightPower > fFlowNumWeightPowersMax)
+  {
+    ::Error("FillChargedVectors","Harmonics or weight power overflow array!");
+    return kFALSE;
+  }
+
+  const Double_t dWeight = 1.;  // for generic framework != 1
+
+  Double_t dPcosPos[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dPcosNeg[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dPsinPos[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dPsinNeg[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dScos[iNumHarmonics][iNumWeightPower] = {0};
+  Double_t dSsin[iNumHarmonics][iNumWeightPower] = {0};
+
+  const Int_t iNumPart = fVectorCharged->size();
+  // printf("====== Filing ======\n number %d\n", iNumPart);
+
+  for (auto part = fVectorCharged->begin(); part != fVectorCharged->end(); part++)
+  {
+    // part->PrintPart();
+
+    // POIs pT bin check (for pT diff. flow filling)
+    if( part->pt < fPtBinEdges[iPtIndex] || part->pt > fPtBinEdges[iPtIndex+1] )
+       continue;
+
+    // POIs candidate passing all criteria: start filling flow vectors
+    if(dEtaGap == -1) // no eta gap
+    {
+      for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+        for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+        {
+          dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * part->phi);
+          dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * part->phi);
+
+          // check if track (passing criteria) is overlapping with RFPs pT region; if so, fill S (q) vector
+          if(part->pt > fCutFlowRFPsPtMin && part->pt < fCutFlowRFPsPtMax)
+          {
+            dScos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * part->phi);
+            dSsin[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * part->phi);
+          }
+        }
+    }
+    else // with eta gap
+    {
+      if(part->eta > dEtaGap / 2 )
+      {
+        // particle in positive eta acceptance
+        for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+          for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+          {
+            dPcosPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * part->phi);
+            dPsinPos[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * part->phi);
+          }
+      }
+      if(part->eta < - dEtaGap / 2 )
+      {
+        // particle in negative eta acceptance
+        for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+          for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+          {
+            dPcosNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * part->phi);
+            dPsinNeg[iHarm][iPower] += TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * part->phi);
+          }
+      }
+    } // endif {dEtaGap}
+  } // endfor {part} particles in vector
+
+
+  // printf("====== End of filling ====\n");
+
+  // pushing filling results to global flow vector arrays
+  for(Short_t iHarm(0); iHarm < iNumHarmonics; iHarm++)
+    for(Short_t iPower(0); iPower < iNumWeightPower; iPower++)
+    {
+      fFlowVecPpos[iHarm][iPower] = TComplex(dPcosPos[iHarm][iPower],dPsinPos[iHarm][iPower],kFALSE);
+      if(dEtaGap > -1) // filling negative eta region
+        fFlowVecPneg[iHarm][iPower] = TComplex(dPcosNeg[iHarm][iPower],dPsinNeg[iHarm][iPower],kFALSE);
+      if(dEtaGap == -1) // filling overlaping tracks to S (q) vector
+        fFlowVecS[iHarm][iPower] = TComplex(dScos[iHarm][iPower],dSsin[iHarm][iPower],kFALSE);
+    }
+
+  printf("POIs charged (vector) EtaGap %g | pt %d : number %g (pos) %g (neg) \n", dEtaGap,iPtIndex,fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re());
   return kTRUE;
 }
 //_____________________________________________________________________________

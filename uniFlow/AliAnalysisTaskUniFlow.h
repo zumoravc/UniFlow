@@ -142,9 +142,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // Flow related methods
       Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
+      Bool_t                  DoFlowChargedWithVector(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
       Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
       Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
       Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (charged tracks) for differential flow
+      Bool_t                  FillChargedVectorsWithVector(const Float_t dEtaGap = -1., const Short_t iPtIndex = 0); // fill flow vectors p and q with POIs (charged tracks) for differential flow
       Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iPtIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
       void                    ResetFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
       void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
@@ -269,6 +271,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // Flow
       TProfile*       fcn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for c2{2}
       TProfile2D*     fdn2Tracks[fNumEtaGap][fNumHarmonics]; //! testing cumulant for d2{2}
+      TProfile2D*     fdn2TracksVector[fNumEtaGap][fNumHarmonics]; //! testing cumulant for d2{2}
       TProfile3D*     fp3V0sCorrK0s[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambda[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
       TH3D*           fh3V0sEntriesK0s[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
