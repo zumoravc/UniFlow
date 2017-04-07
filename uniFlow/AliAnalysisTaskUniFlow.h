@@ -166,6 +166,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                TwoDiff(const Short_t n1, const Short_t n2, const Short_t pt); // Two particle diff. correlation calculations (no eta gap)
       TComplex                TwoDiffGapPos(const Short_t n1, const Short_t n2, const Short_t pt); // Two particle diff. correlation calculations (with eta gap)
       TComplex                TwoDiffGapNeg(const Short_t n1, const Short_t n2, const Short_t pt); // Two particle diff. correlation calculations (with eta gap)
+      TComplex                Four(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4, const Short_t pt); // Four particle reference correlation calculations (no eta gap)
 
       // properties
       AliAODEvent*            fEventAOD; //! AOD event countainer
@@ -269,12 +271,18 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // histograms & profiles
 
       // Flow
-      TProfile*       fpRefs[fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
-      TProfile2D*     fp2Charged[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
-      TProfile3D*     fp3V0sCorrK0s[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrLambda[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
       TH3D*           fh3V0sEntriesK0s[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
       TH3D*           fh3V0sEntriesLambda[fNumEtaGap]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
+
+      TProfile*       fpRefsCor2[fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
+      TProfile2D*     fp2ChargedCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
+      TProfile3D*     fp3V0sCorrK0sCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrLambdaCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
+
+      TProfile*       fpRefsCor4[fNumHarmonics]; //! <4> correlations for RFPs
+      TProfile2D*     fp2ChargedCor4[fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
+      TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidats (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
 
       // Events
       TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
