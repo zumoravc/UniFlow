@@ -262,6 +262,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*      fOutListCharged; //! charged tracks list
       TList*      fOutListPID; //! pi,K,p list
       TList*      fOutListV0s; //! V0s candidates list
+      TList*      fFlowRefs; //! list for flow of reference particles
+      TList*      fFlowCharged; //! list for flow of charged particles
+      TList*      fFlowV0s; //! list for flow of V0s particles
 
       // histograms & profiles
 
