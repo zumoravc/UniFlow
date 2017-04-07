@@ -80,8 +80,8 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
-    task1->SetNumEventsAnalyse(10);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
+    task1->SetNumEventsAnalyse(20);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kFALSE);
     task1->SetProcessCharged(kTRUE);

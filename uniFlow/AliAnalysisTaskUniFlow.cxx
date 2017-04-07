@@ -137,8 +137,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sDaughterEtaMax(0.),
   fCutV0sMotherEtaMax(0.),
   fCutV0sMotherRapMax(0.),
-  fCutV0sMotherPtMin(0.),
-  fCutV0sMotherPtMax(0.),
   fCutV0sArmenterosAlphaK0sMin(0.),
   fCutV0sArmenterosAlphaLambdaMax(0.),
   fCutV0sInvMassK0sMin(0.4),
@@ -262,8 +260,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sDaughterEtaMax(0.),
   fCutV0sMotherEtaMax(0.),
   fCutV0sMotherRapMax(0.),
-  fCutV0sMotherPtMin(0.),
-  fCutV0sMotherPtMax(0.),
   fCutV0sArmenterosAlphaK0sMin(0.),
   fCutV0sArmenterosAlphaLambdaMax(0.),
   fCutV0sInvMassK0sMin(0.4),
@@ -1676,8 +1672,6 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if(fCutV0sDaughterPtMax > 0. && (daughterPos->Pt() > fCutV0sDaughterPtMax  || daughterNeg->Pt() > fCutV0sDaughterPtMax) ) return kFALSE;
 
   if(fCutV0sMotherEtaMax > 0. && TMath::Abs(v0->Eta()) > fCutV0sDaughterEtaMax ) return kFALSE;
-  if(fCutV0sMotherPtMin > 0. && v0->Pt() < fCutV0sMotherPtMin) return kFALSE;
-  if(fCutV0sMotherPtMax > 0. && v0->Pt() > fCutV0sMotherPtMax) return kFALSE;
   fhV0sCounter->Fill("Acceptance",1);
 
   // passing all common criteria
@@ -1897,6 +1891,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // - Flow calculations
   // returns kTRUE if succesfull
   // *************************************************************
+
+  // printf("======= EVENT ================\n");
 
   // filtering particles
   if(!Filtering())
@@ -2160,7 +2156,10 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short
           dValue = vector.Re()/Dn2;
           // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if( TMath::Abs(dValue < 1) )
+          {
             prof->Fill(fIndexCentrality, iPt*dPtBinWidth, dMass, dValue, Dn2);
+            // printf("EtaGap %g (no | <2> | n %d) : Filling (mass %g | pt %g | value %g | weight %g) centrality %d\n",dEtaGap,iHarmonics,dMass,iPt*dPtBinWidth,dValue,Dn2,fIndexCentrality);
+          }
         }
 
       // estimating <4'>
@@ -2174,8 +2173,11 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short
           dValue = vector.Re()/Dn2;
           // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if( TMath::Abs(dValue < 1) )
+          {
             prof->Fill(fIndexCentrality, iPt*dPtBinWidth, dMass, dValue, Dn2);
+            // printf("EtaGap %g (no | <4> | n %d) : Filling (mass %g | pt %g | value %g | weight %g) centrality %d\n",dEtaGap,iHarmonics,dMass,iPt*dPtBinWidth,dValue,Dn2,fIndexCentrality);
           }
+        }
     }
     else // eta gap
     {
@@ -2191,7 +2193,10 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short
           dValue = vector.Re()/Dn2;
           // printf("Gap (Pos): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if( TMath::Abs(dValue < 1) )
+          {
             prof->Fill(fIndexCentrality, iPt*dPtBinWidth, dMass, dValue, Dn2);
+            // printf("EtaGap %g (pos |  n %d): Filling (mass %g | pt %g | value %g | weight %g) centrality %d\n",dEtaGap,iHarmonics,dMass,iPt*dPtBinWidth,dValue,Dn2,fIndexCentrality);
+          }
         }
 
       // POIs in negative eta
@@ -2205,7 +2210,10 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short
           dValue = vector.Re()/Dn2;
           // printf("Gap (Neg): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if( TMath::Abs(dValue < 1) )
+          {
             prof->Fill(fIndexCentrality, iPt*dPtBinWidth, dMass, dValue, Dn2);
+            // printf("EtaGap %g (neg <2>|  n %d): Filling (mass %g | pt %g | value %g | weight %g) cetrality %d\n",dEtaGap,iHarmonics,dMass,iPt*dPtBinWidth,dValue,Dn2,fIndexCentrality);
+          }
         }
     } // endif {dEtaGap}
   } // endfor {iPt}
