@@ -124,8 +124,6 @@ void runAnalysis()
     task1->SetV0sDaughterEtaMax(0.8);
     task1->SetV0sMotherEtaMax(0.8);
     task1->SetV0sMotherRapMax(0.);
-    task1->SetV0sMotherPtMin(0.2);
-    task1->SetV0sMotherPtMax(10.);
     task1->SetV0sK0sCPAMin(0.998);
     task1->SetV0sLambdaCPAMin(0.998);
     task1->SetV0sK0sNumTauMax(3.);
