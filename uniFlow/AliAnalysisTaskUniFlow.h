@@ -134,6 +134,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       Bool_t                  FilterPID(); // pi,K,p filtering
+      Bool_t                  IsTrackPion(const AliAODTrack* track); // pion selection
+      Bool_t                  IsTrackKaon(const AliAODTrack* track); // kaon selection
+      Bool_t                  IsTrackProton(const AliAODTrack* track); // proton selection
+      void                    FillPIDQA(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling pi,K,p QA histograms
       Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
       Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
       Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific

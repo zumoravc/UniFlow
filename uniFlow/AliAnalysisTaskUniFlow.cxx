@@ -1877,9 +1877,75 @@ Bool_t AliAnalysisTaskUniFlow::FilterPID()
   // return kFALSE if any complications occurs
   // *************************************************************
 
-  // TODO: to be implemented
+  const Short_t iNumTracks = fEventAOD->GetNumberOfTracks();
+  if(iNumTracks < 1) return kFALSE;
+
+  Bool_t bIsPion = kFALSE;
+  Bool_t bIsKaon = kFALSE;
+  Bool_t bIsProton = kFALSE;
+
+  AliAODTrack* track = 0x0;
+  for(Short_t iTrack(0); iTrack < iNumTracks; iTrack++)
+  {
+    track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
+    if(!track) continue;
+
+    // PID tracks are subset of selected charged tracks (same quality requirements)
+    if(!IsChargedSelected(track)) continue;
+
+    // filling QA for tracks before selection (but after charged criteria applied)
+    FillPIDQA(0,track);
+
+    bIsPion = IsTrackPion(track);
+    bIsKaon = IsTrackKaon(track);
+    bIsProton = IsTrackProton(track);
+
+    if(bIsPion || bIsKaon || bIsProton)
+    {
+      FillPIDQA(1,track); // filling QA for tracks AFTER selection
+    }
+  }
 
   return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsTrackPion(const AliAODTrack* track)
+{
+  // Selection of pion candidates
+  // return kTRUE if candidate passes all requirements, kFALSE otherwise
+  // *************************************************************
+  if(!track) return kFALSE;
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsTrackKaon(const AliAODTrack* track)
+{
+  // Selection of Kaon candidates
+  // return kTRUE if candidate passes all requirements, kFALSE otherwise
+  // *************************************************************
+  if(!track) return kFALSE;
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsTrackProton(const AliAODTrack* track)
+{
+  // Selection of proton candidates
+  // return kTRUE if candidate passes all requirements, kFALSE otherwise
+  // *************************************************************
+  if(!track) return kFALSE;
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack* track)
+{
+  // Filling various QA plots related to PID (pi,K,p) track selection
+  // *************************************************************
+  if(!track) return;
+
+  return;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
