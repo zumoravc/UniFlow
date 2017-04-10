@@ -138,7 +138,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       Bool_t                  FilterPID(); // pi,K,p filtering
       PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
-      void                    FillPIDQA(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling pi,K,p QA histograms
+      void                    FillPIDQA(const Short_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
       Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
       Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
       Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
@@ -294,6 +294,22 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhEventCounter; //! counter following event selection
       // Charged
       TH1D*           fhChargedCounter; //! counter following charged track selection
+      // PID
+      TH1D*           fhPIDPionMult; //! multiplicity distribution of selected pions
+      TH1D*           fhPIDPionPt; //! pt distribution of selected pions
+      TH1D*           fhPIDPionPhi; //! phi distribution of selected pions
+      TH1D*           fhPIDPionEta; //! eta distribution of selected pions
+      TH1D*           fhPIDPionCharge; //! charge distribution of selected pions
+      TH1D*           fhPIDKaonMult; //! multiplicity distribution of selected pions
+      TH1D*           fhPIDKaonPt; //! pt distribution of selected kaons
+      TH1D*           fhPIDKaonPhi; //! phi distribution of selected kaons
+      TH1D*           fhPIDKaonEta; //! eta distribution of selected kaons
+      TH1D*           fhPIDKaonCharge; //! charge distribution of selected pions
+      TH1D*           fhPIDProtonMult; //! multiplicity distribution of selected pions
+      TH1D*           fhPIDProtonPt; //! pt distribution of selected protons
+      TH1D*           fhPIDProtonPhi; //! phi distribution of selected protons
+      TH1D*           fhPIDProtonEta; //! eta distribution of selected protons
+      TH1D*           fhPIDProtonCharge; //! charge distribution of selected pions
       // V0s
       TH1D*           fhV0sCounter; //! counter following V0s selection
       TH1D*           fhV0sCounterK0s; //! counter following K0s selection
@@ -317,10 +333,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhQAChargedNumTPCcls[fiNumIndexQA];  //! dist of track number of TPC clusters
       TH1D*           fhQAChargedDCAxy[fiNumIndexQA];      //! dist of Charged DCA in transverse plane
       TH1D*           fhQAChargedDCAz[fiNumIndexQA];       //! dist of charged DCA in z coordinate
-      TH1D*           fhQAChargedTPCstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
-      TH1D*           fhQAChargedTOFstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
-      TH2D*           fhQAChargedTPCdEdx[fiNumIndexQA];    //! TPC PID information
-      TH2D*           fhQAChargedTOFbeta[fiNumIndexQA];    //! TOF PID information
+      // QA: PID tracks
+      TH1D*           fhQAPIDTPCstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
+      TH1D*           fhQAPIDTOFstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
+      TH2D*           fhQAPIDTPCdEdx[fiNumIndexQA];    //! TPC PID information
+      TH2D*           fhQAPIDTOFbeta[fiNumIndexQA];    //! TOF PID information
+      TH3D*           fh3QAPIDnSigmaBayesElectron[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
+      TH3D*           fh3QAPIDnSigmaBayesMuon[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
+      TH3D*           fh3QAPIDnSigmaBayesPion[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
+      TH3D*           fh3QAPIDnSigmaBayesKaon[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for kaons
+      TH3D*           fh3QAPIDnSigmaBayesProton[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for protons
       // QA: V0s candidates
       TH1D*			  		fhQAV0sMultK0s[fiNumIndexQA];	//! number of K0s candidates
       TH1D*			  		fhQAV0sMultLambda[fiNumIndexQA];	//! number of Lambda candidates
