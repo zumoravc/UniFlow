@@ -300,16 +300,22 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhPIDPionPhi; //! phi distribution of selected pions
       TH1D*           fhPIDPionEta; //! eta distribution of selected pions
       TH1D*           fhPIDPionCharge; //! charge distribution of selected pions
+      TH2D*           fh2PIDPionTPCdEdx; //! TPC dEdx response of selected pions
+      TH2D*           fh2PIDPionTOFbeta; //! TOF beta of selected pions
       TH1D*           fhPIDKaonMult; //! multiplicity distribution of selected pions
       TH1D*           fhPIDKaonPt; //! pt distribution of selected kaons
       TH1D*           fhPIDKaonPhi; //! phi distribution of selected kaons
       TH1D*           fhPIDKaonEta; //! eta distribution of selected kaons
       TH1D*           fhPIDKaonCharge; //! charge distribution of selected pions
+      TH2D*           fh2PIDKaonTPCdEdx; //! TPC dEdx response of selected pions
+      TH2D*           fh2PIDKaonTOFbeta; //! TOF beta of selected pions
       TH1D*           fhPIDProtonMult; //! multiplicity distribution of selected pions
       TH1D*           fhPIDProtonPt; //! pt distribution of selected protons
       TH1D*           fhPIDProtonPhi; //! phi distribution of selected protons
       TH1D*           fhPIDProtonEta; //! eta distribution of selected protons
       TH1D*           fhPIDProtonCharge; //! charge distribution of selected pions
+      TH2D*           fh2PIDProtonTPCdEdx; //! TPC dEdx response of selected pions
+      TH2D*           fh2PIDProtonTOFbeta; //! TOF beta of selected pions
       // V0s
       TH1D*           fhV0sCounter; //! counter following V0s selection
       TH1D*           fhV0sCounterK0s; //! counter following K0s selection
