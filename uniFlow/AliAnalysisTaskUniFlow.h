@@ -64,9 +64,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetKaonNumSigmasMax(Double_t numSigmas) { fCutKaonNumSigmaMax = numSigmas; }
       void                    SetProtonNumSigmasMax(Double_t numSigmas) { fCutProtonNumSigmaMax = numSigmas; }
       void                    SetUseBayesPID(Bool_t bayes = kTRUE) { fCutUseBayesPID = bayes; }
-      void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutBayesPIDPionMin = probPi; }
-      void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutBayesPIDKaonMin = probK; }
-      void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutBayesPIDProtonMin = probP; }
+      void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesPionMin = probPi; }
+      void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutPIDBayesKaonMin = probK; }
+      void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutPIDBayesProtonMin = probP; }
+      void                    SetPIDBayesRejectElectron(Double_t prob) { fCutPIDBayesRejectElectron = prob; }
+      void                    SetPIDBayesRejectMuon(Double_t prob) { fCutPIDBayesRejectMuon = prob; }
       // V0s setters
       void					          SetV0sOnFly(Bool_t onFly) { fCutV0sOnFly = onFly; }
       void					          SetV0sTPCRefit(Bool_t refit) { fCutV0srefitTPC = refit; }
@@ -135,9 +137,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       Bool_t                  FilterPID(); // pi,K,p filtering
-      Bool_t                  IsTrackPion(const AliAODTrack* track); // pion selection
-      Bool_t                  IsTrackKaon(const AliAODTrack* track); // kaon selection
-      Bool_t                  IsTrackProton(const AliAODTrack* track); // proton selection
+      PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
       void                    FillPIDQA(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling pi,K,p QA histograms
       Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
       Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
@@ -175,6 +175,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // properties
       AliAODEvent*            fEventAOD; //! AOD event countainer
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
+      AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
       Bool_t                  fInit; // initialization check
       Short_t                 fIndexSampling; // sampling index (randomly generated)
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
@@ -225,9 +226,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutPionNumSigmaMax;
       Double_t                fCutKaonNumSigmaMax;
       Double_t                fCutProtonNumSigmaMax;
-      Double_t                fCutBayesPIDPionMin; // minimal value of Bayes PID probability for pion
-      Double_t                fCutBayesPIDKaonMin; // minimal value of Bayes PID probability for Kaon
-      Double_t                fCutBayesPIDProtonMin; // minimal value of Bayes PID probability for proton
+      Double_t                fCutPIDBayesPionMin; // [0.9] minimal value of Bayes PID probability for pion
+      Double_t                fCutPIDBayesKaonMin; // [0.9] minimal value of Bayes PID probability for Kaon
+      Double_t                fCutPIDBayesProtonMin; // [0.9] minimal value of Bayes PID probability for proton
+      Double_t                fCutPIDBayesRejectElectron; // [0.5] maximal value of Bayes PID probability for electron rejection
+      Double_t                fCutPIDBayesRejectMuon; // [0.5] maximal value of Bayes PID probability for muon rejection
       //cuts & selection: V0 reconstruction
 	    Bool_t 					        fCutV0sOnFly;		// V0 reconstruction method: is On-the-fly? (or offline)
   		Bool_t					        fCutV0srefitTPC; // Check TPC refit of V0 daughters ?

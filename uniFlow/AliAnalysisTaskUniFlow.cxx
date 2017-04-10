@@ -60,6 +60,7 @@ Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {-1.,0.,0.8};
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventAOD(0x0),
   fPIDResponse(0x0),
+  fPIDCombined(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(0),
@@ -114,9 +115,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
-  fCutBayesPIDPionMin(0),
-  fCutBayesPIDKaonMin(0),
-  fCutBayesPIDProtonMin(0),
+  fCutPIDBayesPionMin(0.9),
+  fCutPIDBayesKaonMin(0.9),
+  fCutPIDBayesProtonMin(0.9),
+  fCutPIDBayesRejectElectron(0.5),
+  fCutPIDBayesRejectMuon(0.5),
 
   // V0s selection
   fCutV0sOnFly(kFALSE),
@@ -184,6 +187,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
   fEventAOD(0x0),
   fPIDResponse(0x0),
+  fPIDCombined(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(0),
@@ -238,9 +242,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
-  fCutBayesPIDPionMin(0),
-  fCutBayesPIDKaonMin(0),
-  fCutBayesPIDProtonMin(0),
+  fCutPIDBayesPionMin(0.9),
+  fCutPIDBayesKaonMin(0.9),
+  fCutPIDBayesProtonMin(0.9),
+  fCutPIDBayesRejectElectron(0.5),
+  fCutPIDBayesRejectMuon(0.5),
 
   // V0s selection
   fCutV0sOnFly(kFALSE),
@@ -884,6 +890,17 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     return kFALSE;
   }
 
+  fPIDCombined = new AliPIDCombined();
+  if(!fPIDCombined)
+  {
+    ::Error("InitializeTask","AliPIDCombined object not found! Terminating!");
+    return kFALSE;
+  }
+  fPIDCombined->SetDefaultTPCPriors();
+  fPIDCombined->SetSelectedSpecies(5); // all particle species
+  fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
+
+
   if(fSampling && fNumSamples == 0)
   {
     ::Error("InitializeTask","Sampling used, but number of samples is 0! Terminating!");
@@ -1150,6 +1167,8 @@ Bool_t AliAnalysisTaskUniFlow::Filtering()
     fVectorKaon->clear();
     fVectorProton->clear();
     if(!FilterPID()) return kFALSE;
+
+    // printf("sizes: pion %d | kaon %d | proton %d\n", fVectorPion->size(),fVectorKaon->size(),fVectorProton->size());
   }
 
   if(fProcessV0s)
@@ -1884,10 +1903,7 @@ Bool_t AliAnalysisTaskUniFlow::FilterPID()
   const Short_t iNumTracks = fEventAOD->GetNumberOfTracks();
   if(iNumTracks < 1) return kFALSE;
 
-  Bool_t bIsPion = kFALSE;
-  Bool_t bIsKaon = kFALSE;
-  Bool_t bIsProton = kFALSE;
-
+  PartSpecies species = kUnknown;
   AliAODTrack* track = 0x0;
   for(Short_t iTrack(0); iTrack < iNumTracks; iTrack++)
   {
@@ -1897,50 +1913,78 @@ Bool_t AliAnalysisTaskUniFlow::FilterPID()
     // PID tracks are subset of selected charged tracks (same quality requirements)
     if(!IsChargedSelected(track)) continue;
 
-    // filling QA for tracks before selection (but after charged criteria applied)
-    FillPIDQA(0,track);
+    FillPIDQA(0,track);   // filling QA for tracks before selection (but after charged criteria applied)
 
-    bIsPion = IsTrackPion(track);
-    bIsKaon = IsTrackKaon(track);
-    bIsProton = IsTrackProton(track);
-
-    if(bIsPion || bIsKaon || bIsProton)
+    // selection of PID tracks
+    switch (IsPIDSelected(track))
     {
-      FillPIDQA(1,track); // filling QA for tracks AFTER selection
+      case kPion:
+        fVectorPion->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kPion) );
+        break;
+      case kKaon:
+        fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kKaon) );
+        break;
+      case kProton:
+        fVectorProton->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kProton) );
+        break;
+      default:
+        continue;
     }
+
+    FillPIDQA(1,track); // filling QA for tracks AFTER selection
   }
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsTrackPion(const AliAODTrack* track)
+AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const AliAODTrack* track)
 {
-  // Selection of pion candidates
-  // return kTRUE if candidate passes all requirements, kFALSE otherwise
+  // Selection of PID tracks (pi,K,p) - track identification
+  // Based on fCutUseBayesPID flag, either Bayes PID or nSigma cutting is used
+  // returns AliAnalysisTaskUniFlow::PartSpecies enum : kPion, kKaon, kProton if any of this passed kUnknown otherwise
   // *************************************************************
-  if(!track) return kFALSE;
 
-  return kTRUE;
-}
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsTrackKaon(const AliAODTrack* track)
-{
-  // Selection of Kaon candidates
-  // return kTRUE if candidate passes all requirements, kFALSE otherwise
-  // *************************************************************
-  if(!track) return kFALSE;
+  // checking detector statuses
+  AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
+  AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
 
-  return kTRUE;
-}
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsTrackProton(const AliAODTrack* track)
-{
-  // Selection of proton candidates
-  // return kTRUE if candidate passes all requirements, kFALSE otherwise
-  // *************************************************************
-  if(!track) return kFALSE;
+  Bool_t bIsTPCok = (pidStatusTPC == AliPIDResponse::kDetPidOk);
+  Bool_t bIsTOFok = ((pidStatusTOF == AliPIDResponse::kDetPidOk) && (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME)); // checking TOF
 
-  return kTRUE;
+  if(!bIsTPCok) return kUnknown;
+  // TODO: TOF check???
+
+  if(fCutUseBayesPID)
+  {
+    // use Bayesian PID
+    Double_t dProbPID[5] = {0}; // array for Bayes PID probabilities:  0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+    UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dProbPID); // filling probabilities to dPropPID array
+    Double_t dMaxProb = TMath::MaxElement(5,dProbPID);
+
+    // printf("PID Prob: e %g | mu %g | pi %g | K %g | p %g ||| MAX %g \n",dProbPID[0],dProbPID[1],dProbPID[2],dProbPID[3],dProbPID[4],dMaxProb);
+
+    // electron and mion rejection
+    if(dProbPID[0] > fCutPIDBayesRejectElectron || dProbPID[1] > fCutPIDBayesRejectMuon)
+      return kUnknown;
+
+    // checking the PID probability
+    // TODO: think about: if Pion has maximum probibility < fCutBayesPIDPion, track is rejected -> is it good?
+    if(dMaxProb == dProbPID[2] && dProbPID[2] > fCutPIDBayesPionMin)
+      return kPion;
+
+    if(dMaxProb == dProbPID[3] && dProbPID[3] > fCutPIDBayesKaonMin)
+      return kKaon;
+
+    if(dMaxProb == dProbPID[4] && dProbPID[4] > fCutPIDBayesProtonMin)
+      return kProton;
+  }
+  else
+  {
+    // use nSigma cuts
+
+  }
+
+  return kUnknown;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack* track)
