@@ -110,6 +110,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutChargedNumTPCclsMin(0),
 
   // PID tracks selection
+  fCutUseBayesPID(kFALSE),
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
@@ -233,6 +234,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutChargedNumTPCclsMin(0),
 
   // PID tracks selection
+  fCutUseBayesPID(kFALSE),
   fCutPionNumSigmaMax(0),
   fCutKaonNumSigmaMax(0),
   fCutProtonNumSigmaMax(0),
@@ -799,6 +801,8 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutChargedPtMax: (Float_t) %g (GeV/c)\n",    fCutChargedPtMax);
   printf("      fCutChargedDCAzMax: (Float_t) %g (cm)\n",    fCutChargedDCAzMax);
   printf("      fCutChargedDCAxyMax: (Float_t) %g (cm)\n",    fCutChargedDCAxyMax);
+  printf("   -------- PID (pi,K,p) tracks ---------------------------------\n");
+  printf("      fCutUseBayesPID: (Bool_t) %s\n",    fCutUseBayesPID ? "kTRUE" : "kFALSE");
   printf("   -------- V0s candidates --------------------------------------\n");
   printf("      fCutV0sOnFly: (Bool_t) %s\n",    fCutV0sOnFly ? "kTRUE" : "kFALSE");
   printf("      fCutV0srefitTPC: (Bool_t) %s\n",     fCutV0srefitTPC ? "kTRUE" : "kFALSE");
