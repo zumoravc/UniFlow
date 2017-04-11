@@ -754,59 +754,59 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fOutListPID->Add(fh2PIDProtonTPCdEdx);
       fh2PIDProtonTOFbeta = new TH2D("fh2PIDProtonTOFbeta","PID: p: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
       fOutListPID->Add(fh2PIDProtonTOFbeta);
-      fh2PIDPionTPCnSigmaPion = new TH2D("fh2PIDPionTPCnSigmaPion","PID: #pi: TPC n#sigma (#pi hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDPionTPCnSigmaPion = new TH2D("fh2PIDPionTPCnSigmaPion","PID: #pi: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDPionTPCnSigmaPion);
-      fh2PIDPionTOFnSigmaPion = new TH2D("fh2PIDPionTOFnSigmaPion","PID: #pi: TOF n#sigma (#pi hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDPionTOFnSigmaPion = new TH2D("fh2PIDPionTOFnSigmaPion","PID: #pi: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDPionTOFnSigmaPion);
-      fh2PIDPionTPCnSigmaKaon = new TH2D("fh2PIDPionTPCnSigmaKaon","PID: #pi: TPC n#sigma (K hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDPionTPCnSigmaKaon = new TH2D("fh2PIDPionTPCnSigmaKaon","PID: #pi: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDPionTPCnSigmaKaon);
-      fh2PIDPionTOFnSigmaKaon = new TH2D("fh2PIDPionTOFnSigmaKaon","PID: #pi: TOF n#sigma ( hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDPionTOFnSigmaKaon = new TH2D("fh2PIDPionTOFnSigmaKaon","PID: #pi: TOF n#sigma ( hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDPionTOFnSigmaKaon);
-      fh2PIDPionTPCnSigmaProton = new TH2D("fh2PIDPionTPCnSigmaProton","PID: #pi: TPC n#sigma (p hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDPionTPCnSigmaProton = new TH2D("fh2PIDPionTPCnSigmaProton","PID: #pi: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDPionTPCnSigmaProton);
-      fh2PIDPionTOFnSigmaProton = new TH2D("fh2PIDPionTOFnSigmaProton","PID: #pi: TOF n#sigma (p hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDPionTOFnSigmaProton = new TH2D("fh2PIDPionTOFnSigmaProton","PID: #pi: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDPionTOFnSigmaProton);
-      fh2PIDPionBayesPion = new TH2D("fh2PIDPionBayesPion","PID: #pi: Bayes probability (#pi hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDPionBayesPion = new TH2D("fh2PIDPionBayesPion","PID: #pi: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDPionBayesPion);
-      fh2PIDPionBayesKaon = new TH2D("fh2PIDPionBayesKaon","PID: #pi: Bayes probability (K hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDPionBayesKaon = new TH2D("fh2PIDPionBayesKaon","PID: #pi: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDPionBayesKaon);
-      fh2PIDPionBayesProton = new TH2D("fh2PIDPionBayesProton","PID: #pi: Bayes probability (p hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDPionBayesProton = new TH2D("fh2PIDPionBayesProton","PID: #pi: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDPionBayesProton);
-      fh2PIDKaonTPCnSigmaPion = new TH2D("fh2PIDKaonTPCnSigmaPion","PID: K: TPC n#sigma (#pi hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDKaonTPCnSigmaPion = new TH2D("fh2PIDKaonTPCnSigmaPion","PID: K: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDKaonTPCnSigmaPion);
-      fh2PIDKaonTOFnSigmaPion = new TH2D("fh2PIDKaonTOFnSigmaPion","PID: K: TOF n#sigma (#pi hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDKaonTOFnSigmaPion = new TH2D("fh2PIDKaonTOFnSigmaPion","PID: K: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDKaonTOFnSigmaPion);
-      fh2PIDKaonTPCnSigmaKaon = new TH2D("fh2PIDKaonTPCnSigmaKaon","PID: K: TPC n#sigma (K hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDKaonTPCnSigmaKaon = new TH2D("fh2PIDKaonTPCnSigmaKaon","PID: K: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDKaonTPCnSigmaKaon);
-      fh2PIDKaonTOFnSigmaKaon = new TH2D("fh2PIDKaonTOFnSigmaKaon","PID: K: TOF n#sigma ( hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDKaonTOFnSigmaKaon = new TH2D("fh2PIDKaonTOFnSigmaKaon","PID: K: TOF n#sigma ( hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDKaonTOFnSigmaKaon);
-      fh2PIDKaonTPCnSigmaProton = new TH2D("fh2PIDKaonTPCnSigmaProton","PID: K: TPC n#sigma (p hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDKaonTPCnSigmaProton = new TH2D("fh2PIDKaonTPCnSigmaProton","PID: K: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDKaonTPCnSigmaProton);
-      fh2PIDKaonTOFnSigmaProton = new TH2D("fh2PIDKaonTOFnSigmaProton","PID: K: TOF n#sigma (p hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDKaonTOFnSigmaProton = new TH2D("fh2PIDKaonTOFnSigmaProton","PID: K: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDKaonTOFnSigmaProton);
-      fh2PIDKaonBayesPion = new TH2D("fh2PIDKaonBayesPion","PID: K: Bayes probability (#pi hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDKaonBayesPion = new TH2D("fh2PIDKaonBayesPion","PID: K: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDKaonBayesPion);
-      fh2PIDKaonBayesKaon = new TH2D("fh2PIDKaonBayesKaon","PID: K: Bayes probability (K hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDKaonBayesKaon = new TH2D("fh2PIDKaonBayesKaon","PID: K: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDKaonBayesKaon);
-      fh2PIDKaonBayesProton = new TH2D("fh2PIDKaonBayesProton","PID: K: Bayes probability (p hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDKaonBayesProton = new TH2D("fh2PIDKaonBayesProton","PID: K: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDKaonBayesProton);
-      fh2PIDProtonTPCnSigmaPion = new TH2D("fh2PIDProtonTPCnSigmaPion","PID: p: TPC n#sigma (#pi hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDProtonTPCnSigmaPion = new TH2D("fh2PIDProtonTPCnSigmaPion","PID: p: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDProtonTPCnSigmaPion);
-      fh2PIDProtonTOFnSigmaPion = new TH2D("fh2PIDProtonTOFnSigmaPion","PID: p: TOF n#sigma (#pi hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDProtonTOFnSigmaPion = new TH2D("fh2PIDProtonTOFnSigmaPion","PID: p: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDProtonTOFnSigmaPion);
-      fh2PIDProtonTPCnSigmaKaon = new TH2D("fh2PIDProtonTPCnSigmaKaon","PID: p: TPC n#sigma (K hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDProtonTPCnSigmaKaon = new TH2D("fh2PIDProtonTPCnSigmaKaon","PID: p: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDProtonTPCnSigmaKaon);
-      fh2PIDProtonTOFnSigmaKaon = new TH2D("fh2PIDProtonTOFnSigmaKaon","PID: p: TOF n#sigma ( hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDProtonTOFnSigmaKaon = new TH2D("fh2PIDProtonTOFnSigmaKaon","PID: p: TOF n#sigma ( hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDProtonTOFnSigmaKaon);
-      fh2PIDProtonTPCnSigmaProton = new TH2D("fh2PIDProtonTPCnSigmaProton","PID: p: TPC n#sigma (p hyp.); #it{p} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDProtonTPCnSigmaProton = new TH2D("fh2PIDProtonTPCnSigmaProton","PID: p: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDProtonTPCnSigmaProton);
-      fh2PIDProtonTOFnSigmaProton = new TH2D("fh2PIDProtonTOFnSigmaProton","PID: p: TOF n#sigma (p hyp.); #it{p} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
+      fh2PIDProtonTOFnSigmaProton = new TH2D("fh2PIDProtonTOFnSigmaProton","PID: p: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 22,-11,10);
       fOutListPID->Add(fh2PIDProtonTOFnSigmaProton);
-      fh2PIDProtonBayesPion = new TH2D("fh2PIDProtonBayesPion","PID: p: Bayes probability (#pi hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDProtonBayesPion = new TH2D("fh2PIDProtonBayesPion","PID: p: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDProtonBayesPion);
-      fh2PIDProtonBayesKaon = new TH2D("fh2PIDProtonBayesKaon","PID: p: Bayes probability (K hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDProtonBayesKaon = new TH2D("fh2PIDProtonBayesKaon","PID: p: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDProtonBayesKaon);
-      fh2PIDProtonBayesProton = new TH2D("fh2PIDProtonBayesProton","PID: p: Bayes probability (p hyp.); #it{p} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+      fh2PIDProtonBayesProton = new TH2D("fh2PIDProtonBayesProton","PID: p: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fOutListPID->Add(fh2PIDProtonBayesProton);
 
     } //endif {fProcessPID}
@@ -2226,6 +2226,7 @@ void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack
   UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dBayesProb);
 
   Double_t dP = track->P();
+  Double_t dPt = track->Pt();
 
   // detector status dependent
   if(bIsTPCok)
@@ -2286,24 +2287,21 @@ void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack
   switch (species)
   {
     case kPion:
-      printf("= PION =====================\n");
-      printf("TPC nSigma: %g | %g | %g \n",dNumSigmaTPC[2],dNumSigmaTPC[3],dNumSigmaTPC[4]);
-      printf("TOF nSigma: %g | %g | %g (%s)\n",dNumSigmaTOF[2],dNumSigmaTOF[3],dNumSigmaTOF[4], bIsTOFok ? "OK" : "Not OK");
       fhPIDPionPt->Fill(track->Pt());
       fhPIDPionPhi->Fill(track->Phi());
       fhPIDPionEta->Fill(track->Eta());
       fhPIDPionCharge->Fill(track->Charge());
-      fh2PIDPionTPCdEdx->Fill(dP,dTPCdEdx);
-      fh2PIDPionTOFbeta->Fill(dP,dTOFbeta);
-      fh2PIDPionTPCnSigmaPion->Fill(dP,dNumSigmaTPC[2]);
-      fh2PIDPionTOFnSigmaPion->Fill(dP,dNumSigmaTOF[2]);
-      fh2PIDPionTPCnSigmaKaon->Fill(dP,dNumSigmaTPC[3]);
-      fh2PIDPionTOFnSigmaKaon->Fill(dP,dNumSigmaTOF[3]);
-      fh2PIDPionTPCnSigmaProton->Fill(dP,dNumSigmaTPC[4]);
-      fh2PIDPionTOFnSigmaProton->Fill(dP,dNumSigmaTOF[4]);
-      fh2PIDPionBayesPion->Fill(dP,dBayesProb[2]);
-      fh2PIDPionBayesKaon->Fill(dP,dBayesProb[3]);
-      fh2PIDPionBayesProton->Fill(dP,dBayesProb[4]);
+      fh2PIDPionTPCdEdx->Fill(dPt,dTPCdEdx);
+      fh2PIDPionTOFbeta->Fill(dPt,dTOFbeta);
+      fh2PIDPionTPCnSigmaPion->Fill(dPt,dNumSigmaTPC[2]);
+      fh2PIDPionTOFnSigmaPion->Fill(dPt,dNumSigmaTOF[2]);
+      fh2PIDPionTPCnSigmaKaon->Fill(dPt,dNumSigmaTPC[3]);
+      fh2PIDPionTOFnSigmaKaon->Fill(dPt,dNumSigmaTOF[3]);
+      fh2PIDPionTPCnSigmaProton->Fill(dPt,dNumSigmaTPC[4]);
+      fh2PIDPionTOFnSigmaProton->Fill(dPt,dNumSigmaTOF[4]);
+      fh2PIDPionBayesPion->Fill(dPt,dBayesProb[2]);
+      fh2PIDPionBayesKaon->Fill(dPt,dBayesProb[3]);
+      fh2PIDPionBayesProton->Fill(dPt,dBayesProb[4]);
       break;
 
     case kKaon:
@@ -2313,15 +2311,15 @@ void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack
       fhPIDKaonCharge->Fill(track->Charge());
       fh2PIDKaonTPCdEdx->Fill(dP,dTPCdEdx);
       fh2PIDKaonTOFbeta->Fill(dP,dTOFbeta);
-      fh2PIDKaonTPCnSigmaPion->Fill(dP,dNumSigmaTPC[2]);
-      fh2PIDKaonTOFnSigmaPion->Fill(dP,dNumSigmaTOF[2]);
-      fh2PIDKaonTPCnSigmaKaon->Fill(dP,dNumSigmaTPC[3]);
-      fh2PIDKaonTOFnSigmaKaon->Fill(dP,dNumSigmaTOF[3]);
-      fh2PIDKaonTPCnSigmaProton->Fill(dP,dNumSigmaTPC[4]);
-      fh2PIDKaonTOFnSigmaProton->Fill(dP,dNumSigmaTOF[4]);
-      fh2PIDKaonBayesPion->Fill(dP,dBayesProb[2]);
-      fh2PIDKaonBayesKaon->Fill(dP,dBayesProb[3]);
-      fh2PIDKaonBayesProton->Fill(dP,dBayesProb[4]);
+      fh2PIDKaonTPCnSigmaPion->Fill(dPt,dNumSigmaTPC[2]);
+      fh2PIDKaonTOFnSigmaPion->Fill(dPt,dNumSigmaTOF[2]);
+      fh2PIDKaonTPCnSigmaKaon->Fill(dPt,dNumSigmaTPC[3]);
+      fh2PIDKaonTOFnSigmaKaon->Fill(dPt,dNumSigmaTOF[3]);
+      fh2PIDKaonTPCnSigmaProton->Fill(dPt,dNumSigmaTPC[4]);
+      fh2PIDKaonTOFnSigmaProton->Fill(dPt,dNumSigmaTOF[4]);
+      fh2PIDKaonBayesPion->Fill(dPt,dBayesProb[2]);
+      fh2PIDKaonBayesKaon->Fill(dPt,dBayesProb[3]);
+      fh2PIDKaonBayesProton->Fill(dPt,dBayesProb[4]);
       break;
 
     case kProton:
@@ -2331,15 +2329,15 @@ void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack
       fhPIDProtonCharge->Fill(track->Charge());
       fh2PIDProtonTPCdEdx->Fill(dP,dTPCdEdx);
       fh2PIDProtonTOFbeta->Fill(dP,dTOFbeta);
-      fh2PIDProtonTPCnSigmaPion->Fill(dP,dNumSigmaTPC[2]);
-      fh2PIDProtonTOFnSigmaPion->Fill(dP,dNumSigmaTOF[2]);
-      fh2PIDProtonTPCnSigmaKaon->Fill(dP,dNumSigmaTPC[3]);
-      fh2PIDProtonTOFnSigmaKaon->Fill(dP,dNumSigmaTOF[3]);
-      fh2PIDProtonTPCnSigmaProton->Fill(dP,dNumSigmaTPC[4]);
-      fh2PIDProtonTOFnSigmaProton->Fill(dP,dNumSigmaTOF[4]);
-      fh2PIDProtonBayesPion->Fill(dP,dBayesProb[2]);
-      fh2PIDProtonBayesKaon->Fill(dP,dBayesProb[3]);
-      fh2PIDProtonBayesProton->Fill(dP,dBayesProb[4]);
+      fh2PIDProtonTPCnSigmaPion->Fill(dPt,dNumSigmaTPC[2]);
+      fh2PIDProtonTOFnSigmaPion->Fill(dPt,dNumSigmaTOF[2]);
+      fh2PIDProtonTPCnSigmaKaon->Fill(dPt,dNumSigmaTPC[3]);
+      fh2PIDProtonTOFnSigmaKaon->Fill(dPt,dNumSigmaTOF[3]);
+      fh2PIDProtonTPCnSigmaProton->Fill(dPt,dNumSigmaTPC[4]);
+      fh2PIDProtonTOFnSigmaProton->Fill(dPt,dNumSigmaTOF[4]);
+      fh2PIDProtonBayesPion->Fill(dPt,dBayesProb[2]);
+      fh2PIDProtonBayesKaon->Fill(dPt,dBayesProb[3]);
+      fh2PIDProtonBayesProton->Fill(dPt,dBayesProb[4]);
       break;
   }
 
