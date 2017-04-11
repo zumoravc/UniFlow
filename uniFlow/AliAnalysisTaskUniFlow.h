@@ -60,12 +60,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetChargedNumTPCclsMin(UShort_t tpcCls) { fCutChargedNumTPCclsMin = tpcCls; }
       void                    SetChargedTrackFilterBit(UInt_t filter) { fCutChargedTrackFilterBit = filter; }
       // PID (pi,K,p) setters
-      void                    SetPionNumSigmasMax(Double_t numSigmas) { fCutPionNumSigmaMax = numSigmas; }
-      void                    SetKaonNumSigmasMax(Double_t numSigmas) { fCutKaonNumSigmaMax = numSigmas; }
-      void                    SetProtonNumSigmasMax(Double_t numSigmas) { fCutProtonNumSigmaMax = numSigmas; }
-      void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutBayesPIDPionMin = probPi; }
-      void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutBayesPIDKaonMin = probK; }
-      void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutBayesPIDProtonMin = probP; }
+      void                    SetPIDNumSigmasPionMax(Double_t numSigmas) { fCutPIDnSigmaPionMax = numSigmas; }
+      void                    SetPIDNumSigmasKaonMax(Double_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
+      void                    SetPIDNumSigmasProtonMax(Double_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
+      void                    SetUseBayesPID(Bool_t bayes = kTRUE) { fCutUseBayesPID = bayes; }
+      void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesPionMin = probPi; }
+      void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutPIDBayesKaonMin = probK; }
+      void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutPIDBayesProtonMin = probP; }
+      void                    SetPIDBayesRejectElectron(Double_t prob) { fCutPIDBayesRejectElectron = prob; }
+      void                    SetPIDBayesRejectMuon(Double_t prob) { fCutPIDBayesRejectMuon = prob; }
       // V0s setters
       void					          SetV0sOnFly(Bool_t onFly) { fCutV0sOnFly = onFly; }
       void					          SetV0sTPCRefit(Bool_t refit) { fCutV0srefitTPC = refit; }
@@ -134,6 +137,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       Bool_t                  FilterPID(); // pi,K,p filtering
+      PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
+      void                    FillPIDQA(const Short_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
       Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
       Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
       Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
@@ -142,9 +147,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // Flow related methods
       Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
+      Bool_t                  DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
       Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
       Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
       Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs (charged tracks) for differential flow
+      Bool_t                  FillPIDVectors(const Float_t dEtaGap = -1., const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (pi,K,p) for differential flow
       Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
       Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
       void                    ResetRFPsVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
@@ -170,6 +177,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // properties
       AliAODEvent*            fEventAOD; //! AOD event countainer
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
+      AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
       Bool_t                  fInit; // initialization check
       Short_t                 fIndexSampling; // sampling index (randomly generated)
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
@@ -216,12 +224,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Float_t                 fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
       Float_t                 fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
       // cuts & selection: PID selection
-      Double_t                fCutPionNumSigmaMax;
-      Double_t                fCutKaonNumSigmaMax;
-      Double_t                fCutProtonNumSigmaMax;
-      Double_t                fCutBayesPIDPionMin; // minimal value of Bayes PID probability for pion
-      Double_t                fCutBayesPIDKaonMin; // minimal value of Bayes PID probability for Kaon
-      Double_t                fCutBayesPIDProtonMin; // minimal value of Bayes PID probability for proton
+      Double_t                fCutPIDnSigmaPionMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
+      Double_t                fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
+      Double_t                fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
+      Double_t                fCutPIDnSigmaTPCRejectElectron; // [3] number of TPC nSigma for electron rejection
+      Bool_t                  fCutUseBayesPID; // [kFALSE] flag for using Bayes PID for pi,K,p instead nsigma cut
+      Double_t                fCutPIDBayesPionMin; // [0.9] minimal value of Bayes PID probability for pion
+      Double_t                fCutPIDBayesKaonMin; // [0.9] minimal value of Bayes PID probability for Kaon
+      Double_t                fCutPIDBayesProtonMin; // [0.9] minimal value of Bayes PID probability for proton
+      Double_t                fCutPIDBayesRejectElectron; // [0.5] maximal value of Bayes PID probability for electron rejection
+      Double_t                fCutPIDBayesRejectMuon; // [0.5] maximal value of Bayes PID probability for muon rejection
       //cuts & selection: V0 reconstruction
 	    Bool_t 					        fCutV0sOnFly;		// V0 reconstruction method: is On-the-fly? (or offline)
   		Bool_t					        fCutV0srefitTPC; // Check TPC refit of V0 daughters ?
@@ -262,6 +274,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*      fOutListV0s; //! V0s candidates list
       TList*      fFlowRefs; //! list for flow of reference particles
       TList*      fFlowCharged; //! list for flow of charged particles
+      TList*      fFlowPID; //! list for flow of PID (pi,K,p) particles
       TList*      fFlowV0s; //! list for flow of V0s particles
 
       // histograms & profiles
@@ -272,11 +285,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       TProfile*       fpRefsCor2[fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
       TProfile2D*     fp2ChargedCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
+      TProfile2D*     fp2PionCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs
+      TProfile2D*     fp2KaonCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs
+      TProfile2D*     fp2ProtonCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs
       TProfile3D*     fp3V0sCorrK0sCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambdaCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
 
       TProfile*       fpRefsCor4[fNumHarmonics]; //! <4> correlations for RFPs
       TProfile2D*     fp2ChargedCor4[fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
+      TProfile2D*     fp2PionCor4[fNumHarmonics]; //! <4'> correlations for pion POIs
+      TProfile2D*     fp2KaonCor4[fNumHarmonics]; //! <4'> correlations for kaon POIs
+      TProfile2D*     fp2ProtonCor4[fNumHarmonics]; //! <4'> correlations for proton POIs
       TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
 
@@ -285,6 +304,55 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhEventCounter; //! counter following event selection
       // Charged
       TH1D*           fhChargedCounter; //! counter following charged track selection
+      // PID
+      TH1D*           fhPIDPionMult; //! multiplicity distribution of selected pions
+      TH1D*           fhPIDPionPt; //! pt distribution of selected pions
+      TH1D*           fhPIDPionPhi; //! phi distribution of selected pions
+      TH1D*           fhPIDPionEta; //! eta distribution of selected pions
+      TH1D*           fhPIDPionCharge; //! charge distribution of selected pions
+      TH2D*           fh2PIDPionTPCdEdx; //! TPC dEdx response of selected pions
+      TH2D*           fh2PIDPionTOFbeta; //! TOF beta of selected pions
+      TH2D*           fh2PIDPionTPCnSigmaPion; //! TPC nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*           fh2PIDPionTOFnSigmaPion; //! TOF nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*           fh2PIDPionBayesPion; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
+      TH2D*           fh2PIDPionTPCnSigmaKaon; //! TPC nSigma vs pT for selected pions (kaon hypothesis)
+      TH2D*           fh2PIDPionTOFnSigmaKaon; //! TOF nSigma vs pT for selected pions (kaon hypothesis)
+      TH2D*           fh2PIDPionBayesKaon; //! Bayesian PID probability vs pT for selected pions (kaon hypothesis)
+      TH2D*           fh2PIDPionTPCnSigmaProton; //! TPC nSigma vs pT for selected pions (proton hypothesis)
+      TH2D*           fh2PIDPionTOFnSigmaProton; //! TOF nSigma vs pT for selected pions (proton hypothesis)
+      TH2D*           fh2PIDPionBayesProton; //! Bayesian PID probability vs pT for selected pions (proton hypothesis)
+      TH1D*           fhPIDKaonMult; //! multiplicity distribution of selected pions
+      TH1D*           fhPIDKaonPt; //! pt distribution of selected kaons
+      TH1D*           fhPIDKaonPhi; //! phi distribution of selected kaons
+      TH1D*           fhPIDKaonEta; //! eta distribution of selected kaons
+      TH1D*           fhPIDKaonCharge; //! charge distribution of selected pions
+      TH2D*           fh2PIDKaonTPCdEdx; //! TPC dEdx response of selected pions
+      TH2D*           fh2PIDKaonTOFbeta; //! TOF beta of selected pions
+      TH2D*           fh2PIDKaonTPCnSigmaPion; //! TPC nSigma vs pT for selected kaons (pion hypothesis)
+      TH2D*           fh2PIDKaonTOFnSigmaPion; //! TOF nSigma vs pT for selected kaons (pion hypothesis)
+      TH2D*           fh2PIDKaonBayesPion; //! Bayesian PID probability vs pT for selected kaons (pion hypothesis)
+      TH2D*           fh2PIDKaonTPCnSigmaKaon; //! TPC nSigma vs pT for selected kaons (kaon hypothesis)
+      TH2D*           fh2PIDKaonTOFnSigmaKaon; //! TOF nSigma vs pT for selected kaons (kaon hypothesis)
+      TH2D*           fh2PIDKaonBayesKaon; //! Bayesian PID probability vs pT for selected kaons (kaon hypothesis)
+      TH2D*           fh2PIDKaonTPCnSigmaProton; //! TPC nSigma vs pT for selected kaons (proton hypothesis)
+      TH2D*           fh2PIDKaonTOFnSigmaProton; //! TOF nSigma vs pT for selected kaons (proton hypothesis)
+      TH2D*           fh2PIDKaonBayesProton; //! Bayesian PID probability vs pT for selected kaons (proton hypothesis)
+      TH1D*           fhPIDProtonMult; //! multiplicity distribution of selected pions
+      TH1D*           fhPIDProtonPt; //! pt distribution of selected protons
+      TH1D*           fhPIDProtonPhi; //! phi distribution of selected protons
+      TH1D*           fhPIDProtonEta; //! eta distribution of selected protons
+      TH1D*           fhPIDProtonCharge; //! charge distribution of selected pions
+      TH2D*           fh2PIDProtonTPCdEdx; //! TPC dEdx response of selected pions
+      TH2D*           fh2PIDProtonTOFbeta; //! TOF beta of selected pions
+      TH2D*           fh2PIDProtonTPCnSigmaPion; //! TPC nSigma vs pT for selected protons (pion hypothesis)
+      TH2D*           fh2PIDProtonTOFnSigmaPion; //! TOF nSigma vs pT for selected protons (pion hypothesis)
+      TH2D*           fh2PIDProtonBayesPion; //! Bayesian PID probability vs pT for selected protons (pion hypothesis)
+      TH2D*           fh2PIDProtonTPCnSigmaKaon; //! TPC nSigma vs pT for selected protons (kaon hypothesis)
+      TH2D*           fh2PIDProtonTOFnSigmaKaon; //! TOF nSigma vs pT for selected protons (kaon hypothesis)
+      TH2D*           fh2PIDProtonBayesKaon; //! Bayesian PID probability vs pT for selected protons (kaon hypothesis)
+      TH2D*           fh2PIDProtonTPCnSigmaProton; //! TPC nSigma vs pT for selected protons (proton hypothesis)
+      TH2D*           fh2PIDProtonTOFnSigmaProton; //! TOF nSigma vs pT for selected protons (proton hypothesis)
+      TH2D*           fh2PIDProtonBayesProton; //! Bayesian PID probability vs pT for selected protons (proton hypothesis)
       // V0s
       TH1D*           fhV0sCounter; //! counter following V0s selection
       TH1D*           fhV0sCounterK0s; //! counter following K0s selection
@@ -308,10 +376,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhQAChargedNumTPCcls[fiNumIndexQA];  //! dist of track number of TPC clusters
       TH1D*           fhQAChargedDCAxy[fiNumIndexQA];      //! dist of Charged DCA in transverse plane
       TH1D*           fhQAChargedDCAz[fiNumIndexQA];       //! dist of charged DCA in z coordinate
-      TH1D*           fhQAChargedTPCstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
-      TH1D*           fhQAChargedTOFstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
-      TH2D*           fhQAChargedTPCdEdx[fiNumIndexQA];    //! TPC PID information
-      TH2D*           fhQAChargedTOFbeta[fiNumIndexQA];    //! TOF PID information
+      // QA: PID tracks
+      TH1D*           fhQAPIDTPCstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
+      TH1D*           fhQAPIDTOFstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
+      TH2D*           fhQAPIDTPCdEdx[fiNumIndexQA];    //! TPC PID information
+      TH2D*           fhQAPIDTOFbeta[fiNumIndexQA];    //! TOF PID information
+      TH3D*           fh3QAPIDnSigmaBayesElectron[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
+      TH3D*           fh3QAPIDnSigmaBayesMuon[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
+      TH3D*           fh3QAPIDnSigmaBayesPion[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
+      TH3D*           fh3QAPIDnSigmaBayesKaon[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for kaons
+      TH3D*           fh3QAPIDnSigmaBayesProton[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for protons
       // QA: V0s candidates
       TH1D*			  		fhQAV0sMultK0s[fiNumIndexQA];	//! number of K0s candidates
       TH1D*			  		fhQAV0sMultLambda[fiNumIndexQA];	//! number of Lambda candidates

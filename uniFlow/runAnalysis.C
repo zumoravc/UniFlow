@@ -85,7 +85,7 @@ void runAnalysis()
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kFALSE);
     task1->SetProcessCharged(kTRUE);
-    // task1->SetProcessPID(kTRUE);
+    task1->SetProcessPID(kTRUE);
     task1->SetProcessV0s(kTRUE);
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
@@ -104,9 +104,10 @@ void runAnalysis()
     task1->SetChargedNumTPCclsMin(70);
     task1->SetChargedTrackFilterBit(96);
     // PID selection
-    task1->SetPionNumSigmasMax(3);
-    task1->SetKaonNumSigmasMax(3);
-    task1->SetProtonNumSigmasMax(3);
+    task1->SetPIDNumSigmasPionMax(3);
+    task1->SetPIDNumSigmasKaonMax(3);
+    task1->SetPIDNumSigmasProtonMax(3);
+    task1->SetUseBayesPID(kFALSE);
     task1->SetPIDBayesProbPionMin(0.95);
     task1->SetPIDBayesProbKaonMin(0.8);
     task1->SetPIDBayesProbProtonMin(0.8);
