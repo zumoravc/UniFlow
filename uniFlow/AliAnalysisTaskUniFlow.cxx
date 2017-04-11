@@ -81,7 +81,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fRunMode(kFull),
   fAnalType(kAOD),
   fSampling(kFALSE),
-  fNumSamples(10),
+  //fNumSamples(10),
   fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
@@ -260,7 +260,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fRunMode(kFull),
   fAnalType(kAOD),
   fSampling(kFALSE),
-  fNumSamples(10),
+  // fNumSamples(10),
   fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
@@ -1174,7 +1174,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   if(!fSampling)
-  fNumSamples = 1;
+  //fNumSamples = 1;
 
   // checking cut setting
   ::Info("InitializeTask","Checking task parameters setting conflicts (ranges, etc)");
@@ -3416,7 +3416,7 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
 
   Short_t index = 0x0;
 
-  if(fSampling && fNumSamples > 0)
+  if(fSampling && fNumSamples > 1)
   {
     TRandom3 rr(0);
     Double_t ranNum = rr.Rndm(); // getting random number in (0,1)

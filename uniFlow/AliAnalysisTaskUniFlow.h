@@ -39,7 +39,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
       void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
-      void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; }
+      //void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; } // not implemented yet
       void                    SetProcessCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
       void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
       void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
@@ -202,7 +202,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       RunMode                 fRunMode; // running mode (not grid related)
       AnalType                fAnalType; // analysis type: AOD / ESD
       Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
-      Short_t                 fNumSamples; // overall number of samples (from random sampling) used
       Bool_t                  fProcessCharged; // flag for processing charged tracks (both RPF and POIs)
       Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
       Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
@@ -280,6 +279,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // histograms & profiles
 
       // Flow
+      static const Short_t fNumSamples = 10; // overall number of samples (from random sampling) used
       TH3D*           fh3V0sEntriesK0s[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
       TH3D*           fh3V0sEntriesLambda[fNumEtaGap]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
 
