@@ -147,9 +147,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // Flow related methods
       Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
+      Bool_t                  DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
       Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
       Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
       Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs (charged tracks) for differential flow
+      Bool_t                  FillPIDVectors(const Float_t dEtaGap = -1., const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (pi,K,p) for differential flow
       Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
       Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
       void                    ResetRFPsVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
@@ -272,6 +274,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*      fOutListV0s; //! V0s candidates list
       TList*      fFlowRefs; //! list for flow of reference particles
       TList*      fFlowCharged; //! list for flow of charged particles
+      TList*      fFlowPID; //! list for flow of PID (pi,K,p) particles
       TList*      fFlowV0s; //! list for flow of V0s particles
 
       // histograms & profiles
@@ -282,11 +285,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       TProfile*       fpRefsCor2[fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
       TProfile2D*     fp2ChargedCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
+      TProfile2D*     fp2PionCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs
+      TProfile2D*     fp2KaonCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs
+      TProfile2D*     fp2ProtonCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs
       TProfile3D*     fp3V0sCorrK0sCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambdaCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
 
       TProfile*       fpRefsCor4[fNumHarmonics]; //! <4> correlations for RFPs
       TProfile2D*     fp2ChargedCor4[fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
+      TProfile2D*     fp2PionCor4[fNumHarmonics]; //! <4'> correlations for pion POIs
+      TProfile2D*     fp2KaonCor4[fNumHarmonics]; //! <4'> correlations for kaon POIs
+      TProfile2D*     fp2ProtonCor4[fNumHarmonics]; //! <4'> correlations for proton POIs
       TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
 
