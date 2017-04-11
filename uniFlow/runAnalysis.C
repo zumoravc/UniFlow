@@ -80,7 +80,7 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(20);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kFALSE);
@@ -104,10 +104,10 @@ void runAnalysis()
     task1->SetChargedNumTPCclsMin(70);
     task1->SetChargedTrackFilterBit(96);
     // PID selection
-    task1->SetUseBayesPID(kTRUE);
-    task1->SetPionNumSigmasMax(3);
-    task1->SetKaonNumSigmasMax(3);
-    task1->SetProtonNumSigmasMax(3);
+    task1->SetPIDNumSigmasPionMax(3);
+    task1->SetPIDNumSigmasKaonMax(3);
+    task1->SetPIDNumSigmasProtonMax(3);
+    task1->SetUseBayesPID(kFALSE);
     task1->SetPIDBayesProbPionMin(0.95);
     task1->SetPIDBayesProbKaonMin(0.8);
     task1->SetPIDBayesProbProtonMin(0.8);
