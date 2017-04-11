@@ -81,7 +81,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fRunMode(kFull),
   fAnalType(kAOD),
   fSampling(kFALSE),
-  fNumSamples(10),
+  //fNumSamples(10),
   fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
@@ -260,7 +260,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fRunMode(kFull),
   fAnalType(kAOD),
   fSampling(kFALSE),
-  fNumSamples(10),
+  // fNumSamples(10),
   fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
@@ -431,11 +431,15 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // Flow profiles & histograms
   for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
   {
-    fpRefsCor4[iHarm] = 0x0;
-    fp2ChargedCor4[iHarm] = 0x0;
-    fp2PionCor4[iHarm] = 0x0;
-    fp2KaonCor4[iHarm] = 0x0;
-    fp2ProtonCor4[iHarm] = 0x0;
+    for(Short_t iSample(0); iSample < fNumSamples; iSample++)
+    {
+      fpRefsCor4[iSample][iHarm] = 0x0;
+      fp2ChargedCor4[iSample][iHarm] = 0x0;
+      fp2PionCor4[iSample][iHarm] = 0x0;
+      fp2KaonCor4[iSample][iHarm] = 0x0;
+      fp2ProtonCor4[iSample][iHarm] = 0x0;
+    }
+
     fp3V0sCorrK0sCor4[iHarm] = 0x0;
     fp3V0sCorrLambdaCor4[iHarm] = 0x0;
 
@@ -447,11 +451,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
         fh3V0sEntriesLambda[iGap] = 0x0;
       }
 
-      fpRefsCor2[iGap][iHarm] = 0x0;
-      fp2ChargedCor2[iGap][iHarm] = 0x0;
-      fp2PionCor2[iGap][iHarm] = 0x0;
-      fp2KaonCor2[iGap][iHarm] = 0x0;
-      fp2ProtonCor2[iGap][iHarm] = 0x0;
+      for(Short_t iSample(0); iSample < fNumSamples; iSample++)
+      {
+        fpRefsCor2[iSample][iGap][iHarm] = 0x0;
+        fp2ChargedCor2[iSample][iGap][iHarm] = 0x0;
+        fp2PionCor2[iSample][iGap][iHarm] = 0x0;
+        fp2KaonCor2[iSample][iGap][iHarm] = 0x0;
+        fp2ProtonCor2[iSample][iGap][iHarm] = 0x0;
+      }
 
       fp3V0sCorrK0sCor2[iGap][iHarm] = 0x0;
       fp3V0sCorrLambdaCor2[iGap][iHarm] = 0x0;
@@ -667,57 +674,60 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     {
       for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
       {
-        fpRefsCor2[iGap][iHarm] = new TProfile(Form("fpRefs_<2>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("Ref: <<2>> | Gap %g | n=%d ; centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax);
-        fpRefsCor2[iGap][iHarm]->Sumw2(kTRUE);
-        fFlowRefs->Add(fpRefsCor2[iGap][iHarm]);
-
-        if(iGap == 0)
+        for(Short_t iSample(0); iSample < fNumSamples; iSample++)
         {
-          fpRefsCor4[iHarm] = new TProfile(Form("fpRefs_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("Ref: <<4>> | Gap %g | n=%d ; centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax);
-          fpRefsCor4[iHarm]->Sumw2(kTRUE);
-          fFlowRefs->Add(fpRefsCor4[iHarm]);
-        }
-
-        if(fProcessCharged)
-        {
-          fp2ChargedCor2[iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("Charged: <<2'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-          fp2ChargedCor2[iGap][iHarm]->Sumw2(kTRUE);
-          fFlowCharged->Add(fp2ChargedCor2[iGap][iHarm]);
+          fpRefsCor2[iSample][iGap][iHarm] = new TProfile(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Ref: <<2>> | Gap %g | n=%d | sample %d ; centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax);
+          fpRefsCor2[iSample][iGap][iHarm]->Sumw2(kTRUE);
+          fFlowRefs->Add(fpRefsCor2[iSample][iGap][iHarm]);
 
           if(iGap == 0)
           {
-            fp2ChargedCor4[iHarm] = new TProfile2D(Form("fp2Charged_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("Charged: <<4'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-            fp2ChargedCor4[iHarm]->Sumw2(kTRUE);
-            fFlowCharged->Add(fp2ChargedCor4[iHarm]);
+            fpRefsCor4[iSample][iHarm] = new TProfile(Form("fpRefs_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Ref: <<4>> | Gap %g | n=%d | sample %d ; centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax);
+            fpRefsCor4[iSample][iHarm]->Sumw2(kTRUE);
+            fFlowRefs->Add(fpRefsCor4[iSample][iHarm]);
           }
-        }
 
-        if(fProcessPID)
-        {
-          fp2PionCor2[iGap][iHarm] = new TProfile2D(Form("fp2Pion_<2>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("PID #pi: <<2'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-          fp2PionCor2[iGap][iHarm]->Sumw2(kTRUE);
-          fFlowPID->Add(fp2PionCor2[iGap][iHarm]);
-          fp2KaonCor2[iGap][iHarm] = new TProfile2D(Form("fp2Kaon_<2>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("PID K: <<2'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-          fp2KaonCor2[iGap][iHarm]->Sumw2(kTRUE);
-          fFlowPID->Add(fp2KaonCor2[iGap][iHarm]);
-          fp2ProtonCor2[iGap][iHarm] = new TProfile2D(Form("fp2Proton_<2>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("PID p: <<2'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-          fp2ProtonCor2[iGap][iHarm]->Sumw2(kTRUE);
-          fFlowPID->Add(fp2ProtonCor2[iGap][iHarm]);
-
-          if(iGap == 0)
+          if(fProcessCharged)
           {
-            fp2PionCor4[iHarm] = new TProfile2D(Form("fp2Pion_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("PID #pi: <<4'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-            fp2PionCor4[iHarm]->Sumw2(kTRUE);
-            fFlowPID->Add(fp2PionCor4[iHarm]);
-            fp2KaonCor4[iHarm] = new TProfile2D(Form("fp2Kaon_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("PID K: <<4'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-            fp2KaonCor4[iHarm]->Sumw2(kTRUE);
-            fFlowPID->Add(fp2KaonCor4[iHarm]);
-            fp2ProtonCor4[iHarm] = new TProfile2D(Form("fp2Proton_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("PID p: <<4'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-            fp2ProtonCor4[iHarm]->Sumw2(kTRUE);
-            fFlowPID->Add(fp2ProtonCor4[iHarm]);
+            fp2ChargedCor2[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<2'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+            fp2ChargedCor2[iSample][iGap][iHarm]->Sumw2(kTRUE);
+            fFlowCharged->Add(fp2ChargedCor2[iSample][iGap][iHarm]);
 
+            if(iGap == 0)
+            {
+              fp2ChargedCor4[iSample][iHarm] = new TProfile2D(Form("fp2Charged_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<4'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+              fp2ChargedCor4[iSample][iHarm]->Sumw2(kTRUE);
+              fFlowCharged->Add(fp2ChargedCor4[iSample][iHarm]);
+            }
+          }
+
+          if(fProcessPID)
+          {
+            fp2PionCor2[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("PID #pi: <<2'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+            fp2PionCor2[iSample][iGap][iHarm]->Sumw2(kTRUE);
+            fFlowPID->Add(fp2PionCor2[iSample][iGap][iHarm]);
+            fp2KaonCor2[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Kaon_<2>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("PID K: <<2'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+            fp2KaonCor2[iSample][iGap][iHarm]->Sumw2(kTRUE);
+            fFlowPID->Add(fp2KaonCor2[iSample][iGap][iHarm]);
+            fp2ProtonCor2[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Proton_<2>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("PID p: <<2'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+            fp2ProtonCor2[iSample][iGap][iHarm]->Sumw2(kTRUE);
+            fFlowPID->Add(fp2ProtonCor2[iSample][iGap][iHarm]);
+
+            if(iGap == 0)
+            {
+              fp2PionCor4[iSample][iHarm] = new TProfile2D(Form("fp2Pion_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("PID #pi: <<4'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+              fp2PionCor4[iSample][iHarm]->Sumw2(kTRUE);
+              fFlowPID->Add(fp2PionCor4[iSample][iHarm]);
+              fp2KaonCor4[iSample][iHarm] = new TProfile2D(Form("fp2Kaon_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("PID K: <<4'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+              fp2KaonCor4[iSample][iHarm]->Sumw2(kTRUE);
+              fFlowPID->Add(fp2KaonCor4[iSample][iHarm]);
+              fp2ProtonCor4[iSample][iHarm] = new TProfile2D(Form("fp2Proton_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("PID p: <<4'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+              fp2ProtonCor4[iSample][iHarm]->Sumw2(kTRUE);
+              fFlowPID->Add(fp2ProtonCor4[iSample][iHarm]);
+            }
           }
         }
+
 
         if(fProcessV0s)
         {
@@ -1174,7 +1184,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   if(!fSampling)
-  fNumSamples = 1;
+  //fNumSamples = 1;
 
   // checking cut setting
   ::Info("InitializeTask","Checking task parameters setting conflicts (ranges, etc)");
@@ -1219,7 +1229,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   fIndexCentrality = GetCentralityIndex();
   // TODO implement
-
+  
   // processing of selected event
   if(!ProcessEvent()) return;
   fEventCounter++; // counter of processed events
@@ -2578,7 +2588,7 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
         dValue = vector.Re()/Cn2;
         // printf("Gap (RFPs): %g Harm %d | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,Cn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
         if( TMath::Abs(dValue < 1) )
-          fpRefsCor2[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
+          fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
       }
 
     // estimating <4>
@@ -2591,7 +2601,7 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
         dValue = vector.Re()/Cn2;
         // printf("Gap (RFPs): %g Harm %d | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,Cn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
         if( TMath::Abs(dValue < 1) )
-          fpRefsCor4[iHarm]->Fill(fIndexCentrality, dValue, Cn2);
+          fpRefsCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
       }
   }
   else // with gap
@@ -2606,7 +2616,7 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
         dValue = vector.Re()/Cn2;
         // printf("Gap (RFPs): %g Harm %d | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,Cn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
         if( TMath::Abs(dValue < 1) )
-          fpRefsCor2[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
+          fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
       }
   } // endif {dEtaGap}
   return kTRUE;
@@ -2647,7 +2657,7 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
           dValue = vector.Re()/Dn2;
           // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if(TMath::Abs(dValue < 1))
-            fp2ChargedCor2[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
+            fp2ChargedCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
         }
 
       // estimating <4'>
@@ -2660,7 +2670,7 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
           dValue = vector.Re()/Dn2;
           // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if(TMath::Abs(dValue < 1))
-            fp2ChargedCor4[iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
+            fp2ChargedCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
         }
     }
     else // eta gap
@@ -2676,7 +2686,7 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
           dValue = vector.Re()/Dn2;
           // printf("Gap (Pos): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if( TMath::Abs(dValue < 1) )
-            fp2ChargedCor2[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
+            fp2ChargedCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
         }
 
       // POIs in negative eta
@@ -2689,7 +2699,7 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
           dValue = vector.Re()/Dn2;
           // printf("Gap (Neg): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if( TMath::Abs(dValue < 1) )
-            fp2ChargedCor2[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
+            fp2ChargedCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
         }
     } // endif {dEtaGap}
   } // endfor {iPt}
@@ -2708,18 +2718,18 @@ Bool_t AliAnalysisTaskUniFlow::DoFlowPID(const Short_t iEtaGapIndex, const PartS
   switch (species)
   {
     case kPion:
-      profile2 = fp2PionCor2[iEtaGapIndex];
-      profile4 = fp2PionCor4;
+      profile2 = fp2PionCor2[fIndexSampling][iEtaGapIndex];
+      profile4 = fp2PionCor4[fIndexSampling];
       break;
 
     case kKaon:
-      profile2 = fp2KaonCor2[iEtaGapIndex];
-      profile4 = fp2KaonCor4;
+      profile2 = fp2KaonCor2[fIndexSampling][iEtaGapIndex];
+      profile4 = fp2KaonCor4[fIndexSampling];
       break;
 
     case kProton:
-      profile2 = fp2ProtonCor2[iEtaGapIndex];
-      profile4 = fp2ProtonCor4;
+      profile2 = fp2ProtonCor2[fIndexSampling][iEtaGapIndex];
+      profile4 = fp2ProtonCor4[fIndexSampling];
       break;
 
     default:
@@ -3416,7 +3426,7 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
 
   Short_t index = 0x0;
 
-  if(fSampling && fNumSamples > 0)
+  if(fSampling && fNumSamples > 1)
   {
     TRandom3 rr(0);
     Double_t ranNum = rr.Rndm(); // getting random number in (0,1)

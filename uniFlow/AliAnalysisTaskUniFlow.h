@@ -39,7 +39,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
       void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
-      void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; }
+      //void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; } // not implemented yet
       void                    SetProcessCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
       void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
       void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
@@ -116,6 +116,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Short_t    fV0sNumBinsMass = 30; // number of bins for V0s distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
+      const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
       const static Int_t      fNumHarmonics = 2; // number of harmonics
       static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
       const static Int_t      fNumEtaGap = 3; // number of harmonics
@@ -202,7 +203,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       RunMode                 fRunMode; // running mode (not grid related)
       AnalType                fAnalType; // analysis type: AOD / ESD
       Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
-      Short_t                 fNumSamples; // overall number of samples (from random sampling) used
       Bool_t                  fProcessCharged; // flag for processing charged tracks (both RPF and POIs)
       Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
       Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
@@ -283,19 +283,19 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3V0sEntriesK0s[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
       TH3D*           fh3V0sEntriesLambda[fNumEtaGap]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
 
-      TProfile*       fpRefsCor2[fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
-      TProfile2D*     fp2ChargedCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
-      TProfile2D*     fp2PionCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs
-      TProfile2D*     fp2KaonCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs
-      TProfile2D*     fp2ProtonCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs
+      TProfile*       fpRefsCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
+      TProfile2D*     fp2ChargedCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
+      TProfile2D*     fp2PionCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs
+      TProfile2D*     fp2KaonCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs
+      TProfile2D*     fp2ProtonCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs
       TProfile3D*     fp3V0sCorrK0sCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambdaCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
 
-      TProfile*       fpRefsCor4[fNumHarmonics]; //! <4> correlations for RFPs
-      TProfile2D*     fp2ChargedCor4[fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
-      TProfile2D*     fp2PionCor4[fNumHarmonics]; //! <4'> correlations for pion POIs
-      TProfile2D*     fp2KaonCor4[fNumHarmonics]; //! <4'> correlations for kaon POIs
-      TProfile2D*     fp2ProtonCor4[fNumHarmonics]; //! <4'> correlations for proton POIs
+      TProfile*       fpRefsCor4[fNumSamples][fNumHarmonics]; //! <4> correlations for RFPs
+      TProfile2D*     fp2ChargedCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
+      TProfile2D*     fp2PionCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for pion POIs
+      TProfile2D*     fp2KaonCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for kaon POIs
+      TProfile2D*     fp2ProtonCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for proton POIs
       TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidats (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
 
