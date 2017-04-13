@@ -63,7 +63,7 @@ void runAnalysis()
     //Add this here: run before your task, but after definition of manager and input handler
     gROOT->LoadMacro("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
     AliMultSelectionTask* taskMultSelection = AddTaskMultSelection(kFALSE); // user mode:
-    taskMultSelection->SetSelectedTriggerClass(AliVEvent::kMB);
+    taskMultSelection->SetSelectedTriggerClass(AliVEvent::kINT7);
 
     // PID response needed for PID
     gROOT->LoadMacro("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C");
@@ -92,8 +92,8 @@ void runAnalysis()
     task1->SetFlowRFPsPtMax(5.);
     // Events selection
     task1->SetTrigger(0);
-    task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPP);
-    task1->SetPeriod(AliAnalysisTaskUniFlow::k16l);
+    task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
+    task1->SetPeriod(AliAnalysisTaskUniFlow::k16q);
     task1->SetPVtxZMax(10);
     // Charged selection
     task1->SetChargedEtaMax(0.8);
@@ -193,8 +193,9 @@ void runAnalysis()
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
-        //chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
-        chain->Add("~/NBI/Flow/flow/testData/2016/LHC16l/000259888/pass1/AOD/015/AliAOD.root");  // add a few files to the chain (change this so that your local files are added)
+        //chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");
+        // chain->Add("~/NBI/Flow/flow/testData/2016/LHC16l/000259888/pass1/AOD/015/AliAOD.root");
+        chain->Add("~/NBI/Flow/flow/testData/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
         // if we want to run on grid, we create and configure the plugin
@@ -206,11 +207,11 @@ void runAnalysis()
         alienHandler->SetAnalysisSource("AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20160907-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20170411-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
-        alienHandler->SetGridDataDir("/alice/data/2010/LHC10h/");
-        alienHandler->SetDataPattern("ESDs/pass2/AOD160/*/AliAOD.root");
+        alienHandler->SetGridDataDir("/alice/data/2016/LHC16q/");
+        alienHandler->SetDataPattern("pass1_CENT_wSDD/AOD/*/AliAOD.root");
         // MC has no prefix, data has prefix 000
         alienHandler->SetRunPrefix("000");
         // runnumber

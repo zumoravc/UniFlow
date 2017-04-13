@@ -1142,7 +1142,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     return kFALSE;
   }
 
-  if(fColSystem != kPP && fColSystem != kPP && fColSystem != kPbPb)
+  if(fColSystem != kPP && fColSystem != kPPb && fColSystem != kPbPb)
   {
     ::Error("InitializeTask","Collisional system not specified! Terminating!");
     return kFALSE;
@@ -1229,7 +1229,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   fIndexCentrality = GetCentralityIndex();
   // TODO implement
-  
+
   // processing of selected event
   if(!ProcessEvent()) return;
   fEventCounter++; // counter of processed events
@@ -3453,33 +3453,31 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   // returns centrality index
   // *************************************************************
 
-  Short_t index = 0x0;
+  // Short_t index = 0x;
+  //
+  // // centrality estimation for pPb analysis in Run2
+  // // TODO : just moved from flow Event selection for 2016
+  // if(fColSystem == kPPb)
+  // {
+  //   Float_t lPercentile = 900;
+  //   AliMultSelection* MultSelection = 0x0;
+  //   MultSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
+  //
+  //   if(!MultSelection)
+  //   {
+  //     //If you get this warning (and lPercentiles 900) please check that the AliMultSelectionTask actually ran (before your task)
+  //     ::Warning("GetCentralityIndex","AliMultSelection object not found!");
+  //   }
+  //   else
+  //   {
+  //     lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
+  //   }
+  //
+  //   // TODO implement centrality selection based on lPercentile
+  //   ::Warning("GetCentralityIndex","Centrality selection not implemented");
+  // }
 
-  // centrality estimation for pPb analysis in Run2
-  // TODO : just moved from flow Event selection for 2016
-  if(fColSystem == kPPb)
-  {
-    Float_t lPercentile = 900;
-    AliMultSelection* MultSelection = 0x0;
-    MultSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
-
-    if(!MultSelection)
-    {
-      //If you get this warning (and lPercentiles 900) please check that the AliMultSelectionTask actually ran (before your task)
-      ::Warning("GetCentralityIndex","AliMultSelection object not found!");
-    }
-    else
-    {
-      lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
-    }
-
-    // TODO implement centrality selection based on lPercentile
-    ::Warning("GetCentralityIndex","Centrality selection not implemented");
-  }
-
-
-
-  return index;
+  return 0;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
