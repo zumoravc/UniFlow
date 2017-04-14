@@ -133,31 +133,31 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
 
-      Bool_t                  Filtering(); // main (envelope) method for filtering all POIs in event
-      Bool_t                  FilterCharged(); // charged tracks filtering
+      void                    Filtering(); // main (envelope) method for filtering all POIs in event
+      void                    FilterCharged(); // charged tracks filtering
       Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
-      Bool_t                  FilterPID(); // pi,K,p filtering
+      void                    FilterPID(); // pi,K,p filtering
       PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
       void                    FillPIDQA(const Short_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
-      Bool_t                  FilterV0s(); // K0s, Lambda, ALambda filtering
+      void                    FilterV0s(); // K0s, Lambda, ALambda filtering
       Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
       Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
       Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
       void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
       // Flow related methods
-      Bool_t                  DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
-      Bool_t                  DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
-      Bool_t                  DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
-      Bool_t                  DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
-      Bool_t                  FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
-      Bool_t                  FillChargedVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs (charged tracks) for differential flow
-      Bool_t                  FillPIDVectors(const Float_t dEtaGap = -1., const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (pi,K,p) for differential flow
-      Bool_t                  FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
+      void                    DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
+      void                    DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
+      void                    DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
+      void                    DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
+      void                    FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
+      void                    FillChargedVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs (charged tracks) for differential flow
+      void                    FillPIDVectors(const Float_t dEtaGap = -1., const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (pi,K,p) for differential flow
+      void                    FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
       Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
-      void                    ResetRFPsVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
-      void                    ResetPOIsVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]); // set values to TComplex(0,0,0) for given array
-      void                    ListFlowVector(TComplex array[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
+      void                    ResetRFPsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
+      void                    ResetPOIsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]); // set values to TComplex(0,0,0) for given array
+      void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
 
       TComplex                Q(const Short_t n, const Short_t p);
       TComplex                QGapPos(const Short_t n, const Short_t p);
@@ -429,7 +429,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
       AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
 
-      ClassDef(AliAnalysisTaskUniFlow, 0);
+      ClassDef(AliAnalysisTaskUniFlow, 1);
 };
 
 #endif
