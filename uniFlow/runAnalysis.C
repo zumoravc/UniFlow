@@ -1,7 +1,7 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
-    Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
     //TString sGridMode = "terminate";
@@ -9,29 +9,30 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "";
-    TString sOutDir = "outFlow";
+    TString sWorkDir = "uniflow_test";
+    TString sOutDir = "output";
+    TString sPeriod = "LHC16q";
 
     // run switcher
-    // ++ 45 runs
-        // all
-        //Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871, 138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
-        // part1
-        Int_t runNumber[] = {139510, 139507, 139505, 139503, 139465, 139438, 139437, 139360, 139329, 139328, 139314, 139310, 139309, 139173, 139107, 139105, 139038, 139037, 139036, 139029, 139028, 138872, 138871};
-        //part2
-        //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662, 138653, 138652, 138638, 138624, 138621, 138583, 138582, 138579, 138578, 138534, 138469, 138442, 138439, 138438, 138396, 138364};//..++
-        // testing sample
-        //Int_t runNumber[] = {138870, 138837, 138732, 138730, 138666, 138662};
+    // Run2 5.02 TeV
+    // RunList_LHC16r_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [12 runs ~16,6M ]
+    //Int_t runNumber[] = {266318, 266317, 266316,   266208, 266197, 266196, 266187, 265754, 265744, 265607, 265596, 265594};
+    // RunList_LHC16s_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [16 runs ~10,5M ]
+    // Int_t runNumber[] = {267110, 267081, 267077, 267072, 267070, 267030, 266998, 266997, 266994, 266993, 266944, 266886, 266885, 266883, 266882, 266437};
 
+    // Run2 8.16 TeV
+    // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs ~51M ]
+    // Int_t runNumber[] = {267166, 267165, 267164, 267163};
+    // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [32 runs ~328M ]
+    //Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387, 265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265335, 265334, 265332, 265309};
 
-    // -- 46 runs
-        //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595, 137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
-        // part 1
-        //Int_t runNumber[] = {138275, 138225, 138201, 138197, 138192, 138190, 137848, 137844, 137752, 137751, 137724, 137722, 137718, 137704, 137693, 137692, 137691, 137686, 137685, 137639, 137638, 137608, 137595};
-        // part 2
-        //Int_t runNumber[] = {137549, 137546, 137544, 137541, 137539, 137531, 137530, 137443, 137441, 137440, 137439, 137434, 137432, 137431, 137430, 137243, 137236, 137235, 137232, 137231, 137230, 137162, 137161};
-
-
+    // Run2 8.16 TeV
+    // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs]
+    // Int_t runNumber[] = {267166, 267165, 267164, 267163};
+    // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [32 runs]
+    //Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
+    //Int_t runNumber[] = {265385, 265384, 265383, 265381, 265378, 265377, 265344};
+    Int_t runNumber[] = {265343, 265342, 265339, 265338, 265336, 265335, 265334, 265332, 265309};
 
 
     // since we will compile a class, tell root where to look for headers
@@ -107,10 +108,10 @@ void runAnalysis()
     task1->SetPIDNumSigmasPionMax(3);
     task1->SetPIDNumSigmasKaonMax(3);
     task1->SetPIDNumSigmasProtonMax(3);
-    task1->SetUseBayesPID(kFALSE);
+    task1->SetUseBayesPID(kTRUE);
     task1->SetPIDBayesProbPionMin(0.95);
-    task1->SetPIDBayesProbKaonMin(0.8);
-    task1->SetPIDBayesProbProtonMin(0.8);
+    task1->SetPIDBayesProbKaonMin(0.9);
+    task1->SetPIDBayesProbProtonMin(0.9);
     // V0 selection cuts
     task1->SetV0sOnFly(kFALSE);
     task1->SetV0sTPCRefit(kTRUE);
@@ -125,11 +126,11 @@ void runAnalysis()
     task1->SetV0sDaughterEtaMax(0.8);
     task1->SetV0sMotherEtaMax(0.8);
     task1->SetV0sMotherRapMax(0.);
-    task1->SetV0sK0sCPAMin(0.998);
-    task1->SetV0sLambdaCPAMin(0.998);
-    task1->SetV0sK0sNumTauMax(3.);
+    task1->SetV0sK0sCPAMin(0.97);
+    task1->SetV0sLambdaCPAMin(0.995);
+    task1->SetV0sK0sNumTauMax(5);
     task1->SetV0sK0sArmenterosAlphaMin(0.2);
-    task1->SetV0sLambdaNumTauMax(3.);
+    task1->SetV0sLambdaNumTauMax(3.8);
     task1->SetV0sProtonNumSigmaMax(3.);
     task1->SetV0sProtonPIDPtMax(1.2);
 
@@ -210,8 +211,8 @@ void runAnalysis()
         alienHandler->SetAliPhysicsVersion("vAN-20170411-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
-        alienHandler->SetGridDataDir("/alice/data/2016/LHC16q/");
-        alienHandler->SetDataPattern("pass1_CENT_wSDD/AOD/*/AliAOD.root");
+        alienHandler->SetGridDataDir(Form("/alice/data/2016/%s/",sPeriod.Data()));
+        alienHandler->SetDataPattern("/pass1_CENT_wSDD/AOD/*/AliAOD.root");
         // MC has no prefix, data has prefix 000
         alienHandler->SetRunPrefix("000");
         // runnumber
@@ -224,14 +225,13 @@ void runAnalysis()
             alienHandler->AddRunNumber(runNumber[i]);
         }
 
-
         alienHandler->SetMasterResubmitThreshold(90);
         // number of files per subjob
-        alienHandler->SetSplitMaxInputFileNumber(200);
-        alienHandler->SetExecutable("UniFlow.sh");
+        alienHandler->SetSplitMaxInputFileNumber(5);
+        alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
-        alienHandler->SetTTL(36000);
-        alienHandler->SetJDLName("UniFlow.jdl");
+        alienHandler->SetTTL(50000);
+        alienHandler->SetJDLName("FlowPID.jdl");
         alienHandler->SetPrice(1);
         alienHandler->SetOutputToRunNo(kTRUE);
         alienHandler->SetKeepLogs(kTRUE);
@@ -256,5 +256,5 @@ void runAnalysis()
             alienHandler->SetRunMode(sGridMode.Data());
             mgr->StartAnalysis("grid");
         }
-    }
+      }
 }
