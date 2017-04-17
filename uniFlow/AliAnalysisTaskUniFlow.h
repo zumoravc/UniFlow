@@ -151,9 +151,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
       void                    DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
       void                    FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
-      void                    FillChargedVectors(const Float_t dEtaGap = -1.); // fill flow vectors p and q with POIs (charged tracks) for differential flow
-      void                    FillPIDVectors(const Float_t dEtaGap = -1., const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (pi,K,p) for differential flow
-      void                    FillV0sVectors(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // fill flow vectors p and q with POIs (V0s) for differential flow
+      void                    FillPOIsVectors(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown, const Short_t iMassIndex = 0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
       Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
       void                    ResetRFPsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
       void                    ResetPOIsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]); // set values to TComplex(0,0,0) for given array
