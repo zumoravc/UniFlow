@@ -66,8 +66,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fIndexCentrality(0),
   fEventCounter(0),
   fNumEventsAnalyse(50),
-  fV0sPDGMassK0s(TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass()),
-  fV0sPDGMassLambda(TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass()),
+  fPDGMassPion(TDatabasePDG::Instance()->GetParticle(211)->Mass()),
+  fPDGMassKaon(TDatabasePDG::Instance()->GetParticle(321)->Mass()),
+  fPDGMassProton(TDatabasePDG::Instance()->GetParticle(2212)->Mass()),
+  fPDGMassPhi(TDatabasePDG::Instance()->GetParticle(333)->Mass()),
+  fPDGMassK0s(TDatabasePDG::Instance()->GetParticle(310)->Mass()),
+  fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
 
   // FlowPart containers
   fVectorCharged(0x0),
@@ -249,8 +253,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fIndexCentrality(0),
   fEventCounter(0),
   fNumEventsAnalyse(50),
-  fV0sPDGMassK0s(TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass()),
-  fV0sPDGMassLambda(TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass()),
+  fPDGMassPion(TDatabasePDG::Instance()->GetParticle(211)->Mass()),
+  fPDGMassKaon(TDatabasePDG::Instance()->GetParticle(321)->Mass()),
+  fPDGMassProton(TDatabasePDG::Instance()->GetParticle(2212)->Mass()),
+  fPDGMassPhi(TDatabasePDG::Instance()->GetParticle(333)->Mass()),
+  fPDGMassK0s(TDatabasePDG::Instance()->GetParticle(310)->Mass()),
+  fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
 
   // FlowPart containers
   fVectorCharged(0x0),
@@ -1515,7 +1523,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
     if(IsChargedSelected(track))
     {
-      fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kCharged) );
+      fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Pz(),track->Phi(),track->Eta(), track->Charge(), kCharged) );
       FillQACharged(1,track); // QA after selection
       //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
     }
@@ -1659,21 +1667,21 @@ void AliAnalysisTaskUniFlow::FilterV0s()
       {
         iNumK0sSelected++;
         fhV0sCounter->Fill("K^{0}_{S}",1);
-        fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
+        fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Pz(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
       }
 
       if(iIsLambda == 1) // lambda
       {
         iNumLambdaSelected++;
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
-        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassLambda()) );
+        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Pz(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassLambda()) );
       }
 
       if(iIsLambda == -1) // anti-lambda
       {
         iNumALambdaSelected++;
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
-        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassAntiLambda()) );
+        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Pz(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassAntiLambda()) );
       }
 
       if(bIsK0s && iIsLambda != 0)
@@ -1723,7 +1731,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
     for(Int_t i(0); i < 2; i++)
       dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
 
-    Double_t dPropLife = ( (fV0sPDGMassK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    Double_t dPropLife = ( (fPDGMassK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     if( dPropLife > (fCutV0sNumTauK0sMax * 2.68) ) return kFALSE;
   }
   fhV0sCounterK0s->Fill("c#tau",1);
@@ -1753,14 +1761,14 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
     Double_t dMassALambda = v0->MassAntiLambda();
 
     // K0s candidate is within 10 MeV of (Anti)Lambda InvMass physSelTask
-    if(TMath::Abs(dMassLambda - fV0sPDGMassLambda) < fCutV0sCrossMassCutK0s)
+    if(TMath::Abs(dMassLambda - fPDGMassLambda) < fCutV0sCrossMassCutK0s)
     {
       // in Lambda peak
       fhV0sCompetingInvMassK0s->Fill(dMass,dMassLambda);
       return kFALSE;
     }
 
-    if(TMath::Abs(dMassALambda - fV0sPDGMassLambda) < fCutV0sCrossMassCutK0s)
+    if(TMath::Abs(dMassALambda - fPDGMassLambda) < fCutV0sCrossMassCutK0s)
     {
       // in Anti-Lambda peak
       fhV0sCompetingInvMassK0s->Fill(dMass,dMassALambda);
@@ -1808,7 +1816,7 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
     for(Int_t i(0); i < 2; i++)
       dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
 
-    Double_t dPropLife = ( (fV0sPDGMassLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    Double_t dPropLife = ( (fPDGMassLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     if( dPropLife > (fCutV0sNumTauLambdaMax * 7.89) ) return 0;
   }
   fhV0sCounterLambda->Fill("c#tau",1);
@@ -1854,7 +1862,7 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   if(fCutV0sCrossMassRejection)
   {
     Double_t dMassK0s = v0->MassK0Short();
-    if( TMath::Abs(dMassK0s - fV0sPDGMassK0s) < fCutV0sCrossMassCutLambda)
+    if( TMath::Abs(dMassK0s - fPDGMassK0s) < fCutV0sCrossMassCutLambda)
     {
       // Lambda candidate is within 5 MeV of K0s InvMass physSelTask
 
@@ -2186,6 +2194,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   // *************************************************************
 
   printf("== enter FilterPhi ==\n");
+
   const Int_t iNumKaons = fVectorKaon->size();
   printf("Num Kaons: %d\n", iNumKaons);
   // check if there are at least 2 selected kaons in event (minimum for phi reconstruction)
@@ -2264,13 +2273,13 @@ void AliAnalysisTaskUniFlow::FilterPID()
     switch (species)
     {
       case kPion:
-        fVectorPion->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kPion) );
+        fVectorPion->emplace_back( FlowPart(track->Pt(),track->Pz(),track->Phi(),track->Eta(), track->Charge(), kPion) );
         break;
       case kKaon:
-        fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kKaon) );
+        fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Pz(),track->Phi(),track->Eta(), track->Charge(), kKaon) );
         break;
       case kProton:
-        fVectorProton->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kProton) );
+        fVectorProton->emplace_back( FlowPart(track->Pt(),track->Pz(),track->Phi(),track->Eta(), track->Charge(), kProton) );
         break;
       default:
         continue;
@@ -3551,3 +3560,4 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, co
 //   return out;
 //
 // }
+//____________________________________________________________________

@@ -19,12 +19,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       struct FlowPart // representation of selected particle (species independent) storing only basic properties for flow calculations
       {
-                FlowPart(Double_t dPt, Double_t dPhi, Double_t dEta, Short_t iCharge = 0, PartSpecies sSpecies = kUnknown, Double_t dMass = 0) :
-                  pt(dPt), phi(dPhi), eta(dEta), mass(dMass), charge(iCharge), species(sSpecies) {} // constructor
+                FlowPart(Double_t dPt, Double_t dPz, Double_t dPhi, Double_t dEta, Short_t iCharge = 0, PartSpecies sSpecies = kUnknown, Double_t dMass = 0) :
+                  pt(dPt), pz(dPz), phi(dPhi), eta(dEta), mass(dMass), charge(iCharge), species(sSpecies) {} // constructor
 
-        void    PrintPart() { printf("pt %g | phi %g | eta %g | mass %g | charge %d | species %d \n",pt,phi,eta,mass,charge,species); } // print struct members
+        void    PrintPart() { printf("pt %g | pz %g | phi %g | eta %g | mass %g | charge %d | species %d \n",pt,pz,phi,eta,mass,charge,species); } // print struct members
 
-        Double_t pt, phi, eta, mass;
+        Double_t pt, pz, phi, eta, mass; 
         Short_t charge;
         PartSpecies species;
       };
@@ -106,8 +106,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
     private:
       // array lenghts & constants
-      const Double_t          fV0sPDGMassK0s; // [DPGMass] DPG mass of K0s
-      const Double_t          fV0sPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
+      const Double_t          fPDGMassPion; // [DPGMass] DPG mass of charged pion
+      const Double_t          fPDGMassKaon; // [DPGMass] DPG mass of charged kaon
+      const Double_t          fPDGMassProton; // [DPGMass] DPG mass of proton
+      const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
+      const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
+      const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
       static const Short_t    fFlowNumHarmonicsMax = 10; // maximum harmonics length of flow vector array
       static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
       static const Short_t    fFlowPOIsPtNumBins = 200; // number of pT bins for POIs
