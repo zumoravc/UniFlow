@@ -43,6 +43,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
       void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
       void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
+      void                    SetProcessPhi(Bool_t filter = kTRUE) { fProcessPhi = filter; }
       // flow related setters
       void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
@@ -100,6 +101,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetV0sProtonNumSigmaMax(Double_t nSigma) { fCutV0sProtonNumSigmaMax = nSigma; }
       void					          SetV0sProtonPIDPtMin(Double_t pt) { fCutV0sProtonPIDPtMin = pt; }
       void					          SetV0sProtonPIDPtMax(Double_t pt) { fCutV0sProtonPIDPtMax = pt; }
+      // phi setters
 
     private:
       // array lenghts & constants
@@ -196,6 +198,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       std::vector<FlowPart>*  fVectorProton; //! container for selected proton candidates
       std::vector<FlowPart>*  fVectorK0s; //! container for selected K0s candidates
       std::vector<FlowPart>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
+      std::vector<FlowPart>*  fVectorPhi; //! container for selected phi candidates
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
@@ -204,6 +207,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fProcessCharged; // flag for processing charged tracks (both RPF and POIs)
       Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
       Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
+      Bool_t                  fProcessPhi; // flag for processing Phi meson candidates
       // cuts & selection: flow related
       Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow

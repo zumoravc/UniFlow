@@ -1,7 +1,7 @@
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
-    Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
     //TString sGridMode = "terminate";
@@ -81,13 +81,14 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
     task1->SetNumEventsAnalyse(20);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kTRUE);
     task1->SetProcessCharged(kTRUE);
     task1->SetProcessPID(kTRUE);
     task1->SetProcessV0s(kTRUE);
+    task1->SetProcessPhi(kTRUE);
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
     task1->SetFlowRFPsPtMax(5.);

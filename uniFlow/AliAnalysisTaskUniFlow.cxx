@@ -76,6 +76,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fVectorProton(0x0),
   fVectorK0s(0x0),
   fVectorLambda(0x0),
+  fVectorPhi(0x0),
 
   // analysis selection
   fRunMode(kFull),
@@ -85,6 +86,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
+  fProcessPhi(kFALSE),
 
   // flow related
   fCutFlowRFPsPtMin(0),
@@ -255,6 +257,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fVectorProton(0x0),
   fVectorK0s(0x0),
   fVectorLambda(0x0),
+  fVectorPhi(0x0),
 
   // analysis selection
   fRunMode(kFull),
@@ -264,6 +267,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
+  fProcessPhi(kFALSE),
 
   // flow related
   fCutFlowRFPsPtMin(0),
@@ -2972,7 +2976,7 @@ void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t
             case kLambda:
               prof = fp3V0sCorrLambdaCor2[iEtaGapIndex][iHarm];
               break;
-              
+
             default: return;
           }
           iHarmonics = fHarmonics[iHarm];
