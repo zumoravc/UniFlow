@@ -1515,7 +1515,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
     if(IsChargedSelected(track))
     {
-      fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kCharged) );
+      fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kCharged) );
       FillQACharged(1,track); // QA after selection
       //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
     }
@@ -1659,21 +1659,21 @@ void AliAnalysisTaskUniFlow::FilterV0s()
       {
         iNumK0sSelected++;
         fhV0sCounter->Fill("K^{0}_{S}",1);
-        fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), kK0s, v0->MassK0Short()) );
+        fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
       }
 
       if(iIsLambda == 1) // lambda
       {
         iNumLambdaSelected++;
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
-        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), kLambda, v0->MassLambda()) );
+        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassLambda()) );
       }
 
       if(iIsLambda == -1) // anti-lambda
       {
         iNumALambdaSelected++;
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
-        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), kLambda, v0->MassAntiLambda()) );
+        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassAntiLambda()) );
       }
 
       if(bIsK0s && iIsLambda != 0)
@@ -2232,13 +2232,13 @@ void AliAnalysisTaskUniFlow::FilterPID()
     switch (species)
     {
       case kPion:
-        fVectorPion->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kPion) );
+        fVectorPion->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kPion) );
         break;
       case kKaon:
-        fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kKaon) );
+        fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kKaon) );
         break;
       case kProton:
-        fVectorProton->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), kProton) );
+        fVectorProton->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kProton) );
         break;
       default:
         continue;

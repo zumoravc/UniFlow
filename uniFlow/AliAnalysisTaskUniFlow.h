@@ -19,12 +19,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       struct FlowPart // representation of selected particle (species independent) storing only basic properties for flow calculations
       {
-                FlowPart(Double_t dPt, Double_t dPhi, Double_t dEta, PartSpecies sSpecies = kUnknown, Double_t dMass = 0) :
-                  pt(dPt), phi(dPhi), eta(dEta), mass(dMass), species(sSpecies) {} // constructor
+                FlowPart(Double_t dPt, Double_t dPhi, Double_t dEta, Short_t iCharge = 0, PartSpecies sSpecies = kUnknown, Double_t dMass = 0) :
+                  pt(dPt), phi(dPhi), eta(dEta), mass(dMass), charge(iCharge), species(sSpecies) {} // constructor
 
-        void    PrintPart() { printf("pt %g | phi %g | eta %g | mass %g | species %d \n",pt,phi,eta,mass,species); } // print struct members
+        void    PrintPart() { printf("pt %g | phi %g | eta %g | mass %g | charge %d | species %d \n",pt,phi,eta,mass,charge,species); } // print struct members
 
         Double_t pt, phi, eta, mass;
+        Short_t charge;
         PartSpecies species;
       };
                               AliAnalysisTaskUniFlow(); // constructor
