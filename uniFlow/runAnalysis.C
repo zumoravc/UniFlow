@@ -87,8 +87,8 @@ void runAnalysis()
     task1->SetSampling(kTRUE);
     task1->SetProcessCharged(kTRUE);
     task1->SetProcessPID(kTRUE);
-    task1->SetProcessV0s(kTRUE);
     task1->SetProcessPhi(kTRUE);
+    task1->SetProcessV0s(kTRUE);
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
     task1->SetFlowRFPsPtMax(5.);
