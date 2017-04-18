@@ -628,7 +628,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fOutListFlow->Add(fFlowCharged);
   }
 
-  if(fProcessPID)
+  if(fProcessPID || fProcessPhi)
   {
     fVectorPion = new std::vector<FlowPart>;
     fVectorPion->reserve(200);
@@ -786,7 +786,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     } // endif {fProcessCharged}
 
     // PID tracks histograms
-    if(fProcessPID)
+    if(fProcessPID || fProcessPhi)
     {
       fhPIDPionMult = new TH1D("fhPIDPionMult","PID: #pi: Multiplicity; multiplicity", 150,0,150);
       fOutListPID->Add(fhPIDPionMult);
@@ -959,7 +959,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       } // endif {fProcessCharged}
 
       // PID tracks QA
-      if(fProcessPID)
+      if(fProcessPID || fProcessPhi)
       {
         fhQAPIDTPCstatus[iQA] = new TH1D(Form("fhQAPIDTPCstatus_%s",sQAindex[iQA].Data()),"QA PID: PID status: TPC;", iNBinsPIDstatus,0,iNBinsPIDstatus);
         fOutListPID->Add(fhQAPIDTPCstatus[iQA]);
@@ -1466,7 +1466,7 @@ void AliAnalysisTaskUniFlow::Filtering()
     FilterCharged();
   }
 
-  if(fProcessPID)
+  if(fProcessPID || fProcessPhi)
   {
     fVectorPion->clear();
     fVectorKaon->clear();
@@ -1476,6 +1476,12 @@ void AliAnalysisTaskUniFlow::Filtering()
     // printf("sizes: pion %d | kaon %d | proton %d\n", fVectorPion->size(),fVectorKaon->size(),fVectorProton->size());
   }
 
+  if(fProcessPhi)
+  {
+    fVectorPhi->clear();
+    FilterPhi();
+  }
+
   if(fProcessV0s)
   {
     fVectorK0s->clear();
@@ -1483,11 +1489,6 @@ void AliAnalysisTaskUniFlow::Filtering()
     FilterV0s();
   }
 
-  if(fProcessPhi)
-  {
-    fVectorPhi->clear();
-    FilterPhi();
-  }
 
   return;
 }
@@ -2184,7 +2185,18 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   // in FlowPart struct  and pushed to relevant vector container.
   // *************************************************************
 
-  printf("Number of selected Kaons %d\n", fVectorKaon->size());
+  const Int_t iNumKaons = fVectorKaon->size();
+  printf("Num Kaons: %d\n", iNumKaons);
+  // check if there are at least 2 selected kaons in event (minimum for phi reconstruction)
+  if(iNumKaons < 2) return;
+
+  // start Phi reconstruction
+  FlowPart* kaon = 0x0;
+  for(Short_t iKaon(0); iKaon < iNumKaons; iKaon++)
+  {
+    kaon = &(fVectorKaon->at(iKaon));
+    printf("pt: %g \n",kaon->pt);
+  }
 
   return;
 }
