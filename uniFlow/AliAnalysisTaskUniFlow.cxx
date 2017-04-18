@@ -2185,18 +2185,50 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   // in FlowPart struct  and pushed to relevant vector container.
   // *************************************************************
 
+  printf("== enter FilterPhi ==\n");
   const Int_t iNumKaons = fVectorKaon->size();
   printf("Num Kaons: %d\n", iNumKaons);
   // check if there are at least 2 selected kaons in event (minimum for phi reconstruction)
   if(iNumKaons < 2) return;
 
   // start Phi reconstruction
-  FlowPart* kaon = 0x0;
-  for(Short_t iKaon(0); iKaon < iNumKaons; iKaon++)
+  FlowPart* kaon1 = 0x0;
+  FlowPart* kaon2 = 0x0;
+
+  Double_t dInvMass = 0;
+
+  for(Short_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++)
   {
-    kaon = &(fVectorKaon->at(iKaon));
-    printf("pt: %g \n",kaon->pt);
-  }
+    kaon1 = &(fVectorKaon->at(iKaon1));
+    printf("Kaon1: pt: %g | charge %d | mass %g\n",kaon1->pt, kaon1->charge, kaon1->mass);
+
+    for(Short_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++)
+    {
+      kaon2 = &(fVectorKaon->at(iKaon2));
+      printf("Kaon2: pt: %g | charge %d | mass %g\n",kaon2->pt, kaon2->charge, kaon2->mass);
+
+      // invariant mass
+      dInvMass = 0;
+
+
+      if(kaon1->charge == kaon2->charge)
+      {
+        // like-sign combination (background)
+        printf("LikeSign (BG) candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
+      }
+      else
+      {
+        // opposite-sign combination (signal+background)
+        printf("Oposite charge candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
+
+
+
+        //fVectorPhi->emplace_back(FlowPart());
+
+      }
+
+    } // endfor {iKaon2} : second kaon
+  } // endfor {iKaon1} : first Kaon
 
   return;
 }
