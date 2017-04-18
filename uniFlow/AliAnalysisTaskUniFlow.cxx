@@ -162,10 +162,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fOutListCharged(0x0),
   fOutListPID(0x0),
   fOutListV0s(0x0),
+  fOutListPhi(0x0),
   fFlowRefs(0x0),
   fFlowCharged(0x0),
   fFlowPID(0x0),
   fFlowV0s(0x0),
+  fFlowPhi(0x0),
 
   // flow histograms & profiles
   // fcn2Tracks(0x0),
@@ -343,10 +345,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fOutListCharged(0x0),
   fOutListPID(0x0),
   fOutListV0s(0x0),
+  fOutListPhi(0x0),
   fFlowRefs(0x0),
   fFlowCharged(0x0),
   fFlowPID(0x0),
   fFlowV0s(0x0),
+  fFlowPhi(0x0),
 
   // flow histograms & profiles
   // fcn2Tracks(0x0),
@@ -547,6 +551,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   DefineOutput(3, TList::Class());
   DefineOutput(4, TList::Class());
   DefineOutput(5, TList::Class());
+  DefineOutput(6, TList::Class());
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
@@ -564,12 +569,14 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   if(fVectorProton) delete fVectorProton;
   if(fVectorK0s) delete fVectorK0s;
   if(fVectorLambda) delete fVectorLambda;
+  if(fVectorPhi) delete fVectorPhi;
 
   // deleting output lists
   if(fFlowRefs) delete fFlowRefs;
   if(fFlowCharged) delete fFlowCharged;
   if(fFlowPID) delete fFlowPID;
   if(fFlowV0s) delete fFlowV0s;
+  if(fFlowPhi) delete fFlowPhi;
 
   if(fOutListFlow) delete fOutListFlow;
   if(fOutListEvents) delete fOutListEvents;
@@ -602,6 +609,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fOutListPID->SetOwner(kTRUE);
   fOutListV0s = new TList();
   fOutListV0s->SetOwner(kTRUE);
+  fOutListPhi = new TList();
+  fOutListPhi->SetOwner(kTRUE);
 
   fFlowRefs = new TList();
   fFlowRefs->SetOwner(kTRUE);
@@ -645,6 +654,17 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fFlowV0s->SetOwner(kTRUE);
     fFlowV0s->SetName("fFlowV0s");
     fOutListFlow->Add(fFlowV0s);
+  }
+
+  if(fProcessPhi)
+  {
+    fVectorPhi = new std::vector<FlowPart>;
+    fVectorPhi->reserve(1000);
+
+    fFlowPhi = new TList();
+    fFlowPhi->SetOwner(kTRUE);
+    fFlowPhi->SetName("fFlowPhi");
+    fOutListFlow->Add(fFlowPhi);
   }
 
   // creating histograms
@@ -1065,6 +1085,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   PostData(3, fOutListCharged);
   PostData(4, fOutListPID);
   PostData(5, fOutListV0s);
+  PostData(6, fOutListPhi);
 
   return;
 }
@@ -1247,6 +1268,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   PostData(3, fOutListCharged);
   PostData(4, fOutListPID);
   PostData(5, fOutListV0s);
+  PostData(6, fOutListPhi);
 
   return;
 }
@@ -1435,7 +1457,7 @@ void AliAnalysisTaskUniFlow::Filtering()
   // return kTRUE if succesfull (no errors in process)
   // *************************************************************
 
-  if(!fProcessCharged && !fProcessPID && !fProcessV0s) // if neither is ON, filtering is skipped
+  if(!fProcessCharged && !fProcessPID && !fProcessV0s && !fProcessPhi) // if neither is ON, filtering is skipped
     return;
 
   if(fProcessCharged)
@@ -1459,6 +1481,12 @@ void AliAnalysisTaskUniFlow::Filtering()
     fVectorK0s->clear();
     fVectorLambda->clear();
     FilterV0s();
+  }
+
+  if(fProcessPhi)
+  {
+    fVectorPhi->clear();
+    FilterPhi();
   }
 
   return;
@@ -2145,6 +2173,18 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
       }
     }
   }
+
+  return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FilterPhi()
+{
+  // Reconstruction and filtering of Phi meson candidates out of selected Kaon sample
+  // If track passes all requirements, the relevant properties (pT, eta, phi) are stored
+  // in FlowPart struct  and pushed to relevant vector container.
+  // *************************************************************
+
+  printf("Number of selected Kaons %d\n", fVectorKaon->size());
 
   return;
 }

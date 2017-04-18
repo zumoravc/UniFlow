@@ -147,6 +147,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
       Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
       void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
+      void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
       // Flow related methods
       void                    DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       void                    DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
@@ -274,10 +275,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*      fOutListCharged; //! charged tracks list
       TList*      fOutListPID; //! pi,K,p list
       TList*      fOutListV0s; //! V0s candidates list
+      TList*      fOutListPhi; //! Phi candidates list
       TList*      fFlowRefs; //! list for flow of reference particles
       TList*      fFlowCharged; //! list for flow of charged particles
       TList*      fFlowPID; //! list for flow of PID (pi,K,p) particles
       TList*      fFlowV0s; //! list for flow of V0s particles
+      TList*      fFlowPhi; //! list for flow of Phi particles
 
       // histograms & profiles
 

@@ -27,6 +27,7 @@ AliAnalysisTaskUniFlow* AddTaskUniFlow(TString name = "name")
   AliAnalysisDataContainer* cOutput3 = mgr->CreateContainer(Form("Charged_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
   AliAnalysisDataContainer* cOutput4 = mgr->CreateContainer(Form("PID_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
   AliAnalysisDataContainer* cOutput5 = mgr->CreateContainer(Form("V0s_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
+  AliAnalysisDataContainer* cOutput6 = mgr->CreateContainer(Form("Phi_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
 
   // Connecting containers to task
   mgr->ConnectInput(task,0,cInput0); // your task needs input: here we connect the manager to your task
@@ -35,11 +36,7 @@ AliAnalysisTaskUniFlow* AddTaskUniFlow(TString name = "name")
   mgr->ConnectOutput(task,3,cOutput3);
   mgr->ConnectOutput(task,4,cOutput4);
   mgr->ConnectOutput(task,5,cOutput5);
-  // mgr->ConnectOutput(task,2,cOutput2);
-  // mgr->ConnectOutput(task,3,cOutput3);
-  // mgr->ConnectOutput(task,4,cOutput4);
-  // mgr->ConnectOutput(task,5,cOutput5);
-  //mgr->ConnectOutput(task,6,cOutput6);
+  mgr->ConnectOutput(task,6,cOutput6);
 
   return task;
 }
