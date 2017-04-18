@@ -1488,6 +1488,8 @@ void AliAnalysisTaskUniFlow::Filtering()
   {
     fVectorPhi->clear();
     FilterPhi();
+    printf("NumPhis: %d\n",fVectorPhi->size());
+    
   }
 
   if(fProcessV0s)
@@ -1523,7 +1525,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
     if(IsChargedSelected(track))
     {
-      fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Pz(),track->Phi(),track->Eta(), track->Charge(), kCharged) );
+      fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kCharged) );
       FillQACharged(1,track); // QA after selection
       //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
     }
@@ -1667,21 +1669,21 @@ void AliAnalysisTaskUniFlow::FilterV0s()
       {
         iNumK0sSelected++;
         fhV0sCounter->Fill("K^{0}_{S}",1);
-        fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Pz(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
+        fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
       }
 
       if(iIsLambda == 1) // lambda
       {
         iNumLambdaSelected++;
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
-        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Pz(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassLambda()) );
+        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassLambda()) );
       }
 
       if(iIsLambda == -1) // anti-lambda
       {
         iNumALambdaSelected++;
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
-        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Pz(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassAntiLambda()) );
+        fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassAntiLambda()) );
       }
 
       if(bIsK0s && iIsLambda != 0)
@@ -2203,36 +2205,33 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   // start Phi reconstruction
   FlowPart* kaon1 = 0x0;
   FlowPart* kaon2 = 0x0;
-
+  FlowPart mother = FlowPart();
   Double_t dInvMass = 0;
+
+  printf("mother pre: "); mother.PrintPart();
 
   for(Short_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++)
   {
     kaon1 = &(fVectorKaon->at(iKaon1));
-    printf("Kaon1: pt: %g | charge %d | mass %g\n",kaon1->pt, kaon1->charge, kaon1->mass);
+    // kaon1->PrintPart();
 
     for(Short_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++)
     {
       kaon2 = &(fVectorKaon->at(iKaon2));
-      printf("Kaon2: pt: %g | charge %d | mass %g\n",kaon2->pt, kaon2->charge, kaon2->mass);
+      mother = FlowPart::MakeMother(kaon1,kaon2,kPhi);
+      printf("mother post: "); mother.PrintPart();
 
-      // invariant mass
-      dInvMass = 0;
-
-
-      if(kaon1->charge == kaon2->charge)
-      {
-        // like-sign combination (background)
-        printf("LikeSign (BG) candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
-      }
-      else
+      if(mother.charge == 0)
       {
         // opposite-sign combination (signal+background)
         printf("Oposite charge candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
+        fVectorPhi->emplace_back(mother);
+      }
+      else
+      {
+        // like-sign combination (background)
+        printf("LikeSign (BG) candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
 
-
-
-        //fVectorPhi->emplace_back(FlowPart());
 
       }
 
@@ -2273,13 +2272,13 @@ void AliAnalysisTaskUniFlow::FilterPID()
     switch (species)
     {
       case kPion:
-        fVectorPion->emplace_back( FlowPart(track->Pt(),track->Pz(),track->Phi(),track->Eta(), track->Charge(), kPion) );
+        fVectorPion->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kPion, fPDGMassPion, track->Px(), track->Py(), track->Pz()) );
         break;
       case kKaon:
-        fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Pz(),track->Phi(),track->Eta(), track->Charge(), kKaon) );
+        fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kKaon, fPDGMassKaon, track->Px(), track->Py(), track->Pz()) );
         break;
       case kProton:
-        fVectorProton->emplace_back( FlowPart(track->Pt(),track->Pz(),track->Phi(),track->Eta(), track->Charge(), kProton) );
+        fVectorProton->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kProton, fPDGMassProton, track->Px(), track->Py(), track->Pz()) );
         break;
       default:
         continue;
@@ -3560,4 +3559,48 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, co
 //   return out;
 //
 // }
+//____________________________________________________________________
+AliAnalysisTaskUniFlow::FlowPart AliAnalysisTaskUniFlow::FlowPart::MakeMother(const FlowPart* part1, const FlowPart* part2, const PartSpecies species)
+{
+  // Reconstructing mother particle from two daughters (FlowPart type) and fill its properties.
+  // return created mother particle
+  // *************************************************************
+
+  if(!part1 || !part2) return FlowPart();
+  printf(" part1: "); part1->PrintPart();
+  printf(" part2: "); part2->PrintPart();
+
+  if(species == kPhi && (part1->species != kKaon || part2->species != kKaon)) return FlowPart();
+
+  TVector3 vec1 = TVector3(part1->px, part1->py, part1->pz);
+  TVector3 vec2 = TVector3(part2->px, part2->py, part2->pz);
+  TVector3 mother = vec1 + vec2;
+
+  Double_t dMass = InvMass(part1,part2);
+  Short_t iCharge = part1->charge + part2->charge;
+
+  return FlowPart(mother.Pt(), mother.Phi(), mother.PseudoRapidity(), iCharge, species, dMass, mother.Px(), mother.Py(), mother.Pz());
+}
+//____________________________________________________________________
+Double_t AliAnalysisTaskUniFlow::FlowPart::InvMass(const FlowPart* part1, const FlowPart* part2)
+{
+  // Calculating invariant mass of potential mother from two daughter particles given their properties and species.
+  // return calculated invariant mass or -999 if an error occurs.
+  // *************************************************************
+
+  // checking if both poiters are valid
+  if(!part1 || !part2) return -999;
+
+  // checking daughter properties
+  if(part1->species == kUnknown || part2->species == kUnknown) return -999;
+
+  Double_t dP1Sq = TMath::Power(part1->px,2) + TMath::Power(part1->py,2) + TMath::Power(part1->pz,2);
+  Double_t dP2Sq = TMath::Power(part2->px,2) + TMath::Power(part2->py,2) + TMath::Power(part2->pz,2);
+  Double_t dE1 = TMath::Sqrt( dP1Sq + TMath::Power(part1->mass,2) );
+  Double_t dE2 = TMath::Sqrt( dP2Sq + TMath::Power(part2->mass,2) );
+  Double_t dMassSq = TMath::Power((dE1+dE2),2) - ( TMath::Power((part1->px + part2->px),2) + TMath::Power((part1->py + part2->py),2) + TMath::Power((part1->pz + part2->pz),2) );
+
+  if(dMassSq < 0) return -999;
+  return TMath::Sqrt(dMassSq);
+}
 //____________________________________________________________________

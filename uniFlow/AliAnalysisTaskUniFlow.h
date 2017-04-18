@@ -19,12 +19,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       struct FlowPart // representation of selected particle (species independent) storing only basic properties for flow calculations
       {
-                FlowPart(Double_t dPt, Double_t dPz, Double_t dPhi, Double_t dEta, Short_t iCharge = 0, PartSpecies sSpecies = kUnknown, Double_t dMass = 0) :
-                  pt(dPt), pz(dPz), phi(dPhi), eta(dEta), mass(dMass), charge(iCharge), species(sSpecies) {} // constructor
+                FlowPart(Double_t dPt = 0, Double_t dPhi = 0, Double_t dEta = 0, Short_t iCharge = 0, PartSpecies sSpecies = kUnknown, Double_t dMass = 0, Double_t dPx = 0, Double_t dPy = 0, Double_t dPz = 0) :
+                  pt(dPt), px(dPx), py(dPy), pz(dPz), phi(dPhi), eta(dEta), mass(dMass), charge(iCharge), species(sSpecies) {} // constructor
 
-        void    PrintPart() { printf("pt %g | pz %g | phi %g | eta %g | mass %g | charge %d | species %d \n",pt,pz,phi,eta,mass,charge,species); } // print struct members
+        void    PrintPart() const { printf("pt %g | px %g | py %g| pz %g | phi %g | eta %g | mass %g | charge %d | species %d \n",pt,px,py,pz,phi,eta,mass,charge,species); } // print struct members
+        static FlowPart MakeMother(const FlowPart* part1 = 0x0, const FlowPart* part2 = 0x0, const PartSpecies = kUnknown); // reconstruct & fill properties of potential mother from two FlowPart daughters
+        static Double_t InvMass(const FlowPart* part1, const FlowPart* part2); // calculate invariant mass from two FlowPart daughters
 
-        Double_t pt, pz, phi, eta, mass; 
+        Double_t pt,px,py,pz,phi,eta,mass;
         Short_t charge;
         PartSpecies species;
       };
