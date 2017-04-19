@@ -9,30 +9,23 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "uniflow_test";
+    TString sWorkDir = "uniflow_CENT_wSDD";
     TString sOutDir = "output";
     TString sPeriod = "LHC16q";
 
     // run switcher
-    // Run2 5.02 TeV
+    // Run2 8.16 TeV
     // RunList_LHC16r_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [12 runs ~16,6M ]
     //Int_t runNumber[] = {266318, 266317, 266316,   266208, 266197, 266196, 266187, 265754, 265744, 265607, 265596, 265594};
     // RunList_LHC16s_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [16 runs ~10,5M ]
     // Int_t runNumber[] = {267110, 267081, 267077, 267072, 267070, 267030, 266998, 266997, 266994, 266993, 266944, 266886, 266885, 266883, 266882, 266437};
 
-    // Run2 8.16 TeV
-    // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs ~51M ]
-    // Int_t runNumber[] = {267166, 267165, 267164, 267163};
-    // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [32 runs ~328M ]
-    //Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387, 265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265335, 265334, 265332, 265309};
-
-    // Run2 8.16 TeV
+    // Run2 5.02 TeV
     // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs]
     // Int_t runNumber[] = {267166, 267165, 267164, 267163};
-    // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [32 runs]
-    //Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
-    //Int_t runNumber[] = {265385, 265384, 265383, 265381, 265378, 265377, 265344};
-    Int_t runNumber[] = {265343, 265342, 265339, 265338, 265336, 265335, 265334, 265332, 265309};
+    // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170318_v1.txt [31 runs]
+    Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
+    // Int_t runNumber[] = {265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
 
 
     // since we will compile a class, tell root where to look for headers
@@ -86,7 +79,7 @@ void runAnalysis()
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kTRUE);
     task1->SetProcessCharged(kTRUE);
-    task1->SetProcessPID(kFALSE);
+    task1->SetProcessPID(kTRUE);
     task1->SetProcessPhi(kTRUE);
     task1->SetProcessV0s(kTRUE);
     // Flow
@@ -111,8 +104,8 @@ void runAnalysis()
     task1->SetPIDNumSigmasProtonMax(3);
     task1->SetUseBayesPID(kTRUE);
     task1->SetPIDBayesProbPionMin(0.95);
-    task1->SetPIDBayesProbKaonMin(0.9);
-    task1->SetPIDBayesProbProtonMin(0.9);
+    task1->SetPIDBayesProbKaonMin(0.85);
+    task1->SetPIDBayesProbProtonMin(0.85);
     // Phi selection
     // task1->SetPhiMotherEtaMax(0.8);
     // V0 selection cuts
@@ -120,17 +113,17 @@ void runAnalysis()
     task1->SetV0sTPCRefit(kTRUE);
     task1->SetV0sRejectKinks(kTRUE);
     task1->SetV0sUseCrossMassRejection(kTRUE);
-    task1->SetV0sDCAPVMin(0.1);
+    task1->SetV0sDCAPVMin(0.06);
     task1->SetV0sDCAPVMax(0.);
     task1->SetV0sDCADaughtersMax(1.);
-    task1->SetV0sDecayRadiusMin(5.);
+    task1->SetV0sDecayRadiusMin(0.5);
     task1->SetV0sDecayRadiusMax(0.);
     task1->SetV0sDaughterPtMin(0.1);
     task1->SetV0sDaughterEtaMax(0.8);
     task1->SetV0sMotherEtaMax(0.8);
     task1->SetV0sMotherRapMax(0.);
     task1->SetV0sK0sCPAMin(0.97);
-    task1->SetV0sLambdaCPAMin(0.995);
+    task1->SetV0sLambdaCPAMin(0.99);
     task1->SetV0sK0sNumTauMax(5);
     task1->SetV0sK0sArmenterosAlphaMin(0.2);
     task1->SetV0sLambdaNumTauMax(3.8);
