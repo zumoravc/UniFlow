@@ -105,6 +105,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetV0sProtonPIDPtMin(Double_t pt) { fCutV0sProtonPIDPtMin = pt; }
       void					          SetV0sProtonPIDPtMax(Double_t pt) { fCutV0sProtonPIDPtMax = pt; }
       // phi setters
+      void					          SetPhiInvMassMin(Double_t mass) { fCutPhiInvMassMin = mass; }
+      void					          SetPhiInvMassMax(Double_t mass) { fCutPhiInvMassMax = mass; }
 
     private:
       // array lenghts & constants
@@ -122,7 +124,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Int_t             fFlowCentMin; // [0] min range for centrality/multiplicity histos
       const Int_t             fFlowCentMax; // [150] min range for centrality/multiplicity histos
       const Int_t             fFlowCentNumBins; // [150] min range for centrality/multiplicity histos
-      static const Short_t    fV0sNumBinsMass = 30; // number of bins for V0s distribution
+      static const Short_t    fV0sNumBinsMass = 30; // number of InvMass bins for V0s distribution
+      static const Short_t    fPhiNumBinsMass = 30; // number of InvMass bins for phi distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
@@ -276,6 +279,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutV0sProtonNumSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
       Double_t				        fCutV0sProtonPIDPtMin;	// (GeV/c) min pT of proton for PID (Lambda candidates) - only protons within pT range will be checked for num sigma TPC
       Double_t				        fCutV0sProtonPIDPtMax;	// (GeV/c) max pT of proton for PID (Lambda candidates) - only protons within pT range will be checked for num sigma TPC
+      // cuts & selection: phi
+      Double_t                fCutPhiInvMassMin; // [0.99] (GeV/c2) min inv. mass window for selected phi candidates
+      Double_t                fCutPhiInvMassMax; // [1.08] (GeV/c2) min inv. mass window for selected phi candidates
 
       // output lists
       TList*      fOutListFlow; //! flow related list
@@ -295,22 +301,28 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // Flow
       TH3D*           fh3V0sEntriesK0s[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
       TH3D*           fh3V0sEntriesLambda[fNumEtaGap]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
+      TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
+      TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
       TProfile*       fpRefsCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
       TProfile2D*     fp2ChargedCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
       TProfile2D*     fp2PionCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs
       TProfile2D*     fp2KaonCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs
       TProfile2D*     fp2ProtonCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs
-      TProfile3D*     fp3V0sCorrK0sCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidats (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrLambdaCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrK0sCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrLambdaCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates (cent, pT, InvMass)
+      TProfile3D*     fp3PhiCorrSignalCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
+      TProfile3D*     fp3PhiCorrBGCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (phi background candidates / like-sign pairs (cent, pT, InvMass)
 
       TProfile*       fpRefsCor4[fNumSamples][fNumHarmonics]; //! <4> correlations for RFPs
       TProfile2D*     fp2ChargedCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
       TProfile2D*     fp2PionCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for pion POIs
       TProfile2D*     fp2KaonCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for kaon POIs
       TProfile2D*     fp2ProtonCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for proton POIs
-      TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidats (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidats (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidates (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidates (cent, pT, InvMass)
+      TProfile3D*     fp3PhiCorrSignalCor4[fNumHarmonics]; //! <4'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
+      TProfile3D*     fp3PhiCorrBGCor4[fNumHarmonics]; //! <4'> correlations of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
       // Events
       TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
