@@ -284,12 +284,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutPhiInvMassMax; // [1.08] (GeV/c2) min inv. mass window for selected phi candidates
 
       // output lists
-      TList*      fOutListFlow; //! flow related list
-      TList*      fOutListEvents; //! events list
-      TList*      fOutListCharged; //! charged tracks list
-      TList*      fOutListPID; //! pi,K,p list
-      TList*      fOutListV0s; //! V0s candidates list
-      TList*      fOutListPhi; //! Phi candidates list
+      TList*      fQAEvents; //! events list
+      TList*      fQACharged; //! charged tracks list
+      TList*      fQAPID; //! pi,K,p list
+      TList*      fQAV0s; //! V0s candidates list
+      TList*      fQAPhi; //! Phi candidates list
       TList*      fFlowRefs; //! list for flow of reference particles
       TList*      fFlowCharged; //! list for flow of charged particles
       TList*      fFlowPID; //! list for flow of PID (pi,K,p) particles
