@@ -237,6 +237,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fh2PIDProtonBayesKaon(0x0),
   fh2PIDProtonBayesProton(0x0),
 
+  // phi histograms
+  fhPhiCounter(0x0),
+  fhPhiMult(0x0),
+  fhPhiBGMult(0x0),
+  fhPhiInvMass(0x0),
+  fhPhiBGInvMass(0x0),
+  fhPhiCharge(0x0),
+  fhPhiBGCharge(0x0),
+  fhPhiPt(0x0),
+  fhPhiEta(0x0),
+  fhPhiPhi(0x0),
+
   // V0s histogram
   fhV0sCounter(0x0),
   fhV0sCounterK0s(0x0),
@@ -427,6 +439,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fh2PIDProtonBayesPion(0x0),
   fh2PIDProtonBayesKaon(0x0),
   fh2PIDProtonBayesProton(0x0),
+
+  // phi histograms
+  fhPhiCounter(0x0),
+  fhPhiMult(0x0),
+  fhPhiBGMult(0x0),
+  fhPhiInvMass(0x0),
+  fhPhiBGInvMass(0x0),
+  fhPhiCharge(0x0),
+  fhPhiBGCharge(0x0),
+  fhPhiPt(0x0),
+  fhPhiEta(0x0),
+  fhPhiPhi(0x0),
 
   // V0s histogram
   fhV0sCounter(0x0),
@@ -907,6 +931,34 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     } //endif {fProcessPID}
 
+    if(fProcessPhi)
+    {
+      TString sPhiCounterLabel[] = {"Input","InvMass","Pt","Eta","Selected","Unlike-sign","BG"};
+      const Short_t iNBinsPhiCounter = sizeof(sPhiCounterLabel)/sizeof(sPhiCounterLabel[0]);
+      fhPhiCounter = new TH1D("fhPhiCounter","#phi: Counter",iNBinsPhiCounter,0,iNBinsPhiCounter);
+      for(Short_t i(0); i < iNBinsPhiCounter; i++) fhPhiCounter->GetXaxis()->SetBinLabel(i+1, sPhiCounterLabel[i].Data() );
+      fQAPhi->Add(fhPhiCounter);
+
+      fhPhiMult = new TH1D("fhPhiMult","#phi: Multiplicity; Multiplicity", 150,0,150);
+      fQAPhi->Add(fhPhiMult);
+      fhPhiBGMult = new TH1D("fhPhiBGMult","#phi (BG): Multiplicity; Multiplicity", 150,0,150);
+      fQAPhi->Add(fhPhiBGMult);
+      fhPhiInvMass = new TH1D("fhPhiInvMass","#phi: InvMass; #it{m}_{inv} (GeV/#it{c}^{2})", 90,fCutPhiInvMassMin,fCutPhiInvMassMax);
+      fQAPhi->Add(fhPhiInvMass);
+      fhPhiBGInvMass = new TH1D("fhPhiBGInvMass","#phi (BG): InvMass; #it{m}_{inv} (GeV/#it{c}^{2})", 90,fCutPhiInvMassMin,fCutPhiInvMassMax);
+      fQAPhi->Add(fhPhiBGInvMass);
+      fhPhiCharge = new TH1D("fhPhiCharge","#phi: charge; charge", 5,-2.5,2.5);
+      fQAPhi->Add(fhPhiCharge);
+      fhPhiBGCharge = new TH1D("fhPhiBGCharge","#phi (BG): charge; charge", 5,-2.5,2.5);
+      fQAPhi->Add(fhPhiBGCharge);
+      fhPhiPt = new TH1D("fhPhiPt","#phi: #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 150,0.,30.);
+      fQAPhi->Add(fhPhiPt);
+      fhPhiEta = new TH1D("fhPhiEta","#phi: #eta; #eta", 301,-3,3);
+      fQAPhi->Add(fhPhiEta);
+      fhPhiPhi = new TH1D("fhPhiPhi","#phi: #varphi; #varphi", 100,-TMath::Pi(),TMath::Pi());
+      fQAPhi->Add(fhPhiPhi);
+    } //endif {fProcessPhi}
+
     // V0 candidates histograms
     if(fProcessV0s)
     {
@@ -1267,7 +1319,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   fEventCounter++; // counter of processed events
   //printf("event %d\n",fEventCounter);
-
 
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
   if(fRunMode == kTest && fEventCounter >= fNumEventsAnalyse) return;
@@ -2223,42 +2274,52 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   FlowPart* kaon2 = 0x0;
   FlowPart mother = FlowPart();
 
-  // printf("mother pre: "); mother.PrintPart();
-
+  Int_t iNumBG = 0;
   for(Short_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++)
   {
     kaon1 = &(fVectorKaon->at(iKaon1));
-    // kaon1->PrintPart();
+    if(!kaon1) continue;
 
     for(Short_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++)
     {
       kaon2 = &(fVectorKaon->at(iKaon2));
+      if(!kaon2) continue;
+
+      fhPhiCounter->Fill("Input",1);
       mother = FlowPart::MakeMother(kaon1,kaon2,kPhi);
 
-      if(mother.mass < fCutPhiInvMassMin || mother.mass > fCutPhiInvMassMax)
-        continue;
+      // filling QA BEFORE selection
+      FillQAPhi(0,&mother);
 
-      if(mother.pt < fFlowPOIsPtMin || mother.pt > fFlowPOIsPtMax)
-        continue;
+      if(mother.mass < fCutPhiInvMassMin || mother.mass > fCutPhiInvMassMax) continue;
+      fhPhiCounter->Fill("InvMass",1);
 
-      if(fCutPhiMotherEtaMax > 0 && TMath::Abs(mother.eta) > fCutPhiMotherEtaMax)
-        continue;
+      if(mother.pt < fFlowPOIsPtMin || mother.pt > fFlowPOIsPtMax) continue;
+      fhPhiCounter->Fill("Pt",1);
 
-      // printf("mother post: "); mother.PrintPart();
+      if(fCutPhiMotherEtaMax > 0 && TMath::Abs(mother.eta) > fCutPhiMotherEtaMax)  continue;
+      fhPhiCounter->Fill("Eta",1);
+
+      // mother (phi) candidate passing all criteria
+      fhPhiCounter->Fill("Selected",1);
+
+      // filling QA AFTER selection
+      FillQAPhi(1,&mother);
 
       if(mother.charge == 0)
       {
         // opposite-sign combination (signal+background)
-        // printf("Oposite charge candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
+        fhPhiCounter->Fill("Unlike-sign",1);
         fVectorPhi->emplace_back(mother);
       }
 
       if(TMath::Abs(mother.charge) == 2)
       {
         // like-sign combination (background)
-        // filing background entries for Phi candidates
-        // printf("LikeSign (BG) candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
+        fhPhiCounter->Fill("BG",1);
+        iNumBG++;
 
+        // filing background entries for Phi candidates
         for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
         {
           if(TMath::Abs(mother.eta) > fEtaGap[iGap]/2 ) fh3PhiEntriesBG[iGap]->Fill(fIndexCentrality,mother.pt,mother.mass);
@@ -2266,6 +2327,37 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       }
     } // endfor {iKaon2} : second kaon
   } // endfor {iKaon1} : first Kaon
+
+  // filling multiplicity distribution
+  fhPhiMult->Fill(fVectorPhi->size());
+  fhPhiBGMult->Fill(iNumBG);
+
+  return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillQAPhi(const Short_t iQAindex, const FlowPart* part)
+{
+  if(!part) return;
+  if(part->species != kPhi) return;
+
+  if(iQAindex == 0) return; // TODO not implemented (do not know what)
+
+  if(part->charge == 0)
+  {
+    // phi candidate (unlike-sign pair)
+    fhPhiInvMass->Fill(part->mass);
+    fhPhiCharge->Fill(part->charge);
+    fhPhiPt->Fill(part->pt);
+    fhPhiEta->Fill(part->eta);
+    fhPhiPhi->Fill(part->phi);
+  }
+
+  if(TMath::Abs(part->charge) == 2)
+  {
+    // phi candidate (unlike-sign pair)
+    fhPhiBGInvMass->Fill(part->mass);
+    fhPhiBGCharge->Fill(part->charge);
+  }
 
   return;
 }

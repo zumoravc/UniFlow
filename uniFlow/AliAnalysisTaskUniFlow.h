@@ -159,6 +159,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
       void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
       void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
+      void                    FillQAPhi(const Short_t iQAindex, const FlowPart* part = 0x0); // filling QA plots for V0s candidates
       // Flow related methods
       void                    DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       void                    DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
@@ -377,6 +378,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH2D*           fh2PIDProtonTPCnSigmaProton; //! TPC nSigma vs pT for selected protons (proton hypothesis)
       TH2D*           fh2PIDProtonTOFnSigmaProton; //! TOF nSigma vs pT for selected protons (proton hypothesis)
       TH2D*           fh2PIDProtonBayesProton; //! Bayesian PID probability vs pT for selected protons (proton hypothesis)
+      // Phi
+      TH1D*           fhPhiCounter; //! counter following phi candidate selection
+      TH1D*           fhPhiMult; //! multiplicity distribution of selected phi candidates
+      TH1D*           fhPhiBGMult; //! multiplicity distribution of BG candidates
+      TH1D*           fhPhiInvMass; //! invariant mass distribution of phi candidates
+      TH1D*           fhPhiBGInvMass; //! invariant mass distribution of phi background candidates
+      TH1D*           fhPhiCharge; //! charge distribution of selected phi candidates
+      TH1D*           fhPhiBGCharge; //! charge distribution of phi BG candidates
+      TH1D*           fhPhiPt; //! pt distribution of selected phi candidates
+      TH1D*           fhPhiEta; //! eta distribution of selected phi candidates
+      TH1D*           fhPhiPhi; //! phi distribution of selected phi candidates
       // V0s
       TH1D*           fhV0sCounter; //! counter following V0s selection
       TH1D*           fhV0sCounterK0s; //! counter following K0s selection
@@ -409,7 +421,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3QAPIDnSigmaBayesMuon[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
       TH3D*           fh3QAPIDnSigmaBayesPion[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
       TH3D*           fh3QAPIDnSigmaBayesKaon[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for kaons
-      TH3D*           fh3QAPIDnSigmaBayesProton[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for protons
+      TH3D*           fh3QAPIDnSigmaBayesProton[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for proton
       // QA: V0s candidates
       TH1D*			  		fhQAV0sMultK0s[fiNumIndexQA];	//! number of K0s candidates
       TH1D*			  		fhQAV0sMultLambda[fiNumIndexQA];	//! number of Lambda candidates
