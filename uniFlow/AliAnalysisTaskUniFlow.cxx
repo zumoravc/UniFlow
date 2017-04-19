@@ -691,10 +691,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fVectorK0s = new std::vector<FlowPart>;
   fVectorLambda = new std::vector<FlowPart>;
 
-  fVectorCharged->reserve(1000);
-  if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(200); fVectorProton->reserve(200); }
+  fVectorCharged->reserve(300);
+  if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(100); fVectorProton->reserve(100); }
   if(fProcessPhi) { fVectorPhi->reserve(200); }
-  if(fProcessV0s) { fVectorK0s->reserve(1000); fVectorLambda->reserve(1000); }
+  if(fProcessV0s) { fVectorK0s->reserve(100); fVectorLambda->reserve(100); }
 
   // creating histograms
     // event histogram
@@ -849,7 +849,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // PID tracks histograms
     if(fProcessPID || fProcessPhi)
     {
-      fhPIDPionMult = new TH1D("fhPIDPionMult","PID: #pi: Multiplicity; multiplicity", 150,0,150);
+      fhPIDPionMult = new TH1D("fhPIDPionMult","PID: #pi: Multiplicity; multiplicity", 200,0,200);
       fQAPID->Add(fhPIDPionMult);
       fhPIDPionPt = new TH1D("fhPIDPionPt","PID: #pi: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
       fQAPID->Add(fhPIDPionPt);
@@ -859,7 +859,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fhPIDPionEta);
       fhPIDPionCharge = new TH1D("fhPIDPionCharge","PID: #pi: charge; charge", 3,-1.5,1.5);
       fQAPID->Add(fhPIDPionCharge);
-      fhPIDKaonMult = new TH1D("fhPIDKaonMult","PID: K: Multiplicity; multiplicity", 150,0,150);
+      fhPIDKaonMult = new TH1D("fhPIDKaonMult","PID: K: Multiplicity; multiplicity", 100,0,100);
       fQAPID->Add(fhPIDKaonMult);
       fhPIDKaonPt = new TH1D("fhPIDKaonPt","PID: K: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
       fQAPID->Add(fhPIDKaonPt);
@@ -869,7 +869,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fhPIDKaonEta);
       fhPIDKaonCharge = new TH1D("fhPIDKaonCharge","PID: K: charge; charge", 3,-1.5,1.5);
       fQAPID->Add(fhPIDKaonCharge);
-      fhPIDProtonMult = new TH1D("fhPIDProtonMult","PID: p: Multiplicity; multiplicity", 150,0,150);
+      fhPIDProtonMult = new TH1D("fhPIDProtonMult","PID: p: Multiplicity; multiplicity", 100,0,100);
       fQAPID->Add(fhPIDProtonMult);
       fhPIDProtonPt = new TH1D("fhPIDProtonPt","PID: p: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
       fQAPID->Add(fhPIDProtonPt);
@@ -3544,7 +3544,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     {
       if(species == kK0s || species == kLambda || species == kPhi)
       {
-        hist->Fill(fIndexCentrality,part->pt,dMass);
+        hist->Fill(fIndexCentrality,part->pt,dMass,1);
       }
 
       for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
@@ -3574,7 +3574,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
         // particle in positive eta acceptance
         if(species == kK0s || species == kLambda || species == kPhi)
         {
-          hist->Fill(fIndexCentrality,part->pt,dMass);
+          hist->Fill(fIndexCentrality,part->pt,dMass,1);
         }
 
         for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
@@ -3590,7 +3590,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
          // particle in negative eta acceptance
          if(hist && (species == kK0s || species == kLambda || species == kPhi))
          {
-           hist->Fill(fIndexCentrality,part->pt,dMass);
+           hist->Fill(fIndexCentrality,part->pt,dMass,1);
          }
 
          for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
