@@ -185,6 +185,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhEventCounter(0x0),
 
   // charged histogram
+  fhRefsMult(0x0),
+  fhRefsPt(0x0),
+  fhRefsEta(0x0),
+  fhRefsPhi(0x0),
   fhChargedCounter(0x0),
 
   // PID histogram
@@ -388,6 +392,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhEventCounter(0x0),
 
   // charged histogram
+  fhRefsMult(0x0),
+  fhRefsPt(0x0),
+  fhRefsEta(0x0),
+  fhRefsPhi(0x0),
   fhChargedCounter(0x0),
 
   // PID histogram
@@ -820,6 +828,15 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     }
 
     // charged (tracks) histograms
+    fhRefsMult = new TH1D("fhRefsMult","RFPs: Multiplicity; multiplicity", 1000,0,1000);
+    fQACharged->Add(fhRefsMult);
+    fhRefsPt = new TH1D("fhRefsPt","RFPs: #it{p}_{T};  #it{p}_{T} (GeV/#it{c})", 300,0,30);
+    fQACharged->Add(fhRefsPt);
+    fhRefsEta = new TH1D("fhRefsEta","RFPs: #eta; #eta", 301,-3,3);
+    fQACharged->Add(fhRefsEta);
+    fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", 100,0,TMath::TwoPi());
+    fQACharged->Add(fhRefsPhi);
+
     if(fProcessCharged)
     {
       TString sChargedCounterLabel[] = {"Input","FB","#TPC-Cls","DCA-z","DCA-xy","Eta","Selected"};
@@ -1583,6 +1600,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
   if(iNumTracks < 1) return;
 
   AliAODTrack* track = 0x0;
+  Int_t iNumRefs = 0;
   for(Short_t iTrack(0); iTrack < iNumTracks; iTrack++)
   {
     track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
@@ -1595,10 +1613,18 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kCharged) );
       FillQACharged(1,track); // QA after selection
       //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
+
+      // Filling refs QA plots
+      if(fCutFlowRFPsPtMin > 0. && track->Pt() >= fCutFlowRFPsPtMin && fCutFlowRFPsPtMax > 0. && track->Pt() <= fCutFlowRFPsPtMax)
+      {
+        iNumRefs++;
+        FillQARefs(1,track);
+      }
     }
   }
 
   // fill QA charged multiplicity
+  fhRefsMult->Fill(iNumRefs);
   fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
   fhQAChargedMult[1]->Fill(fVectorCharged->size());
 
@@ -1651,6 +1677,21 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
   // track passing all criteria
   fhChargedCounter->Fill("Selected",1);
   return kTRUE;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillQARefs(const Short_t iQAindex, const AliAODTrack* track)
+{
+  // Filling various QA plots related to RFPs subset of charged track selection
+  // *************************************************************
+
+  if(!track) return;
+  if(iQAindex == 0) return; // NOTE implemented only for selected RFPs
+
+  fhRefsPt->Fill(track->Pt());
+  fhRefsEta->Fill(track->Eta());
+  fhRefsPhi->Fill(track->Phi());
+
+  return;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillQACharged(const Short_t iQAindex, const AliAODTrack* track)

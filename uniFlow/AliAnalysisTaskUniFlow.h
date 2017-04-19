@@ -149,6 +149,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    Filtering(); // main (envelope) method for filtering all POIs in event
       void                    FilterCharged(); // charged tracks filtering
       Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
+      void                    FillQARefs(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       void                    FilterPID(); // pi,K,p filtering
       PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
@@ -328,6 +329,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
       TH1D*           fhEventCounter; //! counter following event selection
       // Charged
+      TH1D*           fhRefsMult; //!multiplicity distribution of selected RFPs
+      TH1D*           fhRefsPt; //! pt distribution of selected RFPs
+      TH1D*           fhRefsEta; //! pt distribution of selected RFPs
+      TH1D*           fhRefsPhi; //! pt distribution of selected RFPs
       TH1D*           fhChargedCounter; //! counter following charged track selection
       // PID
       TH1D*           fhPIDPionMult; //! multiplicity distribution of selected pions
