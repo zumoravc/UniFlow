@@ -81,6 +81,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fVectorK0s(0x0),
   fVectorLambda(0x0),
   fVectorPhi(0x0),
+  fVectorPhiBG(0x0),
 
   // analysis selection
   fRunMode(kFull),
@@ -268,6 +269,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fVectorK0s(0x0),
   fVectorLambda(0x0),
   fVectorPhi(0x0),
+  fVectorPhiBG(0x0),
 
   // analysis selection
   fRunMode(kFull),
@@ -578,6 +580,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   if(fVectorK0s) delete fVectorK0s;
   if(fVectorLambda) delete fVectorLambda;
   if(fVectorPhi) delete fVectorPhi;
+  if(fVectorPhiBG) delete fVectorPhiBG;
 
   // deleting output lists
   if(fFlowRefs) delete fFlowRefs;
@@ -591,6 +594,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   if(fOutListCharged) delete fOutListCharged;
   if(fOutListPID) delete fOutListPID;
   if(fOutListV0s) delete fOutListV0s;
+  if(fOutListPhi) delete fOutListPhi;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
@@ -668,6 +672,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   {
     fVectorPhi = new std::vector<FlowPart>;
     fVectorPhi->reserve(1000);
+    fVectorPhiBG = new std::vector<FlowPart>;
+    fVectorPhiBG->reserve(1000);
 
     fFlowPhi = new TList();
     fFlowPhi->SetOwner(kTRUE);
@@ -1487,9 +1493,9 @@ void AliAnalysisTaskUniFlow::Filtering()
   if(fProcessPhi)
   {
     fVectorPhi->clear();
+    fVectorPhiBG->clear();
     FilterPhi();
-    printf("NumPhis: %d\n",fVectorPhi->size());
-    
+    printf("Num Phi: %d | Num BG: %d\n",fVectorPhi->size(),fVectorPhiBG->size());
   }
 
   if(fProcessV0s)
@@ -2227,14 +2233,13 @@ void AliAnalysisTaskUniFlow::FilterPhi()
         printf("Oposite charge candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
         fVectorPhi->emplace_back(mother);
       }
-      else
+
+      if(TMath::Abs(mother.charge) == 2)
       {
         // like-sign combination (background)
         printf("LikeSign (BG) candidates: kaon1 %d | kaon2 %d\n",kaon1->charge,kaon2->charge);
-
-
+        fVectorPhiBG->emplace_back(mother);
       }
-
     } // endfor {iKaon2} : second kaon
   } // endfor {iKaon1} : first Kaon
 

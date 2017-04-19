@@ -206,7 +206,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       std::vector<FlowPart>*  fVectorProton; //! container for selected proton candidates
       std::vector<FlowPart>*  fVectorK0s; //! container for selected K0s candidates
       std::vector<FlowPart>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
-      std::vector<FlowPart>*  fVectorPhi; //! container for selected phi candidates
+      std::vector<FlowPart>*  fVectorPhi; //! container for selected phi candidates (unlike-sign pairs)
+      std::vector<FlowPart>*  fVectorPhiBG; //! container for selected phi background (like-sign pairs)
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
