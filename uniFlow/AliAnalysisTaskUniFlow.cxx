@@ -625,7 +625,23 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fInit = InitializeTask();
   if(!fInit) return;
 
-  // creating arrays for particles and output
+  // creating output lists
+  fFlowRefs = new TList();
+  fFlowRefs->SetOwner(kTRUE);
+  fFlowRefs->SetName("fFlowRefs");
+  fFlowCharged = new TList();
+  fFlowCharged->SetOwner(kTRUE);
+  fFlowCharged->SetName("fFlowCharged");
+  fFlowPID = new TList();
+  fFlowPID->SetOwner(kTRUE);
+  fFlowPID->SetName("fFlowPID");
+  fFlowPhi = new TList();
+  fFlowPhi->SetOwner(kTRUE);
+  fFlowPhi->SetName("fFlowPhi");
+  fFlowV0s = new TList();
+  fFlowV0s->SetOwner(kTRUE);
+  fFlowV0s->SetName("fFlowV0s");
+
   fQAEvents = new TList();
   fQAEvents->SetOwner(kTRUE);
   fQACharged = new TList();
@@ -637,57 +653,20 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fQAV0s = new TList();
   fQAV0s->SetOwner(kTRUE);
 
-  fFlowRefs = new TList();
-  fFlowRefs->SetOwner(kTRUE);
-  fFlowRefs->SetName("fFlowRefs");
+  // creating particle vectors
+  fVectorCharged = new std::vector<FlowPart>;
+  fVectorPion = new std::vector<FlowPart>;
+  fVectorKaon = new std::vector<FlowPart>;
+  fVectorProton = new std::vector<FlowPart>;
+  fVectorPhi = new std::vector<FlowPart>;
+  fVectorPhiBG = new std::vector<FlowPart>;
+  fVectorK0s = new std::vector<FlowPart>;
+  fVectorLambda = new std::vector<FlowPart>;
 
-  if(fProcessCharged)
-  {
-    fVectorCharged = new std::vector<FlowPart>;
-    fVectorCharged->reserve(1000);
-
-    fFlowCharged = new TList();
-    fFlowCharged->SetOwner(kTRUE);
-    fFlowCharged->SetName("fFlowCharged");
-  }
-
-  if(fProcessPID || fProcessPhi)
-  {
-    fVectorPion = new std::vector<FlowPart>;
-    fVectorPion->reserve(200);
-    fVectorKaon = new std::vector<FlowPart>;
-    fVectorKaon->reserve(200);
-    fVectorProton = new std::vector<FlowPart>;
-    fVectorProton->reserve(200);
-
-    fFlowPID = new TList();
-    fFlowPID->SetOwner(kTRUE);
-    fFlowPID->SetName("fFlowPID");
-  }
-
-  if(fProcessPhi)
-  {
-    fVectorPhi = new std::vector<FlowPart>;
-    fVectorPhi->reserve(1000);
-    fVectorPhiBG = new std::vector<FlowPart>;
-    fVectorPhiBG->reserve(1000);
-
-    fFlowPhi = new TList();
-    fFlowPhi->SetOwner(kTRUE);
-    fFlowPhi->SetName("fFlowPhi");
-  }
-
-  if(fProcessV0s)
-  {
-    fVectorK0s = new std::vector<FlowPart>;
-    fVectorK0s->reserve(1000);
-    fVectorLambda = new std::vector<FlowPart>;
-    fVectorLambda->reserve(1000);
-
-    fFlowV0s = new TList();
-    fFlowV0s->SetOwner(kTRUE);
-    fFlowV0s->SetName("fFlowV0s");
-  }
+  fVectorCharged->reserve(1000);
+  if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(200); fVectorProton->reserve(200); }
+  if(fProcessPhi) { fVectorPhi->reserve(200); fVectorPhiBG->reserve(200); }
+  if(fProcessV0s) { fVectorK0s->reserve(1000); fVectorLambda->reserve(1000); }
 
   // creating histograms
     // event histogram
@@ -1519,11 +1498,8 @@ void AliAnalysisTaskUniFlow::Filtering()
   if(!fProcessCharged && !fProcessPID && !fProcessV0s && !fProcessPhi) // if neither is ON, filtering is skipped
     return;
 
-  if(fProcessCharged)
-  {
-    fVectorCharged->clear();
-    FilterCharged();
-  }
+  fVectorCharged->clear();
+  FilterCharged();
 
   if(fProcessPID || fProcessPhi)
   {
@@ -1531,8 +1507,6 @@ void AliAnalysisTaskUniFlow::Filtering()
     fVectorKaon->clear();
     fVectorProton->clear();
     FilterPID();
-
-    // printf("sizes: pion %d | kaon %d | proton %d\n", fVectorPion->size(),fVectorKaon->size(),fVectorProton->size());
   }
 
   if(fProcessPhi)
@@ -1549,7 +1523,6 @@ void AliAnalysisTaskUniFlow::Filtering()
     fVectorLambda->clear();
     FilterV0s();
   }
-
 
   return;
 }
@@ -2633,13 +2606,6 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // filtering particles
   Filtering();
 
-  Int_t iSizeCharged = fVectorCharged->size();
-  Int_t iSizePion = fVectorPion->size();
-  Int_t iSizeKaon = fVectorKaon->size();
-  Int_t iSizeProton = fVectorProton->size();
-  Int_t iSizeK0s = fVectorK0s->size();
-  Int_t iSizeLambda = fVectorLambda->size();
-
   // checking if there is at least one charged track selected;
   // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
   if(fVectorCharged->size() < 1)
@@ -2650,7 +2616,6 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
-
 
   for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
   {
@@ -2666,18 +2631,21 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
     if(fProcessPID)
     {
+      const Int_t iSizePion = fVectorPion->size();
+      const Int_t iSizeKaon = fVectorKaon->size();
+      const Int_t iSizeProton = fVectorProton->size();
+
       // pi,K,p flow
       if(iSizePion > 0) DoFlowPID(iGap,kPion);
       if(iSizeKaon > 0) DoFlowPID(iGap,kKaon);
       if(iSizeProton > 0) DoFlowPID(iGap,kProton);
-
-      // /*if(fVectorPion->size() > 0)*/ DoFlowPID(iGap,kPion);
-      // /*if(fVectorKaon->size() > 0)*/ DoFlowPID(iGap,kKaon);
-      // /*if(fVectorProton->size() > 0)*/ DoFlowPID(iGap,kProton);
     }
 
     if(fProcessV0s)
     {
+      const Int_t iSizeK0s = fVectorK0s->size();
+      const Int_t iSizeLambda = fVectorLambda->size();
+
       if(iSizeK0s > 0)
       {
         for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++)
