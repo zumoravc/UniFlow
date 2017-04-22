@@ -35,7 +35,7 @@ class ProcessUniFlow
   private:
     Bool_t      Initialize(); // initialization task
     void        TestProjections(); // testing projection of reconstructed particles
-    TProfile*   Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
+    TProfile2D*   Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
 
     TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
     TH2D* DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
@@ -184,16 +184,18 @@ void ProcessUniFlow::TestProjections()
 
   // p3K0sCor->GetXaxis()->SetRange(0,10);
 
-  TProfile* prof = Project3DProfile(p3K0sCor);
+  TProfile2D* profROOT = p3K0sCor->Project3DProfile("zx");
+  TProfile2D* prof = Project3DProfile(p3K0sCor);
 
   TCanvas* cK0sCor = new TCanvas("cK0sCor","cK0sCor",1000,1000);
   cK0sCor->Divide(2,3);
   cK0sCor->cd(1);
   p3K0sCor->Draw();
   cK0sCor->cd(2);
-  prof->Draw();
   cK0sCor->cd(3);
+  profROOT->Draw("colz");
   cK0sCor->cd(4);
+  prof->Draw("colz");
   cK0sCor->cd(5);
   cK0sCor->cd(6);
 
@@ -203,7 +205,7 @@ void ProcessUniFlow::TestProjections()
   return;
 }
 //_____________________________________________________________________________
-TProfile* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
+TProfile2D* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
 {
   if(!prof3dorig) return 0x0;
   TProfile3D* prof3d = (TProfile3D*) prof3dorig->Clone();
@@ -228,9 +230,14 @@ TProfile* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
   }
 
 
+  TProfile2D* prof2d_test = DoProjectProfile2D(prof3d,"prof2d_test","",prof3d->GetZaxis(),prof3d->GetXaxis(),1,0,0);
+  // prof2d_test->Draw("colz");
+
+  return prof2d_test;
+
   // resulting profile
-  TProfile* result = new TProfile("result","result",100,0,10);
-  for(Int_t i(0); i < 10; i++) result->Fill(i,1);
+  // TProfile* result = new TProfile("result","result",100,0,10);
+  // for(Int_t i(0); i < 10; i++) result->Fill(i,1);
 
   //
   // TCanvas* canTest = new TCanvas("canTest");
@@ -245,7 +252,7 @@ TProfile* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
   // hist3d_weight->Draw("box");
 
 
-  return result;
+  // return result;
 }
 //_____________________________________________________________________________
 TProfile2D * ProcessUniFlow::DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,
