@@ -296,8 +296,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*      fFlowRefs; //! list for flow of reference particles
       TList*      fFlowCharged; //! list for flow of charged particles
       TList*      fFlowPID; //! list for flow of PID (pi,K,p) particles
-      TList*      fFlowV0s; //! list for flow of V0s particles
       TList*      fFlowPhi; //! list for flow of Phi particles
+      TList*      fFlowK0s; //! list for flow of K0s particles
+      TList*      fFlowLambda; //! list for flow of (anti-)Lambda particles
 
       // histograms & profiles
 

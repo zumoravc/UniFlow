@@ -174,8 +174,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowRefs(0x0),
   fFlowCharged(0x0),
   fFlowPID(0x0),
-  fFlowV0s(0x0),
   fFlowPhi(0x0),
+  fFlowK0s(0x0),
+  fFlowLambda(0x0),
 
   // flow histograms & profiles
   // fcn2Tracks(0x0),
@@ -381,8 +382,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowRefs(0x0),
   fFlowCharged(0x0),
   fFlowPID(0x0),
-  fFlowV0s(0x0),
   fFlowPhi(0x0),
+  fFlowK0s(0x0),
+  fFlowLambda(0x0),
 
   // flow histograms & profiles
   // fcn2Tracks(0x0),
@@ -608,6 +610,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   DefineOutput(8, TList::Class());
   DefineOutput(9, TList::Class());
   DefineOutput(10, TList::Class());
+  DefineOutput(11, TList::Class());
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
@@ -632,7 +635,8 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   if(fFlowCharged) delete fFlowCharged;
   if(fFlowPID) delete fFlowPID;
   if(fFlowPhi) delete fFlowPhi;
-  if(fFlowV0s) delete fFlowV0s;
+  if(fFlowK0s) delete fFlowK0s;
+  if(fFlowLambda) delete fFlowLambda;
 
   if(fQAEvents) delete fQAEvents;
   if(fQACharged) delete fQACharged;
@@ -667,9 +671,12 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fFlowPhi = new TList();
   fFlowPhi->SetOwner(kTRUE);
   fFlowPhi->SetName("fFlowPhi");
-  fFlowV0s = new TList();
-  fFlowV0s->SetOwner(kTRUE);
-  fFlowV0s->SetName("fFlowV0s");
+  fFlowK0s = new TList();
+  fFlowK0s->SetOwner(kTRUE);
+  fFlowK0s->SetName("fFlowK0s");
+  fFlowLambda = new TList();
+  fFlowLambda->SetOwner(kTRUE);
+  fFlowLambda->SetName("fFlowLambda");
 
   fQAEvents = new TList();
   fQAEvents->SetOwner(kTRUE);
@@ -725,10 +732,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       {
         fh3V0sEntriesK0s[iGap] = new TH3D(Form("fh3V0sEntriesK0s_gap%02.2g",10*fEtaGap[iGap]), Form("K_{S}^{0}: Distribution (Gap %g); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
         fh3V0sEntriesK0s[iGap]->Sumw2();
-        fFlowV0s->Add(fh3V0sEntriesK0s[iGap]);
+        fFlowK0s->Add(fh3V0sEntriesK0s[iGap]);
         fh3V0sEntriesLambda[iGap] = new TH3D(Form("fh3V0sEntriesLambda_gap%02.2g",10*fEtaGap[iGap]), Form("#Lambda/#bar{#Lambda}: Distribution (Gap %g); centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
         fh3V0sEntriesLambda[iGap]->Sumw2();
-        fFlowV0s->Add(fh3V0sEntriesLambda[iGap]);
+        fFlowLambda->Add(fh3V0sEntriesLambda[iGap]);
       }
     }
 
@@ -809,19 +816,19 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         {
           fp3V0sCorrK0sCor2[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrK0s_<2>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]), Form("K_{S}^{0}: <<2'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
           fp3V0sCorrK0sCor2[iGap][iHarm]->Sumw2();
-          fFlowV0s->Add(fp3V0sCorrK0sCor2[iGap][iHarm]);
+          fFlowK0s->Add(fp3V0sCorrK0sCor2[iGap][iHarm]);
           fp3V0sCorrLambdaCor2[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrLambda_<2>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]), Form("#Lambda/#bar{#Lambda}: <<2'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
           fp3V0sCorrLambdaCor2[iGap][iHarm]->Sumw2();
-          fFlowV0s->Add(fp3V0sCorrLambdaCor2[iGap][iHarm]);
+          fFlowLambda->Add(fp3V0sCorrLambdaCor2[iGap][iHarm]);
 
           if(iGap == 0)
           {
             fp3V0sCorrK0sCor4[iHarm] = new TProfile3D(Form("fp3V0sCorrK0s_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]), Form("K_{S}^{0}: <<4'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
             fp3V0sCorrK0sCor4[iHarm]->Sumw2();
-            fFlowV0s->Add(fp3V0sCorrK0sCor4[iHarm]);
+            fFlowK0s->Add(fp3V0sCorrK0sCor4[iHarm]);
             fp3V0sCorrLambdaCor4[iHarm] = new TProfile3D(Form("fp3V0sCorrLambda_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]), Form("#Lambda/#bar{#Lambda}: <<4'>> | Gap %g | n=%d; centrality/multiplicity; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
             fp3V0sCorrLambdaCor4[iHarm]->Sumw2();
-            fFlowV0s->Add(fp3V0sCorrLambdaCor4[iHarm]);
+            fFlowLambda->Add(fp3V0sCorrLambdaCor4[iHarm]);
           }
         }
       }
@@ -1173,12 +1180,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   PostData(2, fFlowCharged);
   PostData(3, fFlowPID);
   PostData(4, fFlowPhi);
-  PostData(5, fFlowV0s);
-  PostData(6, fQAEvents);
-  PostData(7, fQACharged);
-  PostData(8, fQAPID);
-  PostData(9, fQAPhi);
-  PostData(10, fQAV0s);
+  PostData(5, fFlowK0s);
+  PostData(6, fFlowLambda);
+  PostData(7, fQAEvents);
+  PostData(8, fQACharged);
+  PostData(9, fQAPID);
+  PostData(10, fQAPhi);
+  PostData(11, fQAV0s);
 
   return;
 }
@@ -1382,12 +1390,13 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   PostData(2, fFlowCharged);
   PostData(3, fFlowPID);
   PostData(4, fFlowPhi);
-  PostData(5, fFlowV0s);
-  PostData(6, fQAEvents);
-  PostData(7, fQACharged);
-  PostData(8, fQAPID);
-  PostData(9, fQAPhi);
-  PostData(10, fQAV0s);
+  PostData(5, fFlowK0s);
+  PostData(6, fFlowLambda);
+  PostData(7, fQAEvents);
+  PostData(8, fQACharged);
+  PostData(9, fQAPID);
+  PostData(10, fQAPhi);
+  PostData(11, fQAV0s);
 
   return;
 }
