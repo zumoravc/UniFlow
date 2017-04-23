@@ -125,8 +125,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Int_t             fFlowCentMin; // [0] min range for centrality/multiplicity histos
       const Int_t             fFlowCentMax; // [150] min range for centrality/multiplicity histos
       const Int_t             fFlowCentNumBins; // [150] min range for centrality/multiplicity histos
-      static const Short_t    fV0sNumBinsMass = 30; // number of InvMass bins for V0s distribution
-      static const Short_t    fPhiNumBinsMass = 30; // number of InvMass bins for phi distribution
+      static const Short_t    fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
+      static const Short_t    fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
@@ -285,7 +285,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // cuts & selection: phi
       Double_t                fCutPhiMotherEtaMax; // (-) max value of phi candidate pseudorapidity
       Double_t                fCutPhiInvMassMin; // [0.99] (GeV/c2) min inv. mass window for selected phi candidates
-      Double_t                fCutPhiInvMassMax; // [1.08] (GeV/c2) min inv. mass window for selected phi candidates
+      Double_t                fCutPhiInvMassMax; // [1.07] (GeV/c2) min inv. mass window for selected phi candidates
 
       // output lists
       TList*      fQAEvents; //! events list

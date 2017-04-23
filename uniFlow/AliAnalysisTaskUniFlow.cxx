@@ -163,7 +163,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // phi selection
   fCutPhiMotherEtaMax(0),
   fCutPhiInvMassMin(0.99),
-  fCutPhiInvMassMax(1.08),
+  fCutPhiInvMassMax(1.07),
 
   // output lists
   fQAEvents(0x0),
@@ -370,7 +370,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // phi selection
   fCutPhiMotherEtaMax(0),
   fCutPhiInvMassMin(0.99),
-  fCutPhiInvMassMax(1.08),
+  fCutPhiInvMassMax(1.07),
 
   // output lists
   fQAEvents(0x0),
