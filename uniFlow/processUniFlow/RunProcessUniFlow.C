@@ -15,7 +15,7 @@ void RunProcessUniFlow()
 	ProcessUniFlow* process = new ProcessUniFlow();
 
 	process->SetInputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
-	process->SetInputFileName("AnalysisResults2.root");
+	process->SetInputFileName("AnalysisResults3.root");
 	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
 	process->SetDebug();
 	process->Run();

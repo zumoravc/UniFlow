@@ -123,25 +123,25 @@ void ProcessUniFlow::TestProjections()
 {
   Info("Testing profile projections");
 
-  ffInputFile->cd("UniFlow_CENT_wSDD");
+  ffInputFile->cd("UniFlow");
   // ffInputFile->ls();
 
-  TList* lFlow = (TList*) gDirectory->Get("Flow_UniFlow_CENT_wSDD");
+  // TList* lFlow = (TList*) gDirectory->Get("UniFlow");
   // lFlow->ls();
 
-
-  TList* lRef = (TList*) lFlow->FindObject("fFlowRefs");
-  TProfile* Ref = (TProfile*) lRef->FindObject("fpRefs_<2>_harm2_gap-10_sample0");
-  if(!Ref) { Error("NotFound"); return; }
-  // Ref->Draw();
-  // NOTE: reference flow works
-
-  // projections charged flow
-  TList* lCharged = (TList*) lFlow->FindObject("fFlowCharged");
-  // lCharged->ls();
-  TProfile2D* p2Charged = (TProfile2D*) lCharged->FindObject("fp2Charged_<2>_harm2_gap-10_sample0");
-  if(!p2Charged) { Error("NotFound"); return; }
-  TProfile* p2ChargedProjY = p2Charged->ProfileY("p2ChargedProjY",10,10);
+  //
+  // TList* lRef = (TList*) lFlow->FindObject("fFlowRefs");
+  // TProfile* Ref = (TProfile*) lRef->FindObject("fpRefs_<2>_harm2_gap-10_sample0");
+  // if(!Ref) { Error("NotFound"); return; }
+  // // Ref->Draw();
+  // // NOTE: reference flow works
+  //
+  // // projections charged flow
+  // TList* lCharged = (TList*) lFlow->FindObject("fFlowCharged");
+  // // lCharged->ls();
+  // TProfile2D* p2Charged = (TProfile2D*) lCharged->FindObject("fp2Charged_<2>_harm2_gap-10_sample0");
+  // if(!p2Charged) { Error("NotFound"); return; }
+  // TProfile* p2ChargedProjY = p2Charged->ProfileY("p2ChargedProjY",10,10);
 
   // TCanvas* cCharged = new TCanvas("cCharged","cCharged",1000,1000);
   // cCharged->Divide(1,2);
@@ -151,16 +151,18 @@ void ProcessUniFlow::TestProjections()
   // p2ChargedProjY->Draw();
 
   // projections V0s
-  TList* lV0s = (TList*) lFlow->FindObject("fFlowV0s");
+  TList* lV0s = (TList*) gDirectory->Get("Flow_V0s_UniFlow");
+  // TList* lV0s = (TList*) gDirectory->Get("Flow_Phi_UniFlow");
   if(!lV0s) { Error("NotFound"); return; }
-  // lV0s->ls();
+  lV0s->ls();
 
   // entries
-  // TH3D* h3K0sEntries = (TH3D*) lV0s->FindObject("fh3V0sEntriesK0s_gap-10")->Clone("h3K0sEntries");
+  // TH3D* h3K0sEntries = (TH3D*) lV0s->FindObject("fh3PhiEntriesBG_gap-10")->Clone("h3K0sEntries");
+  TH3D* h3K0sEntries = (TH3D*) lV0s->FindObject("fh3V0sEntriesLambda_gap-10")->Clone("h3K0sEntries");
   // if(!h3K0sEntries) { Error("NotFound"); return; }
   // TH1D* h3K0sEntriesProjX = h3K0sEntries->ProjectionX("h3K0sEntriesProjX"); // whole projeciton
   // TH1D* h3K0sEntriesProjY = h3K0sEntries->ProjectionY("h3K0sEntriesProjY"); // whole projeciton
-  // TH1D* h3K0sEntriesProjZ = h3K0sEntries->ProjectionZ("h3K0sEntriesProjZ"); // whole projeciton
+  TH1D* h3K0sEntriesProjZ = h3K0sEntries->ProjectionZ("h3K0sEntriesProjZ"); // whole projeciton
   // TH1D* h3K0sEntriesProjZsub = h3K0sEntries->ProjectionZ("h3K0sEntriesProjZsub",10,12,10,12); // projection in certain cent & pt range
   //
   // TCanvas* cK0s = new TCanvas("cK0s","cK0s",1000,1000);
@@ -179,25 +181,33 @@ void ProcessUniFlow::TestProjections()
   // NOTE seems to work properly
 
   // correlations
-  TProfile3D* p3K0sCor = (TProfile3D*) lV0s->FindObject("fp3V0sCorrK0s_<2>_harm2_gap-10")->Clone("p3K0sCor");
+  TProfile3D* p3K0sCor = (TProfile3D*) lV0s->FindObject("fp3V0sCorrLambda_<2>_harm2_gap-10")->Clone("p3K0sCor");
+  // TProfile3D* p3K0sCor = (TProfile3D*) lV0s->FindObject("fp3PhiCorr_<2>_harm2_gap-10")->Clone("p3K0sCor");
   if(!p3K0sCor) { Error("NotFound"); return; }
 
-  // p3K0sCor->GetXaxis()->SetRange(0,10);
+  // p3K0sCor->GetXaxis()->SetRange(1,50);
+  // p3K0sCor->GetZaxis()->SetRange(1,10);
 
-  TProfile2D* profROOT = p3K0sCor->Project3DProfile("zx");
+  TProfile2D* profROOT = p3K0sCor->Project3DProfile("xy");
   TProfile2D* prof = Project3DProfile(p3K0sCor);
+
+  TProfile* profROOTy = profROOT->ProfileX("profROOTy");
+  TProfile* profy = prof->ProfileX("profy");
 
   TCanvas* cK0sCor = new TCanvas("cK0sCor","cK0sCor",1000,1000);
   cK0sCor->Divide(2,3);
   cK0sCor->cd(1);
   p3K0sCor->Draw();
   cK0sCor->cd(2);
+  h3K0sEntriesProjZ->Draw();
   cK0sCor->cd(3);
   profROOT->Draw("colz");
   cK0sCor->cd(4);
   prof->Draw("colz");
   cK0sCor->cd(5);
+  profROOTy->Draw();
   cK0sCor->cd(6);
+  profy->Draw();
 
 
 
@@ -216,21 +226,12 @@ TProfile2D* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
   Int_t iNumBinsAxis = prof3d->GetXaxis()->GetNbins();
   printf("Bins:  %d - %d (%d | %d) \n", iBinFirst,iBinLast,iNumBins,iNumBinsAxis);
 
-  // making 3d hist from 3d profile
-  TH3D* hist3d = prof3d->ProjectionXYZ();   //NOTE do not care about range !!!
-  TH3D* hist3d_entry = prof3d->ProjectionXYZ("hist3d_entry","B");   //NOTE do not care about range !!!
-  TH3D* hist3d_weight = prof3d->ProjectionXYZ("hist3d_weight","W");   //NOTE do not care about range !!!
+  // // making 3d hist from 3d profile
+  // TH3D* hist3d = prof3d->ProjectionXYZ();   //NOTE do not care about range !!!
+  // TH3D* hist3d_entry = prof3d->ProjectionXYZ("hist3d_entry","B");   //NOTE do not care about range !!!
+  // TH3D* hist3d_weight = prof3d->ProjectionXYZ("hist3d_weight","W");   //NOTE do not care about range !!!
 
-  printf("===== Listing bins ======\n");
-  for(Short_t i(0); i < 100; i++)
-  {
-    Int_t bin = 40000+i;
-    printf("bin %d: prof %g ± %g | hist %g ± %g | entry %g ± %g  | weight %g ± %g \n",bin,prof3d->GetBinContent(bin),prof3d->GetBinError(bin),hist3d->GetBinContent(bin),hist3d->GetBinError(bin),hist3d_entry->GetBinContent(bin),hist3d_entry->GetBinError(bin),hist3d_weight->GetBinContent(bin),hist3d_weight->GetBinError(bin));
-
-  }
-
-
-  TProfile2D* prof2d_test = DoProjectProfile2D(prof3d,"prof2d_test","",prof3d->GetZaxis(),prof3d->GetXaxis(),1,0,0);
+  TProfile2D* prof2d_test = DoProjectProfile2D(prof3d,"prof2d_test","",prof3d->GetYaxis(),prof3d->GetZaxis(),1,0,0);
   // prof2d_test->Draw("colz");
 
   return prof2d_test;
@@ -306,6 +307,17 @@ TProfile2D * ProcessUniFlow::DoProjectProfile2D(TProfile3D* h3, const char* name
  TH3D * h3dW = h3->ProjectionXYZ("h3temp-W","W"); // getbincontent*getBinentries
  TH3D * h3dN = h3->ProjectionXYZ("h3temp-N","B"); // bin content is original profile = GetEntriesBin
 
+ // fix ???
+ h3dW->GetXaxis()->SetRange(h3->GetXaxis()->GetFirst(),h3->GetXaxis()->GetLast());
+ h3dW->GetYaxis()->SetRange(h3->GetYaxis()->GetFirst(),h3->GetYaxis()->GetLast());
+ h3dW->GetZaxis()->SetRange(h3->GetZaxis()->GetFirst(),h3->GetZaxis()->GetLast());
+ h3dN->GetXaxis()->SetRange(h3->GetXaxis()->GetFirst(),h3->GetXaxis()->GetLast());
+ h3dN->GetYaxis()->SetRange(h3->GetYaxis()->GetFirst(),h3->GetYaxis()->GetLast());
+ h3dN->GetZaxis()->SetRange(h3->GetZaxis()->GetFirst(),h3->GetZaxis()->GetLast());
+
+
+
+
  h3dW->SetDirectory(0); h3dN->SetDirectory(0); // istograms does not bellow to any directorz ???
 
  // note that h3dW is always a weighted histogram - so we need to compute error in the projection
@@ -371,36 +383,36 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
      Int_t nx = ixmax-ixmin+1;
      Int_t ny = iymax-iymin+1;
 
-        const TArrayD *xbins = projX->GetXbins();
-        const TArrayD *ybins = projY->GetXbins();
-        if ( originalRange )
-        {
-           if (xbins->fN == 0 && ybins->fN == 0) {
-              h2 = new TH2D(name,title,projY->GetNbins(),projY->GetXmin(),projY->GetXmax()
-                            ,projX->GetNbins(),projX->GetXmin(),projX->GetXmax());
-           } else if (ybins->fN == 0) {
-              h2 = new TH2D(name,title,projY->GetNbins(),projY->GetXmin(),projY->GetXmax()
-                            ,projX->GetNbins(),&xbins->fArray[ixmin-1]);
-           } else if (xbins->fN == 0) {
-              h2 = new TH2D(name,title,projY->GetNbins(),&ybins->fArray[iymin-1]
-                            ,projX->GetNbins(),projX->GetXmin(),projX->GetXmax());
-           } else {
-              h2 = new TH2D(name,title,projY->GetNbins(),&ybins->fArray[iymin-1],projX->GetNbins(),&xbins->fArray[ixmin-1]);
-           }
-        } else {
-           if (xbins->fN == 0 && ybins->fN == 0) {
-              h2 = new TH2D(name,title,ny,projY->GetBinLowEdge(iymin),projY->GetBinUpEdge(iymax)
-                            ,nx,projX->GetBinLowEdge(ixmin),projX->GetBinUpEdge(ixmax));
-           } else if (ybins->fN == 0) {
-              h2 = new TH2D(name,title,ny,projY->GetBinLowEdge(iymin),projY->GetBinUpEdge(iymax)
-                            ,nx,&xbins->fArray[ixmin-1]);
-           } else if (xbins->fN == 0) {
-              h2 = new TH2D(name,title,ny,&ybins->fArray[iymin-1]
-                            ,nx,projX->GetBinLowEdge(ixmin),projX->GetBinUpEdge(ixmax));
-           } else {
-              h2 = new TH2D(name,title,ny,&ybins->fArray[iymin-1],nx,&xbins->fArray[ixmin-1]);
-           }
-        }
+      const TArrayD *xbins = projX->GetXbins();
+      const TArrayD *ybins = projY->GetXbins();
+      if ( originalRange )
+      {
+         if (xbins->fN == 0 && ybins->fN == 0) {
+            h2 = new TH2D(name,title,projY->GetNbins(),projY->GetXmin(),projY->GetXmax()
+                          ,projX->GetNbins(),projX->GetXmin(),projX->GetXmax());
+         } else if (ybins->fN == 0) {
+            h2 = new TH2D(name,title,projY->GetNbins(),projY->GetXmin(),projY->GetXmax()
+                          ,projX->GetNbins(),&xbins->fArray[ixmin-1]);
+         } else if (xbins->fN == 0) {
+            h2 = new TH2D(name,title,projY->GetNbins(),&ybins->fArray[iymin-1]
+                          ,projX->GetNbins(),projX->GetXmin(),projX->GetXmax());
+         } else {
+            h2 = new TH2D(name,title,projY->GetNbins(),&ybins->fArray[iymin-1],projX->GetNbins(),&xbins->fArray[ixmin-1]);
+         }
+      } else {
+         if (xbins->fN == 0 && ybins->fN == 0) {
+            h2 = new TH2D(name,title,ny,projY->GetBinLowEdge(iymin),projY->GetBinUpEdge(iymax)
+                          ,nx,projX->GetBinLowEdge(ixmin),projX->GetBinUpEdge(ixmax));
+         } else if (ybins->fN == 0) {
+            h2 = new TH2D(name,title,ny,projY->GetBinLowEdge(iymin),projY->GetBinUpEdge(iymax)
+                          ,nx,&xbins->fArray[ixmin-1]);
+         } else if (xbins->fN == 0) {
+            h2 = new TH2D(name,title,ny,&ybins->fArray[iymin-1]
+                          ,nx,projX->GetBinLowEdge(ixmin),projX->GetBinUpEdge(ixmax));
+         } else {
+            h2 = new TH2D(name,title,ny,&ybins->fArray[iymin-1],nx,&xbins->fArray[ixmin-1]);
+         }
+      }
 
     //  // Copy the axis attributes and the axis labels if needed.
     //  THashList* labels1 = 0;
