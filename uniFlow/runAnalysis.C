@@ -72,9 +72,9 @@ void runAnalysis()
     gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskUniFlow.C"); // load the addtask macro
 
-    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
+    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(10);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kTRUE);

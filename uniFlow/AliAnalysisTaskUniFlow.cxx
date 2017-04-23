@@ -3115,7 +3115,9 @@ void AliAnalysisTaskUniFlow::DoFlowPhi(const Short_t iEtaGapIndex, const Short_t
   TComplex vector = TComplex(0,0,kFALSE);
   Double_t dValue = 999;
   TProfile3D* prof = 0x0;
-  Double_t dMass = fCutPhiInvMassMin + iMassIndex*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
+  Double_t dMassLow = fCutPhiInvMassMin + iMassIndex*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
+  Double_t dMassHigh = fCutPhiInvMassMin + (iMassIndex+1)*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
+  Double_t dMass = (dMassLow + dMassHigh)/2;
 
   for(Short_t iPt(0); iPt < fFlowPOIsPtNumBins; iPt++)
   {
@@ -3220,7 +3222,8 @@ void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t
   TComplex vector = TComplex(0,0,kFALSE);
   Double_t dValue = 999;
   TProfile3D* prof = 0x0;
-  Double_t dMass = 0;
+  Double_t dMassLow = 0;
+  Double_t dMassHigh = 0;
   // TProfile3D** profArr = 0x0;
   // TProfile3D** profArr4 = 0x0;
 
@@ -3230,19 +3233,23 @@ void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t
     case kK0s:
       // profArr = fp3V0sCorrK0sCor2[iEtaGapIndex];
       // profArr4 = fp3V0sCorrK0sCor4;
-      dMass = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
+      dMassLow = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
+      dMassHigh = fCutV0sInvMassK0sMin + (iMassIndex+1)*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
       break;
 
     case kLambda:
       // profArr = fp3V0sCorrLambdaCor2[iEtaGapIndex];
       // profArr4 = fp3V0sCorrLambdaCor4;
-      dMass = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
+      dMassLow = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
+      dMassHigh = fCutV0sInvMassLambdaMin + (iMassIndex+1)*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
       break;
 
     default:
       ::Error("DoFlowV0s","Selected particles are not K0s nor Lambdas!");
       return;
   }
+
+  Double_t dMass = (dMassHigh+dMassLow) / 2;
 
   for(Short_t iPt(0); iPt < fFlowPOIsPtNumBins; iPt++)
   {
