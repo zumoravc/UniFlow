@@ -17,27 +17,31 @@
 #include "TH2.h"
 #include "TH3.h"
 
+
 class ProcessTask
 {
   public:
+    enum    PartSpecies {kUnknown, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+
                 ProcessTask(); // default constructor
                 ProcessTask(const char* name); // named constructor
                 ~ProcessTask(); // default destructor
     TString     fName; // task name
+    PartSpecies fSpecies; // species involved
   protected:
   private:
 };
 
 ProcessTask::ProcessTask() {}
-ProcessTask::ProcessTask(const char* name) : ProcessTask() { fName = name; }
+ProcessTask::ProcessTask(const char* name) : ProcessTask() { fName = name; fSpecies = kUnknown; }
 ProcessTask::~ProcessTask() {}
-
 
 
 
 class ProcessUniFlow
 {
   public:
+
                 ProcessUniFlow(); // default constructor
                 ~ProcessUniFlow(); // default destructor
 
