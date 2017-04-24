@@ -329,7 +329,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TProfile3D*     fp3PhiCorrCor4[fNumHarmonics]; //! <4'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
 
       // Events
-      TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
+      TH2D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
+      TH1D*           fhEventCentrality; //! distribution of event centrality
       TH1D*           fhEventCounter; //! counter following event selection
       // Charged
       TH1D*           fhRefsMult; //!multiplicity distribution of selected RFPs
@@ -473,7 +474,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
       AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
 
-      ClassDef(AliAnalysisTaskUniFlow, 2);
+      ClassDef(AliAnalysisTaskUniFlow, 3);
 };
 
 #endif

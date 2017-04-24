@@ -184,6 +184,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 
   // event histograms
   fhEventSampling(0x0),
+  fhEventCentrality(0x0),
   fhEventCounter(0x0),
 
   // charged histogram
@@ -393,6 +394,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
   // event histograms
   fhEventSampling(0x0),
+  fhEventCentrality(0x0),
   fhEventCounter(0x0),
 
   // charged histogram
@@ -707,8 +709,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   // creating histograms
     // event histogram
-    fhEventSampling = new TH1D("fhEventSampling","Event sampling",fNumSamples, 0, fNumSamples);
+    fhEventSampling = new TH2D("fhEventSampling","Event sampling; centrality/multiplicity; sample index", fFlowCentNumBins,0,fFlowCentNumBins, fNumSamples,0,fNumSamples);
     fQAEvents->Add(fhEventSampling);
+    fhEventCentrality = new TH1D("fhEventCentrality","Event centrality; centrality/multiplicity", fFlowCentNumBins,0,fFlowCentNumBins);
+    fQAEvents->Add(fhEventCentrality);
+
 
     const Short_t iEventCounterBins = 7;
     TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","PV OK","SPD Vtx OK","Pileup MV OK","PV #it{z} OK","Selected"};
@@ -1376,10 +1381,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!EventSelection()) return;
 
-  // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
-  fIndexSampling = GetSamplingIndex();
-  fhEventSampling->Fill(fIndexSampling);
-
   // fIndexCentrality = GetCentralityIndex();
 
   // processing of selected event
@@ -1591,8 +1592,14 @@ void AliAnalysisTaskUniFlow::Filtering()
   fVectorCharged->clear();
   FilterCharged();
 
+  // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
   fIndexCentrality = GetCentralityIndex();
   if(fIndexCentrality < 0) return; // not succesfull estimation
+  fhEventCentrality->Fill(fIndexCentrality);
+
+  fIndexSampling = GetSamplingIndex();
+  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
+
 
   if(fProcessPID || fProcessPhi)
   {
@@ -2851,7 +2858,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   fEventCounter++; // counter of processed events
   //printf("event %d\n",fEventCounter);
-  
+
   return kTRUE;
 }
 //_____________________________________________________________________________
