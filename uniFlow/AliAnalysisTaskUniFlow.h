@@ -53,7 +53,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
-      void                    SetMultEstimator(const char* mult) { fMultEstimator = mult; }
+      void                    SetMultEstimator(const char* mult = "Charged") { fMultEstimator = mult; }
       void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       // track setters
@@ -232,8 +232,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       ColSystem               fColSystem; // collisional system
       DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
       Short_t                 fTrigger; // physics selection trigger
-      TString                 fMultEstimator; // [""] multiplicity estimator (VOA,CL1,...)
-      Float_t                 fPVtxCutZ;          // (cm) PV z cut
+      TString                 fMultEstimator; // [''] multiplicity estimator (suported: ''/Charged,VOA,V0C,V0M,CL0,CL1,ZNA,ZNC)
+      Float_t                 fPVtxCutZ; // (cm) PV z cut
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
       UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
