@@ -17,16 +17,33 @@
 #include "TH2.h"
 #include "TH3.h"
 
+class ProcessTask
+{
+  public:
+                ProcessTask(); // default constructor
+                ~ProcessTask(); // default destructor
+    TString     name; // task name
+  protected:
+  private:
+};
+
+ProcessTask::ProcessTask() { name = TString("test"); }
+ProcessTask::~ProcessTask() {}
+
+
+
+
 class ProcessUniFlow
 {
   public:
-                ProcessUniFlow();
-                ~ProcessUniFlow();
+                ProcessUniFlow(); // default constructor
+                ~ProcessUniFlow(); // default destructor
 
     void        SetInputFilePath(const char* path) { fsInputFilePath = path; }
     void        SetInputFileName(const char* name) { fsInputFileName = name; }
     void        SetOutputFilePath(const char* path) { fsOutputFilePath = path; }
     void        SetOutputFileName(const char* name) { fsOutputFileName = name; }
+    void        SetTaskName(const char* name) { fsTaskName = name; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
     void        Run(); // running the task (main body of the class)
 
@@ -34,6 +51,7 @@ class ProcessUniFlow
 
   private:
     Bool_t      Initialize(); // initialization task
+    Bool_t      LoadLists(); // loading flow lists from input file
     void        TestProjections(); // testing projection of reconstructed particles
     TProfile2D*   Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
 
@@ -48,27 +66,43 @@ class ProcessUniFlow
     void        Info(TString sMsg, TString sMethod = ""); // printf the msg as info
     void        Debug(TString sMsg, TString sMethod = ""); // printf the msg as info
 
-    Bool_t      fbInit; // flag for initialization status
-    Bool_t      fbDebug; // flag for debugging : if kTRUE Debug() messages are displayed
-    TFile*      ffInputFile; //! input file container
-    TFile*      ffOutputFile; //! input file container
     TString     fsInputFilePath; // path to the input folder with input file
     TString     fsInputFileName; // name of input file
     TString     fsOutputFilePath; // path to the ouput folder
     TString     fsOutputFileName; // name of output file
+    TString     fsTaskName; // name of task (inchluded in data structure names)
+
+    Bool_t      fbInit; // flag for initialization status
+    Bool_t      fbDebug; // flag for debugging : if kTRUE Debug() messages are displayed
+    TFile*      ffInputFile; //! input file container
+    TFile*      ffOutputFile; //! input file container
+    TList*      flFlow_Refs; //! TList from input file with RFPs flow profiles
+    TList*      flFlow_Charged; //! TList from input file with Charged flow profiles
+    TList*      flFlow_PID; //! TList from input file with PID (pi,K,p) flow profiles
+    TList*      flFlow_Phi; //! TList from input file with Phi flow profiles
+    TList*      flFlow_K0s; //! TList from input file with K0s flow profiles
+    TList*      flFlow_Lambda; //! TList from input file with Lambda flow profiles
+
 };
 //_____________________________________________________________________________
 ProcessUniFlow::ProcessUniFlow() :
   fbDebug(kFALSE),
   fbInit(kFALSE),
   ffInputFile(0x0),
-  ffOutputFile(0x0)
+  ffOutputFile(0x0),
+  flFlow_Refs(0x0),
+  flFlow_Charged(0x0),
+  flFlow_PID(0x0),
+  flFlow_Phi(0x0),
+  flFlow_K0s(0x0),
+  flFlow_Lambda(0x0)
 {
   // default constructor
   fsInputFilePath = TString("");
   fsInputFileName = TString("AnalysisResults.root");
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
+  fsTaskName = TString("UniFlow");
 }
 //_____________________________________________________________________________
 ProcessUniFlow::~ProcessUniFlow()
@@ -85,7 +119,10 @@ void ProcessUniFlow::Run()
 
   Debug("Initialized");
 
-  TestProjections();
+  flFlow_K0s->ls();
+  // TestProjections();
+  ProcessTask task = ProcessTask();
+  printf("%s\n",task.name.Data());
 
   return;
 }
@@ -111,12 +148,37 @@ Bool_t ProcessUniFlow::Initialize()
     Fatal(Form("Output file %s/%s not open",fsOutputFilePath.Data(),fsOutputFileName.Data()),"Initialize");
     return fbInit;
   }
+  Info("Files loaded","Initialize");
 
+  if(!LoadLists()) return fbInit;
+  Info("Flow lists loaded","Initialize");
 
   // initialization succesfull
   fbInit = kTRUE;
   Info("Initialization succesfull","Initialize");
   return fbInit;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::LoadLists()
+{
+  // loading TLists into task
+  if(!ffInputFile) { Fatal("Input file does not exists!","LoadLists"); return kFALSE; }
+  ffInputFile->cd(fsTaskName.Data());
+
+  flFlow_Refs = (TList*) gDirectory->Get(Form("Flow_Refs_%s",fsTaskName.Data()));
+  if(!flFlow_Refs) { Fatal("flFlow_Refs list does not exists!","LoadLists"); return kFALSE; }
+  flFlow_Charged = (TList*) gDirectory->Get(Form("Flow_Charged_%s",fsTaskName.Data()));
+  if(!flFlow_Charged) { Fatal("flFlow_Charged list does not exists!","LoadLists"); return kFALSE; }
+  flFlow_PID = (TList*) gDirectory->Get(Form("Flow_PID_%s",fsTaskName.Data()));
+  if(!flFlow_PID) { Fatal("flFlow_PID list does not exists!","LoadLists"); return kFALSE; }
+  flFlow_Phi = (TList*) gDirectory->Get(Form("Flow_Phi_%s",fsTaskName.Data()));
+  if(!flFlow_Phi) { Fatal("flFlow_Phi list does not exists!","LoadLists"); return kFALSE; }
+  flFlow_K0s = (TList*) gDirectory->Get(Form("Flow_K0s_%s",fsTaskName.Data()));
+  if(!flFlow_K0s) { Fatal("flFlow_K0s list does not exists!","LoadLists"); return kFALSE; }
+  flFlow_Lambda = (TList*) gDirectory->Get(Form("Flow_Lambda_%s",fsTaskName.Data()));
+  if(!flFlow_Lambda) { Fatal("flFlow_Lambda list does not exists!","LoadLists"); return kFALSE; }
+
+  return kTRUE;
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
@@ -151,14 +213,14 @@ void ProcessUniFlow::TestProjections()
   // p2ChargedProjY->Draw();
 
   // projections V0s
-  TList* lV0s = (TList*) gDirectory->Get("Flow_V0s_UniFlow");
-  // TList* lV0s = (TList*) gDirectory->Get("Flow_Phi_UniFlow");
+  // TList* lV0s = (TList*) gDirectory->Get("Flow_V0s_UniFlow");
+  TList* lV0s = (TList*) gDirectory->Get("Flow_Phi_UniFlow");
   if(!lV0s) { Error("NotFound"); return; }
   lV0s->ls();
 
   // entries
-  // TH3D* h3K0sEntries = (TH3D*) lV0s->FindObject("fh3PhiEntriesBG_gap-10")->Clone("h3K0sEntries");
-  TH3D* h3K0sEntries = (TH3D*) lV0s->FindObject("fh3V0sEntriesLambda_gap-10")->Clone("h3K0sEntries");
+  TH3D* h3K0sEntries = (TH3D*) lV0s->FindObject("fh3PhiEntriesSignal_gap-10")->Clone("h3K0sEntries");
+  // TH3D* h3K0sEntries = (TH3D*) lV0s->FindObject("fh3V0sEntriesK0s_gap-10")->Clone("h3K0sEntries");
   // if(!h3K0sEntries) { Error("NotFound"); return; }
   // TH1D* h3K0sEntriesProjX = h3K0sEntries->ProjectionX("h3K0sEntriesProjX"); // whole projeciton
   // TH1D* h3K0sEntriesProjY = h3K0sEntries->ProjectionY("h3K0sEntriesProjY"); // whole projeciton
@@ -181,18 +243,19 @@ void ProcessUniFlow::TestProjections()
   // NOTE seems to work properly
 
   // correlations
-  TProfile3D* p3K0sCor = (TProfile3D*) lV0s->FindObject("fp3V0sCorrLambda_<2>_harm2_gap-10")->Clone("p3K0sCor");
-  // TProfile3D* p3K0sCor = (TProfile3D*) lV0s->FindObject("fp3PhiCorr_<2>_harm2_gap-10")->Clone("p3K0sCor");
+  // TProfile3D* p3K0sCor = (TProfile3D*) lV0s->FindObject("fp3V0sCorrK0s_<2>_harm2_gap-10")->Clone("p3K0sCor");
+  TProfile3D* p3K0sCor = (TProfile3D*) lV0s->FindObject("fp3PhiCorr_<2>_harm2_gap00")->Clone("p3K0sCor");
   if(!p3K0sCor) { Error("NotFound"); return; }
 
-  // p3K0sCor->GetXaxis()->SetRange(1,50);
+  p3K0sCor->GetXaxis()->SetRange(20,50);
   // p3K0sCor->GetZaxis()->SetRange(1,10);
 
-  TProfile2D* profROOT = p3K0sCor->Project3DProfile("xy");
+  TProfile2D* profROOT = p3K0sCor->Project3DProfile("yz");
   TProfile2D* prof = Project3DProfile(p3K0sCor);
 
   TProfile* profROOTy = profROOT->ProfileX("profROOTy");
-  TProfile* profy = prof->ProfileX("profy");
+  TProfile* profy = prof->ProfileX("profy",40,70);
+  // profy->Rebin(30);
 
   TCanvas* cK0sCor = new TCanvas("cK0sCor","cK0sCor",1000,1000);
   cK0sCor->Divide(2,3);
