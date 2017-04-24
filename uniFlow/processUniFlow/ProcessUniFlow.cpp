@@ -21,11 +21,12 @@
 class ProcessTask
 {
   public:
-    enum    PartSpecies {kUnknown, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+    enum    PartSpecies {kUnknown=0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
                 ProcessTask(); // default constructor
                 ProcessTask(const char* name); // named constructor
                 ~ProcessTask(); // default destructor
+
     TString     fName; // task name
     PartSpecies fSpecies; // species involved
   protected:
