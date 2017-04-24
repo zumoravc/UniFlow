@@ -2787,8 +2787,6 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
   if(fIndexCentrality < 0) return kFALSE;
 
-  printf("Centrality: %d\n",fIndexCentrality);
-
   // checking if there is at least one charged track selected;
   // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
   if(fVectorCharged->size() < 1)
@@ -3740,15 +3738,12 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   // otherwise -1 is returned (and event is skipped)
   // *************************************************************
 
-  printf("fMultEstimator: %s \n",fMultEstimator.Data());
   if(
       fMultEstimator.EqualTo("V0A") || fMultEstimator.EqualTo("V0C") || fMultEstimator.EqualTo("V0M") ||
       fMultEstimator.EqualTo("CL0") || fMultEstimator.EqualTo("CL1") ||
       fMultEstimator.EqualTo("ZNA") || fMultEstimator.EqualTo("ZNC")
     )
   {
-    printf("InMult\n");
-
     // some of supported AliMultSelection estimators (listed above)
     Float_t dPercentile = 300;
 
@@ -3763,13 +3758,11 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   }
   else if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("Charged"))
   {
-    printf("InDefault\n");
     // assigning centrality based on number of selected charged tracks
     return fVectorCharged->size();
   }
   else
   {
-    printf("InElse\n");
     AliWarning(Form("Multiplicity estimator '%s' not supported. Returning -1\n",fMultEstimator.Data()));
     return -1;
   }
