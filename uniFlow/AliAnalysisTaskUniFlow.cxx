@@ -105,6 +105,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPVtxCutZ(0.),
   fColSystem(kPP),
   fPeriod(kNon),
+  fMultEstimator(),
   fTrigger(0),
 
   // charged tracks selection
@@ -313,6 +314,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPVtxCutZ(0.),
   fColSystem(kPP),
   fPeriod(kNon),
+  fMultEstimator(),
   fTrigger(0),
 
   // charged tracks selection
@@ -1211,6 +1213,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
   printf("      fPeriod: (DataPeriod) %d\n",    fPeriod);
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
+  printf("      fMultEstimator: (TString) '%s'\n",    fMultEstimator.Data());
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
   printf("   -------- Charge tracks ---------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
