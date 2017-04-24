@@ -21,13 +21,15 @@ class ProcessTask
 {
   public:
                 ProcessTask(); // default constructor
+                ProcessTask(const char* name); // named constructor
                 ~ProcessTask(); // default destructor
-    TString     name; // task name
+    TString     fName; // task name
   protected:
   private:
 };
 
-ProcessTask::ProcessTask() { name = TString("test"); }
+ProcessTask::ProcessTask() {}
+ProcessTask::ProcessTask(const char* name) : ProcessTask() { fName = name; }
 ProcessTask::~ProcessTask() {}
 
 
@@ -53,11 +55,12 @@ class ProcessUniFlow
     Bool_t      Initialize(); // initialization task
     Bool_t      LoadLists(); // loading flow lists from input file
     void        TestProjections(); // testing projection of reconstructed particles
-    TProfile2D*   Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
 
+    TProfile2D*   Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
     TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
     TH2D* DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
 
+    void        AddTask(ProcessTask* task = 0x0); // add task to internal lists of all tasks
 
     // printing output methods
     void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
@@ -82,6 +85,7 @@ class ProcessUniFlow
     TList*      flFlow_Phi; //! TList from input file with Phi flow profiles
     TList*      flFlow_K0s; //! TList from input file with K0s flow profiles
     TList*      flFlow_Lambda; //! TList from input file with Lambda flow profiles
+    std::vector<ProcessTask*> fvTasks; // vector of task for individual species proccesing
 
 };
 //_____________________________________________________________________________
@@ -103,6 +107,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
   fsTaskName = TString("UniFlow");
+  fvTasks = std::vector<ProcessTask*>();
 }
 //_____________________________________________________________________________
 ProcessUniFlow::~ProcessUniFlow()
@@ -121,8 +126,17 @@ void ProcessUniFlow::Run()
 
   flFlow_K0s->ls();
   // TestProjections();
-  ProcessTask task = ProcessTask();
-  printf("%s\n",task.name.Data());
+  ProcessTask* task = new ProcessTask("test1");
+  printf("%s\n",task->fName.Data());
+
+  printf("size before %d  |",fvTasks.size());
+
+  AddTask(task);
+
+  printf("after %d\n",fvTasks.size());
+  ProcessTask* getting = fvTasks.at(0);
+  printf("%s\n",getting->fName.Data());
+
 
   return;
 }
@@ -179,6 +193,14 @@ Bool_t ProcessUniFlow::LoadLists()
   if(!flFlow_Lambda) { Fatal("flFlow_Lambda list does not exists!","LoadLists"); return kFALSE; }
 
   return kTRUE;
+}
+//_____________________________________________________________________________
+void ProcessUniFlow::AddTask(ProcessTask* task)
+{
+  if(!task) return;
+
+  fvTasks.push_back(task);
+  return;
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
