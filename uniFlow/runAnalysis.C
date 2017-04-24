@@ -74,8 +74,8 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
-    task1->SetNumEventsAnalyse(10);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
+    task1->SetNumEventsAnalyse(50);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kTRUE);
     task1->SetProcessCharged(kTRUE);
@@ -88,6 +88,7 @@ void runAnalysis()
     // Events selection
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
+    task1->SetMultEstimator();
     task1->SetPeriod(AliAnalysisTaskUniFlow::k16q);
     task1->SetPVtxZMax(10);
     // Charged selection

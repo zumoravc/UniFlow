@@ -63,7 +63,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPIDCombined(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
-  fIndexCentrality(0),
+  fIndexCentrality(-1),
   fEventCounter(0),
   fNumEventsAnalyse(50),
   fPDGMassPion(TDatabasePDG::Instance()->GetParticle(211)->Mass()),
@@ -105,6 +105,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPVtxCutZ(0.),
   fColSystem(kPP),
   fPeriod(kNon),
+  fMultEstimator(),
   fTrigger(0),
 
   // charged tracks selection
@@ -183,6 +184,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 
   // event histograms
   fhEventSampling(0x0),
+  fhEventCentrality(0x0),
   fhEventCounter(0x0),
 
   // charged histogram
@@ -271,7 +273,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPIDCombined(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
-  fIndexCentrality(0),
+  fIndexCentrality(-1),
   fEventCounter(0),
   fNumEventsAnalyse(50),
   fPDGMassPion(TDatabasePDG::Instance()->GetParticle(211)->Mass()),
@@ -313,6 +315,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPVtxCutZ(0.),
   fColSystem(kPP),
   fPeriod(kNon),
+  fMultEstimator(),
   fTrigger(0),
 
   // charged tracks selection
@@ -391,6 +394,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
   // event histograms
   fhEventSampling(0x0),
+  fhEventCentrality(0x0),
   fhEventCounter(0x0),
 
   // charged histogram
@@ -705,8 +709,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   // creating histograms
     // event histogram
-    fhEventSampling = new TH1D("fhEventSampling","Event sampling",fNumSamples, 0, fNumSamples);
+    fhEventSampling = new TH2D("fhEventSampling","Event sampling; centrality/multiplicity; sample index", fFlowCentNumBins,0,fFlowCentNumBins, fNumSamples,0,fNumSamples);
     fQAEvents->Add(fhEventSampling);
+    fhEventCentrality = new TH1D("fhEventCentrality","Event centrality; centrality/multiplicity", fFlowCentNumBins,0,fFlowCentNumBins);
+    fQAEvents->Add(fhEventCentrality);
+
 
     const Short_t iEventCounterBins = 7;
     TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","PV OK","SPD Vtx OK","Pileup MV OK","PV #it{z} OK","Selected"};
@@ -1211,6 +1218,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
   printf("      fPeriod: (DataPeriod) %d\n",    fPeriod);
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
+  printf("      fMultEstimator: (TString) '%s'\n",    fMultEstimator.Data());
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
   printf("   -------- Charge tracks ---------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
@@ -1305,6 +1313,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   // TODO check if period corresponds to selected collisional system
 
+
   // checking PID response
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
   AliInputEventHandler* inputHandler = (AliInputEventHandler*)mgr->GetInputEventHandler();
@@ -1365,9 +1374,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   if(!fInit) return; // check if initialization succesfull
 
-  fEventCounter++; // counter of processed events
-  //printf("event %d\n",fEventCounter);
-
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
   if(fRunMode == kTest && fEventCounter >= fNumEventsAnalyse) return;
 
@@ -1375,12 +1381,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!EventSelection()) return;
 
-  // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
-  fIndexSampling = GetSamplingIndex();
-  fhEventSampling->Fill(fIndexSampling);
-
-  fIndexCentrality = GetCentralityIndex();
-  // TODO implement
+  // fIndexCentrality = GetCentralityIndex();
 
   // processing of selected event
   if(!ProcessEvent()) return;
@@ -1591,8 +1592,14 @@ void AliAnalysisTaskUniFlow::Filtering()
   fVectorCharged->clear();
   FilterCharged();
 
-  // assigning centrality based on number of selected charged tracks
-  fIndexCentrality = fVectorCharged->size();
+  // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
+  fIndexCentrality = GetCentralityIndex();
+  if(fIndexCentrality < 0) return; // not succesfull estimation
+  fhEventCentrality->Fill(fIndexCentrality);
+
+  fIndexSampling = GetSamplingIndex();
+  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
+
 
   if(fProcessPID || fProcessPhi)
   {
@@ -2777,6 +2784,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   // filtering particles
   Filtering();
+  // at this point, centrality index (percentile) should be properly estimated, if not, skip event
+  if(fIndexCentrality < 0) return kFALSE;
 
   // checking if there is at least one charged track selected;
   // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
@@ -2844,6 +2853,9 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
       }
     }
   } // endfor {iGap} eta gaps
+
+  fEventCounter++; // counter of processed events
+  //printf("event %d\n",fEventCounter);
 
   return kTRUE;
 }
@@ -3720,36 +3732,42 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
 //_____________________________________________________________________________
 Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
 {
-  // Assing centrality index based on provided method (centrality estimator / number of selected tracks)
-  // If number of selected track method is selected, track filtering must be done first
-  // returns centrality index
+  // Estimating centrality percentile based on selected estimator.
+  // (Default) If no multiplicity estimator is specified (fMultEstimator == '' || Charged), percentile is estimated as number of selected / filtered charged tracks.
+  // If a valid multiplicity estimator is specified, centrality percentile is estimated via AliMultSelection
+  // otherwise -1 is returned (and event is skipped)
   // *************************************************************
 
-  // Short_t index = 0x;
-  //
-  // // centrality estimation for pPb analysis in Run2
-  // // TODO : just moved from flow Event selection for 2016
-  // if(fColSystem == kPPb)
-  // {
-  //   Float_t lPercentile = 900;
-  //   AliMultSelection* MultSelection = 0x0;
-  //   MultSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
-  //
-  //   if(!MultSelection)
-  //   {
-  //     //If you get this warning (and lPercentiles 900) please check that the AliMultSelectionTask actually ran (before your task)
-  //     ::Warning("GetCentralityIndex","AliMultSelection object not found!");
-  //   }
-  //   else
-  //   {
-  //     lPercentile = MultSelection->GetMultiplicityPercentile("V0M");
-  //   }
-  //
-  //   // TODO implement centrality selection based on lPercentile
-  //   ::Warning("GetCentralityIndex","Centrality selection not implemented");
-  // }
+  if(
+      fMultEstimator.EqualTo("V0A") || fMultEstimator.EqualTo("V0C") || fMultEstimator.EqualTo("V0M") ||
+      fMultEstimator.EqualTo("CL0") || fMultEstimator.EqualTo("CL1") ||
+      fMultEstimator.EqualTo("ZNA") || fMultEstimator.EqualTo("ZNC")
+    )
+  {
+    // some of supported AliMultSelection estimators (listed above)
+    Float_t dPercentile = 300;
 
-  return 0;
+    // checking AliMultSelection
+    AliMultSelection* multSelection = 0x0;
+    multSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
+    if(!multSelection) { AliError("AliMultSelection object not found! Returning -1"); return -1;}
+
+    dPercentile = multSelection->GetMultiplicityPercentile(fMultEstimator.Data());
+    if(dPercentile > 100 || dPercentile < 0) { AliWarning("Centrality percentile estimated not within 0-100 range. Returning -1"); return -1;}
+    else {return dPercentile;}
+  }
+  else if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("Charged"))
+  {
+    // assigning centrality based on number of selected charged tracks
+    return fVectorCharged->size();
+  }
+  else
+  {
+    AliWarning(Form("Multiplicity estimator '%s' not supported. Returning -1\n",fMultEstimator.Data()));
+    return -1;
+  }
+
+  return -1;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
