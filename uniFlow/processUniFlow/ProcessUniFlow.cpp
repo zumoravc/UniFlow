@@ -397,24 +397,11 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   TProfile3D* profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
   if(!profFlow) return kFALSE;
 
-  Short_t binMult = 0;
-
-  // preparing resulting flow vs pt (mult) histo
-  TH1D* hFlow = new TH1D(Form("hFlow_K0s_harm%d_gap%g_mult%d",task->fHarmonics,task->fEtaGap,binMult),Form("K^{0}_{S}: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",task->fHarmonics,10*task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
-
-  // estimating multiplicity edges and selection axis range
-  const Short_t binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
-  const Short_t binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
-  profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh); // setting multiplicity range
-
-  // loading relevant reference flow
+  // preparing for loops
+  TH1D* hFlow = 0x0;
   Double_t dRefs = 0, dRefsError = 0;
-  dRefs = hRefFlow->GetBinContent(binMult+1);
-  dRefsError = hRefFlow->GetBinError(binMult+1);
-
-  // preparing for pt loop
-  Short_t binPtLow = 0;
-  Short_t binPtHigh = 0;
+  Short_t binMultLow = 0, binMultHigh = 0;
+  Short_t binPtLow = 0, binPtHigh = 0;
   TH1D* hInvMass = 0x0;
   TProfile2D* prof2DFlowMass = 0x0;
   TProfile* profFlowMass = 0x0;
@@ -422,69 +409,88 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   Double_t dContent = 0, dError = 0;
   Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
   TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200); // canvas for fitting results
+  TCanvas* cFlow = new TCanvas("cFlow","Flow",400,400); // canvas for resulting flow vs pt
 
-  for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
+  for(Short_t binMult(0); binMult < fiNumMultBins; binMult++)
   {
-    // estimating pt edges
-    binPtLow = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
-    binPtHigh = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+    // preparing resulting flow vs pt (mult) histo
+    hFlow = new TH1D(Form("hFlow_K0s_harm%d_gap%g_mult%d",task->fHarmonics,task->fEtaGap,binMult),Form("K^{0}_{S}: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",task->fHarmonics,10*task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
 
-    // rebinning entries based on mult & pt binning
-    hInvMass = (TH1D*) histEntries->ProjectionZ("hInvMass",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-    // here can be rebinning of inv mass if needed
-    // hInvMass ready to fitting
+    // estimating multiplicity edges and selection axis range
+    binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
+    binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+    profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh); // setting multiplicity range
 
-    // projection of flow-mass profile
-    prof2DFlowMass = Project3DProfile(profFlow); // doing projection with modified function
-    profFlowMass = (TProfile*) prof2DFlowMass->ProfileX("profFlowMass",binPtLow,binPtHigh);
-    hFlowMass = (TH1D*) profFlowMass->ProjectionX("hFlowMass");
-    // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
+    // loading relevant reference flow
+    dRefs = hRefFlow->GetBinContent(binMult+1);
+    dRefsError = hRefFlow->GetBinError(binMult+1);
 
-    // make flow out of corralation
-    for(Short_t iMass(1); iMass < profFlowMass->GetNbinsX()+1; iMass++)
+
+    for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
     {
-      dContent = profFlowMass->GetBinContent(iMass);
-      dError = profFlowMass->GetBinError(iMass);
-      hFlowMass->SetBinContent(iMass, dContent / dRefs);
-      hFlowMass->SetBinError(iMass, TMath::Sqrt(TMath::Power(dError/dRefs,2) + TMath::Power(dContent*dRefsError/(dRefs*dRefs),2)) );
-      // printf("bin %d | %g±%g\n",iMass, dContent,dError);
-    }
-    // hFlowMass is ready for fitting
+      // estimating pt edges
+      binPtLow = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
+      binPtHigh = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt+1]) - 1; // for rebin both bins are included (so that one needs to lower)
 
-    // extracting flow
-    if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
-    Info(Form("Extracted flow: %g ± %g\n",dFlow,dFlowError),"ProcessV0s");
+      // rebinning entries based on mult & pt binning
+      hInvMass = (TH1D*) histEntries->ProjectionZ("hInvMass",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+      // here can be rebinning of inv mass if needed
+      // hInvMass ready to fitting
 
-    // saving pt bin resulting flow to flow-vs-pt hist
-    hFlow->SetBinContent(binPt+1, dFlow);
-    hFlow->SetBinError(binPt+1, dFlowError);
+      // projection of flow-mass profile
+      prof2DFlowMass = Project3DProfile(profFlow); // doing projection with modified function
+      profFlowMass = (TProfile*) prof2DFlowMass->ProfileX("profFlowMass",binPtLow,binPtHigh);
+      hFlowMass = (TH1D*) profFlowMass->ProjectionX("hFlowMass");
+      // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
 
-    // printing fitting results
-    canFitInvMass->SaveAs(Form("%s/FlowMass_K0s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),task->fHarmonics,10*task->fEtaGap,binMult,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+      // make flow out of corralation
+      for(Short_t iMass(1); iMass < profFlowMass->GetNbinsX()+1; iMass++)
+      {
+        dContent = profFlowMass->GetBinContent(iMass);
+        dError = profFlowMass->GetBinError(iMass);
+        hFlowMass->SetBinContent(iMass, dContent / dRefs);
+        hFlowMass->SetBinError(iMass, TMath::Sqrt(TMath::Power(dError/dRefs,2) + TMath::Power(dContent*dRefsError/(dRefs*dRefs),2)) );
+        // printf("bin %d | %g±%g\n",iMass, dContent,dError);
+      }
+      // hFlowMass is ready for fitting
 
-  } // endfor {binPt}
+      // extracting flow
+      if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
+      Info(Form("Extracted flow: %g ± %g\n",dFlow,dFlowError),"ProcessV0s");
 
-  TCanvas* cFlow = new TCanvas("cFlow","Flow",400,400);
-  cFlow->cd();
-  hFlow->Draw();
+      // saving pt bin resulting flow to flow-vs-pt hist
+      hFlow->SetBinContent(binPt+1, dFlow);
+      hFlow->SetBinError(binPt+1, dFlowError);
 
-  TCanvas* canTest = new TCanvas("canTest","Test",600,600);
-  canTest->Divide(2,3);
-  canTest->cd(1);
-  histEntries->Draw();
-  canTest->cd(2);
-  profFlow->Draw();
-  canTest->cd(3);
-  hInvMass->Draw();
-  canTest->cd(4);
-  profFlowMass->Draw();
-  canTest->cd(5);
-  hFlowMass->Draw();
-  canTest->cd(6);
-  prof2DFlowMass->Draw("colz");
+      // printing fitting results
+      canFitInvMass->SaveAs(Form("%s/FlowMass_K0s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),task->fHarmonics,10*task->fEtaGap,binMult,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
-  ffOutputFile->cd();
-  hFlow->Write();
+    } // endfor {binPt}
+
+    cFlow->cd();
+    hFlow->Draw();
+    cFlow->SaveAs(Form("%s/Flow_K0s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),task->fHarmonics,10*task->fEtaGap,binMult,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+
+    ffOutputFile->cd();
+    hFlow->Write();
+
+  } // endfor {binMult}
+
+  // TCanvas* canTest = new TCanvas("canTest","Test",600,600);
+  // canTest->Divide(2,3);
+  // canTest->cd(1);
+  // histEntries->Draw();
+  // canTest->cd(2);
+  // profFlow->Draw();
+  // canTest->cd(3);
+  // hInvMass->Draw();
+  // canTest->cd(4);
+  // profFlowMass->Draw();
+  // canTest->cd(5);
+  // hFlowMass->Draw();
+  // canTest->cd(6);
+  // prof2DFlowMass->Draw("colz");
+
 
   return kTRUE;
 }
