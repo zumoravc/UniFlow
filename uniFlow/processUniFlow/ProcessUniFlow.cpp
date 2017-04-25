@@ -255,7 +255,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // for(Short_t i(0); i < 2; i++)
   for(Short_t i(0); i < task->fNumSamples; i++)
   {
-    prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%g_sample%d",task->fHarmonics,task->fEtaGap,i));
+    prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%0.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
     if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
     list->Add(prof);
   }
@@ -267,11 +267,11 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
   // merged->Draw();
 
-  merged->SetName(Form("fpRefs_<2>_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
-  merged->SetTitle(Form("Ref: <<2>> | n=%d | Gap %02.2g",task->fHarmonics,task->fEtaGap));
+  // merged->SetName(Form("fpRefs_<2>_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
+  // merged->SetTitle(Form("Ref: <<2>> | n=%d | Gap %02.2g",task->fHarmonics,task->fEtaGap));
 
   // rebinning: multiplicity
-  Double_t xbins[] = {1,10,20,60};
+  Double_t xbins[] = {1,14,16,60};
   Int_t iNumBins = sizeof(xbins)/sizeof(xbins[0]) - 1;
   printf("bins: %d\n",iNumBins);
 
@@ -282,6 +282,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // start doing vns out of them
 
   TH1D* hFlow = (TH1D*) histRebin->Clone(Form("hFlow_Refs_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
+  hFlow->SetTitle(Form("Ref: v_{%d}{2, Gap %g}",task->fHarmonics,task->fEtaGap));
   // TH1D* hFlow = (TH1D*) histRebin->Clone("hFlow");
   // hFlow->Reset();
 
@@ -293,8 +294,12 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     dContent = histRebin->GetBinContent(iBin);
     if(dContent < 0) hFlow->SetBinContent(iBin, -9.);
     else hFlow->SetBinContent(iBin,TMath::Sqrt(dContent));
-    printf("%g | %g\n",dContent, TMath::Sqrt(dContent));
+    // printf("%g | %g\n",dContent, TMath::Sqrt(dContent));
   }
+
+  printf("%g±%g\n", merged->GetBinContent(14), merged->GetBinError(14));
+  printf("%g±%g\n", merged->GetBinContent(15), merged->GetBinError(15));
+  printf("%g±%g\n", histRebin->GetBinContent(2), histRebin->GetBinError(2));
 
 
 
@@ -309,6 +314,9 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   canTest->cd(4);
   hFlow->Draw();
 
+
+  ffOutputFile->cd();
+  hFlow->Write();
 
 
   return kTRUE;

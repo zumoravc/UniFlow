@@ -22,7 +22,7 @@ void RunProcessUniFlow()
 
 	FlowTask* task1 = new FlowTask("testing",FlowTask::kRefs);
 	task1->SetHarmonics(2);
-	task1->SetEtaGap(-10);
+	task1->SetEtaGap(-1.);
 	process->AddTask(task1);
 
 	process->Run();
