@@ -32,6 +32,7 @@ class FlowTask
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
+    void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
 
   protected:
   private:
@@ -42,11 +43,28 @@ class FlowTask
     Int_t       fHarmonics; // harmonics
     Double_t    fEtaGap; // eta gap
     Short_t     fNumSamples; // [10] number of samples
+    static const Short_t fNumPtBinsMax = 100; // initialization (maximum) number of pt bins
+    Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
+    Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; }
+FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
 FlowTask::~FlowTask() {}
+void FlowTask::SetPtBins(Double_t* array, const Short_t size)
+{
+  if(size < 0 || size > fNumPtBinsMax) { Error("Wrong size of pt binning array.","SetPtBins"); return; }
+  if(!array) { Error("Wrong array.","SetPtBins"); return; }
+
+  fNumPtBins = size - 1;
+
+  for(Short_t i(0); i < size; i++)
+  {
+    fPtBinsEdges[i] = array[i];
+  }
+
+  return;
+}
 
 void FlowTask::PrintTask()
 {
@@ -55,6 +73,8 @@ void FlowTask::PrintTask()
   printf("   fSpecies: %d\n",fSpecies);
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
+  printf("   fNumPtBins: %d (limit %d)\n",fNumPtBins,fNumPtBinsMax);
+  if(fNumPtBins > -1) { printf("   fPtBinsEdges: "); for(Short_t i(0); i < fNumPtBins+1; i++) printf("%g ",fPtBinsEdges[i]); printf("\n"); }
   printf("------------------------------\n");
   return;
 }
@@ -364,11 +384,16 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   if(task->fSpecies != FlowTask::kK0s && task->fSpecies != FlowTask::kLambda) { Error("Task species not V0s!","ProcessV0s"); return kFALSE; }
 
   // NOTE doing for K0s now
+
+
   flFlowK0s->ls();
 
   // entries
   TH3D* histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_gap%0.2g",10*task->fEtaGap));
   if(!histEntries) return kFALSE;
+
+
+
 
   // flow
   TProfile3D* profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));

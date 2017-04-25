@@ -20,14 +20,24 @@ void RunProcessUniFlow()
 	process->SetTaskName("UniFlow");
 	process->SetDebug();
 
+	// setting multiplicity binning
+	Double_t dMultBinning[] = {0,10,30,50,100};
+	Int_t iSizeMult = sizeof(dMultBinning)/sizeof(dMultBinning[0]);
+	process->SetMultiplicityBins(dMultBinning,iSizeMult);
+
 	FlowTask* task1 = new FlowTask("testing",FlowTask::kRefs);
 	task1->SetHarmonics(2);
 	task1->SetEtaGap(-1.);
 	process->AddTask(task1);
 
+	Double_t dPtBinning[] = {0.5,1,1.5,2,3};
+	Int_t iSizePt = sizeof(dPtBinning)/sizeof(dPtBinning[0]);
+
 	FlowTask* task2 = new FlowTask("K0s",FlowTask::kK0s);
 	task2->SetHarmonics(2);
 	task2->SetEtaGap(-1.);
+
+	task2->SetPtBins(dPtBinning,iSizePt);
 	process->AddTask(task2);
 
 	process->Run();
