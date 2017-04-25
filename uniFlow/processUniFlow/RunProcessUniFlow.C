@@ -21,7 +21,7 @@ void RunProcessUniFlow()
 	process->SetDebug();
 
 	// setting multiplicity binning
-	Double_t dMultBinning[] = {0,10,30,50,100};
+	Double_t dMultBinning[] = {0,10,30,50,100,150};
 	Int_t iSizeMult = sizeof(dMultBinning)/sizeof(dMultBinning[0]);
 	process->SetMultiplicityBins(dMultBinning,iSizeMult);
 
@@ -30,7 +30,7 @@ void RunProcessUniFlow()
 	task1->SetEtaGap(-1.);
 	process->AddTask(task1);
 
-	Double_t dPtBinning[] = {0.5,0.6};
+	Double_t dPtBinning[] = {1.,2.};
 	Int_t iSizePt = sizeof(dPtBinning)/sizeof(dPtBinning[0]);
 
 	FlowTask* task2 = new FlowTask("K0s",FlowTask::kK0s);

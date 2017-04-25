@@ -409,13 +409,19 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   // printf("MultBins: low %d | high %d\n",binMultLow,binMultHigh);
   // printf("PtBins: low %d | high %d\n",binPtLow,binPtHigh);
 
-  TH1D* hInvMass = (TH1D*) histEntries->ProjectionZ("hInvMass",binMultLow,binMultHigh,binPtLow,binPtHigh);
+  TH1D* hInvMass = (TH1D*) histEntries->ProjectionZ("hInvMass",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
   // here can be rebinning of inv mass if needed
 
   // hInvMass ready to fitting
 
 
+  // projection of flow-mass profile
+  TH1D* hFlowMass = (TH1D*) profFlow->ProjectionZ("hFlowMass",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+  profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh);
+  TProfile2D* profFlowMass = Project3DProfile(profFlow);
+  TProfile* hFlowMass2 = (TProfile*) profFlowMass->ProfileX("hFlowMass2",binPtLow,binPtHigh);
 
+  // hFlowMass2 is ready for fitting
 
 
   TCanvas* canTest = new TCanvas("canTest","Test",600,600);
@@ -426,6 +432,12 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   profFlow->Draw();
   canTest->cd(3);
   hInvMass->Draw();
+  canTest->cd(4);
+  hFlowMass->Draw();
+  canTest->cd(5);
+  profFlowMass->Draw("colz");
+  canTest->cd(6);
+  hFlowMass2->Draw();
 
 
   return kTRUE;
