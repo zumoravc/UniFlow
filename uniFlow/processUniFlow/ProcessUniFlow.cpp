@@ -358,16 +358,16 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
 
 
-  // TCanvas* canTest = new TCanvas("canTest","canTest",1000,1000);
-  // canTest->Divide(2,2);
-  // canTest->cd(1);
-  // merged->Draw();
-  // canTest->cd(2);
-  // rebin->Draw();
-  // canTest->cd(3);
-  // histRebin->Draw();
-  // canTest->cd(4);
-  // hFlow->Draw();
+  TCanvas* canTest = new TCanvas("canTestRefs","canTestReffs",1000,1000);
+  canTest->Divide(2,2);
+  canTest->cd(1);
+  merged->Draw();
+  canTest->cd(2);
+  rebin->Draw();
+  canTest->cd(3);
+  histRebin->Draw();
+  canTest->cd(4);
+  hFlow->Draw();
 
 
   ffOutputFile->cd();
@@ -416,12 +416,34 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 
 
   // projection of flow-mass profile
-  TH1D* hFlowMass = (TH1D*) profFlow->ProjectionZ("hFlowMass",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-  profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh);
-  TProfile2D* profFlowMass = Project3DProfile(profFlow);
-  TProfile* hFlowMass2 = (TProfile*) profFlowMass->ProfileX("hFlowMass2",binPtLow,binPtHigh);
+  profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh); // setting multiplicity range
+  TProfile2D* prof2DFlowMass = Project3DProfile(profFlow); // doing projection with modified function
+  TProfile* profFlowMass = (TProfile*) prof2DFlowMass->ProfileX("profFlowMass",binPtLow,binPtHigh);
+  TH1D* hFlowMass = (TH1D*) profFlowMass->ProjectionX("hFlowMass");
+  // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
 
-  // hFlowMass2 is ready for fitting
+  // make flow out of corralation
+  Double_t dRefs = 0, dRefsError = 0;
+  TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
+  if(!hRefFlow) { Error("Relevant Reference flow not found within output file.","ProcessV0s"); return kFALSE; }
+
+  dRefs = hRefFlow->GetBinContent(binMult+1);
+  dRefsError = hRefFlow->GetBinError(binMult+1);
+  printf("Refs: %g±%g\n", dRefs,dRefsError);
+
+
+  const Short_t iNumInvMassBins = profFlowMass->GetNbinsX();
+  Double_t dContent = 0, dError = 0;
+  for(Short_t iMass(1); iMass < iNumInvMassBins+1; iMass++)
+  {
+    dContent = profFlowMass->GetBinContent(iMass);
+    dError = profFlowMass->GetBinError(iMass);
+    hFlowMass->SetBinContent(iMass, dContent / dRefs);
+    hFlowMass->SetBinError(iMass, TMath::Sqrt(TMath::Power(dError/dRefs,2) + TMath::Power(dContent*dRefsError/(dRefs*dRefs),2)) );
+    // printf("bin %d | %g±%g\n",iMass, dContent,dError);
+  }
+
+  // hFlowMass is ready for fitting
 
 
   TCanvas* canTest = new TCanvas("canTest","Test",600,600);
@@ -433,11 +455,11 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   canTest->cd(3);
   hInvMass->Draw();
   canTest->cd(4);
-  hFlowMass->Draw();
+  profFlowMass->Draw();
   canTest->cd(5);
-  profFlowMass->Draw("colz");
+  hFlowMass->Draw();
   canTest->cd(6);
-  hFlowMass2->Draw();
+  prof2DFlowMass->Draw("colz");
 
 
   return kTRUE;
