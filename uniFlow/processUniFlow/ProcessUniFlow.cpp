@@ -112,8 +112,8 @@ class ProcessUniFlow
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
     Bool_t      ProcessV0s(FlowTask* task = 0x0); // process  V0s flow
-    Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
-		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
+    Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
+		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
     // printing output methods
     void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
@@ -131,6 +131,7 @@ class ProcessUniFlow
     TString     fsOutputFilePath; // path to the ouput folder
     TString     fsOutputFileName; // name of output file
     TString     fsTaskName; // name of task (inchluded in data structure names)
+    TString     fsOutputFileFormat; // [pdf] format of output files (pictures)
 
     Bool_t      fbInit; // flag for initialization status
     Bool_t      fbDebug; // flag for debugging : if kTRUE Debug() messages are displayed
@@ -164,6 +165,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
   fsTaskName = TString("UniFlow");
+  fsOutputFileFormat = TString("pdf");
   fvTasks = std::vector<FlowTask*>();
 
   for(Short_t i(0); i < fiNumMultBinsGlobal; i++) fdMultBins[i] = 0;
@@ -397,7 +399,6 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   TProfile3D* profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
   if(!profFlow) return kFALSE;
 
-
   // rebinning entries based on mult & pt binning
   Short_t binMult = 0;
   Short_t binPt = 0;
@@ -444,6 +445,16 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   }
 
   // hFlowMass is ready for fitting
+
+  Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
+  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200); // canvas for fitting results
+
+  Bool_t bExtracted = ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass);
+  if(!bExtracted) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
+  Info(Form("Extracted flow: %g ± %g\n",dFlow,dFlowError),"ProcessV0s");
+
+  canFitInvMass->SaveAs(Form("%s/FlowMass_K0s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),task->fHarmonics,10*task->fEtaGap,binMult,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+
 
 
   TCanvas* canTest = new TCanvas("canTest","Test",600,600);
@@ -943,7 +954,7 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
      return h2;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass)
+Bool_t ProcessUniFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
 {
 	if(!hInvMass)
 	{
@@ -1101,13 +1112,13 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* d
 	fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
 	hFlowMass->Fit("fitFlowTot","R");
 
-	*dFlow = fitFlowTot->GetParameter(0);
-	*dFlowError = fitFlowTot->GetParError(0);
+	dFlow = fitFlowTot->GetParameter(0);
+	dFlowError = fitFlowTot->GetParError(0);
 
 	return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass)
+Bool_t ProcessUniFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
 {
 	if(!hInvMass)
 	{
@@ -1271,8 +1282,8 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t
 	fitFlowTot->FixParameter(11,fitFlowSide->GetParameter(3));
 	hFlowMass->Fit("fitFlowTot","RIB");
 
-	*dFlow = fitFlowTot->GetParameter(0);
-	*dFlowError = fitFlowTot->GetParError(0);
+	dFlow = fitFlowTot->GetParameter(0);
+	dFlowError = fitFlowTot->GetParError(0);
 
 	return kTRUE;
 }
