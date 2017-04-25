@@ -18,24 +18,44 @@
 #include "TH3.h"
 
 
-class ProcessTask
+class FlowTask
 {
   public:
-    enum    PartSpecies {kUnknown=0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+    enum    PartSpecies {kUnknown=0, kRefs, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
-                ProcessTask(); // default constructor
-                ProcessTask(const char* name); // named constructor
-                ~ProcessTask(); // default destructor
+                FlowTask(); // default constructor
+                FlowTask(const char* name, PartSpecies species = kUnknown); // named constructor
+                ~FlowTask(); // default destructor
+
+    void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
+    void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
+    void        SetNumSamples(Short_t num) { fNumSamples = num; }
+
+  protected:
+  private:
+    void        PrintTask(); // listing values of internal properties
 
     TString     fName; // task name
     PartSpecies fSpecies; // species involved
-  protected:
-  private:
+    Int_t       fHarmonics; // harmonics
+    Double_t    fEtaGap; // eta gap
+    Short_t     fNumSamples; // [10] number of samples
 };
 
-ProcessTask::ProcessTask() {}
-ProcessTask::ProcessTask(const char* name) : ProcessTask() { fName = name; fSpecies = kUnknown; }
-ProcessTask::~ProcessTask() {}
+FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; }
+FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
+FlowTask::~FlowTask() {}
+
+void FlowTask::PrintTask()
+{
+  printf("----- Printing task info ------\n");
+  printf("   fName: %s\n",fName.Data());
+  printf("   fSpecies: %d\n",fSpecies);
+  printf("   fHarmonics: %d\n",fHarmonics);
+  printf("   fEtaGap: %g\n",fEtaGap);
+  printf("------------------------------\n");
+  return;
+}
 
 
 
@@ -52,6 +72,7 @@ class ProcessUniFlow
     void        SetOutputFileName(const char* name) { fsOutputFileName = name; }
     void        SetTaskName(const char* name) { fsTaskName = name; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
+    void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
 
   protected:
@@ -65,8 +86,8 @@ class ProcessUniFlow
     TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
     TH2D* DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
 
-    void        AddTask(ProcessTask* task = 0x0); // add task to internal lists of all tasks
-
+    void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
+    Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
     // printing output methods
     void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
     void        Error(TString sMsg, TString sMethod = ""); // printf the msg as error
@@ -84,13 +105,13 @@ class ProcessUniFlow
     Bool_t      fbDebug; // flag for debugging : if kTRUE Debug() messages are displayed
     TFile*      ffInputFile; //! input file container
     TFile*      ffOutputFile; //! input file container
-    TList*      flFlow_Refs; //! TList from input file with RFPs flow profiles
-    TList*      flFlow_Charged; //! TList from input file with Charged flow profiles
-    TList*      flFlow_PID; //! TList from input file with PID (pi,K,p) flow profiles
-    TList*      flFlow_Phi; //! TList from input file with Phi flow profiles
-    TList*      flFlow_K0s; //! TList from input file with K0s flow profiles
-    TList*      flFlow_Lambda; //! TList from input file with Lambda flow profiles
-    std::vector<ProcessTask*> fvTasks; // vector of task for individual species proccesing
+    TList*      flFlowRefs; //! TList from input file with RFPs flow profiles
+    TList*      flFlowCharged; //! TList from input file with Charged flow profiles
+    TList*      flFlowPID; //! TList from input file with PID (pi,K,p) flow profiles
+    TList*      flFlowPhi; //! TList from input file with Phi flow profiles
+    TList*      flFlowK0s; //! TList from input file with K0s flow profiles
+    TList*      flFlowLambda; //! TList from input file with Lambda flow profiles
+    std::vector<FlowTask*> fvTasks; // vector of task for individual species proccesing
 
 };
 //_____________________________________________________________________________
@@ -99,12 +120,12 @@ ProcessUniFlow::ProcessUniFlow() :
   fbInit(kFALSE),
   ffInputFile(0x0),
   ffOutputFile(0x0),
-  flFlow_Refs(0x0),
-  flFlow_Charged(0x0),
-  flFlow_PID(0x0),
-  flFlow_Phi(0x0),
-  flFlow_K0s(0x0),
-  flFlow_Lambda(0x0)
+  flFlowRefs(0x0),
+  flFlowCharged(0x0),
+  flFlowPID(0x0),
+  flFlowPhi(0x0),
+  flFlowK0s(0x0),
+  flFlowLambda(0x0)
 {
   // default constructor
   fsInputFilePath = TString("");
@@ -112,7 +133,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
   fsTaskName = TString("UniFlow");
-  fvTasks = std::vector<ProcessTask*>();
+  fvTasks = std::vector<FlowTask*>();
 }
 //_____________________________________________________________________________
 ProcessUniFlow::~ProcessUniFlow()
@@ -129,19 +150,19 @@ void ProcessUniFlow::Run()
 
   Debug("Initialized");
 
-  flFlow_K0s->ls();
+  // flFlow_K0s->ls();
   // TestProjections();
-  ProcessTask* task = new ProcessTask("test1");
-  printf("%s\n",task->fName.Data());
 
-  printf("size before %d  |",fvTasks.size());
-
-  AddTask(task);
-
-  printf("after %d\n",fvTasks.size());
-  ProcessTask* getting = fvTasks.at(0);
-  printf("%s\n",getting->fName.Data());
-
+  const Short_t iNumTasks = fvTasks.size();
+  FlowTask* currentTask = 0x0;
+  Info("===== Running over tasks ======","Run");
+  Info(Form("  Number of tasks: %d\n",iNumTasks),"Run");
+  for(Short_t iTask(0); iTask < iNumTasks; iTask++)
+  {
+    currentTask = fvTasks.at(iTask);
+    if(!currentTask) continue;
+    ProcessTask(currentTask);
+  }
 
   return;
 }
@@ -184,23 +205,116 @@ Bool_t ProcessUniFlow::LoadLists()
   if(!ffInputFile) { Fatal("Input file does not exists!","LoadLists"); return kFALSE; }
   ffInputFile->cd(fsTaskName.Data());
 
-  flFlow_Refs = (TList*) gDirectory->Get(Form("Flow_Refs_%s",fsTaskName.Data()));
-  if(!flFlow_Refs) { Fatal("flFlow_Refs list does not exists!","LoadLists"); return kFALSE; }
-  flFlow_Charged = (TList*) gDirectory->Get(Form("Flow_Charged_%s",fsTaskName.Data()));
-  if(!flFlow_Charged) { Fatal("flFlow_Charged list does not exists!","LoadLists"); return kFALSE; }
-  flFlow_PID = (TList*) gDirectory->Get(Form("Flow_PID_%s",fsTaskName.Data()));
-  if(!flFlow_PID) { Fatal("flFlow_PID list does not exists!","LoadLists"); return kFALSE; }
-  flFlow_Phi = (TList*) gDirectory->Get(Form("Flow_Phi_%s",fsTaskName.Data()));
-  if(!flFlow_Phi) { Fatal("flFlow_Phi list does not exists!","LoadLists"); return kFALSE; }
-  flFlow_K0s = (TList*) gDirectory->Get(Form("Flow_K0s_%s",fsTaskName.Data()));
-  if(!flFlow_K0s) { Fatal("flFlow_K0s list does not exists!","LoadLists"); return kFALSE; }
-  flFlow_Lambda = (TList*) gDirectory->Get(Form("Flow_Lambda_%s",fsTaskName.Data()));
-  if(!flFlow_Lambda) { Fatal("flFlow_Lambda list does not exists!","LoadLists"); return kFALSE; }
+  flFlowRefs = (TList*) gDirectory->Get(Form("Flow_Refs_%s",fsTaskName.Data()));
+  if(!flFlowRefs) { Fatal("flFlow_Refs list does not exists!","LoadLists"); return kFALSE; }
+  flFlowCharged = (TList*) gDirectory->Get(Form("Flow_Charged_%s",fsTaskName.Data()));
+  if(!flFlowCharged) { Fatal("flFlow_Charged list does not exists!","LoadLists"); return kFALSE; }
+  flFlowPID = (TList*) gDirectory->Get(Form("Flow_PID_%s",fsTaskName.Data()));
+  if(!flFlowPID) { Fatal("flFlow_PID list does not exists!","LoadLists"); return kFALSE; }
+  flFlowPhi = (TList*) gDirectory->Get(Form("Flow_Phi_%s",fsTaskName.Data()));
+  if(!flFlowPhi) { Fatal("flFlow_Phi list does not exists!","LoadLists"); return kFALSE; }
+  flFlowK0s = (TList*) gDirectory->Get(Form("Flow_K0s_%s",fsTaskName.Data()));
+  if(!flFlowK0s) { Fatal("flFlow_K0s list does not exists!","LoadLists"); return kFALSE; }
+  flFlowLambda = (TList*) gDirectory->Get(Form("Flow_Lambda_%s",fsTaskName.Data()));
+  if(!flFlowLambda) { Fatal("flFlow_Lambda list does not exists!","LoadLists"); return kFALSE; }
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::AddTask(ProcessTask* task)
+void ProcessUniFlow::ProcessTask(FlowTask* task)
+{
+  Info(Form("Processing task: %s",task->fName.Data()),"ProcessTask");
+  if(!task) { Error("Task not valid!","ProcessTask"); return; }
+
+  task->PrintTask();
+
+  Bool_t bProcessed = kFALSE;
+  switch (task->fSpecies)
+  {
+    case FlowTask::kRefs:
+      bProcessed = ProcessRefs(task);
+      break;
+    default: break;
+  }
+
+  return;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
+{
+  Info("Processing Refs task","ProcesRefs");
+  if(!task) { Error("Task not valid!","ProcessRefs"); return kFALSE; }
+  if(task->fSpecies != FlowTask::kRefs) { Error("Task species not kRefs!","ProcessRefs"); return kFALSE; }
+
+  Info("Listing input refs profiles","ProcesRefs");
+  flFlowRefs->ls();
+
+  // merging samples together
+  TProfile* prof = 0x0;
+  TList* list = new TList();
+  // for(Short_t i(0); i < 2; i++)
+  for(Short_t i(0); i < task->fNumSamples; i++)
+  {
+    prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%g_sample%d",task->fHarmonics,task->fEtaGap,i));
+    if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
+    list->Add(prof);
+  }
+  Debug(Form("Number of samples in list pre merging %d",list->GetEntries()));
+
+
+  TProfile* merged = (TProfile*) prof->Clone();
+  Double_t mergeStatus = merged->Merge(list);
+  if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
+  // merged->Draw();
+
+  merged->SetName(Form("fpRefs_<2>_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
+  merged->SetTitle(Form("Ref: <<2>> | n=%d | Gap %02.2g",task->fHarmonics,task->fEtaGap));
+
+  // rebinning: multiplicity
+  Double_t xbins[] = {1,10,20,60};
+  Int_t iNumBins = sizeof(xbins)/sizeof(xbins[0]) - 1;
+  printf("bins: %d\n",iNumBins);
+
+  TProfile* rebin = (TProfile*) merged->Rebin(iNumBins,Form("%s_rebin",merged->GetName()),xbins);
+  TH1D* histRebin = rebin->ProjectionX();
+
+  // at this point correlations are processed
+  // start doing vns out of them
+
+  TH1D* hFlow = (TH1D*) histRebin->Clone(Form("hFlow_Refs_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
+  // TH1D* hFlow = (TH1D*) histRebin->Clone("hFlow");
+  // hFlow->Reset();
+
+  const Short_t iBinsX = hFlow->GetNbinsX();
+
+  Double_t dContent = 0, dValue = 0;
+  for(Short_t iBin(1); iBin < iBinsX+1; iBin++)
+  {
+    dContent = histRebin->GetBinContent(iBin);
+    if(dContent < 0) hFlow->SetBinContent(iBin, -9.);
+    else hFlow->SetBinContent(iBin,TMath::Sqrt(dContent));
+    printf("%g | %g\n",dContent, TMath::Sqrt(dContent));
+  }
+
+
+
+  TCanvas* canTest = new TCanvas("canTest","canTest",1000,1000);
+  canTest->Divide(2,2);
+  canTest->cd(1);
+  merged->Draw();
+  canTest->cd(2);
+  rebin->Draw();
+  canTest->cd(3);
+  histRebin->Draw();
+  canTest->cd(4);
+  hFlow->Draw();
+
+
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+void ProcessUniFlow::AddTask(FlowTask* task)
 {
   if(!task) return;
 
