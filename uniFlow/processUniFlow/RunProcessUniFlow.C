@@ -25,6 +25,11 @@ void RunProcessUniFlow()
 	task1->SetEtaGap(-1.);
 	process->AddTask(task1);
 
+	FlowTask* task2 = new FlowTask("K0s",FlowTask::kK0s);
+	task2->SetHarmonics(2);
+	task2->SetEtaGap(-1.);
+	process->AddTask(task2);
+
 	process->Run();
 
 

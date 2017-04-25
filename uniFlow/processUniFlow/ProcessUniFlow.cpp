@@ -16,6 +16,8 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
+#include "TF1.h"
+
 
 
 class FlowTask
@@ -88,6 +90,10 @@ class ProcessUniFlow
 
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
+    Bool_t      ProcessV0s(FlowTask* task = 0x0); // process  V0s flow
+    Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
+		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
+
     // printing output methods
     void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
     void        Error(TString sMsg, TString sMethod = ""); // printf the msg as error
@@ -234,8 +240,16 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
     case FlowTask::kRefs:
       bProcessed = ProcessRefs(task);
       break;
+
+    case FlowTask::kK0s:
+    case FlowTask::kLambda:
+      bProcessed = ProcessV0s(task);
+      break;
+    // case FlowTask::kPhi:
     default: break;
   }
+
+  if(!bProcessed) { Error("Task not processed correctly!","ProcessTask"); return; }
 
   return;
 }
@@ -246,8 +260,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(!task) { Error("Task not valid!","ProcessRefs"); return kFALSE; }
   if(task->fSpecies != FlowTask::kRefs) { Error("Task species not kRefs!","ProcessRefs"); return kFALSE; }
 
-  Info("Listing input refs profiles","ProcesRefs");
-  flFlowRefs->ls();
+  // Info("Listing input refs profiles","ProcesRefs");
+  // flFlowRefs->ls();
 
   // merging samples together
   TProfile* prof = 0x0;
@@ -297,26 +311,56 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     // printf("%g | %g\n",dContent, TMath::Sqrt(dContent));
   }
 
-  printf("%g±%g\n", merged->GetBinContent(14), merged->GetBinError(14));
-  printf("%g±%g\n", merged->GetBinContent(15), merged->GetBinError(15));
-  printf("%g±%g\n", histRebin->GetBinContent(2), histRebin->GetBinError(2));
+  // printf("%g±%g\n", merged->GetBinContent(14), merged->GetBinError(14));
+  // printf("%g±%g\n", merged->GetBinContent(15), merged->GetBinError(15));
+  // printf("%g±%g\n", histRebin->GetBinContent(2), histRebin->GetBinError(2));
 
 
 
-  TCanvas* canTest = new TCanvas("canTest","canTest",1000,1000);
-  canTest->Divide(2,2);
-  canTest->cd(1);
-  merged->Draw();
-  canTest->cd(2);
-  rebin->Draw();
-  canTest->cd(3);
-  histRebin->Draw();
-  canTest->cd(4);
-  hFlow->Draw();
+  // TCanvas* canTest = new TCanvas("canTest","canTest",1000,1000);
+  // canTest->Divide(2,2);
+  // canTest->cd(1);
+  // merged->Draw();
+  // canTest->cd(2);
+  // rebin->Draw();
+  // canTest->cd(3);
+  // histRebin->Draw();
+  // canTest->cd(4);
+  // hFlow->Draw();
 
 
   ffOutputFile->cd();
   hFlow->Write();
+
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
+{
+  Info("Processing V0s task","ProcessV0s");
+  if(!task) { Error("Task not valid!","ProcessV0s"); return kFALSE; }
+  if(task->fSpecies != FlowTask::kK0s && task->fSpecies != FlowTask::kLambda) { Error("Task species not V0s!","ProcessV0s"); return kFALSE; }
+
+  // NOTE doing for K0s now
+  flFlowK0s->ls();
+
+  // entries
+  TH3D* histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_gap%0.2g",10*task->fEtaGap));
+  if(!histEntries) return kFALSE;
+
+  // flow
+  TProfile3D* profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
+  if(!profFlow) return kFALSE;
+
+
+
+  TCanvas* canTest = new TCanvas("canTest","Test",600,600);
+  canTest->Divide(2,3);
+  canTest->cd(1);
+  histEntries->Draw();
+  canTest->cd(2);
+  profFlow->Draw();
 
 
   return kTRUE;
@@ -799,7 +843,340 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
 
      return h2;
 }
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass)
+{
+	if(!hInvMass)
+	{
+		Error("ExtractFlowK0s","Inv. Mass histogram does not exists!");
+		return kFALSE;
+	}
 
+	if(!hFlowMass)
+	{
+		Error("ExtractFlowK0s","Flow Mass histogram does not exists!");
+		return kFALSE;
+	}
+
+	if(!canFitInvMass)
+	{
+		Error("ExtractFlowK0s","Canvas not found!");
+		return kFALSE;
+	}
+
+	// Reseting the canvas (removing drawn things)
+	canFitInvMass->Clear();
+
+	// Fitting K0s
+	const TString sOutputFormat = "pdf";
+	const Short_t iNumSigmas = 7;
+	Double_t dMeanShot = 0;
+	Double_t dSigmaShot = 0;
+	Double_t dMassLow = 0;
+	Double_t dMassHigh = 0;
+
+	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
+	canFitInvMass->Divide(3,2);
+
+	TH1D* hInvMass_side = 0x0;
+	TH1D* hInvMass_residual = 0x0;
+	TH1D* hInvMass_ratio = 0x0;
+
+	TH1D* hFlowMass_side = 0x0;
+
+	const Short_t iNumBinsMassFlow = hFlowMass->GetNbinsX();
+
+	// inv mass fitts
+	TF1* fitShot = 0x0;
+	TF1* fitSide = 0x0;
+	TF1* fitRatio = 0x0;
+
+	// flow mass fits
+	TF1* fitFlowSide = 0x0;
+	TF1* fitFlowTot = 0x0;
+
+
+	hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side");
+	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
+
+	printf("\n====== K0s: Fitting InvMass first shot ========\n");
+	canFitInvMass->cd(1);
+	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",0.4,0.6);
+	fitShot->SetNpx(10000);
+	fitShot->SetParameter(1,0.5);
+	fitShot->SetParLimits(1,0.485,0.515);
+	fitShot->SetParameter(2,0.01);
+	fitShot->SetParLimits(2,0.,0.05);
+	hInvMass->Fit("fitShot","R");
+
+	// TODO checking the fitting results
+
+	// extract mean & sigma for sidebands fitting reagion
+	dMeanShot = fitShot->GetParameter(1);
+	dSigmaShot = fitShot->GetParameter(2);
+	dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
+	dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
+	printf("=========================\nFitting region: %f - %f \n==========================\n", dMassLow,dMassHigh);
+
+	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
+	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+	{
+		// Excluding mass peak window (setting errors to inf)
+		if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh)
+		{
+			hInvMass_side->SetBinError(iMass,9999999999999);
+		}
+	}
+	canFitInvMass->cd(2);
+	hInvMass_side->SetMaximum(hInvMass->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
+	hInvMass_side->SetMinimum(0);
+	hInvMass_side->Draw();
+
+	// fitting background in sidebands
+	printf("\n====== K0s: Fitting InvMass side bands ========\n");
+	fitSide = new TF1("fitSide","pol2(0)",0.4,0.6);
+	fitSide->SetNpx(10000);
+	hInvMass_side->Fit("fitSide","R");
+
+	Double_t dContent = 0;
+	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+	{
+		dContent = hInvMass_side->GetBinContent(iMass) - fitSide->Eval(hInvMass_side->GetBinCenter(iMass));
+		hInvMass_residual->SetBinContent(iMass,dContent);
+	}
+
+	canFitInvMass->cd(3);
+	hInvMass_residual->Draw();
+
+	hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
+	hInvMass_ratio->Sumw2();
+	hInvMass_ratio->Divide(hInvMass);
+
+	printf("\n====== K0s: Fitting InvMass sig/tot ratio ========\n");
+	canFitInvMass->cd(4);
+
+	//hInvMass_ratio->Draw();
+	fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",0.4,0.6);
+	fitRatio->SetNpx(1000);
+	fitRatio->SetParameter(0,0.98);
+	fitRatio->SetParameter(1,0.5);
+	fitRatio->SetParLimits(1,0.48,0.51);
+	fitRatio->SetParameter(2,0.01);
+	fitRatio->SetParLimits(2,0.,0.05);
+	hInvMass_ratio->Fit("fitRatio","R");
+
+	// flow mass Fitting
+	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
+	hFlowMass_side->SetMaximum(1.5*hFlowMass->GetMaximum());
+	hFlowMass_side->SetMinimum(0.5*hFlowMass->GetMinimum());
+
+	// fitting side bands
+	for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
+	{
+		// Excluding mass peak window (setting errors to inf)
+		if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
+		{
+			hFlowMass_side->SetBinError(iMass,9999999999999);
+		}
+	}
+
+	printf("\n====== K0s: Fitting FlowMass sidebands ========\n");
+	canFitInvMass->cd(6);
+	fitFlowSide = new TF1("fitFlowSide","pol2(0)",0.4,0.6);
+	hFlowMass_side->Fit("fitFlowSide","R");
+
+	canFitInvMass->cd(5);
+	printf("\n====== K0s: Fitting FlowMass total flow ========\n");
+	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.4,0.6);
+	// Inv mass ratio signal/total
+	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
+	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
+	fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
+	fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
+	fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
+	fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+	fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
+	// FlowMass backround / sidebands
+	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
+	fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
+	fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
+	hFlowMass->Fit("fitFlowTot","R");
+
+	*dFlow = fitFlowTot->GetParameter(0);
+	*dFlowError = fitFlowTot->GetParError(0);
+
+	return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t* dFlow, Double_t* dFlowError, TCanvas* canFitInvMass)
+{
+	if(!hInvMass)
+	{
+		Error("ExtractFlowLambda","Inv. Mass histogram does not exists!");
+		return kFALSE;
+	}
+
+	if(!hFlowMass)
+	{
+		Error("ExtractFlowLambda","Flow Mass histogram does not exists!");
+		return kFALSE;
+	}
+
+	if(!canFitInvMass)
+	{
+		Error("ExtractFlowLambda","Canvas not found!");
+		return kFALSE;
+	}
+
+	// Reseting the canvas (removing drawn things)
+	canFitInvMass->Clear();
+
+	// Fitting K0s
+	const TString sOutputFormat = "pdf";
+	const Short_t iNumSigmas = 6;
+	const Double_t fitLimitLow = 1.095;
+	const Double_t fitLimitHigh = 1.15;
+
+	Double_t dMeanShot = 0;
+	Double_t dSigmaShot = 0;
+	Double_t dMassLow = 0;
+	Double_t dMassHigh = 0;
+
+	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
+	canFitInvMass->Divide(3,2);
+
+	TH1D* hInvMass_side = 0x0;
+	TH1D* hInvMass_residual = 0x0;
+	TH1D* hInvMass_ratio = 0x0;
+
+	TH1D* hFlowMass_side = 0x0;
+
+	const Short_t iNumBinsMassFlow = hFlowMass->GetNbinsX();
+
+	// inv mass fitts
+	TF1* fitShot = 0x0;
+	TF1* fitSide = 0x0;
+	TF1* fitRatio = 0x0;
+
+	// flow mass fits
+	TF1* fitFlowSide = 0x0;
+	TF1* fitFlowTot = 0x0;
+
+
+	hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side");
+	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
+
+	canFitInvMass->cd(1);
+	printf("\n====== Lambda: Fitting InvMass first shot ========\n");
+	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",1.1,1.13);
+	fitShot->SetNpx(10000);
+	fitShot->SetParameter(1,1.115);
+	fitShot->SetParLimits(1,1.113,1.12);
+	fitShot->SetParameter(2,0.01);
+  fitShot->SetParLimits(2,0.,0.002);
+	hInvMass->Fit("fitShot","RI");
+
+	// TODO checking the fitting results
+
+	// extract mean & sigma for sidebands fitting reagion
+	dMeanShot = fitShot->GetParameter(1);
+	dSigmaShot = fitShot->GetParameter(2);
+	dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
+	dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
+	printf("=========================\nFitting region: %f - %f \n==========================\n", dMassLow,dMassHigh);
+
+	// return kTRUE; // testing
+
+	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
+	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+	{
+		// Excluding mass peak window (setting errors to inf)
+		if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh)
+		{
+			hInvMass_side->SetBinError(iMass,9999999999999);
+		}
+	}
+	canFitInvMass->cd(2);
+	hInvMass_side->SetMaximum(hInvMass->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
+	hInvMass_side->SetMinimum(0);
+	hInvMass_side->Draw();
+
+	// fitting background in sidebands
+	printf("\n====== Lambda: Fitting InvMass sidebands ========\n");
+	fitSide = new TF1("fitSide","pol3(0)",fitLimitLow,fitLimitHigh);
+	fitSide->SetNpx(10000);
+	hInvMass_side->Fit("fitSide","RI");
+
+	Double_t dContent = 0;
+	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
+	{
+		dContent = hInvMass_side->GetBinContent(iMass) - fitSide->Eval(hInvMass_side->GetBinCenter(iMass));
+		hInvMass_residual->SetBinContent(iMass,dContent);
+	}
+
+	canFitInvMass->cd(3);
+	hInvMass_residual->Draw();
+
+	hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
+	hInvMass_ratio->Sumw2();
+	hInvMass_ratio->Divide(hInvMass);
+	hInvMass_ratio->SetMinimum(-0.5);
+	hInvMass_ratio->SetMaximum(1.);
+
+	canFitInvMass->cd(4);
+	printf("\n====== Lambda: Fitting InvMass sig/total ratio ========\n");
+	//hInvMass_ratio->Draw();
+	fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",fitLimitLow,fitLimitHigh);
+	fitRatio->SetNpx(1000);
+	fitRatio->SetParameter(0,0.98);
+	fitRatio->SetParameter(1,1.115);
+	fitRatio->SetParameter(2,0.001);
+	hInvMass_ratio->Fit("fitRatio","RI");
+
+	// flow mass Fitting
+	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
+	hFlowMass_side->SetMaximum(1.5*hFlowMass->GetMaximum());
+	hFlowMass_side->SetMinimum(0.5*hFlowMass->GetMinimum());
+
+	// fitting side bands
+	for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
+	{
+		// Excluding mass peak window (setting errors to inf)
+		if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
+		{
+			hFlowMass_side->SetBinError(iMass,9999999999999);
+		}
+	}
+
+	canFitInvMass->cd(6);
+	printf("\n====== Lambda: Fitting FlowMass sidebands ========\n");
+	fitFlowSide = new TF1("fitFlowSide","pol3(0)",fitLimitLow,fitLimitHigh);
+	hFlowMass_side->Fit("fitFlowSide","RI");
+
+	canFitInvMass->cd(5);
+	printf("\n====== Lambda: Fitting FlowMass total flow ========\n");
+	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol3(8)",fitLimitLow,fitLimitHigh);
+
+	// Inv mass ratio signal/total
+	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
+	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
+	fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
+	fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
+	fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
+	fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+	fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
+	// FlowMass backround / sidebands
+	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
+	fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
+	fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
+	fitFlowTot->FixParameter(11,fitFlowSide->GetParameter(3));
+	hFlowMass->Fit("fitFlowTot","RIB");
+
+	*dFlow = fitFlowTot->GetParameter(0);
+	*dFlowError = fitFlowTot->GetParError(0);
+
+	return kTRUE;
+}
 //_____________________________________________________________________________
 void ProcessUniFlow::Fatal(TString sMsg, TString sMethod)
 {
