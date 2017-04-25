@@ -30,7 +30,7 @@ void RunProcessUniFlow()
 	task1->SetEtaGap(-1.);
 	process->AddTask(task1);
 
-	Double_t dPtBinning[] = {1.,2.};
+	Double_t dPtBinning[] = {0.5,1.,2.,3.};
 	Int_t iSizePt = sizeof(dPtBinning)/sizeof(dPtBinning[0]);
 
 	FlowTask* task2 = new FlowTask("K0s",FlowTask::kK0s);
