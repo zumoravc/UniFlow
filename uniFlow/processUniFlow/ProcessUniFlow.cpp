@@ -339,7 +339,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // start doing vns out of them
 
   TH1D* hFlow = (TH1D*) histRebin->Clone(Form("hFlow_Refs_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
-  hFlow->SetTitle(Form("Ref: v_{%d}{2, Gap %g}",task->fHarmonics,task->fEtaGap));
+  hFlow->SetTitle(Form("Ref: v_{%d}{2 | Gap %g}",task->fHarmonics,task->fEtaGap));
   // TH1D* hFlow = (TH1D*) histRebin->Clone("hFlow");
   // hFlow->Reset();
 
@@ -456,6 +456,13 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   canFitInvMass->SaveAs(Form("%s/FlowMass_K0s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),task->fHarmonics,10*task->fEtaGap,binMult,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
 
+  TH1D* hFlow = new TH1D(Form("hFlow_K0s_harm%d_gap%g_mult%d",task->fHarmonics,task->fEtaGap,binMult),Form("K^{0}_{S}: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",task->fHarmonics,10*task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
+  hFlow->SetBinContent(binPt+1, dFlow);
+  hFlow->SetBinError(binPt+1, dFlowError);
+
+  TCanvas* cFlow = new TCanvas("cFlow","Flow",400,400);
+  cFlow->cd();
+  hFlow->Draw();
 
   TCanvas* canTest = new TCanvas("canTest","Test",600,600);
   canTest->Divide(2,3);
@@ -472,6 +479,8 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   canTest->cd(6);
   prof2DFlowMass->Draw("colz");
 
+  ffOutputFile->cd();
+  hFlow->Write();
 
   return kTRUE;
 }
