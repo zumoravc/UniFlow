@@ -76,6 +76,7 @@ class ProcessUniFlow
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
+    void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
 
   protected:
 
@@ -84,9 +85,9 @@ class ProcessUniFlow
     Bool_t      LoadLists(); // loading flow lists from input file
     void        TestProjections(); // testing projection of reconstructed particles
 
-    TProfile2D*   Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
+    TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
     TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
-    TH2D* DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
+    TH2D*       DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
 
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
@@ -100,6 +101,10 @@ class ProcessUniFlow
     void        Warning(TString sMsg, TString sMethod = ""); // printf the msg as warning
     void        Info(TString sMsg, TString sMethod = ""); // printf the msg as info
     void        Debug(TString sMsg, TString sMethod = ""); // printf the msg as info
+
+    static const Short_t fiNumMultBinsGlobal = 20; // global initialization number of bins
+    Double_t    fdMultBins[fiNumMultBinsGlobal]; // global multiplicity/centrality binning
+    Short_t     fiNumMultBins; // number of multiplicity bins (not size of array)
 
     TString     fsInputFilePath; // path to the input folder with input file
     TString     fsInputFileName; // name of input file
@@ -140,6 +145,8 @@ ProcessUniFlow::ProcessUniFlow() :
   fsOutputFileName = TString("UniFlow.root");
   fsTaskName = TString("UniFlow");
   fvTasks = std::vector<FlowTask*>();
+
+  for(Short_t i(0); i < fiNumMultBinsGlobal; i++) fdMultBins[i] = 0;
 }
 //_____________________________________________________________________________
 ProcessUniFlow::~ProcessUniFlow()
@@ -203,6 +210,20 @@ Bool_t ProcessUniFlow::Initialize()
   fbInit = kTRUE;
   Info("Initialization succesfull","Initialize");
   return fbInit;
+}
+//_____________________________________________________________________________
+void ProcessUniFlow::SetMultiplicityBins(Double_t* array, const Short_t size)
+{
+  if(size < 0 || size > fiNumMultBinsGlobal) { Fatal("Wrong number of bins selected","SetMultiplicityBins"); return; }
+  if(!array) { Fatal("Multiplicity array not valid","SetMultiplicityBins"); return; }
+
+  fiNumMultBins = size-1;
+
+  for(Short_t i(0); i < size; i++)
+  {
+    fdMultBins[i] = array[i];
+  }
+  return;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::LoadLists()
@@ -285,11 +306,11 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // merged->SetTitle(Form("Ref: <<2>> | n=%d | Gap %02.2g",task->fHarmonics,task->fEtaGap));
 
   // rebinning: multiplicity
-  Double_t xbins[] = {1,14,16,60};
-  Int_t iNumBins = sizeof(xbins)/sizeof(xbins[0]) - 1;
-  printf("bins: %d\n",iNumBins);
+  // Double_t xbins[] = {1,14,16,60};
+  // Int_t iNumBins = sizeof(xbins)/sizeof(xbins[0]) - 1;
+  // printf("bins: %d\n",iNumBins);
 
-  TProfile* rebin = (TProfile*) merged->Rebin(iNumBins,Form("%s_rebin",merged->GetName()),xbins);
+  TProfile* rebin = (TProfile*) merged->Rebin(fiNumMultBins,Form("%s_rebin",merged->GetName()),fdMultBins);
   TH1D* histRebin = rebin->ProjectionX();
 
   // at this point correlations are processed
