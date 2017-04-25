@@ -30,7 +30,7 @@ void RunProcessUniFlow()
 	task1->SetEtaGap(-1.);
 	process->AddTask(task1);
 
-	Double_t dPtBinning[] = {0.5,1.,2.,3.};
+	Double_t dPtBinning[] = {0.5,1.,2.,3.,4.,6.};
 	Int_t iSizePt = sizeof(dPtBinning)/sizeof(dPtBinning[0]);
 
 	FlowTask* task2 = new FlowTask("K0s",FlowTask::kK0s);
@@ -39,6 +39,13 @@ void RunProcessUniFlow()
 
 	task2->SetPtBins(dPtBinning,iSizePt);
 	process->AddTask(task2);
+
+	FlowTask* task3 = new FlowTask("Lambda",FlowTask::kLambda);
+	task3->SetHarmonics(2);
+	task3->SetEtaGap(-1.);
+
+	task3->SetPtBins(dPtBinning,iSizePt);
+	process->AddTask(task3);
 
 	process->Run();
 

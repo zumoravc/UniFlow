@@ -383,19 +383,46 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 {
   Info("Processing V0s task","ProcessV0s");
   if(!task) { Error("Task not valid!","ProcessV0s"); return kFALSE; }
-  if(task->fSpecies != FlowTask::kK0s && task->fSpecies != FlowTask::kLambda) { Error("Task species not V0s!","ProcessV0s"); return kFALSE; }
+
+  // preparing particle dependent variables for switch
+  //  -- input histos / profiles with entries and correlations
+  TH3D* histEntries = 0x0;
+  TProfile3D* profFlow = 0x0;
+  //  -- naming variables
+  TString sSpeciesName; // in objects name
+  TString sSpeciesLabel; // LaTeX for titles
+
+  // checking particles species and assigning particle dependent variables
+  switch (task->fSpecies)
+  {
+    case FlowTask::kPhi :
+    break;
+
+    case FlowTask::kK0s :
+      histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_gap%0.2g",10*task->fEtaGap));
+      profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
+      sSpeciesName = TString("K0s");
+      sSpeciesLabel = TString("K^{0}_{S}");
+
+    break;
+
+    case FlowTask::kLambda :
+      histEntries = (TH3D*) flFlowLambda->FindObject(Form("fh3V0sEntriesLambda_gap%0.2g",10*task->fEtaGap));
+      profFlow = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
+      sSpeciesName = TString("Lambda");
+      sSpeciesLabel = TString("#Lambda/#bar{#Lambda}");
+    break;
+
+    default:
+      Error("Task species not V0s!","ProcessV0s");
+      return kFALSE;
+  }
+
+  if(!histEntries) { Error("Entries histos not found!","ProcessV0s"); return kFALSE; }
+  if(!profFlow) { Error("Cumulant histos not found!","ProcessV0s"); return kFALSE; }
 
   TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
   if(!hRefFlow) { Error("Relevant Reference flow not found within output file.","ProcessV0s"); return kFALSE; }
-
-
-  // NOTE doing for K0s now
-
-  // loading input histos / profiles with entries and correlations
-  TH3D* histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_gap%0.2g",10*task->fEtaGap));
-  if(!histEntries) return kFALSE;
-  TProfile3D* profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
-  if(!profFlow) return kFALSE;
 
   // preparing for loops
   TH1D* hFlow = 0x0;
@@ -414,7 +441,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   for(Short_t binMult(0); binMult < fiNumMultBins; binMult++)
   {
     // preparing resulting flow vs pt (mult) histo
-    hFlow = new TH1D(Form("hFlow_K0s_harm%d_gap%g_mult%d",task->fHarmonics,task->fEtaGap,binMult),Form("K^{0}_{S}: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",task->fHarmonics,10*task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
+    hFlow = new TH1D(Form("hFlow_%s_harm%d_gap%g_mult%d",sSpeciesName.Data(),task->fHarmonics,task->fEtaGap,binMult),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,10*task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
 
     // estimating multiplicity edges and selection axis range
     binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
@@ -455,7 +482,22 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
       // hFlowMass is ready for fitting
 
       // extracting flow
-      if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
+      switch (task->fSpecies)
+      {
+        case FlowTask::kK0s :
+          if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
+        break;
+
+        case FlowTask::kLambda :
+          if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
+        break;
+
+        case FlowTask::kPhi :
+          // if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
+        break;
+
+        default : break;
+      }
       Info(Form("Extracted flow: %g ± %g\n",dFlow,dFlowError),"ProcessV0s");
 
       // saving pt bin resulting flow to flow-vs-pt hist
@@ -463,13 +505,13 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
       hFlow->SetBinError(binPt+1, dFlowError);
 
       // printing fitting results
-      canFitInvMass->SaveAs(Form("%s/FlowMass_K0s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),task->fHarmonics,10*task->fEtaGap,binMult,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+      canFitInvMass->SaveAs(Form("%s/FlowMass_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
     } // endfor {binPt}
 
     cFlow->cd();
     hFlow->Draw();
-    cFlow->SaveAs(Form("%s/Flow_K0s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),task->fHarmonics,10*task->fEtaGap,binMult,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+    cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
     ffOutputFile->cd();
     hFlow->Write();
