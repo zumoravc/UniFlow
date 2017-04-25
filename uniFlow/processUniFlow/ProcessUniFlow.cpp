@@ -393,11 +393,28 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   if(!histEntries) return kFALSE;
 
 
-
-
   // flow
   TProfile3D* profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
   if(!profFlow) return kFALSE;
+
+
+  // rebinning entries based on mult & pt binning
+  Short_t binMult = 0;
+  Short_t binPt = 0;
+
+  const Short_t binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
+  const Short_t binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+  const Short_t binPtLow = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
+  const Short_t binPtHigh = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+  // printf("MultBins: low %d | high %d\n",binMultLow,binMultHigh);
+  // printf("PtBins: low %d | high %d\n",binPtLow,binPtHigh);
+
+  TH1D* hInvMass = (TH1D*) histEntries->ProjectionZ("hInvMass",binMultLow,binMultHigh,binPtLow,binPtHigh);
+  // here can be rebinning of inv mass if needed
+
+  // hInvMass ready to fitting
+
+
 
 
 
@@ -407,6 +424,8 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   histEntries->Draw();
   canTest->cd(2);
   profFlow->Draw();
+  canTest->cd(3);
+  hInvMass->Draw();
 
 
   return kTRUE;
