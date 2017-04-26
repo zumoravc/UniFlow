@@ -14,15 +14,15 @@ void RunProcessUniFlow()
 
 	ProcessUniFlow* process = new ProcessUniFlow();
 
-	process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_ver3_Charged/Phi");
+	process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_ver3_Charged/");
 	process->SetInputFileName("AnalysisResults_merged_16q.root");
 	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_ver3_Charged/Phi");
 	process->SetTaskName("UniFlow");
-	process->SetDebug();
+	// process->SetDebug();
 	// process->SuggestMultBinning(4);
 
 	// setting multiplicity binning
-	Double_t dMultBinning[] = {0,20,50,80,180};
+	Double_t dMultBinning[] = {0,30,45,75,180};
 	// Double_t dMultBinning[] = {0,50};
 	Int_t iSizeMult = sizeof(dMultBinning)/sizeof(dMultBinning[0]);
 	process->SetMultiplicityBins(dMultBinning,iSizeMult);
@@ -32,7 +32,8 @@ void RunProcessUniFlow()
 	// task1->SetEtaGap(-1.);
 	// process->AddTask(task1);
 
-	Double_t dPtBinning[] = {0.5,1.,2.,3.,5.};
+	// Double_t dPtBinning[] = {0.5,1.,2.,3.,5.};
+	Double_t dPtBinning[] = {0.5,1.};
 	Int_t iSizePt = sizeof(dPtBinning)/sizeof(dPtBinning[0]);
 
 	// FlowTask* task7 = new FlowTask("K0s",FlowTask::kK0s);
