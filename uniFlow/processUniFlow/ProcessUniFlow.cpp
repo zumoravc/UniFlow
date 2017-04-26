@@ -33,6 +33,7 @@ class FlowTask
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
+    void        SetShowMultDist(Bool_t show) { fShowMult = show; }
 
   protected:
   private:
@@ -46,9 +47,10 @@ class FlowTask
     static const Short_t fNumPtBinsMax = 100; // initialization (maximum) number of pt bins
     Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
     Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
+    Bool_t      fShowMult; // show multiplicity distribution
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; }
+FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
 FlowTask::~FlowTask() {}
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
@@ -97,7 +99,7 @@ class ProcessUniFlow
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
     void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
-
+    void        SuggestMultBinning(const Short_t numFractions); // try to cut multiplicity distribution into fractions
   protected:
 
   private:
@@ -246,6 +248,63 @@ void ProcessUniFlow::SetMultiplicityBins(Double_t* array, const Short_t size)
   {
     fdMultBins[i] = array[i];
   }
+  return;
+}
+//_____________________________________________________________________________
+void ProcessUniFlow::SuggestMultBinning(const Short_t numFractions)
+{
+  if(numFractions < 1) { Error("Suggested number of fractions is too low","SuggestMultBinning"); return; }
+  if(!fbInit) Initialize();
+
+  // loading multiplicity dist.
+  ffInputFile->cd(fsTaskName.Data());
+  gDirectory->ls();
+
+  TList* lQACharged = (TList*) gDirectory->Get(Form("QA_Charged_%s",fsTaskName.Data()));
+  if(!lQACharged) return;
+
+  lQACharged->ls();
+  TH1D* hMult = (TH1D*) lQACharged->FindObject("fhQAChargedMult_After");
+
+  TCanvas* canSuggestMult = new TCanvas("canSuggestMult","SuggestMultBinning",400,400);
+  canSuggestMult->cd(1);
+  gPad->SetLogy();
+  hMult->Draw();
+
+  Double_t dCumul = 0;
+  Double_t dContent = 0;
+  Double_t dWeight = 0;
+  Double_t dSum = 0;
+  Double_t dSumWeight = 0;
+
+  for(Short_t bin(1); bin < hMult->GetNbinsX()+1; bin++)
+  {
+    dContent = hMult->GetBinContent(bin);
+    dWeight = 1/(bin - 1);
+    dSum += dContent*(dWeight); // weighed average
+    dSumWeight += dWeight;
+  }
+
+  Double_t dEntries = hMult->GetEntries();
+  // Double_t dSegment = dEntries / numFractions;
+  Double_t dSegment = dSum / dSumWeight / numFractions;
+
+  printf("entries %g | Sum %g | sumweight %g | segmend %g\n",dEntries,dSum,dSumWeight,dSegment);
+
+  for(Short_t bin(1); bin < hMult->GetNbinsX()+1; bin++)
+  {
+    dContent = hMult->GetBinContent(bin);
+    // dWeight = bin - 1;
+    dWeight = 1/(bin-1);
+    dCumul += dContent*(dWeight);
+    // dSumWeight += dWeight;
+    if(dCumul >= dSegment)
+    {
+      printf("bin %d : mult %g (cumul %g)\n",bin,hMult->GetBinLowEdge(bin),dCumul);
+      dCumul = 0;
+    }
+  }
+
   return;
 }
 //_____________________________________________________________________________
@@ -429,6 +488,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   if(!histEntries) { Error("Entries histos not found!","ProcessV0s"); return kFALSE; }
   if(!profFlow) { Error("Cumulant histos not found!","ProcessV0s"); return kFALSE; }
 
+
   TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
   if(!hRefFlow)
   {
@@ -456,6 +516,8 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
   TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200); // canvas for fitting results
   TCanvas* cFlow = new TCanvas("cFlow","Flow",400,400); // canvas for resulting flow vs pt
+  TCanvas* cMultDist = new TCanvas("cMultDist","MultDist.",1200,1200);
+  cMultDist->Divide(3,(Int_t)(fiNumMultBins/3)+1);
 
   for(Short_t binMult(0); binMult < fiNumMultBins; binMult++)
   {
@@ -467,10 +529,20 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
     binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
     profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh); // setting multiplicity range
 
+
+    // checking if Show Multiplicity distribution mode is on (if so, only entries as a function of pt are showed in mult bins)
+    if(task->fShowMult)
+    {
+      hInvMass = (TH1D*) histEntries->ProjectionY(Form("hInvMass_mult%d",binMult),binMultLow,binMultHigh);
+      cMultDist->cd(binMult+1);
+      gPad->SetLogy();
+      hInvMass->Draw();
+      continue;
+    }
+
     // loading relevant reference flow
     dRefs = hRefFlow->GetBinContent(binMult+1);
     dRefsError = hRefFlow->GetBinError(binMult+1);
-
 
     for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
     {
@@ -539,21 +611,23 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 
   } // endfor {binMult}
 
-  // TCanvas* canTest = new TCanvas("canTest","Test",600,600);
-  // canTest->Divide(2,3);
-  // canTest->cd(1);
-  // histEntries->Draw();
-  // canTest->cd(2);
-  // profFlow->Draw();
-  // canTest->cd(3);
-  // hInvMass->Draw();
-  // canTest->cd(4);
-  // profFlowMass->Draw();
-  // canTest->cd(5);
-  // hFlowMass->Draw();
-  // canTest->cd(6);
-  // prof2DFlowMass->Draw("colz");
-
+  if(!task->fShowMult)
+  {
+    // TCanvas* canTest = new TCanvas("canTest","Test",600,600);
+    // canTest->Divide(2,3);
+    // canTest->cd(1);
+    // histEntries->Draw();
+    // canTest->cd(2);
+    // profFlow->Draw();
+    // canTest->cd(3);
+    // hInvMass->Draw();
+    // canTest->cd(4);
+    // profFlowMass->Draw();
+    // canTest->cd(5);
+    // hFlowMass->Draw();
+    // canTest->cd(6);
+    // prof2DFlowMass->Draw("colz");
+  }
 
   return kTRUE;
 }
@@ -1074,7 +1148,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
     dIntBG += hInvMassBG->GetBinContent(iBin);
   }
   Double_t dScaleFact = dIntSignal/dIntBG;
-  printf("integral: sig %g | bg %g | scale %g\n",dIntSignal,dIntBG,dScaleFact);
+  // printf("integral: sig %g | bg %g | scale %g\n",dIntSignal,dIntBG,dScaleFact);
 
   // TODO which one?
   TH1D* hInvMassBG_scaled = (TH1D*) hInvMassBG->Clone("hInvMassBG_scaled");
@@ -1119,7 +1193,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	hInvMass_residual = (TH1D*) hInvMass_subs->Clone("hInvMass_residual");
 
   // fitting first shot
-  Double_t dInvMassPeakLow = 1.005;
+  Double_t dInvMassPeakLow = 1.00;
   Double_t dInvMassPeakHigh = 1.035;
   Short_t iBinPeakLow = hInvMass_shot->FindFixBin(dInvMassPeakLow);
   Short_t iBinPeakHigh = hInvMass_shot->FindFixBin(dInvMassPeakHigh);
@@ -1152,7 +1226,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
   fitSide->SetParameter(2,fitShot->GetParameter(2));
   fitSide->SetParameter(3,hInvMass_side->GetMaximum());
   fitSide->SetParameter(4,1.019445);
-  fitSide->SetParLimits(4,1.01,1.03);
+  fitSide->SetParLimits(4,1.012,1.028);
   fitSide->SetParameter(5,0.004);
   fitSide->SetParLimits(5,0.004,0.005);
 	hInvMass_side->Fit("fitSide","R");
@@ -1205,7 +1279,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
   fitRatio->SetParameter(2,fitSide->GetParameter(2));
   fitRatio->SetParameter(3,0.8);
   fitRatio->SetParameter(4,fitSide->GetParameter(4));
-  fitRatio->SetParLimits(4,1.01,1.03);
+  fitRatio->SetParLimits(4,1.012,1.028);
   fitRatio->SetParameter(5,fitSide->GetParameter(5));
   fitRatio->SetParLimits(5,0.002,0.01);
 	hInvMass_ratio->Fit("fitRatio","R");
@@ -1218,7 +1292,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	hFlowMass_side->SetMinimum(0.8*hFlowMass->GetMinimum());
 
 	// fitting side bands
-	for(Short_t iMass(iBinPeakLow); iMass < iBinPeakHigh+1; iMass++)
+	for(Short_t iMass(iBinPeakLow+3); iMass < iBinPeakHigh+3+1; iMass++)
 	{
 		// Excluding mass peak window (setting errors to inf)
     // if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
