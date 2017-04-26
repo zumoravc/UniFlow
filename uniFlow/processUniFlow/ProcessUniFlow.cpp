@@ -1053,10 +1053,50 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	Double_t dMassLow = 0;
 	Double_t dMassHigh = 0;
 
-  return kFALSE;
 
-	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
-	canFitInvMass->Divide(3,2);
+
+
+
+  // subtraction of BG
+  // normalisation BG to Signal in region of interest
+  const Double_t dNormMassLow = 1.03;
+  const Double_t dNormMassHigh = 1.06;
+
+  Short_t iBinNormLow = hInvMassBG->FindFixBin(dNormMassLow);
+  Short_t iBinNormHigh = hInvMassBG->FindFixBin(dNormMassHigh);
+  printf("Bin low %g | high %g\n",hInvMassBG->GetBinCenter(iBinNormLow),hInvMassBG->GetBinCenter(iBinNormHigh));
+
+  Double_t dIntSignal = 0;
+  Double_t dIntBG = 0;
+  for(Short_t iBin(iBinNormLow); iBin < iBinNormHigh+1; iBin++)
+  {
+    dIntSignal += hInvMass->GetBinContent(iBin);
+    dIntBG += hInvMassBG->GetBinContent(iBin);
+  }
+  Double_t dScaleFact = dIntSignal/dIntBG;
+  printf("integral: sig %g | bg %g | scale %g\n",dIntSignal,dIntBG,dScaleFact);
+
+  // TODO which one?
+  TH1D* hInvMassBG_scaled = (TH1D*) hInvMassBG->Clone("hInvMassBG_scaled");
+  // hInvMass->Scale(1/dIntSignal);
+  // hInvMassBG_scaled->Scale(dScaleFact);
+  // hInvMassBG_scaled->Scale(1/dScaleFact);
+  hInvMassBG_scaled->SetLineColor(kRed);
+
+  TH1D* hInvMass_subs = (TH1D*) hInvMass->Clone("hInvMass_subs");
+  hInvMass_subs->Add(hInvMassBG_scaled,-1);
+
+
+  // TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
+	canFitInvMass->Divide(3,3);
+  canFitInvMass->cd(7);
+  hInvMass->Draw();
+  hInvMassBG->Draw("same");
+  hInvMassBG_scaled->Draw("same");
+  canFitInvMass->cd(8);
+  hInvMass_subs->Draw();
+
+  return kFALSE;
 
 	TH1D* hInvMass_side = 0x0;
 	TH1D* hInvMass_residual = 0x0;
