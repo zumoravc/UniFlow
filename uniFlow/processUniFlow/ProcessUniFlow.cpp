@@ -312,7 +312,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // for(Short_t i(0); i < 2; i++)
   for(Short_t i(0); i < task->fNumSamples; i++)
   {
-    prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%0.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
+    prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
     if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
     list->Add(prof);
   }
@@ -338,7 +338,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // at this point correlations are processed
   // start doing vns out of them
 
-  TH1D* hFlow = (TH1D*) histRebin->Clone(Form("hFlow_Refs_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
+  TH1D* hFlow = (TH1D*) histRebin->Clone(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
   hFlow->SetTitle(Form("Ref: v_{%d}{2 | Gap %g}",task->fHarmonics,task->fEtaGap));
   // TH1D* hFlow = (TH1D*) histRebin->Clone("hFlow");
   // hFlow->Reset();
@@ -360,16 +360,16 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
 
 
-  TCanvas* canTest = new TCanvas("canTestRefs","canTestReffs",1000,1000);
-  canTest->Divide(2,2);
-  canTest->cd(1);
-  merged->Draw();
-  canTest->cd(2);
-  rebin->Draw();
-  canTest->cd(3);
-  histRebin->Draw();
-  canTest->cd(4);
-  hFlow->Draw();
+  // TCanvas* canTest = new TCanvas("canTestRefs","canTestReffs",1000,1000);
+  // canTest->Divide(2,2);
+  // canTest->cd(1);
+  // merged->Draw();
+  // canTest->cd(2);
+  // rebin->Draw();
+  // canTest->cd(3);
+  // histRebin->Draw();
+  // canTest->cd(4);
+  // hFlow->Draw();
 
 
   ffOutputFile->cd();
@@ -396,19 +396,22 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   switch (task->fSpecies)
   {
     case FlowTask::kPhi :
+      histEntries = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntries_gap%02.2g",10*task->fEtaGap));
+      profFlow = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+      sSpeciesName = TString("Phi");
+      sSpeciesLabel = TString("#phi");
     break;
 
     case FlowTask::kK0s :
-      histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_gap%0.2g",10*task->fEtaGap));
-      profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
+      histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_gap%02.2g",10*task->fEtaGap));
+      profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
       sSpeciesName = TString("K0s");
       sSpeciesLabel = TString("K^{0}_{S}");
-
     break;
 
     case FlowTask::kLambda :
-      histEntries = (TH3D*) flFlowLambda->FindObject(Form("fh3V0sEntriesLambda_gap%0.2g",10*task->fEtaGap));
-      profFlow = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_<2>_harm%d_gap%0.2g",task->fHarmonics,10*task->fEtaGap));
+      histEntries = (TH3D*) flFlowLambda->FindObject(Form("fh3V0sEntriesLambda_gap%02.2g",10*task->fEtaGap));
+      profFlow = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
       sSpeciesName = TString("Lambda");
       sSpeciesLabel = TString("#Lambda/#bar{#Lambda}");
     break;
@@ -421,8 +424,18 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   if(!histEntries) { Error("Entries histos not found!","ProcessV0s"); return kFALSE; }
   if(!profFlow) { Error("Cumulant histos not found!","ProcessV0s"); return kFALSE; }
 
-  TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
-  if(!hRefFlow) { Error("Relevant Reference flow not found within output file.","ProcessV0s"); return kFALSE; }
+  TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+  if(!hRefFlow)
+  {
+    Warning("Relevant Reference flow not found within output file.","ProcessV0s");
+    Info("Creating relevant reference flow task.","ProcessV0s");
+
+    FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
+    taskRef->SetHarmonics(task->fHarmonics);
+    taskRef->SetEtaGap(task->fEtaGap);
+    if(ProcessRefs(taskRef)) return ProcessV0s(task);
+    else { Error("Something went wrong when running automatic refs flow task:","ProcessV0s"); taskRef->PrintTask(); return kFALSE; }
+  }
 
   // preparing for loops
   TH1D* hFlow = 0x0;
@@ -441,7 +454,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   for(Short_t binMult(0); binMult < fiNumMultBins; binMult++)
   {
     // preparing resulting flow vs pt (mult) histo
-    hFlow = new TH1D(Form("hFlow_%s_harm%d_gap%g_mult%d",sSpeciesName.Data(),task->fHarmonics,task->fEtaGap,binMult),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,10*task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
+    hFlow = new TH1D(Form("hFlow_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
 
     // estimating multiplicity edges and selection axis range
     binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
@@ -621,20 +634,20 @@ void ProcessUniFlow::TestProjections()
   TProfile* profy = prof->ProfileX("profy",40,70);
   // profy->Rebin(30);
 
-  TCanvas* cK0sCor = new TCanvas("cK0sCor","cK0sCor",1000,1000);
-  cK0sCor->Divide(2,3);
-  cK0sCor->cd(1);
-  p3K0sCor->Draw();
-  cK0sCor->cd(2);
-  h3K0sEntriesProjZ->Draw();
-  cK0sCor->cd(3);
-  profROOT->Draw("colz");
-  cK0sCor->cd(4);
-  prof->Draw("colz");
-  cK0sCor->cd(5);
-  profROOTy->Draw();
-  cK0sCor->cd(6);
-  profy->Draw();
+  // TCanvas* cK0sCor = new TCanvas("cK0sCor","cK0sCor",1000,1000);
+  // cK0sCor->Divide(2,3);
+  // cK0sCor->cd(1);
+  // p3K0sCor->Draw();
+  // cK0sCor->cd(2);
+  // h3K0sEntriesProjZ->Draw();
+  // cK0sCor->cd(3);
+  // profROOT->Draw("colz");
+  // cK0sCor->cd(4);
+  // prof->Draw("colz");
+  // cK0sCor->cd(5);
+  // profROOTy->Draw();
+  // cK0sCor->cd(6);
+  // profy->Draw();
 
 
 
