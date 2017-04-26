@@ -112,6 +112,7 @@ class ProcessUniFlow
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
     Bool_t      ProcessV0s(FlowTask* task = 0x0); // process  V0s flow
+    Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
@@ -284,11 +285,11 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
       bProcessed = ProcessRefs(task);
       break;
 
+    case FlowTask::kPhi:
     case FlowTask::kK0s:
     case FlowTask::kLambda:
       bProcessed = ProcessV0s(task);
       break;
-    // case FlowTask::kPhi:
     default: break;
   }
 
@@ -383,10 +384,12 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 {
   Info("Processing V0s task","ProcessV0s");
   if(!task) { Error("Task not valid!","ProcessV0s"); return kFALSE; }
+  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
 
   // preparing particle dependent variables for switch
   //  -- input histos / profiles with entries and correlations
   TH3D* histEntries = 0x0;
+  TH3D* histBG = 0x0; // etries for BG (phi)
   TProfile3D* profFlow = 0x0;
   //  -- naming variables
   TString sSpeciesName; // in objects name
@@ -396,7 +399,9 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   switch (task->fSpecies)
   {
     case FlowTask::kPhi :
-      histEntries = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntries_gap%02.2g",10*task->fEtaGap));
+      histEntries = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesSignal_gap%02.2g",10*task->fEtaGap));
+      histBG = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesBG_gap%02.2g",10*task->fEtaGap));
+      if(!histBG) { Error("Histo with BG entries not found","ProcessV0s"); return kFALSE; }
       profFlow = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
       sSpeciesName = TString("Phi");
       sSpeciesLabel = TString("#phi");
@@ -417,7 +422,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
     break;
 
     default:
-      Error("Task species not V0s!","ProcessV0s");
+      Error("Task species not V0s nor Phi!","ProcessV0s");
       return kFALSE;
   }
 
@@ -443,6 +448,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   Short_t binMultLow = 0, binMultHigh = 0;
   Short_t binPtLow = 0, binPtHigh = 0;
   TH1D* hInvMass = 0x0;
+  TH1D* hInvMassBG = 0x0;
   TProfile2D* prof2DFlowMass = 0x0;
   TProfile* profFlowMass = 0x0;
   TH1D* hFlowMass = 0x0;
@@ -474,6 +480,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 
       // rebinning entries based on mult & pt binning
       hInvMass = (TH1D*) histEntries->ProjectionZ("hInvMass",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+      if(histBG) hInvMassBG = (TH1D*) histBG->ProjectionZ("hInvMassBG",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
       // here can be rebinning of inv mass if needed
       // hInvMass ready to fitting
 
@@ -497,17 +504,18 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
       // extracting flow
       switch (task->fSpecies)
       {
+        case FlowTask::kPhi :
+          if( !ExtractFlowPhi(hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
+        break;
+
         case FlowTask::kK0s :
-          if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
+          if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
         break;
 
         case FlowTask::kLambda :
-          if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
+          if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
         break;
 
-        case FlowTask::kPhi :
-          // if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); }
-        break;
 
         default : break;
       }
@@ -664,7 +672,7 @@ TProfile2D* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
   Int_t iBinLast = prof3d->GetXaxis()->GetLast();
   Int_t iNumBins = prof3d->GetNbinsX();
   Int_t iNumBinsAxis = prof3d->GetXaxis()->GetNbins();
-  printf("Bins:  %d - %d (%d | %d) \n", iBinFirst,iBinLast,iNumBins,iNumBinsAxis);
+  // printf("Bins:  %d - %d (%d | %d) \n", iBinFirst,iBinLast,iNumBins,iNumBinsAxis);
 
   // // making 3d hist from 3d profile
   // TH3D* hist3d = prof3d->ProjectionXYZ();   //NOTE do not care about range !!!
@@ -1026,6 +1034,11 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
 
 
      return h2;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
+{
+  return kFALSE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
