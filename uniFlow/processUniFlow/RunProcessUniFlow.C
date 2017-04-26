@@ -76,21 +76,22 @@ void RunProcessUniFlow()
 	// process->AddTask(task6);
 	//
 
-	Double_t dPtBinningPhi[] = {0.5,0.7,0.9,1.1,1.3,1.5,1.7,1.9,2.1,2.3,2.5,2.7,2.9,3.1,3.3,3.5,4,4.5,5.};
+	Double_t dPtBinningPhi[] = {0.5,0.8,1.1,1.4,1.7,2.,2.3,2.6,2.9,3.2,3.5,4,4.5,5.};
+	// Double_t dPtBinningPhi[] = {1.,2.};
 	Int_t iSizePtPhi = sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]);
 
 
 	// FlowTask* task2 = new FlowTask("Phi",FlowTask::kPhi);
 	// task2->SetHarmonics(2);
 	// task2->SetEtaGap(-1.);
-	// task2->SetPtBins(dPtBinning,iSizePt);
+	// task2->SetPtBins(dPtBinningPhi,iSizePtPhi);
 	// process->AddTask(task2);
-	//
-	// FlowTask* task3 = new FlowTask("Phi",FlowTask::kPhi);
-	// task3->SetHarmonics(2);
-	// task3->SetEtaGap(0.);
-	// task3->SetPtBins(dPtBinning,iSizePt);
-	// process->AddTask(task3);
+
+	FlowTask* task3 = new FlowTask("Phi",FlowTask::kPhi);
+	task3->SetHarmonics(2);
+	task3->SetEtaGap(0.);
+	task3->SetPtBins(dPtBinningPhi,iSizePtPhi);
+	process->AddTask(task3);
 	//
 	FlowTask* task4 = new FlowTask("Phi",FlowTask::kPhi);
 	task4->SetHarmonics(2);
