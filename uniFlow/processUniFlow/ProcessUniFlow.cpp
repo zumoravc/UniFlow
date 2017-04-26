@@ -613,20 +613,20 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 
   if(!task->fShowMult && fbDebug)
   {
-    // TCanvas* canTest = new TCanvas("canTest","Test",600,600);
-    // canTest->Divide(2,3);
-    // canTest->cd(1);
-    // histEntries->Draw();
-    // canTest->cd(2);
-    // profFlow->Draw();
-    // canTest->cd(3);
-    // hInvMass->Draw();
-    // canTest->cd(4);
-    // profFlowMass->Draw();
-    // canTest->cd(5);
-    // hFlowMass->Draw();
-    // canTest->cd(6);
-    // prof2DFlowMass->Draw("colz");
+    TCanvas* canTest = new TCanvas("canTest","Test",600,600);
+    canTest->Divide(2,3);
+    canTest->cd(1);
+    histEntries->Draw();
+    canTest->cd(2);
+    profFlow->Draw();
+    canTest->cd(3);
+    hInvMass->Draw();
+    canTest->cd(4);
+    profFlowMass->Draw();
+    canTest->cd(5);
+    hFlowMass->Draw();
+    canTest->cd(6);
+    prof2DFlowMass->Draw("colz");
   }
 
   return kTRUE;
