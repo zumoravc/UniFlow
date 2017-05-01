@@ -52,12 +52,13 @@ class FlowTask
     Bool_t      fShowMult; // show multiplicity distribution
     Bool_t      fSuggestPtBins; // suggest pt binning
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
+    std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
     std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fVecHistInvMass =  new std::vector<TH1D*>; fVecHistFlowMass =  new std::vector<TH1D*>; }
+FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fVecHistInvMass = new std::vector<TH1D*>; fVecHistInvMassBG = new std::vector<TH1D*>; fVecHistFlowMass = new std::vector<TH1D*>; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
-FlowTask::~FlowTask() { if(fVecHistFlowMass) delete fVecHistFlowMass; if(fVecHistInvMass) delete fVecHistInvMass; }
+FlowTask::~FlowTask() { if(fVecHistFlowMass) delete fVecHistFlowMass; if(fVecHistInvMass) delete fVecHistInvMass; if(fVecHistInvMassBG) delete fVecHistInvMassBG; }
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 {
   if(size < 0 || size > fNumPtBinsMax) { Error("Wrong size of pt binning array.","SetPtBins"); return; }
@@ -117,7 +118,7 @@ class ProcessUniFlow
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
     Bool_t      ProcessV0s(FlowTask* task = 0x0); // process  V0s flow
-    Bool_t      MakeSlices(FlowTask* task = 0x0); // prepare
+    Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
     Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
@@ -470,8 +471,6 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 {
   Info("Processing V0s task","ProcessV0s");
   if(!task) { Error("Task not valid!","ProcessV0s"); return kFALSE; }
-
-
   // if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
 
   // preparing particle dependent variables for switch
@@ -514,19 +513,10 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
       return kFALSE;
   }
 
-  // check if suggest pt binning flag is on
-  if(task->fSuggestPtBins)
-  {
-    SuggestPtBinning(histEntries,profFlow,task);
-  }
-
-  return kTRUE;
-  // NOTE
-
   if(!histEntries) { Error("Entries histos not found!","ProcessV0s"); return kFALSE; }
   if(!profFlow) { Error("Cumulant histos not found!","ProcessV0s"); return kFALSE; }
 
-
+  // loading reference flow, if not found, it will be prepared
   TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
   if(!hRefFlow)
   {
@@ -539,6 +529,28 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
     if(ProcessRefs(taskRef)) return ProcessV0s(task);
     else { Error("Something went wrong when running automatic refs flow task:","ProcessV0s"); taskRef->PrintTask(); return kFALSE; }
   }
+
+  // potential loop over multiplicity bins
+
+  const Short_t iMultBin = 0;
+  // check if suggest pt binning flag is on if of Pt binning is not specified
+  if(task->fSuggestPtBins || task->fNumPtBins < 1)
+  {
+    SuggestPtBinning(histEntries,profFlow,task);
+  }
+
+  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
+
+  if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histBG)) return kFALSE;
+
+
+
+  return kTRUE;
+  // NOTE
+
+
+
+
 
   // preparing for loops
   TH1D* hFlow = 0x0;
@@ -667,6 +679,68 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
     prof2DFlowMass->Draw("colz");
   }
 
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor, TH3D* h3Entries, TH3D* h3EntriesBG)
+{
+
+  if(!task) { Error("Input task not found!","PrepareSlices"); return kFALSE; }
+  if(!h3Entries) { Error("Input hist with entries not found!","PrepareSlices"); return kFALSE; }
+  if(!p3Cor) { Error("Input profile with correlations not found!","PrepareSlices"); return kFALSE; }
+  if(multBin < 0 || multBin > fiNumMultBins) { Error("Wrong multiplicity bin index (not in range)!","PrepareSlices"); return kFALSE; }
+
+  // cleaning the vectros with flow-mass and inv. mass plots
+  if(task->fVecHistInvMass->size() > 0) task->fVecHistInvMass->clear();
+  if(task->fVecHistInvMassBG->size() > 0) task->fVecHistInvMassBG->clear();
+  if(task->fVecHistFlowMass->size() > 0) task->fVecHistFlowMass->clear();
+
+  const Short_t binMultLow = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin]);
+  const Short_t binMultHigh = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin+1]) - 1;
+  printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[multBin],binMultLow,fdMultBins[multBin+1],binMultHigh);
+
+  // loop over pt
+  Short_t binPtLow = 0;
+  Short_t binPtHigh = 0;
+  TH1D* hInvMass_temp = 0x0;
+  TH1D* hInvMassBG_temp = 0x0;
+  TProfile3D* prof3Flow_temp = 0x0;
+  TProfile2D* prof2FlowMass_temp = 0x0;
+  TProfile* profFlowMass_temp = 0x0;
+  TH1D* hFlowMass_temp = 0x0;
+
+  prof3Flow_temp = (TProfile3D*) p3Cor->Clone(Form("prof3Flow_temp_mult%d",multBin));
+  prof3Flow_temp->GetXaxis()->SetRange(binMultLow,binMultHigh);
+  prof2FlowMass_temp = Project3DProfile(prof3Flow_temp);
+
+  for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
+  {
+    // estimating pt edges
+    binPtLow = h3Entries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
+    binPtHigh = h3Entries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+    printf("   Pt: %g(%d) -  %g(%d)\n",task->fPtBinsEdges[binPt],binPtLow,task->fPtBinsEdges[binPt+1],binPtHigh);
+
+    // rebinning entries based on mult & pt binning
+    hInvMass_temp = (TH1D*) h3Entries->ProjectionZ(Form("hInvMass_mult%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+    if(h3EntriesBG) hInvMassBG_temp = (TH1D*) h3EntriesBG->ProjectionZ(Form("hInvMassBG_mult%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+    // here can be rebinning of inv mass if needed
+
+    // projection of flow-mass profile
+    profFlowMass_temp = (TProfile*) prof2FlowMass_temp->ProfileX(Form("profFlowMass_mult%d_pt%d",multBin,binPt),binPtLow,binPtHigh);
+    hFlowMass_temp = (TH1D*) profFlowMass_temp->ProjectionX(Form("hFlowMass_mult%d_pt%d",multBin,binPt));
+    // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
+
+    // ready to fitting
+    task->fVecHistFlowMass->push_back(hFlowMass_temp);
+    task->fVecHistInvMass->push_back(hInvMass_temp);
+    if(h3EntriesBG) task->fVecHistInvMassBG->push_back(hInvMassBG_temp);
+
+  } // endfor {binPt}: over Pt bins
+
+  printf(" # of slices: InvMass: %d | InvMassBG %d | FlowMass %d\n",task->fVecHistInvMass->size(),task->fVecHistInvMassBG->size(),task->fVecHistFlowMass->size());
+
+
+  if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
   return kTRUE;
 }
 //_____________________________________________________________________________
