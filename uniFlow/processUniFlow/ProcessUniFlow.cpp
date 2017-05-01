@@ -734,7 +734,16 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   prof3Flow_temp->GetXaxis()->SetRange(binMultLow,binMultHigh);
   prof2FlowMass_temp = Project3DProfile(prof3Flow_temp);
 
-  for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
+  Short_t iNumPtBins = task->fNumPtBins;
+
+  TCanvas* canFlowMass = new TCanvas("canFlowMass","FlowMass",1400,600);
+  TCanvas* canInvMass = new TCanvas("canInvMass","InvMass",1400,600);
+  TCanvas* canInvMassBG = new TCanvas("canInvMassBG","InvMassBG",1400,600);
+  canFlowMass->Divide(5,std::ceil(iNumPtBins/5));
+  canInvMass->Divide(5,std::ceil(iNumPtBins/5));
+  canInvMassBG->Divide(5,std::ceil(iNumPtBins/5));
+
+  for(Short_t binPt(0); binPt < iNumPtBins; binPt++)
   {
     // estimating pt edges
     binPtLow = h3Entries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
@@ -756,10 +765,25 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
     task->fVecHistInvMass->push_back(hInvMass_temp);
     if(h3EntriesBG) task->fVecHistInvMassBG->push_back(hInvMassBG_temp);
 
+    canFlowMass->cd(binPt+1);
+    hFlowMass_temp->Draw();
+
+    canInvMass->cd(binPt+1);
+    hInvMass_temp->Draw();
+
+    if(h3EntriesBG)
+    {
+      canInvMassBG->cd(binPt+1);
+      hInvMassBG_temp->Draw();
+    }
+
   } // endfor {binPt}: over Pt bins
 
   printf(" # of slices: InvMass: %lu | InvMassBG %lu | FlowMass %lu\n",task->fVecHistInvMass->size(),task->fVecHistInvMassBG->size(),task->fVecHistFlowMass->size());
 
+  canFlowMass->SaveAs(Form("%s/Slices_FlowMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  canInvMass->SaveAs(Form("%s/Slices_InvMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  if(h3EntriesBG) canInvMassBG->SaveAs(Form("%s/Slices_InvMassBG_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
 
   if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
   return kTRUE;
@@ -845,7 +869,7 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   }
   printf("\n");
 
-  cPtBins->SaveAs(Form("%s/SuggestPtBins_%s_gap%g_mult%d",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,binMult));
+  cPtBins->SaveAs(Form("%s/SuggestPtBins_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,binMult,fsOutputFileFormat.Data()));
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
