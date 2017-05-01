@@ -17,7 +17,7 @@ void RunProcessUniFlow()
 	// process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_ver3_Charged/");
 	process->SetInputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
 	process->SetInputFileName("AnalysisResults.root");
-	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
+	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/taskVer2");
 	process->SetTaskName("UniFlow");
 	process->SetDebug();
 	// process->SuggestMultBinning(4);
@@ -91,7 +91,7 @@ void RunProcessUniFlow()
 	FlowTask* task3 = new FlowTask("Phi",FlowTask::kPhi);
 	task3->SetHarmonics(2);
 	task3->SetEtaGap(0.8);
-	task3->SetPtBins(dPtBinningPhi,iSizePtPhi);
+	// task3->SetPtBins(dPtBinningPhi,iSizePtPhi);
 	task3->SuggestPtBinning();
 	process->AddTask(task3);
 	//

@@ -51,11 +51,13 @@ class FlowTask
     Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     Bool_t      fShowMult; // show multiplicity distribution
     Bool_t      fSuggestPtBins; // suggest pt binning
+    std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
+    std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; }
+FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fVecHistInvMass =  new std::vector<TH1D*>; fVecHistFlowMass =  new std::vector<TH1D*>; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
-FlowTask::~FlowTask() {}
+FlowTask::~FlowTask() { if(fVecHistFlowMass) delete fVecHistFlowMass; if(fVecHistInvMass) delete fVecHistInvMass; }
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 {
   if(size < 0 || size > fNumPtBinsMax) { Error("Wrong size of pt binning array.","SetPtBins"); return; }
@@ -111,21 +113,21 @@ class ProcessUniFlow
   private:
     Bool_t      Initialize(); // initialization task
     Bool_t      LoadLists(); // loading flow lists from input file
-    void        TestProjections(); // testing projection of reconstructed particles
-
-    TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
-    TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
-    TH2D*       DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
 
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
     Bool_t      ProcessV0s(FlowTask* task = 0x0); // process  V0s flow
+    Bool_t      MakeSlices(FlowTask* task = 0x0); // prepare
     Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
     void        SuggestMultBinning(const Short_t numFractions);
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0); //
 
+    void        TestProjections(); // testing projection of reconstructed particles
+    TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
+    TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
+    TH2D*       DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
 
 
     // printing output methods
@@ -189,6 +191,20 @@ ProcessUniFlow::~ProcessUniFlow()
   // default destructor
   if(ffInputFile) delete ffInputFile;
   if(ffOutputFile) delete ffOutputFile;
+
+  if(flFlowRefs) delete flFlowRefs;
+  if(flFlowCharged) delete flFlowCharged;
+  if(flFlowPID) delete flFlowPID;
+  if(flFlowPhi) delete flFlowPhi;
+  if(flFlowK0s) delete flFlowK0s;
+  if(flFlowLambda) delete flFlowLambda;
+
+  // deleting the FlowTasks
+  const Short_t iNumTasks = fvTasks.size();
+  for(Short_t index(0); index < iNumTasks; index++)
+  {
+    delete fvTasks.at(index);
+  }
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Run()
@@ -203,6 +219,7 @@ void ProcessUniFlow::Run()
 
   const Short_t iNumTasks = fvTasks.size();
   FlowTask* currentTask = 0x0;
+
   Info("===== Running over tasks ======","Run");
   Info(Form("  Number of tasks: %d\n",iNumTasks),"Run");
   for(Short_t iTask(0); iTask < iNumTasks; iTask++)
@@ -453,7 +470,9 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 {
   Info("Processing V0s task","ProcessV0s");
   if(!task) { Error("Task not valid!","ProcessV0s"); return kFALSE; }
-  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
+
+
+  // if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
 
   // preparing particle dependent variables for switch
   //  -- input histos / profiles with entries and correlations
@@ -500,6 +519,9 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   {
     SuggestPtBinning(histEntries,profFlow,task);
   }
+
+  return kTRUE;
+  // NOTE
 
   if(!histEntries) { Error("Entries histos not found!","ProcessV0s"); return kFALSE; }
   if(!profFlow) { Error("Cumulant histos not found!","ProcessV0s"); return kFALSE; }
@@ -715,11 +737,11 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   Short_t binPtLow = 0;
   Short_t binPtHigh = 0;
 
-  printf("bins 5x%d\n",(Int_t)iNumBins/5 +1);
+  printf("bins: %d (5x%d)\n",iNumBins,(int)std::ceil(iNumBins/5));
   TCanvas* cBinning = new TCanvas("cBinning","cBinning",1400,1000);
-  cBinning->Divide((Int_t)iNumBins/5+1,5);
+  cBinning->Divide(5,(int)std::ceil(iNumBins/5));
   TCanvas* cBinningFlow = new TCanvas("cBinningFlow","cBinningFlow",1400,1000);
-  cBinningFlow->Divide((Int_t)iNumBins/5+1,5);
+  cBinningFlow->Divide(5,(int)std::ceil(iNumBins/5));
 
   for(Short_t index(0); index < iNumBins-1; index++)
   {
