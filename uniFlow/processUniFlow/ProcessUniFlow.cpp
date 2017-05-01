@@ -10,6 +10,7 @@
 #include "TFile.h"
 #include "TList.h"
 #include "TCanvas.h"
+#include "TLine.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
 #include "TProfile3D.h"
@@ -34,6 +35,7 @@ class FlowTask
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
+    void        SuggestPtBinning(Bool_t bin = kTRUE) { fSuggestPtBins = bin; } // suggest pt binning based on number of candidates
 
   protected:
   private:
@@ -48,9 +50,10 @@ class FlowTask
     Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
     Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     Bool_t      fShowMult; // show multiplicity distribution
+    Bool_t      fSuggestPtBins; // suggest pt binning
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; }
+FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
 FlowTask::~FlowTask() {}
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
@@ -73,6 +76,8 @@ void FlowTask::PrintTask()
   printf("----- Printing task info ------\n");
   printf("   fName: %s\n",fName.Data());
   printf("   fSpecies: %d\n",fSpecies);
+  printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
+  printf("   fSuggestPtBins: %s\n", fSuggestPtBins ? "true" : "false");
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
   printf("   fNumPtBins: %d (limit %d)\n",fNumPtBins,fNumPtBinsMax);
@@ -81,7 +86,9 @@ void FlowTask::PrintTask()
   return;
 }
 
-
+//_____________________________________________________________________________
+//_____________________________________________________________________________
+//_____________________________________________________________________________
 
 class ProcessUniFlow
 {
@@ -99,7 +106,6 @@ class ProcessUniFlow
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
     void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
-    void        SuggestMultBinning(const Short_t numFractions); // try to cut multiplicity distribution into fractions
   protected:
 
   private:
@@ -117,6 +123,10 @@ class ProcessUniFlow
     Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
+    void        SuggestMultBinning(const Short_t numFractions);
+    void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0); //
+
+
 
     // printing output methods
     void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
@@ -485,6 +495,12 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
       return kFALSE;
   }
 
+  // check if suggest pt binning flag is on
+  if(task->fSuggestPtBins)
+  {
+    SuggestPtBinning(histEntries,profFlow,task);
+  }
+
   if(!histEntries) { Error("Entries histos not found!","ProcessV0s"); return kFALSE; }
   if(!profFlow) { Error("Cumulant histos not found!","ProcessV0s"); return kFALSE; }
 
@@ -638,6 +654,98 @@ void ProcessUniFlow::AddTask(FlowTask* task)
 
   fvTasks.push_back(task);
   return;
+}
+//_____________________________________________________________________________
+void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOrig, FlowTask* task)
+{
+  if(!histEntries) return;
+  if(!profFlowOrig) return;
+  if(!task) return;
+
+  const Short_t binMult = 0; //NOTE to be modified
+
+  Short_t binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
+  Short_t binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+
+  TProfile3D* profFlow = (TProfile3D*) profFlowOrig->Clone("profFlow");
+  profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh); // setting multiplicity range
+  TH1D* hPtProj = (TH1D*) histEntries->ProjectionY("hPtProj",binMultLow,binMultHigh);
+  TH3D* hTemp = (TH3D*) histEntries->Clone("hTemp");
+  TH1D* hInvMass = 0x0;
+  TProfile2D* prof2DFlowMass = 0x0;
+  TProfile* profFlowMass = 0x0;
+  TH1D* hFlowMass = 0x0;
+
+  const Double_t dMinEntries = 20000;
+  std::vector<Short_t> vecBins;
+
+  printf("vector pre: %lu\n", vecBins.size());
+
+  Double_t dCount = 0;
+  const Short_t iNBins = hPtProj->GetNbinsX();
+  printf("Suggested binning: ");
+  for(Short_t iBin(1); iBin < iNBins+1; iBin++)
+  {
+    dCount += hPtProj->GetBinContent(iBin);
+    if(dCount > dMinEntries)
+    {
+      vecBins.push_back(iBin);
+      printf("%d |",iBin);
+      dCount = 0;
+    }
+  }
+  vecBins.push_back(iNBins); // pushing last edge
+  const Short_t iNumBins = vecBins.size();
+  printf("\nvector post: %lu\n", iNumBins);
+
+  TLine* line = new TLine();
+  line->SetLineColor(kRed);
+  TCanvas* cPtBins = new TCanvas("cPtBins","cPtBins",600,600);
+  cPtBins->Divide(1,2);
+  cPtBins->cd(1);
+  histEntries->Draw();
+  cPtBins->cd(2);
+  hPtProj->Draw();
+  for(Short_t index(0); index < iNumBins-1; index++)
+  {
+    // line = TLine(vecBins.at(index),0,vecBins.at(index),hPtProj->GetMaximum());
+    line->DrawLine(hPtProj->GetBinLowEdge(vecBins.at(index)),0,hPtProj->GetBinLowEdge(vecBins.at(index)),hPtProj->GetMaximum());
+  }
+
+  Short_t binPtLow = 0;
+  Short_t binPtHigh = 0;
+
+  printf("bins 5x%d\n",(Int_t)iNumBins/5 +1);
+  TCanvas* cBinning = new TCanvas("cBinning","cBinning",1400,1000);
+  cBinning->Divide((Int_t)iNumBins/5+1,5);
+  TCanvas* cBinningFlow = new TCanvas("cBinningFlow","cBinningFlow",1400,1000);
+  cBinningFlow->Divide((Int_t)iNumBins/5+1,5);
+
+  for(Short_t index(0); index < iNumBins-1; index++)
+  {
+    binPtLow = vecBins.at(index);
+    binPtHigh = vecBins.at(index+1);
+    hInvMass = (TH1D*) hTemp->ProjectionZ(Form("hInvMass_pt%d",index),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+
+    cBinning->cd(index+1);
+    hInvMass->Draw();
+
+    prof2DFlowMass = Project3DProfile(profFlow); // doing projection with modified function
+    profFlowMass = (TProfile*) prof2DFlowMass->ProfileX(Form("profFlowMass_pt%d",index),binPtLow,binPtHigh);
+    hFlowMass = (TH1D*) profFlowMass->ProjectionX(Form("hFlowMass_pt%d",index));
+
+    cBinningFlow->cd(index+1);
+    hFlowMass->Draw();
+  }
+  cBinning->SaveAs(Form("%s/SuggestPtBinsEntries_mult%d_pt%d.%s",fsOutputFilePath.Data(),binMult,index,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+  cBinningFlow->SaveAs(Form("%s/SuggestPtBinsFlow_mult%d_pt%d.%s",fsOutputFilePath.Data(),binMult,index,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+
+
+  task->fNumPtBins = iNumBins;
+  for(Short_t index(0); index < iNumBins; index++)
+  {
+    task->fPtBinsEdges[index] = histEntries->GetYaxis()->GetBinLowEdge(vecBins.at(index));
+  }
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
