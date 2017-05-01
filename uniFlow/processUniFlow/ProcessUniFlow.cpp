@@ -541,7 +541,10 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 
   if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
 
+  task->PrintTask();
+
   if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histBG)) return kFALSE;
+
 
 
 
@@ -737,7 +740,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
 
   } // endfor {binPt}: over Pt bins
 
-  printf(" # of slices: InvMass: %d | InvMassBG %d | FlowMass %d\n",task->fVecHistInvMass->size(),task->fVecHistInvMassBG->size(),task->fVecHistFlowMass->size());
+  printf(" # of slices: InvMass: %lu | InvMassBG %lu | FlowMass %lu\n",task->fVecHistInvMass->size(),task->fVecHistInvMassBG->size(),task->fVecHistFlowMass->size());
 
 
   if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
@@ -763,85 +766,52 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   Short_t binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
   Short_t binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
 
-  TProfile3D* profFlow = (TProfile3D*) profFlowOrig->Clone("profFlow");
-  profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh); // setting multiplicity range
   TH1D* hPtProj = (TH1D*) histEntries->ProjectionY("hPtProj",binMultLow,binMultHigh);
-  TH3D* hTemp = (TH3D*) histEntries->Clone("hTemp");
-  TH1D* hInvMass = 0x0;
-  TProfile2D* prof2DFlowMass = 0x0;
-  TProfile* profFlowMass = 0x0;
-  TH1D* hFlowMass = 0x0;
 
   const Double_t dMinEntries = 20000;
-  std::vector<Short_t> vecBins;
+  std::vector<Double_t> vecBins;
 
   printf("vector pre: %lu\n", vecBins.size());
+  vecBins.push_back(hPtProj->GetXaxis()->GetXmin()); // pushing first edge
 
   Double_t dCount = 0;
   const Short_t iNBins = hPtProj->GetNbinsX();
-  printf("Suggested binning: ");
+
   for(Short_t iBin(1); iBin < iNBins+1; iBin++)
   {
     dCount += hPtProj->GetBinContent(iBin);
     if(dCount > dMinEntries)
     {
-      vecBins.push_back(iBin);
-      printf("%d |",iBin);
+      vecBins.push_back(hPtProj->GetXaxis()->GetBinUpEdge(iBin));
       dCount = 0;
     }
   }
-  vecBins.push_back(iNBins); // pushing last edge
-  const Short_t iNumBins = vecBins.size();
-  printf("\nvector post: %lu\n", iNumBins);
+  vecBins.push_back(hPtProj->GetXaxis()->GetXmax()); // pushing last edge (low edge of underflowbin)
+  const Short_t iNumBinEdges = vecBins.size();
+  printf("vector post: %lu\n", iNumBinEdges);
+
+  // filling internal pt binning with suggestion result
+  task->fNumPtBins = iNumBinEdges-1;
+  for(Short_t index(0); index < iNumBinEdges; index++)
+  {
+    task->fPtBinsEdges[index] = vecBins.at(index);
+  }
+
 
   TLine* line = new TLine();
   line->SetLineColor(kRed);
   TCanvas* cPtBins = new TCanvas("cPtBins","cPtBins",600,600);
   cPtBins->Divide(1,2);
   cPtBins->cd(1);
-  histEntries->Draw();
-  cPtBins->cd(2);
   hPtProj->Draw();
-  for(Short_t index(0); index < iNumBins-1; index++)
+
+  printf("Suggested binning: ");
+  for(Short_t index(0); index < iNumBinEdges; index++)
   {
-    // line = TLine(vecBins.at(index),0,vecBins.at(index),hPtProj->GetMaximum());
-    line->DrawLine(hPtProj->GetBinLowEdge(vecBins.at(index)),0,hPtProj->GetBinLowEdge(vecBins.at(index)),hPtProj->GetMaximum());
+    printf("%hd (%g) | ",index,vecBins.at(index));
+    line->DrawLine(vecBins.at(index),0,vecBins.at(index),1.05*hPtProj->GetMaximum());
   }
-
-  Short_t binPtLow = 0;
-  Short_t binPtHigh = 0;
-
-  printf("bins: %d (5x%d)\n",iNumBins,(int)std::ceil(iNumBins/5));
-  TCanvas* cBinning = new TCanvas("cBinning","cBinning",1400,1000);
-  cBinning->Divide(5,(int)std::ceil(iNumBins/5));
-  TCanvas* cBinningFlow = new TCanvas("cBinningFlow","cBinningFlow",1400,1000);
-  cBinningFlow->Divide(5,(int)std::ceil(iNumBins/5));
-
-  for(Short_t index(0); index < iNumBins-1; index++)
-  {
-    binPtLow = vecBins.at(index);
-    binPtHigh = vecBins.at(index+1);
-    hInvMass = (TH1D*) hTemp->ProjectionZ(Form("hInvMass_pt%d",index),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-
-    cBinning->cd(index+1);
-    hInvMass->Draw();
-
-    prof2DFlowMass = Project3DProfile(profFlow); // doing projection with modified function
-    profFlowMass = (TProfile*) prof2DFlowMass->ProfileX(Form("profFlowMass_pt%d",index),binPtLow,binPtHigh);
-    hFlowMass = (TH1D*) profFlowMass->ProjectionX(Form("hFlowMass_pt%d",index));
-
-    cBinningFlow->cd(index+1);
-    hFlowMass->Draw();
-  }
-  cBinning->SaveAs(Form("%s/SuggestPtBinsEntries_mult%d_pt%d.%s",fsOutputFilePath.Data(),binMult,index,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
-  cBinningFlow->SaveAs(Form("%s/SuggestPtBinsFlow_mult%d_pt%d.%s",fsOutputFilePath.Data(),binMult,index,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
-
-
-  task->fNumPtBins = iNumBins;
-  for(Short_t index(0); index < iNumBins; index++)
-  {
-    task->fPtBinsEdges[index] = histEntries->GetYaxis()->GetBinLowEdge(vecBins.at(index));
-  }
+  printf("\n");
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
