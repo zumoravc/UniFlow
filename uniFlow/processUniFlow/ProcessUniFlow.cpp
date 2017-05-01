@@ -35,6 +35,7 @@ class FlowTask
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
+    TString     GetSpeciesName();
     void        SuggestPtBinning(Bool_t bin = kTRUE) { fSuggestPtBins = bin; } // suggest pt binning based on number of candidates
 
   protected:
@@ -72,6 +73,23 @@ void FlowTask::SetPtBins(Double_t* array, const Short_t size)
   }
 
   return;
+}
+TString FlowTask::GetSpeciesName()
+{
+  TString name = TString();
+  switch (fSpecies)
+  {
+    case kRefs : name.Append("Refs"); break;
+    case kCharged : name.Append("Charged"); break;
+    case kPion : name.Append("Pion"); break;
+    case kKaon : name.Append("Kaon"); break;
+    case kProton : name.Append("Proton"); break;
+    case kPhi : name.Append("Phi"); break;
+    case kK0s : name.Append("K0s"); break;
+    case kLambda : name.Append("Lambda"); break;
+    default: name.Append("Unknown");
+  }
+  return name;
 }
 
 void FlowTask::PrintTask()
@@ -770,6 +788,7 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
 
   const Double_t dMinEntries = 20000;
   std::vector<Double_t> vecBins;
+  std::vector<Double_t> vecContents;
 
   printf("vector pre: %lu\n", vecBins.size());
   vecBins.push_back(hPtProj->GetXaxis()->GetXmin()); // pushing first edge
@@ -783,12 +802,14 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
     if(dCount > dMinEntries)
     {
       vecBins.push_back(hPtProj->GetXaxis()->GetBinUpEdge(iBin));
+      vecContents.push_back(dCount);
       dCount = 0;
     }
   }
+  vecContents.push_back(dCount); // pushing last (remaining) bin content
   vecBins.push_back(hPtProj->GetXaxis()->GetXmax()); // pushing last edge (low edge of underflowbin)
   const Short_t iNumBinEdges = vecBins.size();
-  printf("vector post: %lu\n", iNumBinEdges);
+  printf("vector post: %hd\n", iNumBinEdges);
 
   // filling internal pt binning with suggestion result
   task->fNumPtBins = iNumBinEdges-1;
@@ -797,13 +818,24 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
     task->fPtBinsEdges[index] = vecBins.at(index);
   }
 
+  TH1D* hBinsContent = new TH1D("hBinsContent","BinContent", task->fNumPtBins, task->fPtBinsEdges);
+  for(Short_t iBin(0); iBin < iNumBinEdges-1; iBin++)
+  {
+    hBinsContent->SetBinContent(iBin+1,vecContents.at(iBin));
+  }
 
   TLine* line = new TLine();
   line->SetLineColor(kRed);
+
   TCanvas* cPtBins = new TCanvas("cPtBins","cPtBins",600,600);
   cPtBins->Divide(1,2);
   cPtBins->cd(1);
   hPtProj->Draw();
+  cPtBins->cd(2);
+  hBinsContent->SetMinimum(0);
+  hBinsContent->Draw();
+  line->DrawLine(hPtProj->GetXaxis()->GetXmin(),dMinEntries, hPtProj->GetXaxis()->GetXmax(), dMinEntries);
+  cPtBins->cd(1);
 
   printf("Suggested binning: ");
   for(Short_t index(0); index < iNumBinEdges; index++)
@@ -812,6 +844,8 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
     line->DrawLine(vecBins.at(index),0,vecBins.at(index),1.05*hPtProj->GetMaximum());
   }
   printf("\n");
+
+  cPtBins->SaveAs(Form("%s/SuggestPtBins_%s_gap%g_mult%d",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,binMult));
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
