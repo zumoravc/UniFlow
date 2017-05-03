@@ -563,142 +563,51 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
 
   if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histBG)) return kFALSE;
 
+  TH1D* hFlow = new TH1D(Form("hFlow_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
 
-
-
-  return kTRUE;
-  // NOTE
-
-
-
-
-
-  // preparing for loops
-  TH1D* hFlow = 0x0;
-  Double_t dRefs = 0, dRefsError = 0;
-  Short_t binMultLow = 0, binMultHigh = 0;
-  Short_t binPtLow = 0, binPtHigh = 0;
   TH1D* hInvMass = 0x0;
   TH1D* hInvMassBG = 0x0;
-  TProfile2D* prof2DFlowMass = 0x0;
-  TProfile* profFlowMass = 0x0;
   TH1D* hFlowMass = 0x0;
-  Double_t dContent = 0, dError = 0;
   Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
   TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200); // canvas for fitting results
-  TCanvas* cFlow = new TCanvas("cFlow","Flow",400,400); // canvas for resulting flow vs pt
-  TCanvas* cMultDist = new TCanvas("cMultDist","MultDist.",1200,1200);
-  cMultDist->Divide(3,(Int_t)(fiNumMultBins/3)+1);
-
-  for(Short_t binMult(0); binMult < fiNumMultBins; binMult++)
+  for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
   {
-    // preparing resulting flow vs pt (mult) histo
-    hFlow = new TH1D(Form("hFlow_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
 
-    // estimating multiplicity edges and selection axis range
-    binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
-    binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
-    profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh); // setting multiplicity range
+    hInvMass = task->fVecHistInvMass->at(binPt);
+    hFlowMass = task->fVecHistFlowMass->at(binPt);
 
-
-    // checking if Show Multiplicity distribution mode is on (if so, only entries as a function of pt are showed in mult bins)
-    if(task->fShowMult)
+    // extracting flow
+    switch (task->fSpecies)
     {
-      hInvMass = (TH1D*) histEntries->ProjectionY(Form("hInvMass_mult%d",binMult),binMultLow,binMultHigh);
-      cMultDist->cd(binMult+1);
-      gPad->SetLogy();
-      hInvMass->Draw();
-      continue;
+      case FlowTask::kPhi :
+      hInvMassBG = task->fVecHistInvMassBG->at(binPt);
+      if( !ExtractFlowPhi(hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
+      break;
+
+      case FlowTask::kK0s :
+      if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
+      break;
+
+      case FlowTask::kLambda :
+      if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
+      break;
+
+
+      default : break;
     }
 
-    // loading relevant reference flow
-    dRefs = hRefFlow->GetBinContent(binMult+1);
-    dRefsError = hRefFlow->GetBinError(binMult+1);
+    hFlow->SetBinContent(binPt+1,dFlow);
+    hFlow->SetBinError(binPt+1,dFlowError);
 
-    for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
-    {
-      // estimating pt edges
-      binPtLow = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
-      binPtHigh = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+  } // endfor {binPt}
 
-      // rebinning entries based on mult & pt binning
-      hInvMass = (TH1D*) histEntries->ProjectionZ("hInvMass",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-      if(histBG) hInvMassBG = (TH1D*) histBG->ProjectionZ("hInvMassBG",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-      // here can be rebinning of inv mass if needed
-      // hInvMass ready to fitting
+  TCanvas* cFlow = new TCanvas("cFlow","cFlow");
+  cFlow->cd();
+  hFlow->Draw();
+  cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
-      // projection of flow-mass profile
-      prof2DFlowMass = Project3DProfile(profFlow); // doing projection with modified function
-      profFlowMass = (TProfile*) prof2DFlowMass->ProfileX("profFlowMass",binPtLow,binPtHigh);
-      hFlowMass = (TH1D*) profFlowMass->ProjectionX("hFlowMass");
-      // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
-
-      // make flow out of corralation
-      for(Short_t iMass(1); iMass < profFlowMass->GetNbinsX()+1; iMass++)
-      {
-        dContent = profFlowMass->GetBinContent(iMass);
-        dError = profFlowMass->GetBinError(iMass);
-        hFlowMass->SetBinContent(iMass, dContent / dRefs);
-        hFlowMass->SetBinError(iMass, TMath::Sqrt(TMath::Power(dError/dRefs,2) + TMath::Power(dContent*dRefsError/(dRefs*dRefs),2)) );
-        // printf("bin %d | %g±%g\n",iMass, dContent,dError);
-      }
-      // hFlowMass is ready for fitting
-
-      // extracting flow
-      switch (task->fSpecies)
-      {
-        case FlowTask::kPhi :
-          if( !ExtractFlowPhi(hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
-        break;
-
-        case FlowTask::kK0s :
-          if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
-        break;
-
-        case FlowTask::kLambda :
-          if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
-        break;
-
-
-        default : break;
-      }
-      Info(Form("Extracted flow: %g ± %g\n",dFlow,dFlowError),"ProcessV0s");
-
-      // saving pt bin resulting flow to flow-vs-pt hist
-      hFlow->SetBinContent(binPt+1, dFlow);
-      hFlow->SetBinError(binPt+1, dFlowError);
-
-      // printing fitting results
-      canFitInvMass->SaveAs(Form("%s/FlowMass_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
-
-    } // endfor {binPt}
-
-    cFlow->cd();
-    hFlow->Draw();
-    cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
-
-    ffOutputFile->cd();
-    hFlow->Write();
-
-  } // endfor {binMult}
-
-  if(!task->fShowMult && fbDebug)
-  {
-    TCanvas* canTest = new TCanvas("canTest","Test",600,600);
-    canTest->Divide(2,3);
-    canTest->cd(1);
-    histEntries->Draw();
-    canTest->cd(2);
-    profFlow->Draw();
-    canTest->cd(3);
-    hInvMass->Draw();
-    canTest->cd(4);
-    profFlowMass->Draw();
-    canTest->cd(5);
-    hFlowMass->Draw();
-    canTest->cd(6);
-    prof2DFlowMass->Draw("colz");
-  }
+  ffOutputFile->cd();
+  hFlow->Write();
 
   return kTRUE;
 }
@@ -785,7 +694,8 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   canInvMass->SaveAs(Form("%s/Slices_InvMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
   if(h3EntriesBG) canInvMassBG->SaveAs(Form("%s/Slices_InvMassBG_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
 
-  if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
+  if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1 || task->fVecHistFlowMass->size() != task->fVecHistInvMass->size()) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
+  if(h3EntriesBG && (task->fVecHistInvMassBG->size() < 1 || task->fVecHistInvMassBG->size() != task->fVecHistInvMass->size()) ) { Error("Output vector empty. Something went wrong with BG histograms","PrepareSlices"); return kFALSE; }
   return kTRUE;
 }
 //_____________________________________________________________________________
