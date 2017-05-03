@@ -36,7 +36,7 @@ class FlowTask
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
     TString     GetSpeciesName();
-    void        SuggestPtBinning(Bool_t bin = kTRUE) { fSuggestPtBins = bin; } // suggest pt binning based on number of candidates
+    void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
 
   protected:
   private:
@@ -52,12 +52,13 @@ class FlowTask
     Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     Bool_t      fShowMult; // show multiplicity distribution
     Bool_t      fSuggestPtBins; // suggest pt binning
+    Double_t    fSuggestPtBinEntries; // suggest pt binning
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
     std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fVecHistInvMass = new std::vector<TH1D*>; fVecHistInvMassBG = new std::vector<TH1D*>; fVecHistFlowMass = new std::vector<TH1D*>; }
+FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fSuggestPtBinEntries = 20000; fVecHistInvMass = new std::vector<TH1D*>; fVecHistInvMassBG = new std::vector<TH1D*>; fVecHistFlowMass = new std::vector<TH1D*>; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
 FlowTask::~FlowTask() { if(fVecHistFlowMass) delete fVecHistFlowMass; if(fVecHistInvMass) delete fVecHistInvMass; if(fVecHistInvMassBG) delete fVecHistInvMassBG; }
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
@@ -570,9 +571,9 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   TH1D* hFlowMass = 0x0;
   Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
   TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200); // canvas for fitting results
+
   for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
   {
-
     hInvMass = task->fVecHistInvMass->at(binPt);
     hFlowMass = task->fVecHistFlowMass->at(binPt);
 
@@ -592,12 +593,20 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
       if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
       break;
 
-
-      default : break;
+      default :
+        Error("Uknown species","ProcessV0s");
+        return kFALSE;
     }
-
-    hFlow->SetBinContent(binPt+1,dFlow);
-    hFlow->SetBinError(binPt+1,dFlowError);
+    if(TMath::Abs(dFlow) > 1 )
+    {
+      hFlow->SetBinContent(binPt+1,0);
+      hFlow->SetBinError(binPt+1,0);
+    }
+    else
+    {
+      hFlow->SetBinContent(binPt+1,dFlow);
+      hFlow->SetBinError(binPt+1,dFlowError);
+    }
 
   } // endfor {binPt}
 
@@ -720,7 +729,7 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
 
   TH1D* hPtProj = (TH1D*) histEntries->ProjectionY("hPtProj",binMultLow,binMultHigh);
 
-  const Double_t dMinEntries = 20000;
+  const Double_t dMinEntries = task->fSuggestPtBinEntries;
   std::vector<Double_t> vecBins;
   std::vector<Double_t> vecContents;
 
