@@ -6,7 +6,7 @@
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2017
  */
 
-void RunProcessUniFlow()
+void RunProcessUniFlow(const char* sOutputFilePath)
 {
 	gSystem->AddIncludePath("-I/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/");
 	gROOT->SetMacroPath(Form("%s:/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/",gROOT->GetMacroPath()));
@@ -20,7 +20,8 @@ void RunProcessUniFlow()
 	// process->SetInputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
 	// process->SetInputFileName("AnalysisResults.root");
 	// process->SetTaskName("UniFlow");
-	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/taskVer2");
+	process->SetOutputFilePath(sOutputFilePath);
+	// process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/taskVer2");
 	process->SetDebug();
 	// process->SuggestMultBinning(4);
 
