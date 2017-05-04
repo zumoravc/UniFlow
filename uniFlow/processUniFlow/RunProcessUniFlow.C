@@ -97,6 +97,8 @@ void RunProcessUniFlow()
 	task3->SetEtaGap(0.8);
 	task3->SetPtBins(dPtBinningPhi,iSizePtPhi);
 	task3->SuggestPtBinning(1,20000);
+	task3->SetInvMassRebin(2);
+	task3->SetFlowMassRebin(2);
 	process->AddTask(task3);
 	//
 	// FlowTask* task4 = new FlowTask("Phi",FlowTask::kPhi);

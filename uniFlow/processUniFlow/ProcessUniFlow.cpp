@@ -5,6 +5,7 @@
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2017
  */
 
+#include "TROOT.h"
 #include "TMath.h"
 #include "TString.h"
 #include "TFile.h"
@@ -30,14 +31,15 @@ class FlowTask
                 FlowTask(const char* name, PartSpecies species = kUnknown); // named constructor
                 ~FlowTask(); // default destructor
 
+    TString     GetSpeciesName();
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
-    TString     GetSpeciesName();
     void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
-
+    void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
+    void        SetFlowMassRebin(Short_t rebin = 2) { fRebinFlowMass = rebin; }
   protected:
   private:
     void        PrintTask(); // listing values of internal properties
@@ -53,12 +55,14 @@ class FlowTask
     Bool_t      fShowMult; // show multiplicity distribution
     Bool_t      fSuggestPtBins; // suggest pt binning
     Double_t    fSuggestPtBinEntries; // suggest pt binning
+    Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
+    Short_t     fRebinFlowMass; // flag for rebinning flow-mass profile
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
     std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fSuggestPtBinEntries = 20000; fVecHistInvMass = new std::vector<TH1D*>; fVecHistInvMassBG = new std::vector<TH1D*>; fVecHistFlowMass = new std::vector<TH1D*>; }
+FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fSuggestPtBinEntries = 20000; fRebinFlowMass = 0; fRebinInvMass = 0; fVecHistInvMass = new std::vector<TH1D*>; fVecHistInvMassBG = new std::vector<TH1D*>; fVecHistFlowMass = new std::vector<TH1D*>; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
 FlowTask::~FlowTask() { if(fVecHistFlowMass) delete fVecHistFlowMass; if(fVecHistInvMass) delete fVecHistInvMass; if(fVecHistInvMassBG) delete fVecHistInvMassBG; }
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
@@ -570,7 +574,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   TH1D* hInvMassBG = 0x0;
   TH1D* hFlowMass = 0x0;
   Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
-  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200); // canvas for fitting results
+  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1600,1200); // canvas for fitting results
 
   for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
   {
@@ -671,10 +675,17 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
     // rebinning entries based on mult & pt binning
     hInvMass_temp = (TH1D*) h3Entries->ProjectionZ(Form("hInvMass_mult%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
     if(h3EntriesBG) hInvMassBG_temp = (TH1D*) h3EntriesBG->ProjectionZ(Form("hInvMassBG_mult%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-    // here can be rebinning of inv mass if needed
+
+    // checking if rebinning inv mass hist
+    if(task->fRebinInvMass > 1) { hInvMass_temp->Rebin(task->fRebinInvMass); if(h3EntriesBG){ hInvMassBG_temp->Rebin(task->fRebinInvMass); } }
+
 
     // projection of flow-mass profile
     profFlowMass_temp = (TProfile*) prof2FlowMass_temp->ProfileX(Form("profFlowMass_mult%d_pt%d",multBin,binPt),binPtLow,binPtHigh);
+
+    // checking for rebinning the flow-mass profile
+    if(task->fRebinFlowMass > 1) { profFlowMass_temp->Rebin(task->fRebinFlowMass); }
+
     hFlowMass_temp = (TH1D*) profFlowMass_temp->ProjectionX(Form("hFlowMass_mult%d_pt%d",multBin,binPt));
     // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
 
@@ -1291,10 +1302,6 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	Double_t dMassLow = 0;
 	Double_t dMassHigh = 0;
 
-
-
-
-
   // subtraction of BG
   // normalisation BG to Signal in region of interest
   const Double_t dNormMassLow = 1.03;
@@ -1326,13 +1333,13 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 
 
   // TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
-	canFitInvMass->Divide(3,3);
-  canFitInvMass->cd(7);
+	canFitInvMass->Divide(4,2);
+  canFitInvMass->cd(1);
   hInvMass->Draw();
   hInvMassBG->Draw("same");
   hInvMassBG_scaled->Draw("same");
-  canFitInvMass->cd(8);
-  hInvMass_subs->Draw();
+  // canFitInvMass->cd(8);
+  // hInvMass_subs->Draw();
 
 	TH1D* hInvMass_shot = 0x0;
 	TH1D* hInvMass_side = 0x0;
@@ -1369,7 +1376,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
   hInvMass_shot->SetMinimum(hInvMass_subs->GetMinimum());
 
 	printf("\n====== Phi: Fitting InvMass first shot ========\n");
-	canFitInvMass->cd(1);
+	canFitInvMass->cd(2);
 	fitShot = new TF1("fitShot","pol2(0)",0.99,1.07);
 	fitShot->SetNpx(10000);
 	// fitShot->SetParameter(1,0.5);
@@ -1381,7 +1388,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	// TODO checking the fitting results
 
 	// fitting background in sidebands
-  canFitInvMass->cd(2);
+  canFitInvMass->cd(3);
 	printf("\n====== Phi: Fitting InvMass side bands ========\n");
 	fitSide = new TF1("fitSide","pol2(0)+[3]*TMath::BreitWigner(x,[4],[5])",0.99,1.07);
 	fitSide->SetNpx(10000);
@@ -1412,7 +1419,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 		hInvMass_residual->SetBinContent(iMass,dContent);
 	}
 
-	canFitInvMass->cd(3);
+	canFitInvMass->cd(4);
 	hInvMass_residual->Draw();
 
 
@@ -1421,7 +1428,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	hInvMass_ratio->Divide(hInvMass);
 
 	printf("\n====== Phi: Fitting InvMass sig/tot ratio ========\n");
-	canFitInvMass->cd(4);
+	canFitInvMass->cd(5);
 
 	//hInvMass_ratio->Draw();
 	// fitRatio = new TF1("fitRatio","pol2(0)+[3]*TMath::BreitWigner(x,[4],[5])",0.99,1.07);
@@ -1469,7 +1476,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	fitFlowSide = new TF1("fitFlowSide","pol2(0)",0.99,1.07);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
-	canFitInvMass->cd(5);
+	canFitInvMass->cd(7);
 	printf("\n====== K0s: Fitting FlowMass total flow ========\n");
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.99,1.07);
 	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol2(7)",0.99,1.07);
