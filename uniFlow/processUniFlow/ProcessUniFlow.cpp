@@ -1364,7 +1364,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	hInvMass_residual = (TH1D*) hInvMass_subs->Clone("hInvMass_residual");
 
   // fitting first shot
-  Double_t dInvMassPeakLow = 1.00;
+  Double_t dInvMassPeakLow = 1.01;
   Double_t dInvMassPeakHigh = 1.035;
   Short_t iBinPeakLow = hInvMass_shot->FindFixBin(dInvMassPeakLow);
   Short_t iBinPeakHigh = hInvMass_shot->FindFixBin(dInvMassPeakHigh);
@@ -1463,7 +1463,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	hFlowMass_side->SetMinimum(0.8*hFlowMass->GetMinimum());
 
 	// fitting side bands
-	for(Short_t iMass(iBinPeakLow+3); iMass < iBinPeakHigh+3+1; iMass++)
+	for(Short_t iMass = hFlowMass_side->FindFixBin(dInvMassPeakLow); iMass < hFlowMass_side->FindFixBin(dInvMassPeakHigh)+1; iMass++)
 	{
 		// Excluding mass peak window (setting errors to inf)
     // if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
@@ -1471,13 +1471,13 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 
 	}
 
-	printf("\n====== K0s: Fitting FlowMass sidebands ========\n");
+	printf("\n====== Phi: Fitting FlowMass sidebands ========\n");
 	canFitInvMass->cd(6);
 	fitFlowSide = new TF1("fitFlowSide","pol2(0)",0.99,1.07);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
 	canFitInvMass->cd(7);
-	printf("\n====== K0s: Fitting FlowMass total flow ========\n");
+	printf("\n====== Phi: Fitting FlowMass total flow ========\n");
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.99,1.07);
 	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol2(7)",0.99,1.07);
 	// Inv mass ratio signal/total
