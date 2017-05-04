@@ -140,7 +140,7 @@ class ProcessUniFlow
 
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
-    Bool_t      ProcessV0s(FlowTask* task = 0x0); // process  V0s flow
+    Bool_t      ProcessV0s(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
     Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
@@ -398,7 +398,7 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
     case FlowTask::kPhi:
     case FlowTask::kK0s:
     case FlowTask::kLambda:
-      bProcessed = ProcessV0s(task);
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessV0s(task,binMult); }
       break;
     default: break;
   }
@@ -490,7 +490,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
+Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
 {
   Info("Processing V0s task","ProcessV0s");
   if(!task) { Error("Task not valid!","ProcessV0s"); return kFALSE; }
@@ -553,9 +553,6 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
     else { Error("Something went wrong when running automatic refs flow task:","ProcessV0s"); taskRef->PrintTask(); return kFALSE; }
   }
 
-  // potential loop over multiplicity bins
-
-  const Short_t iMultBin = 0;
   // check if suggest pt binning flag is on if of Pt binning is not specified
   if(task->fSuggestPtBins || task->fNumPtBins < 1)
   {
