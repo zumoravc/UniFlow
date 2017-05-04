@@ -142,7 +142,7 @@ class ProcessUniFlow
     Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
     void        SuggestMultBinning(const Short_t numFractions);
-    void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0); //
+    void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
 
     void        TestProjections(); // testing projection of reconstructed particles
     TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
@@ -555,7 +555,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
   // check if suggest pt binning flag is on if of Pt binning is not specified
   if(task->fSuggestPtBins || task->fNumPtBins < 1)
   {
-    SuggestPtBinning(histEntries,profFlow,task);
+    SuggestPtBinning(histEntries,profFlow,task,iMultBin);
   }
 
   if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
@@ -716,13 +716,11 @@ void ProcessUniFlow::AddTask(FlowTask* task)
   return;
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOrig, FlowTask* task)
+void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOrig, FlowTask* task, Short_t binMult)
 {
   if(!histEntries) return;
   if(!profFlowOrig) return;
   if(!task) return;
-
-  const Short_t binMult = 0; //NOTE to be modified
 
   Short_t binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
   Short_t binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
@@ -734,12 +732,19 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   std::vector<Double_t> vecContents;
 
   printf("vector pre: %lu\n", vecBins.size());
-  vecBins.push_back(hPtProj->GetXaxis()->GetXmin()); // pushing first edge
-
   Double_t dCount = 0;
   const Short_t iNBins = hPtProj->GetNbinsX();
+  Short_t iBin = 1;
 
-  for(Short_t iBin(1); iBin < iNBins+1; iBin++)
+  // if some of the pt bins are set, the suggestion started with first bin after the last edge
+  if(task->fNumPtBins > 0 && task->fNumPtBins < iNBins)
+  {
+    iBin = hPtProj->FindFixBin(task->fPtBinsEdges[task->fNumPtBins]) + 1;
+    printf("LastBin %d (%g) | iBin %d (%g)\n",task->fNumPtBins,task->fPtBinsEdges[task->fNumPtBins], iBin, hPtProj->GetBinLowEdge(iBin));
+  }
+  else { vecBins.push_back(hPtProj->GetXaxis()->GetXmin()); } // pushing first edge
+
+  for(iBin; iBin < iNBins+1; iBin++)
   {
     dCount += hPtProj->GetBinContent(iBin);
     if(dCount > dMinEntries)
@@ -755,17 +760,19 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   printf("vector post: %hd\n", iNumBinEdges);
 
   // filling internal pt binning with suggestion result
-  task->fNumPtBins = iNumBinEdges-1;
   for(Short_t index(0); index < iNumBinEdges; index++)
   {
-    task->fPtBinsEdges[index] = vecBins.at(index);
+    task->fPtBinsEdges[index + task->fNumPtBins] = vecBins.at(index); // NOTE +1 ???
   }
+  task->fNumPtBins += iNumBinEdges-1;
 
-  TH1D* hBinsContent = new TH1D("hBinsContent","BinContent", task->fNumPtBins, task->fPtBinsEdges);
-  for(Short_t iBin(0); iBin < iNumBinEdges-1; iBin++)
-  {
-    hBinsContent->SetBinContent(iBin+1,vecContents.at(iBin));
-  }
+
+  // TODO hBinsContent reimplmente
+  // TH1D* hBinsContent = new TH1D("hBinsContent","BinContent", task->fNumPtBins, task->fPtBinsEdges);
+  // for(Short_t iBin(0); iBin < task->-1; iBin++)
+  // {
+  //   hBinsContent->SetBinContent(iBin+1,vecContents.at(iBin));
+  // }
 
   TLine* line = new TLine();
   line->SetLineColor(kRed);
@@ -775,16 +782,18 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   cPtBins->cd(1);
   hPtProj->Draw();
   cPtBins->cd(2);
-  hBinsContent->SetMinimum(0);
-  hBinsContent->Draw();
-  line->DrawLine(hPtProj->GetXaxis()->GetXmin(),dMinEntries, hPtProj->GetXaxis()->GetXmax(), dMinEntries);
+  // hBinsContent->SetMinimum(0);
+  // hBinsContent->Draw();
+  // line->DrawLine(task->fPtBinsEdges[0],dMinEntries, task->fPtBinsEdges[task->fNumPtBins], dMinEntries);
   cPtBins->cd(1);
 
+  Double_t dPt = 0;
   printf("Suggested binning: ");
-  for(Short_t index(0); index < iNumBinEdges; index++)
+  for(Short_t index(0); index < task->fNumPtBins+1; index++)
   {
-    printf("%hd (%g) | ",index,vecBins.at(index));
-    line->DrawLine(vecBins.at(index),0,vecBins.at(index),1.05*hPtProj->GetMaximum());
+    dPt = task->fPtBinsEdges[index];
+    printf("%hd (%g) | ",index,dPt);
+    line->DrawLine(dPt,0,dPt,1.05*hPtProj->GetMaximum());
   }
   printf("\n");
 

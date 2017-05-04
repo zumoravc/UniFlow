@@ -14,17 +14,19 @@ void RunProcessUniFlow()
 
 	ProcessUniFlow* process = new ProcessUniFlow();
 
-	// process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_ver3_Charged/");
-	process->SetInputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
-	process->SetInputFileName("AnalysisResults.root");
+	process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/");
+	process->SetInputFileName("AnalysisResults_CENTwSDD_16q.root");
+	process->SetTaskName("UniFlow_V0A");
+	// process->SetInputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
+	// process->SetInputFileName("AnalysisResults.root");
+	// process->SetTaskName("UniFlow");
 	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/taskVer2");
-	process->SetTaskName("UniFlow");
 	process->SetDebug();
 	// process->SuggestMultBinning(4);
 
 	// setting multiplicity binning
-	Double_t dMultBinning[] = {0,30,45,75,180};
-	// Double_t dMultBinning[] = {0,50};
+	// Double_t dMultBinning[] = {0,30,45,75,180};
+	Double_t dMultBinning[] = {20,30};
 	Int_t iSizeMult = sizeof(dMultBinning)/sizeof(dMultBinning[0]);
 	process->SetMultiplicityBins(dMultBinning,iSizeMult);
 
@@ -55,7 +57,8 @@ void RunProcessUniFlow()
 	// FlowTask* task9 = new FlowTask("K0s",FlowTask::kK0s);
 	// task9->SetHarmonics(2);
 	// task9->SetEtaGap(0.8);
-	// task9->SetPtBins(dPtBinning,iSizePt);
+	// // task9->SetPtBins(dPtBinning,iSizePt);
+	// task9->SuggestPtBinning(1,150000);
 	// process->AddTask(task9);
 	// //
 	// FlowTask* task1 = new FlowTask("Lambda",FlowTask::kLambda);
@@ -73,12 +76,13 @@ void RunProcessUniFlow()
 	// FlowTask* task6 = new FlowTask("Lambda",FlowTask::kLambda);
 	// task6->SetHarmonics(2);
 	// task6->SetEtaGap(0.8);
-	// task6->SetPtBins(dPtBinning,iSizePt);
+	// // task6->SetPtBins(dPtBinning,iSizePt);
+	// task6->SuggestPtBinning(1,150000);
 	// process->AddTask(task6);
 	//
 
 	// Double_t dPtBinningPhi[] = {0.5,0.8,1.1,1.4,1.7,2.,2.3,2.6,2.9,3.2,3.5,4,4.5,5.};
-	Double_t dPtBinningPhi[] = {1.,2.};
+	Double_t dPtBinningPhi[] = {1.,1.5,2.05};
 	Int_t iSizePtPhi = sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]);
 
 
@@ -91,8 +95,8 @@ void RunProcessUniFlow()
 	FlowTask* task3 = new FlowTask("Phi",FlowTask::kPhi);
 	task3->SetHarmonics(2);
 	task3->SetEtaGap(0.8);
-	// task3->SetPtBins(dPtBinningPhi,iSizePtPhi);
-	task3->SuggestPtBinning();
+	task3->SetPtBins(dPtBinningPhi,iSizePtPhi);
+	task3->SuggestPtBinning(1,20000);
 	process->AddTask(task3);
 	//
 	// FlowTask* task4 = new FlowTask("Phi",FlowTask::kPhi);
