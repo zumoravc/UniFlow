@@ -22,12 +22,12 @@ void RunProcessUniFlow(const char* sOutputFilePath)
 	// process->SetTaskName("UniFlow");
 	process->SetOutputFilePath(sOutputFilePath);
 	// process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/taskVer2");
-	process->SetDebug();
+	// process->SetDebug();
 	// process->SuggestMultBinning(4);
 
 	// setting multiplicity binning
 	// Double_t dMultBinning[] = {0,30,45,75,180};
-	Double_t dMultBinning[] = {20,30};
+	Double_t dMultBinning[] = {0,5,10,20,30,40,50,60,70,80};
 	Int_t iSizeMult = sizeof(dMultBinning)/sizeof(dMultBinning[0]);
 	process->SetMultiplicityBins(dMultBinning,iSizeMult);
 
@@ -36,16 +36,19 @@ void RunProcessUniFlow(const char* sOutputFilePath)
 	// task1->SetEtaGap(-1.);
 	// process->AddTask(task1);
 
-	// Double_t dPtBinning[] = {0.5,1.,2.,3.,5.};
-	Double_t dPtBinning[] = {0.5,1.};
+	// Double_t dPtBinning[] = {0.5,1.};
+	Double_t dPtBinning[] = {0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.};
 	Int_t iSizePt = sizeof(dPtBinning)/sizeof(dPtBinning[0]);
 
-	// FlowTask* task7 = new FlowTask("K0s",FlowTask::kK0s);
-	// task7->SetHarmonics(2);
-	// task7->SetEtaGap(-1);
-	// task7->SetPtBins(dPtBinning,iSizePt);
+	FlowTask* task7 = new FlowTask("K0s",FlowTask::kK0s);
+	task7->SetHarmonics(2);
+	task7->SetEtaGap(0.8);
+	task7->SetInvMassRebin(2);
+	task7->SetFlowMassRebin(2);
 	// task7->SetShowMultDist(kTRUE);
-	// process->AddTask(task7);
+	task7->SetPtBins(dPtBinning,iSizePt);
+	// task7->SuggestPtBinning(1,30000);
+	process->AddTask(task7);
 	//
 
 	// FlowTask* task8 = new FlowTask("K0s",FlowTask::kK0s);
@@ -93,14 +96,14 @@ void RunProcessUniFlow(const char* sOutputFilePath)
 	// task2->SetPtBins(dPtBinningPhi,iSizePtPhi);
 	// process->AddTask(task2);
 
-	FlowTask* task3 = new FlowTask("Phi",FlowTask::kPhi);
-	task3->SetHarmonics(2);
-	task3->SetEtaGap(0.8);
-	task3->SetPtBins(dPtBinningPhi,iSizePtPhi);
-	task3->SuggestPtBinning(1,20000);
-	task3->SetInvMassRebin(2);
-	task3->SetFlowMassRebin(2);
-	process->AddTask(task3);
+	// FlowTask* task3 = new FlowTask("Phi",FlowTask::kPhi);
+	// task3->SetHarmonics(2);
+	// task3->SetEtaGap(0.8);
+	// task3->SetPtBins(dPtBinningPhi,iSizePtPhi);
+	// task3->SuggestPtBinning(1,20000);
+	// task3->SetInvMassRebin(2);
+	// task3->SetFlowMassRebin(2);
+	// process->AddTask(task3);
 	//
 	// FlowTask* task4 = new FlowTask("Phi",FlowTask::kPhi);
 	// task4->SetHarmonics(2);
