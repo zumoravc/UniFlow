@@ -418,14 +418,6 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TCanvas* canSamples = new TCanvas("canSamples","canSamples",1200,600);
   canSamples->Divide(4,3);
 
-  // NOTE TESTING
-  // const Short_t testBin = 5;
-  // Double_t dSum = 0;
-  // Double_t dSumW = 0;
-  // Double_t W = 0;
-
-
-
   // merging samples together
   TProfile* prof = 0x0;
   TList* list = new TList();
@@ -436,12 +428,6 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
     list->Add(prof);
 
-
-    // printf("Sample %d: bin %d : %g +- %g (entries %g)\n",i,testBin,prof->GetBinContent(testBin),prof->GetBinError(testBin),prof->GetBinEntries(testBin));
-    // dSum += prof->GetBinContent(testBin);
-    // dSumW += prof->GetBinContent(testBin) / TMath::Power(prof->GetBinError(testBin),2);
-    // W += 1 / TMath::Power(prof->GetBinError(testBin),2);
-
     canSamples->cd(i+1);
     prof->Draw();
   }
@@ -450,15 +436,54 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TProfile* merged = (TProfile*) prof->Clone();
   merged->Reset();
 
+  TH1D* desample = (TH1D*) prof->ProjectionX();
+  desample->Reset();
+
   Double_t mergeStatus = merged->Merge(list);
   if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
 
-  canSamples->cd(10);
+  canSamples->cd(11);
   merged->Draw();
 
-  // printf("Merged: bin %d : %g +- %g (entries %g)\n",testBin,merged->GetBinContent(testBin),merged->GetBinError(testBin), merged->GetBinEntries(testBin));
+  Double_t content = 0;
+  Double_t error = 0;
 
-  // printf("Average: %g | weighted: %g\n",dSum/10,dSumW/W);
+  Double_t dSum = 0;
+  Double_t dW = 0;
+  Double_t dAverage = 0;
+  Double_t dAve_err = 0;
+
+  for(Short_t bin(1); bin < 100+1; bin++)
+  {
+    for(Short_t i(0); i < task->fNumSamples; i++)
+    {
+      prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
+      if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
+
+      content = prof->GetBinContent(bin);
+      error = prof->GetBinError(bin);
+
+      dSum += content/TMath::Power(error,2);
+      dW += 1/TMath::Power(error,2);
+      printf("Sample: %d | bin %d | %g +- %g\n",i,bin,content,error);
+    }
+
+    dAverage = dSum / dW;
+    dAve_err = TMath::Sqrt(1/dW);
+
+    printf("Merged | bin %d | %g +- %g\n",bin,merged->GetBinContent(bin),merged->GetBinError(bin));
+    printf("W average | bin %d | %g +- %g\n",bin,dAverage,dAve_err);
+    printf("Ratio (A/M): values %g | error %g\n", dAverage / merged->GetBinContent(bin), dAve_err / merged->GetBinError(bin));
+
+    desample->SetBinContent(bin,dAverage);
+    desample->SetBinError(bin,dAve_err);
+  }
+
+  canSamples->cd(11);
+  desample->SetLineColor(kRed);
+  desample->SetMarkerColor(kRed);
+  desample->Draw("same");
+
 
   return kTRUE;
   // NOTE testing end
