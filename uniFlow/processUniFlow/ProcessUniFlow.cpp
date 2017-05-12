@@ -438,6 +438,10 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   TH1D* desample = (TH1D*) prof->ProjectionX();
   desample->Reset();
+  TH1D* ratio = (TH1D*) prof->ProjectionX();
+  ratio->Reset();
+  TH1D* ratioErr = (TH1D*) prof->ProjectionX();
+  ratioErr->Reset();
 
   Double_t mergeStatus = merged->Merge(list);
   if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
@@ -455,6 +459,9 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   for(Short_t bin(1); bin < 100+1; bin++)
   {
+    dSum = 0;
+    dW = 0;
+
     for(Short_t i(0); i < task->fNumSamples; i++)
     {
       prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
@@ -477,6 +484,9 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
     desample->SetBinContent(bin,dAverage);
     desample->SetBinError(bin,dAve_err);
+
+    ratio->SetBinContent(bin, dAverage / merged->GetBinContent(bin));
+    ratioErr->SetBinContent(bin, dAve_err / merged->GetBinError(bin));
   }
 
   canSamples->cd(11);
@@ -484,6 +494,11 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   desample->SetMarkerColor(kRed);
   desample->Draw("same");
 
+  canSamples->cd(12);
+  ratio->Draw();
+  ratioErr->SetLineColor(kRed);
+  ratioErr->SetMarkerColor(kRed);
+  ratioErr->Draw("same");
 
   return kTRUE;
   // NOTE testing end
