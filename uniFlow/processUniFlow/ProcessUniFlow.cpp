@@ -399,6 +399,7 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
       bProcessed = ProcessRefs(task);
       break;
 
+    case FlowTask::kCharged:
     case FlowTask::kPion:
     case FlowTask::kKaon:
     case FlowTask::kProton:
@@ -604,8 +605,6 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
     // rebinning according in mult bin
     binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
     binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
-    // printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[iMultBin],binMultLow,fdMultBins[iMultBin+1],binMultHigh);
-
     prof = prof2->ProfileY(Form("%s_projY",prof2->GetName()),binMultLow,binMultHigh);
 
     // rebinning according to pt bins
@@ -617,7 +616,7 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
 
     profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
     dRef = profRefRebin->GetBinContent(iMultBin+1);
-    // printf("Ref = %g | sqrt: %g\n",dRef, TMath::Sqrt(dRef));
+    // NOTE: complains about Sumw2
 
     hFlow = (TH1D*) profRebin->ProjectionX(Form("%s_Flow",profRebin->GetName()));
     hFlow->Scale(1/TMath::Sqrt(dRef));
@@ -625,30 +624,10 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   }
   Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessPID");
 
-  printf("Test scaling: pre: %g | post: %g | ratio %g\n",profRebin->GetBinContent(20), hFlow->GetBinContent(20), profRebin->GetBinContent(20)/hFlow->GetBinContent(20));
-
   TH1D* hDesampled = DesampleList(listFlow,task);
   if(!hDesampled) { Error("Desampling unsuccesfull","ProcessPID"); return kFALSE; }
 
-  TCanvas* canFlow = new TCanvas("canFlow","canFlow",1200,600);
-  canFlow->Divide(3,2);
-  canFlow->cd(1);
-  prof2->Draw("colz");
-  canFlow->cd(2);
-  prof->Draw();
-  // hist->SetLineColor(kRed);
-  // hist->Draw("same");
-  canFlow->cd(3);
-  hist->Draw();
-
-  canFlow->cd(4);
-  profRef->Draw();
-  canFlow->cd(5);
-  profRefRebin->Draw();
-  canFlow->cd(6);
-  hFlow->Draw();
-  hDesampled->SetLineColor(kRed);
-  hDesampled->Draw("same");
+  hDesampled->Draw();
 
   delete listFlow;
   // delete prof;
@@ -783,8 +762,6 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
       hFlow->SetBinError(binPt+1,dFlowError);
     }
 
-
-
   } // endfor {binPt}
 
   TCanvas* cFlow = new TCanvas("cFlow","cFlow");
@@ -838,10 +815,10 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
 
       dSum += content / TMath::Power(error,2);
       dW += 1 / TMath::Power(error,2);
-      printf("Sample: %d | bin %d | %g +- %g\n",iSample,bin,content,error);
+      // printf("Sample: %d | bin %d | %g +- %g\n",iSample,bin,content,error);
     }
 
-    printf(" --- bin %d | Sum %g +- %g\n",bin,dSum,dW);
+    // printf(" --- bin %d | Sum %g +- %g\n",bin,dSum,dW);
 
     if(dSum == 0. && dW == 0.) continue; // skipping empty bins
 
@@ -851,7 +828,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
       dAve_err = TMath::Sqrt(1/dW);
     }
 
-    printf("W average | bin %d | %g +- %g\n",bin,dAverage,dAve_err);
+    // printf("W average | bin %d | %g +- %g\n",bin,dAverage,dAve_err);
 
     //ratio->SetBinContent(bin, dAverage / merged->GetBinContent(bin));
     //ratioErr->SetBinContent(bin, dAve_err / merged->GetBinError(bin));
