@@ -140,6 +140,7 @@ class ProcessUniFlow
 
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
+    Bool_t      ProcessPID(FlowTask* task = 0x0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessV0s(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
     Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
@@ -395,6 +396,12 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
       bProcessed = ProcessRefs(task);
       break;
 
+    case FlowTask::kPion:
+    case FlowTask::kKaon:
+    case FlowTask::kProton:
+      bProcessed = ProcessPID(task);
+      break;
+
     case FlowTask::kPhi:
     case FlowTask::kK0s:
     case FlowTask::kLambda:
@@ -555,6 +562,47 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   ffOutputFile->cd();
   hFlow->Write();
+
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ProcessPID(FlowTask* task)
+{
+  Info("Processing PID task","ProcesPID");
+  if(!task) { Error("Task not valid!","ProcessPID"); return kFALSE; }
+  if(task->fSpecies != FlowTask::kPion && task->fSpecies != FlowTask::kKaon && task->fSpecies != FlowTask::kProton) { Error("Task species not PID!","ProcessPID"); return kFALSE; }
+
+  // plotting all samples
+  TCanvas* canSamples = new TCanvas("canSamples","canSamples",1200,600);
+  canSamples->Divide(4,3);
+
+  // merging samples together
+  TProfile* prof = 0x0;
+  TList* list = new TList();
+
+  // flFlowPID->ls();
+
+  // for(Short_t i(0); i < 2; i++)
+  for(Short_t i(0); i < task->fNumSamples; i++)
+  {
+    prof = (TProfile*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
+    if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
+    list->Add(prof);
+
+    canSamples->cd(i+1);
+    prof->Draw("colz");
+  }
+  Debug(Form("Number of samples in list pre merging %d",list->GetEntries()));
+
+  TProfile* merged = (TProfile*) prof->Clone();
+  merged->Reset();
+
+  Double_t mergeStatus = merged->Merge(list);
+  if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
+
+  canSamples->cd(11);
+  merged->Draw("colz");
 
 
   return kTRUE;
