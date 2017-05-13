@@ -428,7 +428,7 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
     case FlowTask::kPion:
     case FlowTask::kKaon:
     case FlowTask::kProton:
-      bProcessed = ProcessPID(task);
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessPID(task); }
       break;
 
     case FlowTask::kPhi:
@@ -600,9 +600,24 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
 {
   Info("Processing PID task","ProcesPID");
   if(!task) { Error("Task not valid!","ProcessPID"); return kFALSE; }
-  if(task->fSpecies != FlowTask::kCharged && task->fSpecies != FlowTask::kPion && task->fSpecies != FlowTask::kKaon && task->fSpecies != FlowTask::kProton) { Error("Task species not PID!","ProcessPID"); return kFALSE; }
 
-  iMultBin = 0;
+  TList* listInput = 0x0;
+  switch (task->fSpecies)
+  {
+    case FlowTask::kCharged:
+      listInput = flFlowCharged;
+      break;
+
+    case FlowTask::kPion:
+    case FlowTask::kKaon:
+    case FlowTask::kProton:
+      listInput = flFlowPID;
+      break;
+
+    default:
+      Error("Task species not PID!","ProcessPID");
+      return kFALSE;
+  }
 
   // preparing vn' samples
   TList* listFlow = new TList();
@@ -619,7 +634,7 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
 
   for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
   {
-    prof2 = (TProfile2D*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,iSample));
+    prof2 = (TProfile2D*) listInput->FindObject(Form("fp2%s_<2>_harm%d_gap%02.2g_sample%d",task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iSample));
     if(!prof2) { Error(Form("Profile sample %d does not exists.",iSample),"ProcesPID"); return kFALSE; }
 
     // preparing Refs
