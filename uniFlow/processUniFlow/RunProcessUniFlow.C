@@ -14,12 +14,12 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 
 	ProcessUniFlow* process = new ProcessUniFlow();
 
-	// process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/");
+	process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_CENT_wSDD_16q/");
 	// process->SetInputFileName("AnalysisResults_CENTwSDD_16q.root");
 	// process->SetTaskName("UniFlow_V0A");
-	process->SetInputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
+	// process->SetInputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
 	process->SetInputFileName("AnalysisResults.root");
-	process->SetTaskName("UniFlow");
+	process->SetTaskName("UniFlow_V0A");
 	// process->SetOutputFilePath(sOutputFilePath);
 	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/testRefs");
 	process->SetOutputFileName("UniFlow_test.root");
@@ -28,14 +28,29 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 
 	// setting multiplicity binning
 	// Double_t dMultBinning[] = {0,30,45,75,180};
-	Double_t dMultBinning[] = {0,5,10,20,30,40,50,60,70,80,90,100};
+	Double_t dMultBinning[] = {0,10};
+	// Double_t dMultBinning[] = {0,10,20,30,40,50,60,70,80};
 	Int_t iSizeMult = sizeof(dMultBinning)/sizeof(dMultBinning[0]);
 	process->SetMultiplicityBins(dMultBinning,iSizeMult);
 
 	FlowTask* task1 = new FlowTask("Refs",FlowTask::kRefs);
 	task1->SetHarmonics(2);
 	task1->SetEtaGap(0.8);
-	process->AddTask(task1);
+	// process->AddTask(task1);
+
+	Double_t dPt[] = {0.1,0.2,0.3,0.4,0.5,1.,2.};
+
+	FlowTask* task2 = new FlowTask("Pions",FlowTask::kPion);
+	task2->SetHarmonics(2);
+	task2->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
+	task2->SetEtaGap(0.8);
+	process->AddTask(task2);
+	// 
+	// FlowTask* task3 = new FlowTask("Pions2",FlowTask::kPion);
+	// task3->SetHarmonics(2);
+	// // task3->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
+	// task3->SetEtaGap(0.8);
+	// process->AddTask(task3);
 
 	// Double_t dPtBinning[] = {0.5,1.};
 	// Double_t dPtBinning[] = {0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.};

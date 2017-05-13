@@ -30,7 +30,8 @@ class FlowTask
                 ~FlowTask(); // default destructor
 
     TString     GetSpeciesName();
-    TString     GetEtaGapString();
+    TString     GetEtaGapString() { return TString(Form("%02.2g",10*fEtaGap)); }
+
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
@@ -61,9 +62,35 @@ class FlowTask
     std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fSuggestPtBinEntries = 20000; fRebinFlowMass = 0; fRebinInvMass = 0; fVecHistInvMass = new std::vector<TH1D*>; fVecHistInvMassBG = new std::vector<TH1D*>; fVecHistFlowMass = new std::vector<TH1D*>; }
-FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
-FlowTask::~FlowTask() { if(fVecHistFlowMass) delete fVecHistFlowMass; if(fVecHistInvMass) delete fVecHistInvMass; if(fVecHistInvMassBG) delete fVecHistInvMassBG; }
+//_____________________________________________________________________________
+FlowTask::FlowTask()
+{
+  fHarmonics = 0;
+  fEtaGap = 0;
+  fNumSamples = 10;
+  fNumPtBins = -1;
+  fShowMult = kFALSE;
+  fSuggestPtBins = kFALSE;
+  fSuggestPtBinEntries = 20000;
+  fRebinFlowMass = 0;
+  fRebinInvMass = 0;
+  fVecHistInvMass = new std::vector<TH1D*>;
+  fVecHistInvMassBG = new std::vector<TH1D*>;
+  fVecHistFlowMass = new std::vector<TH1D*>;
+}
+//_____________________________________________________________________________
+FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask()
+{
+  fName = name;
+  fSpecies = species;
+}
+//_____________________________________________________________________________
+FlowTask::~FlowTask()
+{
+  if(fVecHistFlowMass) delete fVecHistFlowMass;
+  if(fVecHistInvMass) delete fVecHistInvMass;
+  if(fVecHistInvMassBG) delete fVecHistInvMassBG;
+}
 //_____________________________________________________________________________
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 {
@@ -78,11 +105,6 @@ void FlowTask::SetPtBins(Double_t* array, const Short_t size)
   }
 
   return;
-}
-//_____________________________________________________________________________
-TString FlowTask::GetEtaGapString()
-{
-  return TString(Form("%02.2g",10*fEtaGap));
 }
 //_____________________________________________________________________________
 TString FlowTask::GetSpeciesName()
@@ -107,7 +129,7 @@ void FlowTask::PrintTask()
 {
   printf("----- Printing task info ------\n");
   printf("   fName: %s\n",fName.Data());
-  printf("   fSpecies: %d\n",fSpecies);
+  printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
   printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
   printf("   fSuggestPtBins: %s\n", fSuggestPtBins ? "true" : "false");
   printf("   fHarmonics: %d\n",fHarmonics);
@@ -589,7 +611,6 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   TProfile* profRebin = 0x0;
   TProfile* profRef = 0x0;
   TProfile* profRefRebin = 0x0;
-  TH1D* hist = 0x0;
   TH1D* hFlow = 0x0;
 
   Short_t binMultLow = 0;
@@ -605,23 +626,28 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
     profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,iSample));
     if(!profRef) { Error(Form("Profile sample %d does not exists",iSample),"ProcesPID"); return kFALSE; }
 
+    profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
+    dRef = profRefRebin->GetBinContent(iMultBin+1);
+    // NOTE: complains about Sumw2
+
     // rebinning according in mult bin
     binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
     binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
     prof = prof2->ProfileY(Form("%s_projY",prof2->GetName()),binMultLow,binMultHigh);
 
-    // rebinning according to pt bins
-    // TODO
-    profRebin = (TProfile*) prof->Clone(Form("%s_rebin",prof->GetName()));
+    if(task->fNumPtBins > 0)
+    {
+      // rebinning according to pt bins
+      profRebin = (TProfile*) prof->Rebin(task->fNumPtBins,Form("%s_rebin",prof->GetName()),task->fPtBinsEdges);
+    }
+    else
+    {
+      // making TH1D projection (to avoid handling of bin entries)
+      profRebin = (TProfile*) prof->Clone(Form("%s_rebin",prof->GetName()));
+    }
 
-    // making TH1D projection (to avoid handling of bin entries)
-    hist = (TH1D*) profRebin->ProjectionX();
-
-    profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
-    dRef = profRefRebin->GetBinContent(iMultBin+1);
-    // NOTE: complains about Sumw2
-
-    hFlow = (TH1D*) profRebin->ProjectionX(Form("%s_Flow",profRebin->GetName()));
+    hFlow = (TH1D*) profRebin->ProjectionX();
+    hFlow->SetName(Form("%s_Flow",prof->GetName()));
     hFlow->Scale(1/TMath::Sqrt(dRef));
     listFlow->Add(hFlow);
   }
@@ -630,7 +656,7 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   TH1D* hDesampled = DesampleList(listFlow,task);
   if(!hDesampled) { Error("Desampling unsuccesfull","ProcessPID"); return kFALSE; }
 
-  hDesampled->SetName(Form("hFlow_%s_harm%d_gap%s_cent%d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
+  hDesampled->SetName(Form("hFlow_%s_harm%d_gap%s_cent%d_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,task->fName.Data()));
   hDesampled->SetTitle(Form("%s v_{%d}{2} | Gap %s | Cent %d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
   hDesampled->Draw();
 
@@ -642,8 +668,7 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   delete prof;
   delete profRebin;
   delete profRefRebin;
-  delete hist;
-  // delete hFlow;
+  delete hFlow;
 
   return kTRUE;
 }
