@@ -140,7 +140,7 @@ class ProcessUniFlow
 
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
-    Bool_t      ProcessPID(FlowTask* task = 0x0); // process PID (pion,kaon,proton) flow task
+    Bool_t      ProcessPID(FlowTask* task = 0x0, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessV0s(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
     Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
@@ -410,7 +410,7 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
     default: break;
   }
 
-  if(!bProcessed) { Error("Task not processed correctly!","ProcessTask"); return; }
+  if(!bProcessed) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return; }
 
   return;
 }
@@ -567,45 +567,132 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ProcessPID(FlowTask* task)
+Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
 {
   Info("Processing PID task","ProcesPID");
   if(!task) { Error("Task not valid!","ProcessPID"); return kFALSE; }
   if(task->fSpecies != FlowTask::kPion && task->fSpecies != FlowTask::kKaon && task->fSpecies != FlowTask::kProton) { Error("Task species not PID!","ProcessPID"); return kFALSE; }
 
-  // plotting all samples
-  TCanvas* canSamples = new TCanvas("canSamples","canSamples",1200,600);
-  canSamples->Divide(4,3);
+  iMultBin = 0;
+  Short_t i = 2;
 
-  // merging samples together
-  TProfile* prof = 0x0;
-  TList* list = new TList();
+  TProfile2D* prof2 = 0x0;
+  TProfile* profRef = 0x0;
 
-  // flFlowPID->ls();
 
-  // for(Short_t i(0); i < 2; i++)
-  for(Short_t i(0); i < task->fNumSamples; i++)
-  {
-    prof = (TProfile*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
-    if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
-    list->Add(prof);
+  prof2 = (TProfile2D*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
+  if(!prof2) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); return kFALSE; }
+  // list->Add(prof2);
 
-    canSamples->cd(i+1);
-    prof->Draw("colz");
-  }
-  Debug(Form("Number of samples in list pre merging %d",list->GetEntries()));
+  // rebinning according in mult bin
+  const Short_t binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
+  const Short_t binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
+  printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[iMultBin],binMultLow,fdMultBins[iMultBin+1],binMultHigh);
 
-  TProfile* merged = (TProfile*) prof->Clone();
-  merged->Reset();
+  TProfile* prof = prof2->ProfileY("_py", binMultLow,binMultHigh);
 
-  Double_t mergeStatus = merged->Merge(list);
-  if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
+  // rebinning according to pt bins
+  // TODO
+  TProfile* profRebin = (TProfile*) prof->Clone("profRebin");
 
-  canSamples->cd(11);
-  merged->Draw("colz");
+  // making TH1D projection (to avoid handling of bin entries)
+  TH1D* hist = (TH1D*) profRebin->ProjectionX();
+
+
+  // profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
+  // if(!profRef) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); return kFALSE; }
+  // // listRef->Add(profRef);
+
+
+  TCanvas* canFlow = new TCanvas("canFlow","canFlow",1200,600);
+  canFlow->Divide(3,1);
+  canFlow->cd(1);
+  prof2->Draw("colz");
+  canFlow->cd(2);
+  prof->Draw();
+  // hist->SetLineColor(kRed);
+  // hist->Draw("same");
+  canFlow->cd(3);
+  hist->Draw();
 
 
   return kTRUE;
+
+
+  //
+  // // plotting all samples
+  // TCanvas* canSamples = new TCanvas("canSamples","canSamples",1200,600);
+  // canSamples->Divide(4,3);
+  //
+  // // merging samples together
+  //
+  // TList* list = new TList();
+  // TList* listRef = new TList();
+  //
+  // // flFlowPID->ls();
+  //
+  // // for(Short_t i(0); i < 2; i++)
+  // for(Short_t i(0); i < task->fNumSamples; i++)
+  // {
+  //   prof = (TProfile2D*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
+  //   if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); continue; }
+  //   list->Add(prof);
+  //
+  //   profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
+  //   if(!profRef) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); continue; }
+  //   listRef->Add(profRef);
+  //
+  //   canSamples->cd(i+1);
+  //   prof->Draw("colz");
+  // }
+  // Debug(Form("Number of samples in list pre merging %d",list->GetEntries()));
+  // Debug(Form("Number of samples in list pre merging %d (REFS)",listRef->GetEntries()));
+  //
+  // // rebinning in mult and pt
+  //
+  //
+  // // estimating vn'
+  // Short_t sample = 2;
+  // prof = (TProfile2D*) list->At(2);
+  // TH2D* h2Flow = (TH2D*) prof->ProjectionXY();
+  // h2Flow->Reset();
+  // profRef = (TProfile*) listRef->At(2);
+  //
+  // Double_t dRef = 0;
+  // for(Short_t binMult(1); binMult < profRef->GetNbinsX()+1; binMult++)
+  // {
+  //   dRef = profRef->GetBinContent(binMult);
+  //   if(dRef <= 0.) continue;
+  //
+  //   // for(Short_t binPt(1); binPt < prof->GetNbinsY()+1; binPt++)
+  //   for(Short_t binPt(1); binPt < 10+1; binPt++)
+  //   {
+  //     if(prof->GetBinEntries(prof->GetBin(binMult,binPt)) == 0) continue;
+  //
+  //     h2Flow->SetBinContent(binMult,binPt, prof->GetBinContent(binMult,binPt) / TMath::Sqrt(dRef));
+  //   }
+  // }
+  //
+  // canFlow->cd(1);
+  // profRef->Draw();
+  // canFlow->cd(2);
+  // prof->Draw("colz");
+  // canFlow->cd(3);
+  // h2Flow->Draw("colz");
+  //
+  // // merging
+  //
+  // TProfile* merged = (TProfile*) prof->Clone();
+  // merged->Reset();
+  //
+  // Double_t mergeStatus = merged->Merge(list);
+  // if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
+  //
+  // canSamples->cd(11);
+  // merged->Draw("colz");
+  //
+  //
+  // return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
