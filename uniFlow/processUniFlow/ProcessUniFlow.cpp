@@ -20,8 +20,6 @@
 #include "TH3.h"
 #include "TF1.h"
 
-
-
 class FlowTask
 {
   public:
@@ -32,6 +30,7 @@ class FlowTask
                 ~FlowTask(); // default destructor
 
     TString     GetSpeciesName();
+    TString     GetEtaGapString();
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
@@ -65,7 +64,7 @@ class FlowTask
 FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fSuggestPtBinEntries = 20000; fRebinFlowMass = 0; fRebinInvMass = 0; fVecHistInvMass = new std::vector<TH1D*>; fVecHistInvMassBG = new std::vector<TH1D*>; fVecHistFlowMass = new std::vector<TH1D*>; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
 FlowTask::~FlowTask() { if(fVecHistFlowMass) delete fVecHistFlowMass; if(fVecHistInvMass) delete fVecHistInvMass; if(fVecHistInvMassBG) delete fVecHistInvMassBG; }
-
+//_____________________________________________________________________________
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 {
   if(size < 0 || size > fNumPtBinsMax) { Error("Wrong size of pt binning array.","SetPtBins"); return; }
@@ -80,7 +79,12 @@ void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 
   return;
 }
-
+//_____________________________________________________________________________
+TString FlowTask::GetEtaGapString()
+{
+  return TString(Form("%02.2g",10*fEtaGap));
+}
+//_____________________________________________________________________________
 TString FlowTask::GetSpeciesName()
 {
   TString name = TString();
@@ -98,7 +102,7 @@ TString FlowTask::GetSpeciesName()
   }
   return name;
 }
-
+//_____________________________________________________________________________
 void FlowTask::PrintTask()
 {
   printf("----- Printing task info ------\n");
@@ -113,10 +117,9 @@ void FlowTask::PrintTask()
   printf("------------------------------\n");
   return;
 }
-
-//_____________________________________________________________________________
-//_____________________________________________________________________________
-//_____________________________________________________________________________
+//#############################################################################
+//----------------- End of FlowTask class -------------------------------------
+//#############################################################################
 
 class ProcessUniFlow
 {
@@ -627,13 +630,19 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   TH1D* hDesampled = DesampleList(listFlow,task);
   if(!hDesampled) { Error("Desampling unsuccesfull","ProcessPID"); return kFALSE; }
 
+  hDesampled->SetName(Form("hFlow_%s_harm%d_gap%s_cent%d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
+  hDesampled->SetTitle(Form("%s v_{%d}{2} | Gap %s | Cent %d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
   hDesampled->Draw();
 
+  // saving to output file
+  ffOutputFile->cd();
+  hDesampled->Write();
+
   delete listFlow;
-  // delete prof;
-  // delete profRebin;
-  // delete profRefRebin;
-  // delete hist;
+  delete prof;
+  delete profRebin;
+  delete profRefRebin;
+  delete hist;
   // delete hFlow;
 
   return kTRUE;
