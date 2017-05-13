@@ -65,6 +65,7 @@ class FlowTask
 FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; fSuggestPtBins = kFALSE; fSuggestPtBinEntries = 20000; fRebinFlowMass = 0; fRebinInvMass = 0; fVecHistInvMass = new std::vector<TH1D*>; fVecHistInvMassBG = new std::vector<TH1D*>; fVecHistFlowMass = new std::vector<TH1D*>; }
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
 FlowTask::~FlowTask() { if(fVecHistFlowMass) delete fVecHistFlowMass; if(fVecHistInvMass) delete fVecHistInvMass; if(fVecHistInvMassBG) delete fVecHistInvMassBG; }
+
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 {
   if(size < 0 || size > fNumPtBinsMax) { Error("Wrong size of pt binning array.","SetPtBins"); return; }
@@ -79,6 +80,7 @@ void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 
   return;
 }
+
 TString FlowTask::GetSpeciesName()
 {
   TString name = TString();
@@ -579,7 +581,6 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   TProfile2D* prof2 = 0x0;
   TProfile* profRef = 0x0;
 
-
   prof2 = (TProfile2D*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
   if(!prof2) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); return kFALSE; }
   // list->Add(prof2);
@@ -599,13 +600,21 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   TH1D* hist = (TH1D*) profRebin->ProjectionX();
 
 
-  // profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
-  // if(!profRef) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); return kFALSE; }
+  // preparing Refs
+  profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
+  if(!profRef) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); return kFALSE; }
   // // listRef->Add(profRef);
+
+  TProfile* profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
+  Double_t dRef = profRefRebin->GetBinContent(iMultBin+1);
+  printf("Ref = %g | sqrt: %g\n",dRef, TMath::Sqrt(dRef));
+
+  TProfile* profFlow = (TProfile*) profRebin->Clone("profFlow");
+  profFlow->Scale(1/TMath::Sqrt(dRef));
 
 
   TCanvas* canFlow = new TCanvas("canFlow","canFlow",1200,600);
-  canFlow->Divide(3,1);
+  canFlow->Divide(3,2);
   canFlow->cd(1);
   prof2->Draw("colz");
   canFlow->cd(2);
@@ -614,6 +623,15 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   // hist->Draw("same");
   canFlow->cd(3);
   hist->Draw();
+
+  canFlow->cd(4);
+  profRef->Draw();
+  canFlow->cd(5);
+  profRefRebin->Draw();
+  canFlow->cd(6);
+  profFlow->Draw();
+
+  printf("Test scaling: pre: %g | post: %g | ratio %g\n",profRebin->GetBinContent(20), profFlow->GetBinContent(20), profRebin->GetBinContent(20)/profFlow->GetBinContent(20));
 
 
   return kTRUE;
