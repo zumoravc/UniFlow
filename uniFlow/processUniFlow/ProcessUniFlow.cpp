@@ -150,6 +150,7 @@ class ProcessUniFlow
 		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
     void        SuggestMultBinning(const Short_t numFractions);
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
+    TH1D*       DesampleList(TList* list = 0x0, FlowTask* task = 0x0); // Desample list of samples for estimating the uncertanity
 
     void        TestProjections(); // testing projection of reconstructed particles
     TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
@@ -573,45 +574,61 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
 {
   Info("Processing PID task","ProcesPID");
   if(!task) { Error("Task not valid!","ProcessPID"); return kFALSE; }
-  if(task->fSpecies != FlowTask::kPion && task->fSpecies != FlowTask::kKaon && task->fSpecies != FlowTask::kProton) { Error("Task species not PID!","ProcessPID"); return kFALSE; }
+  if(task->fSpecies != FlowTask::kCharged && task->fSpecies != FlowTask::kPion && task->fSpecies != FlowTask::kKaon && task->fSpecies != FlowTask::kProton) { Error("Task species not PID!","ProcessPID"); return kFALSE; }
 
   iMultBin = 0;
-  Short_t i = 2;
 
+  // preparing vn' samples
+  TList* listFlow = new TList();
   TProfile2D* prof2 = 0x0;
+  TProfile* prof = 0x0;
+  TProfile* profRebin = 0x0;
   TProfile* profRef = 0x0;
+  TProfile* profRefRebin = 0x0;
+  TH1D* hist = 0x0;
+  TH1D* hFlow = 0x0;
 
-  prof2 = (TProfile2D*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
-  if(!prof2) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); return kFALSE; }
-  // list->Add(prof2);
+  Short_t binMultLow = 0;
+  Short_t binMultHigh = 0;
+  Double_t dRef = 0;
 
-  // rebinning according in mult bin
-  const Short_t binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
-  const Short_t binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
-  printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[iMultBin],binMultLow,fdMultBins[iMultBin+1],binMultHigh);
+  for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
+  {
+    prof2 = (TProfile2D*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,iSample));
+    if(!prof2) { Error(Form("Profile sample %d does not exists.",iSample),"ProcesPID"); return kFALSE; }
 
-  TProfile* prof = prof2->ProfileY("_py", binMultLow,binMultHigh);
+    // preparing Refs
+    profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,iSample));
+    if(!profRef) { Error(Form("Profile sample %d does not exists",iSample),"ProcesPID"); return kFALSE; }
 
-  // rebinning according to pt bins
-  // TODO
-  TProfile* profRebin = (TProfile*) prof->Clone("profRebin");
+    // rebinning according in mult bin
+    binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
+    binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
+    // printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[iMultBin],binMultLow,fdMultBins[iMultBin+1],binMultHigh);
 
-  // making TH1D projection (to avoid handling of bin entries)
-  TH1D* hist = (TH1D*) profRebin->ProjectionX();
+    prof = prof2->ProfileY(Form("%s_projY",prof2->GetName()),binMultLow,binMultHigh);
 
+    // rebinning according to pt bins
+    // TODO
+    profRebin = (TProfile*) prof->Clone(Form("%s_rebin",prof->GetName()));
 
-  // preparing Refs
-  profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
-  if(!profRef) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); return kFALSE; }
-  // // listRef->Add(profRef);
+    // making TH1D projection (to avoid handling of bin entries)
+    hist = (TH1D*) profRebin->ProjectionX();
 
-  TProfile* profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
-  Double_t dRef = profRefRebin->GetBinContent(iMultBin+1);
-  printf("Ref = %g | sqrt: %g\n",dRef, TMath::Sqrt(dRef));
+    profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
+    dRef = profRefRebin->GetBinContent(iMultBin+1);
+    // printf("Ref = %g | sqrt: %g\n",dRef, TMath::Sqrt(dRef));
 
-  TProfile* profFlow = (TProfile*) profRebin->Clone("profFlow");
-  profFlow->Scale(1/TMath::Sqrt(dRef));
+    hFlow = (TH1D*) profRebin->ProjectionX(Form("%s_Flow",profRebin->GetName()));
+    hFlow->Scale(1/TMath::Sqrt(dRef));
+    listFlow->Add(hFlow);
+  }
+  Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessPID");
 
+  printf("Test scaling: pre: %g | post: %g | ratio %g\n",profRebin->GetBinContent(20), hFlow->GetBinContent(20), profRebin->GetBinContent(20)/hFlow->GetBinContent(20));
+
+  TH1D* hDesampled = DesampleList(listFlow,task);
+  if(!hDesampled) { Error("Desampling unsuccesfull","ProcessPID"); return kFALSE; }
 
   TCanvas* canFlow = new TCanvas("canFlow","canFlow",1200,600);
   canFlow->Divide(3,2);
@@ -629,88 +646,18 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   canFlow->cd(5);
   profRefRebin->Draw();
   canFlow->cd(6);
-  profFlow->Draw();
+  hFlow->Draw();
+  hDesampled->SetLineColor(kRed);
+  hDesampled->Draw("same");
 
-  printf("Test scaling: pre: %g | post: %g | ratio %g\n",profRebin->GetBinContent(20), profFlow->GetBinContent(20), profRebin->GetBinContent(20)/profFlow->GetBinContent(20));
-
+  delete listFlow;
+  // delete prof;
+  // delete profRebin;
+  // delete profRefRebin;
+  // delete hist;
+  // delete hFlow;
 
   return kTRUE;
-
-
-  //
-  // // plotting all samples
-  // TCanvas* canSamples = new TCanvas("canSamples","canSamples",1200,600);
-  // canSamples->Divide(4,3);
-  //
-  // // merging samples together
-  //
-  // TList* list = new TList();
-  // TList* listRef = new TList();
-  //
-  // // flFlowPID->ls();
-  //
-  // // for(Short_t i(0); i < 2; i++)
-  // for(Short_t i(0); i < task->fNumSamples; i++)
-  // {
-  //   prof = (TProfile2D*) flFlowPID->FindObject(Form("fp2Pion_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
-  //   if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); continue; }
-  //   list->Add(prof);
-  //
-  //   profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
-  //   if(!profRef) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesPID"); continue; }
-  //   listRef->Add(profRef);
-  //
-  //   canSamples->cd(i+1);
-  //   prof->Draw("colz");
-  // }
-  // Debug(Form("Number of samples in list pre merging %d",list->GetEntries()));
-  // Debug(Form("Number of samples in list pre merging %d (REFS)",listRef->GetEntries()));
-  //
-  // // rebinning in mult and pt
-  //
-  //
-  // // estimating vn'
-  // Short_t sample = 2;
-  // prof = (TProfile2D*) list->At(2);
-  // TH2D* h2Flow = (TH2D*) prof->ProjectionXY();
-  // h2Flow->Reset();
-  // profRef = (TProfile*) listRef->At(2);
-  //
-  // Double_t dRef = 0;
-  // for(Short_t binMult(1); binMult < profRef->GetNbinsX()+1; binMult++)
-  // {
-  //   dRef = profRef->GetBinContent(binMult);
-  //   if(dRef <= 0.) continue;
-  //
-  //   // for(Short_t binPt(1); binPt < prof->GetNbinsY()+1; binPt++)
-  //   for(Short_t binPt(1); binPt < 10+1; binPt++)
-  //   {
-  //     if(prof->GetBinEntries(prof->GetBin(binMult,binPt)) == 0) continue;
-  //
-  //     h2Flow->SetBinContent(binMult,binPt, prof->GetBinContent(binMult,binPt) / TMath::Sqrt(dRef));
-  //   }
-  // }
-  //
-  // canFlow->cd(1);
-  // profRef->Draw();
-  // canFlow->cd(2);
-  // prof->Draw("colz");
-  // canFlow->cd(3);
-  // h2Flow->Draw("colz");
-  //
-  // // merging
-  //
-  // TProfile* merged = (TProfile*) prof->Clone();
-  // merged->Reset();
-  //
-  // Double_t mergeStatus = merged->Merge(list);
-  // if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
-  //
-  // canSamples->cd(11);
-  // merged->Draw("colz");
-  //
-  //
-  // return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
@@ -849,6 +796,70 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
   hFlow->Write();
 
   return kTRUE;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
+{
+  if(!task) { Error("FlowTask does not exists","DesampleList"); return 0x0; }
+  if(!list) { Error("List does not exists","DesampleList"); return 0x0; }
+  if(list->GetEntries() < 1) { Error("List is empty","DesampleList"); return 0x0; }
+  if(list->GetEntries() != task->fNumSamples) { Warning("Number of list entries is different from task number of samples","DesampleList"); }
+
+  Debug(Form("Number of samples in list pre-desampling: %d",list->GetEntries()),"DesampleList");
+
+  TH1D* hTempSample = (TH1D*) list->At(0);
+  TH1D* hDesampled = (TH1D*) hTempSample->Clone(Form("%s_Desampled",hTempSample->GetName()));
+  hDesampled->Reset();
+
+  Double_t content = 0;
+  Double_t error = 0;
+
+  Double_t dSum = 0;
+  Double_t dW = 0;
+  Double_t dAverage = 0;
+  Double_t dAve_err = 0;
+
+  for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++)
+  {
+    dSum = 0;
+    dW = 0;
+    dAverage = 9.;
+    dAve_err = 9.;
+
+    for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
+    {
+      hTempSample = (TH1D*) list->At(iSample);
+      if(!hTempSample) { Warning(Form("Sample %d not found! Skipping!",iSample),"DesampleList"); continue; }
+
+      content = hTempSample->GetBinContent(bin);
+      error = hTempSample->GetBinError(bin);
+
+      if(error <= 0.) continue;
+
+      dSum += content / TMath::Power(error,2);
+      dW += 1 / TMath::Power(error,2);
+      printf("Sample: %d | bin %d | %g +- %g\n",iSample,bin,content,error);
+    }
+
+    printf(" --- bin %d | Sum %g +- %g\n",bin,dSum,dW);
+
+    if(dSum == 0. && dW == 0.) continue; // skipping empty bins
+
+    if(dW > 0.)
+    {
+      dAverage = dSum / dW;
+      dAve_err = TMath::Sqrt(1/dW);
+    }
+
+    printf("W average | bin %d | %g +- %g\n",bin,dAverage,dAve_err);
+
+    //ratio->SetBinContent(bin, dAverage / merged->GetBinContent(bin));
+    //ratioErr->SetBinContent(bin, dAve_err / merged->GetBinError(bin));
+    hDesampled->SetBinContent(bin,dAverage);
+    hDesampled->SetBinError(bin,dAve_err);
+  }
+
+  return hDesampled;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor, TH3D* h3Entries, TH3D* h3EntriesBG)
