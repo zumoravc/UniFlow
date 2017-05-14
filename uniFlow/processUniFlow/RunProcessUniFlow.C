@@ -23,6 +23,7 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	// process->SetOutputFilePath(sOutputFilePath);
 	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/testRefs");
 	process->SetOutputFileName("UniFlow_test.root");
+	// process->SetOutputFileMode("UPDATE");
 	process->SetDebug();
 	// process->SuggestMultBinning(4);
 
@@ -40,12 +41,12 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 
 	Double_t dPt[] = {0.1,0.2,0.3,0.4,0.5,1.,2.};
 
-	FlowTask* task2 = new FlowTask("Pions",FlowTask::kPion);
+	FlowTask* task2 = new FlowTask("PionsTest",FlowTask::kPion);
 	task2->SetHarmonics(2);
-	task2->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
+	// task2->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
 	task2->SetEtaGap(0.8);
 	process->AddTask(task2);
-	// 
+	//
 	// FlowTask* task3 = new FlowTask("Pions2",FlowTask::kPion);
 	// task3->SetHarmonics(2);
 	// // task3->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));

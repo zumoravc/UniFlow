@@ -154,6 +154,7 @@ class ProcessUniFlow
     void        SetInputFileName(const char* name) { fsInputFileName = name; }
     void        SetOutputFilePath(const char* path) { fsOutputFilePath = path; }
     void        SetOutputFileName(const char* name) { fsOutputFileName = name; }
+    void        SetOutputFileMode(const char* mode = "RECREATE") { fsOutputFileMode = mode; }
     void        SetTaskName(const char* name) { fsTaskName = name; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
@@ -198,6 +199,7 @@ class ProcessUniFlow
     TString     fsInputFileName; // name of input file
     TString     fsOutputFilePath; // path to the ouput folder
     TString     fsOutputFileName; // name of output file
+    TString     fsOutputFileMode; // [RECREATE] mode of output file
     TString     fsTaskName; // name of task (inchluded in data structure names)
     TString     fsOutputFileFormat; // [pdf] format of output files (pictures)
 
@@ -232,6 +234,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fsInputFileName = TString("AnalysisResults.root");
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
+  fsOutputFileMode = TString("RECREATE");
   fsTaskName = TString("UniFlow");
   fsOutputFileFormat = TString("pdf");
   fvTasks = std::vector<FlowTask*>();
@@ -300,7 +303,7 @@ Bool_t ProcessUniFlow::Initialize()
   }
 
   // opening output file
-  ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),"RECREATE");
+  ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),fsOutputFileMode.Data());
   if(!ffOutputFile || !ffOutputFile->IsOpen())
   {
     Fatal(Form("Output file %s/%s not open",fsOutputFilePath.Data(),fsOutputFileName.Data()),"Initialize");
