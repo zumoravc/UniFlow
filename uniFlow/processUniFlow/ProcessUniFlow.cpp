@@ -898,6 +898,12 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
   lineUnity->SetLineColor(kRed);
   lineUnity->SetLineWidth(3);
 
+  canDesample->cd(1);
+  hDesampled->SetStats(kFALSE);
+  hDesampled->SetFillColor(kBlue);
+  hDesampled->DrawCopy("E2");
+
+
   for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
   {
     hTempSample = (TH1D*) list->At(iSample);
@@ -913,6 +919,9 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
 
     hTempRatio = (TH1D*) hTempSample->Clone(Form("%s_ratio",hTempSample->GetName()));
     hTempRatio->Divide(hDesampled);
+    hTempRatio->SetYTitle("Value: final / sample");
+    hTempRatio->SetTitleOffset(1.2,"Y");
+
     canDesample->cd(2);
     hTempRatio->Draw("hist p same");
 
@@ -920,6 +929,9 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
     for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hTempSample->GetBinError(bin)); }
 
     canDesample->cd(3);
+    hTempError->SetYTitle("Uncertainty");
+    hTempError->SetTitleOffset(1.2,"Y");
+
     hTempError->Draw("hist p same");
   }
   canDesample->cd(1);
@@ -930,7 +942,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
   hDesampled->DrawCopy("hist p same");
 
   canDesample->cd(2);
-  lineUnity->DrawLine(0,1,20,1);
+  lineUnity->DrawLine(hTempRatio->GetXaxis()->GetXmin(),1,hTempRatio->GetXaxis()->GetXmax(),1);
 
   hTempError = (TH1D*) hDesampled->Clone(Form("%s_error",hDesampled->GetName()));
   for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hDesampled->GetBinError(bin)); }
@@ -938,6 +950,9 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
   canDesample->cd(3);
   hTempError->Draw("hist p same");
 
+  // canDesample->cd(2);
+  // hTempError->SetFillColor(kBlue);
+  // hTempError->Draw("E3 same");
 
   // canDesample->SaveAs();
 
