@@ -5,11 +5,13 @@
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2017
  */
 
+#include "TROOT.h"
 #include "TMath.h"
 #include "TString.h"
 #include "TFile.h"
 #include "TList.h"
 #include "TCanvas.h"
+#include "TLine.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
 #include "TProfile3D.h"
@@ -17,8 +19,6 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TF1.h"
-
-
 
 class FlowTask
 {
@@ -29,12 +29,17 @@ class FlowTask
                 FlowTask(const char* name, PartSpecies species = kUnknown); // named constructor
                 ~FlowTask(); // default destructor
 
+    TString     GetSpeciesName();
+    TString     GetEtaGapString() { return TString(Form("%02.2g",10*fEtaGap)); }
+
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
-
+    void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
+    void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
+    void        SetFlowMassRebin(Short_t rebin = 2) { fRebinFlowMass = rebin; }
   protected:
   private:
     void        PrintTask(); // listing values of internal properties
@@ -48,11 +53,45 @@ class FlowTask
     Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
     Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     Bool_t      fShowMult; // show multiplicity distribution
+    Bool_t      fSuggestPtBins; // suggest pt binning
+    Double_t    fSuggestPtBinEntries; // suggest pt binning
+    Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
+    Short_t     fRebinFlowMass; // flag for rebinning flow-mass profile
+    std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
+    std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
+    std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
 };
 
-FlowTask::FlowTask() { fHarmonics = 0; fEtaGap = 0; fNumSamples = 10; fNumPtBins = -1; fShowMult = kFALSE; }
-FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask() { fName = name; fSpecies = species; }
-FlowTask::~FlowTask() {}
+//_____________________________________________________________________________
+FlowTask::FlowTask()
+{
+  fHarmonics = 0;
+  fEtaGap = 0;
+  fNumSamples = 10;
+  fNumPtBins = -1;
+  fShowMult = kFALSE;
+  fSuggestPtBins = kFALSE;
+  fSuggestPtBinEntries = 20000;
+  fRebinFlowMass = 0;
+  fRebinInvMass = 0;
+  fVecHistInvMass = new std::vector<TH1D*>;
+  fVecHistInvMassBG = new std::vector<TH1D*>;
+  fVecHistFlowMass = new std::vector<TH1D*>;
+}
+//_____________________________________________________________________________
+FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask()
+{
+  fName = name;
+  fSpecies = species;
+}
+//_____________________________________________________________________________
+FlowTask::~FlowTask()
+{
+  if(fVecHistFlowMass) delete fVecHistFlowMass;
+  if(fVecHistInvMass) delete fVecHistInvMass;
+  if(fVecHistInvMassBG) delete fVecHistInvMassBG;
+}
+//_____________________________________________________________________________
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 {
   if(size < 0 || size > fNumPtBinsMax) { Error("Wrong size of pt binning array.","SetPtBins"); return; }
@@ -67,12 +106,32 @@ void FlowTask::SetPtBins(Double_t* array, const Short_t size)
 
   return;
 }
-
+//_____________________________________________________________________________
+TString FlowTask::GetSpeciesName()
+{
+  TString name = TString();
+  switch (fSpecies)
+  {
+    case kRefs : name.Append("Refs"); break;
+    case kCharged : name.Append("Charged"); break;
+    case kPion : name.Append("Pion"); break;
+    case kKaon : name.Append("Kaon"); break;
+    case kProton : name.Append("Proton"); break;
+    case kPhi : name.Append("Phi"); break;
+    case kK0s : name.Append("K0s"); break;
+    case kLambda : name.Append("Lambda"); break;
+    default: name.Append("Unknown");
+  }
+  return name;
+}
+//_____________________________________________________________________________
 void FlowTask::PrintTask()
 {
   printf("----- Printing task info ------\n");
   printf("   fName: %s\n",fName.Data());
-  printf("   fSpecies: %d\n",fSpecies);
+  printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
+  printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
+  printf("   fSuggestPtBins: %s\n", fSuggestPtBins ? "true" : "false");
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
   printf("   fNumPtBins: %d (limit %d)\n",fNumPtBins,fNumPtBinsMax);
@@ -80,8 +139,9 @@ void FlowTask::PrintTask()
   printf("------------------------------\n");
   return;
 }
-
-
+//#############################################################################
+//----------------- End of FlowTask class -------------------------------------
+//#############################################################################
 
 class ProcessUniFlow
 {
@@ -94,29 +154,35 @@ class ProcessUniFlow
     void        SetInputFileName(const char* name) { fsInputFileName = name; }
     void        SetOutputFilePath(const char* path) { fsOutputFilePath = path; }
     void        SetOutputFileName(const char* name) { fsOutputFileName = name; }
+    void        SetOutputFileMode(const char* mode = "RECREATE") { fsOutputFileMode = mode; }
     void        SetTaskName(const char* name) { fsTaskName = name; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
     void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
-    void        SuggestMultBinning(const Short_t numFractions); // try to cut multiplicity distribution into fractions
   protected:
 
   private:
     Bool_t      Initialize(); // initialization task
     Bool_t      LoadLists(); // loading flow lists from input file
-    void        TestProjections(); // testing projection of reconstructed particles
 
+    void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
+    Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
+    Bool_t      ProcessDirect(FlowTask* task = 0x0, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
+    Bool_t      ProcessReconstructed(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
+    Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
+    Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
+    Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
+		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
+    void        SuggestMultBinning(const Short_t numFractions);
+    void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
+    TH1D*       DesampleList(TList* list = 0x0, FlowTask* task = 0x0, Short_t iMultBin = 0); // Desample list of samples for estimating the uncertanity
+
+    void        TestProjections(); // testing projection of reconstructed particles
     TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
     TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
     TH2D*       DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
 
-    void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
-    Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
-    Bool_t      ProcessV0s(FlowTask* task = 0x0); // process  V0s flow
-    Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
-    Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
-		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
     // printing output methods
     void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
@@ -133,6 +199,7 @@ class ProcessUniFlow
     TString     fsInputFileName; // name of input file
     TString     fsOutputFilePath; // path to the ouput folder
     TString     fsOutputFileName; // name of output file
+    TString     fsOutputFileMode; // [RECREATE] mode of output file
     TString     fsTaskName; // name of task (inchluded in data structure names)
     TString     fsOutputFileFormat; // [pdf] format of output files (pictures)
 
@@ -167,6 +234,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fsInputFileName = TString("AnalysisResults.root");
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
+  fsOutputFileMode = TString("RECREATE");
   fsTaskName = TString("UniFlow");
   fsOutputFileFormat = TString("pdf");
   fvTasks = std::vector<FlowTask*>();
@@ -179,6 +247,20 @@ ProcessUniFlow::~ProcessUniFlow()
   // default destructor
   if(ffInputFile) delete ffInputFile;
   if(ffOutputFile) delete ffOutputFile;
+
+  if(flFlowRefs) delete flFlowRefs;
+  if(flFlowCharged) delete flFlowCharged;
+  if(flFlowPID) delete flFlowPID;
+  if(flFlowPhi) delete flFlowPhi;
+  if(flFlowK0s) delete flFlowK0s;
+  if(flFlowLambda) delete flFlowLambda;
+
+  // deleting the FlowTasks
+  const Short_t iNumTasks = fvTasks.size();
+  for(Short_t index(0); index < iNumTasks; index++)
+  {
+    delete fvTasks.at(index);
+  }
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Run()
@@ -193,6 +275,7 @@ void ProcessUniFlow::Run()
 
   const Short_t iNumTasks = fvTasks.size();
   FlowTask* currentTask = 0x0;
+
   Info("===== Running over tasks ======","Run");
   Info(Form("  Number of tasks: %d\n",iNumTasks),"Run");
   for(Short_t iTask(0); iTask < iNumTasks; iTask++)
@@ -220,7 +303,7 @@ Bool_t ProcessUniFlow::Initialize()
   }
 
   // opening output file
-  ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),"RECREATE");
+  ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),fsOutputFileMode.Data());
   if(!ffOutputFile || !ffOutputFile->IsOpen())
   {
     Fatal(Form("Output file %s/%s not open",fsOutputFilePath.Data(),fsOutputFileName.Data()),"Initialize");
@@ -344,15 +427,22 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
       bProcessed = ProcessRefs(task);
       break;
 
+    case FlowTask::kCharged:
+    case FlowTask::kPion:
+    case FlowTask::kKaon:
+    case FlowTask::kProton:
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessDirect(task); }
+      break;
+
     case FlowTask::kPhi:
     case FlowTask::kK0s:
     case FlowTask::kLambda:
-      bProcessed = ProcessV0s(task);
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessReconstructed(task,binMult); }
       break;
     default: break;
   }
 
-  if(!bProcessed) { Error("Task not processed correctly!","ProcessTask"); return; }
+  if(!bProcessed) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return; }
 
   return;
 }
@@ -363,87 +453,171 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(!task) { Error("Task not valid!","ProcessRefs"); return kFALSE; }
   if(task->fSpecies != FlowTask::kRefs) { Error("Task species not kRefs!","ProcessRefs"); return kFALSE; }
 
-  // Info("Listing input refs profiles","ProcesRefs");
-  // flFlowRefs->ls();
-
-  // merging samples together
+  // preparing for desampling
   TProfile* prof = 0x0;
+  TProfile* profRebin  = 0x0;
+  TH1D* histProj = 0x0;
   TList* list = new TList();
-  // for(Short_t i(0); i < 2; i++)
+
   for(Short_t i(0); i < task->fNumSamples; i++)
   {
     prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
     if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
-    list->Add(prof);
+
+    // rebinning the profiles
+    profRebin = (TProfile*) prof->Rebin(fiNumMultBins,Form("%s_rebin",prof->GetName()),fdMultBins);
+    histProj = profRebin->ProjectionX(Form("%s_proj",profRebin->GetName()));
+    // histProj = prof->ProjectionX(Form("%s_proj",prof->GetName())); // no rebinning
+    list->Add(histProj);
   }
-  Debug(Form("Number of samples in list pre merging %d",list->GetEntries()));
 
+  // desampling (similarly to PID & Charged tracks)
+  TH1D* hDesampled = DesampleList(list,task);
+  if(!hDesampled) { Error("Desampling unsuccesfull","ProcessRefs"); return kFALSE; }
+  hDesampled->SetName(Form("hCum2_%s_harm%d_gap%s_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fName.Data()));
+  hDesampled->SetTitle(Form("%s c_{%d}{2} | Gap %s ",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TProfile* merged = (TProfile*) prof->Clone();
-  Double_t mergeStatus = merged->Merge(list);
-  if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
-  // merged->Draw();
+  TH1D* hDesampledFlow = (TH1D*) hDesampled->Clone(Form("%s_flow",hDesampled->GetName()));
+  hDesampledFlow->SetName(Form("hFlow2_%s_harm%d_gap%s_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fName.Data()));
+  hDesampledFlow->SetTitle(Form("%s v_{%d}{2} | Gap %s ",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
-  // merged->SetName(Form("fpRefs_<2>_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
-  // merged->SetTitle(Form("Ref: <<2>> | n=%d | Gap %02.2g",task->fHarmonics,task->fEtaGap));
-
-  // rebinning: multiplicity
-  // Double_t xbins[] = {1,14,16,60};
-  // Int_t iNumBins = sizeof(xbins)/sizeof(xbins[0]) - 1;
-  // printf("bins: %d\n",iNumBins);
-
-  TProfile* rebin = (TProfile*) merged->Rebin(fiNumMultBins,Form("%s_rebin",merged->GetName()),fdMultBins);
-  TH1D* histRebin = rebin->ProjectionX();
-
-  // at this point correlations are processed
-  // start doing vns out of them
-
-  TH1D* hFlow = (TH1D*) histRebin->Clone(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
-  hFlow->SetTitle(Form("Ref: v_{%d}{2 | Gap %g}",task->fHarmonics,task->fEtaGap));
-  // TH1D* hFlow = (TH1D*) histRebin->Clone("hFlow");
-  // hFlow->Reset();
-
-  const Short_t iBinsX = hFlow->GetNbinsX();
-
-  Double_t dContent = 0, dValue = 0;
-  for(Short_t iBin(1); iBin < iBinsX+1; iBin++)
+  // estimating vn out of cn
+  Double_t dContent = 0., dError = 0.;
+  for(Short_t iBin(1); iBin < hDesampled->GetNbinsX()+1; iBin++)
   {
-    dContent = histRebin->GetBinContent(iBin);
-    if(dContent < 0) hFlow->SetBinContent(iBin, -9.);
-    else hFlow->SetBinContent(iBin,TMath::Sqrt(dContent));
-    // printf("%g | %g\n",dContent, TMath::Sqrt(dContent));
+    dContent = hDesampled->GetBinContent(iBin);
+    dError = hDesampled->GetBinError(iBin);
+
+    if(dContent > 0. && dError >= 0.)
+    {
+      hDesampledFlow->SetBinContent(iBin, TMath::Sqrt(dContent));
+      hDesampledFlow->SetBinError(iBin, TMath::Sqrt( TMath::Power(dError,2) / (4*dContent) ));
+    }
+    else
+    {
+      hDesampledFlow->SetBinContent(iBin, 9.);
+      hDesampledFlow->SetBinError(iBin, 9.);
+    }
   }
 
-  // printf("%g±%g\n", merged->GetBinContent(14), merged->GetBinError(14));
-  // printf("%g±%g\n", merged->GetBinContent(15), merged->GetBinError(15));
-  // printf("%g±%g\n", histRebin->GetBinContent(2), histRebin->GetBinError(2));
-
-
-
-  // TCanvas* canTest = new TCanvas("canTestRefs","canTestReffs",1000,1000);
-  // canTest->Divide(2,2);
-  // canTest->cd(1);
-  // merged->Draw();
-  // canTest->cd(2);
-  // rebin->Draw();
-  // canTest->cd(3);
-  // histRebin->Draw();
-  // canTest->cd(4);
-  // hFlow->Draw();
-
-
+  // saving to output file
   ffOutputFile->cd();
-  hFlow->Write();
+  hDesampled->Write();
+  hDesampledFlow->Write();
 
+  // TCanvas* canTest = new TCanvas("canTest","canTest");
+  // canTest->Divide(2,1);
+  // canTest->cd(1);
+  // hDesampled->Draw();
+  // canTest->cd(2);
+  // hDesampledFlow->Draw();
+
+  if(hDesampled) delete hDesampled;
+  if(hDesampledFlow) delete hDesampledFlow;
+  if(profRebin) delete profRebin;
+  if(histProj) delete histProj;
+  if(list) delete list;
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
+Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 {
-  Info("Processing V0s task","ProcessV0s");
-  if(!task) { Error("Task not valid!","ProcessV0s"); return kFALSE; }
-  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
+  Info("Processing PID task","ProcesPID");
+  if(!task) { Error("Task not valid!","ProcessDirect"); return kFALSE; }
+
+  TList* listInput = 0x0;
+  switch (task->fSpecies)
+  {
+    case FlowTask::kCharged:
+      listInput = flFlowCharged;
+      break;
+
+    case FlowTask::kPion:
+    case FlowTask::kKaon:
+    case FlowTask::kProton:
+      listInput = flFlowPID;
+      break;
+
+    default:
+      Error("Task species not PID!","ProcessDirect");
+      return kFALSE;
+  }
+
+  // preparing vn' samples
+  TList* listFlow = new TList();
+  TProfile2D* prof2 = 0x0;
+  TProfile* prof = 0x0;
+  TProfile* profRebin = 0x0;
+  TProfile* profRef = 0x0;
+  TProfile* profRefRebin = 0x0;
+  TH1D* hFlow = 0x0;
+
+  Short_t binMultLow = 0;
+  Short_t binMultHigh = 0;
+  Double_t dRef = 0;
+
+  for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
+  {
+    prof2 = (TProfile2D*) listInput->FindObject(Form("fp2%s_<2>_harm%d_gap%02.2g_sample%d",task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+    if(!prof2) { Error(Form("Profile sample %d does not exists.",iSample),"ProcesPID"); return kFALSE; }
+
+    // preparing Refs
+    profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,iSample));
+    if(!profRef) { Error(Form("Profile sample %d does not exists",iSample),"ProcesPID"); return kFALSE; }
+
+    profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
+    dRef = profRefRebin->GetBinContent(iMultBin+1);
+    // NOTE: complains about Sumw2
+
+    // rebinning according in mult bin
+    binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
+    binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
+    prof = prof2->ProfileY(Form("%s_projY",prof2->GetName()),binMultLow,binMultHigh);
+
+    if(task->fNumPtBins > 0)
+    {
+      // rebinning according to pt bins
+      profRebin = (TProfile*) prof->Rebin(task->fNumPtBins,Form("%s_rebin",prof->GetName()),task->fPtBinsEdges);
+    }
+    else
+    {
+      // making TH1D projection (to avoid handling of bin entries)
+      profRebin = (TProfile*) prof->Clone(Form("%s_rebin",prof->GetName()));
+    }
+
+    hFlow = (TH1D*) profRebin->ProjectionX();
+    hFlow->SetName(Form("%s_Flow",prof->GetName()));
+    hFlow->Scale(1/TMath::Sqrt(dRef));
+    listFlow->Add(hFlow);
+  }
+  Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessDirect");
+
+  TH1D* hDesampled = DesampleList(listFlow,task,iMultBin);
+  if(!hDesampled) { Error("Desampling unsuccesfull","ProcessDirect"); return kFALSE; }
+
+  hDesampled->SetName(Form("hFlow_%s_harm%d_gap%s_cent%d_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,task->fName.Data()));
+  hDesampled->SetTitle(Form("%s v_{%d}{2} | Gap %s | Cent %d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
+
+  // saving to output file
+  ffOutputFile->cd();
+  hDesampled->Write();
+
+  delete listFlow;
+  delete prof;
+  delete profRebin;
+  delete profRefRebin;
+  delete hFlow;
+  delete hDesampled;
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
+{
+  Info("Processing V0s task","ProcessReconstructed");
+  if(!task) { Error("Task not valid!","ProcessReconstructed"); return kFALSE; }
+  // if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
   // preparing particle dependent variables for switch
   //  -- input histos / profiles with entries and correlations
@@ -460,7 +634,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
     case FlowTask::kPhi :
       histEntries = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesSignal_gap%02.2g",10*task->fEtaGap));
       histBG = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesBG_gap%02.2g",10*task->fEtaGap));
-      if(!histBG) { Error("Histo with BG entries not found","ProcessV0s"); return kFALSE; }
+      if(!histBG) { Error("Histo with BG entries not found","ProcessReconstructed"); return kFALSE; }
       profFlow = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
       sSpeciesName = TString("Phi");
       sSpeciesLabel = TString("#phi");
@@ -481,154 +655,352 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task)
     break;
 
     default:
-      Error("Task species not V0s nor Phi!","ProcessV0s");
+      Error("Task species not V0s nor Phi!","ProcessReconstructed");
       return kFALSE;
   }
 
-  if(!histEntries) { Error("Entries histos not found!","ProcessV0s"); return kFALSE; }
-  if(!profFlow) { Error("Cumulant histos not found!","ProcessV0s"); return kFALSE; }
+  if(!histEntries) { Error("Entries histos not found!","ProcessReconstructed"); return kFALSE; }
+  if(!profFlow) { Error("Cumulant histos not found!","ProcessReconstructed"); return kFALSE; }
 
-
+  // loading reference flow, if not found, it will be prepared
   TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
   if(!hRefFlow)
   {
-    Warning("Relevant Reference flow not found within output file.","ProcessV0s");
-    Info("Creating relevant reference flow task.","ProcessV0s");
+    Warning("Relevant Reference flow not found within output file.","ProcessReconstructed");
+    Info("Creating relevant reference flow task.","ProcessReconstructed");
 
     FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
     taskRef->SetHarmonics(task->fHarmonics);
     taskRef->SetEtaGap(task->fEtaGap);
-    if(ProcessRefs(taskRef)) return ProcessV0s(task);
-    else { Error("Something went wrong when running automatic refs flow task:","ProcessV0s"); taskRef->PrintTask(); return kFALSE; }
+    if(ProcessRefs(taskRef)) return ProcessReconstructed(task);
+    else { Error("Something went wrong when running automatic refs flow task:","ProcessReconstructed"); taskRef->PrintTask(); return kFALSE; }
   }
 
-  // preparing for loops
-  TH1D* hFlow = 0x0;
-  Double_t dRefs = 0, dRefsError = 0;
-  Short_t binMultLow = 0, binMultHigh = 0;
-  Short_t binPtLow = 0, binPtHigh = 0;
+  // check if suggest pt binning flag is on if of Pt binning is not specified
+  if(task->fSuggestPtBins || task->fNumPtBins < 1)
+  {
+    SuggestPtBinning(histEntries,profFlow,task,iMultBin);
+  }
+
+  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
+
+  task->PrintTask();
+
+  if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histBG)) return kFALSE;
+
+  TH1D* hFlow = new TH1D(Form("hFlow_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
+
   TH1D* hInvMass = 0x0;
   TH1D* hInvMassBG = 0x0;
-  TProfile2D* prof2DFlowMass = 0x0;
-  TProfile* profFlowMass = 0x0;
   TH1D* hFlowMass = 0x0;
-  Double_t dContent = 0, dError = 0;
   Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
-  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200); // canvas for fitting results
-  TCanvas* cFlow = new TCanvas("cFlow","Flow",400,400); // canvas for resulting flow vs pt
-  TCanvas* cMultDist = new TCanvas("cMultDist","MultDist.",1200,1200);
-  cMultDist->Divide(3,(Int_t)(fiNumMultBins/3)+1);
+  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1600,1200); // canvas for fitting results
 
-  for(Short_t binMult(0); binMult < fiNumMultBins; binMult++)
+  for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
   {
-    // preparing resulting flow vs pt (mult) histo
-    hFlow = new TH1D(Form("hFlow_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[binMult],fdMultBins[binMult+1]), task->fNumPtBins,task->fPtBinsEdges);
+    hInvMass = task->fVecHistInvMass->at(binPt);
+    hFlowMass = task->fVecHistFlowMass->at(binPt);
 
-    // estimating multiplicity edges and selection axis range
-    binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
-    binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
-    profFlow->GetXaxis()->SetRange(binMultLow,binMultHigh); // setting multiplicity range
-
-
-    // checking if Show Multiplicity distribution mode is on (if so, only entries as a function of pt are showed in mult bins)
-    if(task->fShowMult)
+    // extracting flow
+    switch (task->fSpecies)
     {
-      hInvMass = (TH1D*) histEntries->ProjectionY(Form("hInvMass_mult%d",binMult),binMultLow,binMultHigh);
-      cMultDist->cd(binMult+1);
-      gPad->SetLogy();
-      hInvMass->Draw();
-      continue;
+      case FlowTask::kPhi :
+      hInvMassBG = task->fVecHistInvMassBG->at(binPt);
+      if( !ExtractFlowPhi(hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+      break;
+
+      case FlowTask::kK0s :
+      if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+      break;
+
+      case FlowTask::kLambda :
+      if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+      break;
+
+      default :
+        Error("Uknown species","ProcessReconstructed");
+        return kFALSE;
     }
 
-    // loading relevant reference flow
-    dRefs = hRefFlow->GetBinContent(binMult+1);
-    dRefsError = hRefFlow->GetBinError(binMult+1);
+    canFitInvMass->SaveAs(Form("%s/fits/%s/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
-    for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
+
+    if(TMath::Abs(dFlow) > 1 )
     {
-      // estimating pt edges
-      binPtLow = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
-      binPtHigh = histEntries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+      hFlow->SetBinContent(binPt+1,0);
+      hFlow->SetBinError(binPt+1,0);
+    }
+    else
+    {
+      hFlow->SetBinContent(binPt+1,dFlow);
+      hFlow->SetBinError(binPt+1,dFlowError);
+    }
 
-      // rebinning entries based on mult & pt binning
-      hInvMass = (TH1D*) histEntries->ProjectionZ("hInvMass",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-      if(histBG) hInvMassBG = (TH1D*) histBG->ProjectionZ("hInvMassBG",binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-      // here can be rebinning of inv mass if needed
-      // hInvMass ready to fitting
+  } // endfor {binPt}
 
-      // projection of flow-mass profile
-      prof2DFlowMass = Project3DProfile(profFlow); // doing projection with modified function
-      profFlowMass = (TProfile*) prof2DFlowMass->ProfileX("profFlowMass",binPtLow,binPtHigh);
-      hFlowMass = (TH1D*) profFlowMass->ProjectionX("hFlowMass");
-      // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
+  TCanvas* cFlow = new TCanvas("cFlow","cFlow");
+  cFlow->cd();
+  hFlow->Draw();
+  cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
-      // make flow out of corralation
-      for(Short_t iMass(1); iMass < profFlowMass->GetNbinsX()+1; iMass++)
-      {
-        dContent = profFlowMass->GetBinContent(iMass);
-        dError = profFlowMass->GetBinError(iMass);
-        hFlowMass->SetBinContent(iMass, dContent / dRefs);
-        hFlowMass->SetBinError(iMass, TMath::Sqrt(TMath::Power(dError/dRefs,2) + TMath::Power(dContent*dRefsError/(dRefs*dRefs),2)) );
-        // printf("bin %d | %g±%g\n",iMass, dContent,dError);
-      }
-      // hFlowMass is ready for fitting
+  ffOutputFile->cd();
+  hFlow->Write();
 
-      // extracting flow
-      switch (task->fSpecies)
-      {
-        case FlowTask::kPhi :
-          if( !ExtractFlowPhi(hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
-        break;
+  return kTRUE;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin)
+{
+  if(!task) { Error("FlowTask does not exists","DesampleList"); return 0x0; }
+  if(!list) { Error("List does not exists","DesampleList"); return 0x0; }
+  if(list->GetEntries() < 1) { Error("List is empty","DesampleList"); return 0x0; }
+  if(list->GetEntries() != task->fNumSamples) { Warning("Number of list entries is different from task number of samples","DesampleList"); }
 
-        case FlowTask::kK0s :
-          if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
-        break;
+  Debug(Form("Number of samples in list pre-desampling: %d",list->GetEntries()),"DesampleList");
 
-        case FlowTask::kLambda :
-          if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
-        break;
+  TH1D* hTempSample = (TH1D*) list->At(0);
+  TH1D* hDesampled = (TH1D*) hTempSample->Clone(Form("%s_Desampled",hTempSample->GetName()));
+  hDesampled->Reset();
 
+  Double_t content = 0;
+  Double_t error = 0;
 
-        default : break;
-      }
-      Info(Form("Extracted flow: %g ± %g\n",dFlow,dFlowError),"ProcessV0s");
+  Double_t dSum = 0;
+  Double_t dW = 0;
+  Double_t dAverage = 0;
+  Double_t dAve_err = 0;
 
-      // saving pt bin resulting flow to flow-vs-pt hist
-      hFlow->SetBinContent(binPt+1, dFlow);
-      hFlow->SetBinError(binPt+1, dFlowError);
-
-      // printing fitting results
-      canFitInvMass->SaveAs(Form("%s/FlowMass_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
-
-    } // endfor {binPt}
-
-    cFlow->cd();
-    hFlow->Draw();
-    cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,binMult,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
-
-    ffOutputFile->cd();
-    hFlow->Write();
-
-  } // endfor {binMult}
-
-  if(!task->fShowMult && fbDebug)
+  for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++)
   {
-    TCanvas* canTest = new TCanvas("canTest","Test",600,600);
-    canTest->Divide(2,3);
-    canTest->cd(1);
-    histEntries->Draw();
-    canTest->cd(2);
-    profFlow->Draw();
-    canTest->cd(3);
-    hInvMass->Draw();
-    canTest->cd(4);
-    profFlowMass->Draw();
-    canTest->cd(5);
-    hFlowMass->Draw();
-    canTest->cd(6);
-    prof2DFlowMass->Draw("colz");
+    dSum = 0;
+    dW = 0;
+    dAverage = 9.;
+    dAve_err = 9.;
+
+    for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
+    {
+      hTempSample = (TH1D*) list->At(iSample);
+      if(!hTempSample) { Warning(Form("Sample %d not found! Skipping!",iSample),"DesampleList"); continue; }
+
+      content = hTempSample->GetBinContent(bin);
+      error = hTempSample->GetBinError(bin);
+
+      if(error <= 0.) continue;
+
+      dSum += content / TMath::Power(error,2);
+      dW += 1 / TMath::Power(error,2);
+      Debug(Form("Sample: %d | bin %d | %g +- %g",iSample,bin,content,error),"DesampleList");
+    }
+
+    Debug(Form(" --- bin %d | Sum %g +- %g",bin,dSum,dW),"DesampleList");
+
+    if(dSum == 0. && dW == 0.) continue; // skipping empty bins
+
+    if(dW > 0.)
+    {
+      dAverage = dSum / dW;
+      dAve_err = TMath::Sqrt(1/dW);
+    }
+
+    Debug(Form("W average | bin %d | %g +- %g",bin,dAverage,dAve_err),"DesampleList");
+
+    //ratio->SetBinContent(bin, dAverage / merged->GetBinContent(bin));
+    //ratioErr->SetBinContent(bin, dAve_err / merged->GetBinError(bin));
+    hDesampled->SetBinContent(bin,dAverage);
+    hDesampled->SetBinError(bin,dAve_err);
+    Debug(Form("Desampled: bin %d | %g +- %g\n",bin,dAverage,dAve_err),"DesampleList");
   }
 
+  // at this point, hDesampled is ready
+
+  // getting copy which does not affect histo which is returned
+  TH1D* hDesampledClone = (TH1D*) hDesampled->Clone(Form("%sClone",hDesampled->GetName()));
+
+  TList* listOutput = new TList(); // list for collecting all QA histos
+
+  // doing QA plots with spread, etc.
+  TCanvas* canDesample = new TCanvas(Form("canDesample_%s",task->fName.Data()),Form("canDesample_%s",task->fName.Data()),1200,400);
+  canDesample->Divide(3,1);
+
+  TH1D* hTempRatio = 0x0;
+  TH1D* hTempError = 0x0;
+
+  TLine* lineUnity = new TLine();
+  lineUnity->SetLineColor(kRed);
+  lineUnity->SetLineWidth(3);
+
+  canDesample->cd(1);
+  hDesampledClone->SetStats(kFALSE);
+  hDesampledClone->SetFillColor(kBlue);
+  hDesampledClone->SetStats(kFALSE);
+  hDesampledClone->SetMarkerStyle(20);
+  hDesampledClone->SetMarkerSize(0.5);
+  hDesampledClone->SetMarkerColor(kRed);
+  hDesampledClone->DrawCopy("E2");
+
+  for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
+  {
+    hTempSample = (TH1D*) list->At(iSample);
+    if(!hTempSample) { Warning(Form("Sample %d not found during plotting QA! Skipping!",iSample),"DesampleList"); continue; }
+
+    canDesample->cd(1);
+    hTempSample->SetStats(kFALSE);
+    hTempSample->SetLineColor(30+2*iSample);
+    hTempSample->SetMarkerColor(30+2*iSample);
+    hTempSample->SetMarkerStyle(24);
+    hTempSample->SetMarkerSize(0.5);
+    hTempSample->DrawCopy("hist p same");
+
+    hTempRatio = (TH1D*) hTempSample->Clone(Form("%s_ratio",hTempSample->GetName()));
+    hTempRatio->Divide(hDesampled);
+    hTempRatio->SetYTitle("Value: final / sample");
+    hTempRatio->SetTitleOffset(1.2,"Y");
+
+    canDesample->cd(2);
+    hTempRatio->SetMinimum(0.6);
+    hTempRatio->SetMaximum(1.4);
+    hTempRatio->Draw("hist p same");
+
+    hTempError = (TH1D*) hTempSample->Clone(Form("%s_error",hTempSample->GetName()));
+    for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hTempSample->GetBinError(bin)); }
+
+    canDesample->cd(3);
+    hTempError->SetMinimum(0.);
+    hTempError->SetMaximum(1.5*hTempError->GetMaximum());
+    hTempError->SetYTitle("Uncertainty");
+    hTempError->SetTitleOffset(1.2,"Y");
+
+    hTempError->Draw("hist p same");
+
+    listOutput->Add(hTempSample);
+    listOutput->Add(hTempRatio);
+    listOutput->Add(hTempError);
+  }
+
+  canDesample->cd(1);
+  hDesampledClone->DrawCopy("hist p same");
+
+  canDesample->cd(2);
+  lineUnity->DrawLine(hTempRatio->GetXaxis()->GetXmin(),1,hTempRatio->GetXaxis()->GetXmax(),1);
+
+  hTempError = (TH1D*) hDesampledClone->Clone(Form("%s_error",hDesampled->GetName()));
+  for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hDesampledClone->GetBinError(bin)); }
+  listOutput->Add(hTempError);
+
+  canDesample->cd(3);
+  hTempError->Draw("hist p same");
+
+  // saving QA plots
+  canDesample->SaveAs(Form("%s/Desampling_%s_harm%d_gap%g_mult%d_%s.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,task->fName.Data(),fsOutputFileFormat.Data()));
+
+  Info("Saving desampling QA into output file","DesampleList");
+  ffOutputFile->cd();
+  listOutput->Add(canDesample);
+  listOutput->Write(Form("Desampling_%s_%s",task->GetSpeciesName().Data(),task->fName.Data()),TObject::kSingleKey);
+
+  // deleting created stuff
+  delete listOutput;
+  // delete canDesample;
+  delete lineUnity;
+  // if(hTempSample) delete hTempSample;
+  // delete hTempRatio;
+  // delete hTempError;
+  // delete hDesampledClone;
+
+  return hDesampled;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor, TH3D* h3Entries, TH3D* h3EntriesBG)
+{
+
+  if(!task) { Error("Input task not found!","PrepareSlices"); return kFALSE; }
+  if(!h3Entries) { Error("Input hist with entries not found!","PrepareSlices"); return kFALSE; }
+  if(!p3Cor) { Error("Input profile with correlations not found!","PrepareSlices"); return kFALSE; }
+  if(multBin < 0 || multBin > fiNumMultBins) { Error("Wrong multiplicity bin index (not in range)!","PrepareSlices"); return kFALSE; }
+
+  // cleaning the vectros with flow-mass and inv. mass plots
+  if(task->fVecHistInvMass->size() > 0) task->fVecHistInvMass->clear();
+  if(task->fVecHistInvMassBG->size() > 0) task->fVecHistInvMassBG->clear();
+  if(task->fVecHistFlowMass->size() > 0) task->fVecHistFlowMass->clear();
+
+  const Short_t binMultLow = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin]);
+  const Short_t binMultHigh = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin+1]) - 1;
+  printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[multBin],binMultLow,fdMultBins[multBin+1],binMultHigh);
+
+  // loop over pt
+  Short_t binPtLow = 0;
+  Short_t binPtHigh = 0;
+  TH1D* hInvMass_temp = 0x0;
+  TH1D* hInvMassBG_temp = 0x0;
+  TProfile3D* prof3Flow_temp = 0x0;
+  TProfile2D* prof2FlowMass_temp = 0x0;
+  TProfile* profFlowMass_temp = 0x0;
+  TH1D* hFlowMass_temp = 0x0;
+
+  prof3Flow_temp = (TProfile3D*) p3Cor->Clone(Form("prof3Flow_temp_mult%d",multBin));
+  prof3Flow_temp->GetXaxis()->SetRange(binMultLow,binMultHigh);
+  prof2FlowMass_temp = Project3DProfile(prof3Flow_temp);
+
+  Short_t iNumPtBins = task->fNumPtBins;
+
+  TCanvas* canFlowMass = new TCanvas("canFlowMass","FlowMass",1400,600);
+  TCanvas* canInvMass = new TCanvas("canInvMass","InvMass",1400,600);
+  TCanvas* canInvMassBG = new TCanvas("canInvMassBG","InvMassBG",1400,600);
+  canFlowMass->Divide(5,std::ceil(iNumPtBins/5));
+  canInvMass->Divide(5,std::ceil(iNumPtBins/5));
+  canInvMassBG->Divide(5,std::ceil(iNumPtBins/5));
+
+  for(Short_t binPt(0); binPt < iNumPtBins; binPt++)
+  {
+    // estimating pt edges
+    binPtLow = h3Entries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
+    binPtHigh = h3Entries->GetYaxis()->FindFixBin(task->fPtBinsEdges[binPt+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+    printf("   Pt: %g(%d) -  %g(%d)\n",task->fPtBinsEdges[binPt],binPtLow,task->fPtBinsEdges[binPt+1],binPtHigh);
+
+    // rebinning entries based on mult & pt binning
+    hInvMass_temp = (TH1D*) h3Entries->ProjectionZ(Form("hInvMass_mult%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+    if(h3EntriesBG) hInvMassBG_temp = (TH1D*) h3EntriesBG->ProjectionZ(Form("hInvMassBG_mult%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+
+    // checking if rebinning inv mass hist
+    if(task->fRebinInvMass > 1) { hInvMass_temp->Rebin(task->fRebinInvMass); if(h3EntriesBG){ hInvMassBG_temp->Rebin(task->fRebinInvMass); } }
+
+
+    // projection of flow-mass profile
+    profFlowMass_temp = (TProfile*) prof2FlowMass_temp->ProfileX(Form("profFlowMass_mult%d_pt%d",multBin,binPt),binPtLow,binPtHigh);
+
+    // checking for rebinning the flow-mass profile
+    if(task->fRebinFlowMass > 1) { profFlowMass_temp->Rebin(task->fRebinFlowMass); }
+
+    hFlowMass_temp = (TH1D*) profFlowMass_temp->ProjectionX(Form("hFlowMass_mult%d_pt%d",multBin,binPt));
+    // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
+
+    // ready to fitting
+    task->fVecHistFlowMass->push_back(hFlowMass_temp);
+    task->fVecHistInvMass->push_back(hInvMass_temp);
+    if(h3EntriesBG) task->fVecHistInvMassBG->push_back(hInvMassBG_temp);
+
+    canFlowMass->cd(binPt+1);
+    hFlowMass_temp->Draw();
+
+    canInvMass->cd(binPt+1);
+    hInvMass_temp->Draw();
+
+    if(h3EntriesBG)
+    {
+      canInvMassBG->cd(binPt+1);
+      hInvMassBG_temp->Draw();
+    }
+
+  } // endfor {binPt}: over Pt bins
+
+  printf(" # of slices: InvMass: %lu | InvMassBG %lu | FlowMass %lu\n",task->fVecHistInvMass->size(),task->fVecHistInvMassBG->size(),task->fVecHistFlowMass->size());
+
+  canFlowMass->SaveAs(Form("%s/slices/%s/Slices_FlowMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  canInvMass->SaveAs(Form("%s/slices/%s/Slices_InvMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  if(h3EntriesBG) canInvMassBG->SaveAs(Form("%s/slices/%s/Slices_InvMassBG_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+
+  if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1 || task->fVecHistFlowMass->size() != task->fVecHistInvMass->size()) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
+  if(h3EntriesBG && (task->fVecHistInvMassBG->size() < 1 || task->fVecHistInvMassBG->size() != task->fVecHistInvMass->size()) ) { Error("Output vector empty. Something went wrong with BG histograms","PrepareSlices"); return kFALSE; }
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -638,6 +1010,90 @@ void ProcessUniFlow::AddTask(FlowTask* task)
 
   fvTasks.push_back(task);
   return;
+}
+//_____________________________________________________________________________
+void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOrig, FlowTask* task, Short_t binMult)
+{
+  if(!histEntries) return;
+  if(!profFlowOrig) return;
+  if(!task) return;
+
+  Short_t binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
+  Short_t binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
+
+  TH1D* hPtProj = (TH1D*) histEntries->ProjectionY("hPtProj",binMultLow,binMultHigh);
+
+  const Double_t dMinEntries = task->fSuggestPtBinEntries;
+  std::vector<Double_t> vecBins;
+  std::vector<Double_t> vecContents;
+
+  printf("vector pre: %lu\n", vecBins.size());
+  Double_t dCount = 0;
+  const Short_t iNBins = hPtProj->GetNbinsX();
+  Short_t iBin = 1;
+
+  // if some of the pt bins are set, the suggestion started with first bin after the last edge
+  if(task->fNumPtBins > 0 && task->fNumPtBins < iNBins)
+  {
+    iBin = hPtProj->FindFixBin(task->fPtBinsEdges[task->fNumPtBins]) + 1;
+    printf("LastBin %d (%g) | iBin %d (%g)\n",task->fNumPtBins,task->fPtBinsEdges[task->fNumPtBins], iBin, hPtProj->GetBinLowEdge(iBin));
+  }
+  else { vecBins.push_back(hPtProj->GetXaxis()->GetXmin()); } // pushing first edge
+
+  for(iBin; iBin < iNBins+1; iBin++)
+  {
+    dCount += hPtProj->GetBinContent(iBin);
+    if(dCount > dMinEntries)
+    {
+      vecBins.push_back(hPtProj->GetXaxis()->GetBinUpEdge(iBin));
+      vecContents.push_back(dCount);
+      dCount = 0;
+    }
+  }
+  vecContents.push_back(dCount); // pushing last (remaining) bin content
+  vecBins.push_back(hPtProj->GetXaxis()->GetXmax()); // pushing last edge (low edge of underflowbin)
+  const Short_t iNumBinEdges = vecBins.size();
+  printf("vector post: %hd\n", iNumBinEdges);
+
+  // filling internal pt binning with suggestion result
+  for(Short_t index(0); index < iNumBinEdges; index++)
+  {
+    task->fPtBinsEdges[index + task->fNumPtBins] = vecBins.at(index); // NOTE +1 ???
+  }
+  task->fNumPtBins += iNumBinEdges-1;
+
+
+  // TODO hBinsContent reimplmente
+  // TH1D* hBinsContent = new TH1D("hBinsContent","BinContent", task->fNumPtBins, task->fPtBinsEdges);
+  // for(Short_t iBin(0); iBin < task->-1; iBin++)
+  // {
+  //   hBinsContent->SetBinContent(iBin+1,vecContents.at(iBin));
+  // }
+
+  TLine* line = new TLine();
+  line->SetLineColor(kRed);
+
+  TCanvas* cPtBins = new TCanvas("cPtBins","cPtBins",600,600);
+  cPtBins->Divide(1,2);
+  cPtBins->cd(1);
+  hPtProj->Draw();
+  cPtBins->cd(2);
+  // hBinsContent->SetMinimum(0);
+  // hBinsContent->Draw();
+  // line->DrawLine(task->fPtBinsEdges[0],dMinEntries, task->fPtBinsEdges[task->fNumPtBins], dMinEntries);
+  cPtBins->cd(1);
+
+  Double_t dPt = 0;
+  printf("Suggested binning: ");
+  for(Short_t index(0); index < task->fNumPtBins+1; index++)
+  {
+    dPt = task->fPtBinsEdges[index];
+    printf("%hd (%g) | ",index,dPt);
+    line->DrawLine(dPt,0,dPt,1.05*hPtProj->GetMaximum());
+  }
+  printf("\n");
+
+  cPtBins->SaveAs(Form("%s/suggestBins/SuggestPtBins_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,binMult,fsOutputFileFormat.Data()));
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
@@ -1131,10 +1587,6 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	Double_t dMassLow = 0;
 	Double_t dMassHigh = 0;
 
-
-
-
-
   // subtraction of BG
   // normalisation BG to Signal in region of interest
   const Double_t dNormMassLow = 1.03;
@@ -1166,13 +1618,13 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 
 
   // TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
-	canFitInvMass->Divide(3,3);
-  canFitInvMass->cd(7);
+	canFitInvMass->Divide(4,2);
+  canFitInvMass->cd(1);
   hInvMass->Draw();
   hInvMassBG->Draw("same");
   hInvMassBG_scaled->Draw("same");
-  canFitInvMass->cd(8);
-  hInvMass_subs->Draw();
+  // canFitInvMass->cd(8);
+  // hInvMass_subs->Draw();
 
 	TH1D* hInvMass_shot = 0x0;
 	TH1D* hInvMass_side = 0x0;
@@ -1197,7 +1649,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	hInvMass_residual = (TH1D*) hInvMass_subs->Clone("hInvMass_residual");
 
   // fitting first shot
-  Double_t dInvMassPeakLow = 1.00;
+  Double_t dInvMassPeakLow = 1.01;
   Double_t dInvMassPeakHigh = 1.035;
   Short_t iBinPeakLow = hInvMass_shot->FindFixBin(dInvMassPeakLow);
   Short_t iBinPeakHigh = hInvMass_shot->FindFixBin(dInvMassPeakHigh);
@@ -1209,7 +1661,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
   hInvMass_shot->SetMinimum(hInvMass_subs->GetMinimum());
 
 	printf("\n====== Phi: Fitting InvMass first shot ========\n");
-	canFitInvMass->cd(1);
+	canFitInvMass->cd(2);
 	fitShot = new TF1("fitShot","pol2(0)",0.99,1.07);
 	fitShot->SetNpx(10000);
 	// fitShot->SetParameter(1,0.5);
@@ -1221,7 +1673,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	// TODO checking the fitting results
 
 	// fitting background in sidebands
-  canFitInvMass->cd(2);
+  canFitInvMass->cd(3);
 	printf("\n====== Phi: Fitting InvMass side bands ========\n");
 	fitSide = new TF1("fitSide","pol2(0)+[3]*TMath::BreitWigner(x,[4],[5])",0.99,1.07);
 	fitSide->SetNpx(10000);
@@ -1252,7 +1704,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 		hInvMass_residual->SetBinContent(iMass,dContent);
 	}
 
-	canFitInvMass->cd(3);
+	canFitInvMass->cd(4);
 	hInvMass_residual->Draw();
 
 
@@ -1261,7 +1713,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	hInvMass_ratio->Divide(hInvMass);
 
 	printf("\n====== Phi: Fitting InvMass sig/tot ratio ========\n");
-	canFitInvMass->cd(4);
+	canFitInvMass->cd(5);
 
 	//hInvMass_ratio->Draw();
 	// fitRatio = new TF1("fitRatio","pol2(0)+[3]*TMath::BreitWigner(x,[4],[5])",0.99,1.07);
@@ -1296,7 +1748,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 	hFlowMass_side->SetMinimum(0.8*hFlowMass->GetMinimum());
 
 	// fitting side bands
-	for(Short_t iMass(iBinPeakLow+3); iMass < iBinPeakHigh+3+1; iMass++)
+	for(Short_t iMass = hFlowMass_side->FindFixBin(dInvMassPeakLow); iMass < hFlowMass_side->FindFixBin(dInvMassPeakHigh)+1; iMass++)
 	{
 		// Excluding mass peak window (setting errors to inf)
     // if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
@@ -1304,13 +1756,13 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlow
 
 	}
 
-	printf("\n====== K0s: Fitting FlowMass sidebands ========\n");
+	printf("\n====== Phi: Fitting FlowMass sidebands ========\n");
 	canFitInvMass->cd(6);
 	fitFlowSide = new TF1("fitFlowSide","pol2(0)",0.99,1.07);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
-	canFitInvMass->cd(5);
-	printf("\n====== K0s: Fitting FlowMass total flow ========\n");
+	canFitInvMass->cd(7);
+	printf("\n====== Phi: Fitting FlowMass total flow ========\n");
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.99,1.07);
 	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol2(7)",0.99,1.07);
 	// Inv mass ratio signal/total
