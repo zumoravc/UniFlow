@@ -857,12 +857,16 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
     hTempRatio->SetTitleOffset(1.2,"Y");
 
     canDesample->cd(2);
+    hTempRatio->SetMinimum(0.6);
+    hTempRatio->SetMaximum(1.4);
     hTempRatio->Draw("hist p same");
 
     hTempError = (TH1D*) hTempSample->Clone(Form("%s_error",hTempSample->GetName()));
     for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hTempSample->GetBinError(bin)); }
 
     canDesample->cd(3);
+    hTempError->SetMinimum(0.);
+    hTempError->SetMaximum(1.5*hTempError->GetMaximum());
     hTempError->SetYTitle("Uncertainty");
     hTempError->SetTitleOffset(1.2,"Y");
 

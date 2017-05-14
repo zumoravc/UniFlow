@@ -30,7 +30,7 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	// setting multiplicity binning
 	// Double_t dMultBinning[] = {0,30,45,75,180};
 	// Double_t dMultBinning[] = {0,10};
-	Double_t dMultBinning[] = {0,10,20,30,40,50,60,70,80};
+	Double_t dMultBinning[] = {0,10,20,30,40,50,60,70,80,90,100};
 	Int_t iSizeMult = sizeof(dMultBinning)/sizeof(dMultBinning[0]);
 	process->SetMultiplicityBins(dMultBinning,iSizeMult);
 
