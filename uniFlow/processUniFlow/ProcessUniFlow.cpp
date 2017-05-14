@@ -168,8 +168,8 @@ class ProcessUniFlow
 
     void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
-    Bool_t      ProcessPID(FlowTask* task = 0x0, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
-    Bool_t      ProcessV0s(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
+    Bool_t      ProcessDirect(FlowTask* task = 0x0, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
+    Bool_t      ProcessReconstructed(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
     Bool_t 	    ExtractFlowPhi(TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0s(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
@@ -431,13 +431,13 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
     case FlowTask::kPion:
     case FlowTask::kKaon:
     case FlowTask::kProton:
-      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessPID(task); }
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessDirect(task); }
       break;
 
     case FlowTask::kPhi:
     case FlowTask::kK0s:
     case FlowTask::kLambda:
-      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessV0s(task,binMult); }
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessReconstructed(task,binMult); }
       break;
     default: break;
   }
@@ -521,10 +521,10 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
+Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 {
   Info("Processing PID task","ProcesPID");
-  if(!task) { Error("Task not valid!","ProcessPID"); return kFALSE; }
+  if(!task) { Error("Task not valid!","ProcessDirect"); return kFALSE; }
 
   TList* listInput = 0x0;
   switch (task->fSpecies)
@@ -540,7 +540,7 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
       break;
 
     default:
-      Error("Task species not PID!","ProcessPID");
+      Error("Task species not PID!","ProcessDirect");
       return kFALSE;
   }
 
@@ -591,10 +591,10 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
     hFlow->Scale(1/TMath::Sqrt(dRef));
     listFlow->Add(hFlow);
   }
-  Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessPID");
+  Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessDirect");
 
   TH1D* hDesampled = DesampleList(listFlow,task,iMultBin);
-  if(!hDesampled) { Error("Desampling unsuccesfull","ProcessPID"); return kFALSE; }
+  if(!hDesampled) { Error("Desampling unsuccesfull","ProcessDirect"); return kFALSE; }
 
   hDesampled->SetName(Form("hFlow_%s_harm%d_gap%s_cent%d_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,task->fName.Data()));
   hDesampled->SetTitle(Form("%s v_{%d}{2} | Gap %s | Cent %d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
@@ -613,11 +613,11 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
+Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 {
-  Info("Processing V0s task","ProcessV0s");
-  if(!task) { Error("Task not valid!","ProcessV0s"); return kFALSE; }
-  // if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
+  Info("Processing V0s task","ProcessReconstructed");
+  if(!task) { Error("Task not valid!","ProcessReconstructed"); return kFALSE; }
+  // if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
   // preparing particle dependent variables for switch
   //  -- input histos / profiles with entries and correlations
@@ -634,7 +634,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
     case FlowTask::kPhi :
       histEntries = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesSignal_gap%02.2g",10*task->fEtaGap));
       histBG = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesBG_gap%02.2g",10*task->fEtaGap));
-      if(!histBG) { Error("Histo with BG entries not found","ProcessV0s"); return kFALSE; }
+      if(!histBG) { Error("Histo with BG entries not found","ProcessReconstructed"); return kFALSE; }
       profFlow = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
       sSpeciesName = TString("Phi");
       sSpeciesLabel = TString("#phi");
@@ -655,25 +655,25 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
     break;
 
     default:
-      Error("Task species not V0s nor Phi!","ProcessV0s");
+      Error("Task species not V0s nor Phi!","ProcessReconstructed");
       return kFALSE;
   }
 
-  if(!histEntries) { Error("Entries histos not found!","ProcessV0s"); return kFALSE; }
-  if(!profFlow) { Error("Cumulant histos not found!","ProcessV0s"); return kFALSE; }
+  if(!histEntries) { Error("Entries histos not found!","ProcessReconstructed"); return kFALSE; }
+  if(!profFlow) { Error("Cumulant histos not found!","ProcessReconstructed"); return kFALSE; }
 
   // loading reference flow, if not found, it will be prepared
   TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
   if(!hRefFlow)
   {
-    Warning("Relevant Reference flow not found within output file.","ProcessV0s");
-    Info("Creating relevant reference flow task.","ProcessV0s");
+    Warning("Relevant Reference flow not found within output file.","ProcessReconstructed");
+    Info("Creating relevant reference flow task.","ProcessReconstructed");
 
     FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
     taskRef->SetHarmonics(task->fHarmonics);
     taskRef->SetEtaGap(task->fEtaGap);
-    if(ProcessRefs(taskRef)) return ProcessV0s(task);
-    else { Error("Something went wrong when running automatic refs flow task:","ProcessV0s"); taskRef->PrintTask(); return kFALSE; }
+    if(ProcessRefs(taskRef)) return ProcessReconstructed(task);
+    else { Error("Something went wrong when running automatic refs flow task:","ProcessReconstructed"); taskRef->PrintTask(); return kFALSE; }
   }
 
   // check if suggest pt binning flag is on if of Pt binning is not specified
@@ -682,7 +682,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
     SuggestPtBinning(histEntries,profFlow,task,iMultBin);
   }
 
-  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessV0s"); return kFALSE; }
+  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
   task->PrintTask();
 
@@ -706,19 +706,19 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
     {
       case FlowTask::kPhi :
       hInvMassBG = task->fVecHistInvMassBG->at(binPt);
-      if( !ExtractFlowPhi(hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
+      if( !ExtractFlowPhi(hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
       break;
 
       case FlowTask::kK0s :
-      if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
+      if( !ExtractFlowK0s(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
       break;
 
       case FlowTask::kLambda :
-      if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessV0s"); return kFALSE; }
+      if( !ExtractFlowLambda(hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
       break;
 
       default :
-        Error("Uknown species","ProcessV0s");
+        Error("Uknown species","ProcessReconstructed");
         return kFALSE;
     }
 
