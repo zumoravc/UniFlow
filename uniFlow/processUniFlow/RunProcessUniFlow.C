@@ -29,15 +29,15 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 
 	// setting multiplicity binning
 	// Double_t dMultBinning[] = {0,30,45,75,180};
-	Double_t dMultBinning[] = {0,10};
-	// Double_t dMultBinning[] = {0,10,20,30,40,50,60,70,80};
+	// Double_t dMultBinning[] = {0,10};
+	Double_t dMultBinning[] = {0,10,20,30,40,50,60,70,80};
 	Int_t iSizeMult = sizeof(dMultBinning)/sizeof(dMultBinning[0]);
 	process->SetMultiplicityBins(dMultBinning,iSizeMult);
 
 	FlowTask* task1 = new FlowTask("Refs",FlowTask::kRefs);
 	task1->SetHarmonics(2);
 	task1->SetEtaGap(0.8);
-	// process->AddTask(task1);
+	process->AddTask(task1);
 
 	Double_t dPt[] = {0.1,0.2,0.3,0.4,0.5,1.,2.};
 
@@ -45,7 +45,7 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	task2->SetHarmonics(2);
 	// task2->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
 	task2->SetEtaGap(0.8);
-	process->AddTask(task2);
+	// process->AddTask(task2);
 	//
 	// FlowTask* task3 = new FlowTask("Pions2",FlowTask::kPion);
 	// task3->SetHarmonics(2);

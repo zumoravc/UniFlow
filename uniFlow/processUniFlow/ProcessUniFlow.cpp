@@ -453,148 +453,70 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(!task) { Error("Task not valid!","ProcessRefs"); return kFALSE; }
   if(task->fSpecies != FlowTask::kRefs) { Error("Task species not kRefs!","ProcessRefs"); return kFALSE; }
 
-  // plotting all samples
-  TCanvas* canSamples = new TCanvas("canSamples","canSamples",1200,600);
-  canSamples->Divide(4,3);
-
-  // merging samples together
+  // preparing for desampling
   TProfile* prof = 0x0;
+  TProfile* profRebin  = 0x0;
+  TH1D* histProj = 0x0;
   TList* list = new TList();
-  // for(Short_t i(0); i < 2; i++)
+
   for(Short_t i(0); i < task->fNumSamples; i++)
   {
     prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
     if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
-    list->Add(prof);
 
-    canSamples->cd(i+1);
-    prof->Draw();
+    // rebinning the profiles
+    profRebin = (TProfile*) prof->Rebin(fiNumMultBins,Form("%s_rebin",prof->GetName()),fdMultBins);
+    histProj = profRebin->ProjectionX(Form("%s_proj",profRebin->GetName()));
+    // histProj = prof->ProjectionX(Form("%s_proj",prof->GetName())); // no rebinning
+    list->Add(histProj);
   }
-  Debug(Form("Number of samples in list pre merging %d",list->GetEntries()));
 
-  TProfile* merged = (TProfile*) prof->Clone();
-  merged->Reset();
+  // desampling (similarly to PID & Charged tracks)
+  TH1D* hDesampled = DesampleList(list,task);
+  if(!hDesampled) { Error("Desampling unsuccesfull","ProcessRefs"); return kFALSE; }
+  hDesampled->SetName(Form("hCum2_%s_harm%d_gap%s_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fName.Data()));
+  hDesampled->SetTitle(Form("%s c_{%d}{2} | Gap %s ",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TH1D* desample = (TH1D*) prof->ProjectionX();
-  desample->Reset();
-  TH1D* ratio = (TH1D*) prof->ProjectionX();
-  ratio->Reset();
-  TH1D* ratioErr = (TH1D*) prof->ProjectionX();
-  ratioErr->Reset();
+  TH1D* hDesampledFlow = (TH1D*) hDesampled->Clone(Form("%s_flow",hDesampled->GetName()));
+  hDesampledFlow->SetName(Form("hFlow2_%s_harm%d_gap%s_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fName.Data()));
+  hDesampledFlow->SetTitle(Form("%s v_{%d}{2} | Gap %s ",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
-  Double_t mergeStatus = merged->Merge(list);
-  if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
-
-  canSamples->cd(11);
-  merged->Draw();
-
-  Double_t content = 0;
-  Double_t error = 0;
-
-  Double_t dSum = 0;
-  Double_t dW = 0;
-  Double_t dAverage = 0;
-  Double_t dAve_err = 0;
-
-  for(Short_t bin(1); bin < 100+1; bin++)
+  // estimating vn out of cn
+  Double_t dContent = 0., dError = 0.;
+  for(Short_t iBin(1); iBin < hDesampled->GetNbinsX()+1; iBin++)
   {
-    dSum = 0;
-    dW = 0;
+    dContent = hDesampled->GetBinContent(iBin);
+    dError = hDesampled->GetBinError(iBin);
 
-    for(Short_t i(0); i < task->fNumSamples; i++)
+    if(dContent > 0. && dError >= 0.)
     {
-      prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
-      if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
-
-      content = prof->GetBinContent(bin);
-      error = prof->GetBinError(bin);
-
-      dSum += content/TMath::Power(error,2);
-      dW += 1/TMath::Power(error,2);
-      printf("Sample: %d | bin %d | %g +- %g\n",i,bin,content,error);
+      hDesampledFlow->SetBinContent(iBin, TMath::Sqrt(dContent));
+      hDesampledFlow->SetBinError(iBin, TMath::Sqrt( TMath::Power(dError,2) / (4*dContent) ));
     }
-
-    dAverage = dSum / dW;
-    dAve_err = TMath::Sqrt(1/dW);
-
-    printf("Merged | bin %d | %g +- %g\n",bin,merged->GetBinContent(bin),merged->GetBinError(bin));
-    printf("W average | bin %d | %g +- %g\n",bin,dAverage,dAve_err);
-    printf("Ratio (A/M): values %g | error %g\n", dAverage / merged->GetBinContent(bin), dAve_err / merged->GetBinError(bin));
-
-    desample->SetBinContent(bin,dAverage);
-    desample->SetBinError(bin,dAve_err);
-
-    ratio->SetBinContent(bin, dAverage / merged->GetBinContent(bin));
-    ratioErr->SetBinContent(bin, dAve_err / merged->GetBinError(bin));
+    else
+    {
+      hDesampledFlow->SetBinContent(iBin, 9.);
+      hDesampledFlow->SetBinError(iBin, 9.);
+    }
   }
 
-  canSamples->cd(11);
-  desample->SetLineColor(kRed);
-  desample->SetMarkerColor(kRed);
-  desample->Draw("same");
-
-  canSamples->cd(12);
-  ratio->Draw();
-  ratioErr->SetLineColor(kRed);
-  ratioErr->SetMarkerColor(kRed);
-  ratioErr->Draw("same");
-
-  return kTRUE;
-  // NOTE testing end
-
-
-
-  // merged->SetName(Form("fpRefs_<2>_harm%d_gap%g",task->fHarmonics,task->fEtaGap));
-  // merged->SetTitle(Form("Ref: <<2>> | n=%d | Gap %02.2g",task->fHarmonics,task->fEtaGap));
-
-  // rebinning: multiplicity
-  // Double_t xbins[] = {1,14,16,60};
-  // Int_t iNumBins = sizeof(xbins)/sizeof(xbins[0]) - 1;
-  // printf("bins: %d\n",iNumBins);
-
-  TProfile* rebin = (TProfile*) merged->Rebin(fiNumMultBins,Form("%s_rebin",merged->GetName()),fdMultBins);
-  TH1D* histRebin = rebin->ProjectionX();
-
-  // at this point correlations are processed
-  // start doing vns out of them
-
-  TH1D* hFlow = (TH1D*) histRebin->Clone(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
-  hFlow->SetTitle(Form("Ref: v_{%d}{2 | Gap %g}",task->fHarmonics,task->fEtaGap));
-  // TH1D* hFlow = (TH1D*) histRebin->Clone("hFlow");
-  // hFlow->Reset();
-
-  const Short_t iBinsX = hFlow->GetNbinsX();
-
-  Double_t dContent = 0, dValue = 0;
-  for(Short_t iBin(1); iBin < iBinsX+1; iBin++)
-  {
-    dContent = histRebin->GetBinContent(iBin);
-    if(dContent < 0) hFlow->SetBinContent(iBin, -9.);
-    else hFlow->SetBinContent(iBin,TMath::Sqrt(dContent));
-    // printf("%g | %g\n",dContent, TMath::Sqrt(dContent));
-  }
-
-  // printf("%g±%g\n", merged->GetBinContent(14), merged->GetBinError(14));
-  // printf("%g±%g\n", merged->GetBinContent(15), merged->GetBinError(15));
-  // printf("%g±%g\n", histRebin->GetBinContent(2), histRebin->GetBinError(2));
-
-
-
-  // TCanvas* canTest = new TCanvas("canTestRefs","canTestReffs",1000,1000);
-  // canTest->Divide(2,2);
-  // canTest->cd(1);
-  // merged->Draw();
-  // canTest->cd(2);
-  // rebin->Draw();
-  // canTest->cd(3);
-  // histRebin->Draw();
-  // canTest->cd(4);
-  // hFlow->Draw();
-
-
+  // saving to output file
   ffOutputFile->cd();
-  hFlow->Write();
+  hDesampled->Write();
+  hDesampledFlow->Write();
 
+  // TCanvas* canTest = new TCanvas("canTest","canTest");
+  // canTest->Divide(2,1);
+  // canTest->cd(1);
+  // hDesampled->Draw();
+  // canTest->cd(2);
+  // hDesampledFlow->Draw();
+
+  if(hDesampled) delete hDesampled;
+  if(hDesampledFlow) delete hDesampledFlow;
+  if(profRebin) delete profRebin;
+  if(histProj) delete histProj;
+  if(list) delete list;
 
   return kTRUE;
 }
@@ -867,10 +789,10 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
 
       dSum += content / TMath::Power(error,2);
       dW += 1 / TMath::Power(error,2);
-      // printf("Sample: %d | bin %d | %g +- %g\n",iSample,bin,content,error);
+      Debug(Form("Sample: %d | bin %d | %g +- %g",iSample,bin,content,error),"DesampleList");
     }
 
-    // printf(" --- bin %d | Sum %g +- %g\n",bin,dSum,dW);
+    Debug(Form(" --- bin %d | Sum %g +- %g",bin,dSum,dW),"DesampleList");
 
     if(dSum == 0. && dW == 0.) continue; // skipping empty bins
 
@@ -880,12 +802,13 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
       dAve_err = TMath::Sqrt(1/dW);
     }
 
-    // printf("W average | bin %d | %g +- %g\n",bin,dAverage,dAve_err);
+    Debug(Form("W average | bin %d | %g +- %g",bin,dAverage,dAve_err),"DesampleList");
 
     //ratio->SetBinContent(bin, dAverage / merged->GetBinContent(bin));
     //ratioErr->SetBinContent(bin, dAve_err / merged->GetBinError(bin));
     hDesampled->SetBinContent(bin,dAverage);
     hDesampled->SetBinError(bin,dAve_err);
+    Debug(Form("Desampled: bin %d | %g +- %g\n",bin,dAverage,dAve_err),"DesampleList");
   }
 
   // at this point, hDesampled is ready
@@ -896,7 +819,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
   TList* listOutput = new TList(); // list for collecting all QA histos
 
   // doing QA plots with spread, etc.
-  TCanvas* canDesample = new TCanvas("canDesample","canDesample",1200,400);
+  TCanvas* canDesample = new TCanvas(Form("canDesample_%s",task->fName.Data()),Form("canDesample_%s",task->fName.Data()),1200,400);
   canDesample->Divide(3,1);
 
   TH1D* hTempRatio = 0x0;
@@ -976,9 +899,9 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
   // delete canDesample;
   delete lineUnity;
   // if(hTempSample) delete hTempSample;
-  delete hTempRatio;
-  delete hTempError;
-  delete hDesampledClone;
+  // delete hTempRatio;
+  // delete hTempError;
+  // delete hDesampledClone;
 
   return hDesampled;
 }
