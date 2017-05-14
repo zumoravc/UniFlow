@@ -673,7 +673,6 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
 
   hDesampled->SetName(Form("hFlow_%s_harm%d_gap%s_cent%d_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,task->fName.Data()));
   hDesampled->SetTitle(Form("%s v_{%d}{2} | Gap %s | Cent %d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
-  hDesampled->Draw();
 
   // saving to output file
   ffOutputFile->cd();
@@ -684,6 +683,7 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   delete profRebin;
   delete profRefRebin;
   delete hFlow;
+  delete hDesampled;
 
   return kTRUE;
 }
@@ -884,6 +884,62 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
     hDesampled->SetBinContent(bin,dAverage);
     hDesampled->SetBinError(bin,dAve_err);
   }
+
+  // at this point, hDesampled is ready
+
+  // doing QA plots with spread, etc.
+  TCanvas* canDesample = new TCanvas("canDesample","canDesample",1200,400);
+  canDesample->Divide(3,1);
+
+  TH1D* hTempRatio = 0x0;
+  TH1D* hTempError = 0x0;
+
+  TLine* lineUnity = new TLine();
+  lineUnity->SetLineColor(kRed);
+  lineUnity->SetLineWidth(3);
+
+  for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
+  {
+    hTempSample = (TH1D*) list->At(iSample);
+    if(!hTempSample) { Warning(Form("Sample %d not found during plotting QA! Skipping!",iSample),"DesampleList"); continue; }
+
+    canDesample->cd(1);
+    hTempSample->SetStats(kFALSE);
+    hTempSample->SetLineColor(30+2*iSample);
+    hTempSample->SetMarkerColor(30+2*iSample);
+    hTempSample->SetMarkerStyle(24);
+    hTempSample->SetMarkerSize(0.5);
+    hTempSample->Draw("hist p same");
+
+    hTempRatio = (TH1D*) hTempSample->Clone(Form("%s_ratio",hTempSample->GetName()));
+    hTempRatio->Divide(hDesampled);
+    canDesample->cd(2);
+    hTempRatio->Draw("hist p same");
+
+    hTempError = (TH1D*) hTempSample->Clone(Form("%s_error",hTempSample->GetName()));
+    for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hTempSample->GetBinError(bin)); }
+
+    canDesample->cd(3);
+    hTempError->Draw("hist p same");
+  }
+  canDesample->cd(1);
+  hDesampled->SetStats(kFALSE);
+  hDesampled->SetMarkerStyle(20);
+  hDesampled->SetMarkerSize(0.5);
+  hDesampled->SetMarkerColor(kRed);
+  hDesampled->DrawCopy("hist p same");
+
+  canDesample->cd(2);
+  lineUnity->DrawLine(0,1,20,1);
+
+  hTempError = (TH1D*) hDesampled->Clone(Form("%s_error",hDesampled->GetName()));
+  for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hDesampled->GetBinError(bin)); }
+
+  canDesample->cd(3);
+  hTempError->Draw("hist p same");
+
+
+  // canDesample->SaveAs();
 
   return hDesampled;
 }
