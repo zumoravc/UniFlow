@@ -175,7 +175,7 @@ class ProcessUniFlow
 		Bool_t 	    ExtractFlowLambda(TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
     void        SuggestMultBinning(const Short_t numFractions);
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
-    TH1D*       DesampleList(TList* list = 0x0, FlowTask* task = 0x0); // Desample list of samples for estimating the uncertanity
+    TH1D*       DesampleList(TList* list = 0x0, FlowTask* task = 0x0, Short_t iMultBin = 0); // Desample list of samples for estimating the uncertanity
 
     void        TestProjections(); // testing projection of reconstructed particles
     TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
@@ -668,7 +668,7 @@ Bool_t ProcessUniFlow::ProcessPID(FlowTask* task, Short_t iMultBin)
   }
   Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessPID");
 
-  TH1D* hDesampled = DesampleList(listFlow,task);
+  TH1D* hDesampled = DesampleList(listFlow,task,iMultBin);
   if(!hDesampled) { Error("Desampling unsuccesfull","ProcessPID"); return kFALSE; }
 
   hDesampled->SetName(Form("hFlow_%s_harm%d_gap%s_cent%d_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,task->fName.Data()));
@@ -824,7 +824,7 @@ Bool_t ProcessUniFlow::ProcessV0s(FlowTask* task,Short_t iMultBin)
   return kTRUE;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
+TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin)
 {
   if(!task) { Error("FlowTask does not exists","DesampleList"); return 0x0; }
   if(!list) { Error("List does not exists","DesampleList"); return 0x0; }
@@ -887,6 +887,11 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
 
   // at this point, hDesampled is ready
 
+  // getting copy which does not affect histo which is returned
+  TH1D* hDesampledClone = (TH1D*) hDesampled->Clone(Form("%sClone",hDesampled->GetName()));
+
+  TList* listOutput = new TList(); // list for collecting all QA histos
+
   // doing QA plots with spread, etc.
   TCanvas* canDesample = new TCanvas("canDesample","canDesample",1200,400);
   canDesample->Divide(3,1);
@@ -899,10 +904,13 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
   lineUnity->SetLineWidth(3);
 
   canDesample->cd(1);
-  hDesampled->SetStats(kFALSE);
-  hDesampled->SetFillColor(kBlue);
-  hDesampled->DrawCopy("E2");
-
+  hDesampledClone->SetStats(kFALSE);
+  hDesampledClone->SetFillColor(kBlue);
+  hDesampledClone->SetStats(kFALSE);
+  hDesampledClone->SetMarkerStyle(20);
+  hDesampledClone->SetMarkerSize(0.5);
+  hDesampledClone->SetMarkerColor(kRed);
+  hDesampledClone->DrawCopy("E2");
 
   for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
   {
@@ -915,7 +923,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
     hTempSample->SetMarkerColor(30+2*iSample);
     hTempSample->SetMarkerStyle(24);
     hTempSample->SetMarkerSize(0.5);
-    hTempSample->Draw("hist p same");
+    hTempSample->DrawCopy("hist p same");
 
     hTempRatio = (TH1D*) hTempSample->Clone(Form("%s_ratio",hTempSample->GetName()));
     hTempRatio->Divide(hDesampled);
@@ -933,28 +941,41 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task)
     hTempError->SetTitleOffset(1.2,"Y");
 
     hTempError->Draw("hist p same");
+
+    listOutput->Add(hTempSample);
+    listOutput->Add(hTempRatio);
+    listOutput->Add(hTempError);
   }
+
   canDesample->cd(1);
-  hDesampled->SetStats(kFALSE);
-  hDesampled->SetMarkerStyle(20);
-  hDesampled->SetMarkerSize(0.5);
-  hDesampled->SetMarkerColor(kRed);
-  hDesampled->DrawCopy("hist p same");
+  hDesampledClone->DrawCopy("hist p same");
 
   canDesample->cd(2);
   lineUnity->DrawLine(hTempRatio->GetXaxis()->GetXmin(),1,hTempRatio->GetXaxis()->GetXmax(),1);
 
-  hTempError = (TH1D*) hDesampled->Clone(Form("%s_error",hDesampled->GetName()));
-  for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hDesampled->GetBinError(bin)); }
+  hTempError = (TH1D*) hDesampledClone->Clone(Form("%s_error",hDesampled->GetName()));
+  for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hDesampledClone->GetBinError(bin)); }
+  listOutput->Add(hTempError);
 
   canDesample->cd(3);
   hTempError->Draw("hist p same");
 
-  // canDesample->cd(2);
-  // hTempError->SetFillColor(kBlue);
-  // hTempError->Draw("E3 same");
+  // saving QA plots
+  canDesample->SaveAs(Form("%s/Desampling_%s_harm%d_gap%g_mult%d_%s.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,task->fName.Data(),fsOutputFileFormat.Data()));
 
-  // canDesample->SaveAs();
+  Info("Saving desampling QA into output file","DesampleList");
+  ffOutputFile->cd();
+  listOutput->Add(canDesample);
+  listOutput->Write(Form("Desampling_%s_%s",task->GetSpeciesName().Data(),task->fName.Data()),TObject::kSingleKey);
+
+  // deleting created stuff
+  delete listOutput;
+  // delete canDesample;
+  delete lineUnity;
+  // if(hTempSample) delete hTempSample;
+  delete hTempRatio;
+  delete hTempError;
+  delete hDesampledClone;
 
   return hDesampled;
 }
