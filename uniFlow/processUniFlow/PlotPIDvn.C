@@ -34,8 +34,10 @@ void PlotPIDvn()
 
   TString sInputFile = TString("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/testRefs/UniFlow_PID.root");
   TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test/UniFlow_Reconstructed.root");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
+
   // TString sGap = "08";
-  Int_t iCent = 5;
+  Int_t iCent = 9;
 
   // ALICE Preferred colors and markers (from figure template)
   const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7}; // for syst bands
@@ -44,21 +46,38 @@ void PlotPIDvn()
 
   // colors setting
   Color_t colCharged = kBlack;
-  Color_t colPion = kRed+1;
-  Color_t colKaon = kBlue+1;
-  Color_t colProton = kGreen+3;
+  Color_t colPion = kRed;
+  Color_t colKaon = kBlue;
+  Color_t colProton = kGreen+2;
   Color_t colPhi = kMagenta+1;
-  Color_t colK0s = kCyan+2;
-  Color_t colLambda = kYellow+2;
+  Color_t colK0s = kCyan+1;
+  Color_t colLambda = kOrange+1;
 
   // markers setting
   Int_t markCharged = kOpenCircle;
   Int_t markPion = kFullCircle;
-  Int_t markKaon = kFullTriangleDown;
-  Int_t markProton = kFullSquare;
+  Int_t markKaon = kFullTriangleUp;
+  Int_t markProton = kFullCross;
+  // Int_t markProton = kFullSquare;
   Int_t markPhi = kFullStar;
-  Int_t markK0s = kFullTriangleUp;
+  Int_t markK0s = kFullTriangleDown;
   Int_t markLambda = kFullDiamond;
+  // Int_t markLambda = kFullCross;
+
+  Double_t markSizeCharged = 1;
+  Double_t markSizePion = 1;
+  Double_t markSizeKaon = 1.2;
+  Double_t markSizeProton = 1.5;
+  Double_t markSizePhi = 1.5;
+  Double_t markSizeK0s = 1.2;
+  Double_t markSizeLambda = 1.6;
+  // Double_t markSizeCharged = 2;
+  // Double_t markSizePion = 2;
+  // Double_t markSizeKaon = 2;
+  // Double_t markSizeProton = 2;
+  // Double_t markSizePhi = 2;
+  // Double_t markSizeK0s = 2;
+  // Double_t markSizeLambda = 2;
 
   // openning input file
   TFile* fInputFile = new TFile(sInputFile.Data(),"READ");
@@ -77,11 +96,11 @@ void PlotPIDvn()
   //TCanvas *cfig = new TCanvas("cfig", "Alice Figure Template", 800, 800);
   // cfig->SetLogy();
   // Set Titles etc..
-  TH1* h = cfig->DrawFrame(0,0,10,1);
+  TH1* h = cfig->DrawFrame(0,0,6,0.5);
 
   // Set titles
   h->SetXTitle("#it{p}_{T} (GeV/#it{c})");
-  h->SetYTitle("#it{v}_{2}{2,|#eta| > 0.8}");
+  h->SetYTitle("#it{v}_{2} {2,|#eta| > 0.8}");
 
   // loading histos
 
@@ -104,78 +123,86 @@ void PlotPIDvn()
   if(!hFlowPhi) return;
 
   // setting histos
-  hFlowCharged->SetStats(kFALSE);
-  hFlowCharged->GetXaxis()->SetRangeUser(0.2,10.);
-  hFlowCharged->SetMinimum(0.);
-  hFlowCharged->SetMaximum(0.5);
+  // hFlowCharged->SetStats(kFALSE);
+  // hFlowCharged->GetXaxis()->SetRangeUser(0.2,10.);
+  // hFlowCharged->SetMinimum(0.);
+  // hFlowCharged->SetMaximum(0.5);
 
   hFlowCharged->SetLineColor(colCharged);
   hFlowCharged->SetMarkerColor(colCharged);
   hFlowCharged->SetMarkerStyle(markCharged);
+  hFlowCharged->SetMarkerSize(markSizeCharged);
 
   hFlowPion->SetLineColor(colPion);
   hFlowPion->SetMarkerColor(colPion);
   hFlowPion->SetMarkerStyle(markPion);
+  hFlowPion->SetMarkerSize(markSizePion);
 
   hFlowKaon->SetLineColor(colKaon);
   hFlowKaon->SetMarkerColor(colKaon);
   hFlowKaon->SetMarkerStyle(markKaon);
+  hFlowKaon->SetMarkerSize(markSizeKaon);
 
   hFlowProton->SetLineColor(colProton);
   hFlowProton->SetMarkerColor(colProton);
   hFlowProton->SetMarkerStyle(markProton);
+  hFlowProton->SetMarkerSize(markSizeProton);
 
   hFlowPhi->SetLineColor(colPhi);
   hFlowPhi->SetMarkerColor(colPhi);
   hFlowPhi->SetMarkerStyle(markPhi);
+  hFlowPhi->SetMarkerSize(markSizePhi);
 
   hFlowK0s->SetLineColor(colK0s);
   hFlowK0s->SetMarkerColor(colK0s);
   hFlowK0s->SetMarkerStyle(markK0s);
+  hFlowK0s->SetMarkerSize(markSizeK0s);
 
   hFlowLambda->SetLineColor(colLambda);
   hFlowLambda->SetMarkerColor(colLambda);
   hFlowLambda->SetMarkerStyle(markLambda);
+  hFlowLambda->SetMarkerSize(markSizeLambda);
 
 
 
   // drawing stuff
   // hFlowCharged->Draw("same");
-  hFlowCharged->Draw("hist p e1 x0 same");
+  // hFlowCharged->Draw("hist p e1 x0 same");
   hFlowPion->Draw("hist p e1 x0 same");
   hFlowKaon->Draw("hist p e1 x0  same");
   hFlowProton->Draw("hist p e1 x0 same");
-  hFlowPhi->Draw("hist p e1 x0 same");
   hFlowK0s->Draw("hist p e1 x0 same");
   hFlowLambda->Draw("hist p e1 x0 same");
+  hFlowCharged->Draw("hist p e1 x0 same");
+  hFlowPhi->Draw("hist p e1 x0 same");
 
   // Draw the logo
   //  0: Just "ALICE" (for final data), to be added only if ALICE does not appear otherwise (e.g. in the legend)
   //  >0: ALICE Preliminary
-  DrawLogo(2, 0.59, 0.81);
+  DrawLogo(2, 0.61, 0.83);
 
   // You should always specify the colliding system
   // NOTATION: pp, p-Pb, Pb-Pb.
   // Don't forget to use #sqrt{s_{NN}} for p-Pb and Pb-Pb
   // You can change the position of this with
-  TLatex * text = new TLatex (0.55,0.88,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
+  TLatex * text = new TLatex (0.3,0.27,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
   text->Draw();
-  TLatex * text2 = new TLatex (0.55,0.81,"Multiplicity Class 0-10% (V0A)");
-  text2->SetTextSizePixels(20);
+  TLatex * text2 = new TLatex (0.3,0.25,Form("Multiplicity Class %d-%d%% (V0A)",10*iCent,10*(iCent+1)));
+  text2->SetTextSizePixels(22);
   text2->Draw();
-  TLatex * text3 = new TLatex (0.55,0.76,"|#eta| < 0.8");
-  text3->SetTextSizePixels(20);
-  text3->Draw();
+  // TLatex * text3 = new TLatex (0.55,0.76,"|#eta| < 0.8");
+  // text3->SetTextSizePixels(20);
+  // text3->Draw();
 
 
   // making legend
-  TLegend * legend = new TLegend(0.22, 0.40, 0.32, 0.7);
-  legend->SetFillColor(0);
+  TLegend * legend = new TLegend(0.62, 0.18, 0.8, 0.46);
+  legend->SetFillColorAlpha(0,0);
   legend->SetTextSize(gStyle->GetTextSize()*0.8);
   // legend->SetBorderSize(1);
 
-  TLegend * legend2 = new TLegend(0.35, 0.49, 0.45, 0.7);
-  legend2->SetFillColor(0);
+  TLegend * legend2 = new TLegend(0.72, 0.18, 0.91, 0.39);
+  legend2->SetFillColorAlpha(0,0);
   legend2->SetTextSize(gStyle->GetTextSize()*0.8);
   // legend2->SetBorderSize(1);
 
@@ -189,6 +216,8 @@ void PlotPIDvn()
 
   legend->Draw();
   legend2->Draw();
+
+  cfig->SaveAs(Form("%s/plots/PID_%d.pdf",sOutputFilePath.Data(),iCent));
 
 
   return;
