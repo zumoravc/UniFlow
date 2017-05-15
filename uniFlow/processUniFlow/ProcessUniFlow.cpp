@@ -431,7 +431,7 @@ void ProcessUniFlow::ProcessTask(FlowTask* task)
     case FlowTask::kPion:
     case FlowTask::kKaon:
     case FlowTask::kProton:
-      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessDirect(task); }
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessDirect(task,binMult); }
       break;
 
     case FlowTask::kPhi:
@@ -568,12 +568,14 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 
     profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
     dRef = profRefRebin->GetBinContent(iMultBin+1);
+    profRefRebin->Draw();
+    // printf("dRef %g\n",dRef);
     // NOTE: complains about Sumw2
 
     // rebinning according in mult bin
     binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
     binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
-    prof = prof2->ProfileY(Form("%s_projY",prof2->GetName()),binMultLow,binMultHigh);
+    prof = prof2->ProfileY(Form("%s_mult%d",prof2->GetName(),iMultBin),binMultLow,binMultHigh);
 
     if(task->fNumPtBins > 0)
     {
@@ -582,13 +584,17 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     }
     else
     {
-      // making TH1D projection (to avoid handling of bin entries)
       profRebin = (TProfile*) prof->Clone(Form("%s_rebin",prof->GetName()));
     }
 
+
+    // making TH1D projection (to avoid handling of bin entries)
     hFlow = (TH1D*) profRebin->ProjectionX();
+    // printf("Pre %g\n",hFlow->GetBinContent(20));
+    // printf("Scale %g\n",1/TMath::Sqrt(dRef));
     hFlow->SetName(Form("%s_Flow",prof->GetName()));
     hFlow->Scale(1/TMath::Sqrt(dRef));
+    // printf("Post %g\n",hFlow->GetBinContent(20));
     listFlow->Add(hFlow);
   }
   Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessDirect");
@@ -896,7 +902,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
   Info("Saving desampling QA into output file","DesampleList");
   ffOutputFile->cd();
   listOutput->Add(canDesample);
-  listOutput->Write(Form("Desampling_%s_%s",task->GetSpeciesName().Data(),task->fName.Data()),TObject::kSingleKey);
+  listOutput->Write(Form("Desampling_%s_mult%d_%s",task->GetSpeciesName().Data(),iMultBin,task->fName.Data()),TObject::kSingleKey);
 
   // deleting created stuff
   delete listOutput;
@@ -925,7 +931,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
 
   const Short_t binMultLow = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin]);
   const Short_t binMultHigh = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin+1]) - 1;
-  printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[multBin],binMultLow,fdMultBins[multBin+1],binMultHigh);
+  // printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[multBin],binMultLow,fdMultBins[multBin+1],binMultHigh);
 
   // loop over pt
   Short_t binPtLow = 0;
