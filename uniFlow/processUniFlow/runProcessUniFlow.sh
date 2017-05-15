@@ -1,6 +1,6 @@
 #!/bin/bash
 
-outputPath="/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/taskVer2"
+outputPath="/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test"
 
 echo $outputPath
 
