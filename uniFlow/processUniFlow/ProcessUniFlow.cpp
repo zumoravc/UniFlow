@@ -474,11 +474,11 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // desampling (similarly to PID & Charged tracks)
   TH1D* hDesampled = DesampleList(list,task);
   if(!hDesampled) { Error("Desampling unsuccesfull","ProcessRefs"); return kFALSE; }
-  hDesampled->SetName(Form("hCum2_%s_harm%d_gap%s_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fName.Data()));
+  hDesampled->SetName(Form("hCum2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
   hDesampled->SetTitle(Form("%s c_{%d}{2} | Gap %s ",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
   TH1D* hDesampledFlow = (TH1D*) hDesampled->Clone(Form("%s_flow",hDesampled->GetName()));
-  hDesampledFlow->SetName(Form("hFlow2_%s_harm%d_gap%s_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fName.Data()));
+  hDesampledFlow->SetName(Form("hFlow2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
   hDesampledFlow->SetTitle(Form("%s v_{%d}{2} | Gap %s ",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
   // estimating vn out of cn
@@ -602,7 +602,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   TH1D* hDesampled = DesampleList(listFlow,task,iMultBin);
   if(!hDesampled) { Error("Desampling unsuccesfull","ProcessDirect"); return kFALSE; }
 
-  hDesampled->SetName(Form("hFlow_%s_harm%d_gap%s_cent%d_task%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,task->fName.Data()));
+  hDesampled->SetName(Form("hFlow2_%s_harm%d_gap%s_cent%d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
   hDesampled->SetTitle(Form("%s v_{%d}{2} | Gap %s | Cent %d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
 
   // saving to output file
@@ -669,7 +669,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   if(!profFlow) { Error("Cumulant histos not found!","ProcessReconstructed"); return kFALSE; }
 
   // loading reference flow, if not found, it will be prepared
-  TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+  TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
   if(!hRefFlow)
   {
     Warning("Relevant Reference flow not found within output file.","ProcessReconstructed");
@@ -694,7 +694,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
   if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histBG)) return kFALSE;
 
-  TH1D* hFlow = new TH1D(Form("hFlow_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
+  TH1D* hFlow = new TH1D(Form("hFlow2_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
 
   TH1D* hInvMass = 0x0;
   TH1D* hInvMassBG = 0x0;
