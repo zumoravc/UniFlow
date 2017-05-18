@@ -37,6 +37,7 @@ class FlowTask
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
+    void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
     void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
     void        SetFlowMassRebin(Short_t rebin = 2) { fRebinFlowMass = rebin; }
@@ -53,6 +54,7 @@ class FlowTask
     Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
     Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     Bool_t      fShowMult; // show multiplicity distribution
+    Bool_t      fRebinning; // flag for rebinning prior to desampling
     Bool_t      fSuggestPtBins; // suggest pt binning
     Double_t    fSuggestPtBinEntries; // suggest pt binning
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
@@ -70,6 +72,7 @@ FlowTask::FlowTask()
   fNumSamples = 10;
   fNumPtBins = -1;
   fShowMult = kFALSE;
+  fRebinning = kTRUE;
   fSuggestPtBins = kFALSE;
   fSuggestPtBinEntries = 20000;
   fRebinFlowMass = 0;
@@ -177,6 +180,7 @@ class ProcessUniFlow
     void        SuggestMultBinning(const Short_t numFractions);
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
     TH1D*       DesampleList(TList* list = 0x0, FlowTask* task = 0x0, Short_t iMultBin = 0); // Desample list of samples for estimating the uncertanity
+    TH1D*       TestRebin(TH1D* hOrig = 0x0, FlowTask* task = 0x0); // testing desample - manual rebin
 
     void        TestProjections(); // testing projection of reconstructed particles
     TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
@@ -464,10 +468,17 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
     if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
 
-    // rebinning the profiles
-    profRebin = (TProfile*) prof->Rebin(fiNumMultBins,Form("%s_rebin",prof->GetName()),fdMultBins);
-    histProj = profRebin->ProjectionX(Form("%s_proj",profRebin->GetName()));
-    // histProj = prof->ProjectionX(Form("%s_proj",prof->GetName())); // no rebinning
+    if(task->fRebinning)
+    {
+      // rebinning the profiles
+      profRebin = (TProfile*) prof->Rebin(fiNumMultBins,Form("%s_rebin",prof->GetName()),fdMultBins);
+      histProj = profRebin->ProjectionX(Form("%s_proj",profRebin->GetName()));
+    }
+    else
+    {
+      // no rebinning
+      histProj = prof->ProjectionX(Form("%s_proj",prof->GetName()));
+    }
     list->Add(histProj);
   }
 
@@ -500,10 +511,19 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     }
   }
 
+
   // saving to output file
   ffOutputFile->cd();
   hDesampled->Write();
   hDesampledFlow->Write();
+
+  if(!task->fRebinning)
+  {
+    // no rebinning
+    TH1D* hNoRebin_rebinned = TestRebin(hDesampledFlow,task);
+
+    hNoRebin_rebinned->Write();
+  }
 
   // TCanvas* canTest = new TCanvas("canTest","canTest");
   // canTest->Divide(2,1);
@@ -1027,6 +1047,48 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1 || task->fVecHistFlowMass->size() != task->fVecHistInvMass->size()) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
   if(h3EntriesBG && (task->fVecHistInvMassBG->size() < 1 || task->fVecHistInvMassBG->size() != task->fVecHistInvMass->size()) ) { Error("Output vector empty. Something went wrong with BG histograms","PrepareSlices"); return kFALSE; }
   return kTRUE;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::TestRebin(TH1D* hOrig, FlowTask* task)
+{
+  if(!hOrig) { Error("Original histogram not found!","TestRebin"); return 0x0; }
+  if(!task) { Error("Task not found!","TestRebin"); return 0x0; }
+  TH1D* hRebin = (TH1D*) hOrig->Rebin(fiNumMultBins,Form("%s_testRebin",hOrig->GetName()),fdMultBins);
+
+  // rebinning
+  Short_t numBins = fiNumMultBins;
+  Double_t* multBins = fdMultBins;
+  Short_t binIndex = 0;
+
+
+  const Short_t iNumBins = hOrig->GetNbinsX();
+
+  Double_t dSum = 0;
+  Double_t dSumWeights = 0;
+  Double_t dContent = 0;
+  Double_t dWeight = 0;
+  for(Short_t mult = 1; mult < iNumBins+1; mult++)
+  {
+    if(hOrig->GetBinLowEdge(mult) < multBins[binIndex]) continue;
+
+    dContent = hOrig->GetBinContent(mult);
+    dWeight =  TMath::Power(hOrig->GetBinError(mult),-2);
+
+    dSumWeights += dWeight;
+    dSum += dContent*dWeight;
+
+    if( hOrig->GetBinLowEdge(mult+1) == multBins[binIndex+1] )
+    {
+      hRebin->SetBinContent(binIndex+1, dSum / dSumWeights);
+      hRebin->SetBinError(binIndex+1, TMath::Sqrt(1/dSumWeights));
+
+      dSumWeights = 0;
+      dSum = 0;
+      binIndex++;
+    }
+  }
+
+  return hRebin;
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::AddTask(FlowTask* task)
