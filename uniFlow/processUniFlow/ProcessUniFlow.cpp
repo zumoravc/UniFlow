@@ -514,15 +514,15 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   // saving to output file
   ffOutputFile->cd();
-  hDesampled->Write();
-  hDesampledFlow->Write();
+  hDesampled->Write(Form("%s_%s",hDesampled->GetName(),task->fName.Data()));
+  hDesampledFlow->Write(Form("%s_%s",hDesampledFlow->GetName(),task->fName.Data()));
 
   if(!task->fRebinning)
   {
     // no rebinning
     TH1D* hNoRebin_rebinned = TestRebin(hDesampledFlow,task);
 
-    hNoRebin_rebinned->Write();
+    hNoRebin_rebinned->Write(Form("%s_%s",hNoRebin_rebinned->GetName(),task->fName.Data()));
   }
 
   // TCanvas* canTest = new TCanvas("canTest","canTest");
