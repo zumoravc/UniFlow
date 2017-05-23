@@ -1,6 +1,6 @@
 #!/bin/bash
 
-outputPath="/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test"
+outputPath="/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/sampleModTestNoRebin"
 
 echo $outputPath
 

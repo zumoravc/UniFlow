@@ -22,9 +22,9 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	process->SetTaskName("UniFlow_V0A");
 	process->SetOutputFilePath(sOutputFilePath);
 	// process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/testRefs");
-	process->SetOutputFileName("UniFlow_DesampleTest.root");
+	process->SetOutputFileName("UniFlow_DesampleTest_2.root");
 	// process->SetOutputFileMode("UPDATE");
-	// process->SetDebug();
+	process->SetDebug();
 	// process->SuggestMultBinning(4);
 
 	// setting multiplicity binning
@@ -42,6 +42,21 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	task2->SetEtaGap(0.8);
 	task2->SetRebinning(kFALSE);
 	process->AddTask(task2);
+
+	FlowTask* taskUnitRMS = new FlowTask("Refs_noRebin_unitRMS",FlowTask::kRefs);
+	taskUnitRMS->SetHarmonics(2);
+	taskUnitRMS->SetEtaGap(0.8);
+	taskUnitRMS->SetRebinning(kFALSE);
+	taskUnitRMS->SetDesamplingUseRMS(kTRUE);
+	process->AddTask(taskUnitRMS);
+
+	FlowTask* task3 = new FlowTask("Refs_noRebin_RMS",FlowTask::kRefs);
+	task3->SetHarmonics(2);
+	task3->SetEtaGap(0.8);
+	task3->SetRebinning(kFALSE);
+	task3->SetDesamplingUseRMS();
+	process->AddTask(task3);
+
 
 	// DIRECT
 

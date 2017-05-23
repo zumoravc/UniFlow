@@ -38,6 +38,7 @@ class FlowTask
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
+    void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
     void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
     void        SetFlowMassRebin(Short_t rebin = 2) { fRebinFlowMass = rebin; }
@@ -55,6 +56,7 @@ class FlowTask
     Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     Bool_t      fShowMult; // show multiplicity distribution
     Bool_t      fRebinning; // flag for rebinning prior to desampling
+    Bool_t      fDesampleUseRMS; // flag for using RMS as uncertainty during desampling
     Bool_t      fSuggestPtBins; // suggest pt binning
     Double_t    fSuggestPtBinEntries; // suggest pt binning
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
@@ -462,22 +464,26 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TProfile* profRebin  = 0x0;
   TH1D* histProj = 0x0;
   TList* list = new TList();
+  TList* listMerge = new TList();
 
   for(Short_t i(0); i < task->fNumSamples; i++)
   {
     prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",task->fHarmonics,10*task->fEtaGap,i));
     if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
 
+
     if(task->fRebinning)
     {
       // rebinning the profiles
       profRebin = (TProfile*) prof->Rebin(fiNumMultBins,Form("%s_rebin",prof->GetName()),fdMultBins);
       histProj = profRebin->ProjectionX(Form("%s_proj",profRebin->GetName()));
+      listMerge->Add(profRebin);
     }
     else
     {
       // no rebinning
       histProj = prof->ProjectionX(Form("%s_proj",prof->GetName()));
+      listMerge->Add(prof);
     }
     list->Add(histProj);
   }
@@ -511,19 +517,52 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     }
   }
 
+  // merging all samples together (NOTE: good for Refs)
+  TProfile* merged = (TProfile*) listMerge->At(0)->Clone();
+  merged->Reset();
+  Double_t mergeStatus = merged->Merge(listMerge);
+  merged->SetName(Form("hCum2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
+  if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
+
+  TH1D* hMerged = (TH1D*) merged->ProjectionX();
+  hMerged->SetName(Form("hFlow2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
+
+  // getting vn out of cn
+  for(Short_t iBin(1); iBin < merged->GetNbinsX()+1; iBin++)
+  {
+    dContent = merged->GetBinContent(iBin);
+    dError = merged->GetBinError(iBin);
+
+    if(dContent > 0. && dError >= 0.)
+    {
+      hMerged->SetBinContent(iBin, TMath::Sqrt(dContent));
+      hMerged->SetBinError(iBin, TMath::Sqrt( TMath::Power(dError,2) / (4*dContent) ));
+    }
+    else
+    {
+      hMerged->SetBinContent(iBin, 9.);
+      hMerged->SetBinError(iBin, 9.);
+    }
+  }
 
   // saving to output file
   ffOutputFile->cd();
   hDesampled->Write(Form("%s_%s",hDesampled->GetName(),task->fName.Data()));
   hDesampledFlow->Write(Form("%s_%s",hDesampledFlow->GetName(),task->fName.Data()));
+  merged->Write(Form("%s_%s",merged->GetName(),task->fName.Data()));
+  hMerged->Write(Form("%s_%s",hMerged->GetName(),task->fName.Data()));
 
   if(!task->fRebinning)
   {
     // no rebinning
     TH1D* hNoRebin_rebinned = TestRebin(hDesampledFlow,task);
+    TH1D* hMerged_rebinned = TestRebin(hMerged,task);
 
     hNoRebin_rebinned->Write(Form("%s_%s",hNoRebin_rebinned->GetName(),task->fName.Data()));
+    hMerged_rebinned->Write(Form("%s_%s",hMerged_rebinned->GetName(),task->fName.Data()));
   }
+
+
 
   // TCanvas* canTest = new TCanvas("canTest","canTest");
   // canTest->Divide(2,1);
@@ -537,6 +576,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(profRebin) delete profRebin;
   if(histProj) delete histProj;
   if(list) delete list;
+  if(listMerge) delete listMerge;
 
   return kTRUE;
 }
@@ -777,6 +817,11 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
   Double_t content = 0;
   Double_t error = 0;
 
+  std::vector<Double_t> vecContents;
+  std::vector<Double_t> vecErrors;
+  Double_t dMean = 0;
+  Double_t dRMS = 0;
+
   Double_t dSum = 0;
   Double_t dW = 0;
   Double_t dAverage = 0;
@@ -789,6 +834,9 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
     dAverage = 9.;
     dAve_err = 9.;
 
+    vecContents.clear();
+    vecErrors.clear();
+
     for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
     {
       hTempSample = (TH1D*) list->At(iSample);
@@ -796,6 +844,9 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
 
       content = hTempSample->GetBinContent(bin);
       error = hTempSample->GetBinError(bin);
+
+      vecContents.push_back(content);
+      vecErrors.push_back(error);
 
       if(error <= 0.) continue;
 
@@ -816,11 +867,55 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
 
     Debug(Form("W average | bin %d | %g +- %g",bin,dAverage,dAve_err),"DesampleList");
 
+    // working on weighted mean and RMS
+    if(vecContents.size() != vecErrors.size()) { Warning("Something went wrong: Vector with contents and error have not the same size","DesampleList"); }
+
+    dSum = 0;
+    dW = 0;
+
+    for(Short_t iSample(0); iSample < vecContents.size(); iSample++)
+    {
+      content = vecContents.at(iSample);
+      error = vecErrors.at(iSample);
+
+      // weighted mean
+      // dW += TMath::Power(error, -2);
+      // dSum += content * TMath::Power(error, -2);
+
+      // non-weighted mean
+      dW++;
+      dSum += content;
+    }
+
+    dMean = dSum/dW;
+
+    dSum = 0;
+    for(Short_t iSample(0); iSample < vecContents.size(); iSample++)
+    {
+      content = vecContents.at(iSample);
+      // error = vecErrors.at(iSample);
+      error = 1.;
+
+      dSum += TMath::Power( (dMean - content) / error ,2);
+    }
+    dRMS = TMath::Sqrt(dSum / (dW-1));
+    Debug(Form("Mean | bin %d | %g +- %g",bin,dMean,dRMS),"DesampleList");
+
     //ratio->SetBinContent(bin, dAverage / merged->GetBinContent(bin));
     //ratioErr->SetBinContent(bin, dAve_err / merged->GetBinError(bin));
-    hDesampled->SetBinContent(bin,dAverage);
-    hDesampled->SetBinError(bin,dAve_err);
-    Debug(Form("Desampled: bin %d | %g +- %g\n",bin,dAverage,dAve_err),"DesampleList");
+
+    if(task->fDesampleUseRMS)
+    {
+      hDesampled->SetBinContent(bin,dMean);
+      // hDesampled->SetBinError(bin,dRMS);
+      hDesampled->SetBinError(bin,dRMS/TMath::Sqrt(task->fNumSamples));
+    }
+    else
+    {
+      hDesampled->SetBinContent(bin,dAverage);
+      hDesampled->SetBinError(bin,dAve_err);
+    }
+    Debug(Form("Desampled: bin %d | %g +- %g\n",bin,hDesampled->GetBinContent(bin),hDesampled->GetBinError(bin)),"DesampleList");
   }
 
   // at this point, hDesampled is ready
