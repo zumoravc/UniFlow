@@ -76,25 +76,25 @@ void PlotDesampleTest()
   hRatio_unitRMS->SetMarkerColor(colors[7]);
   hRatio_unitRMS->SetMarkerStyle(markers[7]);
 
-  TH1D* hRatio_hMergedRebin = (TH1D*) hMergedRebinTest->Clone("hRatio_hMergedRebin");
-  hRatio_hMergedRebin->Divide(hMergedRebin);
-  hRatio_hMergedRebin->SetLineColor(colors[5]);
-  hRatio_hMergedRebin->SetMarkerColor(colors[5]);
-  hRatio_hMergedRebin->SetMarkerStyle(markers[5]);
+  TH1D* hRatio_hMergedRebinTest = (TH1D*) hMergedRebin->Clone("hRatio_hMergedRebinTest");
+  hRatio_hMergedRebinTest->Divide(hMergedRebinTest);
+  hRatio_hMergedRebinTest->SetLineColor(colors[6]);
+  hRatio_hMergedRebinTest->SetMarkerColor(colors[6]);
+  hRatio_hMergedRebinTest->SetMarkerStyle(markers[6]);
 
-  TH1D* hRatio_noRebin_rebin = (TH1D*) hMergedRebinTest->Clone("hRatio_noRebin_rebin");
+  TH1D* hRatio_noRebin_rebin = (TH1D*) hMergedRebin->Clone("hRatio_noRebin_rebin");
   hRatio_noRebin_rebin->Divide(hNoRebin_rebin);
   hRatio_noRebin_rebin->SetLineColor(colors[2]);
   hRatio_noRebin_rebin->SetMarkerColor(colors[2]);
   hRatio_noRebin_rebin->SetMarkerStyle(markers[2]);
 
-  TH1D* hRatio_hRebin = (TH1D*) hMergedRebinTest->Clone("hRatio_hRebin");
+  TH1D* hRatio_hRebin = (TH1D*) hMergedRebin->Clone("hRatio_hRebin");
   hRatio_hRebin->Divide(hRebin);
   hRatio_hRebin->SetLineColor(colors[0]);
   hRatio_hRebin->SetMarkerColor(colors[0]);
   hRatio_hRebin->SetMarkerStyle(markers[0]);
 
-  TH1D* hRatio_hNoRebin_RMS = (TH1D*) hMergedRebinTest->Clone("hRatio_hNoRebin_RMS");
+  TH1D* hRatio_hNoRebin_RMS = (TH1D*) hMergedRebin->Clone("hRatio_hNoRebin_RMS");
   hRatio_hNoRebin_RMS->Divide(hNoRebin_RMS);
   hRatio_hNoRebin_RMS->SetLineColor(colors[3]);
   hRatio_hNoRebin_RMS->SetMarkerColor(colors[3]);
@@ -160,13 +160,13 @@ void PlotDesampleTest()
 
   can->cd(2);
   TH1* h = can->DrawFrame(0,0.99,100,1.01);
-  h->SetTitle("Ratio Merged (Merged->Rebin) / X");
+  h->SetTitle("Ratio Merged (Rebin->Merged) / X");
   hRatio_Desampled->Draw("same hist p");
   hRatio_unitRMS->Draw("same hist p");
   hRatio_hRebin->Draw("same hist p");
-  hRatio_hMergedRebin->Draw("same hist p");
   hRatio_noRebin_rebin->Draw("same hist p");
   hRatio_hNoRebin_RMS->Draw("same hist p");
+  hRatio_hMergedRebinTest->Draw("same hist p");
 
   can->cd(3);
   TH1* h3 = can->DrawFrame(0,0.,100,0.005);
