@@ -55,8 +55,9 @@ class FlowTask
     Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
     Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     Bool_t      fShowMult; // show multiplicity distribution
-    Bool_t      fRebinning; // flag for rebinning prior to desampling
-    Bool_t      fDesampleUseRMS; // flag for using RMS as uncertainty during desampling
+    Bool_t      fSampleMerging; // [kFALSE] flag for merging TProfiles (good for refs)
+    Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
+    Bool_t      fDesampleUseRMS; // [kFALSE] flag for using RMS as uncertainty during desampling
     Bool_t      fSuggestPtBins; // suggest pt binning
     Double_t    fSuggestPtBinEntries; // suggest pt binning
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
@@ -75,6 +76,8 @@ FlowTask::FlowTask()
   fNumPtBins = -1;
   fShowMult = kFALSE;
   fRebinning = kTRUE;
+  fSampleMerging = kFALSE;
+  fDesampleUseRMS = kFALSE;
   fSuggestPtBins = kFALSE;
   fSuggestPtBinEntries = 20000;
   fRebinFlowMass = 0;
@@ -517,52 +520,60 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     }
   }
 
-  // merging all samples together (NOTE: good for Refs)
-  TProfile* merged = (TProfile*) listMerge->At(0)->Clone();
-  merged->Reset();
-  Double_t mergeStatus = merged->Merge(listMerge);
-  merged->SetName(Form("hCum2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
-  if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
-
-  TH1D* hMerged = (TH1D*) merged->ProjectionX();
-  hMerged->SetName(Form("hFlow2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
-
-  // getting vn out of cn
-  for(Short_t iBin(1); iBin < merged->GetNbinsX()+1; iBin++)
-  {
-    dContent = merged->GetBinContent(iBin);
-    dError = merged->GetBinError(iBin);
-
-    if(dContent > 0. && dError >= 0.)
-    {
-      hMerged->SetBinContent(iBin, TMath::Sqrt(dContent));
-      hMerged->SetBinError(iBin, TMath::Sqrt( TMath::Power(dError,2) / (4*dContent) ));
-    }
-    else
-    {
-      hMerged->SetBinContent(iBin, 9.);
-      hMerged->SetBinError(iBin, 9.);
-    }
-  }
 
   // saving to output file
   ffOutputFile->cd();
   hDesampled->Write(Form("%s_%s",hDesampled->GetName(),task->fName.Data()));
   hDesampledFlow->Write(Form("%s_%s",hDesampledFlow->GetName(),task->fName.Data()));
-  merged->Write(Form("%s_%s",merged->GetName(),task->fName.Data()));
-  hMerged->Write(Form("%s_%s",hMerged->GetName(),task->fName.Data()));
+
+  // merging all samples together (NOTE: good for Refs)
+  TH1D* hMerged = 0x0;
+  if(task->fSampleMerging)
+  {
+    TProfile* merged = (TProfile*) listMerge->At(0)->Clone();
+    merged->Reset();
+    Double_t mergeStatus = merged->Merge(listMerge);
+    merged->SetName(Form("hCum2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
+    if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
+
+    hMerged = (TH1D*) merged->ProjectionX();
+    hMerged->SetName(Form("hFlow2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
+
+    // getting vn out of cn
+    for(Short_t iBin(1); iBin < merged->GetNbinsX()+1; iBin++)
+    {
+      dContent = merged->GetBinContent(iBin);
+      dError = merged->GetBinError(iBin);
+
+      if(dContent > 0. && dError >= 0.)
+      {
+        hMerged->SetBinContent(iBin, TMath::Sqrt(dContent));
+        hMerged->SetBinError(iBin, TMath::Sqrt( TMath::Power(dError,2) / (4*dContent) ));
+      }
+      else
+      {
+        hMerged->SetBinContent(iBin, 9.);
+        hMerged->SetBinError(iBin, 9.);
+      }
+    }
+    merged->Write(Form("%s_%s",merged->GetName(),task->fName.Data()));
+    hMerged->Write(Form("%s_%s",hMerged->GetName(),task->fName.Data()));
+  }
+
+
 
   if(!task->fRebinning)
   {
     // no rebinning
     TH1D* hNoRebin_rebinned = TestRebin(hDesampledFlow,task);
-    TH1D* hMerged_rebinned = TestRebin(hMerged,task);
-
     hNoRebin_rebinned->Write(Form("%s_%s",hNoRebin_rebinned->GetName(),task->fName.Data()));
-    hMerged_rebinned->Write(Form("%s_%s",hMerged_rebinned->GetName(),task->fName.Data()));
+
+    if(task->fSampleMerging)
+    {
+      TH1D* hMerged_rebinned = TestRebin(hMerged,task);
+      hMerged_rebinned->Write(Form("%s_%s",hMerged_rebinned->GetName(),task->fName.Data()));
+    }
   }
-
-
 
   // TCanvas* canTest = new TCanvas("canTest","canTest");
   // canTest->Divide(2,1);
