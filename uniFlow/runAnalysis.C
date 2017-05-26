@@ -85,10 +85,11 @@ void runAnalysis()
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
     task1->SetFlowRFPsPtMax(5.);
+    // task1->SetFlowDoFourCorrelations(kFALSE);
     // Events selection
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
-    task1->SetMultEstimator();
+    task1->SetMultEstimator("V0A");
     task1->SetPeriod(AliAnalysisTaskUniFlow::k16q);
     task1->SetPVtxZMax(10);
     // Charged selection

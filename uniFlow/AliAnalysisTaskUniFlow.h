@@ -50,6 +50,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // flow related setters
       void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
+      void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
@@ -227,6 +228,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // cuts & selection: flow related
       Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
+      Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
