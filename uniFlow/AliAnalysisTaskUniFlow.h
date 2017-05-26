@@ -311,13 +311,20 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
       TProfile*       fpRefsCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
-      TProfile2D*     fp2ChargedCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
-      TProfile2D*     fp2PionCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs
-      TProfile2D*     fp2KaonCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs
-      TProfile2D*     fp2ProtonCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs
-      TProfile3D*     fp3V0sCorrK0sCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrLambdaCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates (cent, pT, InvMass)
-      TProfile3D*     fp3PhiCorrCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
+      TProfile2D*     fp2ChargedCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta>0
+      TProfile2D*     fp2ChargedCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta<0
+      TProfile2D*     fp2PionCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs: POIs in Eta>0
+      TProfile2D*     fp2PionCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs: POIs in Eta>0
+      TProfile2D*     fp2KaonCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs: POIs in Eta>0
+      TProfile2D*     fp2KaonCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs: POIs in Eta>0
+      TProfile2D*     fp2ProtonCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs: POIs in Eta>0
+      TProfile2D*     fp2ProtonCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs: POIs in Eta>0
+      TProfile3D*     fp3V0sCorrK0sCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates: POIs in Eta>0  (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrK0sCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates: POIs in Eta<0  (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrLambdaCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates: POIs in Eta>0  (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrLambdaCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates: POIs in Eta<0  (cent, pT, InvMass)
+      TProfile3D*     fp3PhiCorrCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta>0 (cent, pT, InvMass)
+      TProfile3D*     fp3PhiCorrCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta<0 (cent, pT, InvMass)
 
       TProfile*       fpRefsCor4[fNumSamples][fNumHarmonics]; //! <4> correlations for RFPs
       TProfile2D*     fp2ChargedCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
