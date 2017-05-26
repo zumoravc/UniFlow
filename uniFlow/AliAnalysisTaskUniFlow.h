@@ -51,10 +51,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
+      void                    SetFlowDoWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
-      void                    SetMultEstimator(const char* mult = "Charged") { fMultEstimator = mult; }
+      void                    SetMultEstimator(const char* mult = "CHARGED") { fMultEstimator = mult; }
       void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       // track setters
@@ -229,6 +230,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
+      Bool_t                  fFlowFillWeights; //[kTRUE] flag for filling weights
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
@@ -297,6 +299,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*      fQAPID; //! pi,K,p list
       TList*      fQAV0s; //! V0s candidates list
       TList*      fQAPhi; //! Phi candidates list
+      TList*      fFlowWeights; //! list for flow weights
       TList*      fFlowRefs; //! list for flow of reference particles
       TList*      fFlowCharged; //! list for flow of charged particles
       TList*      fFlowPID; //! list for flow of PID (pi,K,p) particles
@@ -311,6 +314,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3V0sEntriesLambda[fNumEtaGap]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
+
+      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta,pt)
+      TProfile*       fpMeanQxRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
+      TProfile*       fpMeanQxRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
+      TProfile*       fpMeanQyRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qy (vs. centrality) for Refs
+      TProfile*       fpMeanQyRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qy (vs. centrality) for Refs
 
       TProfile*       fpRefsCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
       TProfile2D*     fp2ChargedCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta>0
@@ -484,7 +494,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
       AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
 
-      ClassDef(AliAnalysisTaskUniFlow, 3);
+      ClassDef(AliAnalysisTaskUniFlow, 4);
 };
 
 #endif

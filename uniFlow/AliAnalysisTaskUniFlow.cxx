@@ -96,6 +96,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutFlowRFPsPtMin(0),
   fCutFlowRFPsPtMax(0),
   fCutFlowDoFourCorrelations(kTRUE),
+  fFlowFillWeights(kTRUE),
   fFlowPOIsPtMin(0),
   fFlowPOIsPtMax(20.),
   fFlowCentMin(0),
@@ -173,6 +174,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fQAPID(0x0),
   fQAV0s(0x0),
   fQAPhi(0x0),
+  fFlowWeights(0x0),
   fFlowRefs(0x0),
   fFlowCharged(0x0),
   fFlowPID(0x0),
@@ -181,7 +183,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowLambda(0x0),
 
   // flow histograms & profiles
-  // fcn2Tracks(0x0),
+  fh3WeightsRefs(0x0),
+  fh3WeightsCharged(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -310,6 +313,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowPOIsPtMin(0),
   fFlowPOIsPtMax(20.),
   fCutFlowDoFourCorrelations(kTRUE),
+  fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
   fFlowCentMax(150),
   fFlowCentNumBins(150),
@@ -385,6 +389,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fQAPID(0x0),
   fQAV0s(0x0),
   fQAPhi(0x0),
+  fFlowWeights(0x0),
   fFlowRefs(0x0),
   fFlowCharged(0x0),
   fFlowPID(0x0),
@@ -393,7 +398,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowLambda(0x0),
 
   // flow histograms & profiles
-  // fcn2Tracks(0x0),
+  fh3WeightsRefs(0x0),
+  fh3WeightsCharged(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -520,6 +526,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
         fh3PhiEntriesBG[iGap] = 0x0;
       }
 
+      // mean Qx,Qy
+      fpMeanQxRefsPos[iGap][iHarm] = 0x0;
+      fpMeanQxRefsNeg[iGap][iHarm] = 0x0;
+      fpMeanQyRefsPos[iGap][iHarm] = 0x0;
+      fpMeanQyRefsNeg[iGap][iHarm] = 0x0;
+
       for(Short_t iSample(0); iSample < fNumSamples; iSample++)
       {
         fpRefsCor2[iSample][iGap][iHarm] = 0x0;
@@ -626,6 +638,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   DefineOutput(9, TList::Class());
   DefineOutput(10, TList::Class());
   DefineOutput(11, TList::Class());
+  DefineOutput(12, TList::Class());
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
@@ -646,6 +659,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   if(fVectorPhi) delete fVectorPhi;
 
   // deleting output lists
+  if(fFlowWeights) delete fFlowWeights;
   if(fFlowRefs) delete fFlowRefs;
   if(fFlowCharged) delete fFlowCharged;
   if(fFlowPID) delete fFlowPID;
@@ -692,6 +706,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fFlowLambda = new TList();
   fFlowLambda->SetOwner(kTRUE);
   fFlowLambda->SetName("fFlowLambda");
+  fFlowWeights = new TList();
+  fFlowWeights->SetOwner(kTRUE);
+  fFlowWeights->SetName("fFlowWeights");
 
   fQAEvents = new TList();
   fQAEvents->SetOwner(kTRUE);
@@ -734,6 +751,38 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fQAEvents->Add(fhEventCounter);
 
     // flow histograms & profiles
+    // weights
+    if(fFlowFillWeights)
+    {
+      for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+        for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+        {
+          fpMeanQxRefsPos[iGap][iHarm] = new TProfile(Form("fpMeanQxRefs_harm%d_gap%02.2g_Pos",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qx>>: Refs | Gap %g | n=%d | POS; multiplicity/centrality; <Qx>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
+          fpMeanQxRefsPos[iGap][iHarm]->Sumw2();
+          fFlowWeights->Add(fpMeanQxRefsPos[iGap][iHarm]);
+
+          fpMeanQxRefsNeg[iGap][iHarm] = new TProfile(Form("fpMeanQxRefs_harm%d_gap%02.2g_Neg",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qx>>: Refs | Gap %g | n=%d | NEG; multiplicity/centrality; <Qx>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
+          fpMeanQxRefsNeg[iGap][iHarm]->Sumw2();
+          fFlowWeights->Add(fpMeanQxRefsNeg[iGap][iHarm]);
+
+          fpMeanQyRefsPos[iGap][iHarm] = new TProfile(Form("fpMeanQyRefs_harm%d_gap%02.2g_Pos",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qy>>: Refs | Gap %g | n=%d | POS; multiplicity/centrality; <Qy>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
+          fpMeanQyRefsPos[iGap][iHarm]->Sumw2();
+          fFlowWeights->Add(fpMeanQyRefsPos[iGap][iHarm]);
+
+          fpMeanQyRefsNeg[iGap][iHarm] = new TProfile(Form("fpMeanQyRefs_harm%d_gap%02.2g_Neg",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qy>>: Refs | Gap %g | n=%d | NEG; multiplicity/centrality; <Qy>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
+          fpMeanQyRefsNeg[iGap][iHarm]->Sumw2();
+          fFlowWeights->Add(fpMeanQyRefsNeg[iGap][iHarm]);
+        }
+
+      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; #it{p}_{T} (GeV/c)", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsRefs->Sumw2();
+      fFlowWeights->Add(fh3WeightsRefs);
+
+      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; #it{p}_{T} (GeV/c)", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsCharged->Sumw2();
+      fFlowWeights->Add(fh3WeightsCharged);
+    }
+
     // candidate distribution for flow-mass method
     for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
     {
@@ -1248,6 +1297,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   PostData(9, fQAPID);
   PostData(10, fQAPhi);
   PostData(11, fQAV0s);
+  PostData(12, fFlowWeights);
 
   return;
 }
@@ -1422,6 +1472,9 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     return kFALSE;
   }
 
+  // upper-case for multiplicity estimator
+  fMultEstimator.ToUpper();
+
   ::Info("InitializeTask","Initialization succesfull!");
   printf("======================================================================\n\n");
   return kTRUE;
@@ -1458,6 +1511,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   PostData(9, fQAPID);
   PostData(10, fQAPhi);
   PostData(11, fQAV0s);
+  PostData(12, fFlowWeights);
 
   return;
 }
@@ -2934,6 +2988,15 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
   // filling RFPs (Q) flow vectors
   FillRefsVectors(dEtaGap);
 
+  // filling mean Qx, Qy
+  for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+  {
+    fpMeanQxRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Re());
+    fpMeanQyRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Im());
+    fpMeanQxRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Re());
+    fpMeanQyRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Im());
+  }
+
   if(dEtaGap == -1) // no gap
   {
     // estimating <2>
@@ -2983,6 +3046,7 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
         // printf("Gap (RFPs): %g Harm %d | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,Cn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
         if( TMath::Abs(dValue < 1) )
           fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
+
       }
     }
   } // endif {dEtaGap}
@@ -3528,6 +3592,12 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
     dQsinNeg = 0;
 
     // RPF candidate passing all criteria: start filling flow vectors
+    // Filling weights
+    if(fFlowFillWeights)
+    {
+      fh3WeightsRefs->Fill(part->phi, part->eta, part->pt);
+    }
+
     if(dEtaGap == -1) // no eta gap
     {
       for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
@@ -3594,6 +3664,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
 
   std::vector<FlowPart>* vector = 0x0;
   TH3D* hist = 0x0;
+  TH3D* h3Weight = 0x0; // pointer to weights
   Double_t dMassLow = 0, dMassHigh = 0;
 
   // swich based on species
@@ -3601,6 +3672,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   {
     case kCharged:
       vector = fVectorCharged;
+      h3Weight = fh3WeightsCharged;
       break;
 
     case kPion:
@@ -3671,6 +3743,12 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     dSin = 0;
 
     // POIs candidate passing all criteria: start filling flow vectors
+    // filling weights
+    if(fFlowFillWeights && h3Weight)
+    {
+      h3Weight->Fill(part->phi, part->eta, part->pt);
+    }
+
     if(dEtaGap == -1) // no eta gap
     {
       if(species == kK0s || species == kLambda || species == kPhi)
@@ -3817,6 +3895,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   // If a valid multiplicity estimator is specified, centrality percentile is estimated via AliMultSelection
   // otherwise -1 is returned (and event is skipped)
   // *************************************************************
+  fMultEstimator.ToUpper();
 
   if(
       fMultEstimator.EqualTo("V0A") || fMultEstimator.EqualTo("V0C") || fMultEstimator.EqualTo("V0M") ||
@@ -3836,7 +3915,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
     if(dPercentile > 100 || dPercentile < 0) { AliWarning("Centrality percentile estimated not within 0-100 range. Returning -1"); return -1;}
     else {return dPercentile;}
   }
-  else if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("Charged"))
+  else if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("CHARGED"))
   {
     // assigning centrality based on number of selected charged tracks
     return fVectorCharged->size();

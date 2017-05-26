@@ -86,6 +86,7 @@ void runAnalysis()
     task1->SetFlowRFPsPtMin(0.2);
     task1->SetFlowRFPsPtMax(5.);
     // task1->SetFlowDoFourCorrelations(kFALSE);
+    task1->SetFlowDoWeights(kTRUE);
     // Events selection
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
