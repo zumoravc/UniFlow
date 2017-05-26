@@ -185,6 +185,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // event histograms
   fhEventSampling(0x0),
   fhEventCentrality(0x0),
+  fh2EventCentralityNumSelCharged(0x0),
   fhEventCounter(0x0),
 
   // charged histogram
@@ -395,6 +396,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // event histograms
   fhEventSampling(0x0),
   fhEventCentrality(0x0),
+  fh2EventCentralityNumSelCharged(0x0),
   fhEventCounter(0x0),
 
   // charged histogram
@@ -718,9 +720,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // event histogram
     fhEventSampling = new TH2D("fhEventSampling","Event sampling; centrality/multiplicity; sample index", fFlowCentNumBins,0,fFlowCentNumBins, fNumSamples,0,fNumSamples);
     fQAEvents->Add(fhEventSampling);
-    fhEventCentrality = new TH1D("fhEventCentrality","Event centrality; centrality/multiplicity", fFlowCentNumBins,0,fFlowCentNumBins);
+    fhEventCentrality = new TH1D("fhEventCentrality",Form("Event centrality (%s); centrality/multiplicity",fMultEstimator.Data()), fFlowCentNumBins,0,fFlowCentNumBins);
     fQAEvents->Add(fhEventCentrality);
-
+    fh2EventCentralityNumSelCharged = new TH2D("fh2EventCentralityNumSelCharged",Form("Event centrality (%s) vs. N^{sel}_{ch}; N^{sel}_{ch}; centrality/multiplicity",fMultEstimator.Data()), 150,0,150, fFlowCentNumBins,0,fFlowCentNumBins);
+    fQAEvents->Add(fh2EventCentralityNumSelCharged);
 
     const Short_t iEventCounterBins = 7;
     TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","PV OK","SPD Vtx OK","Pileup MV OK","PV #it{z} OK","Selected"};
@@ -1645,6 +1648,7 @@ void AliAnalysisTaskUniFlow::Filtering()
   fIndexCentrality = GetCentralityIndex();
   if(fIndexCentrality < 0) return; // not succesfull estimation
   fhEventCentrality->Fill(fIndexCentrality);
+  fh2EventCentralityNumSelCharged->Fill(fVectorCharged->size(),fIndexCentrality);
 
   fIndexSampling = GetSamplingIndex();
   fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
