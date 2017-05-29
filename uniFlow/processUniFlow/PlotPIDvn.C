@@ -32,12 +32,15 @@ void PlotPIDvn()
   LoadLibs();
   SetStyle();
 
-  TString sInputFile = TString("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/testRefs/UniFlow_PID.root");
-  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test/UniFlow_Reconstructed.root");
-  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
+  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/UniFlow_binning10.root");
+  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/UniFlow_binning10.root");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/plots/no_ALICE_label_binning10");
 
   // TString sGap = "08";
   Int_t iCent = 9;
+  TString sCent = TString("90-100");
+  Double_t dYmin = 0;
+  Double_t dYmax = 0.8;
 
   // ALICE Preferred colors and markers (from figure template)
   const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7}; // for syst bands
@@ -49,12 +52,12 @@ void PlotPIDvn()
   Color_t colPion = kRed;
   Color_t colKaon = kBlue;
   Color_t colProton = kGreen+2;
-  Color_t colPhi = kMagenta+1;
+  Color_t colPhi = kMagenta;
   Color_t colK0s = kCyan+1;
   Color_t colLambda = kOrange+1;
 
   // markers setting
-  Int_t markCharged = kOpenCircle;
+  Int_t markCharged = kOpenSquare;
   Int_t markPion = kFullCircle;
   Int_t markKaon = kFullTriangleUp;
   Int_t markProton = kFullCross;
@@ -96,7 +99,7 @@ void PlotPIDvn()
   //TCanvas *cfig = new TCanvas("cfig", "Alice Figure Template", 800, 800);
   // cfig->SetLogy();
   // Set Titles etc..
-  TH1* h = cfig->DrawFrame(0,0,6,0.5);
+  TH1* h = cfig->DrawFrame(0,dYmin,6,dYmax);
 
   // Set titles
   h->SetXTitle("#it{p}_{T} (GeV/#it{c})");
@@ -105,22 +108,22 @@ void PlotPIDvn()
   // loading histos
 
   // DIRECT
-  TH1D* hFlowCharged = (TH1D*) fInputFile->Get(Form("hFlow_Charged_harm2_gap08_cent%d_taskcharged",iCent));
-  if(!hFlowCharged) return;
-  TH1D* hFlowPion = (TH1D*) fInputFile->Get(Form("hFlow_Pion_harm2_gap08_cent%d_taskPi",iCent));
-  if(!hFlowPion) return;
-  TH1D* hFlowKaon = (TH1D*) fInputFile->Get(Form("hFlow_Kaon_harm2_gap08_cent%d_taskK",iCent));
-  if(!hFlowKaon) return;
-  TH1D* hFlowProton = (TH1D*) fInputFile->Get(Form("hFlow_Proton_harm2_gap08_cent%d_taskp",iCent));
-  if(!hFlowProton) return;
+  TH1D* hFlowCharged = (TH1D*) fInputFile->Get(Form("hFlow2_Charged_harm2_gap08_cent%d",iCent));
+  if(!hFlowCharged) { printf("No charged\n"); return; }
+  TH1D* hFlowPion = (TH1D*) fInputFile->Get(Form("hFlow2_Pion_harm2_gap08_cent%d",iCent));
+  if(!hFlowPion) { printf("No pion\n"); return; }
+  TH1D* hFlowKaon = (TH1D*) fInputFile->Get(Form("hFlow2_Kaon_harm2_gap08_cent%d",iCent));
+  if(!hFlowKaon) { printf("No kaon\n"); return; }
+  TH1D* hFlowProton = (TH1D*) fInputFile->Get(Form("hFlow2_Proton_harm2_gap08_cent%d",iCent));
+  if(!hFlowProton)  { printf("No proton\n"); return; }
 
   // reconstructed
   TH1D* hFlowK0s = (TH1D*) fInputFileRecon->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",iCent));
-  if(!hFlowK0s) return;
+  if(!hFlowK0s) { printf("No K0s\n"); return; }
   TH1D* hFlowLambda = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Lambda_harm2_gap08_mult%d",iCent));
-  if(!hFlowLambda) return;
+  if(!hFlowLambda) { printf("No Lambda\n"); return; }
   TH1D* hFlowPhi = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Phi_harm2_gap08_mult%d",iCent));
-  if(!hFlowPhi) return;
+  if(!hFlowPhi) { printf("No Phi\n"); return; }
 
   // setting histos
   // hFlowCharged->SetStats(kFALSE);
@@ -167,7 +170,6 @@ void PlotPIDvn()
 
   // drawing stuff
   // hFlowCharged->Draw("same");
-  // hFlowCharged->Draw("hist p e1 x0 same");
   hFlowPion->Draw("hist p e1 x0 same");
   hFlowKaon->Draw("hist p e1 x0  same");
   hFlowProton->Draw("hist p e1 x0 same");
@@ -179,17 +181,25 @@ void PlotPIDvn()
   // Draw the logo
   //  0: Just "ALICE" (for final data), to be added only if ALICE does not appear otherwise (e.g. in the legend)
   //  >0: ALICE Preliminary
-  DrawLogo(2, 0.61, 0.83);
+  // DrawLogo(2, 0.186, 0.83);
 
   // You should always specify the colliding system
   // NOTATION: pp, p-Pb, Pb-Pb.
   // Don't forget to use #sqrt{s_{NN}} for p-Pb and Pb-Pb
   // You can change the position of this with
-  TLatex * text = new TLatex (0.3,0.27,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
-  text->Draw();
-  TLatex * text2 = new TLatex (0.3,0.25,Form("Multiplicity Class %d-%d%% (V0A)",10*iCent,10*(iCent+1)));
+
+
+  TLatex * text = new TLatex();
+  text->DrawLatexNDC(0.18,0.83,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
+  TLatex * text2 = new TLatex();
   text2->SetTextSizePixels(22);
-  text2->Draw();
+  text2->DrawLatexNDC(0.18,0.78,Form("Multiplicity Class %s%% (V0A)",sCent.Data()));
+  // TLatex * text = new TLatex(0.3,0.25,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
+  // text->Draw();
+  // TLatex * text2 = new TLatex (0.3,0.23,Form("Multiplicity Class %s%% (V0A)",sCent.Data()));
+  // text2->SetTextSizePixels(22);
+  // text2->Draw();
+
   // TLatex * text3 = new TLatex (0.55,0.76,"|#eta| < 0.8");
   // text3->SetTextSizePixels(20);
   // text3->Draw();
@@ -217,7 +227,10 @@ void PlotPIDvn()
   legend->Draw();
   legend2->Draw();
 
-  cfig->SaveAs(Form("%s/plots/PID_%d.pdf",sOutputFilePath.Data(),iCent));
+  // cfig->SaveAs(Form("%s/plots/PID_%d.%s",sOutputFilePath.Data(),iCent,sOutputFormat.Data()));
+  cfig->SaveAs(Form("%s/PID_%d.pdf",sOutputFilePath.Data(),iCent));
+  cfig->SaveAs(Form("%s/PID_%d.png",sOutputFilePath.Data(),iCent));
+  cfig->SaveAs(Form("%s/PID_%d.eps",sOutputFilePath.Data(),iCent));
 
 
   return;

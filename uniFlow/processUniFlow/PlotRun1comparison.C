@@ -26,24 +26,25 @@ void myPadSetUp(TPad *currentPad, float currentLeft=0.11, float currentTop=0.04,
 void DrawLogo (Int_t logo=0, Double_t xmin =  0.28, Double_t ymin= 0.68) ;
 void FakeHistosOnlyForExample(TH1*&hstat, TH1*&hsyst, TH1*&hsystCorr);
 void LoadLibs();
+void RatioError(TH1* nominator = 0x0, TH1* nominator_errors = 0x0, TH1* denominator = 0x0, TH1* ratio = 0x0);
 
 void PlotRun1comparison()
 {
   LoadLibs();
   SetStyle();
 
-  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/UniFlow.root");
+  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/UniFlow.root");
   TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/UniFlow.root");
   TString sInputFilePublished = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/HEPdata.root");
 
-  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/plots/run1_comparison");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/withRatios");
 
   TString sOutputFormat = TString("png");
 
   // TString sGap = "08";
-  Int_t iCent = 3;
-  Int_t iTable = 17; // 5,9,13,17
-  TString sCent = TString("60-100");
+  Int_t iCent = 0;
+  Int_t iTable = 5; // 5,9,13,17
+  TString sCent = TString("0-20");
 
   // ALICE Preferred colors and markers (from figure template)
   const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7}; // for syst bands
@@ -149,14 +150,27 @@ void PlotRun1comparison()
   fInputFilePublished->cd(Form("Table %d",iTable+1)); // pions 0-20
   TGraphAsymmErrors* gHEP_Pion = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y2");
   if(!gHEP_Pion) { printf("No HEP Pion graph\n"); return; }
+  TH1F* hHEP_Pion = (TH1F*) gDirectory->Get("Hist1D_y2");
+  if(!hHEP_Pion) { printf("No HEP Pion\n"); return; }
+  TH1F* hHEP_Pion_err = (TH1F*) gDirectory->Get("Hist1D_y2_e1");
+  if(!hHEP_Pion_err) { printf("No HEP Pion errors\n"); return; }
 
   fInputFilePublished->cd(Form("Table %d",iTable+2)); // kaons 0-20
   TGraphAsymmErrors* gHEP_Kaon = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y2");
   if(!gHEP_Kaon) { printf("No HEP Kaon graph\n"); return; }
+  TH1F* hHEP_Kaon = (TH1F*) gDirectory->Get("Hist1D_y2");
+  if(!hHEP_Kaon) { printf("No HEP Kaon\n"); return; }
+  TH1F* hHEP_Kaon_err = (TH1F*) gDirectory->Get("Hist1D_y2_e1");
+  if(!hHEP_Kaon_err) { printf("No HEP Kaon errors\n"); return; }
 
   fInputFilePublished->cd(Form("Table %d",iTable+3)); // protons 0-20
   TGraphAsymmErrors* gHEP_Proton = (TGraphAsymmErrors*) gDirectory->Get("Graph1D_y2");
   if(!gHEP_Proton) { printf("No HEP Proton graph\n"); return; }
+  TH1F* hHEP_Proton = (TH1F*) gDirectory->Get("Hist1D_y2");
+  if(!hHEP_Proton) { printf("No HEP Proton\n"); return; }
+  TH1F* hHEP_Proton_err = (TH1F*) gDirectory->Get("Hist1D_y2_e1");
+  if(!hHEP_Proton_err) { printf("No HEP Proton errors\n"); return; }
+
 
 
   // setting histos
@@ -297,11 +311,57 @@ void PlotRun1comparison()
   legend->Draw();
   legend2->Draw();
 
+  // making ratios
+  TCanvas* canRatio = new TCanvas("canRatio","canRatio",600,800);
+  TH1* hRatio = canRatio->DrawFrame(0,0.5,4,1.5);
+  hRatio->SetXTitle("#it{p}_{T} (GeV/#it{c})");
+  hRatio->SetYTitle("Run1 / Run2");
+
+  TH1F* hRatio_Charged = hHEP_Charged->Clone("hRatio_Charged");
+  hRatio_Charged->Divide(hFlowCharged);
+  RatioError(hHEP_Charged,hHEP_Charged_err,hFlowCharged,hRatio_Charged);
+  hRatio_Charged->SetLineColor(colCharged);
+  hRatio_Charged->SetMarkerColor(colCharged);
+  hRatio_Charged->SetMarkerStyle(markCharged);
+
+  TH1F* hRatio_Pion = hHEP_Pion->Clone("hRatio_Pion");
+  hRatio_Pion->Divide(hFlowPion);
+  RatioError(hHEP_Pion,hHEP_Pion_err,hFlowPion,hRatio_Pion);
+  hRatio_Pion->SetLineColor(colPion);
+  hRatio_Pion->SetMarkerColor(colPion);
+  hRatio_Pion->SetMarkerStyle(markPion);
+
+  TH1F* hRatio_Kaon = hHEP_Kaon->Clone("hRatio_Kaon");
+  printf("Bins: kaon HEP: %d | my %d\n",hHEP_Kaon->GetNbinsX(),hFlowKaon->GetNbinsX());
+  hRatio_Kaon->Divide(hFlowKaon);
+  RatioError(hHEP_Kaon,hHEP_Kaon_err,hFlowKaon,hRatio_Kaon);
+  hRatio_Kaon->SetLineColor(colKaon);
+  hRatio_Kaon->SetMarkerColor(colKaon);
+  hRatio_Kaon->SetMarkerStyle(markKaon);
+
+  TH1F* hRatio_Proton = hHEP_Proton->Clone("hRatio_Proton");
+  printf("Bins: proton HEP: %d | my %d\n",hHEP_Proton->GetNbinsX(),hFlowProton->GetNbinsX());
+  hRatio_Proton->Divide(hFlowProton);
+  RatioError(hHEP_Proton,hHEP_Proton_err,hFlowProton,hRatio_Proton);
+  hRatio_Proton->SetLineColor(colProton);
+  hRatio_Proton->SetMarkerColor(colProton);
+  hRatio_Proton->SetMarkerStyle(markProton);
+
+
+  hRatio_Charged->Draw("same hist p e");
+  hRatio_Pion->Draw("same hist p e");
+  hRatio_Kaon->Draw("same hist p e");
+  hRatio_Proton->Draw("same hist p e");
+
+
   // cfig->SaveAs(Form("%s/PID_%d.%s",sOutputFilePath.Data(),iCent,sOutputFormat.Data()));
   cfig->SaveAs(Form("%s/PID_%d.pdf",sOutputFilePath.Data(),iCent));
   cfig->SaveAs(Form("%s/PID_%d.png",sOutputFilePath.Data(),iCent));
   cfig->SaveAs(Form("%s/PID_%d.eps",sOutputFilePath.Data(),iCent));
 
+  canRatio->SaveAs(Form("%s/PID_ratio_%d.pdf",sOutputFilePath.Data(),iCent));
+  canRatio->SaveAs(Form("%s/PID_ratio_%d.png",sOutputFilePath.Data(),iCent));
+  canRatio->SaveAs(Form("%s/PID_ratio_%d.eps",sOutputFilePath.Data(),iCent));
 
   return;
 }
@@ -448,3 +508,32 @@ void FakeHistosOnlyForExample(TH1* &hstat, TH1* &hsyst, TH1*&hsystCorr) {
 
 }
 //_____________________________________________________________________________
+void RatioError(TH1* nominator, TH1* nominator_error, TH1* denominator, TH1* ratio)
+{
+  if(!ratio || ! denominator || !nominator || !nominator_error) { printf("Either of input histos not found!\n"); return; }
+
+  Int_t iNbins = ratio->GetNbinsX();
+  // printf("points: %d | bins %d\n", iNpoints,iNbins);
+  // return;
+  if(nominator->GetNbinsX() != iNbins || denominator->GetNbinsX() != iNbins || nominator_error->GetNbinsX() != iNbins) { printf("Different binning!\n"); return; }
+
+
+  Double_t content_deno = 0, error_deno = 0;
+  Double_t content_no = 0;
+  Double_t error_no = 0;
+  Double_t final_error = 0;
+
+  for(Int_t bin(1); bin < iNbins+1; bin++)
+  {
+    content_deno = denominator->GetBinContent(bin);
+    error_deno = denominator->GetBinError(bin);
+    //
+    content_no = nominator->GetBinContent(bin);
+    error_no = nominator_error->GetBinContent(bin);
+    //
+    final_error = TMath::Power(error_no/content_deno,2) + TMath::Power(error_deno*content_no/(content_deno*content_deno),2);
+    ratio->SetBinError(bin,TMath::Sqrt(final_error));
+  }
+  printf("done\n");
+  return;
+}
