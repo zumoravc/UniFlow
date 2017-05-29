@@ -1,6 +1,6 @@
 #!/bin/bash
 
-outputPath="/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/sampleModTestNoRebin"
+outputPath="/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/"
 
 echo $outputPath
 
@@ -8,6 +8,7 @@ mkdir -v $outputPath
 
 # preparing folder for binning suggestion
 mkdir -v ${outputPath}/suggestBins
+mkdir -v ${outputPath}/plots
 
 # preparing folder for slices
 # mkdir -pv ${outputPath}/fits/Refs

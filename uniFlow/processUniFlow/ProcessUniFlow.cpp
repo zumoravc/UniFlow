@@ -523,8 +523,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   // saving to output file
   ffOutputFile->cd();
-  hDesampled->Write(Form("%s_%s",hDesampled->GetName(),task->fName.Data()));
-  hDesampledFlow->Write(Form("%s_%s",hDesampledFlow->GetName(),task->fName.Data()));
+  hDesampled->Write(Form("%s",hDesampled->GetName()));
+  hDesampledFlow->Write(Form("%s",hDesampledFlow->GetName()));
 
   // merging all samples together (NOTE: good for Refs)
   TH1D* hMerged = 0x0;
@@ -556,8 +556,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
         hMerged->SetBinError(iBin, 9.);
       }
     }
-    merged->Write(Form("%s_%s",merged->GetName(),task->fName.Data()));
-    hMerged->Write(Form("%s_%s",hMerged->GetName(),task->fName.Data()));
+    merged->Write(Form("%s",merged->GetName()));
+    hMerged->Write(Form("%s",hMerged->GetName()));
   }
 
 
@@ -566,12 +566,12 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   {
     // no rebinning
     TH1D* hNoRebin_rebinned = TestRebin(hDesampledFlow,task);
-    hNoRebin_rebinned->Write(Form("%s_%s",hNoRebin_rebinned->GetName(),task->fName.Data()));
+    hNoRebin_rebinned->Write(Form("%s",hNoRebin_rebinned->GetName()));
 
     if(task->fSampleMerging)
     {
       TH1D* hMerged_rebinned = TestRebin(hMerged,task);
-      hMerged_rebinned->Write(Form("%s_%s",hMerged_rebinned->GetName(),task->fName.Data()));
+      hMerged_rebinned->Write(Form("%s",hMerged_rebinned->GetName()));
     }
   }
 
@@ -1050,13 +1050,15 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   if(!hRefFlow)
   {
     Warning("Relevant Reference flow not found within output file.","PrepareSlices");
-    Info("Creating relevant reference flow task.","PrepareSlices");
+    ffOutputFile->ls();
+    return kFALSE;
 
-    FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
-    taskRef->SetHarmonics(task->fHarmonics);
-    taskRef->SetEtaGap(task->fEtaGap);
-    if(ProcessRefs(taskRef)) return ProcessReconstructed(task);
-    else { Error("Something went wrong when running automatic refs flow task:","PrepareSlices"); taskRef->PrintTask(); return kFALSE; }
+    // Info("Creating relevant reference flow task.","PrepareSlices");
+    // FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
+    // taskRef->SetHarmonics(task->fHarmonics);
+    // taskRef->SetEtaGap(task->fEtaGap);
+    // if(ProcessRefs(taskRef)) return ProcessReconstructed(task);
+    // else { Error("Something went wrong when running automatic refs flow task:","PrepareSlices"); taskRef->PrintTask(); return kFALSE; }
   }
   const Double_t dRefFlow = hRefFlow->GetBinContent(multBin+1);
   const Double_t dRefFlowErr = hRefFlow->GetBinError(multBin+1);
