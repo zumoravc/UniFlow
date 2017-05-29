@@ -124,6 +124,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutPIDnSigmaKaonMax(3),
   fCutPIDnSigmaProtonMax(3),
   fCutPIDnSigmaTPCRejectElectron(3),
+  fCutPIDnSigmaCombinedNoTOFrejection(kFALSE),
   fCutUseBayesPID(kFALSE),
   fCutPIDBayesPionMin(0.9),
   fCutPIDBayesKaonMin(0.9),
@@ -339,6 +340,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutPIDnSigmaKaonMax(3),
   fCutPIDnSigmaProtonMax(3),
   fCutPIDnSigmaTPCRejectElectron(3),
+  fCutPIDnSigmaCombinedNoTOFrejection(kFALSE),
   fCutUseBayesPID(kFALSE),
   fCutPIDBayesPionMin(0.9),
   fCutPIDBayesKaonMin(0.9),
@@ -2685,41 +2687,44 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
 
 
     // TPC nSigma cuts
-    if(dPt < 0.4)
+    if(dPt <= 0.4)
     {
       Double_t dMinSigmasTPC = TMath::MinElement(5,dNumSigmaTPC);
 
-      if(dMinSigmasTPC == dNumSigmaTPC[2] && dNumSigmaTPC[2] < fCutPIDnSigmaPionMax)
+      if(dMinSigmasTPC == dNumSigmaTPC[2] && dNumSigmaTPC[2] <= fCutPIDnSigmaPionMax)
         return kPion;
 
-      if(dMinSigmasTPC == dNumSigmaTPC[3] && dNumSigmaTPC[3] < fCutPIDnSigmaKaonMax)
+      if(dMinSigmasTPC == dNumSigmaTPC[3] && dNumSigmaTPC[3] <= fCutPIDnSigmaKaonMax)
         return kKaon;
 
-      if(dMinSigmasTPC == dNumSigmaTPC[4] && dNumSigmaTPC[4] < fCutPIDnSigmaProtonMax)
+      if(dMinSigmasTPC == dNumSigmaTPC[4] && dNumSigmaTPC[4] <= fCutPIDnSigmaProtonMax)
         return kProton;
     }
 
     // combined TPC + TOF nSigma cuts
-    if(dPt >= 0.4) // && < 4 GeV TODO once TPC dEdx parametrisation is available
+    if(dPt > 0.4) // && < 4 GeV TODO once TPC dEdx parametrisation is available
     {
-      if(!bIsTOFok) return kUnknown;
       Double_t dNumSigmaCombined[5] = {-99,-99,-99,-99,-99};
+
+      // discard candidates if no TOF is available if cut is on
+      if(fCutPIDnSigmaCombinedNoTOFrejection && !bIsTOFok) return kUnknown;
 
       // calculating combined nSigmas
       for(Short_t i(0); i < 5; i++)
       {
-        dNumSigmaCombined[i] = TMath::Sqrt(dNumSigmaTPC[i]*dNumSigmaTPC[i] + dNumSigmaTOF[i]*dNumSigmaTOF[i]);
+        if(bIsTOFok) { dNumSigmaCombined[i] = TMath::Sqrt(dNumSigmaTPC[i]*dNumSigmaTPC[i] + dNumSigmaTOF[i]*dNumSigmaTOF[i]); }
+        else { dNumSigmaCombined[i] = dNumSigmaTPC[i]; }
       }
 
       Double_t dMinSigmasCombined = TMath::MinElement(5,dNumSigmaCombined);
 
-      if(dMinSigmasCombined == dNumSigmaCombined[2] && dNumSigmaCombined[2] < fCutPIDnSigmaPionMax)
+      if(dMinSigmasCombined == dNumSigmaCombined[2] && dNumSigmaCombined[2] <= fCutPIDnSigmaPionMax)
         return kPion;
 
-      if(dMinSigmasCombined == dNumSigmaCombined[3] && dNumSigmaCombined[3] < fCutPIDnSigmaKaonMax)
+      if(dMinSigmasCombined == dNumSigmaCombined[3] && dNumSigmaCombined[3] <= fCutPIDnSigmaKaonMax)
         return kKaon;
 
-      if(dMinSigmasCombined == dNumSigmaCombined[4] && dNumSigmaCombined[4] < fCutPIDnSigmaProtonMax)
+      if(dMinSigmasCombined == dNumSigmaCombined[4] && dNumSigmaCombined[4] <= fCutPIDnSigmaProtonMax)
         return kProton;
     }
 

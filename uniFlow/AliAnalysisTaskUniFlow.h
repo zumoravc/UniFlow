@@ -70,6 +70,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetPIDNumSigmasPionMax(Double_t numSigmas) { fCutPIDnSigmaPionMax = numSigmas; }
       void                    SetPIDNumSigmasKaonMax(Double_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
       void                    SetPIDNumSigmasProtonMax(Double_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
+      void                    SetPIDNumSigmasCombinedNoTOFrejection(Bool_t reject = kTRUE) { fCutPIDnSigmaCombinedNoTOFrejection = reject; }
       void                    SetUseBayesPID(Bool_t bayes = kTRUE) { fCutUseBayesPID = bayes; }
       void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesPionMin = probPi; }
       void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutPIDBayesKaonMin = probK; }
@@ -251,6 +252,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
       Double_t                fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
       Double_t                fCutPIDnSigmaTPCRejectElectron; // [3] number of TPC nSigma for electron rejection
+      Bool_t                  fCutPIDnSigmaCombinedNoTOFrejection; // [kFALSE] flag for rejection candidates in TPC+TOF pt region if TOF is not available (if true and no TOF, only TPC is used)
       Bool_t                  fCutUseBayesPID; // [kFALSE] flag for using Bayes PID for pi,K,p instead nsigma cut
       Double_t                fCutPIDBayesPionMin; // [0.9] minimal value of Bayes PID probability for pion
       Double_t                fCutPIDBayesKaonMin; // [0.9] minimal value of Bayes PID probability for Kaon
