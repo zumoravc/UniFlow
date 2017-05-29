@@ -2681,15 +2681,14 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       dNumSigmaTOF[4] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton));
     }
 
-    // electron rejection
-    if(dNumSigmaTPC[0] < fCutPIDnSigmaTPCRejectElectron)
-      return kUnknown;
-
-
     // TPC nSigma cuts
     if(dPt <= 0.4)
     {
       Double_t dMinSigmasTPC = TMath::MinElement(5,dNumSigmaTPC);
+
+      // electron rejection
+      if(dMinSigmasTPC == dNumSigmaTPC[0] && dNumSigmaTPC[0] <= fCutPIDnSigmaTPCRejectElectron)
+        return kUnknown;
 
       if(dMinSigmasTPC == dNumSigmaTPC[2] && dNumSigmaTPC[2] <= fCutPIDnSigmaPionMax)
         return kPion;
@@ -2717,6 +2716,10 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       }
 
       Double_t dMinSigmasCombined = TMath::MinElement(5,dNumSigmaCombined);
+
+      // electron rejection
+      if(dMinSigmasCombined == dNumSigmaCombined[0] && dNumSigmaCombined[0] <= fCutPIDnSigmaPionMax)
+        return kUnknown;
 
       if(dMinSigmasCombined == dNumSigmaCombined[2] && dNumSigmaCombined[2] <= fCutPIDnSigmaPionMax)
         return kPion;
