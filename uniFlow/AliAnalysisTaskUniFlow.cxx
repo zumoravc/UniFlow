@@ -120,6 +120,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutChargedNumTPCclsMin(0),
 
   // PID tracks selection
+  fCutPIDUseAntiProtonOnly(kFALSE),
   fCutPIDnSigmaPionMax(3),
   fCutPIDnSigmaKaonMax(3),
   fCutPIDnSigmaProtonMax(3),
@@ -336,6 +337,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutChargedNumTPCclsMin(0),
 
   // PID tracks selection
+  fCutPIDUseAntiProtonOnly(kFALSE),
   fCutPIDnSigmaPionMax(3),
   fCutPIDnSigmaKaonMax(3),
   fCutPIDnSigmaProtonMax(3),
@@ -1341,6 +1343,8 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutChargedDCAzMax: (Float_t) %g (cm)\n",    fCutChargedDCAzMax);
   printf("      fCutChargedDCAxyMax: (Float_t) %g (cm)\n",    fCutChargedDCAxyMax);
   printf("   -------- PID (pi,K,p) tracks ---------------------------------\n");
+  printf("      fCutPIDUseAntiProtonOnly: (Bool_t) %s\n",  fCutPIDUseAntiProtonOnly ? "kTRUE" : "kFALSE");
+  printf("      fCutPIDnSigmaCombinedNoTOFrejection: (Bool_t) %s\n",  fCutPIDnSigmaCombinedNoTOFrejection ? "kTRUE" : "kFALSE");
   printf("      fCutPIDnSigmaPionMax: (Double_t) %g\n",    fCutPIDnSigmaPionMax);
   printf("      fCutPIDnSigmaKaonMax: (Double_t) %g\n",    fCutPIDnSigmaKaonMax);
   printf("      fCutPIDnSigmaProtonMax: (Double_t) %g\n",    fCutPIDnSigmaProtonMax);
@@ -2585,6 +2589,8 @@ void AliAnalysisTaskUniFlow::FilterPID()
 
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
+    // check if only protons should be used
+    if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) species = kUnknown;
 
     // selection of PID tracks
     switch (species)
@@ -2641,19 +2647,13 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     // printf("PID Prob: e %g | mu %g | pi %g | K %g | p %g ||| MAX %g \n",dProbPID[0],dProbPID[1],dProbPID[2],dProbPID[3],dProbPID[4],dMaxProb);
 
     // electron and mion rejection
-    if(dProbPID[0] > fCutPIDBayesRejectElectron || dProbPID[1] > fCutPIDBayesRejectMuon)
-      return kUnknown;
+    if(dProbPID[0] >= fCutPIDBayesRejectElectron || dProbPID[1] >= fCutPIDBayesRejectMuon) return kUnknown;
 
     // checking the PID probability
     // TODO: think about: if Pion has maximum probibility < fCutBayesPIDPion, track is rejected -> is it good?
-    if(dMaxProb == dProbPID[2] && dProbPID[2] > fCutPIDBayesPionMin)
-      return kPion;
-
-    if(dMaxProb == dProbPID[3] && dProbPID[3] > fCutPIDBayesKaonMin)
-      return kKaon;
-
-    if(dMaxProb == dProbPID[4] && dProbPID[4] > fCutPIDBayesProtonMin)
-      return kProton;
+    if(dMaxProb == dProbPID[2] && dProbPID[2] >= fCutPIDBayesPionMin) return kPion;
+    if(dMaxProb == dProbPID[3] && dProbPID[3] >= fCutPIDBayesKaonMin) return kKaon;
+    if(dMaxProb == dProbPID[4] && dProbPID[4] >= fCutPIDBayesProtonMin) return kProton;
   }
   else
   {
@@ -2687,17 +2687,10 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       Double_t dMinSigmasTPC = TMath::MinElement(5,dNumSigmaTPC);
 
       // electron rejection
-      if(dMinSigmasTPC == dNumSigmaTPC[0] && dNumSigmaTPC[0] <= fCutPIDnSigmaTPCRejectElectron)
-        return kUnknown;
-
-      if(dMinSigmasTPC == dNumSigmaTPC[2] && dNumSigmaTPC[2] <= fCutPIDnSigmaPionMax)
-        return kPion;
-
-      if(dMinSigmasTPC == dNumSigmaTPC[3] && dNumSigmaTPC[3] <= fCutPIDnSigmaKaonMax)
-        return kKaon;
-
-      if(dMinSigmasTPC == dNumSigmaTPC[4] && dNumSigmaTPC[4] <= fCutPIDnSigmaProtonMax)
-        return kProton;
+      if(dMinSigmasTPC == dNumSigmaTPC[0] && dNumSigmaTPC[0] <= fCutPIDnSigmaTPCRejectElectron) return kUnknown;
+      if(dMinSigmasTPC == dNumSigmaTPC[2] && dNumSigmaTPC[2] <= fCutPIDnSigmaPionMax) return kPion;
+      if(dMinSigmasTPC == dNumSigmaTPC[3] && dNumSigmaTPC[3] <= fCutPIDnSigmaKaonMax) return kKaon;
+      if(dMinSigmasTPC == dNumSigmaTPC[4] && dNumSigmaTPC[4] <= fCutPIDnSigmaProtonMax) return kProton;
     }
 
     // combined TPC + TOF nSigma cuts
@@ -2718,17 +2711,10 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       Double_t dMinSigmasCombined = TMath::MinElement(5,dNumSigmaCombined);
 
       // electron rejection
-      if(dMinSigmasCombined == dNumSigmaCombined[0] && dNumSigmaCombined[0] <= fCutPIDnSigmaPionMax)
-        return kUnknown;
-
-      if(dMinSigmasCombined == dNumSigmaCombined[2] && dNumSigmaCombined[2] <= fCutPIDnSigmaPionMax)
-        return kPion;
-
-      if(dMinSigmasCombined == dNumSigmaCombined[3] && dNumSigmaCombined[3] <= fCutPIDnSigmaKaonMax)
-        return kKaon;
-
-      if(dMinSigmasCombined == dNumSigmaCombined[4] && dNumSigmaCombined[4] <= fCutPIDnSigmaProtonMax)
-        return kProton;
+      if(dMinSigmasCombined == dNumSigmaCombined[0] && dNumSigmaCombined[0] <= fCutPIDnSigmaPionMax) return kUnknown;
+      if(dMinSigmasCombined == dNumSigmaCombined[2] && dNumSigmaCombined[2] <= fCutPIDnSigmaPionMax) return kPion;
+      if(dMinSigmasCombined == dNumSigmaCombined[3] && dNumSigmaCombined[3] <= fCutPIDnSigmaKaonMax) return kKaon;
+      if(dMinSigmasCombined == dNumSigmaCombined[4] && dNumSigmaCombined[4] <= fCutPIDnSigmaProtonMax) return kProton;
     }
 
     // TPC dEdx parametrisation (dEdx - <dEdx>)

@@ -102,6 +102,7 @@ void runAnalysis()
     task1->SetChargedNumTPCclsMin(70);
     task1->SetChargedTrackFilterBit(96);
     // PID selection
+    task1->SetPIDUseAntiProtonOnly(kFALSE);
     task1->SetPIDNumSigmasPionMax(3);
     task1->SetPIDNumSigmasKaonMax(3);
     task1->SetPIDNumSigmasProtonMax(3);
