@@ -35,8 +35,8 @@ TString fsTriggerName[fiNumFiles] = {"FAST","CENT_wSDD","CENT_woSDD"};
 Color_t fColors[fiNumFiles] = {kRed, kBlue, kGreen-2};
 Short_t fMarkers[2*fiNumFiles] = {kFullSquare, kFullCircle,  kFullTriangleUp, kOpenSquare, kOpenCircle,  kOpenTriangleUp};
 
-TCanvas* PlotList(const TList* list = 0x0, const Short_t iPlotRatio = 0, const char* sDrawOpt = "hist");
-TCanvas* PlotListPosNeg(const TList* list = 0x0, const Short_t iPlotRatio = 0, const char* sDrawOpt = "hist");
+TCanvas* PlotList(const TList* list = 0x0, const Short_t iPlotRatio = 0, const char* sDrawOpt = "hist", const Double_t dYminRatio = 0, const Double_t dYmaxRatio = 0, const Double_t dXmin = 0, const Double_t dXmax = 0, const Double_t dYmin = 0, const Double_t dYmax = 0);
+TCanvas* PlotListPosNeg(const TList* list = 0x0, const Short_t iPlotRatio = 0, const char* sDrawOpt = "hist", const Double_t dYminRatio = 0, const Double_t dYmaxRatio = 0, const Double_t dXmin = 0, const Double_t dXmax = 0, const Double_t dYmin = 0, const Double_t dYmax = 0);
 void PlotComparison(TString histName = "", TString histListName = "", const char* histClass = "TH1D");
 
 
@@ -57,7 +57,6 @@ void PlotComparisonCentFast()
   TList* list_hFlow2_Charged_harm2_gap08_cent2 = new TList();
   TList* list_hFlow2_Charged_harm2_gap08_cent3 = new TList();
   TList* list_hFlow2_Charged_harm2_gap08_cent4 = new TList();
-
 
   // placeholders
   TFile* file = 0x0;
@@ -169,7 +168,7 @@ void PlotComparisonCentFast()
   can->SaveAs(Form("%s/fhRefsPt.%s",fsOutputPath.Data(),fsOutputFileFormat.Data()));
   can = PlotList(list_fhRefsPhi,1);
   can->SaveAs(Form("%s/fhRefsPhi.%s",fsOutputPath.Data(),fsOutputFileFormat.Data()));
-  can = PlotList(list_fhRefsEta,1);
+  can = PlotList(list_fhRefsEta,1,"hist");
   can->SaveAs(Form("%s/fhRefsEta.%s",fsOutputPath.Data(),fsOutputFileFormat.Data()));
 
   can = PlotList(list_hFlow2_Refs_harm2_gap08,1,"hist p e");
@@ -191,7 +190,7 @@ void PlotComparisonCentFast()
   return;
 }
 // _____________________________________________________________________________
-TCanvas* PlotList(const TList* list, const Short_t iPlotRatio, const char* sDrawOpt)
+TCanvas* PlotList(const TList* list, const Short_t iPlotRatio, const char* sDrawOpt, const Double_t dYminRatio, const Double_t dYmaxRatio, const Double_t dXmin, const Double_t dXmax, const Double_t dYmin, const Double_t dYmax)
 {
   printf(" ------- PlotList -------\n");
   if(!list) { printf("Input list does not exists!\n"); return 0x0; }
@@ -205,14 +204,38 @@ TCanvas* PlotList(const TList* list, const Short_t iPlotRatio, const char* sDraw
   TH1* histRatio = 0x0; // placeholder for ratio
   TH1* hist = 0x0; // placeholder for temporary histo
 
-  TLegend* legend = new TLegend(0.6,0.6,0.8,0.8);
 
-  TCanvas* canvas = new TCanvas(histNom->GetName(),histNom->GetName(),800,800);
+  if(dYminRatio == 0 && dYmaxRatio == 0)
+  {
+    const Double_t dRatioYmax = 1.5;
+    const Double_t dRatioYmin = 0.5;
+  } else {
+    const Double_t dRatioYmax = dYmaxRatio;
+    const Double_t dRatioYmin = dYminRatio;
+  }
+
+  // TLegend* legend = new TLegend(0.12,0.5,0.4,0.89);
+  TLegend* legend = new TLegend(0.76,0.3,0.99,0.5);
+  legend->SetBorderSize(0);
+  // legend->SetFillColorAlpha(0,0);
+
+  TLegend* legendRatio = new TLegend(0.76,0.3,0.99,0.4);
+  legendRatio->SetBorderSize(0);
+  // legendRatio->SetFillColorAlpha(0,0);
+
+  TCanvas* canvas = new TCanvas(histNom->GetName(),histNom->GetName(),800,6500);
   if(iPlotRatio)
   {
     canvas->Divide(1,2);
     // TH1* cFrameRatio = canvas->cd(2)->DrawFrame(0,0,100,2);
+    canvas->cd(2);
+    gPad->SetRightMargin(0.25);
   }
+
+  canvas->cd(1);
+  gPad->SetRightMargin(0.25);
+
+
 
   // finding the maximum and minimum y-value
   Double_t dMax = 0;
@@ -223,6 +246,18 @@ TCanvas* PlotList(const TList* list, const Short_t iPlotRatio, const char* sDraw
     if(!hist) { printf("File %d: input histo not loaded properly\n",iFile); return 0x0; }
     if(dMax < hist->GetMaximum()) dMax = hist->GetMaximum();
     if(dMin > hist->GetMinimum()) dMin = hist->GetMinimum();
+  }
+
+  if(dXmin != 0 || dXmax != 0)
+  {
+    if(dYmin != 0 || dYmax != 0) { dMax = dYmax; dMin = dYmin; }
+    TH1* frame = canvas->cd(1)->DrawFrame(dXmin,dMin,dXmax,dMax);
+    frame->SetTitle(hist->GetTitle());
+    if(iPlotRatio)
+    {
+      TH1* frameRatio = canvas->cd(2)->DrawFrame(dXmin,dRatioYmin,dXmax,dRatioYmax);
+      frameRatio->SetTitle("Ratio: FAST / CENT (w/wo SDD)");
+    }
   }
 
   for(Short_t iFile(0); iFile < fiNumFiles; iFile++)
@@ -241,21 +276,24 @@ TCanvas* PlotList(const TList* list, const Short_t iPlotRatio, const char* sDraw
     legend->AddEntry(hist,fsTriggerName[iFile].Data(),"pl");
 
     canvas->cd(1);
-    (iFile == 0) ? hist->Draw(sDrawOpt) : hist->Draw(Form("%s same",sDrawOpt));
+    // (iFile == 0) ? hist->Draw(sDrawOpt) : hist->Draw(Form("%s same",sDrawOpt));
+    hist->Draw(Form("%s same",sDrawOpt));
 
     if(iPlotRatio && iFile > 0)
     {
       canvas->cd(2);
       histRatio = (list->At(iFile)->Class()) histNom->Clone();
-      histRatio->SetTitle("");
+      histRatio->SetTitle("Ratio: FAST / CENT (w/wo SDD)");
       histRatio->Divide(hist);
-      histRatio->SetMaximum(2.);
-      histRatio->SetMinimum(0.);
+      histRatio->SetMaximum(dRatioYmax);
+      histRatio->SetMinimum(dRatioYmin);
       histRatio->SetStats(0);
       histRatio->SetMarkerStyle(fMarkers[iFile]);
       histRatio->SetMarkerColor(fColors[iFile]);
       histRatio->SetLineColor(fColors[iFile]);
       histRatio->Draw("same");
+      legendRatio->AddEntry(histRatio,Form("FAST / %s",fsTriggerName[iFile].Data()),"pl");
+
     }
   }
 
@@ -267,13 +305,15 @@ TCanvas* PlotList(const TList* list, const Short_t iPlotRatio, const char* sDraw
     canvas->cd(2);
     TLine* unity = new TLine();
     unity->SetLineColor(fColors[0]);
-    unity->DrawLine(histRatio->GetXaxis()->GetXmin(),1.,histRatio->GetXaxis()->GetXmax() ,1.);
+    if(dXmin != 0 || dXmax != 0) unity->DrawLine(dXmin,1.,dXmax ,1.);
+    else unity->DrawLine(histRatio->GetXaxis()->GetXmin(),1.,histRatio->GetXaxis()->GetXmax() ,1.);
+    legendRatio->Draw();
   }
 
   return canvas;
 }
 // _____________________________________________________________________________
-TCanvas* PlotListPosNeg(const TList* list, const Short_t iPlotRatio, const char* sDrawOpt)
+TCanvas* PlotListPosNeg(const TList* list, const Short_t iPlotRatio, const char* sDrawOpt, const Double_t dYminRatio, const Double_t dYmaxRatio, const Double_t dXmin, const Double_t dXmax, const Double_t dYmin, const Double_t dYmax)
 {
   printf(" ------- PlotListPosNeg -------\n");
   if(!list) { printf("Input list does not exists!\n"); return 0x0; }
@@ -291,8 +331,14 @@ TCanvas* PlotListPosNeg(const TList* list, const Short_t iPlotRatio, const char*
   TH1* hist = 0x0; // placeholder for temporary histo
   TH1* hist2 = 0x0; // placeholder for temporary histo
 
-  const Double_t dRatioYmax = 1.5;
-  const Double_t dRatioYmin = 0.5;
+  if(dYminRatio == 0 && dYmaxRatio == 0)
+  {
+    const Double_t dRatioYmax = 1.5;
+    const Double_t dRatioYmin = 0.5;
+  } else {
+    const Double_t dRatioYmax = dYmaxRatio;
+    const Double_t dRatioYmin = dYminRatio;
+  }
 
   // TLegend* legend = new TLegend(0.12,0.5,0.4,0.89);
   TLegend* legend = new TLegend(0.76,0.3,0.99,0.89);
@@ -337,6 +383,23 @@ TCanvas* PlotListPosNeg(const TList* list, const Short_t iPlotRatio, const char*
     if(dMin > hist->GetMinimum()) dMin = hist->GetMinimum();
   }
 
+  if(dXmin != 0 || dXmax != 0)
+  {
+    if(dYmin != 0 || dYmax != 0) { dMax = dYmax; dMin = dYmin; }
+
+    TH1* frame = canvas->cd(1)->DrawFrame(dXmin,dMin,dXmax,dMax);
+    frame->SetTitle(hist->GetTitle());
+
+    if(iPlotRatio)
+    {
+      TH1* frameRatio = canvas->cd(2)->DrawFrame(dXmin,dRatioYmin,dXmax,dRatioYmax);
+      frameRatio->SetTitle("Ratio: FAST / CENT (w/wo SDD)");
+
+      TH1* frameRatioPosNeg = canvas->cd(3)->DrawFrame(dXmin,dRatioYmin,dXmax,dRatioYmax);
+      frameRatioPosNeg->SetTitle("Ratio: POIs positive eta / negative eta");
+    }
+  }
+
   for(Short_t iFile(0); iFile < fiNumFiles; iFile++)
   {
     // printf("Class: '%s'\n", list->At(0)->ClassName());
@@ -363,7 +426,7 @@ TCanvas* PlotListPosNeg(const TList* list, const Short_t iPlotRatio, const char*
     legend->AddEntry(hist2,Form("%s (POI neg)",fsTriggerName[iFile].Data()),"pl");
 
     canvas->cd(1);
-    (iFile == 0) ? hist->Draw(sDrawOpt) : hist->Draw(Form("%s same",sDrawOpt));
+    hist->Draw(Form("%s same",sDrawOpt));
     hist2->Draw(Form("%s same",sDrawOpt));
 
     if(iPlotRatio)
@@ -399,7 +462,7 @@ TCanvas* PlotListPosNeg(const TList* list, const Short_t iPlotRatio, const char*
 
       canvas->cd(3);
       histRatio = (list->At(iFile)->Class()) hist->Clone();
-      histRatio->SetTitle("Ration: POIs positive eta / negative eta");
+      histRatio->SetTitle("Ratio: POIs positive eta / negative eta");
       histRatio->Divide(hist2);
       histRatio->SetMaximum(dRatioYmax);
       histRatio->SetMinimum(dRatioYmin);
