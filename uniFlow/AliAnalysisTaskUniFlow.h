@@ -11,7 +11,7 @@
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
     public:
-      enum    RunMode {kTest, kFull}; // task running mode (NOT GRID MODE)
+      enum    RunMode {kTest, kFillWeights, kFull}; // task running mode (NOT GRID MODE)
       enum    ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
       enum    AnalType {kAOD, kESD}; // tag for analysis type
       enum    DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
@@ -51,7 +51,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
-      void                    SetFlowDoWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
+      void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
@@ -232,7 +232,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
-      Bool_t                  fFlowFillWeights; //[kTRUE] flag for filling weights
+      Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
@@ -319,8 +319,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
-      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta,pt)
+      TH2D*           fh2WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta)
+      TH2D*           fh2WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta)
+      TH2D*           fh2WeightsPion; //! distribution of Pion POIs particles for weighting purpose (phi,eta)
+      TH2D*           fh2WeightsKaon; //! distribution of Kaon POIs particles for weighting purpose (phi,eta)
+      TH2D*           fh2WeightsProton; //! distribution of Proton POIs particles for weighting purpose (phi,eta)
+      TH2D*           fh2WeightsPhi; //! distribution of Phi POIs particles for weighting purpose (phi,eta)
+      TH2D*           fh2WeightsK0s; //! distribution of K0s POIs particles for weighting purpose (phi,eta)
+      TH2D*           fh2WeightsLambda; //! distribution of Lambda POIs particles for weighting purpose (phi,eta)
+
       TProfile*       fpMeanQxRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
       TProfile*       fpMeanQxRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
       TProfile*       fpMeanQyRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qy (vs. centrality) for Refs
