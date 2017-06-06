@@ -185,14 +185,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowLambda(0x0),
 
   // flow histograms & profiles
-  fh2WeightsRefs(0x0),
-  fh2WeightsCharged(0x0),
-  fh2WeightsPion(0x0),
-  fh2WeightsKaon(0x0),
-  fh2WeightsProton(0x0),
-  fh2WeightsPhi(0x0),
-  fh2WeightsK0s(0x0),
-  fh2WeightsLambda(0x0),
+  fh3WeightsRefs(0x0),
+  fh3WeightsCharged(0x0),
+  fh3WeightsPion(0x0),
+  fh3WeightsKaon(0x0),
+  fh3WeightsProton(0x0),
+  fh3WeightsPhi(0x0),
+  fh3WeightsK0s(0x0),
+  fh3WeightsLambda(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -408,14 +408,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowLambda(0x0),
 
   // flow histograms & profiles
-  fh2WeightsRefs(0x0),
-  fh2WeightsCharged(0x0),
-  fh2WeightsPion(0x0),
-  fh2WeightsKaon(0x0),
-  fh2WeightsProton(0x0),
-  fh2WeightsPhi(0x0),
-  fh2WeightsK0s(0x0),
-  fh2WeightsLambda(0x0),
+  fh3WeightsRefs(0x0),
+  fh3WeightsCharged(0x0),
+  fh3WeightsPion(0x0),
+  fh3WeightsKaon(0x0),
+  fh3WeightsProton(0x0),
+  fh3WeightsPhi(0x0),
+  fh3WeightsK0s(0x0),
+  fh3WeightsLambda(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -790,37 +790,37 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           fFlowWeights->Add(fpMeanQyRefsNeg[iGap][iHarm]);
         }
 
-      fh2WeightsRefs = new TH2D("fh2WeightsRefs","Weights: Refs; #varphi; #eta;", 100,0,TMath::TwoPi(), 301,-3,3);
-      fh2WeightsRefs->Sumw2();
-      fFlowWeights->Add(fh2WeightsRefs);
+      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsRefs->Sumw2();
+      fFlowWeights->Add(fh3WeightsRefs);
 
-      fh2WeightsCharged = new TH2D("fh2WeightsCharged","Weights: Charged; #varphi; #eta;", 100,0,TMath::TwoPi(), 301,-3,3);
-      fh2WeightsCharged->Sumw2();
-      fFlowWeights->Add(fh2WeightsCharged);
+      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsCharged->Sumw2();
+      fFlowWeights->Add(fh3WeightsCharged);
 
-      fh2WeightsPion = new TH2D("fh2WeightsPion","Weights: #pi; #varphi; #eta;", 100,0,TMath::TwoPi(), 301,-3,3);
-      fh2WeightsPion->Sumw2();
-      fFlowWeights->Add(fh2WeightsPion);
+      fh3WeightsPion = new TH3D("fh3WeightsPion","Weights: #pi; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsPion->Sumw2();
+      fFlowWeights->Add(fh3WeightsPion);
 
-      fh2WeightsKaon = new TH2D("fh2WeightsKaon","Weights: K; #varphi; #eta;", 100,0,TMath::TwoPi(), 301,-3,3);
-      fh2WeightsKaon->Sumw2();
-      fFlowWeights->Add(fh2WeightsKaon);
+      fh3WeightsKaon = new TH3D("fh3WeightsKaon","Weights: K; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsKaon->Sumw2();
+      fFlowWeights->Add(fh3WeightsKaon);
 
-      fh2WeightsProton = new TH2D("fh2WeightsProton","Weights: p; #varphi; #eta;", 100,0,TMath::TwoPi(), 301,-3,3);
-      fh2WeightsProton->Sumw2();
-      fFlowWeights->Add(fh2WeightsProton);
+      fh3WeightsProton = new TH3D("fh3WeightsProton","Weights: p; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsProton->Sumw2();
+      fFlowWeights->Add(fh3WeightsProton);
 
-      fh2WeightsPhi = new TH2D("fh2WeightsPhi","Weights: #phi; #varphi; #eta;", 100,0,TMath::TwoPi(), 301,-3,3);
-      fh2WeightsPhi->Sumw2();
-      fFlowWeights->Add(fh2WeightsPhi);
+      fh3WeightsPhi = new TH3D("fh3WeightsPhi","Weights: #phi; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsPhi->Sumw2();
+      fFlowWeights->Add(fh3WeightsPhi);
 
-      fh2WeightsK0s = new TH2D("fh2WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta;", 100,0,TMath::TwoPi(), 301,-3,3);
-      fh2WeightsK0s->Sumw2();
-      fFlowWeights->Add(fh2WeightsK0s);
+      fh3WeightsK0s = new TH3D("fh3WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsK0s->Sumw2();
+      fFlowWeights->Add(fh3WeightsK0s);
 
-      fh2WeightsLambda = new TH2D("fh2WeightsLambda","Weights: #Lambda; #varphi; #eta;", 100,0,TMath::TwoPi(), 301,-3,3);
-      fh2WeightsLambda->Sumw2();
-      fFlowWeights->Add(fh2WeightsLambda);
+      fh3WeightsLambda = new TH3D("fh3WeightsLambda","Weights: #Lambda; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsLambda->Sumw2();
+      fFlowWeights->Add(fh3WeightsLambda);
     }
 
     // candidate distribution for flow-mass method
@@ -1807,6 +1807,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     if(IsChargedSelected(track))
     {
       fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kCharged) );
+      if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt());
       FillQACharged(1,track); // QA after selection
       //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
 
@@ -1814,6 +1815,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       if(fCutFlowRFPsPtMin > 0. && track->Pt() >= fCutFlowRFPsPtMin && fCutFlowRFPsPtMax > 0. && track->Pt() <= fCutFlowRFPsPtMax)
       {
         iNumRefs++;
+        if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt());
         FillQARefs(1,track);
       }
     }
@@ -1974,6 +1976,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         iNumK0sSelected++;
         fhV0sCounter->Fill("K^{0}_{S}",1);
         fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
+        if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
       }
 
       if(iIsLambda == 1) // lambda
@@ -1981,6 +1984,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         iNumLambdaSelected++;
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
         fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassLambda()) );
+        if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
       }
 
       if(iIsLambda == -1) // anti-lambda
@@ -1988,6 +1992,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         iNumALambdaSelected++;
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
         fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassAntiLambda()) );
+        if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
       }
 
       if(bIsK0s && iIsLambda != 0)
@@ -2540,8 +2545,12 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       // mother (phi) candidate passing all criteria
       fhPhiCounter->Fill("Selected",1);
 
+
       // filling QA AFTER selection
       FillQAPhi(1,&mother);
+
+      // filling weights
+      if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsPhi->Fill(mother.phi, mother.eta, mother.pt);
 
       if(mother.charge == 0)
       {
@@ -2633,12 +2642,15 @@ void AliAnalysisTaskUniFlow::FilterPID()
     {
       case kPion:
         fVectorPion->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kPion, fPDGMassPion, track->Px(), track->Py(), track->Pz()) );
+        if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsPion->Fill(track->Phi(), track->Eta(), track->Pt());
         break;
       case kKaon:
         fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kKaon, fPDGMassKaon, track->Px(), track->Py(), track->Pz()) );
+        if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsKaon->Fill(track->Phi(), track->Eta(), track->Pt());
         break;
       case kProton:
         fVectorProton->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kProton, fPDGMassProton, track->Px(), track->Py(), track->Pz()) );
+        if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsProton->Fill(track->Phi(), track->Eta(), track->Pt());
         break;
       default:
         continue;
@@ -2921,6 +2933,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 {
   // main method for processing of (selected) event:
   // - Filtering of tracks / particles for flow calculations
+  // - Phi,eta,pt weights for generic framework are calculated if specified
   // - Flow calculations
   // returns kTRUE if succesfull
   // *************************************************************
@@ -2932,6 +2945,9 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
   if(fIndexCentrality < 0) return kFALSE;
 
+  // if running in kFillWeights mode, skip the remaining part
+  if(fRunMode == kFillWeights) { fEventCounter++; return kTRUE; }
+
   // checking if there is at least one charged track selected;
   // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
   if(fVectorCharged->size() < 1)
@@ -2941,7 +2957,6 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
-
   for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
   {
     // Reference (pT integrated) flow
@@ -3009,22 +3024,25 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
 {
   // Estimate <2> for reference flow for all harmonics based on relevant flow vectors
   // *************************************************************
+
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
   Short_t iHarmonics = 0;
   Double_t Cn2 = 0;
   TComplex vector = TComplex(0,0,kFALSE);
   Double_t dValue = 999;
 
-  // filling RFPs (Q) flow vectors
-  FillRefsVectors(dEtaGap);
+  FillRefsVectors(dEtaGap); // filling RFPs (Q) flow vectors
 
   // filling mean Qx, Qy
-  for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+  if(fFlowFillWeights)
   {
-    fpMeanQxRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Re());
-    fpMeanQyRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Im());
-    fpMeanQxRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Re());
-    fpMeanQyRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Im());
+    for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+    {
+      fpMeanQxRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Re());
+      fpMeanQyRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Im());
+      fpMeanQxRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Re());
+      fpMeanQyRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Im());
+    }
   }
 
   if(dEtaGap == -1) // no gap
@@ -3088,6 +3106,8 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
   // Estimate <2> for pT diff flow of charged tracks for all harmonics based on relevant flow vectors
   // *************************************************************
 
+  FillPOIsVectors(iEtaGapIndex,kCharged);  // filling POIs (P,S) flow vectors
+
   const Double_t dPtBinWidth = (fFlowPOIsPtMax - fFlowPOIsPtMin) / fFlowPOIsPtNumBins;
 
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
@@ -3096,8 +3116,6 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
   TComplex vector = TComplex(0,0,kFALSE);
   Double_t dValue = 999;
 
-  // filling POIs (P,S) flow vectors
-  FillPOIsVectors(iEtaGapIndex,kCharged);
 
   for(Short_t iPt(0); iPt < fFlowPOIsPtNumBins; iPt++)
   {
@@ -3207,6 +3225,8 @@ void AliAnalysisTaskUniFlow::DoFlowPID(const Short_t iEtaGapIndex, const PartSpe
       return;
   }
 
+  FillPOIsVectors(iEtaGapIndex,species); // Filling POIs vectors
+
   const Double_t dPtBinWidth = (fFlowPOIsPtMax - fFlowPOIsPtMin) / fFlowPOIsPtNumBins;
 
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
@@ -3216,7 +3236,6 @@ void AliAnalysisTaskUniFlow::DoFlowPID(const Short_t iEtaGapIndex, const PartSpe
   Double_t dValue = 999;
 
   // filling POIs (P,S) flow vectors
-  FillPOIsVectors(iEtaGapIndex,species);
 
   for(Short_t iPt(0); iPt < fFlowPOIsPtNumBins; iPt++)
   {
@@ -3294,8 +3313,7 @@ void AliAnalysisTaskUniFlow::DoFlowPhi(const Short_t iEtaGapIndex, const Short_t
   // Estimate the correlations for pT diff flow of phi candidates for all harmonics based on relevant flow vectors
   // *************************************************************
 
-  // filling POIs (P,S) flow vectors
-  FillPOIsVectors(iEtaGapIndex,kPhi,iMassIndex);
+  FillPOIsVectors(iEtaGapIndex,kPhi,iMassIndex); // filling POIs (P,S) flow vectors
 
   const Double_t dPtBinWidth = (fFlowPOIsPtMax - fFlowPOIsPtMin) / fFlowPOIsPtNumBins;
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
@@ -3404,8 +3422,7 @@ void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t
   // Estimate <2> for pT diff flow of V0s for all harmonics based on relevant flow vectors
   // *************************************************************
 
-  // filling POIs (P,S) flow vectors
-  FillPOIsVectors(iEtaGapIndex,species,iMassIndex);
+  FillPOIsVectors(iEtaGapIndex,species,iMassIndex);  // filling POIs (P,S) flow vectors
 
   const Double_t dPtBinWidth = (fFlowPOIsPtMax - fFlowPOIsPtMin) / fFlowPOIsPtNumBins;
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
@@ -3622,11 +3639,6 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
     dQsinNeg = 0;
 
     // RPF candidate passing all criteria: start filling flow vectors
-    // Filling weights
-    if(fFlowFillWeights || fRunMode == kFillWeights)
-    {
-      fh2WeightsRefs->Fill(part->phi, part->eta);
-    }
 
     if(dEtaGap == -1) // no eta gap
     {
@@ -3694,7 +3706,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
 
   std::vector<FlowPart>* vector = 0x0;
   TH3D* hist = 0x0;
-  TH2D* h2Weight = 0x0; // pointer to weights
   Double_t dMassLow = 0, dMassHigh = 0;
 
   // swich based on species
@@ -3702,7 +3713,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   {
     case kCharged:
       vector = fVectorCharged;
-      h2Weight = fh2WeightsCharged;
       break;
 
     case kPion:
@@ -3773,11 +3783,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     dSin = 0;
 
     // POIs candidate passing all criteria: start filling flow vectors
-    // filling weights
-    if((fFlowFillWeights || fRunMode == kFillWeights) && h2Weight)
-    {
-      h2Weight->Fill(part->phi, part->eta);
-    }
 
     if(dEtaGap == -1) // no eta gap
     {

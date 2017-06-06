@@ -319,14 +319,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
-      TH2D*           fh2WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta)
-      TH2D*           fh2WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta)
-      TH2D*           fh2WeightsPion; //! distribution of Pion POIs particles for weighting purpose (phi,eta)
-      TH2D*           fh2WeightsKaon; //! distribution of Kaon POIs particles for weighting purpose (phi,eta)
-      TH2D*           fh2WeightsProton; //! distribution of Proton POIs particles for weighting purpose (phi,eta)
-      TH2D*           fh2WeightsPhi; //! distribution of Phi POIs particles for weighting purpose (phi,eta)
-      TH2D*           fh2WeightsK0s; //! distribution of K0s POIs particles for weighting purpose (phi,eta)
-      TH2D*           fh2WeightsLambda; //! distribution of Lambda POIs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for weighting purpose (phi,eta)
 
       TProfile*       fpMeanQxRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
       TProfile*       fpMeanQxRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
