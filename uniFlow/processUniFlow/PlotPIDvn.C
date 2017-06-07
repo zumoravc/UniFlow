@@ -32,13 +32,13 @@ void PlotPIDvn()
   LoadLibs();
   SetStyle();
 
-  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/UniFlow_binning10.root");
-  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/UniFlow_binning10.root");
-  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/plots/no_ALICE_label_binning10");
+  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/UniFlow.root");
+  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/UniFlow.root");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/plots/");
 
   // TString sGap = "08";
-  Int_t iCent = 9;
-  TString sCent = TString("90-100");
+  Int_t iCent = 0;
+  TString sCent = TString("0-20");
   Double_t dYmin = 0;
   Double_t dYmax = 0.8;
 

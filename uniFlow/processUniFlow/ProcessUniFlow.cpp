@@ -35,6 +35,7 @@ class FlowTask
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
+    void        SetAlternativeProfileName(const char* name) { fProfName = name; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
@@ -48,6 +49,7 @@ class FlowTask
 
     TString     fName; // task name
     PartSpecies fSpecies; // species involved
+    TString     fProfName; // alterinative profiles name
     Int_t       fHarmonics; // harmonics
     Double_t    fEtaGap; // eta gap
     Short_t     fNumSamples; // [10] number of samples
@@ -72,6 +74,7 @@ FlowTask::FlowTask()
 {
   fHarmonics = 0;
   fEtaGap = 0;
+  fProfName = "";
   fNumSamples = 10;
   fNumPtBins = -1;
   fShowMult = kFALSE;
@@ -630,7 +633,11 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 
   for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
   {
-    prof2 = (TProfile2D*) listInput->FindObject(Form("fp2%s_<2>_harm%d_gap%02.2g_sample%d",task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+    if(task->fProfName.Data() == "")
+    { prof2 = (TProfile2D*) listInput->FindObject(Form("fp2%s_<2>_harm%d_gap%02.2g_sample%d",task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iSample)); }
+    else
+    { prof2 = (TProfile2D*) listInput->FindObject(Form("%s_sample%d",task->fProfName.Data(),iSample)); }
+
     if(!prof2) { Error(Form("Profile sample %d does not exists.",iSample),"ProcesPID"); return kFALSE; }
 
     // preparing Refs
@@ -712,21 +719,35 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       histEntries = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesSignal_gap%02.2g",10*task->fEtaGap));
       histBG = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesBG_gap%02.2g",10*task->fEtaGap));
       if(!histBG) { Error("Histo with BG entries not found","ProcessReconstructed"); return kFALSE; }
-      profFlow = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+
+      if(task->fProfName.EqualTo(""))
+      { profFlow = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap)); }
+      else
+      { profFlow = (TProfile3D*) flFlowPhi->FindObject(task->fProfName.Data()); }
+
       sSpeciesName = TString("Phi");
       sSpeciesLabel = TString("#phi");
     break;
 
     case FlowTask::kK0s :
       histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_gap%02.2g",10*task->fEtaGap));
-      profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+      if(task->fProfName.EqualTo(""))
+      { profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap)); }
+      else
+      { profFlow = (TProfile3D*) flFlowK0s->FindObject(task->fProfName.Data()); }
       sSpeciesName = TString("K0s");
       sSpeciesLabel = TString("K^{0}_{S}");
     break;
 
     case FlowTask::kLambda :
       histEntries = (TH3D*) flFlowLambda->FindObject(Form("fh3V0sEntriesLambda_gap%02.2g",10*task->fEtaGap));
-      profFlow = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+      if(task->fProfName.EqualTo(""))
+      { profFlow = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_<2>_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap)); }
+      else
+      { profFlow = (TProfile3D*) flFlowLambda->FindObject(task->fProfName.Data()); }
+      // printf("%s\n",task->fProfName.Data());
+      // flFlowLambda->ls();
+
       sSpeciesName = TString("Lambda");
       sSpeciesLabel = TString("#Lambda/#bar{#Lambda}");
     break;
@@ -735,6 +756,8 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       Error("Task species not V0s nor Phi!","ProcessReconstructed");
       return kFALSE;
   }
+
+
 
   if(!histEntries) { Error("Entries histos not found!","ProcessReconstructed"); return kFALSE; }
   if(!profFlow) { Error("Cumulant histos not found!","ProcessReconstructed"); return kFALSE; }

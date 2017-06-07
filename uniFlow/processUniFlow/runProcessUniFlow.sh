@@ -1,6 +1,6 @@
 #!/bin/bash
 
-outputPath="/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/"
+outputPath="/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/compRun1"
 
 echo $outputPath
 

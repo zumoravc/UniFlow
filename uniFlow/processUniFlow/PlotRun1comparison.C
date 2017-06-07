@@ -33,18 +33,18 @@ void PlotRun1comparison()
   LoadLibs();
   SetStyle();
 
-  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/UniFlow.root");
-  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged/UniFlow.root");
+  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/compRun1/UniFlow.root");
+  // TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/compRun1/UniFlow.root");
   TString sInputFilePublished = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/HEPdata.root");
 
-  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/withRatios");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/compRun1");
 
   TString sOutputFormat = TString("png");
 
   // TString sGap = "08";
-  Int_t iCent = 0;
-  Int_t iTable = 5; // 5,9,13,17
-  TString sCent = TString("0-20");
+  Int_t iCent = 3;
+  Int_t iTable = 17; // 5,9,13,17
+  TString sCent = TString("60-100");
 
   // ALICE Preferred colors and markers (from figure template)
   const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7}; // for syst bands
@@ -96,9 +96,9 @@ void PlotRun1comparison()
   if(!fInputFile->IsOpen()) return;
   fInputFile->ls();
 
-  TFile* fInputFileRecon = new TFile(sInputFileRecon.Data(),"READ");
-  if(!fInputFileRecon->IsOpen()) return;
-  fInputFileRecon->ls();
+  // TFile* fInputFileRecon = new TFile(sInputFileRecon.Data(),"READ");
+  // if(!fInputFileRecon->IsOpen()) return;
+  // fInputFileRecon->ls();
 
   TFile* fInputFilePublished = new TFile(sInputFilePublished.Data(),"READ");
   if(!fInputFilePublished->IsOpen()) return;
@@ -112,7 +112,7 @@ void PlotRun1comparison()
   //TCanvas *cfig = new TCanvas("cfig", "Alice Figure Template", 800, 800);
   // cfig->SetLogy();
   // Set Titles etc..
-  TH1* h = cfig->DrawFrame(0,0,6,0.3);
+  TH1* h = cfig->DrawFrame(0,0,6,0.4);
 
   // Set titles
   h->SetXTitle("#it{p}_{T} (GeV/#it{c})");
@@ -131,12 +131,12 @@ void PlotRun1comparison()
   if(!hFlowProton)  { printf("No proton\n"); return; }
 
   // reconstructed
-  TH1D* hFlowK0s = (TH1D*) fInputFileRecon->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",iCent));
-  if(!hFlowK0s) { printf("No K0s\n"); return; }
-  TH1D* hFlowLambda = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Lambda_harm2_gap08_mult%d",iCent));
-  if(!hFlowLambda) { printf("No Lambda\n"); return; }
-  TH1D* hFlowPhi = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Phi_harm2_gap08_mult%d",iCent));
-  if(!hFlowPhi) { printf("No Phi\n"); return; }
+  // TH1D* hFlowK0s = (TH1D*) fInputFileRecon->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",iCent));
+  // if(!hFlowK0s) { printf("No K0s\n"); return; }
+  // TH1D* hFlowLambda = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Lambda_harm2_gap08_mult%d",iCent));
+  // if(!hFlowLambda) { printf("No Lambda\n"); return; }
+  // TH1D* hFlowPhi = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Phi_harm2_gap08_mult%d",iCent));
+  // if(!hFlowPhi) { printf("No Phi\n"); return; }
 
   // published
   fInputFilePublished->cd(Form("Table %d",iTable)); // charged 0-20
@@ -199,20 +199,20 @@ void PlotRun1comparison()
   hFlowProton->SetMarkerStyle(markProton);
   hFlowProton->SetMarkerSize(markSizeProton);
 
-  hFlowPhi->SetLineColor(colPhi);
-  hFlowPhi->SetMarkerColor(colPhi);
-  hFlowPhi->SetMarkerStyle(markPhi);
-  hFlowPhi->SetMarkerSize(markSizePhi);
-
-  hFlowK0s->SetLineColor(colK0s);
-  hFlowK0s->SetMarkerColor(colK0s);
-  hFlowK0s->SetMarkerStyle(markK0s);
-  hFlowK0s->SetMarkerSize(markSizeK0s);
-
-  hFlowLambda->SetLineColor(colLambda);
-  hFlowLambda->SetMarkerColor(colLambda);
-  hFlowLambda->SetMarkerStyle(markLambda);
-  hFlowLambda->SetMarkerSize(markSizeLambda);
+  // hFlowPhi->SetLineColor(colPhi);
+  // hFlowPhi->SetMarkerColor(colPhi);
+  // hFlowPhi->SetMarkerStyle(markPhi);
+  // hFlowPhi->SetMarkerSize(markSizePhi);
+  //
+  // hFlowK0s->SetLineColor(colK0s);
+  // hFlowK0s->SetMarkerColor(colK0s);
+  // hFlowK0s->SetMarkerStyle(markK0s);
+  // hFlowK0s->SetMarkerSize(markSizeK0s);
+  //
+  // hFlowLambda->SetLineColor(colLambda);
+  // hFlowLambda->SetMarkerColor(colLambda);
+  // hFlowLambda->SetMarkerStyle(markLambda);
+  // hFlowLambda->SetMarkerSize(markSizeLambda);
 
   gHEP_Charged->SetLineColor(colCharged);
   gHEP_Charged->SetFillColor(colCharged);
@@ -266,15 +266,15 @@ void PlotRun1comparison()
   // Draw the logo
   //  0: Just "ALICE" (for final data), to be added only if ALICE does not appear otherwise (e.g. in the legend)
   //  >0: ALICE Preliminary
-  DrawLogo(2, 0.61, 0.83);
+  // DrawLogo(2, 0.61, 0.83);
 
   // You should always specify the colliding system
   // NOTATION: pp, p-Pb, Pb-Pb.
   // Don't forget to use #sqrt{s_{NN}} for p-Pb and Pb-Pb
   // You can change the position of this with
-  TLatex * text = new TLatex (0.3,0.27,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
+  TLatex * text = new TLatex (0.3,0.37,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
   text->Draw();
-  TLatex * text2 = new TLatex (0.3,0.25,Form("Multiplicity Class %s%% (V0A)",sCent.Data()));
+  TLatex * text2 = new TLatex (0.3,0.35,Form("Multiplicity Class %s%% (V0A)",sCent.Data()));
   text2->SetTextSizePixels(22);
   text2->Draw();
   // TLatex * text3 = new TLatex (0.55,0.76,"|#eta| < 0.8");
@@ -316,6 +316,11 @@ void PlotRun1comparison()
   TH1* hRatio = canRatio->DrawFrame(0,0.5,4,1.5);
   hRatio->SetXTitle("#it{p}_{T} (GeV/#it{c})");
   hRatio->SetYTitle("Run1 / Run2");
+
+  TLine* unity = new TLine(0.,1.,4,1.);
+  unity->SetLineColor(kGray+2);
+  unity->SetLineStyle(9);
+  unity->Draw();
 
   TH1F* hRatio_Charged = hHEP_Charged->Clone("hRatio_Charged");
   hRatio_Charged->Divide(hFlowCharged);
