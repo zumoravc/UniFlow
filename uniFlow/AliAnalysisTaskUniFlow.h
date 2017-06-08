@@ -11,7 +11,7 @@
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
     public:
-      enum    RunMode {kTest, kFull}; // task running mode (NOT GRID MODE)
+      enum    RunMode {kTest, kFillWeights, kFull}; // task running mode (NOT GRID MODE)
       enum    ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
       enum    AnalType {kAOD, kESD}; // tag for analysis type
       enum    DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
@@ -51,7 +51,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
-      void                    SetFlowDoWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
+      void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
+      void                    SetUseWeigthsFile(const char* file) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
@@ -172,7 +173,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
       void                    DoFlowPhi(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0); // Estimate <2'> for pt diff. flow of phi particles
       void                    DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
-      void                    FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
+      void                    FillRefsVectors(const Short_t iEtaGapIndex = 0); // fill flow vector Q with RFPs for reference flow
       void                    FillPOIsVectors(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown, const Short_t iMassIndex = 0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
       Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
       void                    ResetRFPsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
@@ -199,11 +200,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAODEvent*            fEventAOD; //! AOD event countainer
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
+      TFile*                  fFlowWeightsFile; //! source file containing weights
       Bool_t                  fInit; // initialization check
       Short_t                 fIndexSampling; // sampling index (randomly generated)
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
       Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
       Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
+      Int_t                   fRunNumber; // [-1] run number obtained from AliVHeader
 
       TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
@@ -232,7 +235,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
-      Bool_t                  fFlowFillWeights; //[kTRUE] flag for filling weights
+      Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
+      Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
+      TString                 fFlowWeightsPath; //[] path to source root file with weigthts (if empty unit weights are applied) e.g. "alice/cern.ch/user/k/kgajdoso/EfficienciesWeights/2016/PhiWeight_LHC16kl.root"
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
@@ -319,8 +324,33 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
-      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for estimating weight purpose (phi,eta,pt)
+
+      TH3D*           fh3AfterWeightsRefs; //! distribution of Refs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsCharged; //! distribution of Charged POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsPion; //! distribution of Pion POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsKaon; //! distribution of Kaon POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsProton; //! distribution of Proton POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsPhi; //! distribution of Phi POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsK0s; //! distribution of K0s POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsLambda; //! distribution of Lambda POIs particles after applying the weights (phi,eta,pt)
+
+      TH2D*           fh2WeightRefs; //! container for loading weights for given run
+      TH2D*           fh2WeightCharged; //! container for loading weights for given run
+      TH2D*           fh2WeightPion; //! container for loading weights for given run
+      TH2D*           fh2WeightKaon; //! container for loading weights for given run
+      TH2D*           fh2WeightProton; //! container for loading weights for given run
+      TH2D*           fh2WeightK0s; //! container for loading weights for given run
+      TH2D*           fh2WeightLambda; //! container for loading weights for given run
+      TH2D*           fh2WeightPhi; //! container for loading weights for given run
+
       TProfile*       fpMeanQxRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
       TProfile*       fpMeanQxRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
       TProfile*       fpMeanQyRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qy (vs. centrality) for Refs

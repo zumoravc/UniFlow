@@ -1,7 +1,7 @@
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
-    Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
     //TString sGridMode = "terminate";
@@ -24,8 +24,12 @@ void runAnalysis()
     // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs]
     // Int_t runNumber[] = {267166, 267165, 267164, 267163};
     // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170318_v1.txt [31 runs]
-    Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
+    // Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
     // Int_t runNumber[] = {265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
+
+
+    //test
+    Int_t runNumber[] = {265385, 265384, 265383};
 
 
     // since we will compile a class, tell root where to look for headers
@@ -86,7 +90,9 @@ void runAnalysis()
     task1->SetFlowRFPsPtMin(0.2);
     task1->SetFlowRFPsPtMax(5.);
     // task1->SetFlowDoFourCorrelations(kFALSE);
-    task1->SetFlowDoWeights(kTRUE);
+    task1->SetFlowFillWeights(kFALSE);
+    // task1->SetUseWeigthsFile("alice/cern.ch/user/v/vpacik/uniFlow_ver4_CENT_woSDD_16t_V0A/output/000267163/001/AnalysisResults.root");
+    task1->SetUseWeigthsFile("/alice/cern.ch/user/v/vpacik/weights_CENTwoSDD_16q.root");
     // Events selection
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
