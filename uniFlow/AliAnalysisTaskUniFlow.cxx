@@ -1536,11 +1536,10 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     fFlowWeightsFile = TFile::Open(Form("alien:///%s",fFlowWeightsPath.Data()));
     if(!fFlowWeightsFile)
     {
-      ::Error("InitializeTask",Form("Flow weights file '%s' not found",fFlowWeightsPath.Data()));
+      ::Error("InitializeTask","Flow weights file not found");
       return kFALSE;
     }
   }
-
 
   ::Info("InitializeTask","Initialization succesfull!");
   printf("======================================================================\n\n");
@@ -2965,7 +2964,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // printf("======= EVENT ================\n");
 
   // checking the run number for aplying weights & loading TList with weights
-  if(fFlowUseWeights && fRunNumber < 0)
+  // if(fFlowUseWeights && fRunNumber < 0)
+  if(fFlowUseWeights && (fRunNumber < 0 || fRunNumber != fEventAOD->GetRunNumber()) )
   {
     fRunNumber = fEventAOD->GetRunNumber();
     if(fFlowWeightsFile) fFlowWeightsList = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber));
@@ -3635,10 +3635,11 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
 
-  const Double_t dWeight = 1.;
+  TH2D* h2Weights = 0x0;
+  Double_t dWeight = 1.;
   if(fFlowUseWeights && fFlowWeightsList)
   {
-    TH2D* h2Weights = (TH2D*) fFlowWeightsList->FindObject("Refs");
+    h2Weights = (TH2D*) fFlowWeightsList->FindObject("Refs");
     if(!h2Weights) { ::Error("FillRefsVectors","Histogtram with weights not found."); return; }
   }
 
@@ -3676,7 +3677,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
     dQsinNeg = 0;
 
     // loading weights if needed
-    if(fFlowUseWeights)
+    if(fFlowUseWeights && h2Weights)
     {
       dWeight = h2Weights->GetBinContent(h2Weights->GetXaxis()->FindBin(part->eta), h2Weights->GetYaxis()->FindBin(part->phi));
       if(dWeight <= 0) dWeight = 1.;
@@ -3741,7 +3742,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
 
   if(species == kUnknown) return;
 
-  const Double_t dWeight = 1.;  // for generic framework != 1
+  Double_t dWeight = 1.;  // for generic framework != 1
 
   // clearing output (global) flow vectors
   ResetPOIsVector(fFlowVecPpos);
@@ -3840,7 +3841,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     // POIs candidate passing all criteria: start filling flow vectors
 
     // loading weights if needed
-    if(fFlowUseWeights)
+    if(fFlowUseWeights && h2Weights)
     {
       dWeight = h2Weights->GetBinContent(h2Weights->GetXaxis()->FindBin(part->eta), h2Weights->GetYaxis()->FindBin(part->phi));
       if(dWeight <= 0) dWeight = 1.;
