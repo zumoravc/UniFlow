@@ -199,6 +199,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fh3WeightsPhi(0x0),
   fh3WeightsK0s(0x0),
   fh3WeightsLambda(0x0),
+  fh3AfterWeightsRefs(0x0),
+  fh3AfterWeightsCharged(0x0),
+  fh3AfterWeightsPion(0x0),
+  fh3AfterWeightsKaon(0x0),
+  fh3AfterWeightsProton(0x0),
+  fh3AfterWeightsPhi(0x0),
+  fh3AfterWeightsK0s(0x0),
+  fh3AfterWeightsLambda(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -427,6 +435,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fh3WeightsPhi(0x0),
   fh3WeightsK0s(0x0),
   fh3WeightsLambda(0x0),
+  fh3AfterWeightsRefs(0x0),
+  fh3AfterWeightsCharged(0x0),
+  fh3AfterWeightsPion(0x0),
+  fh3AfterWeightsKaon(0x0),
+  fh3AfterWeightsProton(0x0),
+  fh3AfterWeightsPhi(0x0),
+  fh3AfterWeightsK0s(0x0),
+  fh3AfterWeightsLambda(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -781,57 +797,78 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // weights
     if(fFlowFillWeights || fRunMode == kFillWeights)
     {
-      for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
-        for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
-        {
-          fpMeanQxRefsPos[iGap][iHarm] = new TProfile(Form("fpMeanQxRefs_harm%d_gap%02.2g_Pos",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qx>>: Refs | Gap %g | n=%d | POS; multiplicity/centrality; <Qx>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
-          fpMeanQxRefsPos[iGap][iHarm]->Sumw2();
-          fFlowWeights->Add(fpMeanQxRefsPos[iGap][iHarm]);
+      // for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+      //   for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      //   {
+      //     fpMeanQxRefsPos[iGap][iHarm] = new TProfile(Form("fpMeanQxRefs_harm%d_gap%02.2g_Pos",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qx>>: Refs | Gap %g | n=%d | POS; multiplicity/centrality; <Qx>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
+      //     fpMeanQxRefsPos[iGap][iHarm]->Sumw2();
+      //     fFlowWeights->Add(fpMeanQxRefsPos[iGap][iHarm]);
+      //
+      //     fpMeanQxRefsNeg[iGap][iHarm] = new TProfile(Form("fpMeanQxRefs_harm%d_gap%02.2g_Neg",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qx>>: Refs | Gap %g | n=%d | NEG; multiplicity/centrality; <Qx>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
+      //     fpMeanQxRefsNeg[iGap][iHarm]->Sumw2();
+      //     fFlowWeights->Add(fpMeanQxRefsNeg[iGap][iHarm]);
+      //
+      //     fpMeanQyRefsPos[iGap][iHarm] = new TProfile(Form("fpMeanQyRefs_harm%d_gap%02.2g_Pos",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qy>>: Refs | Gap %g | n=%d | POS; multiplicity/centrality; <Qy>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
+      //     fpMeanQyRefsPos[iGap][iHarm]->Sumw2();
+      //     fFlowWeights->Add(fpMeanQyRefsPos[iGap][iHarm]);
+      //
+      //     fpMeanQyRefsNeg[iGap][iHarm] = new TProfile(Form("fpMeanQyRefs_harm%d_gap%02.2g_Neg",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qy>>: Refs | Gap %g | n=%d | NEG; multiplicity/centrality; <Qy>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
+      //     fpMeanQyRefsNeg[iGap][iHarm]->Sumw2();
+      //     fFlowWeights->Add(fpMeanQyRefsNeg[iGap][iHarm]);
+      //   }
 
-          fpMeanQxRefsNeg[iGap][iHarm] = new TProfile(Form("fpMeanQxRefs_harm%d_gap%02.2g_Neg",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qx>>: Refs | Gap %g | n=%d | NEG; multiplicity/centrality; <Qx>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
-          fpMeanQxRefsNeg[iGap][iHarm]->Sumw2();
-          fFlowWeights->Add(fpMeanQxRefsNeg[iGap][iHarm]);
-
-          fpMeanQyRefsPos[iGap][iHarm] = new TProfile(Form("fpMeanQyRefs_harm%d_gap%02.2g_Pos",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qy>>: Refs | Gap %g | n=%d | POS; multiplicity/centrality; <Qy>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
-          fpMeanQyRefsPos[iGap][iHarm]->Sumw2();
-          fFlowWeights->Add(fpMeanQyRefsPos[iGap][iHarm]);
-
-          fpMeanQyRefsNeg[iGap][iHarm] = new TProfile(Form("fpMeanQyRefs_harm%d_gap%02.2g_Neg",fHarmonics[iHarm],10*fEtaGap[iGap]),Form("<<Qy>>: Refs | Gap %g | n=%d | NEG; multiplicity/centrality; <Qy>",fEtaGap[iGap],fHarmonics[iHarm]), fFlowCentNumBins,0,fFlowCentNumBins);
-          fpMeanQyRefsNeg[iGap][iHarm]->Sumw2();
-          fFlowWeights->Add(fpMeanQyRefsNeg[iGap][iHarm]);
-        }
-
-      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fh3WeightsRefs->Sumw2();
       fFlowWeights->Add(fh3WeightsRefs);
-
-      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fh3WeightsCharged->Sumw2();
       fFlowWeights->Add(fh3WeightsCharged);
-
-      fh3WeightsPion = new TH3D("fh3WeightsPion","Weights: #pi; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsPion = new TH3D("fh3WeightsPion","Weights: #pi; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fh3WeightsPion->Sumw2();
       fFlowWeights->Add(fh3WeightsPion);
-
-      fh3WeightsKaon = new TH3D("fh3WeightsKaon","Weights: K; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsKaon = new TH3D("fh3WeightsKaon","Weights: K; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fh3WeightsKaon->Sumw2();
       fFlowWeights->Add(fh3WeightsKaon);
-
-      fh3WeightsProton = new TH3D("fh3WeightsProton","Weights: p; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsProton = new TH3D("fh3WeightsProton","Weights: p; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fh3WeightsProton->Sumw2();
       fFlowWeights->Add(fh3WeightsProton);
-
-      fh3WeightsPhi = new TH3D("fh3WeightsPhi","Weights: #phi; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsPhi = new TH3D("fh3WeightsPhi","Weights: #phi; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,-TMath::Pi(),TMath::Pi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fh3WeightsPhi->Sumw2();
       fFlowWeights->Add(fh3WeightsPhi);
-
-      fh3WeightsK0s = new TH3D("fh3WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsK0s = new TH3D("fh3WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fh3WeightsK0s->Sumw2();
       fFlowWeights->Add(fh3WeightsK0s);
-
-      fh3WeightsLambda = new TH3D("fh3WeightsLambda","Weights: #Lambda; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 301,-3,3, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsLambda = new TH3D("fh3WeightsLambda","Weights: #Lambda; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fh3WeightsLambda->Sumw2();
       fFlowWeights->Add(fh3WeightsLambda);
+    }
+
+    if(fFlowUseWeights)
+    {
+      fh3AfterWeightsRefs = new TH3D("fh3AfterWeightsRefs","Weights: Refs; #varphi (After); #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsRefs->Sumw2();
+      fFlowWeights->Add(fh3AfterWeightsRefs);
+      fh3AfterWeightsCharged = new TH3D("fhAfter3WeightsCharged","Weights: Charged (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsCharged->Sumw2();
+      fFlowWeights->Add(fh3AfterWeightsCharged);
+      fh3AfterWeightsPion = new TH3D("fh3AfterWeightsPion","Weights: #pi (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsPion->Sumw2();
+      fFlowWeights->Add(fh3AfterWeightsPion);
+      fh3AfterWeightsKaon = new TH3D("fh3AfterWeightsKaon","Weights: K (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsKaon->Sumw2();
+      fFlowWeights->Add(fh3AfterWeightsKaon);
+      fh3AfterWeightsProton = new TH3D("fh3AfterWeightsProton","Weights: p (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsProton->Sumw2();
+      fFlowWeights->Add(fh3AfterWeightsProton);
+      fh3AfterWeightsPhi = new TH3D("fhAfter3WeightsPhi","Weights: #phi (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,-TMath::Pi(),TMath::Pi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsPhi->Sumw2();
+      fFlowWeights->Add(fh3AfterWeightsPhi);
+      fh3AfterWeightsK0s = new TH3D("fh3AfterWeightsK0s","Weights: K^{0}_{S} (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsK0s->Sumw2();
+      fFlowWeights->Add(fh3AfterWeightsK0s);
+      fh3AfterWeightsLambda = new TH3D("fh3AfterWeightsLambda","Weights: #Lambda (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsLambda->Sumw2();
+      fFlowWeights->Add(fh3AfterWeightsLambda);
     }
 
     // candidate distribution for flow-mass method
@@ -1000,7 +1037,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fQACharged->Add(fhRefsMult);
     fhRefsPt = new TH1D("fhRefsPt","RFPs: #it{p}_{T};  #it{p}_{T} (GeV/#it{c})", 300,0,30);
     fQACharged->Add(fhRefsPt);
-    fhRefsEta = new TH1D("fhRefsEta","RFPs: #eta; #eta", 301,-3,3);
+    fhRefsEta = new TH1D("fhRefsEta","RFPs: #eta; #eta", 151,-1.5,1.5);
     fQACharged->Add(fhRefsEta);
     fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", 100,0,TMath::TwoPi());
     fQACharged->Add(fhRefsPhi);
@@ -1023,7 +1060,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fhPIDPionPt);
       fhPIDPionPhi = new TH1D("fhPIDPionPhi","PID: #pi: #varphi; #varphi", 100,0,TMath::TwoPi());
       fQAPID->Add(fhPIDPionPhi);
-      fhPIDPionEta = new TH1D("fhPIDPionEta","PID: #pi: #eta; #eta", 301,-3,3);
+      fhPIDPionEta = new TH1D("fhPIDPionEta","PID: #pi: #eta; #eta", 151,-1.5,1.5);
       fQAPID->Add(fhPIDPionEta);
       fhPIDPionCharge = new TH1D("fhPIDPionCharge","PID: #pi: charge; charge", 3,-1.5,1.5);
       fQAPID->Add(fhPIDPionCharge);
@@ -1033,7 +1070,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fhPIDKaonPt);
       fhPIDKaonPhi = new TH1D("fhPIDKaonPhi","PID: K: #varphi; #varphi", 100,0,TMath::TwoPi());
       fQAPID->Add(fhPIDKaonPhi);
-      fhPIDKaonEta = new TH1D("fhPIDKaonEta","PID: K: #eta; #eta", 301,-3,3);
+      fhPIDKaonEta = new TH1D("fhPIDKaonEta","PID: K: #eta; #eta", 151,-1.5,1.5);
       fQAPID->Add(fhPIDKaonEta);
       fhPIDKaonCharge = new TH1D("fhPIDKaonCharge","PID: K: charge; charge", 3,-1.5,1.5);
       fQAPID->Add(fhPIDKaonCharge);
@@ -1043,7 +1080,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fhPIDProtonPt);
       fhPIDProtonPhi = new TH1D("fhPIDProtonPhi","PID: p: #varphi; #varphi", 100,0,TMath::TwoPi());
       fQAPID->Add(fhPIDProtonPhi);
-      fhPIDProtonEta = new TH1D("fhPIDProtonEta","PID: p: #eta; #eta", 301,-3,3);
+      fhPIDProtonEta = new TH1D("fhPIDProtonEta","PID: p: #eta; #eta", 151,-1.5,1.5);
       fQAPID->Add(fhPIDProtonEta);
       fhPIDProtonCharge = new TH1D("fhPIDProtonCharge","PID: p: charge; charge", 3,-1.5,1.5);
       fQAPID->Add(fhPIDProtonCharge);
@@ -1138,7 +1175,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPhi->Add(fhPhiBGCharge);
       fhPhiPt = new TH1D("fhPhiPt","#phi: #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 150,0.,30.);
       fQAPhi->Add(fhPhiPt);
-      fhPhiEta = new TH1D("fhPhiEta","#phi: #eta; #eta", 301,-3,3);
+      fhPhiEta = new TH1D("fhPhiEta","#phi: #eta; #eta", 151,-1.5,1.5);
       fQAPhi->Add(fhPhiEta);
       fhPhiPhi = new TH1D("fhPhiPhi","#phi: #varphi; #varphi", 100,-TMath::Pi(),TMath::Pi());
       fQAPhi->Add(fhPhiPhi);
@@ -1200,7 +1237,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fQACharged->Add(fhQAChargedCharge[iQA]);
         fhQAChargedPt[iQA] = new TH1D(Form("fhQAChargedPt_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 300,0.,30.);
         fQACharged->Add(fhQAChargedPt[iQA]);
-        fhQAChargedEta[iQA] = new TH1D(Form("fhQAChargedEta_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#eta}; #it{#eta}", 301,-3,3);
+        fhQAChargedEta[iQA] = new TH1D(Form("fhQAChargedEta_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#eta}; #it{#eta}", 151,-1.5,1.5);
         fQACharged->Add(fhQAChargedEta[iQA]);
         fhQAChargedPhi[iQA] = new TH1D(Form("fhQAChargedPhi_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#varphi}; #it{#varphi}", 100,0.,TMath::TwoPi());
         fQACharged->Add(fhQAChargedPhi[iQA]);
@@ -1285,11 +1322,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fQAV0s->Add(fhQAV0sMotherPt[iQA]);
         fhQAV0sMotherPhi[iQA] = new TH1D(Form("fhQAV0sMotherPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#varphi}; #it{#varphi}^{V0} (GeV/#it{c})", 100,0.,TMath::TwoPi());
         fQAV0s->Add(fhQAV0sMotherPhi[iQA]);
-        fhQAV0sMotherEta[iQA] = new TH1D(Form("fhQAV0sMotherEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#eta}; #it{#eta}^{V0}", 301,-3,3);
+        fhQAV0sMotherEta[iQA] = new TH1D(Form("fhQAV0sMotherEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#eta}; #it{#eta}^{V0}", 151,-1.5,1.5);
         fQAV0s->Add(fhQAV0sMotherEta[iQA]);
         fhQAV0sMotherCharge[iQA] = new TH1D(Form("fhQAV0sMotherCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother charge; V^{0} charge", 3,-1.5,1.5);
         fQAV0s->Add(fhQAV0sMotherCharge[iQA]);
-        fhQAV0sMotherRapK0s[iQA] = new TH1D(Form("fhQAV0sMotherRapK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo); #it{y}^{V0,K0s}", 301,-3,3);
+        fhQAV0sMotherRapK0s[iQA] = new TH1D(Form("fhQAV0sMotherRapK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo); #it{y}^{V0,K0s}", 151,-1.5,1.5);
         fQAV0s->Add(fhQAV0sMotherRapK0s[iQA]);
         fhQAV0sMotherRapLambda[iQA] = new TH1D(Form("fhQAV0sMotherRapLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo); #it{y}^{V0,#Lambda}", 301,-3.,3.);
         fQAV0s->Add(fhQAV0sMotherRapLambda[iQA]);
@@ -1305,7 +1342,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fQAV0s->Add(fhQAV0sDaughterPt[iQA]);
         fhQAV0sDaughterPhi[iQA] = new TH1D(Form("fhQAV0sDaughterPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#varphi}; #it{#varphi}^{daughter} (GeV/#it{c})", 100,0.,TMath::TwoPi());
         fQAV0s->Add(fhQAV0sDaughterPhi[iQA]);
-        fhQAV0sDaughterEta[iQA] = new TH1D(Form("fhQAV0sDaughterEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#eta}; #it{#eta}^{daugter}", 301,-3.,3);
+        fhQAV0sDaughterEta[iQA] = new TH1D(Form("fhQAV0sDaughterEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#eta}; #it{#eta}^{daugter}", 151,-1.5,1.5);
         fQAV0s->Add(fhQAV0sDaughterEta[iQA]);
         fhQAV0sDaughterCharge[iQA] = new TH1D(Form("fhQAV0sDaughterCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter charge; daughter charge", 3,-1.5,1.5);
         fQAV0s->Add(fhQAV0sDaughterCharge[iQA]);
@@ -3063,19 +3100,19 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
   TComplex vector = TComplex(0,0,kFALSE);
   Double_t dValue = 999;
 
-  FillRefsVectors(dEtaGap); // filling RFPs (Q) flow vectors
+  FillRefsVectors(iEtaGapIndex); // filling RFPs (Q) flow vectors
 
-  // filling mean Qx, Qy
-  if(fFlowFillWeights)
-  {
-    for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
-    {
-      fpMeanQxRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Re());
-      fpMeanQyRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Im());
-      fpMeanQxRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Re());
-      fpMeanQyRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Im());
-    }
-  }
+  // // filling mean Qx, Qy
+  // if(fFlowFillWeights)
+  // {
+  //   for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+  //   {
+  //     fpMeanQxRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Re());
+  //     fpMeanQyRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Im());
+  //     fpMeanQxRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Re());
+  //     fpMeanQyRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Im());
+  //   }
+  // }
 
   if(dEtaGap == -1) // no gap
   {
@@ -3629,12 +3666,12 @@ void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
+void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
 {
   // Filling Q flow vector with RFPs
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
-
+  const Float_t dEtaGap = fEtaGap[iEtaGapIndex];
   TH2D* h2Weights = 0x0;
   Double_t dWeight = 1.;
   if(fFlowUseWeights && fFlowWeightsList)
@@ -3681,6 +3718,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
     {
       dWeight = h2Weights->GetBinContent(h2Weights->GetXaxis()->FindBin(part->eta), h2Weights->GetYaxis()->FindBin(part->phi));
       if(dWeight <= 0) dWeight = 1.;
+      if(iEtaGapIndex == 0) fh3AfterWeightsRefs->Fill(part->phi,part->eta,part->pt, dWeight);
     }
 
     // RPF candidate passing all criteria: start filling flow vectors
@@ -3753,35 +3791,36 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   TH3D* hist = 0x0;
   Double_t dMassLow = 0, dMassHigh = 0;
   TH2D* h2Weights = 0x0;
+  TH3D* h3AfterWeights = 0x0;
 
   // swich based on species
   switch (species)
   {
     case kCharged:
       vector = fVectorCharged;
-      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Charged"); }
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Charged"); h3AfterWeights = fh3AfterWeightsCharged; }
       break;
 
     case kPion:
       vector = fVectorPion;
-      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Pion"); }
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Pion"); h3AfterWeights = fh3AfterWeightsPion; }
       break;
 
     case kKaon:
       vector = fVectorKaon;
-      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Kaon"); }
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Kaon"); h3AfterWeights = fh3AfterWeightsKaon; }
 
       break;
 
     case kProton:
       vector = fVectorProton;
-      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Proton"); }
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Proton"); h3AfterWeights = fh3AfterWeightsProton; }
       break;
 
     case kK0s:
       vector = fVectorK0s;
       hist = fh3V0sEntriesK0s[iEtaGapIndex];
-      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("K0s"); }
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("K0s"); h3AfterWeights = fh3AfterWeightsK0s; }
       dMassLow = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
       dMassHigh = fCutV0sInvMassK0sMin + (iMassIndex+1)*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
       break;
@@ -3789,7 +3828,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     case kLambda: // if a Lambda/ALambda candidates: first go through Lambda array and then goes through ALambda array
       vector = fVectorLambda;
       hist = fh3V0sEntriesLambda[iEtaGapIndex];
-      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Lambda"); }
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Lambda"); h3AfterWeights = fh3AfterWeightsLambda; }
       dMassLow = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
       dMassHigh = fCutV0sInvMassLambdaMin + (iMassIndex+1)*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
       break;
@@ -3797,7 +3836,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     case kPhi:
       vector = fVectorPhi;
       hist = fh3PhiEntriesSignal[iEtaGapIndex];
-      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Phi"); }
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Phi"); h3AfterWeights = fh3AfterWeightsPhi; }
       dMassLow = fCutPhiInvMassMin + iMassIndex*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
       dMassHigh = fCutPhiInvMassMin + (iMassIndex+1)*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
       break;
@@ -3845,6 +3884,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     {
       dWeight = h2Weights->GetBinContent(h2Weights->GetXaxis()->FindBin(part->eta), h2Weights->GetYaxis()->FindBin(part->phi));
       if(dWeight <= 0) dWeight = 1.;
+      if(iEtaGapIndex == 0) h3AfterWeights->Fill(part->phi,part->eta,part->pt, dWeight);
     }
 
     if(dEtaGap == -1) // no eta gap

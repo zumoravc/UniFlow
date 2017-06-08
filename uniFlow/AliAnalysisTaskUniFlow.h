@@ -173,7 +173,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
       void                    DoFlowPhi(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0); // Estimate <2'> for pt diff. flow of phi particles
       void                    DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
-      void                    FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
+      void                    FillRefsVectors(const Short_t iEtaGapIndex = 0); // fill flow vector Q with RFPs for reference flow
       void                    FillPOIsVectors(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown, const Short_t iMassIndex = 0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
       Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
       void                    ResetRFPsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
@@ -325,14 +325,23 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
-      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta)
-      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta)
-      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for weighting purpose (phi,eta)
-      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for weighting purpose (phi,eta)
-      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for weighting purpose (phi,eta)
-      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for weighting purpose (phi,eta)
-      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for weighting purpose (phi,eta)
-      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for weighting purpose (phi,eta)
+      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for weighting purpose (phi,eta,pt)
+
+      TH3D*           fh3AfterWeightsRefs; //! distribution of Refs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsCharged; //! distribution of Charged POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsPion; //! distribution of Pion POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsKaon; //! distribution of Kaon POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsProton; //! distribution of Proton POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsPhi; //! distribution of Phi POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsK0s; //! distribution of K0s POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsLambda; //! distribution of Lambda POIs particles after applying the weights (phi,eta,pt)
 
       TProfile*       fpMeanQxRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
       TProfile*       fpMeanQxRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
