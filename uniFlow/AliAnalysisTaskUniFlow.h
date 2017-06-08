@@ -201,7 +201,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
       TFile*                  fFlowWeightsFile; //! source file containing weights
-      TList*                  fFlowWeightsList; //! list with flow weights according to runnumber
       Bool_t                  fInit; // initialization check
       Short_t                 fIndexSampling; // sampling index (randomly generated)
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
@@ -325,14 +324,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
-      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for weighting purpose (phi,eta,pt)
-      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for weighting purpose (phi,eta,pt)
+      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for estimating weight purpose (phi,eta,pt)
 
       TH3D*           fh3AfterWeightsRefs; //! distribution of Refs particles after applying the weights (phi,eta,pt)
       TH3D*           fh3AfterWeightsCharged; //! distribution of Charged POIs particles after applying the weights (phi,eta,pt)
@@ -342,6 +341,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3AfterWeightsPhi; //! distribution of Phi POIs particles after applying the weights (phi,eta,pt)
       TH3D*           fh3AfterWeightsK0s; //! distribution of K0s POIs particles after applying the weights (phi,eta,pt)
       TH3D*           fh3AfterWeightsLambda; //! distribution of Lambda POIs particles after applying the weights (phi,eta,pt)
+
+      TH2D*           fh2WeightRefs; //! container for loading weights for given run
+      TH2D*           fh2WeightCharged; //! container for loading weights for given run
+      TH2D*           fh2WeightPion; //! container for loading weights for given run
+      TH2D*           fh2WeightKaon; //! container for loading weights for given run
+      TH2D*           fh2WeightProton; //! container for loading weights for given run
+      TH2D*           fh2WeightK0s; //! container for loading weights for given run
+      TH2D*           fh2WeightLambda; //! container for loading weights for given run
+      TH2D*           fh2WeightPhi; //! container for loading weights for given run
 
       TProfile*       fpMeanQxRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
       TProfile*       fpMeanQxRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
