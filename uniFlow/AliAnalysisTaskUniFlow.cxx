@@ -24,6 +24,7 @@
 #include <TDatabasePDG.h>
 #include <TPDGCode.h>
 
+#include "TFile.h"
 #include "TChain.h"
 #include "TH1D.h"
 #include "TH2D.h"
@@ -32,11 +33,6 @@
 #include "TProfile2D.h"
 #include "TProfile3D.h"
 #include "TList.h"
-#include "AliAODEvent.h"
-#include "AliESDEvent.h"
-#include "AliAODTrack.h"
-#include "AliAODv0.h"
-#include "AliVTrack.h"
 #include "TComplex.h"
 #include "TRandom3.h"
 
@@ -49,6 +45,11 @@
 #include "AliPIDCombined.h"
 #include "AliAnalysisTaskUniFlow.h"
 #include "AliLog.h"
+#include "AliAODEvent.h"
+#include "AliESDEvent.h"
+#include "AliAODTrack.h"
+#include "AliAODv0.h"
+#include "AliVTrack.h"
 
 class AliAnalysisTaskUniFlow;
 
@@ -61,11 +62,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventAOD(0x0),
   fPIDResponse(0x0),
   fPIDCombined(0x0),
+  fFlowWeightsFile(0x0),
+  fFlowWeightsList(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(-1),
   fEventCounter(0),
   fNumEventsAnalyse(50),
+  fRunNumber(-1),
   fPDGMassPion(TDatabasePDG::Instance()->GetParticle(211)->Mass()),
   fPDGMassKaon(TDatabasePDG::Instance()->GetParticle(321)->Mass()),
   fPDGMassProton(TDatabasePDG::Instance()->GetParticle(2212)->Mass()),
@@ -102,6 +106,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowCentMin(0),
   fFlowCentMax(150),
   fFlowCentNumBins(150),
+  fFlowWeightsPath(),
+  fFlowUseWeights(kFALSE),
 
   // events selection
   fPVtxCutZ(0.),
@@ -284,11 +290,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fEventAOD(0x0),
   fPIDResponse(0x0),
   fPIDCombined(0x0),
+  fFlowWeightsFile(0x0),
+  fFlowWeightsList(0x0),
   fInit(kFALSE),
   fIndexSampling(0),
   fIndexCentrality(-1),
   fEventCounter(0),
   fNumEventsAnalyse(50),
+  fRunNumber(-1),
   fPDGMassPion(TDatabasePDG::Instance()->GetParticle(211)->Mass()),
   fPDGMassKaon(TDatabasePDG::Instance()->GetParticle(321)->Mass()),
   fPDGMassProton(TDatabasePDG::Instance()->GetParticle(2212)->Mass()),
@@ -325,6 +334,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowCentMin(0),
   fFlowCentMax(150),
   fFlowCentNumBins(150),
+  fFlowWeightsPath(),
+  fFlowUseWeights(kFALSE),
 
   // events selection
   fPVtxCutZ(0.),
@@ -1364,6 +1375,8 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fFlowCentNumBins: (Int_t) %d (GeV/c)\n",    fFlowCentNumBins);
   printf("      fFlowCentMin: (Int_t) %d (GeV/c)\n",    fFlowCentMin);
   printf("      fFlowCentMax: (Int_t) %d (GeV/c)\n",    fFlowCentMax);
+  printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
+  printf("      fFlowWeightsPath: (TString) '%s' \n",    fFlowWeightsPath.Data());
   printf("   -------- Events ----------------------------------------------\n");
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
   printf("      fPeriod: (DataPeriod) %d\n",    fPeriod);
@@ -1516,6 +1529,18 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   // upper-case for multiplicity estimator
   fMultEstimator.ToUpper();
+
+  // checking for weights source file
+  if(fFlowUseWeights && !fFlowWeightsPath.EqualTo(""))
+  {
+    fFlowWeightsFile = TFile::Open(Form("alien:///%s",fFlowWeightsPath.Data()));
+    if(!fFlowWeightsFile)
+    {
+      ::Error("InitializeTask",Form("Flow weights file '%s' not found",fFlowWeightsPath.Data()));
+      return kFALSE;
+    }
+  }
+
 
   ::Info("InitializeTask","Initialization succesfull!");
   printf("======================================================================\n\n");
@@ -1756,7 +1781,6 @@ void AliAnalysisTaskUniFlow::Filtering()
 
   fIndexSampling = GetSamplingIndex();
   fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
-
 
   if(fProcessPID || fProcessPhi)
   {
@@ -2940,6 +2964,14 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   // printf("======= EVENT ================\n");
 
+  // checking the run number for aplying weights & loading TList with weights
+  if(fFlowUseWeights && fRunNumber < 0)
+  {
+    fRunNumber = fEventAOD->GetRunNumber();
+    if(fFlowWeightsFile) fFlowWeightsList = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber));
+    if(!fFlowWeightsList) { ::Error("ProcessEvent","TList from flow weights not found."); return kFALSE; }
+  }
+
   // filtering particles
   Filtering();
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
@@ -3603,7 +3635,12 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
 
-  const Double_t dWeight = 1.;  // for generic framework != 1
+  const Double_t dWeight = 1.;
+  if(fFlowUseWeights && fFlowWeightsList)
+  {
+    TH2D* h2Weights = (TH2D*) fFlowWeightsList->FindObject("Refs");
+    if(!h2Weights) { ::Error("FillRefsVectors","Histogtram with weights not found."); return; }
+  }
 
   // clearing output (global) flow vectors
   ResetRFPsVector(fFlowVecQpos);
@@ -3637,6 +3674,13 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Float_t dEtaGap)
     dQcosNeg = 0;
     dQsinPos = 0;
     dQsinNeg = 0;
+
+    // loading weights if needed
+    if(fFlowUseWeights)
+    {
+      dWeight = h2Weights->GetBinContent(h2Weights->GetXaxis()->FindBin(part->eta), h2Weights->GetYaxis()->FindBin(part->phi));
+      if(dWeight <= 0) dWeight = 1.;
+    }
 
     // RPF candidate passing all criteria: start filling flow vectors
 
@@ -3707,29 +3751,36 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   std::vector<FlowPart>* vector = 0x0;
   TH3D* hist = 0x0;
   Double_t dMassLow = 0, dMassHigh = 0;
+  TH2D* h2Weights = 0x0;
 
   // swich based on species
   switch (species)
   {
     case kCharged:
       vector = fVectorCharged;
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Charged"); }
       break;
 
     case kPion:
       vector = fVectorPion;
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Pion"); }
       break;
 
     case kKaon:
       vector = fVectorKaon;
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Kaon"); }
+
       break;
 
     case kProton:
       vector = fVectorProton;
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Proton"); }
       break;
 
     case kK0s:
       vector = fVectorK0s;
       hist = fh3V0sEntriesK0s[iEtaGapIndex];
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("K0s"); }
       dMassLow = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
       dMassHigh = fCutV0sInvMassK0sMin + (iMassIndex+1)*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
       break;
@@ -3737,6 +3788,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     case kLambda: // if a Lambda/ALambda candidates: first go through Lambda array and then goes through ALambda array
       vector = fVectorLambda;
       hist = fh3V0sEntriesLambda[iEtaGapIndex];
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Lambda"); }
       dMassLow = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
       dMassHigh = fCutV0sInvMassLambdaMin + (iMassIndex+1)*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
       break;
@@ -3744,6 +3796,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     case kPhi:
       vector = fVectorPhi;
       hist = fh3PhiEntriesSignal[iEtaGapIndex];
+      if(fFlowUseWeights && fFlowWeightsList) { h2Weights = (TH2D*) fFlowWeightsList->FindObject("Phi"); }
       dMassLow = fCutPhiInvMassMin + iMassIndex*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
       dMassHigh = fCutPhiInvMassMin + (iMassIndex+1)*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
       break;
@@ -3752,6 +3805,8 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       ::Error("FillPOIsVectors","Selected species unknown.");
       return;
   }
+
+  if(!h2Weights) { ::Error("FillPOIsVectors","Histogtram with weights not found."); return; }
 
   const Double_t dEtaGap = fEtaGap[iEtaGapIndex];
   const Double_t dMass = (dMassLow+dMassHigh)/2;
@@ -3783,6 +3838,13 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     dSin = 0;
 
     // POIs candidate passing all criteria: start filling flow vectors
+
+    // loading weights if needed
+    if(fFlowUseWeights)
+    {
+      dWeight = h2Weights->GetBinContent(h2Weights->GetXaxis()->FindBin(part->eta), h2Weights->GetYaxis()->FindBin(part->phi));
+      if(dWeight <= 0) dWeight = 1.;
+    }
 
     if(dEtaGap == -1) // no eta gap
     {

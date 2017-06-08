@@ -52,6 +52,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
+      void                    SetUseWeigthsFile(const char* file) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
@@ -199,11 +200,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAODEvent*            fEventAOD; //! AOD event countainer
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
+      TFile*                  fFlowWeightsFile; //! source file containing weights
+      TList*                  fFlowWeightsList; //! list with flow weights according to runnumber
       Bool_t                  fInit; // initialization check
       Short_t                 fIndexSampling; // sampling index (randomly generated)
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
       Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
       Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
+      Int_t                   fRunNumber; // [-1] run number obtained from AliVHeader
 
       TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
@@ -233,6 +237,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
+      Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
+      TString                 fFlowWeightsPath; //[] path to source root file with weigthts (if empty unit weights are applied) e.g. "alice/cern.ch/user/k/kgajdoso/EfficienciesWeights/2016/PhiWeight_LHC16kl.root"
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
