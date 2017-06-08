@@ -89,6 +89,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fRunMode(kFull),
   fAnalType(kAOD),
   fSampling(kFALSE),
+  fFillQA(kTRUE),
   //fNumSamples(10),
   fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
@@ -332,6 +333,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fRunMode(kFull),
   fAnalType(kAOD),
   fSampling(kFALSE),
+  fFillQA(kTRUE),
   // fNumSamples(10),
   fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
@@ -1070,100 +1072,105 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     {
       fhPIDPionMult = new TH1D("fhPIDPionMult","PID: #pi: Multiplicity; multiplicity", 200,0,200);
       fQAPID->Add(fhPIDPionMult);
-      fhPIDPionPt = new TH1D("fhPIDPionPt","PID: #pi: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
-      fQAPID->Add(fhPIDPionPt);
-      fhPIDPionPhi = new TH1D("fhPIDPionPhi","PID: #pi: #varphi; #varphi", 100,0,TMath::TwoPi());
-      fQAPID->Add(fhPIDPionPhi);
-      fhPIDPionEta = new TH1D("fhPIDPionEta","PID: #pi: #eta; #eta", 151,-1.5,1.5);
-      fQAPID->Add(fhPIDPionEta);
-      fhPIDPionCharge = new TH1D("fhPIDPionCharge","PID: #pi: charge; charge", 3,-1.5,1.5);
-      fQAPID->Add(fhPIDPionCharge);
       fhPIDKaonMult = new TH1D("fhPIDKaonMult","PID: K: Multiplicity; multiplicity", 100,0,100);
       fQAPID->Add(fhPIDKaonMult);
-      fhPIDKaonPt = new TH1D("fhPIDKaonPt","PID: K: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
-      fQAPID->Add(fhPIDKaonPt);
-      fhPIDKaonPhi = new TH1D("fhPIDKaonPhi","PID: K: #varphi; #varphi", 100,0,TMath::TwoPi());
-      fQAPID->Add(fhPIDKaonPhi);
-      fhPIDKaonEta = new TH1D("fhPIDKaonEta","PID: K: #eta; #eta", 151,-1.5,1.5);
-      fQAPID->Add(fhPIDKaonEta);
-      fhPIDKaonCharge = new TH1D("fhPIDKaonCharge","PID: K: charge; charge", 3,-1.5,1.5);
-      fQAPID->Add(fhPIDKaonCharge);
       fhPIDProtonMult = new TH1D("fhPIDProtonMult","PID: p: Multiplicity; multiplicity", 100,0,100);
       fQAPID->Add(fhPIDProtonMult);
-      fhPIDProtonPt = new TH1D("fhPIDProtonPt","PID: p: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
-      fQAPID->Add(fhPIDProtonPt);
-      fhPIDProtonPhi = new TH1D("fhPIDProtonPhi","PID: p: #varphi; #varphi", 100,0,TMath::TwoPi());
-      fQAPID->Add(fhPIDProtonPhi);
-      fhPIDProtonEta = new TH1D("fhPIDProtonEta","PID: p: #eta; #eta", 151,-1.5,1.5);
-      fQAPID->Add(fhPIDProtonEta);
-      fhPIDProtonCharge = new TH1D("fhPIDProtonCharge","PID: p: charge; charge", 3,-1.5,1.5);
-      fQAPID->Add(fhPIDProtonCharge);
-      fh2PIDPionTPCdEdx = new TH2D("fh2PIDPionTPCdEdx","PID: #pi: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
-      fQAPID->Add(fh2PIDPionTPCdEdx);
-      fh2PIDPionTOFbeta = new TH2D("fh2PIDPionTOFbeta","PID: #pi: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
-      fQAPID->Add(fh2PIDPionTOFbeta);
-      fh2PIDKaonTPCdEdx = new TH2D("fh2PIDKaonTPCdEdx","PID: K: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
-      fQAPID->Add(fh2PIDKaonTPCdEdx);
-      fh2PIDKaonTOFbeta = new TH2D("fh2PIDKaonTOFbeta","PID: K: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
-      fQAPID->Add(fh2PIDKaonTOFbeta);
-      fh2PIDProtonTPCdEdx = new TH2D("fh2PIDProtonTPCdEdx","PID: p: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
-      fQAPID->Add(fh2PIDProtonTPCdEdx);
-      fh2PIDProtonTOFbeta = new TH2D("fh2PIDProtonTOFbeta","PID: p: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
-      fQAPID->Add(fh2PIDProtonTOFbeta);
-      fh2PIDPionTPCnSigmaPion = new TH2D("fh2PIDPionTPCnSigmaPion","PID: #pi: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDPionTPCnSigmaPion);
-      fh2PIDPionTOFnSigmaPion = new TH2D("fh2PIDPionTOFnSigmaPion","PID: #pi: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDPionTOFnSigmaPion);
-      fh2PIDPionTPCnSigmaKaon = new TH2D("fh2PIDPionTPCnSigmaKaon","PID: #pi: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDPionTPCnSigmaKaon);
-      fh2PIDPionTOFnSigmaKaon = new TH2D("fh2PIDPionTOFnSigmaKaon","PID: #pi: TOF n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDPionTOFnSigmaKaon);
-      fh2PIDPionTPCnSigmaProton = new TH2D("fh2PIDPionTPCnSigmaProton","PID: #pi: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDPionTPCnSigmaProton);
-      fh2PIDPionTOFnSigmaProton = new TH2D("fh2PIDPionTOFnSigmaProton","PID: #pi: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDPionTOFnSigmaProton);
-      fh2PIDPionBayesPion = new TH2D("fh2PIDPionBayesPion","PID: #pi: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDPionBayesPion);
-      fh2PIDPionBayesKaon = new TH2D("fh2PIDPionBayesKaon","PID: #pi: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDPionBayesKaon);
-      fh2PIDPionBayesProton = new TH2D("fh2PIDPionBayesProton","PID: #pi: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDPionBayesProton);
-      fh2PIDKaonTPCnSigmaPion = new TH2D("fh2PIDKaonTPCnSigmaPion","PID: K: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDKaonTPCnSigmaPion);
-      fh2PIDKaonTOFnSigmaPion = new TH2D("fh2PIDKaonTOFnSigmaPion","PID: K: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDKaonTOFnSigmaPion);
-      fh2PIDKaonTPCnSigmaKaon = new TH2D("fh2PIDKaonTPCnSigmaKaon","PID: K: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDKaonTPCnSigmaKaon);
-      fh2PIDKaonTOFnSigmaKaon = new TH2D("fh2PIDKaonTOFnSigmaKaon","PID: K: TOF n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDKaonTOFnSigmaKaon);
-      fh2PIDKaonTPCnSigmaProton = new TH2D("fh2PIDKaonTPCnSigmaProton","PID: K: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDKaonTPCnSigmaProton);
-      fh2PIDKaonTOFnSigmaProton = new TH2D("fh2PIDKaonTOFnSigmaProton","PID: K: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDKaonTOFnSigmaProton);
-      fh2PIDKaonBayesPion = new TH2D("fh2PIDKaonBayesPion","PID: K: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDKaonBayesPion);
-      fh2PIDKaonBayesKaon = new TH2D("fh2PIDKaonBayesKaon","PID: K: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDKaonBayesKaon);
-      fh2PIDKaonBayesProton = new TH2D("fh2PIDKaonBayesProton","PID: K: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDKaonBayesProton);
-      fh2PIDProtonTPCnSigmaPion = new TH2D("fh2PIDProtonTPCnSigmaPion","PID: p: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDProtonTPCnSigmaPion);
-      fh2PIDProtonTOFnSigmaPion = new TH2D("fh2PIDProtonTOFnSigmaPion","PID: p: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDProtonTOFnSigmaPion);
-      fh2PIDProtonTPCnSigmaKaon = new TH2D("fh2PIDProtonTPCnSigmaKaon","PID: p: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDProtonTPCnSigmaKaon);
-      fh2PIDProtonTOFnSigmaKaon = new TH2D("fh2PIDProtonTOFnSigmaKaon","PID: p: TOF n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDProtonTOFnSigmaKaon);
-      fh2PIDProtonTPCnSigmaProton = new TH2D("fh2PIDProtonTPCnSigmaProton","PID: p: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDProtonTPCnSigmaProton);
-      fh2PIDProtonTOFnSigmaProton = new TH2D("fh2PIDProtonTOFnSigmaProton","PID: p: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
-      fQAPID->Add(fh2PIDProtonTOFnSigmaProton);
-      fh2PIDProtonBayesPion = new TH2D("fh2PIDProtonBayesPion","PID: p: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDProtonBayesPion);
-      fh2PIDProtonBayesKaon = new TH2D("fh2PIDProtonBayesKaon","PID: p: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDProtonBayesKaon);
-      fh2PIDProtonBayesProton = new TH2D("fh2PIDProtonBayesProton","PID: p: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
-      fQAPID->Add(fh2PIDProtonBayesProton);
+
+      if(fFillQA)
+      {
+        fhPIDPionPt = new TH1D("fhPIDPionPt","PID: #pi: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
+        fQAPID->Add(fhPIDPionPt);
+        fhPIDPionPhi = new TH1D("fhPIDPionPhi","PID: #pi: #varphi; #varphi", 100,0,TMath::TwoPi());
+        fQAPID->Add(fhPIDPionPhi);
+        fhPIDPionEta = new TH1D("fhPIDPionEta","PID: #pi: #eta; #eta", 151,-1.5,1.5);
+        fQAPID->Add(fhPIDPionEta);
+        fhPIDPionCharge = new TH1D("fhPIDPionCharge","PID: #pi: charge; charge", 3,-1.5,1.5);
+        fQAPID->Add(fhPIDPionCharge);
+        fhPIDKaonPt = new TH1D("fhPIDKaonPt","PID: K: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
+        fQAPID->Add(fhPIDKaonPt);
+        fhPIDKaonPhi = new TH1D("fhPIDKaonPhi","PID: K: #varphi; #varphi", 100,0,TMath::TwoPi());
+        fQAPID->Add(fhPIDKaonPhi);
+        fhPIDKaonEta = new TH1D("fhPIDKaonEta","PID: K: #eta; #eta", 151,-1.5,1.5);
+        fQAPID->Add(fhPIDKaonEta);
+        fhPIDKaonCharge = new TH1D("fhPIDKaonCharge","PID: K: charge; charge", 3,-1.5,1.5);
+        fQAPID->Add(fhPIDKaonCharge);
+        fhPIDProtonPt = new TH1D("fhPIDProtonPt","PID: p: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
+        fQAPID->Add(fhPIDProtonPt);
+        fhPIDProtonPhi = new TH1D("fhPIDProtonPhi","PID: p: #varphi; #varphi", 100,0,TMath::TwoPi());
+        fQAPID->Add(fhPIDProtonPhi);
+        fhPIDProtonEta = new TH1D("fhPIDProtonEta","PID: p: #eta; #eta", 151,-1.5,1.5);
+        fQAPID->Add(fhPIDProtonEta);
+        fhPIDProtonCharge = new TH1D("fhPIDProtonCharge","PID: p: charge; charge", 3,-1.5,1.5);
+        fQAPID->Add(fhPIDProtonCharge);
+        fh2PIDPionTPCdEdx = new TH2D("fh2PIDPionTPCdEdx","PID: #pi: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
+        fQAPID->Add(fh2PIDPionTPCdEdx);
+        fh2PIDPionTOFbeta = new TH2D("fh2PIDPionTOFbeta","PID: #pi: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
+        fQAPID->Add(fh2PIDPionTOFbeta);
+        fh2PIDKaonTPCdEdx = new TH2D("fh2PIDKaonTPCdEdx","PID: K: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
+        fQAPID->Add(fh2PIDKaonTPCdEdx);
+        fh2PIDKaonTOFbeta = new TH2D("fh2PIDKaonTOFbeta","PID: K: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
+        fQAPID->Add(fh2PIDKaonTOFbeta);
+        fh2PIDProtonTPCdEdx = new TH2D("fh2PIDProtonTPCdEdx","PID: p: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
+        fQAPID->Add(fh2PIDProtonTPCdEdx);
+        fh2PIDProtonTOFbeta = new TH2D("fh2PIDProtonTOFbeta","PID: p: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
+        fQAPID->Add(fh2PIDProtonTOFbeta);
+        fh2PIDPionTPCnSigmaPion = new TH2D("fh2PIDPionTPCnSigmaPion","PID: #pi: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDPionTPCnSigmaPion);
+        fh2PIDPionTOFnSigmaPion = new TH2D("fh2PIDPionTOFnSigmaPion","PID: #pi: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDPionTOFnSigmaPion);
+        fh2PIDPionTPCnSigmaKaon = new TH2D("fh2PIDPionTPCnSigmaKaon","PID: #pi: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDPionTPCnSigmaKaon);
+        fh2PIDPionTOFnSigmaKaon = new TH2D("fh2PIDPionTOFnSigmaKaon","PID: #pi: TOF n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDPionTOFnSigmaKaon);
+        fh2PIDPionTPCnSigmaProton = new TH2D("fh2PIDPionTPCnSigmaProton","PID: #pi: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDPionTPCnSigmaProton);
+        fh2PIDPionTOFnSigmaProton = new TH2D("fh2PIDPionTOFnSigmaProton","PID: #pi: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDPionTOFnSigmaProton);
+        fh2PIDPionBayesPion = new TH2D("fh2PIDPionBayesPion","PID: #pi: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDPionBayesPion);
+        fh2PIDPionBayesKaon = new TH2D("fh2PIDPionBayesKaon","PID: #pi: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDPionBayesKaon);
+        fh2PIDPionBayesProton = new TH2D("fh2PIDPionBayesProton","PID: #pi: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDPionBayesProton);
+        fh2PIDKaonTPCnSigmaPion = new TH2D("fh2PIDKaonTPCnSigmaPion","PID: K: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDKaonTPCnSigmaPion);
+        fh2PIDKaonTOFnSigmaPion = new TH2D("fh2PIDKaonTOFnSigmaPion","PID: K: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDKaonTOFnSigmaPion);
+        fh2PIDKaonTPCnSigmaKaon = new TH2D("fh2PIDKaonTPCnSigmaKaon","PID: K: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDKaonTPCnSigmaKaon);
+        fh2PIDKaonTOFnSigmaKaon = new TH2D("fh2PIDKaonTOFnSigmaKaon","PID: K: TOF n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDKaonTOFnSigmaKaon);
+        fh2PIDKaonTPCnSigmaProton = new TH2D("fh2PIDKaonTPCnSigmaProton","PID: K: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDKaonTPCnSigmaProton);
+        fh2PIDKaonTOFnSigmaProton = new TH2D("fh2PIDKaonTOFnSigmaProton","PID: K: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDKaonTOFnSigmaProton);
+        fh2PIDKaonBayesPion = new TH2D("fh2PIDKaonBayesPion","PID: K: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDKaonBayesPion);
+        fh2PIDKaonBayesKaon = new TH2D("fh2PIDKaonBayesKaon","PID: K: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDKaonBayesKaon);
+        fh2PIDKaonBayesProton = new TH2D("fh2PIDKaonBayesProton","PID: K: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDKaonBayesProton);
+        fh2PIDProtonTPCnSigmaPion = new TH2D("fh2PIDProtonTPCnSigmaPion","PID: p: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDProtonTPCnSigmaPion);
+        fh2PIDProtonTOFnSigmaPion = new TH2D("fh2PIDProtonTOFnSigmaPion","PID: p: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDProtonTOFnSigmaPion);
+        fh2PIDProtonTPCnSigmaKaon = new TH2D("fh2PIDProtonTPCnSigmaKaon","PID: p: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDProtonTPCnSigmaKaon);
+        fh2PIDProtonTOFnSigmaKaon = new TH2D("fh2PIDProtonTOFnSigmaKaon","PID: p: TOF n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDProtonTOFnSigmaKaon);
+        fh2PIDProtonTPCnSigmaProton = new TH2D("fh2PIDProtonTPCnSigmaProton","PID: p: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDProtonTPCnSigmaProton);
+        fh2PIDProtonTOFnSigmaProton = new TH2D("fh2PIDProtonTOFnSigmaProton","PID: p: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
+        fQAPID->Add(fh2PIDProtonTOFnSigmaProton);
+        fh2PIDProtonBayesPion = new TH2D("fh2PIDProtonBayesPion","PID: p: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDProtonBayesPion);
+        fh2PIDProtonBayesKaon = new TH2D("fh2PIDProtonBayesKaon","PID: p: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDProtonBayesKaon);
+        fh2PIDProtonBayesProton = new TH2D("fh2PIDProtonBayesProton","PID: p: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
+        fQAPID->Add(fh2PIDProtonBayesProton);
+
+      }
 
     } //endif {fProcessPID}
 
@@ -1227,164 +1234,167 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     const Short_t iNFilterMapBinBins = 32;
 
     // QA histograms
-    TString sQAindex[fiNumIndexQA] = {"Before", "After"};
-    for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
+    if(fFillQA)
     {
-      // EVENTs QA histograms
-      fhQAEventsPVz[iQA] = new TH1D(Form("fhQAEventsPVz_%s",sQAindex[iQA].Data()), "QA Events: PV-#it{z}", 101,-50,50);
-      fQAEvents->Add(fhQAEventsPVz[iQA]);
-      fhQAEventsNumContrPV[iQA] = new TH1D(Form("fhQAEventsNumContrPV_%s",sQAindex[iQA].Data()), "QA Events: Number of contributors to AOD PV", 20,0,20);
-      fQAEvents->Add(fhQAEventsNumContrPV[iQA]);
-      fhQAEventsNumSPDContrPV[iQA] = new TH1D(Form("fhQAEventsNumSPDContrPV_%s",sQAindex[iQA].Data()), "QA Events: SPD contributors to PV", 20,0,20);
-      fQAEvents->Add(fhQAEventsNumSPDContrPV[iQA]);
-      fhQAEventsDistPVSPD[iQA] = new TH1D(Form("fhQAEventsDistPVSPD_%s",sQAindex[iQA].Data()), "QA Events: PV SPD vertex", 50,0,5);
-      fQAEvents->Add(fhQAEventsDistPVSPD[iQA]);
-      fhQAEventsSPDresol[iQA] = new TH1D(Form("fhQAEventsSPDresol_%s",sQAindex[iQA].Data()), "QA Events: SPD resolution", 150,0,15);
-      fQAEvents->Add(fhQAEventsSPDresol[iQA]);
-
-      // Charged tracks QA
-      if(fProcessCharged)
+      TString sQAindex[fiNumIndexQA] = {"Before", "After"};
+      for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
       {
-        fhQAChargedMult[iQA] = new TH1D(Form("fhQAChargedMult_%s",sQAindex[iQA].Data()),"QA Charged: Number of Charged in selected events; #it{N}^{Charged}", 1500,0,1500);
-        fQACharged->Add(fhQAChargedMult[iQA]);
-        fhQAChargedCharge[iQA] = new TH1D(Form("fhQAChargedCharge_%s",sQAindex[iQA].Data()),"QA Charged: Track charge; charge;", 3,-1.5,1.5);
-        fQACharged->Add(fhQAChargedCharge[iQA]);
-        fhQAChargedPt[iQA] = new TH1D(Form("fhQAChargedPt_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 300,0.,30.);
-        fQACharged->Add(fhQAChargedPt[iQA]);
-        fhQAChargedEta[iQA] = new TH1D(Form("fhQAChargedEta_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#eta}; #it{#eta}", 151,-1.5,1.5);
-        fQACharged->Add(fhQAChargedEta[iQA]);
-        fhQAChargedPhi[iQA] = new TH1D(Form("fhQAChargedPhi_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#varphi}; #it{#varphi}", 100,0.,TMath::TwoPi());
-        fQACharged->Add(fhQAChargedPhi[iQA]);
-        fhQAChargedFilterBit[iQA] = new TH1D(Form("fhQAChargedFilterBit_%s",sQAindex[iQA].Data()), "QA Charged: Filter bit",iNFilterMapBinBins,0,iNFilterMapBinBins);
-        for(Int_t j = 0x0; j < iNFilterMapBinBins; j++) fhQAChargedFilterBit[iQA]->GetXaxis()->SetBinLabel(j+1, Form("%g",TMath::Power(2,j)));
-        fQACharged->Add(fhQAChargedFilterBit[iQA]);
-        fhQAChargedNumTPCcls[iQA] = new TH1D(Form("fhQAChargedNumTPCcls_%s",sQAindex[iQA].Data()),"QA Charged: Track number of TPC clusters; #it{N}^{TPC clusters}", 160,0,160);
-        fQACharged->Add(fhQAChargedNumTPCcls[iQA]);
-        fhQAChargedDCAxy[iQA] = new TH1D(Form("fhQAChargedDCAxy_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-xy; DCA_{#it{xy}} (cm)", 100,0.,10);
-        fQACharged->Add(fhQAChargedDCAxy[iQA]);
-        fhQAChargedDCAz[iQA] = new TH1D(Form("fhQAChargedDCAz_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-z; DCA_{#it{z}} (cm)", 200,-10.,10.);
-        fQACharged->Add(fhQAChargedDCAz[iQA]);
-      } // endif {fProcessCharged}
+        // EVENTs QA histograms
+        fhQAEventsPVz[iQA] = new TH1D(Form("fhQAEventsPVz_%s",sQAindex[iQA].Data()), "QA Events: PV-#it{z}", 101,-50,50);
+        fQAEvents->Add(fhQAEventsPVz[iQA]);
+        fhQAEventsNumContrPV[iQA] = new TH1D(Form("fhQAEventsNumContrPV_%s",sQAindex[iQA].Data()), "QA Events: Number of contributors to AOD PV", 20,0,20);
+        fQAEvents->Add(fhQAEventsNumContrPV[iQA]);
+        fhQAEventsNumSPDContrPV[iQA] = new TH1D(Form("fhQAEventsNumSPDContrPV_%s",sQAindex[iQA].Data()), "QA Events: SPD contributors to PV", 20,0,20);
+        fQAEvents->Add(fhQAEventsNumSPDContrPV[iQA]);
+        fhQAEventsDistPVSPD[iQA] = new TH1D(Form("fhQAEventsDistPVSPD_%s",sQAindex[iQA].Data()), "QA Events: PV SPD vertex", 50,0,5);
+        fQAEvents->Add(fhQAEventsDistPVSPD[iQA]);
+        fhQAEventsSPDresol[iQA] = new TH1D(Form("fhQAEventsSPDresol_%s",sQAindex[iQA].Data()), "QA Events: SPD resolution", 150,0,15);
+        fQAEvents->Add(fhQAEventsSPDresol[iQA]);
 
-      // PID tracks QA
-      if(fProcessPID || fProcessPhi)
-      {
-        fhQAPIDTPCstatus[iQA] = new TH1D(Form("fhQAPIDTPCstatus_%s",sQAindex[iQA].Data()),"QA PID: PID status: TPC;", iNBinsPIDstatus,0,iNBinsPIDstatus);
-        fQAPID->Add(fhQAPIDTPCstatus[iQA]);
-        fhQAPIDTPCdEdx[iQA] = new TH2D(Form("fhQAPIDTPCdEdx_%s",sQAindex[iQA].Data()),"QA PID: TPC PID information; #it{p} (GeV/#it{c}); TPC dEdx (au)", 100,0,10, 131,-10,1000);
-        fQAPID->Add(fhQAPIDTPCdEdx[iQA]);
-        fhQAPIDTOFstatus[iQA] = new TH1D(Form("fhQAPIDTOFstatus_%s",sQAindex[iQA].Data()),"QA PID: PID status: TOF;", iNBinsPIDstatus,0,iNBinsPIDstatus);
-        fQAPID->Add(fhQAPIDTOFstatus[iQA]);
-        fhQAPIDTOFbeta[iQA] = new TH2D(Form("fhQAPIDTOFbeta_%s",sQAindex[iQA].Data()),"QA PID: TOF #beta information; #it{p} (GeV/#it{c}); TOF #beta", 100,0,10, 101,-0.1,1.5);
-        fQAPID->Add(fhQAPIDTOFbeta[iQA]);
-        fh3QAPIDnSigmaBayesElectron[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesElectron_%s",sQAindex[iQA].Data()),"QA PID: e; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
-        fQAPID->Add(fh3QAPIDnSigmaBayesElectron[iQA]);
-        fh3QAPIDnSigmaBayesMuon[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesMuon_%s",sQAindex[iQA].Data()),"QA PID: #mu; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
-        fQAPID->Add(fh3QAPIDnSigmaBayesMuon[iQA]);
-        fh3QAPIDnSigmaBayesPion[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesPion_%s",sQAindex[iQA].Data()),"QA PID: #pi; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
-        fQAPID->Add(fh3QAPIDnSigmaBayesPion[iQA]);
-        fh3QAPIDnSigmaBayesKaon[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesKaon_%s",sQAindex[iQA].Data()),"QA PID: K; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
-        fQAPID->Add(fh3QAPIDnSigmaBayesKaon[iQA]);
-        fh3QAPIDnSigmaBayesProton[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesProton_%s",sQAindex[iQA].Data()),"QA PID: p; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
-        fQAPID->Add(fh3QAPIDnSigmaBayesProton[iQA]);
-
-        for(Int_t j = 0x0; j < iNBinsPIDstatus; j++)
+        // Charged tracks QA
+        if(fProcessCharged)
         {
-          fhQAPIDTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
-          fhQAPIDTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
-        }
-      } // endif {fProcessPID}
+          fhQAChargedMult[iQA] = new TH1D(Form("fhQAChargedMult_%s",sQAindex[iQA].Data()),"QA Charged: Number of Charged in selected events; #it{N}^{Charged}", 1500,0,1500);
+          fQACharged->Add(fhQAChargedMult[iQA]);
+          fhQAChargedCharge[iQA] = new TH1D(Form("fhQAChargedCharge_%s",sQAindex[iQA].Data()),"QA Charged: Track charge; charge;", 3,-1.5,1.5);
+          fQACharged->Add(fhQAChargedCharge[iQA]);
+          fhQAChargedPt[iQA] = new TH1D(Form("fhQAChargedPt_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 300,0.,30.);
+          fQACharged->Add(fhQAChargedPt[iQA]);
+          fhQAChargedEta[iQA] = new TH1D(Form("fhQAChargedEta_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#eta}; #it{#eta}", 151,-1.5,1.5);
+          fQACharged->Add(fhQAChargedEta[iQA]);
+          fhQAChargedPhi[iQA] = new TH1D(Form("fhQAChargedPhi_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#varphi}; #it{#varphi}", 100,0.,TMath::TwoPi());
+          fQACharged->Add(fhQAChargedPhi[iQA]);
+          fhQAChargedFilterBit[iQA] = new TH1D(Form("fhQAChargedFilterBit_%s",sQAindex[iQA].Data()), "QA Charged: Filter bit",iNFilterMapBinBins,0,iNFilterMapBinBins);
+          for(Int_t j = 0x0; j < iNFilterMapBinBins; j++) fhQAChargedFilterBit[iQA]->GetXaxis()->SetBinLabel(j+1, Form("%g",TMath::Power(2,j)));
+          fQACharged->Add(fhQAChargedFilterBit[iQA]);
+          fhQAChargedNumTPCcls[iQA] = new TH1D(Form("fhQAChargedNumTPCcls_%s",sQAindex[iQA].Data()),"QA Charged: Track number of TPC clusters; #it{N}^{TPC clusters}", 160,0,160);
+          fQACharged->Add(fhQAChargedNumTPCcls[iQA]);
+          fhQAChargedDCAxy[iQA] = new TH1D(Form("fhQAChargedDCAxy_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-xy; DCA_{#it{xy}} (cm)", 100,0.,10);
+          fQACharged->Add(fhQAChargedDCAxy[iQA]);
+          fhQAChargedDCAz[iQA] = new TH1D(Form("fhQAChargedDCAz_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-z; DCA_{#it{z}} (cm)", 200,-10.,10.);
+          fQACharged->Add(fhQAChargedDCAz[iQA]);
+        } // endif {fProcessCharged}
 
-      // V0s QA
-      if(fProcessV0s)
-      {
-        fhQAV0sMultK0s[iQA] = new TH1D(Form("fhQAV0sMultK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of K^{0}_{S} candidates", 1000,0,1000);
-        fQAV0s->Add(fhQAV0sMultK0s[iQA]);
-        fhQAV0sMultLambda[iQA] = new TH1D(Form("fhQAV0sMultLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #Lambda candidates", 1000,0,1000);
-        fQAV0s->Add(fhQAV0sMultLambda[iQA]);
-        fhQAV0sMultALambda[iQA] = new TH1D(Form("fhQAV0sMultALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #bar{#Lambda} candidates", 1000,0,1000);
-        fQAV0s->Add(fhQAV0sMultALambda[iQA]);
-        fhQAV0sRecoMethod[iQA] = new TH1D(Form("fhQAV0sRecoMethod_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Reconstruction method", 2,-0.5,1.5);
-        fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(1, "offline");
-        fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
-        fQAV0s->Add(fhQAV0sRecoMethod[iQA]);
-        fhQAV0sDCAtoPV[iQA] = new TH1D(Form("fhQAV0sDCAtoPV_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter DCA to PV; daughter DCA^{PV} (cm)", 200,0.,20.);
-        fQAV0s->Add(fhQAV0sDCAtoPV[iQA]);
-        fhQAV0sDCADaughters[iQA] = new TH1D(Form("fhQAV0sDCADaughters_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: DCA among daughters; DCA^{daughters} (cm)", 200,0.,20.);
-        fQAV0s->Add(fhQAV0sDCADaughters[iQA]);
-        fhQAV0sDecayRadius[iQA] = new TH1D(Form("fhQAV0sDecayRadius_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Decay radius; #it{r_{xy}}^{decay} (cm)", 300,0.,300.);
-        fQAV0s->Add(fhQAV0sDecayRadius[iQA]);
-        fhQAV0sCPAK0s[iQA] = new TH1D(Form("fhQAV0sCPAK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: CPA; CPA^{K0s}", 100,0.9,1.);
-        fQAV0s->Add(fhQAV0sCPAK0s[iQA]);
-        fhQAV0sCPALambda[iQA] = new TH1D(Form("fhQAV0sCPALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA; CPA^{#Lambda}", 100, 0.9,1.);
-        fQAV0s->Add(fhQAV0sCPALambda[iQA]);
-        fhQAV0sNumTauK0s[iQA] = new TH1D(Form("fhQAV0sNumTauK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}:  K^{0}_{S}: Number of #it{c#tau}; #it{c#tau}^{K0s} (cm)", 100, 0.,20.);
-        fQAV0s->Add(fhQAV0sNumTauK0s[iQA]);
-        fhQAV0sNumTauLambda[iQA] = new TH1D(Form("fhQAV0sNumTauLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #it{c#tau}; #it{c#tau}^{#Lambda} (cm)", 100, 0.,60);
-        fQAV0s->Add(fhQAV0sNumTauLambda[iQA]);
-        fhQAV0sArmenterosK0s[iQA] = new TH2D(Form("fhQAV0sArmenterosK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}:  K^{0}_{S}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
-        fQAV0s->Add(fhQAV0sArmenterosK0s[iQA]);
-        fhQAV0sArmenterosLambda[iQA] = new TH2D(Form("fhQAV0sArmenterosLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
-        fQAV0s->Add(fhQAV0sArmenterosLambda[iQA]);
-        fhQAV0sArmenterosALambda[iQA] = new TH2D(Form("fhQAV0sArmenterosALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
-        fQAV0s->Add(fhQAV0sArmenterosALambda[iQA]);
-        fhQAV0sInvMassK0s[iQA] = new TH1D(Form("fhQAV0sInvMassK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: InvMass; #it{m}_{inv} (GeV/#it{c}^{2});", 200,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
-        fQAV0s->Add(fhQAV0sInvMassK0s[iQA]);
-        fhQAV0sInvMassLambda[iQA] = new TH1D(Form("fhQAV0sInvMassLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: InvMass; #it{m}_{inv} (GeV/#it{c}^{2});", 80,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
-        fQAV0s->Add(fhQAV0sInvMassLambda[iQA]);
-        fhQAV0sMotherPt[iQA] = new TH1D(Form("fhQAV0sMotherPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{p}_{T}; #it{p}_{T}^{V0} (GeV/#it{c})", 200,0.,20.);
-        fQAV0s->Add(fhQAV0sMotherPt[iQA]);
-        fhQAV0sMotherPhi[iQA] = new TH1D(Form("fhQAV0sMotherPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#varphi}; #it{#varphi}^{V0} (GeV/#it{c})", 100,0.,TMath::TwoPi());
-        fQAV0s->Add(fhQAV0sMotherPhi[iQA]);
-        fhQAV0sMotherEta[iQA] = new TH1D(Form("fhQAV0sMotherEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#eta}; #it{#eta}^{V0}", 151,-1.5,1.5);
-        fQAV0s->Add(fhQAV0sMotherEta[iQA]);
-        fhQAV0sMotherCharge[iQA] = new TH1D(Form("fhQAV0sMotherCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother charge; V^{0} charge", 3,-1.5,1.5);
-        fQAV0s->Add(fhQAV0sMotherCharge[iQA]);
-        fhQAV0sMotherRapK0s[iQA] = new TH1D(Form("fhQAV0sMotherRapK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo); #it{y}^{V0,K0s}", 151,-1.5,1.5);
-        fQAV0s->Add(fhQAV0sMotherRapK0s[iQA]);
-        fhQAV0sMotherRapLambda[iQA] = new TH1D(Form("fhQAV0sMotherRapLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo); #it{y}^{V0,#Lambda}", 301,-3.,3.);
-        fQAV0s->Add(fhQAV0sMotherRapLambda[iQA]);
-        fhQAV0sDaughterTPCRefit[iQA] = new TH1D(Form("fhQAV0sDaughterTPCRefit_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter TPC refit", 2,-0.5,1.5);
-        fhQAV0sDaughterTPCRefit[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODTrack::kTPCrefit");
-        fhQAV0sDaughterTPCRefit[iQA]->GetXaxis()->SetBinLabel(2, "AliAODTrack::kTPCrefit");
-        fQAV0s->Add(fhQAV0sDaughterTPCRefit[iQA]);
-        fhQAV0sDaughterKinks[iQA] = new TH1D(Form("fhQAV0sDaughterKinks_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter Kinks", 2,-0.5,1.5);
-        fhQAV0sDaughterKinks[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
-        fhQAV0sDaughterKinks[iQA]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
-        fQAV0s->Add(fhQAV0sDaughterKinks[iQA]);
-        fhQAV0sDaughterPt[iQA] = new TH1D(Form("fhQAV0sDaughterPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{p}_{T}; #it{p}_{T}^{daughter} (GeV/#it{c})", 200,0.,20.);
-        fQAV0s->Add(fhQAV0sDaughterPt[iQA]);
-        fhQAV0sDaughterPhi[iQA] = new TH1D(Form("fhQAV0sDaughterPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#varphi}; #it{#varphi}^{daughter} (GeV/#it{c})", 100,0.,TMath::TwoPi());
-        fQAV0s->Add(fhQAV0sDaughterPhi[iQA]);
-        fhQAV0sDaughterEta[iQA] = new TH1D(Form("fhQAV0sDaughterEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#eta}; #it{#eta}^{daugter}", 151,-1.5,1.5);
-        fQAV0s->Add(fhQAV0sDaughterEta[iQA]);
-        fhQAV0sDaughterCharge[iQA] = new TH1D(Form("fhQAV0sDaughterCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter charge; daughter charge", 3,-1.5,1.5);
-        fQAV0s->Add(fhQAV0sDaughterCharge[iQA]);
-        fhQAV0sDaughterTPCstatus[iQA] = new TH1D(Form("fhQAV0sDaughterTPCstatus_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: PID status: TPC;", iNBinsPIDstatus,0,iNBinsPIDstatus);
-        fQAV0s->Add(fhQAV0sDaughterTPCstatus[iQA]);
-        fhQAV0sDaughterTOFstatus[iQA] = new TH1D(Form("fhQAV0sDaughterTOFstatus_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: PID status: TOF;", iNBinsPIDstatus,0,iNBinsPIDstatus);
-        fQAV0s->Add(fhQAV0sDaughterTOFstatus[iQA]);
-        fhQAV0sDaughterTPCdEdxK0s[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
-        fQAV0s->Add(fhQAV0sDaughterTPCdEdxK0s[iQA]);
-        fhQAV0sDaughterNumSigmaPionK0s[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: Daughter PID (#pi); #it{p}_{T}^{daughter} (GeV/#it{c}); #pi PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
-        fQAV0s->Add(fhQAV0sDaughterNumSigmaPionK0s[iQA]);
-        fhQAV0sDaughterTPCdEdxLambda[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
-        fQAV0s->Add(fhQAV0sDaughterTPCdEdxLambda[iQA]);
-        fhQAV0sDaughterNumSigmaPionLambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Daughter PID (#pi); #it{p}_{T}^{pion} (GeV/#it{c}); pion PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
-        fQAV0s->Add(fhQAV0sDaughterNumSigmaPionLambda[iQA]);
-        fhQAV0sDaughterNumSigmaProtonLambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
-        fQAV0s->Add(fhQAV0sDaughterNumSigmaProtonLambda[iQA]);
-        fhQAV0sDaughterNumSigmaPionALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (#pi); #it{p}_{T}^{pion} (GeV/#it{c}); pion PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
-        fQAV0s->Add(fhQAV0sDaughterNumSigmaPionALambda[iQA]);
-        fhQAV0sDaughterNumSigmaProtonALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
-        fQAV0s->Add(fhQAV0sDaughterNumSigmaProtonALambda[iQA]);
-
-        for(Int_t j = 0x0; j < iNBinsPIDstatus; j++)
+        // PID tracks QA
+        if(fProcessPID || fProcessPhi)
         {
-          fhQAV0sDaughterTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
-          fhQAV0sDaughterTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
-        }
-      } // endif {fProcessV0s}
+          fhQAPIDTPCstatus[iQA] = new TH1D(Form("fhQAPIDTPCstatus_%s",sQAindex[iQA].Data()),"QA PID: PID status: TPC;", iNBinsPIDstatus,0,iNBinsPIDstatus);
+          fQAPID->Add(fhQAPIDTPCstatus[iQA]);
+          fhQAPIDTPCdEdx[iQA] = new TH2D(Form("fhQAPIDTPCdEdx_%s",sQAindex[iQA].Data()),"QA PID: TPC PID information; #it{p} (GeV/#it{c}); TPC dEdx (au)", 100,0,10, 131,-10,1000);
+          fQAPID->Add(fhQAPIDTPCdEdx[iQA]);
+          fhQAPIDTOFstatus[iQA] = new TH1D(Form("fhQAPIDTOFstatus_%s",sQAindex[iQA].Data()),"QA PID: PID status: TOF;", iNBinsPIDstatus,0,iNBinsPIDstatus);
+          fQAPID->Add(fhQAPIDTOFstatus[iQA]);
+          fhQAPIDTOFbeta[iQA] = new TH2D(Form("fhQAPIDTOFbeta_%s",sQAindex[iQA].Data()),"QA PID: TOF #beta information; #it{p} (GeV/#it{c}); TOF #beta", 100,0,10, 101,-0.1,1.5);
+          fQAPID->Add(fhQAPIDTOFbeta[iQA]);
+          fh3QAPIDnSigmaBayesElectron[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesElectron_%s",sQAindex[iQA].Data()),"QA PID: e; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
+          fQAPID->Add(fh3QAPIDnSigmaBayesElectron[iQA]);
+          fh3QAPIDnSigmaBayesMuon[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesMuon_%s",sQAindex[iQA].Data()),"QA PID: #mu; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
+          fQAPID->Add(fh3QAPIDnSigmaBayesMuon[iQA]);
+          fh3QAPIDnSigmaBayesPion[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesPion_%s",sQAindex[iQA].Data()),"QA PID: #pi; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
+          fQAPID->Add(fh3QAPIDnSigmaBayesPion[iQA]);
+          fh3QAPIDnSigmaBayesKaon[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesKaon_%s",sQAindex[iQA].Data()),"QA PID: K; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
+          fQAPID->Add(fh3QAPIDnSigmaBayesKaon[iQA]);
+          fh3QAPIDnSigmaBayesProton[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesProton_%s",sQAindex[iQA].Data()),"QA PID: p; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
+          fQAPID->Add(fh3QAPIDnSigmaBayesProton[iQA]);
+
+          for(Int_t j = 0x0; j < iNBinsPIDstatus; j++)
+          {
+            fhQAPIDTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+            fhQAPIDTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+          }
+        } // endif {fProcessPID}
+
+        // V0s QA
+        if(fProcessV0s)
+        {
+          fhQAV0sMultK0s[iQA] = new TH1D(Form("fhQAV0sMultK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of K^{0}_{S} candidates", 1000,0,1000);
+          fQAV0s->Add(fhQAV0sMultK0s[iQA]);
+          fhQAV0sMultLambda[iQA] = new TH1D(Form("fhQAV0sMultLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #Lambda candidates", 1000,0,1000);
+          fQAV0s->Add(fhQAV0sMultLambda[iQA]);
+          fhQAV0sMultALambda[iQA] = new TH1D(Form("fhQAV0sMultALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #bar{#Lambda} candidates", 1000,0,1000);
+          fQAV0s->Add(fhQAV0sMultALambda[iQA]);
+          fhQAV0sRecoMethod[iQA] = new TH1D(Form("fhQAV0sRecoMethod_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Reconstruction method", 2,-0.5,1.5);
+          fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(1, "offline");
+          fhQAV0sRecoMethod[iQA]->GetXaxis()->SetBinLabel(2, "online (on-the-fly)");
+          fQAV0s->Add(fhQAV0sRecoMethod[iQA]);
+          fhQAV0sDCAtoPV[iQA] = new TH1D(Form("fhQAV0sDCAtoPV_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter DCA to PV; daughter DCA^{PV} (cm)", 200,0.,20.);
+          fQAV0s->Add(fhQAV0sDCAtoPV[iQA]);
+          fhQAV0sDCADaughters[iQA] = new TH1D(Form("fhQAV0sDCADaughters_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: DCA among daughters; DCA^{daughters} (cm)", 200,0.,20.);
+          fQAV0s->Add(fhQAV0sDCADaughters[iQA]);
+          fhQAV0sDecayRadius[iQA] = new TH1D(Form("fhQAV0sDecayRadius_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Decay radius; #it{r_{xy}}^{decay} (cm)", 300,0.,300.);
+          fQAV0s->Add(fhQAV0sDecayRadius[iQA]);
+          fhQAV0sCPAK0s[iQA] = new TH1D(Form("fhQAV0sCPAK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: CPA; CPA^{K0s}", 100,0.9,1.);
+          fQAV0s->Add(fhQAV0sCPAK0s[iQA]);
+          fhQAV0sCPALambda[iQA] = new TH1D(Form("fhQAV0sCPALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: CPA; CPA^{#Lambda}", 100, 0.9,1.);
+          fQAV0s->Add(fhQAV0sCPALambda[iQA]);
+          fhQAV0sNumTauK0s[iQA] = new TH1D(Form("fhQAV0sNumTauK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}:  K^{0}_{S}: Number of #it{c#tau}; #it{c#tau}^{K0s} (cm)", 100, 0.,20.);
+          fQAV0s->Add(fhQAV0sNumTauK0s[iQA]);
+          fhQAV0sNumTauLambda[iQA] = new TH1D(Form("fhQAV0sNumTauLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of #it{c#tau}; #it{c#tau}^{#Lambda} (cm)", 100, 0.,60);
+          fQAV0s->Add(fhQAV0sNumTauLambda[iQA]);
+          fhQAV0sArmenterosK0s[iQA] = new TH2D(Form("fhQAV0sArmenterosK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}:  K^{0}_{S}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
+          fQAV0s->Add(fhQAV0sArmenterosK0s[iQA]);
+          fhQAV0sArmenterosLambda[iQA] = new TH2D(Form("fhQAV0sArmenterosLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
+          fQAV0s->Add(fhQAV0sArmenterosLambda[iQA]);
+          fhQAV0sArmenterosALambda[iQA] = new TH2D(Form("fhQAV0sArmenterosALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Armenteros-Podolaski plot; #alpha; #it{p}_{T}^{Arm} (GeV/#it{c});", 100,-1.,1., 100,0.,0.3);
+          fQAV0s->Add(fhQAV0sArmenterosALambda[iQA]);
+          fhQAV0sInvMassK0s[iQA] = new TH1D(Form("fhQAV0sInvMassK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: InvMass; #it{m}_{inv} (GeV/#it{c}^{2});", 200,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+          fQAV0s->Add(fhQAV0sInvMassK0s[iQA]);
+          fhQAV0sInvMassLambda[iQA] = new TH1D(Form("fhQAV0sInvMassLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: InvMass; #it{m}_{inv} (GeV/#it{c}^{2});", 80,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+          fQAV0s->Add(fhQAV0sInvMassLambda[iQA]);
+          fhQAV0sMotherPt[iQA] = new TH1D(Form("fhQAV0sMotherPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{p}_{T}; #it{p}_{T}^{V0} (GeV/#it{c})", 200,0.,20.);
+          fQAV0s->Add(fhQAV0sMotherPt[iQA]);
+          fhQAV0sMotherPhi[iQA] = new TH1D(Form("fhQAV0sMotherPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#varphi}; #it{#varphi}^{V0} (GeV/#it{c})", 100,0.,TMath::TwoPi());
+          fQAV0s->Add(fhQAV0sMotherPhi[iQA]);
+          fhQAV0sMotherEta[iQA] = new TH1D(Form("fhQAV0sMotherEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{#eta}; #it{#eta}^{V0}", 151,-1.5,1.5);
+          fQAV0s->Add(fhQAV0sMotherEta[iQA]);
+          fhQAV0sMotherCharge[iQA] = new TH1D(Form("fhQAV0sMotherCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother charge; V^{0} charge", 3,-1.5,1.5);
+          fQAV0s->Add(fhQAV0sMotherCharge[iQA]);
+          fhQAV0sMotherRapK0s[iQA] = new TH1D(Form("fhQAV0sMotherRapK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (K^{0}_{S} hypo); #it{y}^{V0,K0s}", 151,-1.5,1.5);
+          fQAV0s->Add(fhQAV0sMotherRapK0s[iQA]);
+          fhQAV0sMotherRapLambda[iQA] = new TH1D(Form("fhQAV0sMotherRapLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Mother #it{y} (Lambda/#bar{#Lambda} hypo); #it{y}^{V0,#Lambda}", 301,-3.,3.);
+          fQAV0s->Add(fhQAV0sMotherRapLambda[iQA]);
+          fhQAV0sDaughterTPCRefit[iQA] = new TH1D(Form("fhQAV0sDaughterTPCRefit_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter TPC refit", 2,-0.5,1.5);
+          fhQAV0sDaughterTPCRefit[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODTrack::kTPCrefit");
+          fhQAV0sDaughterTPCRefit[iQA]->GetXaxis()->SetBinLabel(2, "AliAODTrack::kTPCrefit");
+          fQAV0s->Add(fhQAV0sDaughterTPCRefit[iQA]);
+          fhQAV0sDaughterKinks[iQA] = new TH1D(Form("fhQAV0sDaughterKinks_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter Kinks", 2,-0.5,1.5);
+          fhQAV0sDaughterKinks[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
+          fhQAV0sDaughterKinks[iQA]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
+          fQAV0s->Add(fhQAV0sDaughterKinks[iQA]);
+          fhQAV0sDaughterPt[iQA] = new TH1D(Form("fhQAV0sDaughterPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{p}_{T}; #it{p}_{T}^{daughter} (GeV/#it{c})", 200,0.,20.);
+          fQAV0s->Add(fhQAV0sDaughterPt[iQA]);
+          fhQAV0sDaughterPhi[iQA] = new TH1D(Form("fhQAV0sDaughterPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#varphi}; #it{#varphi}^{daughter} (GeV/#it{c})", 100,0.,TMath::TwoPi());
+          fQAV0s->Add(fhQAV0sDaughterPhi[iQA]);
+          fhQAV0sDaughterEta[iQA] = new TH1D(Form("fhQAV0sDaughterEta_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#eta}; #it{#eta}^{daugter}", 151,-1.5,1.5);
+          fQAV0s->Add(fhQAV0sDaughterEta[iQA]);
+          fhQAV0sDaughterCharge[iQA] = new TH1D(Form("fhQAV0sDaughterCharge_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter charge; daughter charge", 3,-1.5,1.5);
+          fQAV0s->Add(fhQAV0sDaughterCharge[iQA]);
+          fhQAV0sDaughterTPCstatus[iQA] = new TH1D(Form("fhQAV0sDaughterTPCstatus_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: PID status: TPC;", iNBinsPIDstatus,0,iNBinsPIDstatus);
+          fQAV0s->Add(fhQAV0sDaughterTPCstatus[iQA]);
+          fhQAV0sDaughterTOFstatus[iQA] = new TH1D(Form("fhQAV0sDaughterTOFstatus_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: PID status: TOF;", iNBinsPIDstatus,0,iNBinsPIDstatus);
+          fQAV0s->Add(fhQAV0sDaughterTOFstatus[iQA]);
+          fhQAV0sDaughterTPCdEdxK0s[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
+          fQAV0s->Add(fhQAV0sDaughterTPCdEdxK0s[iQA]);
+          fhQAV0sDaughterNumSigmaPionK0s[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: K^{0}_{S}: Daughter PID (#pi); #it{p}_{T}^{daughter} (GeV/#it{c}); #pi PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+          fQAV0s->Add(fhQAV0sDaughterNumSigmaPionK0s[iQA]);
+          fhQAV0sDaughterTPCdEdxLambda[iQA] = new TH2D(Form("fhQAV0sDaughterTPCdEdxLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda/#bar{#Lambda}: TPC dEdx daughters; #it{p}^{daughter} (GeV/#it{c}); TPC dEdx (au);", 100,0.,20, 101,-10,1000);
+          fQAV0s->Add(fhQAV0sDaughterTPCdEdxLambda[iQA]);
+          fhQAV0sDaughterNumSigmaPionLambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Daughter PID (#pi); #it{p}_{T}^{pion} (GeV/#it{c}); pion PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+          fQAV0s->Add(fhQAV0sDaughterNumSigmaPionLambda[iQA]);
+          fhQAV0sDaughterNumSigmaProtonLambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonLambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #Lambda: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+          fQAV0s->Add(fhQAV0sDaughterNumSigmaProtonLambda[iQA]);
+          fhQAV0sDaughterNumSigmaPionALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaPionALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (#pi); #it{p}_{T}^{pion} (GeV/#it{c}); pion PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+          fQAV0s->Add(fhQAV0sDaughterNumSigmaPionALambda[iQA]);
+          fhQAV0sDaughterNumSigmaProtonALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
+          fQAV0s->Add(fhQAV0sDaughterNumSigmaProtonALambda[iQA]);
+
+          for(Int_t j = 0x0; j < iNBinsPIDstatus; j++)
+          {
+            fhQAV0sDaughterTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+            fhQAV0sDaughterTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
+          }
+        } // endif {fProcessV0s}
+      }
     }
 
   // posting data (mandatory)
@@ -1413,6 +1423,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fRunMode: (RunMode) %d\n",    fRunMode);
   printf("      fAnalType: (AnalType) %d\n",    fAnalType);
   printf("      fSampling: (Bool_t) %s\n",    fSampling ? "kTRUE" : "kFALSE");
+  printf("      fFillQA: (Bool_t) %s\n",    fFillQA ? "kTRUE" : "kFALSE");
   printf("      fProcessCharged: (Bool_t) %s\n",    fProcessCharged ? "kTRUE" : "kFALSE");
   printf("      fProcessPID: (Bool_t) %s\n",    fProcessPID ? "kTRUE" : "kFALSE");
   printf("      fProcessPhi: (Bool_t) %s\n",    fProcessPhi ? "kTRUE" : "kFALSE");
@@ -1645,7 +1656,7 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   if(!fEventAOD) return kFALSE;
 
   // Fill event QA BEFORE cuts
-  FillEventsQA(0);
+  if(fFillQA) FillEventsQA(0);
 
   // event selection for small systems pp, pPb in Run2 (2016)
   if( (fColSystem == kPP || fColSystem == kPPb)
@@ -1653,7 +1664,7 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
     ) eventSelected = IsEventSelected_2016();
 
   // Fill event QA AFTER cuts
-  FillEventsQA(1);
+  if(fFillQA) FillEventsQA(1);
 
   return eventSelected;
 }
@@ -1878,7 +1889,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
     if(!track) continue;
 
-    FillQACharged(0,track); // QA before selection
+    if(fFillQA) FillQACharged(0,track); // QA before selection
 
     if(IsChargedSelected(track))
     {
@@ -1889,7 +1900,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
         weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi()) );
         fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
       }
-      FillQACharged(1,track); // QA after selection
+      if(fFillQA) FillQACharged(1,track); // QA after selection
       //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
 
       // Filling refs QA plots
@@ -1909,8 +1920,11 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
   // fill QA charged multiplicity
   fhRefsMult->Fill(iNumRefs);
-  fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
-  fhQAChargedMult[1]->Fill(fVectorCharged->size());
+  if(fFillQA)
+  {
+    fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
+    fhQAChargedMult[1]->Fill(fVectorCharged->size());
+  }
 
   return;
 }
@@ -2049,13 +2063,13 @@ void AliAnalysisTaskUniFlow::FilterV0s()
     v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
     if(!v0) continue;
 
-    FillQAV0s(0,v0); // QA BEFORE selection
+    if(fFillQA) FillQAV0s(0,v0); // QA BEFORE selection
     if(IsV0Selected(v0))
     {
       bIsK0s = IsV0aK0s(v0);
       iIsLambda = IsV0aLambda(v0);
 
-      if(bIsK0s || iIsLambda != 0)
+      if(fFillQA && (bIsK0s || iIsLambda != 0))
         FillQAV0s(1,v0,bIsK0s,iIsLambda); // QA AFTER selection
 
       if(bIsK0s)
@@ -2103,12 +2117,15 @@ void AliAnalysisTaskUniFlow::FilterV0s()
   }
 
   // fill QA charged multiplicity
-  fhQAV0sMultK0s[0]->Fill(fEventAOD->GetNumberOfV0s());
-  fhQAV0sMultLambda[0]->Fill(fEventAOD->GetNumberOfV0s());
-  fhQAV0sMultALambda[0]->Fill(fEventAOD->GetNumberOfV0s());
-  fhQAV0sMultK0s[1]->Fill(iNumK0sSelected);
-  fhQAV0sMultLambda[1]->Fill(iNumLambdaSelected);
-  fhQAV0sMultALambda[1]->Fill(iNumALambdaSelected);
+  if(fFillQA)
+  {
+    fhQAV0sMultK0s[0]->Fill(fEventAOD->GetNumberOfV0s());
+    fhQAV0sMultLambda[0]->Fill(fEventAOD->GetNumberOfV0s());
+    fhQAV0sMultALambda[0]->Fill(fEventAOD->GetNumberOfV0s());
+    fhQAV0sMultK0s[1]->Fill(iNumK0sSelected);
+    fhQAV0sMultLambda[1]->Fill(iNumLambdaSelected);
+    fhQAV0sMultALambda[1]->Fill(iNumALambdaSelected);
+  }
 
   return;
 }
@@ -2633,7 +2650,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       mother = FlowPart::MakeMother(kaon1,kaon2,kPhi);
 
       // filling QA BEFORE selection
-      FillQAPhi(0,&mother);
+      if(fFillQA) FillQAPhi(0,&mother);
 
       if(mother.mass < fCutPhiInvMassMin || mother.mass > fCutPhiInvMassMax) continue;
       fhPhiCounter->Fill("InvMass",1);
@@ -2647,9 +2664,8 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       // mother (phi) candidate passing all criteria
       fhPhiCounter->Fill("Selected",1);
 
-
       // filling QA AFTER selection
-      FillQAPhi(1,&mother);
+      if(fFillQA) FillQAPhi(1,&mother);
 
       // filling weights
       if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsPhi->Fill(mother.phi, mother.eta, mother.pt);
@@ -2739,7 +2755,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
     // PID tracks are subset of selected charged tracks (same quality requirements)
     if(!IsChargedSelected(track)) continue;
 
-    FillPIDQA(0,track,kUnknown);   // filling QA for tracks before selection (but after charged criteria applied)
+    if(fFillQA) FillPIDQA(0,track,kUnknown);   // filling QA for tracks before selection (but after charged criteria applied)
 
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
@@ -2780,7 +2796,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         continue;
     }
 
-    FillPIDQA(1,track,species); // filling QA for tracks AFTER selection
+    if(fFillQA) FillPIDQA(1,track,species); // filling QA for tracks AFTER selection
   }
 
   fhPIDPionMult->Fill(fVectorPion->size());

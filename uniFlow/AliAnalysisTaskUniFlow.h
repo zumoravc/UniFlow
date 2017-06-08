@@ -42,6 +42,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
       void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
+      void                    SetFillQAhistos(Bool_t fill = kTRUE) { fFillQA = fill; }
       //void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; } // not implemented yet
       void                    SetProcessCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
       void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
@@ -227,6 +228,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       RunMode                 fRunMode; // running mode (not grid related)
       AnalType                fAnalType; // analysis type: AOD / ESD
       Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
+      Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
       Bool_t                  fProcessCharged; // flag for processing charged tracks (both RPF and POIs)
       Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
       Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
