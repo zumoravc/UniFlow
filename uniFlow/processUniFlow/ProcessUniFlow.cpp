@@ -39,6 +39,7 @@ class FlowTask
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
+    void        SetMergePosNeg(Bool_t merge = kTRUE) {fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
     void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -60,6 +61,7 @@ class FlowTask
     Bool_t      fSampleMerging; // [kFALSE] flag for merging TProfiles (good for refs)
     Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
     Bool_t      fDesampleUseRMS; // [kFALSE] flag for using RMS as uncertainty during desampling
+    Bool_t      fMergePosNeg; // [kFALSE] flag for merging results corresponding to positive and negative POIs
     Bool_t      fSuggestPtBins; // suggest pt binning
     Double_t    fSuggestPtBinEntries; // suggest pt binning
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
@@ -81,6 +83,7 @@ FlowTask::FlowTask()
   fRebinning = kTRUE;
   fSampleMerging = kFALSE;
   fDesampleUseRMS = kFALSE;
+  fMergePosNeg = kFALSE;
   fSuggestPtBins = kFALSE;
   fSuggestPtBinEntries = 20000;
   fRebinFlowMass = 0;
@@ -143,6 +146,7 @@ void FlowTask::PrintTask()
   printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
   printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
   printf("   fSuggestPtBins: %s\n", fSuggestPtBins ? "true" : "false");
+  printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
   printf("   fNumPtBins: %d (limit %d)\n",fNumPtBins,fNumPtBinsMax);
@@ -620,7 +624,10 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 
   // preparing vn' samples
   TList* listFlow = new TList();
+  TList* listMerge = new TList();
   TProfile2D* prof2 = 0x0;
+  TProfile2D* prof2pos = 0x0;
+  TProfile2D* prof2neg = 0x0;
   TProfile* prof = 0x0;
   TProfile* profRebin = 0x0;
   TProfile* profRef = 0x0;
@@ -633,11 +640,30 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 
   for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
   {
-    if(task->fProfName.Data() == "")
-    { prof2 = (TProfile2D*) listInput->FindObject(Form("fp2%s_<2>_harm%d_gap%02.2g_sample%d",task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iSample)); }
-    else
-    { prof2 = (TProfile2D*) listInput->FindObject(Form("%s_sample%d",task->fProfName.Data(),iSample)); }
+    if(task->fMergePosNeg)
+    {
+      // loading Pos & Neg if fMergePosNeg is ON
+      prof2pos = (TProfile2D*) listInput->FindObject(Form("fp2%s_<2>_harm%d_gap%02.2g_Pos_sample%d",task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+      prof2neg = (TProfile2D*) listInput->FindObject(Form("fp2%s_<2>_harm%d_gap%02.2g_Neg_sample%d",task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iSample));
 
+      if(!prof2pos || !prof2neg) { Error("Pos OR Neg profile not found for Pos&Neg merging.","ProcessDirect"); return kFALSE; }
+      listMerge->Clear();
+      listMerge->Add(prof2pos);
+      listMerge->Add(prof2neg);
+
+      prof2 = (TProfile2D*) listMerge->At(0)->Clone();
+      prof2->Reset();
+      Double_t mergeStatus = prof2->Merge(listMerge);
+      if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessDirect"); return kFALSE; }
+    }
+    else
+    {
+      // loading single profile
+      if(task->fProfName.Data() == "")
+      { prof2 = (TProfile2D*) listInput->FindObject(Form("fp2%s_<2>_harm%d_gap%02.2g_sample%d",task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iSample)); }
+      else
+      { prof2 = (TProfile2D*) listInput->FindObject(Form("%s_sample%d",task->fProfName.Data(),iSample)); }
+    }
     if(!prof2) { Error(Form("Profile sample %d does not exists.",iSample),"ProcesPID"); return kFALSE; }
 
     // preparing Refs
