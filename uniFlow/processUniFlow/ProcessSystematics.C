@@ -36,15 +36,17 @@ const Int_t markers[]    = {kFullCircle, kFullSquare,kOpenCircle,kOpenSquare,kOp
 
 TCanvas* canSuper;
 TCanvas* canRatio;
+TCanvas* canBarlow;
 
 void ProcessList(TList* list = 0x0);
 TH1D* MakeRatio(TH1D* hBase = 0x0, TH1D* hSyst = 0x0, Bool_t bCorelated = kFALSE);
-
+TH1D* DoBarlowTest(TH1D* hBase = 0x0, TH1D* hSyst = 0x0, Bool_t bCorelated = kFALSE);
 
 void ProcessSystematics()
 {
   canSuper = new TCanvas("Super","canSuper",800,800);
   canRatio = new TCanvas("canRatio","canRatio",800,800);
+  canBarlow = new TCanvas("canBarlow","canBarlow",800,800);
 
   TList* list = new TList();
 
@@ -96,7 +98,8 @@ void ProcessList(TList* list)
 
   TH1D* hTemp = 0x0;
   TH1D* hRatio = 0x0;
-  TH1D* hRatio2 = 0x0;
+  // TH1D* hRatio2 = 0x0;
+  TH1D* hBarlow = 0x0;
 
   for(Short_t iFile(1); iFile < iNumFiles; iFile++)
   {
@@ -117,11 +120,17 @@ void ProcessList(TList* list)
     // hRatio->SetMarkerStyle(markers[iFile]);
     // hRatio->SetFillColor(colors[iFile]);
 
+    hBarlow = DoBarlowTest(hBase,hTemp,1);
+
     canRatio->cd();
     hRatio->Draw("hist p e1");
+
+    canBarlow->cd();
+    hBarlow->Draw("hist p");
   }
 
   // fitting the ratios
+  canRatio->cd();
   TF1* fitConst = new TF1("fitConst","[0]",hRatio->GetXaxis()->GetXmin(),hRatio->GetXaxis()->GetXmax());
   fitConst->SetLineColor(kRed);
   hRatio->Fit("fitConst","R");
@@ -131,9 +140,11 @@ void ProcessList(TList* list)
   lineUnity->SetLineColor(kBlack);
   lineUnity->SetLineStyle(7);
 
-  canRatio->cd();
   fitConst->Draw("same");
   lineUnity->DrawLine(hRatio->GetXaxis()->GetXmin(),1.,hRatio->GetXaxis()->GetXmax(),1.);
+
+  canBarlow->cd();
+  lineUnity->DrawLine(hBarlow->GetXaxis()->GetXmin(),1.,hBarlow->GetXaxis()->GetXmax(),1.);
 
   return;
 }
@@ -180,4 +191,45 @@ TH1D* MakeRatio(TH1D* hBase, TH1D* hSyst, Bool_t bCorelated)
   hRatio->SetMaximum(2.);
 
   return hRatio;
+}
+//_____________________________________________________________________________
+TH1D* DoBarlowTest(TH1D* hBase, TH1D* hSyst, Bool_t bCorelated)
+{
+  if(!hBase) { printf("DoBarlowTest::Baseline histo not found\n"); return 0x0; }
+  if(!hSyst) { printf("DoBarlowTest::Systematics histo not found\n"); return 0x0; }
+
+  TH1D* hBarlow = (TH1D*) hSyst->Clone("hBarlow");
+  hBarlow->Reset();
+
+  // checking the binning
+  const Short_t iNumBins = hBarlow->GetNbinsX();
+  const Short_t iNumBinsBase = hBase->GetNbinsX();
+  const Short_t iNumBinsSyst = hSyst->GetNbinsX();
+
+  if( iNumBins != iNumBinsBase || iNumBins != iNumBinsSyst ) { printf("DoBarlowTest::Different number of bins\n"); return 0x0; }
+
+  // calculating ratio
+  Double_t dContBase = 0, dErrBase = 0;
+  Double_t dContSyst = 0, dErrSyst = 0;
+  Double_t dBarlow = 0, dDenom = 0;
+  for(Short_t iBin(1); iBin < iNumBins+1; iBin++)
+  {
+    dContBase = hBase->GetBinContent(iBin);
+    dErrBase = hBase->GetBinError(iBin);
+    dContSyst = hSyst->GetBinContent(iBin);
+    dErrSyst = hSyst->GetBinError(iBin);
+
+    if(bCorelated) { dDenom = TMath::Sqrt(TMath::Abs(TMath::Power(dErrBase,2) - TMath::Power(dErrSyst,2))); }
+    else { dDenom = TMath::Sqrt(TMath::Abs(TMath::Power(dErrBase,2) + TMath::Power(dErrSyst,2))); }
+
+    dBarlow = (dContBase - dContSyst) / dDenom;
+
+    hBarlow->SetBinContent(iBin,dBarlow);
+    hBarlow->SetBinError(iBin,0);
+  }
+
+  // hBarlow->SetMinimum(0.);
+  // hBarlow->SetMaximum(10.);
+
+  return hBarlow;
 }
