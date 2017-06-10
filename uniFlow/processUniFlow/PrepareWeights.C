@@ -19,15 +19,15 @@ TH2D* ProcessWeights(const TH3D* weight = 0x0, const Int_t runNumber = -1);
 
 void PrepareWeights()
 {
-  const Short_t iNumRuns = 1;
-  const Int_t iRunList[iNumRuns] = {265387};
-  // const Short_t iNumRuns = 31;
-  // const Int_t iRunList[iNumRuns] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387,265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
+  // const Short_t iNumRuns = 1;
+  // const Int_t iRunList[iNumRuns] = {265387};
+  const Short_t iNumRuns = 31;
+  const Int_t iRunList[iNumRuns] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387,265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
   // const TString sOutputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_weights_V0A/FAST_16q"
   const TString sPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst/baseline/CENT_woSDD_16q/";
   const TString sTaskTag = "UniFlow";
 
-  TFile* fOutput = new TFile(Form("%s/weights_CENTwoSDD_16q_2.root",sPath.Data()),"RECREATE");
+  TFile* fOutput = new TFile(Form("%s/weights_Cor_CENTwoSDD_16q.root",sPath.Data()),"RECREATE");
 
   const Short_t iNumPart = 8;
   const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
@@ -121,7 +121,25 @@ TH2D* ProcessWeights(const TH3D* weights, const Int_t runNumber)
   if(runNumber == -1) { printf("PrepareWeights: run number not specified\n"); return 0x0; }
 
   TH2D* weights_2d = (TH2D*) weights->Project3D("xy");
-  weights_2d->Scale(1/weights_2d->GetMaximum());
+
+  // preparing weigths:  bin content = max / bincontent
+  const Short_t iNumBinX = weights_2d->GetNbinsX();
+  const Short_t iNumBinY = weights_2d->GetNbinsY();
+  const Double_t dMax = weights_2d->GetMaximum();
+
+  Double_t dContent = 0;
+
+  for(Short_t binX(0); binX < iNumBinX+2; binX++)
+    for(Short_t binY(0); binY < iNumBinY+2; binY++)
+    {
+      dContent = weights_2d->GetBinContent(binX,binY);
+      if(dContent > 0.) { weights_2d->SetBinContent(binX,binY, dMax / dContent); }
+      else {weights_2d->SetBinContent(binX,binY, 1); }
+
+      weights_2d->SetBinError(binX,binY,0);
+    }
+
+  // weights_2d->Scale(1/weights_2d->GetMaximum());
   // weights_2d->Scale(1/weights_2d->GetEntries());
   // weights_2d->SetName(Form("%s_%d",species.Data(),runNumber));
   // weights_2d->SetTitle(Form("%s | Run %d",species.Data(),runNumber));
