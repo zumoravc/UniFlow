@@ -1175,24 +1175,28 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   // printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[multBin],binMultLow,fdMultBins[multBin+1],binMultHigh);
 
   // loading reference flow, if not found, it will be prepared
-  TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+  TH1D* hRefFlow = 0x0;
+  hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
   if(!hRefFlow)
   {
     Warning("Relevant Reference flow not found within output file.","PrepareSlices");
     ffOutputFile->ls();
-    return kFALSE;
+    // return kFALSE;
 
-    // Info("Creating relevant reference flow task.","PrepareSlices");
-    // FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
-    // taskRef->SetHarmonics(task->fHarmonics);
-    // taskRef->SetEtaGap(task->fEtaGap);
-    // if(ProcessRefs(taskRef)) return ProcessReconstructed(task);
-    // else { Error("Something went wrong when running automatic refs flow task:","PrepareSlices"); taskRef->PrintTask(); return kFALSE; }
+    Info("Creating relevant reference flow task.","PrepareSlices");
+    FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
+    taskRef->SetHarmonics(task->fHarmonics);
+    taskRef->SetEtaGap(task->fEtaGap);
+    if(ProcessRefs(taskRef))
+    {
+      hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+      if(!hRefFlow) {  Error("Automated Refs task completed, but RefFlow not found!","PrepareSlices"); return kFALSE; }
+    }
+    else { Error("Something went wrong when running automatic refs flow task:","PrepareSlices"); taskRef->PrintTask(); return kFALSE; }
   }
   const Double_t dRefFlow = hRefFlow->GetBinContent(multBin+1);
   const Double_t dRefFlowErr = hRefFlow->GetBinError(multBin+1);
   Debug(Form("Ref (bin %d): %g +- %g\n",multBin,dRefFlow,dRefFlowErr),"PrepareSlices");
-
 
   // loop over pt
   Short_t binPtLow = 0;
@@ -1254,7 +1258,6 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
       hFlowMass_temp->SetBinContent(bin,dContent/dRefFlow);
       hFlowMass_temp->SetBinError(bin, TMath::Sqrt( TMath::Power(dError/dRefFlow,2) + TMath::Power(dRefFlowErr*dContent/(dRefFlow*dRefFlow),2) ) );
     }
-
 
     // ready to fitting
     task->fVecHistFlowMass->push_back(hFlowMass_temp);
