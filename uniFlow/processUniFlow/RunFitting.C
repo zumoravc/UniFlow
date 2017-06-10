@@ -22,7 +22,7 @@ void RunFitting(const char* sOutputFilePath = "")
 	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/fitTest");
 	process->SetOutputFileName("UniFlowFitting.root");
 	// process->SetOutputFileMode("UPDATE");
-	process->SetDebug();
+	// process->SetDebug();
 	// process->SuggestMultBinning(4);
 
 	// setting multiplicity binning
@@ -33,7 +33,7 @@ void RunFitting(const char* sOutputFilePath = "")
 	FlowTask* taskRefs = new FlowTask("Refs",FlowTask::kRefs);
 	taskRefs->SetHarmonics(2);
 	taskRefs->SetEtaGap(0.8);
-	process->AddTask(taskRefs);
+	// process->AddTask(taskRefs);
 
 	Double_t dPtBinningK0s[] = {1.,1.5};
 	Double_t dPtBinningLambda[] = {1.,1.5};
@@ -57,7 +57,7 @@ void RunFitting(const char* sOutputFilePath = "")
 	taskK0s->SetFittingRange(0.45,0.55);
 	taskK0s->SetFittingRejectNumSigmas(3);
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
-	// process->AddTask(taskK0s);
+	process->AddTask(taskK0s);
 
 	FlowTask* taskLambda = new FlowTask("Lambda",FlowTask::kLambda);
 	taskLambda->SetHarmonics(2);
@@ -69,7 +69,7 @@ void RunFitting(const char* sOutputFilePath = "")
 	taskLambda->SetMergePosNeg();
 	taskLambda->SetFittingRange(1.1,1.14);
 	taskLambda->SetFittingRejectNumSigmas(5);
-	// process->AddTask(taskLambda);
+	process->AddTask(taskLambda);
 
 	FlowTask* taskPhi = new FlowTask("Phi",FlowTask::kPhi);
 	taskPhi->SetHarmonics(2);

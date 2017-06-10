@@ -2117,13 +2117,15 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowPhi");
 	canFitInvMass->cd(6);
-	fitFlowSide = new TF1("fitFlowSide","pol2(0)",dFittingLow,dFittingHigh);
+	// fitFlowSide = new TF1("fitFlowSide","pol2(0)",dFittingLow,dFittingHigh);
+	fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
   Debug("====== Fitting FlowMass total ========","ExtractFlowPhi");
 	canFitInvMass->cd(7);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.99,1.07);
-	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol2(7)",dFittingLow,dFittingHigh);
+	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol2(7)",dFittingLow,dFittingHigh);
+	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
 	// Inv mass ratio signal/total
 	// fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
 	// fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
@@ -2146,7 +2148,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	// FlowMass backround / sidebands
 	fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
 	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
-	fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(2));
+	// fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(2));
 	hFlowMass->Fit("fitFlowTot","R");
 
 	dFlow = fitFlowTot->GetParameter(0);
@@ -2292,13 +2294,13 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowK0s");
 	canFitInvMass->cd(6);
-	fitFlowSide = new TF1("fitFlowSide","pol2(0)",dFittingLow,dFittingHigh);
+	fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
   Debug("====== Fitting FlowMass total flow ========","ExtractFlowK0s");
   canFitInvMass->cd(5);
 
-	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",dFittingLow,dFittingHigh);
+	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
 	// Inv mass ratio signal/total
 	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
 	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
@@ -2310,7 +2312,7 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 	// FlowMass backround / sidebands
 	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
 	fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
-	fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
+	// fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
 	hFlowMass->Fit("fitFlowTot","R");
 
 	dFlow = fitFlowTot->GetParameter(0);
@@ -2454,12 +2456,12 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	}
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowLambda");
   canFitInvMass->cd(6);
-	fitFlowSide = new TF1("fitFlowSide","pol3(0)",dFittingLow,dFittingHigh);
+	fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
   Debug("====== Fitting FlowMass total flow ========","ExtractFlowLambda");
 	canFitInvMass->cd(5);
-	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol3(8)",dFittingLow,dFittingHigh);
+	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
 
 	// Inv mass ratio signal/total
 	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
@@ -2472,8 +2474,8 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	// FlowMass backround / sidebands
 	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
 	fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
-	fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
-	fitFlowTot->FixParameter(11,fitFlowSide->GetParameter(3));
+	// fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
+	// fitFlowTot->FixParameter(11,fitFlowSide->GetParameter(3));
 	hFlowMass->Fit("fitFlowTot","RIB");
 
 	dFlow = fitFlowTot->GetParameter(0);
