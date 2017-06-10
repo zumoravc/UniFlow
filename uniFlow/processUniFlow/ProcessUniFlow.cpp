@@ -183,10 +183,11 @@ class ProcessUniFlow
     void        SetOutputFileName(const char* name) { fsOutputFileName = name; }
     void        SetOutputFileMode(const char* mode = "RECREATE") { fsOutputFileMode = mode; }
     void        SetTaskName(const char* name) { fsTaskName = name; }
+    void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
-    void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
+    void        Clear(); // clearing (removing tasks, etc.) after running
   protected:
 
   private:
@@ -289,6 +290,27 @@ ProcessUniFlow::~ProcessUniFlow()
   {
     delete fvTasks.at(index);
   }
+}
+//_____________________________________________________________________________
+void ProcessUniFlow::Clear()
+{
+  Info("Cleaning ProcessUniFlow instance","Clear");
+  if(ffInputFile) delete ffInputFile;
+  if(ffOutputFile) delete ffOutputFile;
+
+  flFlowRefs = 0x0;
+  flFlowCharged = 0x0;
+  flFlowPID = 0x0;
+  flFlowPhi = 0x0;
+  flFlowK0s = 0x0;
+  flFlowLambda = 0x0;
+
+  const Short_t iNumTasks = fvTasks.size();
+  for(Short_t index(0); index < iNumTasks; index++)
+  {
+    if(fvTasks.at(index)) delete fvTasks.at(index);
+  }
+  Info("Cleaning done!","Clear");
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Run()
