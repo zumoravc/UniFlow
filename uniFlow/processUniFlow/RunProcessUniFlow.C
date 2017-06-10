@@ -8,28 +8,28 @@
 
 void RunProcessUniFlow(const char* sOutputFilePath = "")
 {
-	gSystem->AddIncludePath("-I/Users/vpacik/NBI/triggerHMstudies/TrigEff");
-	gROOT->SetMacroPath(Form("%s:/Users/vpacik/NBI/triggerHMstudies/TrigEff",gROOT->GetMacroPath()));
+	// gSystem->AddIncludePath("-I/Users/vpacik/NBI/triggerHMstudies/TrigEff");
+	// gROOT->SetMacroPath(Form("%s:/Users/vpacik/NBI/triggerHMstudies/TrigEff",gROOT->GetMacroPath()));
 	gROOT->LoadMacro("ProcessUniFlow.cpp++g");
 
 	ProcessUniFlow* process = new ProcessUniFlow();
 
-	process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_Recon_full/FAST_16q");
+	process->SetInputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_Recon_full/CENT_woSDD_16q/");
 	// process->SetInputFileName("AnalysisResults_CENTwSDD_16q.root");
 	// process->SetTaskName("UniFlow_V0A");
 	// process->SetInputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test");
 	process->SetInputFileName("AnalysisResults.root");
 	process->SetTaskName("UniFlow");
 	// process->SetOutputFilePath(sOutputFilePath);
-	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_Recon_full/FAST_16q/results2");
-	process->SetOutputFileName("UniFlow_All.root");
+	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/uniFlow/processUniFlow");
+	process->SetOutputFileName("UniFlowTest.root");
 	// process->SetOutputFileMode("UPDATE");
 	// process->SetDebug();
 	// process->SuggestMultBinning(4);
 
 	// setting multiplicity binning
 	// Double_t dMultBinning[] = {0,10,20,30,40,50,60,70,80,90,100};
-	Double_t dMultBinning[] = {0,20,40,60,80,100};
+	Double_t dMultBinning[] = {0,20};
 	// Double_t dMultBinning[] = {0,10};
 	process->SetMultiplicityBins(dMultBinning,sizeof(dMultBinning)/sizeof(dMultBinning[0]));
 
@@ -40,8 +40,9 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 
 	// DIRECT
 
-	// Double_t dPt[] = {0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.,2.1,2.2,2.3,2.4,2.5,2.6,2.8,3.,3.2,3.4,3.6,3.8,4.,4.2,4.4,4.6,4.8,5.,5.5,6.,6.5,7.,8.,9.,10.,15.,20.};
-	Double_t dPt[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,9.,10.,15.,20.};
+	Double_t dPt[] = {1.,1.2};
+	// Double_t dPt[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,9.,10.,15.,20.};
+	// Double_t dPt[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,9.,10.,15.,20.};
 	Double_t dPtKaon[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,9.,10.,15.,20.};
 	Double_t dPtProton[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,9.,10.,15.,20.};
 	// Double_t dPt[] = {0.3,0.5,0.75,1.,1.25,1.5,2.,2.5,3.,4.,}; // HEP Run 1
@@ -72,15 +73,17 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	task5->SetHarmonics(2);
 	task5->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
 	task5->SetEtaGap(0.8);
-	task5->SetAlternativeProfileName("fp2Charged_<2>_harm2_gap08_Pos");
+	// task5->SetAlternativeProfileName("fp2Charged_<2>_harm2_gap08_Pos");
+	task5->SetMergePosNeg();
+	task5->SetNumSamples(1);
 	process->AddTask(task5);
-
+//
 	FlowTask* taskChargedNeg = new FlowTask("charged_neg",FlowTask::kCharged);
 	taskChargedNeg->SetHarmonics(2);
 	taskChargedNeg->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
 	taskChargedNeg->SetEtaGap(0.8);
 	taskChargedNeg->SetAlternativeProfileName("fp2Charged_<2>_harm2_gap08_Neg");
-	process->AddTask(taskChargedNeg);
+	// process->AddTask(taskChargedNeg);
 
 	Double_t dPtBinningK0s[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,10.,20.};
 	Double_t dPtBinningLambda[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,10.,20.};
@@ -98,7 +101,8 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
  taskK0s->SetFlowMassRebin(2);
  // task7->SetShowMultDist(kTRUE);
  taskK0s->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
- taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Pos");
+ // taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Pos");
+ taskK0s->SetMergePosNeg();
  // task7->SuggestPtBinning(1,30000);
  process->AddTask(taskK0s);
 
@@ -111,7 +115,7 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
  taskK0sNeg->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
  taskK0sNeg->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
  // task7->SuggestPtBinning(1,30000);
- process->AddTask(taskK0sNeg);
+ // process->AddTask(taskK0sNeg);
  //
  //
  // // FlowTask* task8 = new FlowTask("K0s",FlowTask::kK0s);
@@ -134,7 +138,8 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
  taskLambda->SetInvMassRebin(2);
  taskLambda->SetFlowMassRebin(2);
  taskLambda->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
- taskLambda->SetAlternativeProfileName("fp3V0sCorrLambda_<2>_harm2_gap08_Pos");
+ // taskLambda->SetAlternativeProfileName("fp3V0sCorrLambda_<2>_harm2_gap08_Pos");
+ taskLambda->SetMergePosNeg();
  process->AddTask(taskLambda);
 
  FlowTask* taskLambdaNeg = new FlowTask("LambdaNeg",FlowTask::kLambda);
@@ -144,7 +149,7 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
  taskLambdaNeg->SetFlowMassRebin(2);
  taskLambdaNeg->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
  taskLambdaNeg->SetAlternativeProfileName("fp3V0sCorrLambda_<2>_harm2_gap08_Neg");
- process->AddTask(taskLambdaNeg);
+ // process->AddTask(taskLambdaNeg);
 
  // // FlowTask* task5 = new FlowTask("Lambda",FlowTask::kLambda);
  // // task5->SetHarmonics(2);
@@ -170,15 +175,16 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
  taskPhi->SetHarmonics(2);
  taskPhi->SetEtaGap(0.8);
  taskPhi->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
- taskPhi->SetAlternativeProfileName("fp3PhiCorr_<2>_harm2_gap08_Pos");
- process->AddTask(taskPhi);
+ // taskPhi->SetAlternativeProfileName("fp3PhiCorr_<2>_harm2_gap08_Pos");
+ taskPhi->SetMergePosNeg();
+ // process->AddTask(taskPhi);
 
  FlowTask* taskPhiNeg = new FlowTask("PhiNeg",FlowTask::kPhi);
  taskPhiNeg->SetHarmonics(2);
  taskPhiNeg->SetEtaGap(0.8);
  taskPhiNeg->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
  taskPhiNeg->SetAlternativeProfileName("fp3PhiCorr_<2>_harm2_gap08_Neg");
- process->AddTask(taskPhiNeg);
+ // process->AddTask(taskPhiNeg);
 
  // // FlowTask* task3 = new FlowTask("Phi",FlowTask::kPhi);
  // // task3->SetHarmonics(2);
