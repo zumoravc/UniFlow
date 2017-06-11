@@ -10,8 +10,8 @@ void RunSystematics()
 {
 	gROOT->LoadMacro("ProcessUniFlow.cpp++g");
 
-	const Short_t iNumProcess = 2;
-	const char* sTaskTag[iNumProcess] = {"vtx8","vtx9"};
+	const Short_t iNumProcess = 1;
+	const char* sTaskTag[iNumProcess] = {"vtx8"};
 
 
 	ProcessUniFlow* process = new ProcessUniFlow();
@@ -20,7 +20,7 @@ void RunSystematics()
 
 	// setting multiplicity binning
 	// Double_t dMultBinning[] = {0,10,20,30,40,50,60,70,80,90,100};
-	Double_t dMultBinning[] = {0,20};
+	Double_t dMultBinning[] = {0,20,40,60,80,100};
 	// Double_t dMultBinning[] = {0,10};
 	process->SetMultiplicityBins(dMultBinning,sizeof(dMultBinning)/sizeof(dMultBinning[0]));
 
@@ -42,25 +42,6 @@ void RunSystematics()
 	taskRefs->SetEtaGap(0.8);
 	process->AddTask(taskRefs);
 
-	FlowTask* taskPion = new FlowTask("Pi",FlowTask::kPion);
-	taskPion->SetHarmonics(2);
-	taskPion->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
-	taskPion->SetEtaGap(0.8);
-	// process->AddTask(taskPion);
-
-	FlowTask* taskKaon = new FlowTask("K",FlowTask::kKaon);
-	taskKaon->SetHarmonics(2);
-	taskKaon->SetPtBins(dPtKaon,sizeof(dPtKaon)/sizeof(dPtKaon[0]));
-	taskKaon->SetEtaGap(0.8);
-	// process->AddTask(taskKaon);
-
-	FlowTask* taskProton = new FlowTask("P",FlowTask::kProton);
-	taskProton->SetHarmonics(2);
-	taskProton->SetPtBins(dPtProton,sizeof(dPtProton)/sizeof(dPtProton[0]));
-	// taskProton->SetAlternativeProfileName("fp2Proton_<2>_harm2_gap08_Pos");
-	taskProton->SetEtaGap(0.8);
-	// process->AddTask(taskProton);
-
 	FlowTask* taskCharged = new FlowTask("Charged",FlowTask::kCharged);
 	taskCharged->SetHarmonics(2);
 	taskCharged->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
@@ -69,6 +50,31 @@ void RunSystematics()
 	taskCharged->SetMergePosNeg();
 	taskCharged->SetNumSamples(1);
 	process->AddTask(taskCharged);
+
+	FlowTask* taskPion = new FlowTask("Pi",FlowTask::kPion);
+	taskPion->SetHarmonics(2);
+	taskPion->SetPtBins(dPt,sizeof(dPt)/sizeof(dPt[0]));
+	taskPion->SetEtaGap(0.8);
+	taskPion->SetMergePosNeg();
+	taskPion->SetNumSamples(1);
+	process->AddTask(taskPion);
+
+	FlowTask* taskKaon = new FlowTask("K",FlowTask::kKaon);
+	taskKaon->SetHarmonics(2);
+	taskKaon->SetPtBins(dPtKaon,sizeof(dPtKaon)/sizeof(dPtKaon[0]));
+	taskKaon->SetEtaGap(0.8);
+	taskKaon->SetMergePosNeg();
+	taskKaon->SetNumSamples(1);
+	process->AddTask(taskKaon);
+
+	FlowTask* taskProton = new FlowTask("P",FlowTask::kProton);
+	taskProton->SetHarmonics(2);
+	taskProton->SetPtBins(dPtProton,sizeof(dPtProton)/sizeof(dPtProton[0]));
+	// taskProton->SetAlternativeProfileName("fp2Proton_<2>_harm2_gap08_Pos");
+	taskProton->SetEtaGap(0.8);
+	taskProton->SetMergePosNeg();
+	taskProton->SetNumSamples(1);
+	process->AddTask(taskProton);
 
 	FlowTask* taskK0s = new FlowTask("K0s",FlowTask::kK0s);
 	taskK0s->SetHarmonics(2);

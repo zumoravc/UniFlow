@@ -1,6 +1,6 @@
 #!/bin/bash
 
-outputPath="/Users/vpacik/NBI/Flow/results/uniFlow_syst/Vtx_z/syst/vtx8"
+outputPath="/Users/vpacik/NBI/Flow/results/uniFlow_syst/baseline_noNUA/merged_16q"
 
 echo "Prepring folder structure for UniFlow in '${outputPath}'"
 
