@@ -32,15 +32,16 @@ void PlotPIDvn()
   LoadLibs();
   SetStyle();
 
-  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/UniFlow.root");
-  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/UniFlow.root");
-  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/plots/");
+  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlowTest.root");
+  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlowTest.root");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/Run1comp");
 
   // TString sGap = "08";
-  Int_t iCent = 0;
-  TString sCent = TString("0-20");
-  Double_t dYmin = 0;
-  Double_t dYmax = 0.8;
+  // Int_t iCent = 0;
+  const Short_t iNumCent = 4;
+  TString sCent[iNumCent] = {"0-20","20-40","40-60","60-100"};
+  Double_t dYmin[iNumCent] = {0,0,0,0};
+  Double_t dYmax[iNumCent] = {0.3,0.3,0.5,0.5};
 
   // ALICE Preferred colors and markers (from figure template)
   const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7}; // for syst bands
@@ -99,138 +100,149 @@ void PlotPIDvn()
   //TCanvas *cfig = new TCanvas("cfig", "Alice Figure Template", 800, 800);
   // cfig->SetLogy();
   // Set Titles etc..
-  TH1* h = cfig->DrawFrame(0,dYmin,6,dYmax);
-
-  // Set titles
-  h->SetXTitle("#it{p}_{T} (GeV/#it{c})");
-  h->SetYTitle("#it{v}_{2} {2,|#eta| > 0.8}");
-
-  // loading histos
-
-  // DIRECT
-  TH1D* hFlowCharged = (TH1D*) fInputFile->Get(Form("hFlow2_Charged_harm2_gap08_cent%d",iCent));
-  if(!hFlowCharged) { printf("No charged\n"); return; }
-  TH1D* hFlowPion = (TH1D*) fInputFile->Get(Form("hFlow2_Pion_harm2_gap08_cent%d",iCent));
-  if(!hFlowPion) { printf("No pion\n"); return; }
-  TH1D* hFlowKaon = (TH1D*) fInputFile->Get(Form("hFlow2_Kaon_harm2_gap08_cent%d",iCent));
-  if(!hFlowKaon) { printf("No kaon\n"); return; }
-  TH1D* hFlowProton = (TH1D*) fInputFile->Get(Form("hFlow2_Proton_harm2_gap08_cent%d",iCent));
-  if(!hFlowProton)  { printf("No proton\n"); return; }
-
-  // reconstructed
-  TH1D* hFlowK0s = (TH1D*) fInputFileRecon->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",iCent));
-  if(!hFlowK0s) { printf("No K0s\n"); return; }
-  TH1D* hFlowLambda = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Lambda_harm2_gap08_mult%d",iCent));
-  if(!hFlowLambda) { printf("No Lambda\n"); return; }
-  TH1D* hFlowPhi = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Phi_harm2_gap08_mult%d",iCent));
-  if(!hFlowPhi) { printf("No Phi\n"); return; }
-
-  // setting histos
-  // hFlowCharged->SetStats(kFALSE);
-  // hFlowCharged->GetXaxis()->SetRangeUser(0.2,10.);
-  // hFlowCharged->SetMinimum(0.);
-  // hFlowCharged->SetMaximum(0.5);
-
-  hFlowCharged->SetLineColor(colCharged);
-  hFlowCharged->SetMarkerColor(colCharged);
-  hFlowCharged->SetMarkerStyle(markCharged);
-  hFlowCharged->SetMarkerSize(markSizeCharged);
-
-  hFlowPion->SetLineColor(colPion);
-  hFlowPion->SetMarkerColor(colPion);
-  hFlowPion->SetMarkerStyle(markPion);
-  hFlowPion->SetMarkerSize(markSizePion);
-
-  hFlowKaon->SetLineColor(colKaon);
-  hFlowKaon->SetMarkerColor(colKaon);
-  hFlowKaon->SetMarkerStyle(markKaon);
-  hFlowKaon->SetMarkerSize(markSizeKaon);
-
-  hFlowProton->SetLineColor(colProton);
-  hFlowProton->SetMarkerColor(colProton);
-  hFlowProton->SetMarkerStyle(markProton);
-  hFlowProton->SetMarkerSize(markSizeProton);
-
-  hFlowPhi->SetLineColor(colPhi);
-  hFlowPhi->SetMarkerColor(colPhi);
-  hFlowPhi->SetMarkerStyle(markPhi);
-  hFlowPhi->SetMarkerSize(markSizePhi);
-
-  hFlowK0s->SetLineColor(colK0s);
-  hFlowK0s->SetMarkerColor(colK0s);
-  hFlowK0s->SetMarkerStyle(markK0s);
-  hFlowK0s->SetMarkerSize(markSizeK0s);
-
-  hFlowLambda->SetLineColor(colLambda);
-  hFlowLambda->SetMarkerColor(colLambda);
-  hFlowLambda->SetMarkerStyle(markLambda);
-  hFlowLambda->SetMarkerSize(markSizeLambda);
-
-
-
-  // drawing stuff
-  // hFlowCharged->Draw("same");
-  hFlowPion->Draw("hist p e1 x0 same");
-  hFlowKaon->Draw("hist p e1 x0  same");
-  hFlowProton->Draw("hist p e1 x0 same");
-  hFlowK0s->Draw("hist p e1 x0 same");
-  hFlowLambda->Draw("hist p e1 x0 same");
-  hFlowCharged->Draw("hist p e1 x0 same");
-  hFlowPhi->Draw("hist p e1 x0 same");
-
-  // Draw the logo
-  //  0: Just "ALICE" (for final data), to be added only if ALICE does not appear otherwise (e.g. in the legend)
-  //  >0: ALICE Preliminary
-  // DrawLogo(2, 0.186, 0.83);
-
-  // You should always specify the colliding system
-  // NOTATION: pp, p-Pb, Pb-Pb.
-  // Don't forget to use #sqrt{s_{NN}} for p-Pb and Pb-Pb
-  // You can change the position of this with
 
 
   TLatex * text = new TLatex();
-  text->DrawLatexNDC(0.18,0.83,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
   TLatex * text2 = new TLatex();
   text2->SetTextSizePixels(22);
-  text2->DrawLatexNDC(0.18,0.78,Form("Multiplicity Class %s%% (V0A)",sCent.Data()));
-  // TLatex * text = new TLatex(0.3,0.25,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
-  // text->Draw();
-  // TLatex * text2 = new TLatex (0.3,0.23,Form("Multiplicity Class %s%% (V0A)",sCent.Data()));
-  // text2->SetTextSizePixels(22);
-  // text2->Draw();
-
-  // TLatex * text3 = new TLatex (0.55,0.76,"|#eta| < 0.8");
-  // text3->SetTextSizePixels(20);
-  // text3->Draw();
 
 
-  // making legend
-  TLegend * legend = new TLegend(0.62, 0.18, 0.8, 0.46);
-  legend->SetFillColorAlpha(0,0);
-  legend->SetTextSize(gStyle->GetTextSize()*0.8);
-  // legend->SetBorderSize(1);
+  // loop over centrality
+  for(Short_t iCent(0); iCent < iNumCent; iCent++)
+  {
+    TH1* h = cfig->DrawFrame(0,dYmin[iCent],6,dYmax[iCent]);
+    // Set titles
+    h->SetXTitle("#it{p}_{T} (GeV/#it{c})");
+    h->SetYTitle("#it{v}_{2} {2,|#eta| > 0.8}");
 
-  TLegend * legend2 = new TLegend(0.72, 0.18, 0.91, 0.39);
-  legend2->SetFillColorAlpha(0,0);
-  legend2->SetTextSize(gStyle->GetTextSize()*0.8);
-  // legend2->SetBorderSize(1);
 
-  legend->AddEntry(hFlowCharged,"h^{#pm}","pl");
-  legend->AddEntry(hFlowPion,"#pi^{#pm}","pl");
-  legend->AddEntry(hFlowKaon,"K^{#pm}","pl");
-  legend->AddEntry(hFlowK0s,"K^{0}_{S}","pl");
-  legend2->AddEntry(hFlowProton,"p/#bar{p}","pl");
-  legend2->AddEntry(hFlowPhi,"#phi","pl");
-  legend2->AddEntry(hFlowLambda,"#Lambda/#bar{#Lambda}","pl");
+    // loading histos
 
-  legend->Draw();
-  legend2->Draw();
+    // DIRECT
+    TH1D* hFlowCharged = (TH1D*) fInputFile->Get(Form("hFlow2_Charged_harm2_gap08_cent%d",iCent));
+    if(!hFlowCharged) { printf("No charged\n"); return; }
+    TH1D* hFlowPion = (TH1D*) fInputFile->Get(Form("hFlow2_Pion_harm2_gap08_cent%d",iCent));
+    if(!hFlowPion) { printf("No pion\n"); return; }
+    TH1D* hFlowKaon = (TH1D*) fInputFile->Get(Form("hFlow2_Kaon_harm2_gap08_cent%d",iCent));
+    if(!hFlowKaon) { printf("No kaon\n"); return; }
+    TH1D* hFlowProton = (TH1D*) fInputFile->Get(Form("hFlow2_Proton_harm2_gap08_cent%d",iCent));
+    if(!hFlowProton)  { printf("No proton\n"); return; }
 
-  // cfig->SaveAs(Form("%s/plots/PID_%d.%s",sOutputFilePath.Data(),iCent,sOutputFormat.Data()));
-  cfig->SaveAs(Form("%s/PID_%d.pdf",sOutputFilePath.Data(),iCent));
-  cfig->SaveAs(Form("%s/PID_%d.png",sOutputFilePath.Data(),iCent));
-  cfig->SaveAs(Form("%s/PID_%d.eps",sOutputFilePath.Data(),iCent));
+    // reconstructed
+    TH1D* hFlowK0s = (TH1D*) fInputFileRecon->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",iCent));
+    if(!hFlowK0s) { printf("No K0s\n"); return; }
+    TH1D* hFlowLambda = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Lambda_harm2_gap08_mult%d",iCent));
+    if(!hFlowLambda) { printf("No Lambda\n"); return; }
+    TH1D* hFlowPhi = (TH1D*) fInputFileRecon->Get(Form("hFlow2_Phi_harm2_gap08_mult%d",iCent));
+    if(!hFlowPhi) { printf("No Phi\n"); return; }
+
+    // setting histos
+    // hFlowCharged->SetStats(kFALSE);
+    // hFlowCharged->GetXaxis()->SetRangeUser(0.2,10.);
+    // hFlowCharged->SetMinimum(0.);
+    // hFlowCharged->SetMaximum(0.5);
+
+    hFlowCharged->SetLineColor(colCharged);
+    hFlowCharged->SetMarkerColor(colCharged);
+    hFlowCharged->SetMarkerStyle(markCharged);
+    hFlowCharged->SetMarkerSize(markSizeCharged);
+
+    hFlowPion->SetLineColor(colPion);
+    hFlowPion->SetMarkerColor(colPion);
+    hFlowPion->SetMarkerStyle(markPion);
+    hFlowPion->SetMarkerSize(markSizePion);
+
+    hFlowKaon->SetLineColor(colKaon);
+    hFlowKaon->SetMarkerColor(colKaon);
+    hFlowKaon->SetMarkerStyle(markKaon);
+    hFlowKaon->SetMarkerSize(markSizeKaon);
+
+    hFlowProton->SetLineColor(colProton);
+    hFlowProton->SetMarkerColor(colProton);
+    hFlowProton->SetMarkerStyle(markProton);
+    hFlowProton->SetMarkerSize(markSizeProton);
+
+    hFlowPhi->SetLineColor(colPhi);
+    hFlowPhi->SetMarkerColor(colPhi);
+    hFlowPhi->SetMarkerStyle(markPhi);
+    hFlowPhi->SetMarkerSize(markSizePhi);
+
+    hFlowK0s->SetLineColor(colK0s);
+    hFlowK0s->SetMarkerColor(colK0s);
+    hFlowK0s->SetMarkerStyle(markK0s);
+    hFlowK0s->SetMarkerSize(markSizeK0s);
+
+    hFlowLambda->SetLineColor(colLambda);
+    hFlowLambda->SetMarkerColor(colLambda);
+    hFlowLambda->SetMarkerStyle(markLambda);
+    hFlowLambda->SetMarkerSize(markSizeLambda);
+
+
+
+    // drawing stuff
+    // hFlowCharged->Draw("same");
+    hFlowPion->Draw("hist p e1 x0 same");
+    hFlowKaon->Draw("hist p e1 x0  same");
+    hFlowProton->Draw("hist p e1 x0 same");
+    hFlowK0s->Draw("hist p e1 x0 same");
+    hFlowLambda->Draw("hist p e1 x0 same");
+    hFlowCharged->Draw("hist p e1 x0 same");
+    hFlowPhi->Draw("hist p e1 x0 same");
+
+    // Draw the logo
+    //  0: Just "ALICE" (for final data), to be added only if ALICE does not appear otherwise (e.g. in the legend)
+    //  >0: ALICE Preliminary
+    // DrawLogo(2, 0.186, 0.83);
+
+    // You should always specify the colliding system
+    // NOTATION: pp, p-Pb, Pb-Pb.
+    // Don't forget to use #sqrt{s_{NN}} for p-Pb and Pb-Pb
+    // You can change the position of this with
+
+
+    text->DrawLatexNDC(0.18,0.83,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
+    text2->DrawLatexNDC(0.18,0.78,Form("Centrality Class %s%% (V0A)",sCent[iCent].Data()));
+    // TLatex * text = new TLatex(0.3,0.25,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
+    // text->Draw();
+    // TLatex * text2 = new TLatex (0.3,0.23,Form("Multiplicity Class %s%% (V0A)",sCent.Data()));
+    // text2->SetTextSizePixels(22);
+    // text2->Draw();
+
+    // TLatex * text3 = new TLatex (0.55,0.76,"|#eta| < 0.8");
+    // text3->SetTextSizePixels(20);
+    // text3->Draw();
+
+
+    // making legend
+    // TLegend * legend = new TLegend(0.62, 0.18, 0.8, 0.46);
+    TLegend * legend = new TLegend(0.19, 0.48, 0.37, 0.76);
+    legend->SetFillColorAlpha(0,0);
+    legend->SetTextSize(gStyle->GetTextSize()*0.8);
+    // legend->SetBorderSize(1);
+
+    // TLegend * legend2 = new TLegend(0.72, 0.18, 0.91, 0.39);
+    TLegend * legend2 = new TLegend(0.29, 0.55, 0.48, 0.76);
+    legend2->SetFillColorAlpha(0,0);
+    legend2->SetTextSize(gStyle->GetTextSize()*0.8);
+    // legend2->SetBorderSize(1);
+
+    legend->AddEntry(hFlowCharged,"h^{#pm}","pl");
+    legend->AddEntry(hFlowPion,"#pi^{#pm}","pl");
+    legend->AddEntry(hFlowKaon,"K^{#pm}","pl");
+    legend->AddEntry(hFlowK0s,"K^{0}_{S}","pl");
+    legend2->AddEntry(hFlowProton,"p/#bar{p}","pl");
+    legend2->AddEntry(hFlowPhi,"#phi","pl");
+    legend2->AddEntry(hFlowLambda,"#Lambda/#bar{#Lambda}","pl");
+
+    legend->Draw();
+    legend2->Draw();
+
+    // cfig->SaveAs(Form("%s/plots/PID_%d.%s",sOutputFilePath.Data(),iCent,sOutputFormat.Data()));
+    cfig->SaveAs(Form("%s/PID_%d.pdf",sOutputFilePath.Data(),iCent));
+    cfig->SaveAs(Form("%s/PID_%d.png",sOutputFilePath.Data(),iCent));
+    cfig->SaveAs(Form("%s/PID_%d.eps",sOutputFilePath.Data(),iCent));
+
+  }
 
 
   return;
