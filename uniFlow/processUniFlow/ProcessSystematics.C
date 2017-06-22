@@ -422,7 +422,7 @@ TH1D* MakeRatio(TH1D* hBase, TH1D* hSyst, Bool_t bCorelated)
     dErrRatio = TMath::Power(dErrBase/dContSyst, 2) + TMath::Power( dErrSyst*dContBase/(dContSyst*dContSyst), 2);
     // printf("Err (before) : %g | ", TMath::Sqrt(dErrRatio));
 
-    if(bCorelated) dErrRatio += (2*dContBase*dErrBase*dErrSyst/TMath::Power(dContSyst,3));
+    if(bCorelated) dErrRatio -= (2*dContBase*dErrBase*dErrSyst/TMath::Power(dContSyst,3));
     // printf("(after) : %g\n", TMath::Sqrt(dErrRatio));
 
     hRatio->SetBinContent(iBin,dContRatio);
