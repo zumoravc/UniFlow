@@ -150,6 +150,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sCPALambdaMin(0.),
   fCutV0sDCAtoPVMin(0.),
   fCutV0sDCAtoPVMax(0.),
+  fCutV0sDCAtoPVzMax(0.),
   fCutV0sDCADaughtersMin(0.),
   fCutV0sDCADaughtersMax(0.),
   fCutV0sDecayRadiusMin(0.),
@@ -394,6 +395,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sCPALambdaMin(0.),
   fCutV0sDCAtoPVMin(0.),
   fCutV0sDCAtoPVMax(0.),
+  fCutV0sDCAtoPVzMax(0.),
   fCutV0sDCADaughtersMin(0.),
   fCutV0sDCADaughtersMax(0.),
   fCutV0sDecayRadiusMin(0.),
@@ -1478,6 +1480,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sCrossMassCutLambda: (Double_t) %g (GeV/c2)\n",     fCutV0sCrossMassCutLambda);
   printf("      fCutV0sDCAtoPVMin: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVMin);
   printf("      fCutV0sDCAtoPVMax: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVMax);
+  printf("      fCutV0sDCAtoPVzMax: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVzMax);
   printf("      fCutV0sDCADaughtersMin: (Double_t) %g (cm)\n",    fCutV0sDCADaughtersMin);
   printf("      fCutV0sDCADaughtersMax: (Double_t) %g (cm)\n",    fCutV0sDCADaughtersMax);
   printf("      fCutV0sDecayRadiusMin: (Double_t) %g (cm)\n",    fCutV0sDecayRadiusMin);
@@ -2392,12 +2395,39 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if(fCutV0srejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) ) return kFALSE;
   fhV0sCounter->Fill("Kinks",1);
 
+
   // Daughters DCA to PV
   const Float_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
   const Float_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
+
+  // note AliAODTrack::XYZAtDCA() works only for constrained tracks
+  Double_t dVertexXYZ[3] = {0.};
+  Double_t dTrackXYZpos[3] = {0};
+  Double_t dTrackXYZneg[3] = {0};
+  Double_t dDCAXYZpos[3] = {0.};
+  Double_t dDCAXYZneg[3] = {0.};
+  if( fCutV0sDCAtoPVzMax > 0. )
+  {
+    const AliAODVertex* vertex = fEventAOD->GetPrimaryVertex();
+    if(!vertex) return kFALSE; // event does not have a PV
+
+    daughterPos->GetXYZ(dTrackXYZpos);
+    daughterNeg->GetXYZ(dTrackXYZneg);
+    vertex->GetXYZ(dVertexXYZ);
+
+    for(Short_t i(0); i < 3; i++)
+    {
+      dDCAXYZpos[i] = dTrackXYZpos[i] - dVertexXYZ[i];
+      dDCAXYZneg[i] = dTrackXYZneg[i] - dVertexXYZ[i];
+    }
+  }
+
   if(fCutV0sDCAtoPVMin > 0. && ( dDCAPosToPV < fCutV0sDCAtoPVMin || dDCANegToPV < fCutV0sDCAtoPVMin ) ) return kFALSE;
   if(fCutV0sDCAtoPVMax > 0. && ( dDCAPosToPV > fCutV0sDCAtoPVMax || dDCANegToPV > fCutV0sDCAtoPVMax ) ) return kFALSE;
+  if(fCutV0sDCAtoPVzMax > 0. && ( TMath::Abs(dDCAXYZpos[2]) > fCutV0sDCAtoPVzMax || TMath::Abs(dDCAXYZneg[2]) > fCutV0sDCAtoPVzMax ) ) return kFALSE;
   fhV0sCounter->Fill("DCA to PV",1);
+
+
 
   // Daughter DCA among themselves
   if(fCutV0sDCADaughtersMin > 0. && TMath::Abs(v0->DcaV0Daughters()) < fCutV0sDCADaughtersMin) return kFALSE;
