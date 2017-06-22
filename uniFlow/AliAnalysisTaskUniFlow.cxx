@@ -155,6 +155,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sDCADaughtersMax(0.),
   fCutV0sDecayRadiusMin(0.),
   fCutV0sDecayRadiusMax(0.),
+  fCutV0sDaughterFilterBit(0),
   fCutV0sDaughterPtMin(0.),
   fCutV0sDaughterPtMax(0.),
   fCutV0sDaughterEtaMax(0.),
@@ -400,6 +401,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sDCADaughtersMax(0.),
   fCutV0sDecayRadiusMin(0.),
   fCutV0sDecayRadiusMax(0.),
+  fCutV0sDaughterFilterBit(0),
   fCutV0sDaughterPtMin(0.),
   fCutV0sDaughterPtMax(0.),
   fCutV0sDaughterEtaMax(0.),
@@ -1481,6 +1483,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sDCAtoPVMin: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVMin);
   printf("      fCutV0sDCAtoPVMax: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVMax);
   printf("      fCutV0sDCAtoPVzMax: (Double_t) %g (cm)\n",    fCutV0sDCAtoPVzMax);
+  printf("      fCutV0sDaughterFilterBit: (UInt) %d\n",    fCutV0sDaughterFilterBit);
   printf("      fCutV0sDCADaughtersMin: (Double_t) %g (cm)\n",    fCutV0sDCADaughtersMin);
   printf("      fCutV0sDCADaughtersMax: (Double_t) %g (cm)\n",    fCutV0sDCADaughtersMax);
   printf("      fCutV0sDecayRadiusMin: (Double_t) %g (cm)\n",    fCutV0sDecayRadiusMin);
@@ -2371,9 +2374,14 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   const AliAODTrack* daughterPos = (AliAODTrack*) v0->GetDaughter(0);
   const AliAODTrack* daughterNeg = (AliAODTrack*) v0->GetDaughter(1);
 
+
   // daughter track check
   if(!daughterPos || !daughterNeg) return kFALSE;
   fhV0sCounter->Fill("Daughters OK",1);
+
+  // filter bit
+  // printf("FB: %d\n",daughterPos->TestFilterBit(fCutV0sDaughterFilterBit));
+  if( fCutV0sDaughterFilterBit > 0 && (!daughterPos->TestFilterBit(fCutV0sDaughterFilterBit) || !daughterNeg->TestFilterBit(fCutV0sDaughterFilterBit) ) ) return kFALSE;
 
   // daughters & mother charge checks
   if( (TMath::Abs(daughterPos->Charge()) != 1) || (TMath::Abs(daughterNeg->Charge()) != 1) ) return kFALSE;

@@ -126,7 +126,8 @@ void runAnalysis()
     task1->SetV0sUseCrossMassRejection(kTRUE);
     task1->SetV0sDCAPVMin(0.06);
     task1->SetV0sDCAPVMax(0.);
-    task1->SetV0sDCAPVzMax(1.);
+    // task1->SetV0sDCAPVzMax(1.);
+    // task1->SetV0sDaughtersFilterBit(211);
     task1->SetV0sDCADaughtersMax(1.);
     task1->SetV0sDecayRadiusMin(0.5);
     task1->SetV0sDecayRadiusMax(0.);
