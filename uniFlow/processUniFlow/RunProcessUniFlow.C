@@ -129,7 +129,8 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrLambda_<2>_harm2_gap08_Pos");
 	taskLambda->SetFittingRejectNumSigmas(4);
 	taskLambda->SetMergePosNeg();
-	// process->AddTask(taskLambda);
+	taskLambda->SetfFlowFitFixTerms(0);
+	process->AddTask(taskLambda);
 
 
 	FlowTask* taskPhi = new FlowTask("Phi",FlowTask::kPhi);
@@ -141,7 +142,8 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	// taskPhi->SetAlternativeProfileName("fp3PhiCorr_<2>_harm2_gap08_Pos");
 	taskPhi->SetFittingRange(1.,1.05);
 	taskPhi->SetMergePosNeg();
-	// process->AddTask(taskPhi);
+	taskPhi->SetfFlowFitFixTerms(0);
+	process->AddTask(taskPhi);
 
 	FlowTask* K0sFitting = new FlowTask("K0s",FlowTask::kK0s);
 	K0sFitting->SetHarmonics(2);
@@ -168,7 +170,7 @@ void RunProcessUniFlow(const char* sOutputFilePath = "")
 	// K0sFittingNoFix->SetPtBins(dPtKaon,sizeof(dPtKaon)/sizeof(dPtKaon[0]));
 	K0sFittingNoFix->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
 	// K0sFittingNoFix->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Pos");
-	// K0sFittingNoFix->SetFittingRange(0.46,0.56);
+	K0sFittingNoFix->SetFittingRange(0.44,0.56);
 	K0sFittingNoFix->SetFittingRejectNumSigmas(5);
 	K0sFittingNoFix->SetMergePosNeg();
 	// task7->SuggestPtBinning(1,30000);
