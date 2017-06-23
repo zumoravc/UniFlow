@@ -24,8 +24,8 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/NUA_cor/merged_16qt_noFASTt/fitTest");
 	process->SetOutputFileName("UniFlow.root");
 	// process->SetOutputFileMode("UPDATE");
-	// process->SetDebug(kFALSE);
-	process->SetDebug(kTRUE);
+	process->SetDebug(kFALSE);
+	// process->SetDebug(kTRUE);
 	// process->SuggestMultBinning(4);
 
 	// setting multiplicity binning
@@ -87,7 +87,7 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	K0sFittingNoFix->SetMergePosNeg(1);
 	K0sFittingNoFix->SetFlowFitFixTerms(kFALSE);
 	// task7->SuggestPtBinning(1,30000);
-	// process->AddTask(K0sFittingNoFix);
+	process->AddTask(K0sFittingNoFix);
 
 	FlowTask* taskLambda = new FlowTask("Lambda",FlowTask::kLambda);
 	taskLambda->SetHarmonics(2);
@@ -101,7 +101,7 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	taskLambda->SetFittingRejectNumSigmas(9);
 	taskLambda->SetMergePosNeg();
 	taskLambda->SetFlowFitFixTerms(0);
-	// process->AddTask(taskLambda);
+	process->AddTask(taskLambda);
 
 
 	FlowTask* taskPhi = new FlowTask("Phi",FlowTask::kPhi);
@@ -111,7 +111,7 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	taskPhi->SetFlowMassRebin(2);
 	taskPhi->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
 	// taskPhi->SetAlternativeProfileName("fp3PhiCorr_<2>_harm2_gap08_Pos");
-	taskPhi->SetFittingRange(1.,1.059);
+	taskPhi->SetFittingRange(1.001,1.059);
 	taskPhi->SetMergePosNeg();
 	taskPhi->SetFlowFitFixTerms(0);
 	taskPhi->SetFlowPhiSubtLS(1);

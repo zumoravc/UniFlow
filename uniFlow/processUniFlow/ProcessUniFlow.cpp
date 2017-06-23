@@ -2200,7 +2200,9 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowPhi");
 	canFitInvMass->cd(6);
-	fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
+
+  if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
+  else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
 	// fitFlowSide = new TF1("fitFlowSide","pol3(0)",dFittingLow,dFittingHigh);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
@@ -2433,7 +2435,11 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowK0s");
 	canFitInvMass->cd(6);
-	fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
+
+  if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
+  else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
+
+	// fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
   Debug("====== Fitting FlowMass total flow ========","ExtractFlowK0s");
@@ -2656,7 +2662,11 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	}
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowLambda");
   canFitInvMass->cd(6);
-	fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
+
+  if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
+  else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
+
+  // fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
 	// fitFlowSide = new TF1("fitFlowSide","pol2(0)",dFittingLow,dFittingHigh);
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
