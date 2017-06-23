@@ -46,8 +46,8 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	// Double_t dPtBinningK0s[] = {2.,4.};
 	// Double_t dPtBinningK0s[] = {0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.6,3.,3.5,4.,5.,6.};
 	Double_t dPtBinningK0s[] = {0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.};
-	// Double_t dPtBinningLambda[] = {0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.,3.5,4.,5.,6.};
-	Double_t dPtBinningLambda[] = {0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.7,4.5,6.};
+	// Double_t dPtBinningLambda[] = {0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.7,4.5,6.};
+	Double_t dPtBinningLambda[] = {0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.8,4.6,6.};
 	Double_t dPtBinningPhi[] = {0.5,1.,1.5,2.,2.5,3.,4.,6.};
 
 	// // Double_t dPt[] = {1.,1.2};
@@ -94,7 +94,7 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	taskLambda->SetInvMassRebin(2);
 	taskLambda->SetFlowMassRebin(2);
 	taskLambda->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
-	taskLambda->SetFittingRange(1.099,1.145);
+	taskLambda->SetFittingRange(1.099,1.147);
 	// taskLambda->SetFittingRejectNumSigmas(3);
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrLambda_<2>_harm2_gap08_Pos");
 	taskLambda->SetFittingRejectNumSigmas(9);

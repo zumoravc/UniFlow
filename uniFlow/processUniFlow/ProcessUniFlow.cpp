@@ -970,6 +970,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
   TCanvas* cFlow = new TCanvas("cFlow","cFlow");
   cFlow->cd();
+  hFlow->SetStats(0);
   hFlow->Draw();
   cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
