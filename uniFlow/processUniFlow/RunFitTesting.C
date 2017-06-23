@@ -24,7 +24,8 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	process->SetOutputFilePath("/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/NUA_cor/merged_16qt_noFASTt/fitTest");
 	process->SetOutputFileName("UniFlow.root");
 	// process->SetOutputFileMode("UPDATE");
-	process->SetDebug(kFALSE);
+	// process->SetDebug(kFALSE);
+	process->SetDebug(kTRUE);
 	// process->SuggestMultBinning(4);
 
 	// setting multiplicity binning
@@ -76,7 +77,7 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	K0sFittingNoFix->SetEtaGap(0.8);
 	K0sFittingNoFix->SetInvMassRebin(2);
 	K0sFittingNoFix->SetFlowMassRebin(2);
-	K0sFittingNoFix->SetfFlowFitFixTerms(kFALSE);
+	K0sFittingNoFix->SetFlowFitFixTerms(kFALSE);
 	// task7->SetShowMultDist(kTRUE);
 	// K0sFittingNoFix->SetPtBins(dPtKaon,sizeof(dPtKaon)/sizeof(dPtKaon[0]));
 	K0sFittingNoFix->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
@@ -84,7 +85,7 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	K0sFittingNoFix->SetFittingRejectNumSigmas(7);
 	K0sFittingNoFix->SetFittingRange(0.44,0.56);
 	K0sFittingNoFix->SetMergePosNeg(1);
-	K0sFittingNoFix->SetfFlowFitFixTerms(kFALSE);
+	K0sFittingNoFix->SetFlowFitFixTerms(kFALSE);
 	// task7->SuggestPtBinning(1,30000);
 	// process->AddTask(K0sFittingNoFix);
 
@@ -99,8 +100,8 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrLambda_<2>_harm2_gap08_Pos");
 	taskLambda->SetFittingRejectNumSigmas(9);
 	taskLambda->SetMergePosNeg();
-	taskLambda->SetfFlowFitFixTerms(0);
-	process->AddTask(taskLambda);
+	taskLambda->SetFlowFitFixTerms(0);
+	// process->AddTask(taskLambda);
 
 
 	FlowTask* taskPhi = new FlowTask("Phi",FlowTask::kPhi);
@@ -110,10 +111,11 @@ void RunFitTesting(const char* sOutputFilePath = "")
 	taskPhi->SetFlowMassRebin(2);
 	taskPhi->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
 	// taskPhi->SetAlternativeProfileName("fp3PhiCorr_<2>_harm2_gap08_Pos");
-	taskPhi->SetFittingRange(1.,1.05);
+	taskPhi->SetFittingRange(1.,1.059);
 	taskPhi->SetMergePosNeg();
-	taskPhi->SetfFlowFitFixTerms(0);
-	// process->AddTask(taskPhi);
+	taskPhi->SetFlowFitFixTerms(0);
+	taskPhi->SetFlowPhiSubtLS(1);
+	process->AddTask(taskPhi);
 
 	FlowTask* K0sFitting = new FlowTask("K0s",FlowTask::kK0s);
 	K0sFitting->SetHarmonics(2);
