@@ -44,6 +44,7 @@ class FlowTask
     void        SetMergePosNeg(Bool_t merge = kTRUE) {fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
     void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
+    void        SetfFlowFitFixTerms(Bool_t fix = kTRUE) { fFlowFitFixTerms = fix; }
     void        SetFittingRange(Double_t low = 0., Double_t high = 0.) { if(low > 0. && high > 0. && low < high) { fFlowFitRangeLow = low; fFlowFitRangeHigh = high; } else printf("E-SetFittingRange: One of the edges unspecified: values not set."); }
     void        SetFittingRejectNumSigmas(UShort_t sigmas) { fFlowFitRejectNumSigmas = sigmas; }
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -69,6 +70,7 @@ class FlowTask
     Bool_t      fSuggestPtBins; // suggest pt binning
     Double_t    fSuggestPtBinEntries; // suggest pt binning
     // Reconstructed fitting
+    Bool_t      fFlowFitFixTerms; // [kTRUE] flag for using sequential flow extraction (fixing all terms in master formula)
     Double_t    fFlowFitRangeLow; // lower edge for fitting during flow extraction
     Double_t    fFlowFitRangeHigh; // high edge for fitting during flow extraction
     UShort_t    fFlowFitRejectNumSigmas; // number of sigmas for rejection peak region
@@ -94,6 +96,7 @@ FlowTask::FlowTask()
   fMergePosNeg = kFALSE;
   fSuggestPtBins = kFALSE;
   fSuggestPtBinEntries = 20000;
+  fFlowFitFixTerms = kTRUE;
   fFlowFitRangeLow = 0;
   fFlowFitRangeHigh = 0;
   fFlowFitRejectNumSigmas = 0;
@@ -2357,18 +2360,37 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
   canFitInvMass->cd(5);
 
 	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
-	// Inv mass ratio signal/total
-	fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-	fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-	fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-	fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-	fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-	fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-	fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
-	// FlowMass backround / sidebands
-	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
-	fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
-	// fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
+
+  if(task->fFlowFitFixTerms) // fix terms from background flowe stiamtion
+  {
+    // Inv mass ratio signal/total
+    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
+    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
+    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
+    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
+    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
+    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+    fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
+    // FlowMass backround / sidebands
+    fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
+    fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
+    // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
+  }
+  else
+  {
+    // Inv mass ratio signal/total
+    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
+    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
+    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
+    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
+    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
+    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+    fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
+    // FlowMass backround / sidebands
+    fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(0));
+    fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
+    // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
+  }
 	hFlowMass->Fit("fitFlowTot","R");
 
 	dFlow = fitFlowTot->GetParameter(0);
