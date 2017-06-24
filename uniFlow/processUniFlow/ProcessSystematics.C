@@ -29,23 +29,22 @@ const char* sOutputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/comp
 
 const char* sBaseFile = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/NUA_cor/merged_16qt_noFASTt/fitTest/UniFlow_NUA_cor.root";
 
-// const char* sCommonTag = "tpcCls"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"uniflow_tpcCls80"};
-const char* sCommonTag = "tpcCls"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"uniflow_tpcCls80","uniflow_tpcCls90"};
-// const char* sTaskTag[iNumFiles] = {"NUA_cor_cent","noNUA_cent","vtx8","vtx9","tpcCls80","tpcCls90","CPA","filterBit","bgFunc","fitRange"};
-// const char* sTaskTag[iNumFiles] = {"NUA_cor_cent","noNUA_cent","vtx8","vtx9","tpcCls80","tpcCls90","2sigma","bayes","filterBit","bgFunc","fitRange"};
-// const char* sTaskTag[iNumFiles] = {"NUA_cor_cent","noNUA_cent","vtx8","vtx9","tpcCls80","tpcCls90","filterBit"};
+// const char* sCommonTag = "tpcCls"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"uniflow_tpcCls80","uniflow_tpcCls90"}; Bool_t plotTogether = 1;
+// const char* sCommonTag = "dca"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"UniFlow_dcaxy","UniFlow_dcaz"}; Bool_t plotTogether = 0;
+// const char* sCommonTag = "Vtx_z"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"UniFlow_vtx8","UniFlow_vtx9"}; Bool_t plotTogether = 1;
+// const char* sCommonTag = "filterBit_withNUA"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"UniFlow_fb768}; Bool_t plotTogether = 0;
+// const char* sCommonTag = "v0s"; const Short_t iNumFiles = 5; const char* sTaskTag[iNumFiles] = {"UniFlow_CPA","UniFlow_DCA","uniflow_dcaZ","UniFlow_DecayRadius","uniflow_NoArmernteros"}; Bool_t plotTogether = 0;
+// const char* sCommonTag = "pid"; const Short_t iNumFiles = 3; const char* sTaskTag[iNumFiles] = {"UniFlow","UniFlow_2sigma",UniFlow_bayes}; Bool_t plotTogether = 1;
 
-// const char* sTaskTag[iNumFiles] = {"fb96","fb768"};
+// const Short_t iNumSpecies = 3; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult","hFlow2_Phi_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.5,0.5 0.5}; Double_t dFittRangeHigh[iNumSpecies] = {6.,6.,6.};
+const Short_t iNumSpecies = 2; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.5, 0.5}; Double_t dFittRangeHigh[iNumSpecies] = {6.,6.};
+// const Short_t iNumSpecies = 1; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.5}; Double_t dFittRangeHigh[iNumSpecies] = {6.};
+
 
 //const Short_t iNumSpecies = 4; const char* sSpecies[iNumSpecies] = {"hFlow2_Charged_harm2_gap08_cent","hFlow2_Pion_harm2_gap08_cent","hFlow2_Kaon_harm2_gap08_cent","hFlow2_Proton_harm2_gap08_cent"};
-// const Short_t iNumSpecies = 3; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult","hFlow2_Phi_harm2_gap08_mult"};
-const Short_t iNumSpecies = 2; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.5, 0.5}; Double_t dFittRangeHigh[iNumSpecies] = {4.,4.};
 // const Short_t iNumSpecies = 1; const char* sSpecies[iNumSpecies] = {"hFlow2_Phi_harm2_gap08_mult"};
-
-
-
 // Bool_t plotTogether = kTRUE;
-Bool_t plotTogether = kFALSE;
+// Bool_t plotTogether = kFALSE;
 
 const Short_t iNumCent = 4;
 const char* sCentTag[iNumCent] = {"0-20","20-40","40-60","60-100"};
