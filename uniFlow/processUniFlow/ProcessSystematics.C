@@ -29,6 +29,7 @@ const char* sOutputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/comp
 
 const char* sBaseFile = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/NUA_cor/merged_16qt_noFASTt/fitTest/UniFlow_NUA_cor.root";
 
+// const char* sCommonTag = "tpcCls"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"uniflow_tpcCls80"};
 const char* sCommonTag = "tpcCls"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"uniflow_tpcCls80","uniflow_tpcCls90"};
 // const char* sTaskTag[iNumFiles] = {"NUA_cor_cent","noNUA_cent","vtx8","vtx9","tpcCls80","tpcCls90","CPA","filterBit","bgFunc","fitRange"};
 // const char* sTaskTag[iNumFiles] = {"NUA_cor_cent","noNUA_cent","vtx8","vtx9","tpcCls80","tpcCls90","2sigma","bayes","filterBit","bgFunc","fitRange"};
@@ -37,20 +38,20 @@ const char* sCommonTag = "tpcCls"; const Short_t iNumFiles = 2; const char* sTas
 // const char* sTaskTag[iNumFiles] = {"fb96","fb768"};
 
 //const Short_t iNumSpecies = 4; const char* sSpecies[iNumSpecies] = {"hFlow2_Charged_harm2_gap08_cent","hFlow2_Pion_harm2_gap08_cent","hFlow2_Kaon_harm2_gap08_cent","hFlow2_Proton_harm2_gap08_cent"};
-const Short_t iNumSpecies = 3; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult","hFlow2_Phi_harm2_gap08_mult"};
-// const char* sSpecies[iNumSpecies] = {"hFlow2_Lambda_harm2_gap08_mult"};
-// const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult"};
-// const char* sSpecies[iNumSpecies] = {"hFlow2_Phi_harm2_gap08_mult"};
-// const char* sSpecies[iNumSpecies] = {"hFlow2_Charged_harm2_gap08_cent"};
-// const char* sSpecies[iNumSpecies] = {"hFlow2_Pion_harm2_gap08_cent"};
-// const char* sSpecies[iNumSpecies] = {"hFlow2_Kaon_harm2_gap08_cent"};
-// const char* sSpecies[iNumSpecies] = {"hFlow2_Proton_harm2_gap08_cent"};
+// const Short_t iNumSpecies = 3; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult","hFlow2_Phi_harm2_gap08_mult"};
+const Short_t iNumSpecies = 2; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.5, 0.5}; Double_t dFittRangeHigh[iNumSpecies] = {4.,4.};
+// const Short_t iNumSpecies = 1; const char* sSpecies[iNumSpecies] = {"hFlow2_Phi_harm2_gap08_mult"};
+
+
+
+// Bool_t plotTogether = kTRUE;
+Bool_t plotTogether = kFALSE;
 
 const Short_t iNumCent = 4;
 const char* sCentTag[iNumCent] = {"0-20","20-40","40-60","60-100"};
 
 const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7};
-const Int_t colors[]     = {kGreen+3, kBlue+1, kMagenta+1,kRed+1,kOrange-1,kCyan+2,kYellow+2,kRed+2,kMagenta-3,kBlack};
+const Int_t colors[]     = {kGreen+3, kBlue+1,kRed,kOrange-1,kCyan+2,kYellow+2,kRed+2,kMagenta-3,kBlack};
 const Int_t markers[]    = {kFullCircle, kFullSquare,kFullDiamond,kFullCross,kOpenCircle,kOpenSquare,kOpenDiamond,kOpenCross,kFullDiamond,kFullStar,kOpenStar};
 
 
@@ -72,6 +73,7 @@ void ProcessSystematics()
   TList* list = new TList();
 
   TCanvas* canSuper = new TCanvas("canSuper","canSuper",800,800);
+  canSuper->Divide(3,4);
   TCanvas* canRatio = new TCanvas("canRatio","canRatio",800,800);
   TCanvas* canBarlow = new TCanvas("canBarlow","canBarlow",800,800);
   TCanvas* canOver = new TCanvas("canOver","canOver",1200,400);
@@ -90,79 +92,230 @@ void ProcessSystematics()
 
   TLatex* latex = new TLatex();
   latex->SetNDC();
+  latex->SetTextSize(0.06);
+  TLatex* latexRed = new TLatex();
+  latexRed->SetTextColor(kRed);
+  latexRed->SetNDC();
+  latexRed->SetTextSize(0.06);
+
+  TLatex* latexTog = new TLatex();
+  latexTog->SetNDC();
+  latexTog->SetTextSize(0.06);
 
   TFile* fInputFileBase = new TFile(sBaseFile,"READ");
   if(!fInputFileBase) { printf("InputFileBase not found!\n"); return; }
 
-  for(Short_t iFile(0); iFile < iNumFiles; iFile++)
-  {
-    fInputFile = new TFile(Form("%s/%s/%s/UniFlow_%s.root",sInputPath,sCommonTag,sTaskTag[iFile],sTaskTag[iFile]),"READ");
-    if(!fInputFile) { printf("InputFile (%d) not found!\n",iFile); return; }
+  TLegend* legend = new TLegend(0.45,0.14,0.82,0.55);
+  TLegend* legendSolo = new TLegend(0.45,0.25,0.82,0.45);
+  legendSolo->SetBorderSize(0);
+  legendSolo->SetFillColorAlpha(0,0);
+  legend->SetBorderSize(0);
+  legend->SetFillColorAlpha(0,0);
 
+
+  if(!plotTogether)
+  {
+    for(Short_t iFile(0); iFile < iNumFiles; iFile++)
+    {
+      fInputFile = new TFile(Form("%s/%s/%s/UniFlow_%s.root",sInputPath,sCommonTag,sTaskTag[iFile],sTaskTag[iFile]),"READ");
+      if(!fInputFile) { printf("InputFile (%d) not found!\n",iFile); return; }
+
+      // loop over species (histos of interests)
+      for(Short_t iSpecies(0); iSpecies < iNumSpecies; iSpecies++)
+      {
+        // loop over centralities (histos of interests)
+        for(Short_t iCent(0); iCent < iNumCent; iCent++)
+        {
+
+          hBase = (TH1D*) fInputFileBase->Get(Form("%s%d",sSpecies[iSpecies],iCent));
+          if(!hBase) { printf("Histos Base not found: file %d | species %d\n",iFile,iSpecies); fInputFileBase->ls(); return; }
+          hBase->SetLineColor(colors[0]);
+          hBase->SetMarkerColor(colors[0]);
+          hBase->SetMarkerStyle(markers[0]);
+          hBase->SetTitle("; #it{p}_{T} (GeV#it{c}); v_{2}");
+
+          hTemp = (TH1D*) fInputFile->Get(Form("%s%d",sSpecies[iSpecies],iCent));
+          if(!hTemp) { printf("Histos not found: file %d | species %d\n",iFile,iSpecies); fInputFile->ls(); return; }
+          hTemp->SetLineColor(colors[1]);
+          hTemp->SetMarkerColor(colors[1]);
+          hTemp->SetMarkerStyle(markers[1]);
+
+          if(iCent == 0 && iSpecies == 0) legendSolo->AddEntry(hTemp,sTaskTag[iFile],"pel");
+
+
+          hRatio = MakeRatio(hBase,hTemp,1);
+          hRatio->SetTitle("Ratio systematic/baseline; #it{p}_{T} (GeV/#it{c}); syst / baseline;");
+          hRatio->SetName(Form("default/%s",sTaskTag[iFile]));
+
+          hBarlow = DoBarlowTest(hBase,hTemp,1);
+          hBarlow->SetTitle("Barlow Test; #it{p}_{T} (GeV/#it{c}); Barlow #it{B}");
+          hBarlow->SetMaximum(5);
+          hBarlow->SetMinimum(0);
+
+          canRatio->cd();
+          gPad->SetGrid(0,1);
+          // frame_ratio = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),2.);
+          hRatio->Draw("hist p e ");
+          // fitRatio = new TF1("fitRatio","[0]",hRatio->GetXaxis()->GetXmin(),hRatio->GetXaxis()->GetXmax());
+          fitRatio = new TF1("fitRatio","[0]",dFittRangeLow[iSpecies],dFittRangeHigh[iSpecies]);
+          hRatio->Fit("fitRatio","R");
+          fitRatio->Draw("same");
+          latex->DrawLatex(0.16,0.77,Form("%s%%",sCentTag[iCent]));
+          latexRed->DrawLatex(0.45,0.77,Form("%.3g#pm%.3g",fitRatio->GetParameter(0),fitRatio->GetParError(0)));
+          latex->DrawLatex(0.16,0.84,Form("%s",sSpecies[iSpecies]));
+          // canRatio->SaveAs(Form("%s/%s/Ratio_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
+
+          canBarlow->cd();
+          gPad->SetGrid(0,1);
+          // frame_barlow = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),5.);
+          hBarlow->Draw("hist p e");
+          // canBarlow->SaveAs(Form("%s/%s/Barlow_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
+
+          canOver->cd(1);
+          hBase->Draw("hist p e");
+          hTemp->Draw("hist p e same");
+          canOver->cd(2);
+          gPad->SetGrid(0,1);
+          // frame_ratio = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),2.);
+          hRatio->Draw("hist p e");
+          fitRatio->Draw("same");
+          latex->DrawLatex(0.13,0.74,Form("%s%%",sCentTag[iCent]));
+          latex->DrawLatex(0.13,0.82,Form("%s",sSpecies[iSpecies]));
+          latexRed->DrawLatex(0.45,0.74,Form("%.3g#pm%.3g",fitRatio->GetParameter(0),fitRatio->GetParError(0)));
+          canOver->cd(3);
+          // frame_barlow = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),5.);
+          gPad->SetGrid(0,1);
+          hBarlow->Draw("hist p e");
+          // canOver->SaveAs(Form("%s/%s/Over_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
+
+          canSuper->cd(iCent*3+1);
+          // gPad->SetGrid(0,1);
+          hBase->Draw("hist p e");
+          hTemp->Draw("hist p e same");
+          // if(iCent == 0)
+          legendSolo->Draw();
+
+
+
+          canSuper->cd(iCent*3+2);
+          gPad->SetGrid(0,1);
+          hRatio->Draw("hist p e");
+          fitRatio->Draw("same");
+          latex->DrawLatex(0.16,0.77,Form("%s%%",sCentTag[iCent]));
+          latexRed->DrawLatex(0.45,0.77,Form("%.3g#pm%.3g",fitRatio->GetParameter(0),fitRatio->GetParError(0)));
+          latex->DrawLatex(0.16,0.84,Form("%s",sSpecies[iSpecies]));
+
+          canSuper->cd(iCent*3+3);
+          gPad->SetGrid(0,1);
+          hBarlow->Draw("hist p e");
+        }
+        canSuper->SaveAs(Form("%s/%s/0_%s_%s.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile]));
+      }
+    }
+  }
+  else
+  {
     // loop over species (histos of interests)
     for(Short_t iSpecies(0); iSpecies < iNumSpecies; iSpecies++)
     {
-      // loop over centralities (histos of interests)
-      for(Short_t iCent(0); iCent < iNumCent; iCent++)
+      for(Short_t iFile(0); iFile < iNumFiles; iFile++)
       {
-        hBase = (TH1D*) fInputFileBase->Get(Form("%s%d",sSpecies[iSpecies],iCent));
-        if(!hBase) { printf("Histos Base not found: file %d | species %d\n",iFile,iSpecies); fInputFileBase->ls(); return; }
-        hBase->SetLineColor(colors[0]);
-        hBase->SetMarkerColor(colors[0]);
-        hBase->SetMarkerStyle(markers[0]);
-        hBase->SetTitle("; #it{p}_{T} (GeV#it{c}); v_{2}");
+        // canSuper->Clear("D");
+        fInputFile = new TFile(Form("%s/%s/%s/UniFlow_%s.root",sInputPath,sCommonTag,sTaskTag[iFile],sTaskTag[iFile]),"READ");
+        if(!fInputFile) { printf("InputFile (%d) not found!\n",iFile); return; }
 
-        hTemp = (TH1D*) fInputFile->Get(Form("%s%d",sSpecies[iSpecies],iCent));
-        if(!hTemp) { printf("Histos not found: file %d | species %d\n",iFile,iSpecies); fInputFile->ls(); return; }
-        hTemp->SetLineColor(colors[1]);
-        hTemp->SetMarkerColor(colors[1]);
-        hTemp->SetMarkerStyle(markers[1]);
+        // loop over centralities (histos of interests)
+        for(Short_t iCent(0); iCent < iNumCent; iCent++)
+        {
+          hBase = (TH1D*) fInputFileBase->Get(Form("%s%d",sSpecies[iSpecies],iCent));
+          if(!hBase) { printf("Histos Base not found: file %d | species %d\n",iFile,iSpecies); fInputFileBase->ls(); return; }
+          hBase->SetLineColor(colors[0]);
+          hBase->SetMarkerColor(colors[0]);
+          hBase->SetMarkerStyle(markers[0]);
+          hBase->SetTitle("; #it{p}_{T} (GeV#it{c}); v_{2}");
 
-        hRatio = MakeRatio(hBase,hTemp,1);
-        hRatio->SetTitle("Ratio systematic/baseline; #it{p}_{T} (GeV/#it{c}); syst / baseline;");
-        hRatio->SetName(Form("default/%s",sTaskTag[iFile]));
+          hTemp = (TH1D*) fInputFile->Get(Form("%s%d",sSpecies[iSpecies],iCent));
+          if(!hTemp) { printf("Histos not found: file %d | species %d\n",iFile,iSpecies); fInputFile->ls(); return; }
+          hTemp->SetLineColor(colors[iFile+1]);
+          hTemp->SetMarkerColor(colors[iFile+1]);
+          hTemp->SetMarkerStyle(markers[iFile+1]);
 
-        hBarlow = DoBarlowTest(hBase,hTemp,1);
-        hBarlow->SetTitle("Barlow Test; #it{p}_{T} (GeV/#it{c}); Barlow #it{B}");
-        hBarlow->SetMaximum(5);
-        hBarlow->SetMinimum(0);
+          if(iCent == 0 && iSpecies == 0) legend->AddEntry(hTemp,sTaskTag[iFile],"pel");
 
-        canRatio->cd();
-        gPad->SetGrid(0,1);
-        // frame_ratio = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),2.);
-        hRatio->Draw("hist p e ");
-        fitRatio = new TF1("fitRatio","[0]",hRatio->GetXaxis()->GetXmin(),hRatio->GetXaxis()->GetXmax());
-        hRatio->Fit("fitRatio","R");
-        fitRatio->Draw("same");
-        latex->DrawLatex(0.16,0.77,Form("%s%%",sCentTag[iCent]));
-        latex->DrawLatex(0.45,0.77,Form("%.3g#pm%.3g",fitRatio->GetParameter(0),fitRatio->GetParError(0)));
-        latex->DrawLatex(0.16,0.84,Form("%s",sSpecies[iSpecies]));
-        canRatio->SaveAs(Form("%s/%s/Ratio_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
 
-        canBarlow->cd();
-        gPad->SetGrid(0,1);
-        // frame_barlow = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),5.);
-        hBarlow->Draw("hist p e");
-        canBarlow->SaveAs(Form("%s/%s/Barlow_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
+          hRatio = MakeRatio(hBase,hTemp,1);
+          hRatio->SetTitle("Ratio systematic/baseline; #it{p}_{T} (GeV/#it{c}); syst / baseline;");
+          hRatio->SetName(Form("default/%s",sTaskTag[iFile]));
 
-        canOver->cd(1);
-        hBase->Draw("hist p e");
-        hTemp->Draw("hist p e same");
-        canOver->cd(2);
-        gPad->SetGrid(0,1);
-        // frame_ratio = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),2.);
-        hRatio->Draw("hist p e");
-        fitRatio->Draw("same");
-        latex->DrawLatex(0.16,0.77,Form("%s%%",sCentTag[iCent]));
-        latex->DrawLatex(0.45,0.77,Form("%.3g#pm%.3g",fitRatio->GetParameter(0),fitRatio->GetParError(0)));
-        latex->DrawLatex(0.16,0.84,Form("%s",sSpecies[iSpecies]));
-        canOver->cd(3);
-        // frame_barlow = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),5.);
-        gPad->SetGrid(0,1);
-        hBarlow->Draw("hist p e");
-        canOver->SaveAs(Form("%s/%s/Over_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
+          hBarlow = DoBarlowTest(hBase,hTemp,1);
+          hBarlow->SetTitle("Barlow Test; #it{p}_{T} (GeV/#it{c}); Barlow #it{B}");
+          hBarlow->SetMaximum(5);
+          hBarlow->SetMinimum(0);
+
+          canRatio->cd();
+          gPad->SetGrid(0,1);
+          // frame_ratio = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),2.);
+          hRatio->Draw("hist p e ");
+          // fitRatio = new TF1("fitRatio","[0]",hRatio->GetXaxis()->GetXmin(),hRatio->GetXaxis()->GetXmax());
+          fitRatio = new TF1("fitRatio","[0]",dFittRangeLow[iSpecies],dFittRangeHigh[iSpecies]);
+          fitRatio->SetLineColor(colors[iFile+1]);
+          hRatio->Fit("fitRatio","R");
+          fitRatio->Draw("same");
+          latex->DrawLatex(0.16,0.77,Form("%s%%",sCentTag[iCent]));
+          latexRed->DrawLatex(0.45,0.77,Form("%.3g#pm%.3g",fitRatio->GetParameter(0),fitRatio->GetParError(0)));
+          latex->DrawLatex(0.16,0.84,Form("%s",sSpecies[iSpecies]));
+          // canRatio->SaveAs(Form("%s/%s/Ratio_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
+
+          canBarlow->cd();
+          gPad->SetGrid(0,1);
+          // frame_barlow = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),5.);
+          hBarlow->Draw("hist p e");
+          // canBarlow->SaveAs(Form("%s/%s/Barlow_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
+
+          canOver->cd(1);
+          hBase->Draw("hist p e");
+          hTemp->Draw("hist p e same");
+          canOver->cd(2);
+          gPad->SetGrid(0,1);
+          // frame_ratio = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),2.);
+          hRatio->Draw("hist p e");
+          fitRatio->Draw("same");
+          latex->DrawLatex(0.13,0.74,Form("%s%%",sCentTag[iCent]));
+          latex->DrawLatex(0.13,0.82,Form("%s",sSpecies[iSpecies]));
+          latexRed->DrawLatex(0.45,0.74,Form("%.3g#pm%.3g",fitRatio->GetParameter(0),fitRatio->GetParError(0)));
+          canOver->cd(3);
+          // frame_barlow = gPad->DrawFrame(hBase->GetXaxis()->GetXmin(),0.,hBase->GetXaxis()->GetXmax(),5.);
+          gPad->SetGrid(0,1);
+          hBarlow->Draw("hist p e");
+          // canOver->SaveAs(Form("%s/%s/Over_%s_%s_cent%d.pdf",sOutputPath,sCommonTag,sSpecies[iSpecies],sTaskTag[iFile],iCent));
+
+          canSuper->cd(iCent*3+1);
+          // gPad->SetGrid(0,1);
+          if(iFile == 0) hBase->Draw("hist p e ");
+          else hBase->Draw("hist p e same");
+          hTemp->Draw("hist p e same");
+          if(iFile == 0)legend->Draw();
+
+
+          canSuper->cd(iCent*3+2);
+          gPad->SetGrid(0,1);
+          if(iFile == 0) hRatio->Draw("hist p e ");
+          else hRatio->Draw("same hist p e");
+          fitRatio->Draw("same");
+          latex->DrawLatex(0.16,0.77,Form("%s%%",sCentTag[iCent]));
+          latexTog->SetTextColor(colors[iFile+1]);
+          latexTog->DrawLatex(0.45,0.17+iFile*0.1,Form("%.3g#pm%.3g",fitRatio->GetParameter(0),fitRatio->GetParError(0)));
+          latex->DrawLatex(0.16,0.84,Form("%s",sSpecies[iSpecies]));
+
+          canSuper->cd(iCent*3+3);
+          gPad->SetGrid(0,1);
+          if(iFile == 0) hBarlow->Draw(" hist p e");
+          else hBarlow->Draw(" hist p e same");
+        }
+        canSuper->SaveAs(Form("%s/%s/0_%s_%s.pdf",sOutputPath,sCommonTag,sCommonTag,sSpecies[iSpecies]));
       }
     }
+
   }
 
 
@@ -444,8 +597,8 @@ TH1D* MakeRatio(TH1D* hBase, TH1D* hSyst, Bool_t bCorelated)
     hRatio->SetBinError(iBin,TMath::Sqrt(dErrRatio));
   }
 
-  hRatio->SetMinimum(0.);
-  hRatio->SetMaximum(2.);
+  hRatio->SetMinimum(0.5);
+  hRatio->SetMaximum(1.5);
 
   return hRatio;
 }
