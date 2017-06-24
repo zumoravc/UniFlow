@@ -415,11 +415,10 @@ TH1D* MakeRatio(TH1D* hBase, TH1D* hSyst, Bool_t bCorelated)
   TH1D* hRatio = (TH1D*) hSyst->Clone("hRatio");
   hRatio->Reset();
 
-
   // checking the binning
-  const Short_t iNumBins = hRatio->GetNbinsX();
-  const Short_t iNumBinsBase = hBase->GetNbinsX();
-  const Short_t iNumBinsSyst = hSyst->GetNbinsX();
+  Short_t iNumBins = hRatio->GetNbinsX();
+  Short_t iNumBinsBase = hBase->GetNbinsX();
+  Short_t iNumBinsSyst = hSyst->GetNbinsX();
 
   if( iNumBins != iNumBinsBase || iNumBins != iNumBinsSyst ) { printf("MakeRatio::Different number of bins\n"); return 0x0; }
 
@@ -460,9 +459,9 @@ TH1D* DoBarlowTest(TH1D* hBase, TH1D* hSyst, Bool_t bCorelated)
   hBarlow->Reset();
 
   // checking the binning
-  const Short_t iNumBins = hBarlow->GetNbinsX();
-  const Short_t iNumBinsBase = hBase->GetNbinsX();
-  const Short_t iNumBinsSyst = hSyst->GetNbinsX();
+  Short_t iNumBins = hBarlow->GetNbinsX();
+  Short_t iNumBinsBase = hBase->GetNbinsX();
+  Short_t iNumBinsSyst = hSyst->GetNbinsX();
 
   if( iNumBins != iNumBinsBase || iNumBins != iNumBinsSyst ) { printf("DoBarlowTest::Different number of bins\n"); return 0x0; }
 
