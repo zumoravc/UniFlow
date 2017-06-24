@@ -2075,7 +2075,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
   // Short_t iBinPeakLow = hInvMass_shot->FindFixBin(dInvMassPeakLow);
   dMassHigh = 1.038;
 
-	Debug(Form("  Fitting region: %f - %f \n", dMassLow,dMassHigh), "ExtractFlowK0s");
+	Debug(Form("  Fitting region: %f - %f \n", dMassLow,dMassHigh), "ExtractFlowPhi");
 
   // Excluding mass peak window (setting errors to inf)
 	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
@@ -2118,6 +2118,9 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	hInvMass_side->Fit("fitSide",sFitOpt.Data());
 
   TF1* fitResBG = new TF1("fitResBG","pol2(0)",dFittingLow,dFittingHigh);
+  // fitResBG->SetParameter(0,fitShot->GetParameter(3));
+  // fitResBG->SetParameter(1,fitShot->GetParameter(4));
+  // fitResBG->SetParameter(2,fitShot->GetParameter(5));
   fitResBG->SetParameter(0,fitSide->GetParameter(0));
   fitResBG->SetParameter(1,fitSide->GetParameter(1));
   fitResBG->SetParameter(2,fitSide->GetParameter(2));
@@ -2164,22 +2167,23 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
   // fitRatio->SetParLimits(5,0.004,0.008);
 	// hInvMass_ratio->Fit("fitRatio","R");
 
-	fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",dFittingLow,dFittingHigh);
+	fitRatio = new TF1("fitRatio","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
+	// fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",dFittingLow,dFittingHigh);
 	// fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",dFittingLow,dFittingHigh);
 	fitRatio->SetNpx(1000);
   fitRatio->SetParameter(0,0.8);
-  fitRatio->SetParLimits(0,0.5,1.);
+  // fitRatio->SetParLimits(0,0.5,1.);
   fitRatio->SetParameter(1,fitShot->GetParameter(1));
-  fitRatio->SetParLimits(1,1.015,1.025);
+  fitRatio->SetParLimits(1,1.014,1.025);
   fitRatio->SetParameter(2,fitShot->GetParameter(2));
-  fitRatio->SetParLimits(2,0.003,0.01);
-  fitRatio->SetParameter(3,10);
+  fitRatio->SetParLimits(2,0.003,0.03);
+  // fitRatio->SetParameter(3,10);
   // fitRatio->SetParLimits(3,-300,300);
-  fitRatio->SetParameter(4,10);
+  // fitRatio->SetParameter(4,10);
   // fitRatio->SetParLimits(4,-300,300);
-  fitRatio->SetParameter(5,10);
+  // fitRatio->SetParameter(5,10);
   // fitRatio->SetParLimits(5,-300,300);
-  fitRatio->SetParameter(6,10);
+  // fitRatio->SetParameter(6,10);
   // fitRatio->SetParLimits(6,-300,300);
 	hInvMass_ratio->Fit("fitRatio",sFitOpt.Data());
 
@@ -2210,7 +2214,8 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	canFitInvMass->cd(7);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.99,1.07);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
-	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
+	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
+	fitFlowTot = new TF1("fitFlowTot","[0]*([1]*TMath::BreitWigner(x,[2],[3])+pol2(4)) + ( 1-([1]*TMath::BreitWigner(x,[2],[3])+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol3(7)",dFittingLow,dFittingHigh);
 	// Inv mass ratio signal/total
 	// fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
@@ -2434,7 +2439,7 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 	}
 
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowK0s");
-	canFitInvMass->cd(6);
+	canFitInvMass->cd(5);
 
   if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
   else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
@@ -2443,7 +2448,7 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
   Debug("====== Fitting FlowMass total flow ========","ExtractFlowK0s");
-  canFitInvMass->cd(5);
+  canFitInvMass->cd(6);
 
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+gaus(4)+pol2(7)) + ( 1-(gaus(1)+gaus(4)+pol3(7)) )*pol1(10)",dFittingLow,dFittingHigh);
 	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
@@ -2661,7 +2666,7 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 		}
 	}
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowLambda");
-  canFitInvMass->cd(6);
+  canFitInvMass->cd(5);
 
   if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
   else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
@@ -2671,7 +2676,7 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
   Debug("====== Fitting FlowMass total flow ========","ExtractFlowLambda");
-	canFitInvMass->cd(5);
+	canFitInvMass->cd(6);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+gaus(4)+pol2(7)) + ( 1-(gaus(1)+gaus(4)+pol2(7)) )*pol1(9)",dFittingLow,dFittingHigh);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+gaus(4)+pol3(7)) + ( 1-(gaus(1)+gaus(4)+pol3(7)) )*pol1(11)",dFittingLow,dFittingHigh);
 	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
@@ -2724,7 +2729,7 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	dFlow = fitFlowTot->GetParameter(0);
 	dFlowError = fitFlowTot->GetParError(0);
 
-  canFitInvMass->cd(5);
+  canFitInvMass->cd(6);
   TLatex* latex = new TLatex();
   // latex->SetLineColor(kRed);
   latex->SetNDC();
