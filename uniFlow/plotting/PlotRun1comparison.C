@@ -33,18 +33,22 @@ void PlotRun1comparison()
   LoadLibs();
   SetStyle();
 
-  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/compRun1/UniFlow.root");
+  // TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/compRun1/UniFlow.root");
+  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlowTest.root");
   // TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/compRun1/UniFlow.root");
   TString sInputFilePublished = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/HEPdata.root");
 
-  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/merged_FAST_CENTwoSDD/compRun1");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/merged_16q/compRun1");
 
   TString sOutputFormat = TString("png");
 
   // TString sGap = "08";
-  Int_t iCent = 3;
-  Int_t iTable = 17; // 5,9,13,17
-  TString sCent = TString("60-100");
+  Int_t iCent = 1;
+  Int_t iTable = 5; // 5,9,13,17
+  TString sCent = TString("0-20");
+  // TString sCent = TString("60-100");
+  // TString sCent = TString("60-100");
+  // TString sCent = TString("60-100");
 
   // ALICE Preferred colors and markers (from figure template)
   const Int_t fillColors[] = {kGray+1,  kRed-10, kBlue-9, kGreen-8, kMagenta-9, kOrange-9,kCyan-8,kYellow-7}; // for syst bands

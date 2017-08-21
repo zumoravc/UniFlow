@@ -17,17 +17,20 @@
 void CheckWeights(const TH3D* weight = 0x0, const Int_t runNumber = -1);
 TH2D* ProcessWeights(const TH3D* weight = 0x0, const Int_t runNumber = -1);
 
+const TString sPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/fb768_NUAweights/";
+
+
 void PrepareWeights()
 {
-  // const Short_t iNumRuns = 1;
-  // const Int_t iRunList[iNumRuns] = {265387};
-  const Short_t iNumRuns = 31;
-  const Int_t iRunList[iNumRuns] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387,265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
-  // const TString sOutputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_weights_V0A/FAST_16q"
-  const TString sPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst/baseline/CENT_woSDD_16q/";
-  const TString sTaskTag = "UniFlow";
+  // const Short_t iNumRuns = 1; const Int_t iRunList[iNumRuns] = {265387};
+  const Short_t iNumRuns = 31; const Int_t iRunList[iNumRuns] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387, 265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
+  // const Short_t iNumRuns = 16; const Int_t iRunList[iNumRuns] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};//,265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
 
-  TFile* fOutput = new TFile(Form("%s/weights_Cor_CENTwoSDD_16q.root",sPath.Data()),"RECREATE");
+  // const Short_t iNumRuns = 4;  const Int_t iRunList[iNumRuns] = {267166, 267165, 267164, 267163};
+  // const TString sOutputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_weights_V0A/FAST_16q"
+  const TString sTaskTag = "UniFlow_fb768";
+
+  TFile* fOutput = new TFile(Form("%s/weights_Cor_CENT_woSDD_16q_FB768.root",sPath.Data()),"RECREATE");
 
   const Short_t iNumPart = 8;
   const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
@@ -54,9 +57,12 @@ void PrepareWeights()
     for(Short_t part = 0; part < iNumPart; part++)
     {
       printf(" -part %d (out of %d)\n",part+1,iNumPart);
+      // h3Weights = (TH3D*) listTemp->FindObject(Form("fh3Weights%s",species[part].Data()));
       h3Weights = (TH3D*) listTemp->FindObject(Form("fh3Weights%s",species[part].Data()));
       if(!h3Weights) { printf("Run %d | Hist 'fh3Weights%s' not found\n",iRunList[iRun],species[part].Data()); continue; }
       h2Weights = ProcessWeights(h3Weights, iRunList[iRun]);
+      // CheckWeights(h3Weights, iRunList[iRun]);
+
       // if(part == 7)
       // {
       //   for(Short_t binX(1); binX < h2Weights->GetNbinsX()+1; binX++)
@@ -97,6 +103,7 @@ void CheckWeights(const TH3D* weights, const Int_t runNumber)
   weights_temp = (TH3D*) weights->Clone("weights_temp_int");
   weights_2d = (TH2D*) weights_temp->Project3D("xy");
   weights_2d->Draw("colz");
+  weights_2d->SaveAs(Form("%s/weights_dist.pdf",sPath.Data()));
 
   for(Short_t pt(0); pt < 8; pt++)
   {
