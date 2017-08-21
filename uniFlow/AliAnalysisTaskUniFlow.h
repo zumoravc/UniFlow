@@ -11,7 +11,7 @@
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
     public:
-      enum    RunMode {kTest, kFull}; // task running mode (NOT GRID MODE)
+      enum    RunMode {kTest, kFillWeights, kFull}; // task running mode (NOT GRID MODE)
       enum    ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
       enum    AnalType {kAOD, kESD}; // tag for analysis type
       enum    DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
@@ -42,6 +42,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
       void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
+      void                    SetFillQAhistos(Bool_t fill = kTRUE) { fFillQA = fill; }
       //void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; } // not implemented yet
       void                    SetProcessCharged(Bool_t filter = kTRUE) { fProcessCharged = filter; }
       void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
@@ -50,9 +51,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // flow related setters
       void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
+      void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
+      void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
+      void                    SetUseWeigthsFile(const char* file) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
+      void                    SetMultEstimator(const char* mult = "CHARGED") { fMultEstimator = mult; }
       void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       // track setters
@@ -64,9 +69,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetChargedNumTPCclsMin(UShort_t tpcCls) { fCutChargedNumTPCclsMin = tpcCls; }
       void                    SetChargedTrackFilterBit(UInt_t filter) { fCutChargedTrackFilterBit = filter; }
       // PID (pi,K,p) setters
+      void                    SetPIDUseAntiProtonOnly(Bool_t use = kTRUE) { fCutPIDUseAntiProtonOnly = use; }
       void                    SetPIDNumSigmasPionMax(Double_t numSigmas) { fCutPIDnSigmaPionMax = numSigmas; }
       void                    SetPIDNumSigmasKaonMax(Double_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
       void                    SetPIDNumSigmasProtonMax(Double_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
+      void                    SetPIDNumSigmasCombinedNoTOFrejection(Bool_t reject = kTRUE) { fCutPIDnSigmaCombinedNoTOFrejection = reject; }
       void                    SetUseBayesPID(Bool_t bayes = kTRUE) { fCutUseBayesPID = bayes; }
       void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesPionMin = probPi; }
       void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutPIDBayesKaonMin = probK; }
@@ -82,6 +89,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetV0sCrossMassCutLambda(Double_t mass) { fCutV0sCrossMassCutLambda = mass; }
       void					          SetV0sDCAPVMin(Double_t dca) { fCutV0sDCAtoPVMin = dca; }
       void					          SetV0sDCAPVMax(Double_t dca) { fCutV0sDCAtoPVMax = dca; }
+      void					          SetV0sDCAPVzMax(Double_t dca) { fCutV0sDCAtoPVzMax = dca; }
+      void                    SetV0sDaughtersFilterBit(UInt_t filter) { fCutV0sDaughterFilterBit = filter; }
       void					          SetV0sDCADaughtersMin(Double_t dca) { fCutV0sDCADaughtersMin = dca; }
       void					          SetV0sDCADaughtersMax(Double_t dca) { fCutV0sDCADaughtersMax = dca; }
       void					          SetV0sDecayRadiusMin(Double_t radius) { fCutV0sDecayRadiusMin = radius; }
@@ -125,8 +134,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Int_t             fFlowCentMin; // [0] min range for centrality/multiplicity histos
       const Int_t             fFlowCentMax; // [150] min range for centrality/multiplicity histos
       const Int_t             fFlowCentNumBins; // [150] min range for centrality/multiplicity histos
-      static const Short_t    fV0sNumBinsMass = 30; // number of InvMass bins for V0s distribution
-      static const Short_t    fPhiNumBinsMass = 30; // number of InvMass bins for phi distribution
+      static const Short_t    fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
+      static const Short_t    fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
@@ -167,7 +176,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
       void                    DoFlowPhi(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0); // Estimate <2'> for pt diff. flow of phi particles
       void                    DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
-      void                    FillRefsVectors(const Float_t dEtaGap = -1.); // fill flow vector Q with RFPs for reference flow
+      void                    FillRefsVectors(const Short_t iEtaGapIndex = 0); // fill flow vector Q with RFPs for reference flow
       void                    FillPOIsVectors(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown, const Short_t iMassIndex = 0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
       Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
       void                    ResetRFPsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
@@ -194,11 +203,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAODEvent*            fEventAOD; //! AOD event countainer
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
+      TFile*                  fFlowWeightsFile; //! source file containing weights
       Bool_t                  fInit; // initialization check
       Short_t                 fIndexSampling; // sampling index (randomly generated)
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
       Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
       Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
+      Int_t                   fRunNumber; // [-1] run number obtained from AliVHeader
 
       TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
@@ -219,6 +230,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       RunMode                 fRunMode; // running mode (not grid related)
       AnalType                fAnalType; // analysis type: AOD / ESD
       Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
+      Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
       Bool_t                  fProcessCharged; // flag for processing charged tracks (both RPF and POIs)
       Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
       Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
@@ -226,12 +238,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // cuts & selection: flow related
       Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
+      Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
+      Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
+      Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
+      TString                 fFlowWeightsPath; //[] path to source root file with weigthts (if empty unit weights are applied) e.g. "alice/cern.ch/user/k/kgajdoso/EfficienciesWeights/2016/PhiWeight_LHC16kl.root"
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
       DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
       Short_t                 fTrigger; // physics selection trigger
-      Float_t                 fPVtxCutZ;          // (cm) PV z cut
+      TString                 fMultEstimator; // [''] multiplicity estimator (suported: ''/Charged,VOA,V0C,V0M,CL0,CL1,ZNA,ZNC)
+      Float_t                 fPVtxCutZ; // (cm) PV z cut
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
       UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
@@ -241,10 +258,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Float_t                 fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
       Float_t                 fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
       // cuts & selection: PID selection
+      Bool_t                  fCutPIDUseAntiProtonOnly; // [kFALSE] check proton PID charge to select AntiProtons only
       Double_t                fCutPIDnSigmaPionMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
       Double_t                fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
       Double_t                fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
       Double_t                fCutPIDnSigmaTPCRejectElectron; // [3] number of TPC nSigma for electron rejection
+      Bool_t                  fCutPIDnSigmaCombinedNoTOFrejection; // [kFALSE] flag for rejection candidates in TPC+TOF pt region if TOF is not available (if true and no TOF, only TPC is used)
       Bool_t                  fCutUseBayesPID; // [kFALSE] flag for using Bayes PID for pi,K,p instead nsigma cut
       Double_t                fCutPIDBayesPionMin; // [0.9] minimal value of Bayes PID probability for pion
       Double_t                fCutPIDBayesKaonMin; // [0.9] minimal value of Bayes PID probability for Kaon
@@ -260,10 +279,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutV0sCrossMassCutLambda; // [0.010] (GeV/c2) InvMass range of cross contamination for (Anti-)Lambda candidates
   		Double_t                fCutV0sDCAtoPVMin;   // (cm) min DCA of V0 daughter to PV
       Double_t				        fCutV0sDCAtoPVMax;	// (cm) max DCA of V0 daughter to PV
+      Double_t                fCutV0sDCAtoPVzMax; // (cm) max DCA-z coordinate of V0 daughters to PV
 		  Double_t				        fCutV0sDCADaughtersMin;	// (cm) min DCA of V0 daughters among themselves
 		  Double_t				        fCutV0sDCADaughtersMax;	// (cm) max DCA of V0 daughters among themselves
       Double_t                fCutV0sDecayRadiusMin; // (cm) min distance of secondary vertex from z-axis in transverse plane
 		  Double_t				        fCutV0sDecayRadiusMax; // (cm) max distance of secondary vertex from z-axis in transverse plane
+      UInt_t                  fCutV0sDaughterFilterBit; // (-) V0 daughters filter bit
       Double_t                fCutV0sDaughterPtMin; // (GeV/c) min pT of V0 daughters
       Double_t                fCutV0sDaughterPtMax; // (GeV/c) max pT of V0 daughters
       Double_t                fCutV0sDaughterEtaMax; // (-) max value of Eta of V0 daughters
@@ -285,7 +306,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // cuts & selection: phi
       Double_t                fCutPhiMotherEtaMax; // (-) max value of phi candidate pseudorapidity
       Double_t                fCutPhiInvMassMin; // [0.99] (GeV/c2) min inv. mass window for selected phi candidates
-      Double_t                fCutPhiInvMassMax; // [1.08] (GeV/c2) min inv. mass window for selected phi candidates
+      Double_t                fCutPhiInvMassMax; // [1.07] (GeV/c2) min inv. mass window for selected phi candidates
 
       // output lists
       TList*      fQAEvents; //! events list
@@ -293,11 +314,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*      fQAPID; //! pi,K,p list
       TList*      fQAV0s; //! V0s candidates list
       TList*      fQAPhi; //! Phi candidates list
+      TList*      fFlowWeights; //! list for flow weights
       TList*      fFlowRefs; //! list for flow of reference particles
       TList*      fFlowCharged; //! list for flow of charged particles
       TList*      fFlowPID; //! list for flow of PID (pi,K,p) particles
-      TList*      fFlowV0s; //! list for flow of V0s particles
       TList*      fFlowPhi; //! list for flow of Phi particles
+      TList*      fFlowK0s; //! list for flow of K0s particles
+      TList*      fFlowLambda; //! list for flow of (anti-)Lambda particles
 
       // histograms & profiles
 
@@ -307,14 +330,53 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
+      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for estimating weight purpose (phi,eta,pt)
+      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for estimating weight purpose (phi,eta,pt)
+
+      TH3D*           fh3AfterWeightsRefs; //! distribution of Refs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsCharged; //! distribution of Charged POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsPion; //! distribution of Pion POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsKaon; //! distribution of Kaon POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsProton; //! distribution of Proton POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsPhi; //! distribution of Phi POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsK0s; //! distribution of K0s POIs particles after applying the weights (phi,eta,pt)
+      TH3D*           fh3AfterWeightsLambda; //! distribution of Lambda POIs particles after applying the weights (phi,eta,pt)
+
+      TH2D*           fh2WeightRefs; //! container for loading weights for given run
+      TH2D*           fh2WeightCharged; //! container for loading weights for given run
+      TH2D*           fh2WeightPion; //! container for loading weights for given run
+      TH2D*           fh2WeightKaon; //! container for loading weights for given run
+      TH2D*           fh2WeightProton; //! container for loading weights for given run
+      TH2D*           fh2WeightK0s; //! container for loading weights for given run
+      TH2D*           fh2WeightLambda; //! container for loading weights for given run
+      TH2D*           fh2WeightPhi; //! container for loading weights for given run
+
+      TProfile*       fpMeanQxRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
+      TProfile*       fpMeanQxRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qx (vs. centrality) for Refs
+      TProfile*       fpMeanQyRefsPos[fNumEtaGap][fNumHarmonics]; //! average of Qy (vs. centrality) for Refs
+      TProfile*       fpMeanQyRefsNeg[fNumEtaGap][fNumHarmonics]; //! average of Qy (vs. centrality) for Refs
+
       TProfile*       fpRefsCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
-      TProfile2D*     fp2ChargedCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs
-      TProfile2D*     fp2PionCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs
-      TProfile2D*     fp2KaonCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs
-      TProfile2D*     fp2ProtonCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs
-      TProfile3D*     fp3V0sCorrK0sCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrLambdaCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates (cent, pT, InvMass)
-      TProfile3D*     fp3PhiCorrCor2[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
+      TProfile2D*     fp2ChargedCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta>0
+      TProfile2D*     fp2ChargedCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta<0
+      TProfile2D*     fp2PionCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs: POIs in Eta>0
+      TProfile2D*     fp2PionCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs: POIs in Eta>0
+      TProfile2D*     fp2KaonCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs: POIs in Eta>0
+      TProfile2D*     fp2KaonCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs: POIs in Eta>0
+      TProfile2D*     fp2ProtonCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs: POIs in Eta>0
+      TProfile2D*     fp2ProtonCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs: POIs in Eta>0
+      TProfile3D*     fp3V0sCorrK0sCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates: POIs in Eta>0  (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrK0sCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates: POIs in Eta<0  (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrLambdaCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates: POIs in Eta>0  (cent, pT, InvMass)
+      TProfile3D*     fp3V0sCorrLambdaCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates: POIs in Eta<0  (cent, pT, InvMass)
+      TProfile3D*     fp3PhiCorrCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta>0 (cent, pT, InvMass)
+      TProfile3D*     fp3PhiCorrCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta<0 (cent, pT, InvMass)
 
       TProfile*       fpRefsCor4[fNumSamples][fNumHarmonics]; //! <4> correlations for RFPs
       TProfile2D*     fp2ChargedCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
@@ -326,7 +388,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TProfile3D*     fp3PhiCorrCor4[fNumHarmonics]; //! <4'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
 
       // Events
-      TH1D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
+      TH2D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
+      TH1D*           fhEventCentrality; //! distribution of event centrality
+      TH2D*           fh2EventCentralityNumSelCharged; //! distribution of event centrality vs number of selected charged tracks
       TH1D*           fhEventCounter; //! counter following event selection
       // Charged
       TH1D*           fhRefsMult; //!multiplicity distribution of selected RFPs
@@ -470,7 +534,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
       AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
 
-      ClassDef(AliAnalysisTaskUniFlow, 2);
+      ClassDef(AliAnalysisTaskUniFlow, 4);
 };
 
 #endif

@@ -24,8 +24,12 @@ void runAnalysis()
     // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs]
     // Int_t runNumber[] = {267166, 267165, 267164, 267163};
     // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170318_v1.txt [31 runs]
-    Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
+    // Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
     // Int_t runNumber[] = {265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
+
+
+    //test
+    Int_t runNumber[] = {265385, 265384, 265383};
 
 
     // since we will compile a class, tell root where to look for headers
@@ -72,12 +76,13 @@ void runAnalysis()
     gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskUniFlow.C"); // load the addtask macro
 
-    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_test");
+    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
     task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
-    task1->SetNumEventsAnalyse(10);
+    task1->SetNumEventsAnalyse(50);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetSampling(kTRUE);
+    // task1->SetFillQAhistos(kFALSE);
     task1->SetProcessCharged(kTRUE);
     task1->SetProcessPID(kTRUE);
     task1->SetProcessPhi(kTRUE);
@@ -85,9 +90,14 @@ void runAnalysis()
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
     task1->SetFlowRFPsPtMax(5.);
+    // task1->SetFlowDoFourCorrelations(kFALSE);
+    task1->SetFlowFillWeights(kFALSE);
+    // task1->SetUseWeigthsFile("alice/cern.ch/user/v/vpacik/uniFlow_ver4_CENT_woSDD_16t_V0A/output/000267163/001/AnalysisResults.root");
+    // task1->SetUseWeigthsFile("/alice/cern.ch/user/v/vpacik/weights_CENTwoSDD_16q.root");
     // Events selection
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
+    task1->SetMultEstimator("V0A");
     task1->SetPeriod(AliAnalysisTaskUniFlow::k16q);
     task1->SetPVtxZMax(10);
     // Charged selection
@@ -99,6 +109,7 @@ void runAnalysis()
     task1->SetChargedNumTPCclsMin(70);
     task1->SetChargedTrackFilterBit(96);
     // PID selection
+    task1->SetPIDUseAntiProtonOnly(kFALSE);
     task1->SetPIDNumSigmasPionMax(3);
     task1->SetPIDNumSigmasKaonMax(3);
     task1->SetPIDNumSigmasProtonMax(3);
@@ -115,6 +126,8 @@ void runAnalysis()
     task1->SetV0sUseCrossMassRejection(kTRUE);
     task1->SetV0sDCAPVMin(0.06);
     task1->SetV0sDCAPVMax(0.);
+    // task1->SetV0sDCAPVzMax(1.);
+    // task1->SetV0sDaughtersFilterBit(211);
     task1->SetV0sDCADaughtersMax(1.);
     task1->SetV0sDecayRadiusMin(0.5);
     task1->SetV0sDecayRadiusMax(0.);
