@@ -21,20 +21,21 @@
 #include "TH3.h"
 #include "TF1.h"
 
-void SetStyle(Bool_t graypalette=kFALSE);
-void myPadSetUp(TPad *currentPad, float currentLeft=0.11, float currentTop=0.04, float currentRight=0.04, float currentBottom=0.15);
-void DrawLogo (Int_t logo=0, Double_t xmin =  0.28, Double_t ymin= 0.68) ;
-void FakeHistosOnlyForExample(TH1*&hstat, TH1*&hsyst, TH1*&hsystCorr);
-void LoadLibs();
+void ProcessUniFlow::SetStyle(Bool_t graypalette=kFALSE);
+void ProcessUniFlow::myPadSetUp(TPad *currentPad, float currentLeft=0.11, float currentTop=0.04, float currentRight=0.04, float currentBottom=0.15);
+void ProcessUniFlow::DrawLogo (Int_t logo=0, Double_t xmin =  0.28, Double_t ymin= 0.68) ;
+void ProcessUniFlow::FakeHistosOnlyForExample(TH1*&hstat, TH1*&hsyst, TH1*&hsystCorr);
+void ProcessUniFlow::LoadLibs();
 
 void PlotPIDvn()
 {
   LoadLibs();
   SetStyle();
 
-  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlowTest.root");
-  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlowTest.root");
-  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/Run1comp");
+  // TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/HEPdata_extracted.root");
+  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlow.root");
+  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlow.root");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/final_all");
 
   // TString sGap = "08";
   // Int_t iCent = 0;
@@ -113,7 +114,7 @@ void PlotPIDvn()
     TH1* h = cfig->DrawFrame(0,dYmin[iCent],6,dYmax[iCent]);
     // Set titles
     h->SetXTitle("#it{p}_{T} (GeV/#it{c})");
-    h->SetYTitle("#it{v}_{2} {2,|#eta| > 0.8}");
+    h->SetYTitle("#it{v}_{2} {2,|#Delta#eta| > 0.8}");
 
 
     // loading histos
@@ -229,8 +230,8 @@ void PlotPIDvn()
     legend->AddEntry(hFlowCharged,"h^{#pm}","pl");
     legend->AddEntry(hFlowPion,"#pi^{#pm}","pl");
     legend->AddEntry(hFlowKaon,"K^{#pm}","pl");
-    legend->AddEntry(hFlowK0s,"K^{0}_{S}","pl");
-    legend2->AddEntry(hFlowProton,"p/#bar{p}","pl");
+    legend->AddEntry(hFlowProton,"p/#bar{p}","pl");
+    legend2->AddEntry(hFlowK0s,"K^{0}_{S}","pl");
     legend2->AddEntry(hFlowPhi,"#phi","pl");
     legend2->AddEntry(hFlowLambda,"#Lambda/#bar{#Lambda}","pl");
 
@@ -248,7 +249,7 @@ void PlotPIDvn()
   return;
 }
 //_____________________________________________________________________________
-void LoadLibs() {
+void ProcessUniFlow::LoadLibs() {
   gSystem->Load("libCore.so");
   gSystem->Load("libGeom.so");
   gSystem->Load("libPhysics.so");
@@ -264,7 +265,7 @@ void LoadLibs() {
   gSystem->Load("libPWGTools");
 }
 //_____________________________________________________________________________
-void DrawLogo (Int_t logo, Double_t xmin, Double_t ymin) {
+void ProcessUniFlow::DrawLogo (Int_t logo, Double_t xmin, Double_t ymin) {
 
   // Logo is not needed anymore, now we only write alice preliminary
   // Logo:
@@ -320,7 +321,7 @@ void DrawLogo (Int_t logo, Double_t xmin, Double_t ymin) {
 
 }
 //_____________________________________________________________________________
-void myPadSetUp(TPad *currentPad, float currentLeft, float currentTop, float currentRight, float currentBottom){
+void ProcessUniFlow::myPadSetUp(TPad *currentPad, float currentLeft, float currentTop, float currentRight, float currentBottom){
   currentPad->SetLeftMargin(currentLeft);
   currentPad->SetTopMargin(currentTop);
   currentPad->SetRightMargin(currentRight);
@@ -328,7 +329,7 @@ void myPadSetUp(TPad *currentPad, float currentLeft, float currentTop, float cur
   return;
 }
 //_____________________________________________________________________________
-void SetStyle(Bool_t graypalette) {
+void ProcessUniFlow::SetStyle(Bool_t graypalette) {
   cout << "Setting style!" << endl;
 
   gStyle->Reset("Plain");
@@ -368,7 +369,7 @@ void SetStyle(Bool_t graypalette) {
   gStyle->SetLegendFont(42);
 }
 //_____________________________________________________________________________
-void FakeHistosOnlyForExample(TH1* &hstat, TH1* &hsyst, TH1*&hsystCorr) {
+void ProcessUniFlow::FakeHistosOnlyForExample(TH1* &hstat, TH1* &hsyst, TH1*&hsystCorr) {
 
   TF1 * fExpo = new TF1 ("fExpo", "expo");
   fExpo->SetParameters(10, -0.3);

@@ -5,18 +5,37 @@
  *
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2017
  */
+ Bool_t bDoKOs = kFALSE;
+ Bool_t bDoLambda = kFALSE;
+ Bool_t bDoPhi = kFALSE;
 
 void RunSystematics()
 {
 	gROOT->LoadMacro("ProcessUniFlow.cpp++g");
 
+
+
+	const Short_t iNumProcess = 1; const char* sTaskTag[iNumProcess] = {"UniFlow_fb768"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/filterBit_withNUA/";
 	// const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"uniflow_tpcCls80","uniflow_tpcCls90"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/tpcCls/";
-	// const Short_t iNumProcess = 3; const char* sTaskTag[iNumProcess] = {"UniFlow_CPA","UniFlow_DCA","UniFlow_DecayRadius"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/v0s/";
 	// const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"UniFlow_dcaz","UniFlow_dcaxy"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/dca/";
 	// const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"UniFlow_vtx8","UniFlow_vtx9"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/Vtx_z/";
-	const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"UniFlow_2sigma","UniFlow_bayes"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/pid/";
+	// const Short_t iNumProcess = 3; const char* sTaskTag[iNumProcess] = {"UniFlow_CPA","UniFlow_DCA","UniFlow_DecayRadius"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/v0s/";
+	// const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"uniflow_dcaZ","uniflow_NoArmernteros"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/kaonDist/";
+	// const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"UniFlow_2sigma","UniFlow_bayes"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/pid/";
+	// const Short_t iNumProcess = 1; const char* sTaskTag[iNumProcess] = {"UniFlow"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/loosePhi_tightV0s/";
+	// const Short_t iNumProcess = 1; const char* sTaskTag[iNumProcess] = {"UniFlow"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/baseline_noNUA/";
+	// const Short_t iNumProcess = 1; const char* sTaskTag[iNumProcess] = {"UniFlow"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/fit_fix/";
+
+  // const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"UniFlow_vtx8","UniFlow_vtx9"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/Vtx_z_merged/";
+  // const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"uniflow_tpcCls80","uniflow_tpcCls90"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/tpcCls_merged/";
+  // const Short_t iNumProcess = 2; const char* sTaskTag[iNumProcess] = {"UniFlow_2sigma","UniFlow_bayes"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/pid_merged/";
 
  // 	const char* sOutputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/comparison"
+ // const Short_t iNumProcess = 1; const char* sTaskTag[iNumProcess] = {"uniflow_Alex"}; const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/kaonDist/";
+
+	bDoKOs = kTRUE;
+	bDoLambda = kTRUE;
+	bDoPhi = kTRUE;
 
 
 	ProcessUniFlow* process = new ProcessUniFlow();
@@ -49,17 +68,20 @@ void RunSystematics()
 		// Double_t dPtProton[] = {0.5,0.75,1.,1.25,1.5,2.,2.5,3.,4.,}; // HEP Run 1
 
 
-		// Double_t dPtBinningK0s[] = {2.,4.};
-		// Double_t dPtBinningK0s[] = {0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.6,3.,3.5,4.,5.,6.};
-		// Double_t dPtBinningLambda[] = {0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.7,4.5,6.};
-		Double_t dPtBinningK0s[] = {0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.};
-		Double_t dPtBinningLambda[] = {0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.8,4.6,6.};
-		Double_t dPtBinningPhi[] = {0.5,1.,1.5,2.,2.5,3.,4.,6.};
+    // Double_t dPtBinningK0s[] = {2.,4.};
+  	// Double_t dPtBinningK0s[] = {0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.6,3.,3.5,4.,5.,6.};
+  	// Double_t dPtBinningLambda[] = {0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.7,4.5,6.};
+  	Double_t dPtBinningK0s[] = {0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.};
+  	// Double_t dPtBinningLambda[] = {0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.8,4.6,6.};
+  	// Double_t dPtBinningLambda[] = {0.,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.6.,4.3.,5.295};
+  	Double_t dPtBinningLambda[] = {0.8,1.1,1.4,1.6,1.8,2.,2.2,2.4,2.7,3.2,3.6.,4.3.,5.295};
+  	Double_t dPtBinningPhi[] = {0.5,1.,1.5,2.,2.5,3.,4.,6.};
+
 
 		FlowTask* taskRefs = new FlowTask("Refs",FlowTask::kRefs);
 		taskRefs->SetHarmonics(2);
 		taskRefs->SetEtaGap(0.8);
-		taskRefs->SetNumSamples(10);
+		taskRefs->SetNumSamples(1);
 		taskRefs->SetMergePosNeg(1);
 		process->AddTask(taskRefs);
 
@@ -78,7 +100,7 @@ void RunSystematics()
 		taskK0s->SetMergePosNeg(1);
 		taskK0s->SetFlowFitFixTerms(kFALSE);
 		// task7->SuggestPtBinning(1,30000);
-		// process->AddTask(taskK0s);
+		if(bDoKOs) process->AddTask(taskK0s);
 
 		FlowTask* taskLambda = new FlowTask("Lambda",FlowTask::kLambda);
 		taskLambda->SetHarmonics(2);
@@ -92,7 +114,7 @@ void RunSystematics()
 		taskLambda->SetFittingRejectNumSigmas(9);
 		taskLambda->SetMergePosNeg(1);
 		taskLambda->SetFlowFitFixTerms(0);
-		// process->AddTask(taskLambda);
+		if(bDoLambda) process->AddTask(taskLambda);
 
 		FlowTask* taskPhi = new FlowTask("Phi",FlowTask::kPhi);
 		taskPhi->SetHarmonics(2);
@@ -105,7 +127,7 @@ void RunSystematics()
 		taskPhi->SetMergePosNeg(1);
 		taskPhi->SetFlowFitFixTerms(0);
 		taskPhi->SetFlowPhiSubtLS(1);
-		process->AddTask(taskPhi);
+		if(bDoPhi) process->AddTask(taskPhi);
 
 		FlowTask* taskCharged = new FlowTask("Charged",FlowTask::kCharged);
 		taskCharged->SetHarmonics(2);

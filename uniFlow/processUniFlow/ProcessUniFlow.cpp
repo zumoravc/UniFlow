@@ -13,6 +13,8 @@
 #include "TFile.h"
 #include "TList.h"
 #include "TCanvas.h"
+#include "TLegend.h"
+#include "TSystem.h"
 #include "TLine.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
@@ -21,6 +23,13 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TF1.h"
+
+void SetStyle(Bool_t graypalette=kFALSE);
+void myPadSetUp(TPad *currentPad, float currentLeft=0.11, float currentTop=0.04, float currentRight=0.04, float currentBottom=0.15);
+void DrawLogo (Int_t logo=0, Double_t xmin =  0.28, Double_t ymin= 0.68) ;
+void FakeHistosOnlyForExample(TH1*&hstat, TH1*&hsyst, TH1*&hsystCorr);
+void LoadLibs();
+
 
 class FlowTask
 {
@@ -81,6 +90,7 @@ class FlowTask
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
     std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
+    TCanvas*     fCanvas; // temporary canvas for mass plotting
 };
 
 //_____________________________________________________________________________
@@ -113,6 +123,7 @@ FlowTask::FlowTask()
 FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask()
 {
   fName = name;
+  // fCanvas = new TCanvas(Form("can_%s",name));
   fSpecies = species;
 }
 //_____________________________________________________________________________
@@ -121,6 +132,7 @@ FlowTask::~FlowTask()
   if(fVecHistFlowMass) delete fVecHistFlowMass;
   if(fVecHistInvMass) delete fVecHistInvMass;
   if(fVecHistInvMassBG) delete fVecHistInvMassBG;
+  if(fCanvas) delete fCanvas;
 }
 //_____________________________________________________________________________
 void FlowTask::SetPtBins(Double_t* array, const Short_t size)
@@ -923,6 +935,19 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
   TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1600,1200); // canvas for fitting results
 
+  TCanvas* canFlowAll = new TCanvas("canFlowAll","canFlowAll",1600,1200);
+  TCanvas* canInvMassAll = new TCanvas("canInvMassAll","canInvMassAll",1600,1200);
+  canFlowAll->Divide(3,ceil(task->fNumPtBins/3.));
+  canInvMassAll->Divide(3,ceil(task->fNumPtBins/3.));
+
+  TLatex* latex = new TLatex();
+  latex->SetTextSize(0.12);
+  latex->SetNDC();
+
+  TLatex* latex2 = new TLatex();
+  // latex2->SetTextSize(0.12);
+  latex2->SetNDC();
+
   for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
   {
     hInvMass = task->fVecHistInvMass->at(binPt);
@@ -955,7 +980,21 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         return kFALSE;
     }
 
+
+    canFitInvMass->cd(1);
+    // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
+    latex2->DrawLatex(0.18,0.58,Form("pt %g-%g                 cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+
+
     canFitInvMass->SaveAs(Form("%s/fits/%s/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+
+    canFlowAll->cd(binPt+1);
+    hFlowMass->DrawCopy();
+    latex->DrawLatex(0.18,0.73,Form("pt%g-%g cent%g-%g",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+
+    canInvMassAll->cd(binPt+1);
+    hInvMass->DrawCopy();
+    latex->DrawLatex(0.18,0.73,Form("pt%g-%g cent%g-%g",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
 
 
     if(TMath::Abs(dFlow) > 1 )
@@ -970,6 +1009,11 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     }
 
   } // endfor {binPt}
+
+  // task->fCanvas->Draw();
+  canFlowAll->SaveAs(Form("%s/FlowMassFits_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+  canInvMassAll->SaveAs(Form("%s/InvMassFits_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+
 
   TCanvas* cFlow = new TCanvas("cFlow","cFlow");
   cFlow->cd();
@@ -1959,6 +2003,9 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	// Reseting the canvas (removing drawn things)
 	canFitInvMass->Clear();
 
+  TLatex* latex = new TLatex();
+  latex->SetNDC();
+  // latex->SetLineColor(kRed);
 
 	// Fitting Phi
 	const TString sOutputFormat = fsOutputFileFormat;
@@ -2005,16 +2052,16 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 
 
   // TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
-	canFitInvMass->Divide(4,2);
-  canFitInvMass->cd(1);
-  hInvMass->Draw();
-  if(task->fFlowPhiSubtLS)
-  {
-    hInvMassBG->Draw("same");
-    hInvMassBG_scaled->Draw("same");
-  }
-  // canFitInvMass->cd(8);
-  // hInvMass_subs->Draw();
+	canFitInvMass->Divide(3,2);
+  // canFitInvMass->cd(1);
+  // hInvMass->Draw();
+  // if(task->fFlowPhiSubtLS)
+  // {
+  //   hInvMassBG->Draw("same");
+  //   hInvMassBG_scaled->Draw("same");
+  // }
+  // // canFitInvMass->cd(8);
+  // // hInvMass_subs->Draw();
 
 	TH1D* hInvMass_shot = 0x0;
 	TH1D* hInvMass_side = 0x0;
@@ -2035,8 +2082,10 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	TF1* fitFlowTot = 0x0;
 
 	hInvMass_shot = (TH1D*) hInvMass_subs->Clone("hInvMass_shot");
+  hInvMass_shot->SetMaximum(hInvMass_shot->GetMaximum()*2);
 	hInvMass_side = (TH1D*) hInvMass_subs->Clone("hInvMass_side");
 	hInvMass_residual = (TH1D*) hInvMass_subs->Clone("hInvMass_residual");
+  hInvMass_residual->GetYaxis()->SetTitle("Residuals");
 
   // fitting first shot
   // Short_t iBinPeakLow = hInvMass_shot->FindFixBin(dInvMassPeakLow);
@@ -2049,7 +2098,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
   // hInvMass_shot->SetMinimum(hInvMass_subs->GetMinimum());
 
   Debug("====== Fitting InvMass first shot ========","ExtractFlowPhi");
-  canFitInvMass->cd(2);
+  canFitInvMass->cd(1);
 	fitShot = new TF1("fitShot","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
 	fitShot->SetNpx(10000);
   fitShot->SetParameter(0,hInvMass_shot->GetMaximum());
@@ -2063,6 +2112,12 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	// fitShot->SetParLimits(2,0.,0.05);
   // fitShot->SetParameter(3,hInvMass_shot->GetMaximum());
 	hInvMass_shot->Fit("fitShot",sFitOpt.Data());
+
+  latex->DrawLatex(0.18,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitShot->GetChisquare(), fitShot->GetNDF(),fitShot->GetChisquare()/fitShot->GetNDF()));
+  latex->DrawLatex(0.18,0.73,Form("#color[8]{M = %.6g#pm%.2g}",fitShot->GetParameter(1),fitShot->GetParError(1)));
+  latex->DrawLatex(0.18,0.65,Form("#color[8]{#Gamma = %0.5g#pm%.2g}",fitShot->GetParameter(2),fitShot->GetParError(2)));
+
+
 
 	// TODO checking the fitting results
 
@@ -2093,7 +2148,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
   if(task->fFlowFitRangeHigh <= dFittingHigh && task->fFlowFitRangeHigh > dMassHigh) dFittingHigh = task->fFlowFitRangeHigh;
 
   Debug("====== Fitting InvMass sidebands ========","ExtractFlowPhi");
-  canFitInvMass->cd(3);
+  canFitInvMass->cd(2);
   hInvMass_side->Draw();
 	// fitSide = new TF1("fitSide","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
 	fitSide = new TF1("fitSide","pol2(0)",dFittingLow,dFittingHigh);
@@ -2116,6 +2171,8 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
   // fitSide->SetParameter(4,fitShot->GetParameter(4));
   // fitSide->SetParameter(5,fitShot->GetParameter(5));
 	hInvMass_side->Fit("fitSide",sFitOpt.Data());
+  latex->DrawLatex(0.38,0.15,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitSide->GetChisquare(), fitSide->GetNDF(),fitSide->GetChisquare()/fitSide->GetNDF()));
+
 
   TF1* fitResBG = new TF1("fitResBG","pol2(0)",dFittingLow,dFittingHigh);
   // fitResBG->SetParameter(0,fitShot->GetParameter(3));
@@ -2138,7 +2195,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	}
   hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
 
-	canFitInvMass->cd(4);
+	canFitInvMass->cd(3);
   hInvMass_residual->SetMaximum(0.1*hInvMass_residual->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
 	hInvMass_residual->Draw();
 
@@ -2150,9 +2207,10 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 
 	hInvMass_ratio->Sumw2();
 	hInvMass_ratio->Divide(hInvMass);
+  hInvMass_ratio->GetYaxis()->SetTitle("signal/total ratio");
 
   Debug("====== Fitting InvMass sig/tot ratio ========","ExtractFlowPhi");
-	canFitInvMass->cd(5);
+	canFitInvMass->cd(4);
 
 	//hInvMass_ratio->Draw();
 	// fitRatio = new TF1("fitRatio","pol2(0)+[3]*TMath::BreitWigner(x,[4],[5])",0.99,1.07);
@@ -2168,6 +2226,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	// hInvMass_ratio->Fit("fitRatio","R");
 
 	fitRatio = new TF1("fitRatio","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
+	// fitRatio = new TF1("fitRatio","[0]*TMath::BreitWigner(x,[1],[2])+pol3(3)",dFittingLow,dFittingHigh);
 	// fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",dFittingLow,dFittingHigh);
 	// fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",dFittingLow,dFittingHigh);
 	fitRatio->SetNpx(1000);
@@ -2187,12 +2246,19 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
   // fitRatio->SetParLimits(6,-300,300);
 	hInvMass_ratio->Fit("fitRatio",sFitOpt.Data());
 
+  latex->DrawLatex(0.38,0.15,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitRatio->GetChisquare(), fitRatio->GetNDF(),fitRatio->GetChisquare()/fitRatio->GetNDF()));
+
+
   // return kFALSE;
 
 	// flow mass Fitting
 	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
 	hFlowMass_side->SetMaximum(1.2*hFlowMass->GetMaximum());
 	hFlowMass_side->SetMinimum(0.8*hFlowMass->GetMinimum());
+  hFlowMass_side->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
+  hFlowMass_side->GetYaxis()->SetTitle("v_{2}^{tot}");
+  hFlowMass->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
+  hFlowMass->GetYaxis()->SetTitle("v_{2}^{tot}");
 
 	// fitting side bands
   // Excluding mass peak window (setting errors to inf)
@@ -2203,7 +2269,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	}
 
   Debug("====== Fitting FlowMass sidebands ========","ExtractFlowPhi");
-	canFitInvMass->cd(6);
+	canFitInvMass->cd(5);
 
   if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
   else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
@@ -2211,11 +2277,12 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
 	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
 
   Debug("====== Fitting FlowMass total ========","ExtractFlowPhi");
-	canFitInvMass->cd(7);
+	canFitInvMass->cd(6);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.99,1.07);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
 	fitFlowTot = new TF1("fitFlowTot","[0]*([1]*TMath::BreitWigner(x,[2],[3])+pol2(4)) + ( 1-([1]*TMath::BreitWigner(x,[2],[3])+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
+	// fitFlowTot = new TF1("fitFlowTot","[0]*([1]*TMath::BreitWigner(x,[2],[3])+pol3(4)) + ( 1-([1]*TMath::BreitWigner(x,[2],[3])+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
 	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol3(7)",dFittingLow,dFittingHigh);
 	// Inv mass ratio signal/total
 	// fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
@@ -2233,16 +2300,17 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
   if(task->fFlowFitFixTerms) // fix terms from background flowe stiamtion
   {
     // Inv mass ratio signal/total
-    fitFlowTot->FixParameter(1,fitRatio->GetParameter(3));
-  	fitFlowTot->FixParameter(2,fitRatio->GetParameter(4));
-  	fitFlowTot->FixParameter(3,fitRatio->GetParameter(5));
-  	fitFlowTot->FixParameter(4,fitRatio->GetParameter(0));
-  	fitFlowTot->FixParameter(5,fitRatio->GetParameter(1));
-  	fitFlowTot->FixParameter(6,fitRatio->GetParameter(2));
-  	// FlowMass backround / sidebands
-  	fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
-  	fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
-  	fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(2));
+
+    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
+    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
+    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
+    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
+    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
+    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
+    // FlowMass backround / sidebands
+    // fitFlowTot->SetParameter(7,fitFlowSide->GetParameter(0));
+    fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
+    fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
   	// fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(3));
   }
   else
@@ -2255,27 +2323,167 @@ Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMa
     fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
     fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
     fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-    fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
+    // fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
     // FlowMass backround / sidebands
     // fitFlowTot->SetParameter(7,fitFlowSide->GetParameter(0));
-    fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(0));
-    fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
+    fitFlowTot->SetParameter(7,fitFlowSide->GetParameter(0));
+    fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(1));
+    // fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(0));
+    // fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
+    // fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
     // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(3));
   }
 
-
+  fitFlowTot->SetLineColor(8);
 	hFlowMass->Fit("fitFlowTot","RIB");
 
 	dFlow = fitFlowTot->GetParameter(0);
 	dFlowError = fitFlowTot->GetParError(0);
 
-  canFitInvMass->cd(7);
-  TLatex* latex = new TLatex();
-  // latex->SetLineColor(kRed);
-  latex->SetNDC();
-  latex->DrawLatex(0.2,0.83,Form("#color[2]{v_{2}=%.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[2]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
+  canFitInvMass->cd(6);
 
+  latex->SetNDC();
+  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
+  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
+
+
+  fitShot = new TF1("fitShot","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
+	fitShot->SetNpx(10000);
+	// fitShot->SetParameter(1,0.5);
+	// fitShot->SetParLimits(1,0.485,0.515);
+	// fitShot->SetParameter(2,0.01);
+	// fitShot->SetParLimits(2,0.,0.05);
+  // fitShot->SetParameter(3,hInvMass_shot->GetMaximum());
+	hInvMass_shot->Fit("fitShot",sFitOpt.Data());
+
+
+
+TLegend* leg = new TLegend(0.55,0.3,0.88,0.61);
+leg->SetBorderSize(0);
+leg->SetFillColorAlpha(0,0);
+
+TLegend* leg2 = new TLegend(0.55,0.3,0.88,0.43);
+leg2->SetBorderSize(0);
+leg2->SetFillColorAlpha(0,0);
+
+
+  TF1* fitMass = new TF1("fitMass","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",1,1.06);
+	// fitMass->SetNpx(50000);
+  fitMass->SetParameter(0,hInvMass_shot->GetMaximum());
+  fitMass->SetParameter(1,1.019445);
+  fitMass->SetParLimits(1,1.018,1.020);
+  fitMass->SetParameter(2,0.005);
+  fitMass->SetParLimits(2,0.004,0.006);
+  fitMass->SetLineColor(kBlue);
+
+
+  SetStyle();
+
+
+  TLatex * text = new TLatex();
+  text->SetTextFont(42);
+
+  TLatex * text2 = new TLatex();
+  text2->SetTextFont(42);
+  // text2->SetTextSizePixels(22);
+
+
+
+  // TCanvas* canNice = new TCanvas("canNice","canNice",500,1000);
+  TCanvas* canNice = new TCanvas("canNice","canNice",600,800);
+  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
+  pad1->SetBottomMargin(0.0);
+  pad1->SetLeftMargin(0.15);
+  pad1->Draw();
+  TPad *pad2 = new TPad("pad2", "pad2", 0, 0., 1, 0.3);
+  pad2->SetTopMargin(0.0);
+  pad2->SetBottomMargin(0.25);
+  pad2->SetLeftMargin(0.15);
+  pad2->Draw();
+
+  pad1->cd();
+  // canNice->Divide(1,2);
+  // canNice->cd(1);
+  TH1* h1 = pad1->DrawFrame(1.,0.02 ,1.06, 300000);
+  h1->SetStats(0);
+  // h1->SetTitleSize(0.2,"xy");
+  h1->SetTitle(";#it{m}_{inv} (GeV/#it{c}^{2}); Counts");
+  h1->GetXaxis()->SetLabelSize(0.);
+  hInvMass_subs->SetStats(0);
+  hInvMass_subs->SetLineColor(kBlack);
+  // fitMass->SetLineStyle(kDashed);
+  fitMass->SetNpx(300);
+  hInvMass_subs->SetMarkerColor(kBlack);
+  hInvMass_subs->Draw("same");
+  hInvMass_subs->Fit("fitMass","R");
+  fitMass->Draw("same");
+    // TGaxis *axis = new TGaxis( -5, 20, -5, 220, 20,220,510,"");
+    // axis->SetLabelFont(43); // Absolute font size in pixel (precision 3)
+    // axis->SetLabelSize(15);
+    // axis->Draw();
+
+
+  TF1* fitSig = new TF1("fitMass","[0]*TMath::BreitWigner(x,[1],[2])",1,1.06);
+  fitSig->SetParameter(0,fitMass->GetParameter(0));
+  fitSig->SetParameter(1,fitMass->GetParameter(1));
+  fitSig->SetParameter(2,fitMass->GetParameter(2));
+  fitSig->SetParameter(0,fitMass->GetParameter(0));
+  fitSig->SetLineColor(kRed);
+  fitSig->SetNpx(300);
+
+  TF1* fitBg = new TF1("fitMass","pol2(3)",1,1.06);
+  fitBg->SetParameter(3,fitMass->GetParameter(3));
+  fitBg->SetParameter(4,fitMass->GetParameter(4));
+  fitBg->SetParameter(5,fitMass->GetParameter(5));
+  fitBg->SetLineColor(kBlack);
+  fitBg->SetLineStyle(kDashed);
+
+  leg->AddEntry(hInvMass_subs,"data","pl");
+  leg->AddEntry(fitMass,"combined fit","l");
+  leg->AddEntry(fitSig,"#phi signal (Breit-Wigner)","l");
+  leg->AddEntry(fitBg,"background (pol2)","l");
+  // leg->AddEntry(hInvMass_subs,"K^{+}+K^{-} yield","pel");
+  // leg->AddEntry(fitMass,"Breit-Wigner + pol2","l");
+  // leg->AddEntry(fitSig,"#phi #rightarrow K^{+}+K^{-}","l");
+  // leg->AddEntry(fitBg,"comb. bg.","l");
+
+
+
+
+  fitSig->Draw("same");
+  fitBg->Draw("same");
+  leg->Draw();
+
+
+  leg2->AddEntry(fitFlowTot,"#it{v}_{2}^{ tot} fit","l");
+
+  DrawLogo(1, 0.2, 0.83);
+  text->DrawLatexNDC(0.2,0.77,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
+  text2->DrawLatexNDC(0.2,0.7,Form("0-20%% (V0A)"));
+  text2->DrawLatexNDC(0.2,0.63,Form("|#eta| < 0.8, 1.5 < #it{p}_{T} < 2 GeV/#it{c}"));
+  text2->DrawLatexNDC(0.65,0.83,Form("#phi #rightarrow K^{+} + K^{-}"));
+
+  pad2->cd();
+  // gPad->SetBottomMargin(0.5);
+  TH1* h2 = pad2->DrawFrame(1.,0.08 ,1.06,0.199 );
+  hFlowMass->SetStats(0);
+  hFlowMass->SetLineColor(kBlack);
+  h2->SetTickLength(0.07,"X");
+  h2->SetTitle(";#it{m}_{K^{+}K^{-}} (GeV/#it{c}^{2}); v_{2}^{tot} {2,|#Delta#eta|>0.8}");
+  h2->SetTitleSize(0.09,"X");
+  h2->SetTitleSize(0.09,"Y");
+  h2->SetTitleOffset(0.7,"Y");
+  // h2->SetLabelSize(0.045,"xyz");
+  h2->SetLabelSize(0.09,"xy");
+  // h2->SetLabelOffset(0.01,"x");
+  // h2->SetLabelOffset(0.01,"y");
+  // h2->SetLabelOffset(0.01,"x");
+  // h2->SetTitleOffset(0.1,"XY");
+  hFlowMass->Draw("same");
+  leg2->Draw();
+  canNice->SaveAs(Form("%s/NICE_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),"Phi",task->fHarmonics,10*task->fEtaGap,1,"pdf"),"pdf");
+  canNice->SaveAs(Form("%s/NICE_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),"Phi",task->fHarmonics,10*task->fEtaGap,1,"eps"),"eps");
+//
 
   return kTRUE;
 }
@@ -2298,6 +2506,10 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 
 	// Reseting the canvas (removing drawn things)
 	canFitInvMass->Clear();
+
+  TLatex* latex = new TLatex();
+  // latex->SetLineColor(kRed);
+  latex->SetNDC();
 
 	// Fitting K0s
 	const TString sOutputFormat = fsOutputFileFormat;
@@ -2345,7 +2557,16 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 	fitShot->SetParLimits(1,0.485,0.515);
 	fitShot->SetParameter(2,0.01);
 	fitShot->SetParLimits(2,0.,0.05);
-	hInvMass->Fit("fitShot",sFitOpt.Data());
+	hInvMass->Fit("fitShot",Form("%s N",sFitOpt.Data()));
+	hInvMass->Draw();
+  fitShot->Draw("same");
+
+
+  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitShot->GetChisquare(), fitShot->GetNDF(),fitShot->GetChisquare()/fitShot->GetNDF()));
+  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitShot->GetParameter(1),fitShot->GetParError(1)));
+  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitShot->GetParameter(2),fitShot->GetParError(2)));
+
+
 
 	// TODO checking the fitting results
 
@@ -2377,6 +2598,10 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 	fitSide->SetNpx(10000);
 	hInvMass_side->Fit("fitSide",sFitOpt.Data());
 
+  // latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
+  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitSide->GetChisquare(), fitSide->GetNDF(),fitSide->GetChisquare()/fitSide->GetNDF()));
+
+
 	Double_t dContent = 0;
 	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
 	{
@@ -2385,10 +2610,13 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 	}
 
   hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
+  hInvMass_ratio->GetYaxis()->SetTitle("signal/total ratio");
 
 	canFitInvMass->cd(3);
   hInvMass_residual->SetMaximum(0.01*hInvMass_residual->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
 	hInvMass_residual->Draw();
+  hInvMass_residual->GetYaxis()->SetTitle("Residuals");
+
 
   TLine* vert = new TLine();
   vert->SetLineColor(kRed);
@@ -2423,10 +2651,18 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 	// fitRatio->SetParLimits(5,0.003,0.01);
 	hInvMass_ratio->Fit("fitRatio",sFitOpt.Data());
 
+  // latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
+  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitRatio->GetChisquare(), fitRatio->GetNDF(),fitRatio->GetChisquare()/fitRatio->GetNDF()));
+
+
 	// flow mass Fitting
 	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
 	hFlowMass_side->SetMaximum(1.5*hFlowMass->GetMaximum());
 	hFlowMass_side->SetMinimum(0.5*hFlowMass->GetMinimum());
+  hFlowMass_side->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
+  hFlowMass_side->GetYaxis()->SetTitle("v_{2}^{tot}");
+  hFlowMass->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
+  hFlowMass->GetYaxis()->SetTitle("v_{2}^{tot}");
 
 	// fitting side bands
 	for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
@@ -2495,12 +2731,8 @@ Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowM
 	dFlow = fitFlowTot->GetParameter(0);
 	dFlowError = fitFlowTot->GetParError(0);
 
-  canFitInvMass->cd(5);
-  TLatex* latex = new TLatex();
-  // latex->SetLineColor(kRed);
-  latex->SetNDC();
-  latex->DrawLatex(0.2,0.83,Form("#color[2]{v_{2}=%.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[2]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
+  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
+  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
 
 	return kTRUE;
 }
@@ -2538,6 +2770,10 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
   Double_t dMeanShot = 0;
   Double_t dSigmaShot = 0;
 
+  TLatex* latex = new TLatex();
+  // latex->SetLineColor(kRed);
+  latex->SetNDC();
+
 	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
 	canFitInvMass->Divide(3,2);
 
@@ -2561,6 +2797,7 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 
 	hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side");
 	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
+	hInvMass_residual->GetYaxis()->SetTitle("Residuals");
 
   Debug("====== Fitting InvMass first shot ========","ExtractFlowLambda");
   canFitInvMass->cd(1);
@@ -2569,10 +2806,18 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	fitShot->SetNpx(10000);
 	fitShot->SetParameter(1,1.115);
 	fitShot->SetParLimits(1,1.113,1.12);
-	fitShot->SetParameter(2,0.01);
-  fitShot->SetParLimits(2,0.,0.002);
+	fitShot->SetParameter(2,0.001);
+  fitShot->SetParLimits(2,0.,0.0025);
   hInvMass->Fit("fitShot",Form("%s N",sFitOpt.Data()));
   hInvMass->Draw();
+  fitShot->Draw("same");
+
+  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitShot->GetChisquare(), fitShot->GetNDF(),fitShot->GetChisquare()/fitShot->GetNDF()));
+  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitShot->GetParameter(1),fitShot->GetParError(1)));
+  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitShot->GetParameter(2),fitShot->GetParError(2)));
+
+
+
 
 	// TODO checking the fitting results
 
@@ -2608,6 +2853,7 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
   	fitSide = new TF1("fitSide","pol3(0)",dFittingLow,dFittingHigh);
 	fitSide->SetNpx(10000);
 	hInvMass_side->Fit("fitSide",sFitOpt.Data());
+  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitSide->GetChisquare(), fitSide->GetNDF(),fitSide->GetChisquare()/fitSide->GetNDF()));
 
 	Double_t dContent = 0;
 	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
@@ -2617,6 +2863,8 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	}
 
   hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
+  hInvMass_ratio->GetYaxis()->SetTitle("signal/total ratio");
+
 
   canFitInvMass->cd(3);
   hInvMass_residual->SetMaximum(0.1*hInvMass_residual->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
@@ -2638,6 +2886,7 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
   canFitInvMass->cd(4);
 	//hInvMass_ratio->Draw();
 	fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",dFittingLow,dFittingHigh);
+	// fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",dFittingLow,dFittingHigh);
 	// fitRatio = new TF1("fitRatio","gaus(0)+gaus(3)+pol2(6)",dFittingLow,dFittingHigh);
 	fitRatio->SetNpx(1000);
 	fitRatio->SetParameter(0,hInvMass_ratio->GetMaximum());
@@ -2650,11 +2899,16 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	// fitRatio->SetParameter(5,0.005);
 	// fitRatio->SetParLimits(5,0.01,0.3);
 	hInvMass_ratio->Fit("fitRatio",sFitOpt.Data());
+  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitRatio->GetChisquare(), fitRatio->GetNDF(),fitRatio->GetChisquare()/fitRatio->GetNDF()));
 
 	// flow mass Fitting
 	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
 	hFlowMass_side->SetMaximum(1.5*hFlowMass->GetMaximum());
 	hFlowMass_side->SetMinimum(0.5*hFlowMass->GetMinimum());
+  hFlowMass_side->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
+  hFlowMass_side->GetYaxis()->SetTitle("v_{2}^{tot}");
+  hFlowMass->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
+  hFlowMass->GetYaxis()->SetTitle("v_{2}^{tot}");
 
 	// fitting side bands
 	for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
@@ -2715,9 +2969,14 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
     // fitFlowTot->FixParameter(9,fitRatio->GetParameter(8));
     // FlowMass backround / sidebands
     fitFlowTot->SetParameter(0,dFlow);
-    fitFlowTot->SetParLimits(0,0.01,0.5);
+    // fitFlowTot->SetParLimits(0,0.01,0.5);
+    // if(dFlow > 0.01) fitFlowTot->SetParLimits(0,0.5*dFlow,2*dFlow);
+
+
     fitFlowTot->SetParameter(7,fitFlowSide->GetParameter(0));
     fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(1));
+    // fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(0));
+    // fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
     // fitFlowTot->SetParameter(12,fitFlowSide->GetParameter(1));
     // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
   }
@@ -2730,11 +2989,9 @@ Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFl
 	dFlowError = fitFlowTot->GetParError(0);
 
   canFitInvMass->cd(6);
-  TLatex* latex = new TLatex();
-  // latex->SetLineColor(kRed);
-  latex->SetNDC();
-  latex->DrawLatex(0.2,0.83,Form("#color[2]{v_{2}=%.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[2]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
+
+  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
+  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
 
 	return kTRUE;
 }
@@ -2764,3 +3021,145 @@ void ProcessUniFlow::Debug(TString sMsg, TString sMethod)
 	if(fbDebug) printf("Debug::%s  %s\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
+//_____________________________________________________________________________
+void myPadSetUp(TPad *currentPad, float currentLeft, float currentTop, float currentRight, float currentBottom){
+  currentPad->SetLeftMargin(currentLeft);
+  currentPad->SetTopMargin(currentTop);
+  currentPad->SetRightMargin(currentRight);
+  currentPad->SetBottomMargin(currentBottom);
+  return;
+}
+//_____________________________________________________________________________
+void SetStyle(Bool_t graypalette) {
+  cout << "Setting style!" << endl;
+
+  gStyle->Reset("Plain");
+  gStyle->SetOptTitle(0);
+  gStyle->SetOptStat(0);
+  if(graypalette) gStyle->SetPalette(8,0);
+  else gStyle->SetPalette(1);
+  gStyle->SetCanvasColor(10);
+  gStyle->SetCanvasBorderMode(0);
+  gStyle->SetFrameLineWidth(1);
+  gStyle->SetFrameFillColor(kWhite);
+  gStyle->SetPadColor(10);
+  gStyle->SetPadTickX(1);
+  gStyle->SetPadTickY(1);
+  gStyle->SetPadBottomMargin(0.15);
+  gStyle->SetPadLeftMargin(0.15);
+  gStyle->SetHistLineWidth(1);
+  gStyle->SetHistLineColor(kRed);
+  gStyle->SetFuncWidth(2);
+  gStyle->SetFuncColor(kGreen);
+  gStyle->SetLineWidth(2);
+  gStyle->SetLabelSize(0.045,"xyz");
+  gStyle->SetLabelOffset(0.01,"y");
+  gStyle->SetLabelOffset(0.01,"x");
+  gStyle->SetLabelColor(kBlack,"xyz");
+  gStyle->SetTitleSize(0.05,"xyz");
+  gStyle->SetTitleOffset(1.25,"y");
+  gStyle->SetTitleOffset(1.2,"x");
+  gStyle->SetTitleFillColor(kWhite);
+  gStyle->SetTextSizePixels(26);
+  gStyle->SetTextFont(42);
+  //  gStyle->SetTickLength(0.04,"X");  gStyle->SetTickLength(0.04,"Y");
+
+  gStyle->SetLegendBorderSize(0);
+  gStyle->SetLegendFillColor(kWhite);
+  //  gStyle->SetFillColor(kWhite);
+  gStyle->SetLegendFont(42);
+}
+//_____________________________________________________________________________
+void FakeHistosOnlyForExample(TH1* &hstat, TH1* &hsyst, TH1*&hsystCorr) {
+
+  TF1 * fExpo = new TF1 ("fExpo", "expo");
+  fExpo->SetParameters(10, -0.3);
+  hstat     = new TH1F("hstat", "hstat", 100, 0, 10);
+  hsyst     = new TH1F("hsyst", "hsyst", 100, 0, 10);
+  hsystCorr = new TH1F("hsystCorr", "hsystCorr", 100, 0, 10);
+  hstat     ->Sumw2();
+  hsyst     ->Sumw2();
+  hsystCorr ->Sumw2();
+  hstat->FillRandom("fExpo",20000);
+  Int_t nbinx = hstat->GetNbinsX();
+
+  for(Int_t ibinx = 1; ibinx <= nbinx; ibinx++){
+    hsyst->SetBinContent (ibinx, hstat->GetBinContent(ibinx));
+			  hsyst->SetBinError   (ibinx, hstat->GetBinContent(ibinx)*0.08);
+			  hsystCorr->SetBinContent (ibinx, hstat->GetBinContent(ibinx));
+			  hsystCorr->SetBinError   (ibinx, hstat->GetBinContent(ibinx)*0.15);
+  }
+
+}
+//_____________________________________________________________________________
+void LoadLibs() {
+  gSystem->Load("libCore.so");
+  gSystem->Load("libGeom.so");
+  gSystem->Load("libPhysics.so");
+  gSystem->Load("libVMC");
+  gSystem->Load("libTree");
+  gSystem->Load("libMinuit");
+  gSystem->Load("libSTEERBase");
+  gSystem->Load("libESD");
+  gSystem->Load("libAOD");
+  gSystem->Load("libANALYSIS");
+  gSystem->Load("libANALYSISalice");
+  gSystem->Load("libCORRFW");
+  gSystem->Load("libPWGTools");
+}
+//_____________________________________________________________________________
+void DrawLogo (Int_t logo, Double_t xmin, Double_t ymin) {
+
+  // Logo is not needed anymore, now we only write alice preliminary
+  // Logo:
+  // 0: Justr writes "ALICE" (for final data)
+  // Anything eles: writes "ALICE Preliminary"
+  TString sText;
+
+  switch (logo)
+  {
+    case 0:
+      sText = TString("ALICE");
+      break;
+
+    case 1:
+      sText = TString("ALICE Preliminary");
+      break;
+
+    case 2:
+      sText = TString("ALICE This thesis");
+      break;
+  }
+
+
+  TLatex *   tex = new TLatex(xmin,ymin, sText.Data());
+  tex->SetNDC();
+  tex->SetTextFont(42);
+  tex->Draw();
+
+  // OLD logo
+  //  TPad * currentPad = gPad;
+  // Double_t AliLogo_LowX =xmin;
+  // Double_t AliLogo_LowY = ymin;
+  // Double_t AliLogo_Height = size;
+  // //ALICE logo is a  file that is 821x798 pixels->should be wider than a square
+  // Double_t AliLogo_Width  = (821./798.) * AliLogo_Height * gPad->GetWh() / gPad->GetWw();
+
+  // TPad *myPadLogo = new TPad("myPadLogo", "Pad for ALICE Logo",AliLogo_LowX,AliLogo_LowY,AliLogo_LowX+AliLogo_Width,AliLogo_LowY+AliLogo_Height);
+  // myPadSetUp(myPadLogo,0,0,0,0);
+  // //myPadLogo->SetFixedAspectRatio(1);
+  // myPadLogo->Draw();
+  // myPadLogo->cd();
+  // if (logo == 0) {
+  //   myPadLogo->SetFillColor(2); // color to first figure out where is the pad then comment !
+  // } else if (logo == 1){
+  //   TASImage *myAliceLogo = new TASImage(performanceLogoPath);
+  //   myAliceLogo->Draw();
+  // } else if (logo == 2) {
+  //   TASImage *myAliceLogo = new TASImage(preliminaryLogoPath);
+  //   myAliceLogo->Draw();
+  // }
+  // // go back to the old pad
+  // currentPad->cd();
+
+}//_____________________________________________________________________________

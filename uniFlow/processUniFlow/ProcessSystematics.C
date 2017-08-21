@@ -27,18 +27,31 @@
 const char* sInputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2";
 const char* sOutputPath = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/comparison";
 
-const char* sBaseFile = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/NUA_cor/merged_16qt_noFASTt/fitTest/UniFlow_NUA_cor.root";
+const char* sBaseFile = "/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/NUA_cor/merged_16qt_noFASTt/fitTest/UniFlow.root";
 
 // const char* sCommonTag = "tpcCls"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"uniflow_tpcCls80","uniflow_tpcCls90"}; Bool_t plotTogether = 1;
 // const char* sCommonTag = "dca"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"UniFlow_dcaxy","UniFlow_dcaz"}; Bool_t plotTogether = 0;
 // const char* sCommonTag = "Vtx_z"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"UniFlow_vtx8","UniFlow_vtx9"}; Bool_t plotTogether = 1;
-// const char* sCommonTag = "filterBit_withNUA"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"UniFlow_fb768}; Bool_t plotTogether = 0;
+// const char* sCommonTag = "filterBit_withNUA"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"UniFlow_fb768"}; Bool_t plotTogether = 0;
 // const char* sCommonTag = "v0s"; const Short_t iNumFiles = 5; const char* sTaskTag[iNumFiles] = {"UniFlow_CPA","UniFlow_DCA","uniflow_dcaZ","UniFlow_DecayRadius","uniflow_NoArmernteros"}; Bool_t plotTogether = 0;
-// const char* sCommonTag = "pid"; const Short_t iNumFiles = 3; const char* sTaskTag[iNumFiles] = {"UniFlow","UniFlow_2sigma",UniFlow_bayes}; Bool_t plotTogether = 1;
+// const char* sCommonTag = "pid"; const Short_t iNumFiles = 3; const char* sTaskTag[iNumFiles] = {"UniFlow","UniFlow_2sigma","UniFlow_bayes"}; Bool_t plotTogether = 1;
+// const char* sCommonTag = "baseline_noNUA"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"UniFlow"}; Bool_t plotTogether = 0;
+// const char* sCommonTag = "fit_fixed"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"fit_fixed"}; Bool_t plotTogether = 0;
+// const char* sCommonTag = "fit_range"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"fit_range"}; Bool_t plotTogether = 0;
+// const char* sCommonTag = "fit_LSsub"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"fit_LSsub"}; Bool_t plotTogether = 0;
+// const char* sCommonTag = "fit_pol"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"fit_pol"}; Bool_t plotTogether = 0;
+const char* sCommonTag = "kaonDist"; const Short_t iNumFiles = 1; const char* sTaskTag[iNumFiles] = {"PbPblike"}; Bool_t plotTogether = 0;
 
-// const Short_t iNumSpecies = 3; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult","hFlow2_Phi_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.5,0.5 0.5}; Double_t dFittRangeHigh[iNumSpecies] = {6.,6.,6.};
-const Short_t iNumSpecies = 2; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.5, 0.5}; Double_t dFittRangeHigh[iNumSpecies] = {6.,6.};
-// const Short_t iNumSpecies = 1; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.5}; Double_t dFittRangeHigh[iNumSpecies] = {6.};
+// const char* sCommonTag = "Vtx_z_merged"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"UniFlow_vtx8","UniFlow_vtx9"}; Bool_t plotTogether = 1;
+// const char* sCommonTag = "tpcCls_merged"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"uniflow_tpcCls80","uniflow_tpcCls90"}; Bool_t plotTogether = 1;
+// const char* sCommonTag = "pid_merged"; const Short_t iNumFiles = 2; const char* sTaskTag[iNumFiles] = {"UniFlow_2sigma","UniFlow_bayes"}; Bool_t plotTogether = 1;
+
+// const Short_t iNumSpecies = 4; const char* sSpecies[iNumSpecies] = {"hFlow2_Charged_harm2_gap08_cent","hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult","hFlow2_Phi_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.2,1,1.,1.}; Double_t dFittRangeHigh[iNumSpecies] = {6.,5.,4.5,4.};
+// const Short_t iNumSpecies = 5; const char* sSpecies[iNumSpecies] = {"hFlow2_Charged_harm2_gap08_cent","hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult","hFlow2_Phi_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.2,1,1.,1.}; Double_t dFittRangeHigh[iNumSpecies] = {6.,5.,4.5,4.};
+// const Short_t iNumSpecies = 3; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult","hFlow2_Phi_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {1,0.6,0.5}; Double_t dFittRangeHigh[iNumSpecies] = {6.,4.6,4.};
+const Short_t iNumSpecies = 2; const char* sSpecies[iNumSpecies] = {"hFlow2_K0s_harm2_gap08_mult","hFlow2_Lambda_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {1.,1  }; Double_t dFittRangeHigh[iNumSpecies] = {5.,4.5};
+// const Short_t iNumSpecies = 1; const char* sSpecies[iNumSpecies] = {"hFlow2_Phi_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {1.}; Double_t dFittRangeHigh[iNumSpecies] = {5.};
+// const Short_t iNumSpecies = 2; const char* sSpecies[iNumSpecies] = {"hFlow2_Charged_harm2_gap08_cent","hFlow2_Phi_harm2_gap08_mult"}; Double_t dFittRangeLow[iNumSpecies] = {0.2,1.}; Double_t dFittRangeHigh[iNumSpecies] = {6.,4.};
 
 
 //const Short_t iNumSpecies = 4; const char* sSpecies[iNumSpecies] = {"hFlow2_Charged_harm2_gap08_cent","hFlow2_Pion_harm2_gap08_cent","hFlow2_Kaon_harm2_gap08_cent","hFlow2_Proton_harm2_gap08_cent"};
@@ -142,11 +155,11 @@ void ProcessSystematics()
           if(iCent == 0 && iSpecies == 0) legendSolo->AddEntry(hTemp,sTaskTag[iFile],"pel");
 
 
-          hRatio = MakeRatio(hBase,hTemp,1);
+          hRatio = MakeRatio(hBase,hTemp,0);
           hRatio->SetTitle("Ratio systematic/baseline; #it{p}_{T} (GeV/#it{c}); syst / baseline;");
           hRatio->SetName(Form("default/%s",sTaskTag[iFile]));
 
-          hBarlow = DoBarlowTest(hBase,hTemp,1);
+          hBarlow = DoBarlowTest(hBase,hTemp,0);
           hBarlow->SetTitle("Barlow Test; #it{p}_{T} (GeV/#it{c}); Barlow #it{B}");
           hBarlow->SetMaximum(5);
           hBarlow->SetMinimum(0);
@@ -242,11 +255,11 @@ void ProcessSystematics()
           if(iCent == 0 && iSpecies == 0) legend->AddEntry(hTemp,sTaskTag[iFile],"pel");
 
 
-          hRatio = MakeRatio(hBase,hTemp,1);
+          hRatio = MakeRatio(hBase,hTemp,0);
           hRatio->SetTitle("Ratio systematic/baseline; #it{p}_{T} (GeV/#it{c}); syst / baseline;");
           hRatio->SetName(Form("default/%s",sTaskTag[iFile]));
 
-          hBarlow = DoBarlowTest(hBase,hTemp,1);
+          hBarlow = DoBarlowTest(hBase,hTemp,0);
           hBarlow->SetTitle("Barlow Test; #it{p}_{T} (GeV/#it{c}); Barlow #it{B}");
           hBarlow->SetMaximum(5);
           hBarlow->SetMinimum(0);
