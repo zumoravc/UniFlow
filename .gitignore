@@ -23,11 +23,16 @@
 ### OTHERS ###
 *.xml
 *.tmp
-.DS_Store 			# Mac specific 
+*.zip
+.DS_Store 			# Mac specific
+
+# Images/Pictures #
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
 
 ### Directories ###
 results/*
 hepData/*
-
-
-

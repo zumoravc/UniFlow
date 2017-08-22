@@ -21,21 +21,23 @@
 #include "TH3.h"
 #include "TF1.h"
 
-void ProcessUniFlow::SetStyle(Bool_t graypalette=kFALSE);
-void ProcessUniFlow::myPadSetUp(TPad *currentPad, float currentLeft=0.11, float currentTop=0.04, float currentRight=0.04, float currentBottom=0.15);
-void ProcessUniFlow::DrawLogo (Int_t logo=0, Double_t xmin =  0.28, Double_t ymin= 0.68) ;
-void ProcessUniFlow::FakeHistosOnlyForExample(TH1*&hstat, TH1*&hsyst, TH1*&hsystCorr);
-void ProcessUniFlow::LoadLibs();
+void SetStyle(Bool_t graypalette=kFALSE);
+void myPadSetUp(TPad *currentPad, float currentLeft=0.11, float currentTop=0.04, float currentRight=0.04, float currentBottom=0.15);
+void DrawLogo (Int_t logo=0, Double_t xmin =  0.28, Double_t ymin= 0.68) ;
+void FakeHistosOnlyForExample(TH1*&hstat, TH1*&hsyst, TH1*&hsystCorr);
+void LoadLibs();
 
-void PlotPIDvn()
+void PlotPIDvnRun1()
 {
   LoadLibs();
   SetStyle();
 
-  // TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/HEPdata_extracted.root");
-  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlow.root");
-  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlow.root");
-  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/final_all");
+  // TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlowTest.root");
+  TString sInputFile = TString("/Users/vpacik/NBI/Flow/results/uniFlow_ver4_V0A/run1_comparison/HEPdata_extracted.root");
+  // TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/UniFlow.root");
+  // TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst/NUA_cor/merged_16q/finalWithRun1");
+  TString sInputFileRecon = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/NUA_cor/merged_16qt_noFASTt/fitTest/UniFlow.root");
+  TString sOutputFilePath = TString("/Users/vpacik/NBI/Flow/results/uniFlow_syst_run2/NUA_cor/merged_16qt_noFASTt/");
 
   // TString sGap = "08";
   // Int_t iCent = 0;
@@ -50,7 +52,7 @@ void PlotPIDvn()
   const Int_t markers[]    = {kFullCircle, kFullSquare,kOpenCircle,kOpenSquare,kOpenDiamond,kOpenCross,kFullCross,kFullDiamond,kFullStar,kOpenStar};
 
   // colors setting
-  Color_t colCharged = kBlack;
+  Color_t colCharged = kGray+1;
   Color_t colPion = kRed;
   Color_t colKaon = kBlue;
   Color_t colProton = kGreen+2;
@@ -59,24 +61,24 @@ void PlotPIDvn()
   Color_t colLambda = kOrange+1;
 
   // markers setting
-  Int_t markCharged = kOpenSquare;
-  Int_t markPion = kFullCircle;
-  Int_t markKaon = kFullTriangleUp;
-  Int_t markProton = kFullCross;
+  Int_t markCharged = kFullCircle;
+  Int_t markPion = kOpenCircle;
+  Int_t markKaon = kOpenSquare;
+  Int_t markProton = kOpenCross;
   // Int_t markProton = kFullSquare;
   Int_t markPhi = kFullStar;
-  Int_t markK0s = kFullTriangleDown;
+  Int_t markK0s = kFullSquare;
   Int_t markLambda = kFullDiamond;
   // Int_t markLambda = kFullCross;
 
-  Double_t markSizeCharged = 1;
+
+  Double_t markSizeCharged = 1.2;
   Double_t markSizePion = 1;
-  Double_t markSizeKaon = 1.2;
+  Double_t markSizeKaon = 1.;
   Double_t markSizeProton = 1.5;
   Double_t markSizePhi = 1.5;
-  Double_t markSizeK0s = 1.2;
+  Double_t markSizeK0s = 1.;
   Double_t markSizeLambda = 1.6;
-  // Double_t markSizeCharged = 2;
   // Double_t markSizePion = 2;
   // Double_t markSizeKaon = 2;
   // Double_t markSizeProton = 2;
@@ -182,12 +184,12 @@ void PlotPIDvn()
 
     // drawing stuff
     // hFlowCharged->Draw("same");
-    hFlowPion->Draw("hist p e1 x0 same");
-    hFlowKaon->Draw("hist p e1 x0  same");
-    hFlowProton->Draw("hist p e1 x0 same");
+    // hFlowCharged->Draw("hist p e1 x0 same");
+    // hFlowProton->Draw("hist p e1 x0 same");
+    // hFlowPion->Draw("hist p e1 x0 same");
+    // hFlowKaon->Draw("hist p e1 x0  same");
     hFlowK0s->Draw("hist p e1 x0 same");
     hFlowLambda->Draw("hist p e1 x0 same");
-    hFlowCharged->Draw("hist p e1 x0 same");
     hFlowPhi->Draw("hist p e1 x0 same");
 
     // Draw the logo
@@ -215,27 +217,46 @@ void PlotPIDvn()
 
 
     // making legend
-    // TLegend * legend = new TLegend(0.62, 0.18, 0.8, 0.46);
-    TLegend * legend = new TLegend(0.19, 0.48, 0.37, 0.76);
+    TLegend * legend = new TLegend(0.7, 0.2, 0.86, 0.4);
     legend->SetFillColorAlpha(0,0);
     legend->SetTextSize(gStyle->GetTextSize()*0.8);
-    // legend->SetBorderSize(1);
+
+    // TLegend * legend = new TLegend(0.62, 0.18, 0.8, 0.46);
+    TLegend * legendPion = new TLegend(0.19, 0.48, 0.37, 0.76);
+    legendPion->SetFillColorAlpha(0,0);
+    legendPion->SetTextSize(gStyle->GetTextSize()*0.8);
+
+    TLegend * legendKaon = new TLegend(0.19, 0.48, 0.37, 0.76);
+    legendKaon->SetFillColorAlpha(0,0);
+    legendKaon->SetTextSize(gStyle->GetTextSize()*0.8);
+
+    TLegend * legendProton = new TLegend(0.19, 0.48, 0.37, 0.76);
+    legendProton->SetFillColorAlpha(0,0);
+    legendProton->SetTextSize(gStyle->GetTextSize()*0.8);
+
 
     // TLegend * legend2 = new TLegend(0.72, 0.18, 0.91, 0.39);
-    TLegend * legend2 = new TLegend(0.29, 0.55, 0.48, 0.76);
+    TLegend * legend2 = new TLegend(0.2, 0.55, 0.39, 0.76);
     legend2->SetFillColorAlpha(0,0);
     legend2->SetTextSize(gStyle->GetTextSize()*0.8);
     // legend2->SetBorderSize(1);
 
-    legend->AddEntry(hFlowCharged,"h^{#pm}","pl");
+    legend2->AddEntry(hFlowCharged,"h^{#pm}","pl");
+    legend->SetHeader("PLB726");
     legend->AddEntry(hFlowPion,"#pi^{#pm}","pl");
     legend->AddEntry(hFlowKaon,"K^{#pm}","pl");
     legend->AddEntry(hFlowProton,"p/#bar{p}","pl");
+    legendPion->AddEntry(hFlowPion,"#pi^{#pm}","pl");
+    legendKaon->AddEntry(hFlowKaon,"K^{#pm}","pl");
+    legendProton->AddEntry(hFlowProton,"p/#bar{p} (PLB726)","pl");
     legend2->AddEntry(hFlowK0s,"K^{0}_{S}","pl");
     legend2->AddEntry(hFlowPhi,"#phi","pl");
     legend2->AddEntry(hFlowLambda,"#Lambda/#bar{#Lambda}","pl");
 
     legend->Draw();
+    // legendPion->Draw();
+    // legendKaon->Draw();
+    // legendProton->Draw();
     legend2->Draw();
 
     // cfig->SaveAs(Form("%s/plots/PID_%d.%s",sOutputFilePath.Data(),iCent,sOutputFormat.Data()));
@@ -249,7 +270,7 @@ void PlotPIDvn()
   return;
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::LoadLibs() {
+void LoadLibs() {
   gSystem->Load("libCore.so");
   gSystem->Load("libGeom.so");
   gSystem->Load("libPhysics.so");
@@ -265,7 +286,7 @@ void ProcessUniFlow::LoadLibs() {
   gSystem->Load("libPWGTools");
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::DrawLogo (Int_t logo, Double_t xmin, Double_t ymin) {
+void DrawLogo (Int_t logo, Double_t xmin, Double_t ymin) {
 
   // Logo is not needed anymore, now we only write alice preliminary
   // Logo:
@@ -321,7 +342,7 @@ void ProcessUniFlow::DrawLogo (Int_t logo, Double_t xmin, Double_t ymin) {
 
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::myPadSetUp(TPad *currentPad, float currentLeft, float currentTop, float currentRight, float currentBottom){
+void myPadSetUp(TPad *currentPad, float currentLeft, float currentTop, float currentRight, float currentBottom){
   currentPad->SetLeftMargin(currentLeft);
   currentPad->SetTopMargin(currentTop);
   currentPad->SetRightMargin(currentRight);
@@ -329,7 +350,7 @@ void ProcessUniFlow::myPadSetUp(TPad *currentPad, float currentLeft, float curre
   return;
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::SetStyle(Bool_t graypalette) {
+void SetStyle(Bool_t graypalette) {
   cout << "Setting style!" << endl;
 
   gStyle->Reset("Plain");
@@ -369,7 +390,7 @@ void ProcessUniFlow::SetStyle(Bool_t graypalette) {
   gStyle->SetLegendFont(42);
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::FakeHistosOnlyForExample(TH1* &hstat, TH1* &hsyst, TH1*&hsystCorr) {
+void FakeHistosOnlyForExample(TH1* &hstat, TH1* &hsyst, TH1*&hsystCorr) {
 
   TF1 * fExpo = new TF1 ("fExpo", "expo");
   fExpo->SetParameters(10, -0.3);
