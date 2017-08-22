@@ -2516,6 +2516,9 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
   canFitInvMass->Clear();
   canFitInvMass->Divide(2,1);
 
+  TLatex* latex = new TLatex();
+  // latex->SetLineColor(kRed);
+  latex->SetNDC();
 
   // ####### Alex's code
   Info("#### Start of Alex's segment #######################","ExtractFlowK0sAlex");
@@ -2561,6 +2564,9 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
 
   fitA->DrawCopy("same");
 
+  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitA->GetChisquare(), fitA->GetNDF(),fitA->GetChisquare()/fitA->GetNDF()));
+  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitA->GetParameter(7),fitA->GetParError(7)));
+  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitA->GetParameter(8),fitA->GetParError(8)));
 
   TF1* poliA = new TF1(Form("poliA_%d_%d", j, k), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4)", 0.4, 0.6);
   poliA->SetParameters(fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5));
@@ -2580,8 +2586,6 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
 
   hVnK0APx->GetXaxis()->SetTitle("M_{K^{0}} (GeV/c^{2})");
   hVnK0APx->DrawCopy();
-
-
 
   TF1* fvna = new TF1(Form("fvna_%d_%d", j, k), "[0]*gaus(1)/(gaus(4) + [7] + [8]*(x-0.4) + [9]*(x-0.4)*sqrt(x-0.4) + [10]*(x-0.4)*(x-0.4) + [11]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [12]*(x-0.4)*(x-0.4)*(x-0.4)) + ([13] + [14]*(x-0.4) + [15]*(x-0.4)*sqrt(x-0.4) + [16]*(x-0.4)*(x-0.4) + [17]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [18]*(x-0.4)*(x-0.4)*(x-0.4)) / ( [19] + [20]*(x-0.4) + [21]*(x-0.4)*sqrt(x-0.4) + [22]*(x-0.4)*(x-0.4) + [23]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [24]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(25))*([28]+[29]*x)", 0.4, 0.6);
 
@@ -2632,6 +2636,9 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
 
   dFlow = fvna->GetParameter(0);
   dFlowError = fvna->GetParError(0);
+
+  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
+  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fvna->GetChisquare(), fvna->GetNDF(),fvna->GetChisquare()/fvna->GetNDF()));
 
   Info("#### End of Alex's segment #######################","ExtractFlowK0sAlex");
   // ####### END of Alex's code
