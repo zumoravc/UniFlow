@@ -118,6 +118,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetPhiInvMassMin(Double_t mass) { fCutPhiInvMassMin = mass; }
       void					          SetPhiInvMassMax(Double_t mass) { fCutPhiInvMassMax = mass; }
 
+
+      // related to Alex's code
+      Bool_t                  IsV0SelectedK0sAlex(const AliAODv0* v0 = 0x0); //
+      Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta); //
+      Bool_t       fDoAlexK0sSelection; //
+
+      // end of Alex's code
+
     private:
       // array lenghts & constants
       const Double_t          fPDGMassPion; // [DPGMass] DPG mass of charged pion
@@ -529,6 +537,26 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH2D*				   	fhQAV0sArmenterosK0s[fiNumIndexQA];	//! Armenteros-Podolanski plot for K0s candidates
       TH2D*			  		fhQAV0sArmenterosLambda[fiNumIndexQA];	//! Armenteros-Podolanski plot for Lambda candidates
       TH2D*			  		fhQAV0sArmenterosALambda[fiNumIndexQA];	//! Armenteros-Podolanski plot for ALambda candidates
+
+
+      // Alex V0s selection
+      Float_t      fNcrFind;            // number of cross rows over findable clusters
+      Float_t      fDCADghtPV;          // DCA daughters to primary vertex
+      Float_t      fMaxDCADght;         // DCA daughters
+      Float_t      fCosPA;              // cos pointing angle
+      Float_t      fMinRad;             // V0 radius cut low
+      Float_t      fMaxRad;             // V0 radius cut low
+      Bool_t       fArmPodCut;          // flag for Arm-Pod cut
+      Bool_t       fMinPtDght;          // flag for min pT cut for daughters
+      Double_t     fEtaCut;             // Eta cut used to select particles
+      Int_t        fNoClus;	          // No of TPC clusters
+      Double_t     fMinPt;              // Min pt - for histogram limits
+      Double_t     fMaxPt;              // Max pt - for histogram limits
+      Double_t     fNsigCut;            // combined sigma cut value
+      Int_t        fNoClusPid;          // no of TPC clusters used for PID
+      // end of Alex selection
+
+
 
 
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
