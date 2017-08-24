@@ -1,6 +1,6 @@
 void runAnalysisAlexK0s()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -9,7 +9,7 @@ void runAnalysisAlexK0s()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "uniflow_CENT_wSDD";
+    TString sWorkDir = "K0sComp_0";
     TString sOutDir = "output";
     TString sPeriod = "LHC16q";
 
@@ -24,12 +24,12 @@ void runAnalysisAlexK0s()
     // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs]
     // Int_t runNumber[] = {267166, 267165, 267164, 267163};
     // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170318_v1.txt [31 runs]
-    // Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
+    Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
     // Int_t runNumber[] = {265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
 
 
     //test
-    Int_t runNumber[] = {265385, 265384, 265383};
+    // Int_t runNumber[] = {265385, 265384, 265383};
 
 
     // since we will compile a class, tell root where to look for headers
@@ -200,7 +200,7 @@ void runAnalysisAlexK0s()
     AliAnalysisTaskUniFlow* taskAlex = AddTaskUniFlow("UniFlow_Alex");
     taskAlex->fDoAlexK0sSelection = kTRUE;
     // Analysis
-    taskAlex->SetRunMode(AliAnalysisTaskUniFlow::kTest);
+    taskAlex->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     taskAlex->SetNumEventsAnalyse(50);
     taskAlex->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     taskAlex->SetSampling(kFALSE);
@@ -287,11 +287,11 @@ void runAnalysisAlexK0s()
         alienHandler->SetAnalysisSource("AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20170411-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20170820-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
         alienHandler->SetGridDataDir(Form("/alice/data/2016/%s/",sPeriod.Data()));
-        alienHandler->SetDataPattern("/pass1_CENT_wSDD/AOD/*/AliAOD.root");
+        alienHandler->SetDataPattern("/pass1_CENT_woSDD/AOD/*/AliAOD.root");
         // MC has no prefix, data has prefix 000
         alienHandler->SetRunPrefix("000");
         // runnumber
@@ -306,13 +306,13 @@ void runAnalysisAlexK0s()
 
         alienHandler->SetMasterResubmitThreshold(90);
         // number of files per subjob
-        alienHandler->SetSplitMaxInputFileNumber(5);
+        alienHandler->SetSplitMaxInputFileNumber(30);
         alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
-        alienHandler->SetTTL(50000);
+        alienHandler->SetTTL(10000);
         alienHandler->SetJDLName("FlowPID.jdl");
         alienHandler->SetPrice(1);
-        alienHandler->SetOutputToRunNo(kTRUE);
+        alienHandler->SetOutputToRunNo(kFALSE);
         alienHandler->SetKeepLogs(kTRUE);
 
         alienHandler->SetMaxMergeStages(1);
