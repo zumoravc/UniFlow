@@ -692,6 +692,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 		fhQAV0sDecayRadius[iQA] = 0x0;
     fhQAV0sDaughterTPCRefit[iQA] = 0x0;
     fhQAV0sDaughterKinks[iQA] = 0x0;
+    fhQAV0sDaughterNumTPCCls[iQA] = 0x0;
+    fhQAV0sDaughterNumTPCFind[iQA] = 0x0;
+    fhQAV0sDaughterNumTPCCrossRows[iQA] = 0x0;
+    fhQAV0sDaughterTPCCrossFindRatio[iQA] = 0x0;
+    fhQAV0sDaughterNumTPCClsPID[iQA] = 0x0;
     fhQAV0sDaughterPt[iQA] = 0x0;
 		fhQAV0sDaughterPhi[iQA] = 0x0;
 		fhQAV0sDaughterEta[iQA] = 0x0;
@@ -1399,6 +1404,16 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           fhQAV0sDaughterKinks[iQA]->GetXaxis()->SetBinLabel(1, "NOT AliAODVertex::kKink");
           fhQAV0sDaughterKinks[iQA]->GetXaxis()->SetBinLabel(2, "AliAODVertex:kKink");
           fQAV0s->Add(fhQAV0sDaughterKinks[iQA]);
+          fhQAV0sDaughterNumTPCCls[iQA] = new TH1D(Form("fhQAV0sDaughterNumTPCCls_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter # of TPC clusters; # cls; Counts;", 180,-10.,170);
+          fQAV0s->Add(fhQAV0sDaughterNumTPCCls[iQA]);
+          fhQAV0sDaughterNumTPCClsPID[iQA] = new TH1D(Form("fhQAV0sDaughterNumTPCClsPID_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter # of TPC clusters for PID; # cls PID; Counts;", 180,-10.,170);
+          fQAV0s->Add(fhQAV0sDaughterNumTPCClsPID[iQA]);
+          fhQAV0sDaughterNumTPCFind[iQA] = new TH1D(Form("fhQAV0sDaughterNumTPCFind_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter # of findable TPC clusters; # findable; Counts;", 180,-10.,170);
+          fQAV0s->Add(fhQAV0sDaughterNumTPCFind[iQA]);
+          fhQAV0sDaughterNumTPCCrossRows[iQA] = new TH1D(Form("fhQAV0sDaughterNumTPCCrossRows_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter # of crossed TPC rows; # crossed; Counts;", 180,-10.,170);
+          fQAV0s->Add(fhQAV0sDaughterNumTPCCrossRows[iQA]);
+          fhQAV0sDaughterTPCCrossFindRatio[iQA] = new TH1D(Form("fhQAV0sDaughterTPCCrossFindRatio_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter crossed / findable TPC clusters; #crossed/find; Counts;", 180,-10,170);
+          fQAV0s->Add(fhQAV0sDaughterTPCCrossFindRatio[iQA]);
           fhQAV0sDaughterPt[iQA] = new TH1D(Form("fhQAV0sDaughterPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{p}_{T}; #it{p}_{T}^{daughter} (GeV/#it{c})", 200,0.,20.);
           fQAV0s->Add(fhQAV0sDaughterPt[iQA]);
           fhQAV0sDaughterPhi[iQA] = new TH1D(Form("fhQAV0sDaughterPhi_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{#varphi}; #it{#varphi}^{daughter} (GeV/#it{c})", 100,0.,TMath::TwoPi());
@@ -1425,6 +1440,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           fQAV0s->Add(fhQAV0sDaughterNumSigmaPionALambda[iQA]);
           fhQAV0sDaughterNumSigmaProtonALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
           fQAV0s->Add(fhQAV0sDaughterNumSigmaProtonALambda[iQA]);
+
+
 
           for(Int_t j = 0x0; j < iNBinsPIDstatus; j++)
           {
@@ -2780,6 +2797,8 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
 
   AliPIDResponse::EDetPidStatus pidStatusTPC;
   AliPIDResponse::EDetPidStatus pidStatusTOF;
+  UShort_t numTPCfindable = 0;
+  Float_t numTPCcrossed = 0;
 
   // daughters properties
   AliAODVertex* prodVtxDaughter = 0x0;
@@ -2791,6 +2810,15 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     // kinks
     prodVtxDaughter = (AliAODVertex*) trackDaughter[i]->GetProdVertex();
     fhQAV0sDaughterKinks[iQAindex]->Fill(prodVtxDaughter->GetType() == AliAODVertex::kKink);
+
+    // track quality
+    numTPCcrossed = trackDaughter[i]->GetTPCNCrossedRows();
+    numTPCfindable = trackDaughter[i]->GetTPCNclsF();
+    fhQAV0sDaughterNumTPCCls[iQAindex]->Fill(trackDaughter[i]->GetTPCNcls());
+    fhQAV0sDaughterNumTPCClsPID[iQAindex]->Fill(trackDaughter[i]->GetTPCsignalN());
+    fhQAV0sDaughterNumTPCFind[iQAindex]->Fill(numTPCfindable);
+    fhQAV0sDaughterNumTPCCrossRows[iQAindex]->Fill(numTPCcrossed);
+    if(numTPCfindable > 0.) fhQAV0sDaughterTPCCrossFindRatio[iQAindex]->Fill(numTPCcrossed/numTPCfindable); else fhQAV0sDaughterTPCCrossFindRatio[iQAindex]->Fill(-5.);
 
     // detector status
     pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughter[i]);
