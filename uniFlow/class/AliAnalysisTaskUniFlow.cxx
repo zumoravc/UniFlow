@@ -565,7 +565,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
   //Alex
   fEtaCut(0.8),
-  fNoClus(70),
+  fNoClus(80),
   fMinPt(0.2),
   fMaxPt(20.0),
   fNsigCut(3.),

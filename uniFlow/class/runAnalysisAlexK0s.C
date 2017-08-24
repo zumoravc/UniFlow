@@ -76,17 +76,16 @@ void runAnalysisAlexK0s()
     gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g"); // compile the class (locally)
     gROOT->LoadMacro("AddTaskUniFlow.C"); // load the addtask macro
 
-    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
+    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow_AN");
     // Analysis
-    task1->fDoAlexK0sSelection = kTRUE;
     task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
     task1->SetNumEventsAnalyse(50);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
-    task1->SetSampling(kTRUE);
+    task1->SetSampling(kFALSE);
     // task1->SetFillQAhistos(kFALSE);
     task1->SetProcessCharged(kTRUE);
-    task1->SetProcessPID(kTRUE);
-    task1->SetProcessPhi(kTRUE);
+    // task1->SetProcessPID(kTRUE);
+    // task1->SetProcessPhi(kTRUE);
     task1->SetProcessV0s(kTRUE);
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
@@ -141,8 +140,8 @@ void runAnalysisAlexK0s()
     task1->SetV0sK0sNumTauMax(5);
     task1->SetV0sK0sArmenterosAlphaMin(0.2);
     task1->SetV0sLambdaNumTauMax(3.8);
-    task1->SetV0sProtonNumSigmaMax(3.);
-    task1->SetV0sProtonPIDPtMax(1.2);
+    // task1->SetV0sProtonNumSigmaMax(3.);
+    // task1->SetV0sProtonPIDPtMax(1.2);
 
     /*
     AliAnalysisTaskUniFlow* task2 = AddTaskUniFlow("UniFlow_FB768_Nsigma");
@@ -196,6 +195,76 @@ void runAnalysisAlexK0s()
     task2->SetV0sProtonNumSigmaMax(3.);
     task2->SetV0sProtonPIDPtMax(1.2);
     */
+
+
+    AliAnalysisTaskUniFlow* taskAlex = AddTaskUniFlow("UniFlow_Alex");
+    taskAlex->fDoAlexK0sSelection = kTRUE;
+    // Analysis
+    taskAlex->SetRunMode(AliAnalysisTaskUniFlow::kTest);
+    taskAlex->SetNumEventsAnalyse(50);
+    taskAlex->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
+    taskAlex->SetSampling(kFALSE);
+    // taskAlex->SetFillQAhistos(kFALSE);
+    taskAlex->SetProcessCharged(kTRUE);
+    // taskAlex->SetProcessPID(kTRUE);
+    // taskAlex->SetProcessPhi(kTRUE);
+    taskAlex->SetProcessV0s(kTRUE);
+    // Flow
+    taskAlex->SetFlowRFPsPtMin(0.2);
+    taskAlex->SetFlowRFPsPtMax(5.);
+    // taskAlex->SetFlowDoFourCorrelations(kFALSE);
+    taskAlex->SetFlowFillWeights(kFALSE);
+    // taskAlex->SetUseWeigthsFile("alice/cern.ch/user/v/vpacik/uniFlow_ver4_CENT_woSDD_16t_V0A/output/000267163/001/AnalysisResults.root");
+    // taskAlex->SetUseWeigthsFile("/alice/cern.ch/user/v/vpacik/weights_CENTwoSDD_16q.root");
+    // Events selection
+    taskAlex->SetTrigger(0);
+    taskAlex->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
+    taskAlex->SetMultEstimator("V0A");
+    taskAlex->SetPeriod(AliAnalysisTaskUniFlow::k16q);
+    taskAlex->SetPVtxZMax(10);
+    // Charged selection
+    taskAlex->SetChargedEtaMax(0.8);
+    // taskAlex->SetChargedPtMin(0.2);
+    // taskAlex->SetChargedPtMax(5.);
+    // taskAlex->SetChargedDCAzMax(0.1);
+    // taskAlex->SetChargedDCAxyMax(0.2);
+    taskAlex->SetChargedNumTPCclsMin(70);
+    taskAlex->SetChargedTrackFilterBit(96);
+    // PID selection
+    // taskAlex->SetPIDUseAntiProtonOnly(kFALSE);
+    // taskAlex->SetPIDNumSigmasPionMax(3);
+    // taskAlex->SetPIDNumSigmasKaonMax(3);
+    // taskAlex->SetPIDNumSigmasProtonMax(3);
+    // taskAlex->SetUseBayesPID(kTRUE);
+    // taskAlex->SetPIDBayesProbPionMin(0.95);
+    // taskAlex->SetPIDBayesProbKaonMin(0.85);
+    // taskAlex->SetPIDBayesProbProtonMin(0.85);
+    // Phi selection
+    // taskAlex->SetPhiMotherEtaMax(0.8);
+    // V0 selection cuts
+    // taskAlex->SetV0sOnFly(kFALSE);
+    // taskAlex->SetV0sTPCRefit(kTRUE);
+    // taskAlex->SetV0sRejectKinks(kTRUE);
+    // taskAlex->SetV0sUseCrossMassRejection(kTRUE);
+    // taskAlex->SetV0sDCAPVMin(0.06);
+    // taskAlex->SetV0sDCAPVMax(0.);
+    // // taskAlex->SetV0sDCAPVzMax(1.);
+    // // taskAlex->SetV0sDaughtersFilterBit(211);
+    // taskAlex->SetV0sDCADaughtersMax(1.);
+    // taskAlex->SetV0sDecayRadiusMin(0.5);
+    // taskAlex->SetV0sDecayRadiusMax(0.);
+    // taskAlex->SetV0sDaughterPtMin(0.1);
+    // taskAlex->SetV0sDaughterEtaMax(0.8);
+    // taskAlex->SetV0sMotherEtaMax(0.8);
+    // taskAlex->SetV0sMotherRapMax(0.);
+    // taskAlex->SetV0sK0sCPAMin(0.97);
+    // taskAlex->SetV0sLambdaCPAMin(0.99);
+    // taskAlex->SetV0sK0sNumTauMax(5);
+    // taskAlex->SetV0sK0sArmenterosAlphaMin(0.2);
+    // taskAlex->SetV0sLambdaNumTauMax(3.8);
+    // taskAlex->SetV0sProtonNumSigmaMax(3.);
+    // taskAlex->SetV0sProtonPIDPtMax(1.2);
+
     if (!mgr->InitAnalysis()) return;
     //mgr->SetDebugLevel(2);
     //mgr->PrintStatus();
