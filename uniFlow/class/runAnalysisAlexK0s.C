@@ -312,7 +312,7 @@ void runAnalysisAlexK0s()
         alienHandler->SetTTL(10000);
         alienHandler->SetJDLName("FlowPID.jdl");
         alienHandler->SetPrice(1);
-        alienHandler->SetOutputToRunNo(kFALSE);
+        alienHandler->SetOutputToRunNo(kTRUE);
         alienHandler->SetKeepLogs(kTRUE);
 
         alienHandler->SetMaxMergeStages(1);
