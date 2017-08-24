@@ -1670,7 +1670,7 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
     ) eventSelected = IsEventSelected_2016();
 
   // Fill event QA AFTER cuts
-  if(fFillQA) FillEventsQA(1);
+  if(fFillQA && eventSelected) FillEventsQA(1);
 
   return eventSelected;
 }
