@@ -142,6 +142,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // V0s selection
   fCutV0sOnFly(kFALSE),
   fCutV0srejectKinks(kFALSE),
+  fCutV0sDaughterNumTPCClsMin(0),
+  fCutV0sDaughterNumTPCCrossMin(0),
+  fCutV0sDaughterNumTPCFindMin(0),
+  fCutV0sDaughterNumTPCClsPIDMin(0),
+  fCutV0sDaughterRatioCrossFindMin(-10),
   fCutV0srefitTPC(kFALSE),
   fCutV0sCrossMassRejection(kFALSE),
   fCutV0sCrossMassCutK0s(0.005),
@@ -169,9 +174,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sInvMassLambdaMax(1.16),
   fCutV0sNumTauK0sMax(0.),
   fCutV0sNumTauLambdaMax(0.),
-  fCutV0sProtonNumSigmaMax(0),
-  fCutV0sProtonPIDPtMin(0.),
-  fCutV0sProtonPIDPtMax(0.),
+  fCutV0sK0sKaonNumTPCSigmaMax(0.),
+  fCutV0sLambdaProtonNumTPCSigmaMax(0.),
 
   // phi selection
   fCutPhiMotherEtaMax(0),
@@ -405,6 +409,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // V0s selection
   fCutV0sOnFly(kFALSE),
   fCutV0srejectKinks(kFALSE),
+  fCutV0sDaughterNumTPCClsMin(0),
+  fCutV0sDaughterNumTPCCrossMin(0),
+  fCutV0sDaughterNumTPCFindMin(0),
+  fCutV0sDaughterNumTPCClsPIDMin(0),
+  fCutV0sDaughterRatioCrossFindMin(-10),
   fCutV0srefitTPC(kFALSE),
   fCutV0sCrossMassRejection(kFALSE),
   fCutV0sCrossMassCutK0s(0.005),
@@ -432,9 +441,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sInvMassLambdaMax(1.16),
   fCutV0sNumTauK0sMax(0.),
   fCutV0sNumTauLambdaMax(0.),
-  fCutV0sProtonNumSigmaMax(0),
-  fCutV0sProtonPIDPtMin(0.),
-  fCutV0sProtonPIDPtMax(0.),
+  fCutV0sK0sKaonNumTPCSigmaMax(0.),
+  fCutV0sLambdaProtonNumTPCSigmaMax(0.),
 
   // phi selection
   fCutPhiMotherEtaMax(0),
@@ -1248,19 +1256,19 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // V0 candidates histograms
     if(fProcessV0s)
     {
-      TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","DCA to PV","Daughters DCA","Decay radius","Acceptance","Common passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
+      TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","Daughters track quality","DCA to PV","Daughters DCA","Decay radius","Acceptance","Common passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
       const Short_t iNBinsV0sCounter = sizeof(sV0sCounterLabel)/sizeof(sV0sCounterLabel[0]);
       fhV0sCounter = new TH1D("fhV0sCounter","V^{0}: Counter",iNBinsV0sCounter,0,iNBinsV0sCounter);
       for(Short_t i(0); i < iNBinsV0sCounter; i++) fhV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
       fQAV0s->Add(fhV0sCounter);
 
-      TString sV0sK0sCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Competing InvMass","Selected"};
+      TString sV0sK0sCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Daughters PID","Competing InvMass","Selected"};
       const Short_t iNBinsV0sK0sCounter = sizeof(sV0sK0sCounterLabel)/sizeof(sV0sK0sCounterLabel[0]);
       fhV0sCounterK0s = new TH1D("fhV0sCounterK0s","V^{0}: K^{0}_{S} Counter",iNBinsV0sK0sCounter,0,iNBinsV0sK0sCounter);
       for(Short_t i(0); i < iNBinsV0sK0sCounter; i++) fhV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sK0sCounterLabel[i].Data() );
       fQAV0s->Add(fhV0sCounterK0s);
 
-      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Competing InvMass","Proton PID","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
+      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Proton PID","Competing InvMass","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
       const Short_t iNBinsV0sLambdaCounter = sizeof(sV0sLambdaCounterLabel)/sizeof(sV0sLambdaCounterLabel[0]);
       fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #Lambda/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
       for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
@@ -1412,7 +1420,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           fQAV0s->Add(fhQAV0sDaughterNumTPCFind[iQA]);
           fhQAV0sDaughterNumTPCCrossRows[iQA] = new TH1D(Form("fhQAV0sDaughterNumTPCCrossRows_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter # of crossed TPC rows; # crossed; Counts;", 180,-10.,170);
           fQAV0s->Add(fhQAV0sDaughterNumTPCCrossRows[iQA]);
-          fhQAV0sDaughterTPCCrossFindRatio[iQA] = new TH1D(Form("fhQAV0sDaughterTPCCrossFindRatio_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter crossed / findable TPC clusters; #crossed/find; Counts;", 180,-10,170);
+          fhQAV0sDaughterTPCCrossFindRatio[iQA] = new TH1D(Form("fhQAV0sDaughterTPCCrossFindRatio_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter crossed / findable TPC clusters; #crossed/find; Counts;", 50,0,5);
           fQAV0s->Add(fhQAV0sDaughterTPCCrossFindRatio[iQA]);
           fhQAV0sDaughterPt[iQA] = new TH1D(Form("fhQAV0sDaughterPt_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Daughter #it{p}_{T}; #it{p}_{T}^{daughter} (GeV/#it{c})", 200,0.,20.);
           fQAV0s->Add(fhQAV0sDaughterPt[iQA]);
@@ -1528,6 +1536,11 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sOnFly: (Bool_t) %s\n",    fCutV0sOnFly ? "kTRUE" : "kFALSE");
   printf("      fCutV0srefitTPC: (Bool_t) %s\n",     fCutV0srefitTPC ? "kTRUE" : "kFALSE");
   printf("      fCutV0srejectKinks: (Bool_t) %s\n",     fCutV0srejectKinks ? "kTRUE" : "kFALSE");
+  printf("      fCutV0sDaughterNumTPCClsMin: (UShort_t) %d\n",     fCutV0sDaughterNumTPCClsMin);
+  printf("      fCutV0sDaughterNumTPCClsPIDMin: (UShort_t) %d\n",     fCutV0sDaughterNumTPCClsPIDMin);
+  printf("      fCutV0sDaughterNumTPCCrossMin: (Float_t) %f\n",     fCutV0sDaughterNumTPCCrossMin);
+  printf("      fCutV0sDaughterNumTPCFindMin: (UShort_t) %d\n",     fCutV0sDaughterNumTPCFindMin);
+  printf("      fCutV0sDaughterRatioCrossFindMin: (Float_t) %f\n",     fCutV0sDaughterRatioCrossFindMin);
   printf("      fCutV0sCrossMassRejection: (Bool_t) %s\n",     fCutV0sCrossMassRejection ? "kTRUE" : "kFALSE");
   printf("      fCutV0sCrossMassCutK0s: (Double_t) %g (GeV/c2)\n",     fCutV0sCrossMassCutK0s);
   printf("      fCutV0sCrossMassCutLambda: (Double_t) %g (GeV/c2)\n",     fCutV0sCrossMassCutLambda);
@@ -1554,9 +1567,8 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sNumTauLambdaMax: (Double_t) %g (c*tau)\n",    fCutV0sNumTauLambdaMax);
   printf("      fCutV0sArmenterosAlphaK0sMin: (Double_t) %g (alpha)\n",    fCutV0sArmenterosAlphaK0sMin);
   printf("      fCutV0sArmenterosAlphaLambdaMax: (Double_t) %g (alpha)\n",    fCutV0sArmenterosAlphaLambdaMax);
-  printf("      fCutV0sProtonNumSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sProtonNumSigmaMax);
-  printf("      fCutV0sProtonPIDPtMin: (Double_t) %g (GeV/c)\n",    fCutV0sProtonPIDPtMin);
-  printf("      fCutV0sProtonPIDPtMax: (Double_t) %g (GeV/c)\n",    fCutV0sProtonPIDPtMax);
+  printf("      fCutV0sK0sKaonNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sK0sKaonNumTPCSigmaMax);
+  printf("      fCutV0sLambdaProtonNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sLambdaProtonNumTPCSigmaMax);
   printf("=====================================================================\n\n");
 
   return;
@@ -2264,6 +2276,21 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   if( dMass < fCutV0sInvMassK0sMin || dMass > fCutV0sInvMassK0sMax ) return kFALSE;
   fhV0sCounterK0s->Fill("InvMass",1);
 
+  // Daughter PID
+  if(fCutV0sK0sKaonNumTPCSigmaMax > 0.)
+  {
+    const AliAODTrack* daughterPos = (AliAODTrack*) v0->GetDaughter(0);
+    const AliAODTrack* daughterNeg = (AliAODTrack*) v0->GetDaughter(1);
+
+    if(!HasTrackPIDTPC(daughterPos) || !HasTrackPIDTPC(daughterNeg)) return kFALSE;
+
+    if (daughterPos->GetTPCsignalN() < fCutV0sDaughterNumTPCClsPIDMin || daughterNeg->GetTPCsignalN() < fCutV0sDaughterNumTPCClsPIDMin) return kFALSE;
+    Double_t nSigmaPiPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(daughterPos, AliPID::kPion));
+    Double_t nSigmaPiNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(daughterNeg, AliPID::kPion));
+    if(nSigmaPiPos > fCutV0sK0sKaonNumTPCSigmaMax || nSigmaPiNeg > fCutV0sK0sKaonNumTPCSigmaMax) return kFALSE;
+  }
+  fhV0sCounterK0s->Fill("Daughters PID",1);
+
   // competing V0 rejection based on InvMass
   if(fCutV0sCrossMassRejection)
   {
@@ -2361,79 +2388,44 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
     return 0;
   fhV0sCounterLambda->Fill("InvMass",1);
 
-  // Armenteros-Podolanski for candidates fullfilling both Lambda and Anti-Lambda selection
-  if(bIsLambda && bIsALambda)
-  {
-    if(v0->AlphaV0() < 0.) bIsLambda = kFALSE;
-    if(v0->AlphaV0() > 0.) bIsALambda = kFALSE;
-  }
-
-  // competing V0 rejection based on InvMass
-  if(fCutV0sCrossMassRejection)
-  {
-    Double_t dMassK0s = v0->MassK0Short();
-    if( TMath::Abs(dMassK0s - fPDGMassK0s) < fCutV0sCrossMassCutLambda)
-    {
-      // Lambda candidate is within 5 MeV of K0s InvMass physSelTask
-
-      Double_t dMass = 0;
-      if(bIsLambda) dMass = dMassLambda;
-      if(bIsALambda) dMass = dMassALambda;
-
-      fhV0sCompetingInvMassLambda->Fill(dMass,dMassK0s);
-      return kFALSE;
-    }
-  }
-  fhV0sCounterLambda->Fill("Competing InvMass",1);
-
+  // // Armenteros-Podolanski for candidates fullfilling both Lambda and Anti-Lambda selection
+  // if(bIsLambda && bIsALambda)
+  // {
+  //   if(v0->AlphaV0() < 0.) bIsLambda = kFALSE;
+  //   if(v0->AlphaV0() > 0.) bIsALambda = kFALSE;
+  // }
 
   // proton PID of Lambda Candidates
-  if( (fCutV0sProtonNumSigmaMax > 0.) && (fCutV0sProtonPIDPtMax > 0. || fCutV0sProtonPIDPtMin > 0.) && fPIDResponse)
+  if( fCutV0sLambdaProtonNumTPCSigmaMax > 0. && fPIDResponse )
   {
     const AliAODTrack* trackDaughterPos = (AliAODTrack*) v0->GetDaughter(0); // positive charge
     const AliAODTrack* trackDaughterNeg = (AliAODTrack*) v0->GetDaughter(1); // negative charge
 
-    // checking detector status
-    AliPIDResponse::EDetPidStatus pidStatusTPCpos = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughterPos);
-    AliPIDResponse::EDetPidStatus pidStatusTPCneg = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, trackDaughterNeg);
-    if(pidStatusTPCpos != AliPIDResponse::kDetPidOk || pidStatusTPCneg != AliPIDResponse::kDetPidOk) return 0;
+    if(bIsLambda) // positive daughter should be proton
+    {
+      Double_t dSigmaProton = 999.;
+      if(HasTrackPIDTPC(trackDaughterPos)) dSigmaProton = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
+      if(dSigmaProton > fCutV0sLambdaProtonNumTPCSigmaMax) bIsLambda = kFALSE;
+    }
 
-    Double_t dSigmaProtPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
-    Double_t dSigmaProtNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
+    if(bIsALambda) // negative daughter should be proton
+    {
+      Double_t dSigmaAntiProton = 999.;
+      if(HasTrackPIDTPC(trackDaughterNeg)) dSigmaAntiProton = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
+      if(dSigmaAntiProton > fCutV0sLambdaProtonNumTPCSigmaMax) bIsALambda = kFALSE;
+    }
 
-    // positive daughter is not a proton (within TPC sigmas)
-    if(bIsLambda && (trackDaughterPos->Pt() > fCutV0sProtonPIDPtMin) && (trackDaughterPos->Pt() < fCutV0sProtonPIDPtMax) && (dSigmaProtPos > fCutV0sProtonNumSigmaMax) )
-      return 0;
-
-    // negative daughter is not a proton (within TPC sigmas)
-    if(bIsALambda && (trackDaughterNeg->Pt() > fCutV0sProtonPIDPtMin) && (trackDaughterNeg->Pt() < fCutV0sProtonPIDPtMax) && (dSigmaProtNeg > fCutV0sProtonNumSigmaMax) )
-      return 0;
+    if(!bIsLambda && !bIsALambda) return 0;
   }
   fhV0sCounterLambda->Fill("Proton PID",1);
 
   // passing all criteria
   fhV0sCounterLambda->Fill("Selected",1);
 
-  if(bIsLambda && bIsALambda) // both Lambda & Anti-Lambda
-  {
-    fhV0sCounterLambda->Fill("#Lambda && #bar{#Lambda}",1);
-    return 2;
-  }
-
-  if(bIsLambda) // only Lambda
-  {
-    fhV0sCounterLambda->Fill("only #Lambda",1);
-    return 1;
-  }
-
-  if(bIsALambda) // only Anti-Lambda
-  {
-    fhV0sCounterLambda->Fill("only #bar{#Lambda}",1);
-    return -1;
-  }
-
-  // default return 0: should return earlier if candidates is either Lambda or ALambda
-  return 0;
+  if(bIsLambda && bIsALambda) { fhV0sCounterLambda->Fill("#Lambda && #bar{#Lambda}",1); return 2; } // both Lambda & Anti-Lambda
+  if(bIsLambda) { fhV0sCounterLambda->Fill("only #Lambda",1); return 1; } // only Lambda
+  if(bIsALambda) { fhV0sCounterLambda->Fill("only #bar{#Lambda}",1); return -1; } // only Anti-Lambda
+  return 0; // neither
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsV0SelectedK0sAlex(const AliAODv0* v0)
@@ -2620,6 +2612,18 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if(fCutV0srejectKinks && ( (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) || (prodVtxDaughterPos->GetType() == AliAODVertex::kKink ) ) ) return kFALSE;
   fhV0sCounter->Fill("Kinks",1);
 
+  // Daughter track quality
+  if(daughterPos->GetTPCNcls() < fCutV0sDaughterNumTPCClsMin || daughterNeg->GetTPCNcls() < fCutV0sDaughterNumTPCClsMin) return kFALSE;
+  if(daughterPos->GetTPCNCrossedRows() < fCutV0sDaughterNumTPCCrossMin || daughterNeg->GetTPCNCrossedRows() < fCutV0sDaughterNumTPCCrossMin) return kFALSE;
+  if(daughterPos->GetTPCNclsF() < fCutV0sDaughterNumTPCFindMin || daughterNeg->GetTPCNclsF() < fCutV0sDaughterNumTPCFindMin) return kFALSE;
+  if(fCutV0sDaughterRatioCrossFindMin > -1.)
+  {
+    if(daughterPos->GetTPCNclsF() < 1 || daughterNeg->GetTPCNclsF() < 1) return kFALSE; // at least 1 findable cls for proper division
+    Double_t dRatioCrossFindPos = daughterPos->GetTPCNCrossedRows() / daughterPos->GetTPCNclsF();
+    Double_t dRatioCrossFindNeg = daughterNeg->GetTPCNCrossedRows() / daughterNeg->GetTPCNclsF();
+    if( dRatioCrossFindPos < fCutV0sDaughterRatioCrossFindMin || dRatioCrossFindNeg < fCutV0sDaughterRatioCrossFindMin) return kFALSE;
+  }
+  fhV0sCounter->Fill("Daughters track quality",1);
 
   // Daughters DCA to PV
   const Float_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
@@ -3080,11 +3084,8 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   // *************************************************************
 
   // checking detector statuses
-  AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
-  AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
-
-  Bool_t bIsTPCok = (pidStatusTPC == AliPIDResponse::kDetPidOk);
-  Bool_t bIsTOFok = ((pidStatusTOF == AliPIDResponse::kDetPidOk) && (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME)); // checking TOF
+  Bool_t bIsTPCok = HasTrackPIDTPC(track);
+  Bool_t bIsTOFok = HasTrackPIDTOF(track);
 
   if(!bIsTPCok) return kUnknown;
   // TODO: TOF check???
@@ -3201,8 +3202,8 @@ void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack
   fhQAPIDTOFstatus[iQAindex]->Fill((Int_t) pidStatusTOF );
   fhQAPIDTPCstatus[iQAindex]->Fill((Int_t) pidStatusTPC );
 
-  Bool_t bIsTPCok = (pidStatusTPC == AliPIDResponse::kDetPidOk);
-  Bool_t bIsTOFok = ((pidStatusTOF == AliPIDResponse::kDetPidOk) && (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME));
+  Bool_t bIsTPCok = HasTrackPIDTPC(track);
+  Bool_t bIsTOFok = HasTrackPIDTOF(track);
 
   Double_t dNumSigmaTPC[5] = {-11}; // array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
   Double_t dNumSigmaTOF[5] = {-11}; // array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
@@ -4420,6 +4421,24 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   }
 
   return -1;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTPC(const AliAODTrack* track)
+{
+  // Checks if the track has ok PID information from TPC
+  // *************************************************************
+  if(!track || !fPIDResponse) return kFALSE;
+  AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
+  return (pidStatusTPC == AliPIDResponse::kDetPidOk);
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTOF(const AliAODTrack* track)
+{
+  // Checks if the track has ok PID information from TOF
+  // *************************************************************
+  if(!track || !fPIDResponse) return kFALSE;
+  AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
+  return ((pidStatusTOF == AliPIDResponse::kDetPidOk) && (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME));
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::Terminate(Option_t* option)

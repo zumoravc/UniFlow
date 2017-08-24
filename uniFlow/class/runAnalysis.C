@@ -140,8 +140,8 @@ void runAnalysis()
     task1->SetV0sK0sNumTauMax(5);
     task1->SetV0sK0sArmenterosAlphaMin(0.2);
     task1->SetV0sLambdaNumTauMax(3.8);
-    task1->SetV0sProtonNumSigmaMax(3.);
-    task1->SetV0sProtonPIDPtMax(1.2);
+    task1->SetV0sK0sKaonNumTPCSigmaMax(3.);
+    task1->SetV0sLambdaProtonNumTPCSigmaMax(3.);
 
     /*
     AliAnalysisTaskUniFlow* task2 = AddTaskUniFlow("UniFlow_FB768_Nsigma");
