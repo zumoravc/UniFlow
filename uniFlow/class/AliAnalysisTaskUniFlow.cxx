@@ -2153,6 +2153,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         // selected K0s according to Alex
         iNumK0sSelected++;
         fhV0sCounter->Fill("K^{0}_{S}",1);
+        if(fFillQA)  FillQAV0s(1,v0,kTRUE,0); // QA AFTER selection
         fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
         if(fFlowUseWeights)
