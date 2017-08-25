@@ -150,7 +150,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0srefitTPC(kFALSE),
   fCutV0sCrossMassRejection(kFALSE),
   fCutV0sCrossMassCutK0s(0.005),
-  fCutV0sCrossMassCutLambda(0.010),
+  fCutV0sCrossMassCutLambda(0.020),
   fCutV0sCPAK0sMin(0.),
   fCutV0sCPALambdaMin(0.),
   fCutV0sDCAtoPVMin(0.),
@@ -302,6 +302,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhV0sCounter(0x0),
   fhV0sCounterK0s(0x0),
   fhV0sCounterLambda(0x0),
+  fhV0sInvMassK0s(0x0),
+  fhV0sInvMassLambda(0x0),
   fhV0sCompetingInvMassK0s(0x0),
   fhV0sCompetingInvMassLambda(0x0),
 
@@ -418,7 +420,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0srefitTPC(kFALSE),
   fCutV0sCrossMassRejection(kFALSE),
   fCutV0sCrossMassCutK0s(0.005),
-  fCutV0sCrossMassCutLambda(0.010),
+  fCutV0sCrossMassCutLambda(0.020),
   fCutV0sCPAK0sMin(0.),
   fCutV0sCPALambdaMin(0.),
   fCutV0sDCAtoPVMin(0.),
@@ -570,6 +572,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhV0sCounter(0x0),
   fhV0sCounterK0s(0x0),
   fhV0sCounterLambda(0x0),
+  fhV0sInvMassK0s(0x0),
+  fhV0sInvMassLambda(0x0),
   fhV0sCompetingInvMassK0s(0x0),
   fhV0sCompetingInvMassLambda(0x0),
 
@@ -1276,9 +1280,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
       fQAV0s->Add(fhV0sCounterLambda);
 
+      fhV0sInvMassK0s = new TH2D("fhV0sInvMassK0s","V^{0}: K^{0}_{S}: InvMass (selected); K^{0}_{S} #it{m}_{inv} (GeV/#it{c}^{2}); #Lambda/#bar{#Lambda} #it{m}_{inv} (GeV/#it{c}^{2})", 110,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax, 50,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+      fQAV0s->Add(fhV0sInvMassK0s);
+      fhV0sInvMassLambda = new TH2D("fhV0sInvMassLambda","V^{0}: #Lambda/#bar{#Lambda}: InvMass (selected); K^{0}_{S} #it{m}_{inv} (GeV/#it{c}^{2}); #Lambda/#bar{#Lambda} #it{m}_{inv} (GeV/#it{c}^{2})", 110,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax, 50,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+      fQAV0s->Add(fhV0sInvMassLambda);
       fhV0sCompetingInvMassK0s = new TH2D("fhV0sCompetingInvMassK0s","V^{0}: K^{0}_{S}: Competing InvMass rejection; K^{0}_{S} #it{m}_{inv} (GeV/#it{c}^{2}); #Lambda/#bar{#Lambda} #it{m}_{inv} (GeV/#it{c}^{2})", 110,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax, 50,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
       fQAV0s->Add(fhV0sCompetingInvMassK0s);
-      fhV0sCompetingInvMassLambda = new TH2D("fhV0sCompetingInvMassLambda","V^{0}: #Lambda/#bar{#Lambda}: Competing InvMass rejection; #Lambda/#bar{#Lambda} #it{m}_{inv} (GeV/#it{c}^{2}); K^{0}_{S} #it{m}_{inv} (GeV/#it{c}^{2})", 50,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax, 110,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+      fhV0sCompetingInvMassLambda = new TH2D("fhV0sCompetingInvMassLambda","V^{0}: #Lambda/#bar{#Lambda}: Competing InvMass rejection; K^{0}_{S} #it{m}_{inv} (GeV/#it{c}^{2}); #Lambda/#bar{#Lambda} #it{m}_{inv} (GeV/#it{c}^{2})", 110,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax, 50,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
       fQAV0s->Add(fhV0sCompetingInvMassLambda);
     } // endif {fProcessV0s}
 
@@ -2168,6 +2176,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         {
           iNumK0sSelected++;
           fhV0sCounter->Fill("K^{0}_{S}",1);
+          fhV0sInvMassK0s->Fill(v0->MassK0Short(),v0->MassLambda());
           fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
@@ -2181,6 +2190,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         {
           iNumLambdaSelected++;
           fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
+          fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassLambda());
           fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassLambda()) );
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
@@ -2194,6 +2204,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         {
           iNumALambdaSelected++;
           fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
+          fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassAntiLambda());
           fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassAntiLambda()) );
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
@@ -2431,6 +2442,19 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
     if(!bIsLambda && !bIsALambda) return 0;
   }
   fhV0sCounterLambda->Fill("Daughter PID",1);
+
+  // Lambda(AntiLamda) candidate is within fCutV0sCrossMassCutLambda of K0s InvMass
+  if(fCutV0sCrossMassRejection)
+  {
+    Double_t dMassK0s = v0->MassK0Short();
+    if(TMath::Abs(dMassK0s - fPDGMassK0s) < fCutV0sCrossMassCutLambda)
+    {
+      if(bIsLambda) fhV0sCompetingInvMassLambda->Fill(dMassK0s,dMassLambda);
+      if(bIsALambda) fhV0sCompetingInvMassLambda->Fill(dMassK0s,dMassALambda);
+      return 0;
+    }
+  }
+  fhV0sCounterLambda->Fill("Competing InvMass",1);
 
   // passing all criteria
   fhV0sCounterLambda->Fill("Selected",1);

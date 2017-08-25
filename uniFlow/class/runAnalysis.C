@@ -124,6 +124,8 @@ void runAnalysis()
     task1->SetV0sTPCRefit(kTRUE);
     task1->SetV0sRejectKinks(kTRUE);
     task1->SetV0sUseCrossMassRejection(kTRUE);
+    task1->SetV0sCrossMassCutK0s(0.005);
+    task1->SetV0sCrossMassCutLambda(0.020);
     task1->SetV0sDCAPVMin(0.06);
     task1->SetV0sDCAPVMax(0.);
     // task1->SetV0sDCAPVzMax(1.);

@@ -295,8 +295,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       UShort_t                fCutV0sDaughterNumTPCClsPIDMin; // min number of TPC clusters used for PID
       Float_t                 fCutV0sDaughterRatioCrossFindMin; // min ratio of crossed / findable TPC clusters
   		Bool_t					        fCutV0sCrossMassRejection; // competing V0 rejection based on InvMass
-      Double_t                fCutV0sCrossMassCutK0s; // [0.005] (GeV/c2) InvMass range of cross contamination for K0s candidates
-      Double_t                fCutV0sCrossMassCutLambda; // [0.010] (GeV/c2) InvMass range of cross contamination for (Anti-)Lambda candidates
+      Double_t                fCutV0sCrossMassCutK0s; // [0.005] (GeV/c2) restricted vicinity of Lambda/ALambda inv. mass peak for K0s candidates
+      Double_t                fCutV0sCrossMassCutLambda; // [0.020] (GeV/c2) restricted vicinity of K0s inv. mass peak for Lambda/ALambda candidates
   		Double_t                fCutV0sDCAtoPVMin;   // (cm) min DCA of V0 daughter to PV
       Double_t				        fCutV0sDCAtoPVMax;	// (cm) max DCA of V0 daughter to PV
       Double_t                fCutV0sDCAtoPVzMax; // (cm) max DCA-z coordinate of V0 daughters to PV
@@ -482,8 +482,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhV0sCounter; //! counter following V0s selection
       TH1D*           fhV0sCounterK0s; //! counter following K0s selection
       TH1D*           fhV0sCounterLambda; //! counter following (Anti-)Lambda selection
+      TH2D*           fhV0sInvMassK0s; //! 2D inv. mass distiburion (K0s mass vs. Lambda/AntiLambda mass)
+      TH2D*           fhV0sInvMassLambda; //! 2D inv. mass distiburion (K0s mass vs. Lambda/AntiLambda mass)
       TH2D*           fhV0sCompetingInvMassK0s; //! dist of InvMass of rejected K0s candidates in (Anti-)Lambda peak
       TH2D*           fhV0sCompetingInvMassLambda; //! dist of InvMass of rejected (Anti-)Lambda candidates in K0s peak
+
 
       // QA: events
       TH1D*           fhQAEventsPVz[fiNumIndexQA]; //!
