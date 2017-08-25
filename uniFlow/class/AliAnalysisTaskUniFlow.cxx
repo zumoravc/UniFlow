@@ -175,6 +175,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sNumTauK0sMax(0.),
   fCutV0sNumTauLambdaMax(0.),
   fCutV0sK0sKaonNumTPCSigmaMax(0.),
+  fCutV0sLambdaPionNumTPCSigmaMax(0.),
   fCutV0sLambdaProtonNumTPCSigmaMax(0.),
 
   // phi selection
@@ -442,6 +443,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sNumTauK0sMax(0.),
   fCutV0sNumTauLambdaMax(0.),
   fCutV0sK0sKaonNumTPCSigmaMax(0.),
+  fCutV0sLambdaPionNumTPCSigmaMax(0.),
   fCutV0sLambdaProtonNumTPCSigmaMax(0.),
 
   // phi selection
@@ -1268,7 +1270,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       for(Short_t i(0); i < iNBinsV0sK0sCounter; i++) fhV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sK0sCounterLabel[i].Data() );
       fQAV0s->Add(fhV0sCounterK0s);
 
-      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Proton PID","Competing InvMass","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
+      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Daughter PID","Competing InvMass","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
       const Short_t iNBinsV0sLambdaCounter = sizeof(sV0sLambdaCounterLabel)/sizeof(sV0sLambdaCounterLabel[0]);
       fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #Lambda/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
       for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
@@ -1568,6 +1570,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sArmenterosAlphaK0sMin: (Double_t) %g (alpha)\n",    fCutV0sArmenterosAlphaK0sMin);
   printf("      fCutV0sArmenterosAlphaLambdaMax: (Double_t) %g (alpha)\n",    fCutV0sArmenterosAlphaLambdaMax);
   printf("      fCutV0sK0sKaonNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sK0sKaonNumTPCSigmaMax);
+  printf("      fCutV0sLambdaPionNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sLambdaPionNumTPCSigmaMax);
   printf("      fCutV0sLambdaProtonNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sLambdaProtonNumTPCSigmaMax);
   printf("=====================================================================\n\n");
 
@@ -2395,29 +2398,39 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   //   if(v0->AlphaV0() > 0.) bIsALambda = kFALSE;
   // }
 
-  // proton PID of Lambda Candidates
-  if( fCutV0sLambdaProtonNumTPCSigmaMax > 0. && fPIDResponse )
+  // daughter PID of Lambda Candidates
+  if( fCutV0sLambdaProtonNumTPCSigmaMax > 0. || fCutV0sLambdaPionNumTPCSigmaMax > 0. )
   {
     const AliAODTrack* trackDaughterPos = (AliAODTrack*) v0->GetDaughter(0); // positive charge
     const AliAODTrack* trackDaughterNeg = (AliAODTrack*) v0->GetDaughter(1); // negative charge
 
-    if(bIsLambda) // positive daughter should be proton
+    Bool_t bIsPosOK = HasTrackPIDTPC(trackDaughterPos);
+    Bool_t bIsNegOK = HasTrackPIDTPC(trackDaughterNeg);
+
+    Double_t dSigmaPos = 999.;
+    Double_t dSigmaNeg = 999.;
+
+    if(fCutV0sLambdaPionNumTPCSigmaMax > 0.) // check pions
     {
-      Double_t dSigmaProton = 999.;
-      if(HasTrackPIDTPC(trackDaughterPos)) dSigmaProton = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton));
-      if(dSigmaProton > fCutV0sLambdaProtonNumTPCSigmaMax) bIsLambda = kFALSE;
+      if(bIsPosOK) dSigmaPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kPion)); else dSigmaPos = 999.;
+      if(bIsNegOK) dSigmaNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kPion)); else dSigmaNeg = 999.;
+
+      if(bIsLambda && (!bIsNegOK || dSigmaNeg > fCutV0sLambdaPionNumTPCSigmaMax) ) bIsLambda = kFALSE;
+      if(bIsALambda && (!bIsPosOK || dSigmaPos > fCutV0sLambdaPionNumTPCSigmaMax) ) bIsALambda = kFALSE;
     }
 
-    if(bIsALambda) // negative daughter should be proton
+    if(fCutV0sLambdaProtonNumTPCSigmaMax > 0.) // check protons
     {
-      Double_t dSigmaAntiProton = 999.;
-      if(HasTrackPIDTPC(trackDaughterNeg)) dSigmaAntiProton = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton));
-      if(dSigmaAntiProton > fCutV0sLambdaProtonNumTPCSigmaMax) bIsALambda = kFALSE;
+      if(bIsPosOK) dSigmaPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterPos, AliPID::kProton)); else dSigmaPos = 999.;
+      if(bIsNegOK) dSigmaNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackDaughterNeg, AliPID::kProton)); else dSigmaNeg = 999.;
+
+      if(bIsLambda && (!bIsPosOK || dSigmaPos > fCutV0sLambdaProtonNumTPCSigmaMax) ) bIsLambda = kFALSE;
+      if(bIsALambda && (!bIsNegOK || dSigmaNeg > fCutV0sLambdaProtonNumTPCSigmaMax) ) bIsALambda = kFALSE;
     }
 
     if(!bIsLambda && !bIsALambda) return 0;
   }
-  fhV0sCounterLambda->Fill("Proton PID",1);
+  fhV0sCounterLambda->Fill("Daughter PID",1);
 
   // passing all criteria
   fhV0sCounterLambda->Fill("Selected",1);
