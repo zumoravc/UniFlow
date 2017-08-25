@@ -115,7 +115,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0sNumTauLambdaMax = nTau; }
       void					          SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0sArmenterosAlphaK0sMin = alpha; }
       void					          SetV0sLambdaArmenterosAlphaMax(Double_t alpha) { fCutV0sArmenterosAlphaLambdaMax = alpha; }
-      void                    SetV0sK0sKaonNumTPCSigmaMax(Double_t nSigma) { fCutV0sK0sKaonNumTPCSigmaMax = nSigma; }
+      void                    SetV0sK0sPionNumTPCSigmaMax(Double_t nSigma) { fCutV0sK0sPionNumTPCSigmaMax = nSigma; }
       void                    SetV0sLambdaPionNumTPCSigmaMax(Double_t nSigma) { fCutV0sLambdaPionNumTPCSigmaMax = nSigma; }
       void                    SetV0sLambdaProtonNumTPCSigmaMax(Double_t nSigma) { fCutV0sLambdaProtonNumTPCSigmaMax = nSigma; }
       // phi setters
@@ -320,7 +320,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutV0sInvMassLambdaMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
       Double_t				        fCutV0sArmenterosAlphaK0sMin; // (alpha) min Armenteros alpha for K0s
       Double_t                fCutV0sArmenterosAlphaLambdaMax; // (alpha) max Armenteros alpha for (Anti)Lambda
-      Double_t                fCutV0sK0sKaonNumTPCSigmaMax; // (sigmaTPC) max number of TPC sigmas for kaon PID (K0s candidates)
+      Double_t                fCutV0sK0sPionNumTPCSigmaMax; // (sigmaTPC) max number of TPC sigmas for kaon PID (K0s candidates)
       Double_t                fCutV0sLambdaPionNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for pion PID (Lambda candidates)
       Double_t                fCutV0sLambdaProtonNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
       // cuts & selection: phi

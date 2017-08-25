@@ -174,7 +174,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sInvMassLambdaMax(1.16),
   fCutV0sNumTauK0sMax(0.),
   fCutV0sNumTauLambdaMax(0.),
-  fCutV0sK0sKaonNumTPCSigmaMax(0.),
+  fCutV0sK0sPionNumTPCSigmaMax(0.),
   fCutV0sLambdaPionNumTPCSigmaMax(0.),
   fCutV0sLambdaProtonNumTPCSigmaMax(0.),
 
@@ -444,7 +444,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sInvMassLambdaMax(1.16),
   fCutV0sNumTauK0sMax(0.),
   fCutV0sNumTauLambdaMax(0.),
-  fCutV0sK0sKaonNumTPCSigmaMax(0.),
+  fCutV0sK0sPionNumTPCSigmaMax(0.),
   fCutV0sLambdaPionNumTPCSigmaMax(0.),
   fCutV0sLambdaProtonNumTPCSigmaMax(0.),
 
@@ -1577,7 +1577,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sNumTauLambdaMax: (Double_t) %g (c*tau)\n",    fCutV0sNumTauLambdaMax);
   printf("      fCutV0sArmenterosAlphaK0sMin: (Double_t) %g (alpha)\n",    fCutV0sArmenterosAlphaK0sMin);
   printf("      fCutV0sArmenterosAlphaLambdaMax: (Double_t) %g (alpha)\n",    fCutV0sArmenterosAlphaLambdaMax);
-  printf("      fCutV0sK0sKaonNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sK0sKaonNumTPCSigmaMax);
+  printf("      fCutV0sK0sPionNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sK0sPionNumTPCSigmaMax);
   printf("      fCutV0sLambdaPionNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sLambdaPionNumTPCSigmaMax);
   printf("      fCutV0sLambdaProtonNumTPCSigmaMax: (Double_t) %g (n*sigma)\n",    fCutV0sLambdaProtonNumTPCSigmaMax);
   printf("=====================================================================\n\n");
@@ -2292,7 +2292,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   fhV0sCounterK0s->Fill("InvMass",1);
 
   // Daughter PID
-  if(fCutV0sK0sKaonNumTPCSigmaMax > 0.)
+  if(fCutV0sK0sPionNumTPCSigmaMax > 0.)
   {
     const AliAODTrack* daughterPos = (AliAODTrack*) v0->GetDaughter(0);
     const AliAODTrack* daughterNeg = (AliAODTrack*) v0->GetDaughter(1);
@@ -2302,7 +2302,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
     if (daughterPos->GetTPCsignalN() < fCutV0sDaughterNumTPCClsPIDMin || daughterNeg->GetTPCsignalN() < fCutV0sDaughterNumTPCClsPIDMin) return kFALSE;
     Double_t nSigmaPiPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(daughterPos, AliPID::kPion));
     Double_t nSigmaPiNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(daughterNeg, AliPID::kPion));
-    if(nSigmaPiPos > fCutV0sK0sKaonNumTPCSigmaMax || nSigmaPiNeg > fCutV0sK0sKaonNumTPCSigmaMax) return kFALSE;
+    if(nSigmaPiPos > fCutV0sK0sPionNumTPCSigmaMax || nSigmaPiNeg > fCutV0sK0sPionNumTPCSigmaMax) return kFALSE;
   }
   fhV0sCounterK0s->Fill("Daughters PID",1);
 
