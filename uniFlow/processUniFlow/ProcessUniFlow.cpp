@@ -1116,7 +1116,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
     dSum = 0;
     dW = 0;
 
-    for(Short_t iSample(0); iSample < vecContents.size(); iSample++)
+    for(ULong_t iSample(0); iSample < vecContents.size(); iSample++)
     {
       content = vecContents.at(iSample);
       error = vecErrors.at(iSample);
@@ -1133,7 +1133,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
     dMean = dSum/dW;
 
     dSum = 0;
-    for(Short_t iSample(0); iSample < vecContents.size(); iSample++)
+    for(ULong_t iSample(0); iSample < vecContents.size(); iSample++)
     {
       content = vecContents.at(iSample);
       // error = vecErrors.at(iSample);
@@ -1474,12 +1474,12 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   }
   else { vecBins.push_back(hPtProj->GetXaxis()->GetXmin()); } // pushing first edge
 
-  for(iBin; iBin < iNBins+1; iBin++)
+  for(Short_t bin(iBin); bin < iNBins+1; bin++)
   {
-    dCount += hPtProj->GetBinContent(iBin);
+    dCount += hPtProj->GetBinContent(bin);
     if(dCount > dMinEntries)
     {
-      vecBins.push_back(hPtProj->GetXaxis()->GetBinUpEdge(iBin));
+      vecBins.push_back(hPtProj->GetXaxis()->GetBinUpEdge(bin));
       vecContents.push_back(dCount);
       dCount = 0;
     }
@@ -2524,7 +2524,7 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
   Info("#### Start of Alex's segment #######################","ExtractFlowK0sAlex");
   TH1D* hInvMassA = (TH1D*) hInvMass;
   TH1D* hVnK0APx = (TH1D*) hFlowMass;
-  
+
   canFitInvMass->cd(1);
 
   hInvMassA->Sumw2();
