@@ -6,40 +6,56 @@ and implemented in method ExtractFlowK0sAlex()
 Author: Vojtech Pacik, NBI (vojtech.pacik@cern.ch)
 */
 
+const Short_t iNumFiles = 6;
+const Short_t nBinsMult = 4;
+TString sMultLabel[nBinsMult] =
+{
+  "0-20",
+  "20-40",
+  "40-60",
+  "60-100"
+};
+
+TString outDirectory = "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/test";
+TString sHistName = "hFlow2_K0s_harm2_gap08_mult";
+
+TString sInputFile[iNumFiles] = {
+  "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/prel_noNUA/plots/Processed.root",
+  "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_Alex/plots/Processed.root",
+  "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_AN/plots/Processed.root",
+  "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_pidAlone/plots/Processed.root",
+  "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_decay5/plots/Processed.root",
+  "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_PIDtrackingDecay/plots/Processed.root"
+};
+
+TString sLabel[iNumFiles] = {
+  "Prel",
+  "Alex",
+  "AN",
+  "PID",
+  "Decay",
+  "PID+Tracking+Decay"
+};
+
+Color_t color[iNumFiles] = {
+  kBlue,
+  kRed,
+  kGreen+2,
+  kOrange,
+  38,
+  kMagenta+2
+};
+
+void ProcessFile(TString fileName, TString label, Color_t color, TString histName, TString fileNameBase, TString histNameBase, TCanvas* canvas, TLegend* legend);
+
 void CompareK0sSelectionAlex()
 {
-  TString outDirectory = "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/comparison";
-  const nBinsMult = 4;
 
-  TFile* filePrel = new TFile("/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/prel_noNUA/plots/Processed.root","READ");
-  TFile* fileAlex = new TFile("/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_Alex/plots/Processed.root","READ");
-  TFile* fileAN = new TFile("/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_AN/plots/Processed.root","READ");
-  TFile* filePID = new TFile("/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_pidAlone/plots/Processed.root","READ");
-  TFile* fileDecay = new TFile("/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_decay5/plots/Processed.root","READ");
-  TFile* filePIDtrackingDecay = new TFile("/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s/K0sComp4_PIDtrackingDecay/plots/Processed.root","READ");
-
-  Color_t colAlex = kBlue;
-  Color_t colAN = kRed;
-  Color_t colPID = kGreen+2;
-  Color_t colDecay = kOrange;
-  Color_t colPrel = 38;
-  Color_t colPIDtrackingDecay = kMagenta+2;
-
-  if(!fileAlex || !filePID || !fileAN || !filePIDtrackingDecay ||! filePrel) return;
-
-
+  // ==============
   gSystem->mkdir(outDirectory.Data(),kTRUE);
 
-  fileAlex->ls();
+  TCanvas* can = new TCanvas("can","can");
 
-  TH1D* hAlex = 0x0;
-  TH1D* hAN = 0x0;
-  TH1D* hPID = 0x0;
-  TH1D* hDecay = 0x0;
-  TH1D* hPIDtrackingDecay = 0x0;
-  TH1D* hPrel = 0x0;
-
-  TCanvas* can = new TCanvas("can","Can");
   TLine* lUnity = new TLine(0.,1.,20.,1.);
   lUnity->SetLineColor(kBlack);
   lUnity->SetLineStyle(kDashed);
@@ -51,97 +67,68 @@ void CompareK0sSelectionAlex()
 
   for(Short_t mult(0); mult < nBinsMult; mult++)
   {
+    can->Divide(1,2);
+    can->cd(1);
+    TH1* frame_upper = gPad->DrawFrame(0.,0.,20.,1.,Form("Multiplicity %s%%; #it{p}_{T} (GeV/#it{c}); #it{v}_{2}{2}",sMultLabel[mult].Data()));
+    can->cd(2);
+    TH1* frame_lower = gPad->DrawFrame(0.,0.,20.,2.,Form("; #it{p}_{T} (GeV/#it{c}); ratio X /%s",sLabel[1].Data()));
 
-    hAlex = (TH1D*) fileAlex->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",mult));
-    hAN = (TH1D*) fileAN->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",mult));
-    hPID = (TH1D*) filePID->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",mult));
-    hDecay = (TH1D*) fileDecay->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",mult));
-    hPrel = (TH1D*) filePrel->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",mult));
-    hPIDtrackingDecay = (TH1D*) filePIDtrackingDecay->Get(Form("hFlow2_K0s_harm2_gap08_mult%d",mult));
-
-
-    if(!hAN || !hPID || !hAlex || !hPIDtrackingDecay) return;
-
-    if(mult == 0)
+    for(Short_t file(0); file < iNumFiles; file++)
     {
-      legend->AddEntry(hAlex,"Alex","pel");
-      legend->AddEntry(hAN,"AN","pel");
-      legend->AddEntry(hPrel,"Prel","pel");
-      legend->AddEntry(hPID,"PID","pel");
-      legend->AddEntry(hDecay,"Decay5","pel");
-      legend->AddEntry(hPIDtrackingDecay,"PIDTrackingDecay","pel");
+      ProcessFile(sInputFile[file],sLabel[file],color[file],sHistName.Format("%s%d",sHistName.Data(),mult),sInputFile[1],sHistName.Format("%s0",sHistName.Data()),can,legend);
     }
 
-    hAlex->SetLineColor(colAlex);
-    hAlex->SetMarkerColor(colAlex);
-    hAN->SetLineColor(colAN);
-    hAN->SetMarkerColor(colAN);
-    hPID->SetLineColor(colPID);
-    hPID->SetMarkerColor(colPID);
-    hDecay->SetLineColor(colDecay);
-    hDecay->SetMarkerColor(colDecay);
-    hPIDtrackingDecay->SetLineColor(colPIDtrackingDecay);
-    hPIDtrackingDecay->SetMarkerColor(colPIDtrackingDecay);
-    hPrel->SetMarkerColor(colPrel);
-    hPrel->SetLineColor(colPrel);
-
-    hRatio = (TH1D*) hAN->Clone(Form("hRatio_%d",mult));
-    hRatio->SetTitle("Ratio X / Alex");
-    // hRatio->SetLineColor(kBlack);
-    hRatio->Divide(hAlex);
-    hRatio->SetMinimum(0.);
-    hRatio->SetMaximum(2.);
-
-    hRatio2 = (TH1D*) hPID->Clone(Form("hRatio2_%d",mult));
-    hRatio2->SetTitle("Ratio X / Alex");
-    // hRatio2->SetLineColor(kBlack);
-    hRatio2->Divide(hAlex);
-    // hRatio2->SetMinimum(0.7);
-    // hRatio2->SetMaximum(1.3);
-
-    hRatio3 = (TH1D*) hPIDtrackingDecay->Clone(Form("hRatio3_%d",mult));
-    hRatio3->SetTitle("Ratio X / Alex");
-    // hRatio2->SetLineColor(kBlack);
-    hRatio3->Divide(hAlex);
-    // hRatio3->SetMinimum(0.7);
-    // hRatio3->SetMaximum(1.3);
-
-    hRatio4 = (TH1D*) hDecay->Clone(Form("hRatio4_%d",mult));
-    hRatio4->SetTitle("Ratio X / Alex");
-    // hRatio4->SetLineColor(kBlack);
-    hRatio4->Divide(hAlex);
-    // hRatio4->SetMinimum(0.7);
-    // hRatio4->SetMaximum(1.3);
-
-    hRatio5 = (TH1D*) hPrel->Clone(Form("hRatio5_%d",mult));
-    hRatio5->SetTitle("Ratio X / Alex");
-    // hRatio5->SetLineColor(kBlack);
-    hRatio5->Divide(hAlex);
-    // hRatio5->SetMinimum(0.7);
-    // hRatio5->SetMaximum(1.3);
-
-    can->Clear();
-    can->Divide(1,2);
-
     can->cd(1);
-    hAN->DrawCopy("e1");
-    hAlex->DrawCopy("same e1");
-    hPID->DrawCopy("same e1");
-    hDecay->DrawCopy("same e1");
-    hPIDtrackingDecay->DrawCopy("same e1");
-    hPrel->DrawCopy("same e1");
     legend->Draw();
-
     can->cd(2);
-    hRatio->DrawCopy("e1");
-    hRatio2->DrawCopy("e1 same");
-    hRatio3->DrawCopy("e1 same");
-    hRatio4->DrawCopy("e1 same");
-    hRatio5->DrawCopy("e1 same");
     lUnity->Draw("same");
-
     can->SaveAs(Form("%s/mult%d.pdf",outDirectory.Data(),mult));
-
+    can->Clear();
+    legend->Clear();
   }
 
+  return;
+}
+// ===========================================================================
+void ProcessFile(
+    TString fileName,
+    TString label,
+    Color_t color,
+    TString histName,
+    TString fileNameBase,
+    TString histNameBase,
+    TCanvas* canvas,
+    TLegend* legend
+  )
+{
+  if(!canvas) { printf("ERROR: Canvas does not exists!\n"); return; }
+  if(!legend) { printf("ERROR: Legend does not exists!\n"); return; }
+
+  TFile* fileBase = TFile::Open(fileNameBase.Data(),"READ");
+  if(!fileBase) { printf("ERROR: File (base) '%s' does not exists!\n",fileNameBase.Data()); return; }
+
+  TH1D* histBase = (TH1D*) fileBase->Get(histNameBase.Data());
+  if(!histBase) { printf("ERROR: Hist (base) '%s' does not exists!\n",histNameBase.Data()); return; }
+
+  TFile* file = TFile::Open(fileName.Data(),"READ");
+  if(!file) { printf("ERROR: File '%s' does not exists!\n",fileName.Data()); return; }
+
+  TH1D* hist = (TH1D*) file->Get(histName.Data());
+  if(!hist) { printf("ERROR: Hist '%s' does not exists!\n",histName.Data()); return; }
+
+  hist->SetLineColor(color);
+  hist->SetMarkerColor(color);
+  legend->AddEntry(hist,label.Data(),"pel");
+
+  TH1D* hRatio = (TH1D*) hist->Clone(Form("%s_ratio",hist->GetName()));
+  hRatio->Divide(hist,histBase);
+  // hRatio->SetTitle("Ratio X / Alex");
+
+  canvas->cd(1);
+  hist->DrawCopy("same p0 e1");
+
+  canvas->cd(2);
+  hRatio->DrawCopy("same e1 p0");
+
+  return;
 }
