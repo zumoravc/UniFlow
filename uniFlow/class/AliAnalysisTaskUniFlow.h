@@ -6,6 +6,7 @@
 #define AliAnalysisTaskUniFlow_H
 
 #include "AliAnalysisTaskSE.h"
+#include "AliEventCuts.h"
 
 
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
@@ -16,6 +17,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    AnalType {kAOD, kESD}; // tag for analysis type
       enum    DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
       enum    PartSpecies {kUnknown, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+
+      AliEventCuts fEventCuts; //
 
       struct FlowPart // representation of selected particle (species independent) storing only basic properties for flow calculations
       {
@@ -55,10 +58,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; }
       // events setters
-      void                    SetColisionSystem(ColSystem colSystem = kPP) {fColSystem = colSystem; }
+      void                    SetColisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
       void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
       void                    SetMultEstimator(const char* mult = "CHARGED") { fMultEstimator = mult; }
       void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
+      void                    SetUseAliEventCuts(Bool_t bUseCuts = kTRUE) { fUseAliEventCuts = bUseCuts; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       // track setters
       void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
@@ -263,6 +267,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
       Short_t                 fTrigger; // physics selection trigger
       TString                 fMultEstimator; // [''] multiplicity estimator (suported: ''/Charged,VOA,V0C,V0M,CL0,CL1,ZNA,ZNC)
+      Bool_t                  fUseAliEventCuts; // use decision of AliEventCuts in event selection
       Float_t                 fPVtxCutZ; // (cm) PV z cut
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit

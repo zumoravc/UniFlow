@@ -115,6 +115,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPeriod(kNon),
   fMultEstimator(),
   fTrigger(0),
+  fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
   fCutChargedEtaMax(0),
@@ -385,6 +386,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPeriod(kNon),
   fMultEstimator(),
   fTrigger(0),
+  fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
   fCutChargedEtaMax(0),
@@ -860,8 +862,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fh2EventCentralityNumSelCharged = new TH2D("fh2EventCentralityNumSelCharged",Form("Event centrality (%s) vs. N^{sel}_{ch}; N^{sel}_{ch}; centrality/multiplicity",fMultEstimator.Data()), 150,0,150, fFlowCentNumBins,0,fFlowCentNumBins);
     fQAEvents->Add(fh2EventCentralityNumSelCharged);
 
-    const Short_t iEventCounterBins = 7;
-    TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","PV OK","SPD Vtx OK","Pileup MV OK","PV #it{z} OK","Selected"};
+    const Short_t iEventCounterBins = 8;
+    TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","EventCuts OK","PV OK","SPD Vtx OK","Pileup MV OK","PV #it{z} OK","Selected"};
     fhEventCounter = new TH1D("fhEventCounter","Event Counter",iEventCounterBins,0,iEventCounterBins);
     for(Short_t i(0); i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fQAEvents->Add(fhEventCounter);
@@ -1518,6 +1520,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
   printf("      fMultEstimator: (TString) '%s'\n",    fMultEstimator.Data());
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
+  printf("      fUseAliEventCuts: (Bool_t) %s\n",    fUseAliEventCuts ? "kTRUE" : "kFALSE");
   printf("   -------- Charge tracks ---------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
   printf("      fCutChargedNumTPCclsMin: (UShort_t) %d\n",    fCutChargedNumTPCclsMin);
@@ -1727,8 +1730,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 Bool_t AliAnalysisTaskUniFlow::EventSelection()
 {
   // main (envelope) method for event selection
-  // Specific event selection methods are called from here
-  // returns kTRUE if event pass all selection criteria
+  // Specific event selection methods are called from here.
+  // Fill the event QA if event pass selection.
+  // returns kTRUE if event pass all selection criteria kFALSE otherwise
   // *************************************************************
 
   Bool_t eventSelected = kFALSE;
@@ -1743,10 +1747,12 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
       && (fPeriod == k16k || fPeriod == k16l || fPeriod == k16q || fPeriod == k16r || fPeriod == k16s || fPeriod == k16t)
     ) eventSelected = IsEventSelected_2016();
 
+  if(!eventSelected) return kFALSE;
+
   // Fill event QA AFTER cuts
   if(fFillQA && eventSelected) FillEventsQA(1);
 
-  return eventSelected;
+  return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
@@ -1786,6 +1792,10 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
 
   // events passing physics selection
   fhEventCounter->Fill("Physics selection OK",1);
+
+  // events passing AliEventCuts selection
+  if(fUseAliEventCuts && !fEventCuts.AcceptEvent(fEventAOD)) return kFALSE;
+  fhEventCounter->Fill("EventCuts OK",1);
 
   // primary vertex selection
   const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertex());
