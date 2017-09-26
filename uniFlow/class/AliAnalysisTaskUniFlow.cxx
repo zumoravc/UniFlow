@@ -977,6 +977,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       {
         for(Short_t iSample(0); iSample < fNumSamples; iSample++)
         {
+          if(!fSampling && iSample > 0) break; // define only one sample histogram if sampling is off
+
           fpRefsCor2[iSample][iGap][iHarm] = new TProfile(Form("fpRefs_<2>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Ref: <<2>> | Gap %g | n=%d | sample %d ; centrality/multiplicity;",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax);
           fpRefsCor2[iSample][iGap][iHarm]->Sumw2(kTRUE);
           fFlowRefs->Add(fpRefsCor2[iSample][iGap][iHarm]);
@@ -1651,7 +1653,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     return kFALSE;
   }
 
-  if(!fSampling)
+  // if(!fSampling)
   //fNumSamples = 1;
 
   // checking cut setting
