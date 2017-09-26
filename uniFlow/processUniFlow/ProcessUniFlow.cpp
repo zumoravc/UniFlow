@@ -102,6 +102,7 @@ class FlowTask
 //_____________________________________________________________________________
 FlowTask::FlowTask()
 {
+  fName = "";
   fHarmonics = 0;
   fEtaGap = 0;
   fProfName = "";
@@ -374,35 +375,37 @@ Bool_t ProcessUniFlow::Initialize()
 {
   // initialization of all necessery prerequisits
   Info("Initializating task","Initialize");
-  fbInit = kFALSE;
 
   // opening input file
   ffInputFile = new TFile(Form("%s/%s",fsInputFilePath.Data(),fsInputFileName.Data()),"READ");
   if(!ffInputFile || !ffInputFile->IsOpen())
   {
     Fatal(Form("Input file %s/%s not open",fsInputFilePath.Data(),fsInputFileName.Data()),"Initialize");
-    return fbInit;
+    return kFALSE;
   }
+
+  // checking specified output folder & required sub-folders
+  gSystem->mkdir(fsOutputFilePath.Data(),kTRUE);
+  gSystem->mkdir(Form("%s/slices/K0s",fsOutputFilePath.Data()),kTRUE);
+  gSystem->mkdir(Form("%s/slices/Lambda",fsOutputFilePath.Data()),kTRUE);
+  gSystem->mkdir(Form("%s/fits/K0s",fsOutputFilePath.Data()),kTRUE);
+  gSystem->mkdir(Form("%s/fits/Lambda",fsOutputFilePath.Data()),kTRUE);
 
   // opening output file
   ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),fsOutputFileMode.Data());
   if(!ffOutputFile || !ffOutputFile->IsOpen())
   {
     Fatal(Form("Output file %s/%s not open",fsOutputFilePath.Data(),fsOutputFileName.Data()),"Initialize");
-    return fbInit;
+    return kFALSE;
   }
   Info("Files loaded","Initialize");
 
-  if(!LoadLists()) return fbInit;
+  if(!LoadLists()) return kFALSE;
   Info("Flow lists loaded","Initialize");
 
   // initialization succesfull
-  fbInit = kTRUE;
   Info("Initialization succesfull","Initialize");
-  return fbInit;
-
-  // //gStyle->SetOptStats(1101);
-  //gStyle->SetOptFit(1110);
+  return kTRUE;
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::SetMultiplicityBins(Double_t* array, const Short_t size)
@@ -483,7 +486,7 @@ Bool_t ProcessUniFlow::LoadLists()
   ffInputFile->cd(fsTaskName.Data());
 
   flFlowRefs = (TList*) gDirectory->Get(Form("Flow_Refs_%s",fsTaskName.Data()));
-  if(!flFlowRefs) { Fatal("flFlow_Refs list does not exists!","LoadLists"); return kFALSE; }
+  if(!flFlowRefs) { Fatal("flFlow_Refs list does not exists!","LoadLists"); ffInputFile->ls(); return kFALSE; }
   flFlowCharged = (TList*) gDirectory->Get(Form("Flow_Charged_%s",fsTaskName.Data()));
   if(!flFlowCharged) { Fatal("flFlow_Charged list does not exists!","LoadLists"); return kFALSE; }
   flFlowPID = (TList*) gDirectory->Get(Form("Flow_PID_%s",fsTaskName.Data()));
@@ -1000,7 +1003,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
     canFitInvMass->cd(1);
     // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
-    latex2->DrawLatex(0.18,0.58,Form("pt %g-%g                 cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    latex2->DrawLatex(0.18,0.58,Form("pt %g-%g cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
 
 
     canFitInvMass->SaveAs(Form("%s/fits/%s/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
