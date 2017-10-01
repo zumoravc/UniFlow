@@ -52,6 +52,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
       void                    SetProcessPhi(Bool_t filter = kTRUE) { fProcessPhi = filter; }
       // flow related setters
+      void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
       void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
@@ -156,10 +157,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
-      const static Int_t      fNumHarmonics = 2; // number of harmonics
+      const static Int_t      fNumHarmonics = 1; // number of harmonics
       static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-      const static Int_t      fNumEtaGap = 3; // number of harmonics
+      const static Int_t      fNumEtaGap = 1; // number of harmonics
       static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
+      const static Int_t      fNumMultBins = 6; // number of multiplicity bins
+      static Double_t         fMultBins[fNumMultBins+1]; // multiplicity bins
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       void                    ListParameters(); // list all task parameters
@@ -255,6 +258,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
       Bool_t                  fProcessPhi; // flag for processing Phi meson candidates
       // cuts & selection: flow related
+      Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
       Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>

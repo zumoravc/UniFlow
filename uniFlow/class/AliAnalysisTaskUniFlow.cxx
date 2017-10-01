@@ -55,8 +55,9 @@ class AliAnalysisTaskUniFlow;
 
 ClassImp(AliAnalysisTaskUniFlow); // classimp: necessary for root
 
-Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2,3};
-Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {-1.,0.,0.8};
+Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2};
+Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {0.8};
+Double_t AliAnalysisTaskUniFlow::fMultBins[] = {0.,5.,10.,20.,40.,60.,100.};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventAOD(0x0),
@@ -97,6 +98,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fProcessPhi(kFALSE),
 
   // flow related
+  fUseFixedMultBins(kFALSE),
   fCutFlowRFPsPtMin(0),
   fCutFlowRFPsPtMax(0),
   fCutFlowDoFourCorrelations(kTRUE),
@@ -368,6 +370,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fProcessPhi(kFALSE),
 
   // flow related
+  fUseFixedMultBins(kFALSE),
   fCutFlowRFPsPtMin(0),
   fCutFlowRFPsPtMax(0),
   fFlowPOIsPtMin(0),
@@ -1624,7 +1627,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   // TODO check if period corresponds to selected collisional system
-
 
   // checking PID response
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
@@ -3421,6 +3423,17 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   Filtering();
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
   if(fIndexCentrality < 0) return kFALSE;
+
+  // transfering centrality percentile to multiplicity bin (if fixed size bins are used)
+  if(fUseFixedMultBins)
+  {
+    Short_t oldCent = fIndexCentrality;
+    for(Int_t multIndex(0); multIndex < fNumMultBins; multIndex++)
+    {
+      if(oldCent >= fMultBins[multIndex] && oldCent < fMultBins[multIndex+1]) { fIndexCentrality = multIndex; break; }
+    }
+    // printf("Cent: old: %g | new %hd\n",oldCent,fIndexCentrality);
+  }
 
   // if running in kFillWeights mode, skip the remaining part
   if(fRunMode == kFillWeights) { fEventCounter++; return kTRUE; }
