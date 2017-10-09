@@ -1293,6 +1293,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
     FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
     taskRef->SetHarmonics(task->fHarmonics);
     taskRef->SetEtaGap(task->fEtaGap);
+    taskRef->SetNumSamples(task->fNumSamples);
     if(ProcessRefs(taskRef))
     {
       hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
