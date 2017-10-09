@@ -9,7 +9,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "uniflow_CENT_wSDD";
+    TString sWorkDir = "uniflow_testD";
     TString sOutDir = "output";
     TString sPeriod = "LHC16q";
 
@@ -78,14 +78,14 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(50);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
-    task1->SetSampling(kTRUE);
+    // task1->SetSampling(kTRUE);
     // task1->SetFillQAhistos(kFALSE);
     task1->SetProcessCharged(kTRUE);
-    task1->SetProcessPID(kTRUE);
-    task1->SetProcessPhi(kTRUE);
+    // task1->SetProcessPID(kTRUE);
+    // task1->SetProcessPhi(kTRUE);
     task1->SetProcessV0s(kTRUE);
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
@@ -95,6 +95,7 @@ void runAnalysis()
     // task1->SetUseWeigthsFile("alice/cern.ch/user/v/vpacik/uniFlow_ver4_CENT_woSDD_16t_V0A/output/000267163/001/AnalysisResults.root");
     // task1->SetUseWeigthsFile("/alice/cern.ch/user/v/vpacik/weights_CENTwoSDD_16q.root");
     // Events selection
+    // task1->SetUseAliEventCuts();
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
     task1->SetMultEstimator("V0A");
@@ -124,6 +125,8 @@ void runAnalysis()
     task1->SetV0sTPCRefit(kTRUE);
     task1->SetV0sRejectKinks(kTRUE);
     task1->SetV0sUseCrossMassRejection(kTRUE);
+    task1->SetV0sCrossMassCutK0s(0.005);
+    task1->SetV0sCrossMassCutLambda(0.020);
     task1->SetV0sDCAPVMin(0.06);
     task1->SetV0sDCAPVMax(0.);
     // task1->SetV0sDCAPVzMax(1.);
@@ -140,8 +143,9 @@ void runAnalysis()
     task1->SetV0sK0sNumTauMax(5);
     task1->SetV0sK0sArmenterosAlphaMin(0.2);
     task1->SetV0sLambdaNumTauMax(3.8);
-    task1->SetV0sProtonNumSigmaMax(3.);
-    task1->SetV0sProtonPIDPtMax(1.2);
+    // task1->SetV0sK0sKaonNumTPCSigmaMax(3.);
+    // task1->SetV0sLambdaPionNumTPCSigmaMax(3.);
+    // task1->SetV0sLambdaProtonNumTPCSigmaMax(3.);
 
     /*
     AliAnalysisTaskUniFlow* task2 = AddTaskUniFlow("UniFlow_FB768_Nsigma");
@@ -205,7 +209,7 @@ void runAnalysis()
         TChain* chain = new TChain("aodTree");
         //chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");
         // chain->Add("~/NBI/Flow/flow/testData/2016/LHC16l/000259888/pass1/AOD/015/AliAOD.root");
-        chain->Add("~/NBI/Flow/flow/testData/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
+        chain->Add("~/NBI/Flow/data/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
         // if we want to run on grid, we create and configure the plugin
@@ -217,7 +221,7 @@ void runAnalysis()
         alienHandler->SetAnalysisSource("AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20170411-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20170820-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
         alienHandler->SetGridDataDir(Form("/alice/data/2016/%s/",sPeriod.Data()));

@@ -102,6 +102,7 @@ class FlowTask
 //_____________________________________________________________________________
 FlowTask::FlowTask()
 {
+  fName = "";
   fHarmonics = 0;
   fEtaGap = 0;
   fProfName = "";
@@ -374,35 +375,37 @@ Bool_t ProcessUniFlow::Initialize()
 {
   // initialization of all necessery prerequisits
   Info("Initializating task","Initialize");
-  fbInit = kFALSE;
 
   // opening input file
   ffInputFile = new TFile(Form("%s/%s",fsInputFilePath.Data(),fsInputFileName.Data()),"READ");
   if(!ffInputFile || !ffInputFile->IsOpen())
   {
     Fatal(Form("Input file %s/%s not open",fsInputFilePath.Data(),fsInputFileName.Data()),"Initialize");
-    return fbInit;
+    return kFALSE;
   }
+
+  // checking specified output folder & required sub-folders
+  gSystem->mkdir(fsOutputFilePath.Data(),kTRUE);
+  gSystem->mkdir(Form("%s/slices/K0s",fsOutputFilePath.Data()),kTRUE);
+  gSystem->mkdir(Form("%s/slices/Lambda",fsOutputFilePath.Data()),kTRUE);
+  gSystem->mkdir(Form("%s/fits/K0s",fsOutputFilePath.Data()),kTRUE);
+  gSystem->mkdir(Form("%s/fits/Lambda",fsOutputFilePath.Data()),kTRUE);
 
   // opening output file
   ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),fsOutputFileMode.Data());
   if(!ffOutputFile || !ffOutputFile->IsOpen())
   {
     Fatal(Form("Output file %s/%s not open",fsOutputFilePath.Data(),fsOutputFileName.Data()),"Initialize");
-    return fbInit;
+    return kFALSE;
   }
   Info("Files loaded","Initialize");
 
-  if(!LoadLists()) return fbInit;
+  if(!LoadLists()) return kFALSE;
   Info("Flow lists loaded","Initialize");
 
   // initialization succesfull
-  fbInit = kTRUE;
   Info("Initialization succesfull","Initialize");
-  return fbInit;
-
-  // //gStyle->SetOptStats(1101);
-  //gStyle->SetOptFit(1110);
+  return kTRUE;
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::SetMultiplicityBins(Double_t* array, const Short_t size)
@@ -483,7 +486,7 @@ Bool_t ProcessUniFlow::LoadLists()
   ffInputFile->cd(fsTaskName.Data());
 
   flFlowRefs = (TList*) gDirectory->Get(Form("Flow_Refs_%s",fsTaskName.Data()));
-  if(!flFlowRefs) { Fatal("flFlow_Refs list does not exists!","LoadLists"); return kFALSE; }
+  if(!flFlowRefs) { Fatal("flFlow_Refs list does not exists!","LoadLists"); ffInputFile->ls(); return kFALSE; }
   flFlowCharged = (TList*) gDirectory->Get(Form("Flow_Charged_%s",fsTaskName.Data()));
   if(!flFlowCharged) { Fatal("flFlow_Charged list does not exists!","LoadLists"); return kFALSE; }
   flFlowPID = (TList*) gDirectory->Get(Form("Flow_PID_%s",fsTaskName.Data()));
@@ -1000,7 +1003,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
     canFitInvMass->cd(1);
     // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
-    latex2->DrawLatex(0.18,0.58,Form("pt %g-%g                 cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    latex2->DrawLatex(0.18,0.58,Form("pt %g-%g cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
 
 
     canFitInvMass->SaveAs(Form("%s/fits/%s/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
@@ -1116,7 +1119,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
     dSum = 0;
     dW = 0;
 
-    for(Short_t iSample(0); iSample < vecContents.size(); iSample++)
+    for(ULong_t iSample(0); iSample < vecContents.size(); iSample++)
     {
       content = vecContents.at(iSample);
       error = vecErrors.at(iSample);
@@ -1133,7 +1136,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
     dMean = dSum/dW;
 
     dSum = 0;
-    for(Short_t iSample(0); iSample < vecContents.size(); iSample++)
+    for(ULong_t iSample(0); iSample < vecContents.size(); iSample++)
     {
       content = vecContents.at(iSample);
       // error = vecErrors.at(iSample);
@@ -1290,6 +1293,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
     FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
     taskRef->SetHarmonics(task->fHarmonics);
     taskRef->SetEtaGap(task->fEtaGap);
+    taskRef->SetNumSamples(task->fNumSamples);
     if(ProcessRefs(taskRef))
     {
       hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
@@ -1474,12 +1478,12 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   }
   else { vecBins.push_back(hPtProj->GetXaxis()->GetXmin()); } // pushing first edge
 
-  for(iBin; iBin < iNBins+1; iBin++)
+  for(Short_t bin(iBin); bin < iNBins+1; bin++)
   {
-    dCount += hPtProj->GetBinContent(iBin);
+    dCount += hPtProj->GetBinContent(bin);
     if(dCount > dMinEntries)
     {
-      vecBins.push_back(hPtProj->GetXaxis()->GetBinUpEdge(iBin));
+      vecBins.push_back(hPtProj->GetXaxis()->GetBinUpEdge(bin));
       vecContents.push_back(dCount);
       dCount = 0;
     }
@@ -2524,8 +2528,6 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
   Info("#### Start of Alex's segment #######################","ExtractFlowK0sAlex");
   TH1D* hInvMassA = (TH1D*) hInvMass;
   TH1D* hVnK0APx = (TH1D*) hFlowMass;
-  Double_t k = 0;
-  Double_t j = 0;
 
   canFitInvMass->cd(1);
 
@@ -2536,7 +2538,7 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
   hInvMassA->DrawCopy();
 
 
-  TF1* fitA = new TF1(Form("fitA_%d_%d", k, j), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(6)", 0.4, 0.6);
+  TF1* fitA = new TF1(Form("fitA"), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(6)", 0.4, 0.6);
   fitA->SetParameters(hInvMassA->GetMaximum()/10., -hInvMassA->GetMaximum()/50., hInvMassA->GetMaximum()/30., hInvMassA->GetMaximum()/10., hInvMassA->GetMaximum()/20., hInvMassA->GetMaximum()/20., hInvMassA->GetMaximum(), 0.4976, 0.001);
   fitA->SetParLimits(6, 0, hInvMassA->GetMaximum()*100);
   //fitA->FixParameter(7, 0.4976);
@@ -2568,13 +2570,13 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
   latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitA->GetParameter(7),fitA->GetParError(7)));
   latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitA->GetParameter(8),fitA->GetParError(8)));
 
-  TF1* poliA = new TF1(Form("poliA_%d_%d", j, k), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4)", 0.4, 0.6);
+  TF1* poliA = new TF1(Form("poliA"), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4)", 0.4, 0.6);
   poliA->SetParameters(fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5));
   poliA->SetLineColor(2);
   poliA->SetLineStyle(2);
   poliA->DrawCopy("same");
 
-  TF1* gA = new TF1(Form("gausA_%d_%d", j, k), "gaus", 0.4, 0.6);
+  TF1* gA = new TF1(Form("gausA"), "gaus", 0.4, 0.6);
   gA->SetParameters(fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8));
   gA->SetLineColor(4);
   gA->SetLineStyle(2);
@@ -2587,7 +2589,7 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
   hVnK0APx->GetXaxis()->SetTitle("M_{K^{0}} (GeV/c^{2})");
   hVnK0APx->DrawCopy();
 
-  TF1* fvna = new TF1(Form("fvna_%d_%d", j, k), "[0]*gaus(1)/(gaus(4) + [7] + [8]*(x-0.4) + [9]*(x-0.4)*sqrt(x-0.4) + [10]*(x-0.4)*(x-0.4) + [11]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [12]*(x-0.4)*(x-0.4)*(x-0.4)) + ([13] + [14]*(x-0.4) + [15]*(x-0.4)*sqrt(x-0.4) + [16]*(x-0.4)*(x-0.4) + [17]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [18]*(x-0.4)*(x-0.4)*(x-0.4)) / ( [19] + [20]*(x-0.4) + [21]*(x-0.4)*sqrt(x-0.4) + [22]*(x-0.4)*(x-0.4) + [23]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [24]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(25))*([28]+[29]*x)", 0.4, 0.6);
+  TF1* fvna = new TF1(Form("fvna"), "[0]*gaus(1)/(gaus(4) + [7] + [8]*(x-0.4) + [9]*(x-0.4)*sqrt(x-0.4) + [10]*(x-0.4)*(x-0.4) + [11]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [12]*(x-0.4)*(x-0.4)*(x-0.4)) + ([13] + [14]*(x-0.4) + [15]*(x-0.4)*sqrt(x-0.4) + [16]*(x-0.4)*(x-0.4) + [17]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [18]*(x-0.4)*(x-0.4)*(x-0.4)) / ( [19] + [20]*(x-0.4) + [21]*(x-0.4)*sqrt(x-0.4) + [22]*(x-0.4)*(x-0.4) + [23]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [24]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(25))*([28]+[29]*x)", 0.4, 0.6);
 
  Double_t parama[30] = {0.1, fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8), fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8), fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5), fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5), fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5), fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8), 4.65731e-01, -5.44560e+00};
 

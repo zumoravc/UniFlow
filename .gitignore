@@ -34,5 +34,7 @@
 *.gif
 
 ### Directories ###
-results/*
-hepData/*
+results
+data/
+AnalNote/
+others/
