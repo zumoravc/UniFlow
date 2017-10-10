@@ -37,8 +37,7 @@ class FlowTask
   public:
     enum    PartSpecies {kUnknown=0, kRefs, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
-                FlowTask(); // default constructor
-                FlowTask(const char* name, PartSpecies species = kUnknown); // named constructor
+                FlowTask(PartSpecies species = kUnknown, const char* name = "");
                 ~FlowTask(); // default destructor
 
     void        PrintTask(); // listing values of internal properties
@@ -68,6 +67,7 @@ class FlowTask
   protected:
   private:
 
+    TString     fTaskTag; // "unique" tag used primarily for storing output
     TString     fName; // task name
     PartSpecies fSpecies; // species involved
     TString     fProfName; // alterinative profiles name
@@ -101,9 +101,10 @@ class FlowTask
 };
 
 //_____________________________________________________________________________
-FlowTask::FlowTask()
+FlowTask::FlowTask(PartSpecies species, const char* name)
 {
-  fName = "";
+  fName = name;
+  fSpecies = species;
   fHarmonics = 0;
   fEtaGap = 0;
   fProfName = "";
@@ -127,13 +128,9 @@ FlowTask::FlowTask()
   fVecHistInvMass = new std::vector<TH1D*>;
   fVecHistInvMassBG = new std::vector<TH1D*>;
   fVecHistFlowMass = new std::vector<TH1D*>;
-}
-//_____________________________________________________________________________
-FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask()
-{
-  fName = name;
-  // fCanvas = new TCanvas(Form("can_%s",name));
-  fSpecies = species;
+
+  fTaskTag = this->GetSpeciesName();
+  if(!fName.EqualTo("")) fTaskTag.Append(Form("_%s",fName.Data()));
 }
 //_____________________________________________________________________________
 FlowTask::~FlowTask()
@@ -180,7 +177,8 @@ TString FlowTask::GetSpeciesName()
 void FlowTask::PrintTask()
 {
   printf("----- Printing task info ------\n");
-  printf("   fName: %s\n",fName.Data());
+  printf("   fTaskTag: \"%s\"\n",fTaskTag.Data());
+  printf("   fName: \"%s\"\n",fName.Data());
   printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
@@ -1291,7 +1289,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
     // return kFALSE;
 
     Info("Creating relevant reference flow task.","PrepareSlices");
-    FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
+    FlowTask* taskRef = new FlowTask(FlowTask::kRefs,"Ref");
     taskRef->SetHarmonics(task->fHarmonics);
     taskRef->SetEtaGap(task->fEtaGap);
     taskRef->SetNumSamples(task->fNumSamples);
