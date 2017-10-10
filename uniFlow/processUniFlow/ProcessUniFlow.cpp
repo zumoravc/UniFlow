@@ -1444,8 +1444,10 @@ TH1D* ProcessUniFlow::TestRebin(TH1D* hOrig, FlowTask* task)
 void ProcessUniFlow::AddTask(FlowTask* task)
 {
   if(!task) return;
+  
+  if(task->fSpecies == FlowTask::kRefs) fvTasks.insert(fvTasks.begin(), task);
+  else fvTasks.push_back(task);
 
-  fvTasks.push_back(task);
   return;
 }
 //_____________________________________________________________________________
