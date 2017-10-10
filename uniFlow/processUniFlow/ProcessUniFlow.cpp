@@ -206,7 +206,7 @@ class ProcessUniFlow
 
     void        SetInputFilePath(const char* path) { fsInputFilePath = path; }
     void        SetInputFileName(const char* name) { fsInputFileName = name; }
-    void        SetOutputFilePath(const char* path) { fsOutputFilePath = path; }
+    void        SetOutputFilePath(const char* path) { fsOutputFilePathRoot = path; }
     void        SetOutputFileName(const char* name) { fsOutputFileName = name; }
     void        SetOutputFileMode(const char* mode = "RECREATE") { fsOutputFileMode = mode; }
     void        SetTaskName(const char* name) { fsTaskName = name; }
@@ -256,7 +256,8 @@ class ProcessUniFlow
 
     TString     fsInputFilePath; // path to the input folder with input file
     TString     fsInputFileName; // name of input file
-    TString     fsOutputFilePath; // path to the ouput folder
+    TString     fsOutputFilePath; // current (working) path to the output folder (process/task dependent)
+    TString     fsOutputFilePathRoot; // root (global/top-level) path to the output folder
     TString     fsOutputFileName; // name of output file
     TString     fsOutputFileMode; // [RECREATE] mode of output file
     TString     fsTaskName; // name of task (inchluded in data structure names)
@@ -291,6 +292,7 @@ ProcessUniFlow::ProcessUniFlow() :
   // default constructor
   fsInputFilePath = TString("");
   fsInputFileName = TString("AnalysisResults.root");
+  fsOutputFilePathRoot = TString("");
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
   fsOutputFileMode = TString("RECREATE");
@@ -349,15 +351,14 @@ void ProcessUniFlow::Run()
 
   // main body of the class
   if(!Initialize()) { Fatal("Task not initialized","Run"); return; }
-  
+
   const Short_t iNumTasks = fvTasks.size();
-  FlowTask* currentTask = 0x0;
 
   Info("===== Running over tasks ======","Run");
   Info(Form("  Number of tasks: %d\n",iNumTasks),"Run");
   for(Short_t iTask(0); iTask < iNumTasks; iTask++)
   {
-    currentTask = fvTasks.at(iTask);
+    FlowTask* currentTask = fvTasks.at(iTask);
     if(!currentTask) continue;
     ProcessTask(currentTask);
   }
@@ -378,12 +379,12 @@ Bool_t ProcessUniFlow::Initialize()
     return kFALSE;
   }
 
+  // Setting current output path
+  fsOutputFilePath = fsOutputFilePathRoot;
+
   // checking specified output folder & required sub-folders
   gSystem->mkdir(fsOutputFilePath.Data(),kTRUE);
-  gSystem->mkdir(Form("%s/slices/K0s",fsOutputFilePath.Data()),kTRUE);
-  gSystem->mkdir(Form("%s/slices/Lambda",fsOutputFilePath.Data()),kTRUE);
-  gSystem->mkdir(Form("%s/fits/K0s",fsOutputFilePath.Data()),kTRUE);
-  gSystem->mkdir(Form("%s/fits/Lambda",fsOutputFilePath.Data()),kTRUE);
+
 
   // opening output file
   ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),fsOutputFileMode.Data());
@@ -497,6 +498,9 @@ Bool_t ProcessUniFlow::LoadLists()
 //_____________________________________________________________________________
 void ProcessUniFlow::ProcessTask(FlowTask* task)
 {
+  fsOutputFilePath = Form("%s/%s",fsOutputFilePathRoot.Data(),task->fTaskTag.Data());
+  gSystem->mkdir(fsOutputFilePath.Data(),kTRUE);
+
   Info(Form("Processing task: %s",task->fName.Data()),"ProcessTask");
   if(!task) { Error("Task not valid!","ProcessTask"); return; }
 
