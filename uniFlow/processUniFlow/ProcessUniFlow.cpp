@@ -349,12 +349,7 @@ void ProcessUniFlow::Run()
 
   // main body of the class
   if(!Initialize()) { Fatal("Task not initialized","Run"); return; }
-
-  Debug("Initialized");
-
-  // flFlow_K0s->ls();
-  // TestProjections();
-
+  
   const Short_t iNumTasks = fvTasks.size();
   FlowTask* currentTask = 0x0;
 
