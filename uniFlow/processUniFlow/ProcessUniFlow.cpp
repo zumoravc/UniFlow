@@ -4,7 +4,7 @@
  *
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2017
  */
-
+#include <vector>
 #include "TROOT.h"
 #include "TMinuit.h"
 #include "TMath.h"
@@ -41,6 +41,8 @@ class FlowTask
                 FlowTask(const char* name, PartSpecies species = kUnknown); // named constructor
                 ~FlowTask(); // default destructor
 
+    void        PrintTask(); // listing values of internal properties
+
     TString     GetSpeciesName();
     TString     GetEtaGapString() { return TString(Form("%02.2g",10*fEtaGap)); }
 
@@ -65,7 +67,6 @@ class FlowTask
     void        SetAlexFitting(Bool_t fit = kTRUE) { fFitByAlex = fit; }
   protected:
   private:
-    void        PrintTask(); // listing values of internal properties
 
     TString     fName; // task name
     PartSpecies fSpecies; // species involved
