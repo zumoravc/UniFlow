@@ -37,8 +37,7 @@ class FlowTask
   public:
     enum    PartSpecies {kUnknown=0, kRefs, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
-                FlowTask(); // default constructor
-                FlowTask(const char* name, PartSpecies species = kUnknown); // named constructor
+                FlowTask(PartSpecies species = kUnknown, const char* name = "");
                 ~FlowTask(); // default destructor
 
     void        PrintTask(); // listing values of internal properties
@@ -68,6 +67,7 @@ class FlowTask
   protected:
   private:
 
+    TString     fTaskTag; // "unique" tag used primarily for storing output
     TString     fName; // task name
     PartSpecies fSpecies; // species involved
     TString     fProfName; // alterinative profiles name
@@ -101,9 +101,10 @@ class FlowTask
 };
 
 //_____________________________________________________________________________
-FlowTask::FlowTask()
+FlowTask::FlowTask(PartSpecies species, const char* name)
 {
-  fName = "";
+  fName = name;
+  fSpecies = species;
   fHarmonics = 0;
   fEtaGap = 0;
   fProfName = "";
@@ -127,13 +128,9 @@ FlowTask::FlowTask()
   fVecHistInvMass = new std::vector<TH1D*>;
   fVecHistInvMassBG = new std::vector<TH1D*>;
   fVecHistFlowMass = new std::vector<TH1D*>;
-}
-//_____________________________________________________________________________
-FlowTask::FlowTask(const char* name, PartSpecies species) : FlowTask()
-{
-  fName = name;
-  // fCanvas = new TCanvas(Form("can_%s",name));
-  fSpecies = species;
+
+  fTaskTag = this->GetSpeciesName();
+  if(!fName.EqualTo("")) fTaskTag.Append(Form("_%s",fName.Data()));
 }
 //_____________________________________________________________________________
 FlowTask::~FlowTask()
@@ -180,7 +177,8 @@ TString FlowTask::GetSpeciesName()
 void FlowTask::PrintTask()
 {
   printf("----- Printing task info ------\n");
-  printf("   fName: %s\n",fName.Data());
+  printf("   fTaskTag: \"%s\"\n",fTaskTag.Data());
+  printf("   fName: \"%s\"\n",fName.Data());
   printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
@@ -208,7 +206,7 @@ class ProcessUniFlow
 
     void        SetInputFilePath(const char* path) { fsInputFilePath = path; }
     void        SetInputFileName(const char* name) { fsInputFileName = name; }
-    void        SetOutputFilePath(const char* path) { fsOutputFilePath = path; }
+    void        SetOutputFilePath(const char* path) { fsOutputFilePathRoot = path; }
     void        SetOutputFileName(const char* name) { fsOutputFileName = name; }
     void        SetOutputFileMode(const char* mode = "RECREATE") { fsOutputFileMode = mode; }
     void        SetTaskName(const char* name) { fsTaskName = name; }
@@ -258,7 +256,8 @@ class ProcessUniFlow
 
     TString     fsInputFilePath; // path to the input folder with input file
     TString     fsInputFileName; // name of input file
-    TString     fsOutputFilePath; // path to the ouput folder
+    TString     fsOutputFilePath; // current (working) path to the output folder (process/task dependent)
+    TString     fsOutputFilePathRoot; // root (global/top-level) path to the output folder
     TString     fsOutputFileName; // name of output file
     TString     fsOutputFileMode; // [RECREATE] mode of output file
     TString     fsTaskName; // name of task (inchluded in data structure names)
@@ -293,6 +292,7 @@ ProcessUniFlow::ProcessUniFlow() :
   // default constructor
   fsInputFilePath = TString("");
   fsInputFileName = TString("AnalysisResults.root");
+  fsOutputFilePathRoot = TString("");
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
   fsOutputFileMode = TString("RECREATE");
@@ -352,19 +352,13 @@ void ProcessUniFlow::Run()
   // main body of the class
   if(!Initialize()) { Fatal("Task not initialized","Run"); return; }
 
-  Debug("Initialized");
-
-  // flFlow_K0s->ls();
-  // TestProjections();
-
   const Short_t iNumTasks = fvTasks.size();
-  FlowTask* currentTask = 0x0;
 
   Info("===== Running over tasks ======","Run");
   Info(Form("  Number of tasks: %d\n",iNumTasks),"Run");
   for(Short_t iTask(0); iTask < iNumTasks; iTask++)
   {
-    currentTask = fvTasks.at(iTask);
+    FlowTask* currentTask = fvTasks.at(iTask);
     if(!currentTask) continue;
     ProcessTask(currentTask);
   }
@@ -385,12 +379,12 @@ Bool_t ProcessUniFlow::Initialize()
     return kFALSE;
   }
 
+  // Setting current output path
+  fsOutputFilePath = fsOutputFilePathRoot;
+
   // checking specified output folder & required sub-folders
   gSystem->mkdir(fsOutputFilePath.Data(),kTRUE);
-  gSystem->mkdir(Form("%s/slices/K0s",fsOutputFilePath.Data()),kTRUE);
-  gSystem->mkdir(Form("%s/slices/Lambda",fsOutputFilePath.Data()),kTRUE);
-  gSystem->mkdir(Form("%s/fits/K0s",fsOutputFilePath.Data()),kTRUE);
-  gSystem->mkdir(Form("%s/fits/Lambda",fsOutputFilePath.Data()),kTRUE);
+
 
   // opening output file
   ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),fsOutputFileMode.Data());
@@ -504,6 +498,9 @@ Bool_t ProcessUniFlow::LoadLists()
 //_____________________________________________________________________________
 void ProcessUniFlow::ProcessTask(FlowTask* task)
 {
+  fsOutputFilePath = Form("%s/%s",fsOutputFilePathRoot.Data(),task->fTaskTag.Data());
+  gSystem->mkdir(fsOutputFilePath.Data(),kTRUE);
+
   Info(Form("Processing task: %s",task->fName.Data()),"ProcessTask");
   if(!task) { Error("Task not valid!","ProcessTask"); return; }
 
@@ -1001,13 +998,13 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         return kFALSE;
     }
 
+    gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
 
     canFitInvMass->cd(1);
     // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
     latex2->DrawLatex(0.18,0.58,Form("pt %g-%g cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
 
-
-    canFitInvMass->SaveAs(Form("%s/fits/%s/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+    canFitInvMass->SaveAs(Form("%s/fits/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
     canFlowAll->cd(binPt+1);
     hFlowMass->DrawCopy();
@@ -1291,7 +1288,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
     // return kFALSE;
 
     Info("Creating relevant reference flow task.","PrepareSlices");
-    FlowTask* taskRef = new FlowTask("Ref",FlowTask::kRefs);
+    FlowTask* taskRef = new FlowTask(FlowTask::kRefs,"Ref");
     taskRef->SetHarmonics(task->fHarmonics);
     taskRef->SetEtaGap(task->fEtaGap);
     taskRef->SetNumSamples(task->fNumSamples);
@@ -1392,9 +1389,10 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
 
   printf(" # of slices: InvMass: %lu | InvMassBG %lu | FlowMass %lu\n",task->fVecHistInvMass->size(),task->fVecHistInvMassBG->size(),task->fVecHistFlowMass->size());
 
-  canFlowMass->SaveAs(Form("%s/slices/%s/Slices_FlowMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
-  canInvMass->SaveAs(Form("%s/slices/%s/Slices_InvMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
-  if(h3EntriesBG) canInvMassBG->SaveAs(Form("%s/slices/%s/Slices_InvMassBG_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  gSystem->mkdir(Form("%s/slices/",fsOutputFilePath.Data()));
+  canFlowMass->SaveAs(Form("%s/slices/Slices_FlowMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  canInvMass->SaveAs(Form("%s/slices/Slices_InvMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  if(h3EntriesBG) canInvMassBG->SaveAs(Form("%s/slices/Slices_InvMassBG_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
 
   if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1 || task->fVecHistFlowMass->size() != task->fVecHistInvMass->size()) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
   if(h3EntriesBG && (task->fVecHistInvMassBG->size() < 1 || task->fVecHistInvMassBG->size() != task->fVecHistInvMass->size()) ) { Error("Output vector empty. Something went wrong with BG histograms","PrepareSlices"); return kFALSE; }
