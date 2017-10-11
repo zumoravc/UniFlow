@@ -354,10 +354,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // histograms & profiles
 
       // Flow
-      TH3D*           fh3V0sEntriesK0s[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
-      TH3D*           fh3V0sEntriesLambda[fNumEtaGap]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
-      TH3D*           fh3PhiEntriesSignal[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
-      TH3D*           fh3PhiEntriesBG[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
+      TH3D*           fh3V0sEntriesK0sPos[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
+      TH3D*           fh3V0sEntriesK0sNeg[fNumEtaGap]; //! distribution of K0s candidates (cent, pT, InvMass)
+      TH3D*           fh3V0sEntriesLambdaPos[fNumEtaGap]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
+      TH3D*           fh3V0sEntriesLambdaNeg[fNumEtaGap]; //! distribution of (Anti-)Lambda candidates (cent, pT, InvMass)
+      TH3D*           fh3PhiEntriesSignalPos[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
+      TH3D*           fh3PhiEntriesSignalNeg[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
+      TH3D*           fh3PhiEntriesBGPos[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
+      TH3D*           fh3PhiEntriesBGNeg[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
 
       TH3D*           fh3WeightsRefs; //! distribution of Refs particles for estimating weight purpose (phi,eta,pt)
       TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for estimating weight purpose (phi,eta,pt)
