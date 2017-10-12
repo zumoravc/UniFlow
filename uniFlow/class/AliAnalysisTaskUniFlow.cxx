@@ -2739,10 +2739,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   fhV0sCounter->Fill("Daughters DCA",1);
 
   // radius of decay vertex in transverse plane
-  Double_t dSecVtxCoor[3] = {0};
-  v0->GetSecondaryVtx(dSecVtxCoor);
-  Double_t dDecayRadius = TMath::Sqrt(dSecVtxCoor[0]*dSecVtxCoor[0] + dSecVtxCoor[1]*dSecVtxCoor[1]);
-  // can be substituted by AliAODv0::RadiusV0() - equivalent
+  Double_t dDecayRadius = v0->RadiusV0();
   if( fCutV0sDecayRadiusMin > 0. && (dDecayRadius < fCutV0sDecayRadiusMin) ) return kFALSE;
   if( fCutV0sDecayRadiusMax > 0. && (dDecayRadius > fCutV0sDecayRadiusMax) ) return kFALSE;
   fhV0sCounter->Fill("Decay radius",1);
