@@ -34,7 +34,8 @@
 *.gif
 
 ### Directories ###
-results
+uniFlow/results
+results/
 data/
 AnalNote/
 others/
