@@ -1522,7 +1522,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
 {
   // lists all task parameters
   // *************************************************************
-  printf("\n======= List of parameters ========================================\n");
+  AliInfo("Listing all AliAnalysisTaskUniFlow parameters");
   printf("   -------- Analysis task ---------------------------------------\n");
   printf("      fRunMode: (RunMode) %d\n",    fRunMode);
   printf("      fAnalType: (AnalType) %d\n",    fAnalType);
@@ -1623,30 +1623,29 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // check if task parameters are specified and valid
   // returns kTRUE if succesfull
   // *************************************************************
-
-  printf("====== InitializeTask AliAnalysisTaskUniFlow =========================\n");
+  AliInfo("Checking task setting");
 
   if(fAnalType != kESD && fAnalType != kAOD)
   {
-    ::Error("InitializeTask","Analysis type not specified! Terminating!");
+    AliError("Analysis type not specified! Terminating!");
     return kFALSE;
   }
 
   if(fAnalType == kESD)
   {
-    ::Error("InitializeTask","Analysis type: ESD not implemented! Terminating!");
+    AliError("Analysis type: ESD not implemented! Terminating!");
     return kFALSE;
   }
 
   if(fColSystem != kPP && fColSystem != kPPb && fColSystem != kPbPb)
   {
-    ::Error("InitializeTask","Collisional system not specified! Terminating!");
+    AliError("Collisional system not specified! Terminating!");
     return kFALSE;
   }
 
   if(fPeriod == kNon)
   {
-    ::Error("InitializeTask","Period of data sample not selected! Terminating!");
+    AliError("Period of data sample not selected! Terminating!");
     return kFALSE;
   }
 
@@ -1658,14 +1657,14 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   fPIDResponse = inputHandler->GetPIDResponse();
   if(!fPIDResponse)
   {
-    ::Error("InitializeTask","AliPIDResponse object not found! Terminating!");
+    AliError("AliPIDResponse object not found! Terminating!");
     return kFALSE;
   }
 
   fPIDCombined = new AliPIDCombined();
   if(!fPIDCombined)
   {
-    ::Error("InitializeTask","AliPIDCombined object not found! Terminating!");
+    AliError("AliPIDCombined object not found! Terminating!");
     return kFALSE;
   }
   fPIDCombined->SetDefaultTPCPriors();
@@ -1675,7 +1674,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   if(fSampling && fNumSamples == 0)
   {
-    ::Error("InitializeTask","Sampling used, but number of samples is 0! Terminating!");
+    AliError("Sampling used, but number of samples is 0! Terminating!");
     return kFALSE;
   }
 
@@ -1683,20 +1682,20 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   //fNumSamples = 1;
 
   // checking cut setting
-  ::Info("InitializeTask","Checking task parameters setting conflicts (ranges, etc)");
+  AliInfo("Checking task parameters setting conflicts (ranges, etc)");
   if(fCutFlowRFPsPtMin > 0. && fCutFlowRFPsPtMax > 0. && fCutFlowRFPsPtMin > fCutFlowRFPsPtMax)
   {
-    ::Error("InitializeTask","Cut: RFPs Pt range wrong!");
+    AliError("Cut: RFPs Pt range wrong! Terminating!");
     return kFALSE;
   }
   if(fCutV0sInvMassK0sMin > fCutV0sInvMassK0sMax || fCutV0sInvMassK0sMin < 0. || fCutV0sInvMassK0sMax < 0.)
   {
-    ::Error("InitializeTask","Cut: InvMass (K0s) range wrong!");
+    AliError("Cut: InvMass (K0s) range wrong! Terminating! ");
     return kFALSE;
   }
   if(fCutV0sInvMassLambdaMin > fCutV0sInvMassLambdaMax || fCutV0sInvMassLambdaMin < 0. || fCutV0sInvMassLambdaMax < 0.)
   {
-    ::Error("InitializeTask","Cut: InvMass (Lambda) range wrong!");
+    AliError("Cut: InvMass (Lambda) range wrong! Terminating!");
     return kFALSE;
   }
 
@@ -1709,13 +1708,12 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     fFlowWeightsFile = TFile::Open(Form("alien:///%s",fFlowWeightsPath.Data()));
     if(!fFlowWeightsFile)
     {
-      ::Error("InitializeTask","Flow weights file not found");
+      AliError("Flow weights file not found! Terminating!");
       return kFALSE;
     }
   }
 
-  ::Info("InitializeTask","Initialization succesfull!");
-  printf("======================================================================\n\n");
+  AliInfo("Initialization succesfull!");
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -3265,7 +3263,7 @@ void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack
 
   if(!fPIDResponse || !fPIDCombined)
   {
-    ::Error("FillPIDQA","AliPIDResponse or AliPIDCombined object not found!");
+    AliError("AliPIDResponse or AliPIDCombined object not found!");
     return;
   }
 
@@ -3429,15 +3427,15 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
     if(fFlowWeightsFile)
     {
       TList* listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber));
-      if(!listFlowWeights) {::Error("ProcessEvent","TList from flow weights not found."); return kFALSE; }
-      fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { ::Error("ProcessEvent","Refs weights not found"); return kFALSE; }
-      fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { ::Error("ProcessEvent","Charged weights not found"); return kFALSE; }
-      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { ::Error("ProcessEvent","Pion weights not found"); return kFALSE; }
-      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { ::Error("ProcessEvent","Kaon weights not found"); return kFALSE; }
-      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { ::Error("ProcessEvent","Proton weights not found"); return kFALSE; }
-      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { ::Error("ProcessEvent","K0s weights not found"); return kFALSE; }
-      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { ::Error("ProcessEvent","Phi weights not found"); return kFALSE; }
-      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { ::Error("ProcessEvent","Phi weights not found"); return kFALSE; }
+      if(!listFlowWeights) {AliError("TList from flow weights not found."); return kFALSE; }
+      fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
+      fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
+      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
+      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
+      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
+      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
+      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
+      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
     }
   }
 
@@ -3733,7 +3731,7 @@ void AliAnalysisTaskUniFlow::DoFlowPID(const Short_t iEtaGapIndex, const PartSpe
       break;
 
     default:
-      ::Error("DoFlowPID","Unexpected species! Terminating!");
+      AliError("Unexpected species! Terminating!");
       return;
   }
 
@@ -3966,7 +3964,7 @@ void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t
       break;
 
     default:
-      ::Error("DoFlowV0s","Selected particles are not K0s nor Lambdas!");
+      AliError("Selected particles are not K0s nor Lambdas!");
       return;
   }
 
@@ -4120,7 +4118,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   if(fFlowUseWeights)
   {
     h2Weights = fh2WeightRefs;
-    if(!h2Weights) { ::Error("FillRefsVectors","Histogtram with weights not found."); return; }
+    if(!h2Weights) { AliError("Histogtram with weights not found."); return; }
   }
 
   // clearing output (global) flow vectors
@@ -4139,7 +4137,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
     // checking species of used particles (just for double checking purpose)
     if( part->species != kCharged)
     {
-      ::Warning("FillRefsVectors","Unexpected part. species (%d) in selected sample (expected %d)",part->species,kCharged);
+      AliWarning(Form("Unexpected part. species (%d) in selected sample (expected %d)",part->species,kCharged));
       continue;
     }
 
@@ -4289,11 +4287,11 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       break;
 
     default:
-      ::Error("FillPOIsVectors","Selected species unknown.");
+      AliError("Selected species unknown.");
       return;
   }
 
-  if(fFlowUseWeights && !h2Weights) { ::Error("FillPOIsVectors","Histogtram with weights not found."); return; }
+  if(fFlowUseWeights && !h2Weights) { AliError("Histogtram with weights not found."); return; }
 
   const Double_t dMass = (dMassLow+dMassHigh)/2;
 
@@ -4305,7 +4303,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     // checking species of used particles (just for double checking purpose)
     if( part->species != species)
     {
-      ::Warning("FillPOIsVectors","Unexpected part. species (%d) in selected sample (expected %d)",part->species,species);
+      AliWarning(Form("Unexpected part. species (%d) in selected sample (expected %d)",part->species,species));
       continue;
     }
 
