@@ -109,6 +109,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowCentMax(150),
   fFlowCentNumBins(150),
   fFlowWeightsPath(),
+  fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
 
   // events selection
@@ -381,6 +382,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowCentMax(150),
   fFlowCentNumBins(150),
   fFlowWeightsPath(),
+  fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
 
   // events selection
@@ -1542,6 +1544,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fFlowCentMin: (Int_t) %d (GeV/c)\n",    fFlowCentMin);
   printf("      fFlowCentMax: (Int_t) %d (GeV/c)\n",    fFlowCentMax);
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
+  printf("      fFlowRunByRunWeights: (Bool_t) %s\n",    fFlowRunByRunWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowWeightsPath: (TString) '%s' \n",    fFlowWeightsPath.Data());
   printf("   -------- Events ----------------------------------------------\n");
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
@@ -1705,11 +1708,26 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // checking for weights source file
   if(fFlowUseWeights && !fFlowWeightsPath.EqualTo(""))
   {
-    fFlowWeightsFile = TFile::Open(Form("alien:///%s",fFlowWeightsPath.Data()));
+    fFlowWeightsFile = TFile::Open(Form("%s",fFlowWeightsPath.Data()));
     if(!fFlowWeightsFile)
     {
       AliError("Flow weights file not found! Terminating!");
       return kFALSE;
+    }
+
+    // if only one (run integrated) set of weights is used, load it here
+    if(!fFlowRunByRunWeights)
+    {
+      TList* listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
+      if(!listFlowWeights) { AliError("TList from flow weights not found."); return kFALSE; }
+      fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
+      fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
+      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
+      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
+      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
+      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
+      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
+      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
     }
   }
 
@@ -3421,7 +3439,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   // checking the run number for aplying weights & loading TList with weights
   // if(fFlowUseWeights && fRunNumber < 0)
-  if(fFlowUseWeights && (fRunNumber < 0 || fRunNumber != fEventAOD->GetRunNumber()) )
+  if(fFlowUseWeights && fFlowRunByRunWeights && (fRunNumber != fEventAOD->GetRunNumber()))
   {
     fRunNumber = fEventAOD->GetRunNumber();
     if(fFlowWeightsFile)
