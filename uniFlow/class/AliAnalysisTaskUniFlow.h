@@ -53,8 +53,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessPhi(Bool_t filter = kTRUE) { fProcessPhi = filter; }
       // flow related setters
       void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
-      void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
-      void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
+      void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
+      void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun = kTRUE) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; fFlowRunByRunWeights = bRunByRun; } //! NOTE file has to include "alien:///" if the file is on grid
@@ -75,9 +75,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetChargedTrackFilterBit(UInt_t filter) { fCutChargedTrackFilterBit = filter; }
       // PID (pi,K,p) setters
       void                    SetPIDUseAntiProtonOnly(Bool_t use = kTRUE) { fCutPIDUseAntiProtonOnly = use; }
-      void                    SetPIDNumSigmasPionMax(Double_t numSigmas) { fCutPIDnSigmaPionMax = numSigmas; }
-      void                    SetPIDNumSigmasKaonMax(Double_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
-      void                    SetPIDNumSigmasProtonMax(Double_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
+      void                    SetPIDNumSigmasPionMax(Float_t numSigmas) { fCutPIDnSigmaPionMax = numSigmas; }
+      void                    SetPIDNumSigmasKaonMax(Float_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
+      void                    SetPIDNumSigmasProtonMax(Float_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
       void                    SetPIDNumSigmasCombinedNoTOFrejection(Bool_t reject = kTRUE) { fCutPIDnSigmaCombinedNoTOFrejection = reject; }
       void                    SetUseBayesPID(Bool_t bayes = kTRUE) { fCutUseBayesPID = bayes; }
       void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesPionMin = probPi; }
@@ -259,8 +259,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fProcessPhi; // flag for processing Phi meson candidates
       // cuts & selection: flow related
       Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
-      Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
-      Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
+      Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
+      Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
@@ -277,17 +277,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
       UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
-      Float_t                 fCutChargedEtaMax; // (-) Maximum pseudorapidity range
+      Double_t                fCutChargedEtaMax; // (-) Maximum pseudorapidity range
       Float_t                 fCutChargedPtMax; // (GeV/c) Maximal track pT
       Float_t                 fCutChargedPtMin; // (GeV/c) Minimal track pT
-      Float_t                 fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
-      Float_t                 fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
+      Double_t                fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
+      Double_t                fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
       // cuts & selection: PID selection
       Bool_t                  fCutPIDUseAntiProtonOnly; // [kFALSE] check proton PID charge to select AntiProtons only
-      Double_t                fCutPIDnSigmaPionMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
-      Double_t                fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
-      Double_t                fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
-      Double_t                fCutPIDnSigmaTPCRejectElectron; // [3] number of TPC nSigma for electron rejection
+      Float_t                 fCutPIDnSigmaPionMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
+      Float_t                 fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
+      Float_t                 fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
+      Float_t                 fCutPIDnSigmaTPCRejectElectron; // [3] number of TPC nSigma for electron rejection
       Bool_t                  fCutPIDnSigmaCombinedNoTOFrejection; // [kFALSE] flag for rejection candidates in TPC+TOF pt region if TOF is not available (if true and no TOF, only TPC is used)
       Bool_t                  fCutUseBayesPID; // [kFALSE] flag for using Bayes PID for pi,K,p instead nsigma cut
       Double_t                fCutPIDBayesPionMin; // [0.9] minimal value of Bayes PID probability for pion

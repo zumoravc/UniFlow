@@ -99,8 +99,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 
   // flow related
   fUseFixedMultBins(kFALSE),
-  fCutFlowRFPsPtMin(0),
-  fCutFlowRFPsPtMax(0),
+  fCutFlowRFPsPtMin(0.),
+  fCutFlowRFPsPtMax(0.),
   fCutFlowDoFourCorrelations(kTRUE),
   fFlowFillWeights(kFALSE),
   fFlowPOIsPtMin(0),
@@ -121,20 +121,20 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
-  fCutChargedEtaMax(0),
-  fCutChargedPtMax(0),
-  fCutChargedPtMin(0),
-  fCutChargedDCAzMax(0),
-  fCutChargedDCAxyMax(0),
+  fCutChargedEtaMax(0.),
+  fCutChargedPtMax(0.),
+  fCutChargedPtMin(0.),
+  fCutChargedDCAzMax(0.),
+  fCutChargedDCAxyMax(0.),
   fCutChargedTrackFilterBit(0),
   fCutChargedNumTPCclsMin(0),
 
   // PID tracks selection
   fCutPIDUseAntiProtonOnly(kFALSE),
-  fCutPIDnSigmaPionMax(3),
-  fCutPIDnSigmaKaonMax(3),
-  fCutPIDnSigmaProtonMax(3),
-  fCutPIDnSigmaTPCRejectElectron(3),
+  fCutPIDnSigmaPionMax(3.),
+  fCutPIDnSigmaKaonMax(3.),
+  fCutPIDnSigmaProtonMax(3.),
+  fCutPIDnSigmaTPCRejectElectron(3.),
   fCutPIDnSigmaCombinedNoTOFrejection(kFALSE),
   fCutUseBayesPID(kFALSE),
   fCutPIDBayesPionMin(0.9),
@@ -372,8 +372,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
   // flow related
   fUseFixedMultBins(kFALSE),
-  fCutFlowRFPsPtMin(0),
-  fCutFlowRFPsPtMax(0),
+  fCutFlowRFPsPtMin(0.),
+  fCutFlowRFPsPtMax(0.),
   fFlowPOIsPtMin(0),
   fFlowPOIsPtMax(20.),
   fCutFlowDoFourCorrelations(kTRUE),
@@ -394,20 +394,20 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
-  fCutChargedEtaMax(0),
-  fCutChargedPtMax(0),
-  fCutChargedPtMin(0),
-  fCutChargedDCAzMax(0),
-  fCutChargedDCAxyMax(0),
+  fCutChargedEtaMax(0.),
+  fCutChargedPtMax(0.),
+  fCutChargedPtMin(0.),
+  fCutChargedDCAzMax(0.),
+  fCutChargedDCAxyMax(0.),
   fCutChargedTrackFilterBit(0),
   fCutChargedNumTPCclsMin(0),
 
   // PID tracks selection
   fCutPIDUseAntiProtonOnly(kFALSE),
-  fCutPIDnSigmaPionMax(3),
-  fCutPIDnSigmaKaonMax(3),
-  fCutPIDnSigmaProtonMax(3),
-  fCutPIDnSigmaTPCRejectElectron(3),
+  fCutPIDnSigmaPionMax(3.),
+  fCutPIDnSigmaKaonMax(3.),
+  fCutPIDnSigmaProtonMax(3.),
+  fCutPIDnSigmaTPCRejectElectron(3.),
   fCutPIDnSigmaCombinedNoTOFrejection(kFALSE),
   fCutUseBayesPID(kFALSE),
   fCutPIDBayesPionMin(0.9),
@@ -1536,8 +1536,8 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fProcessV0s: (Bool_t) %s\n",    fProcessV0s ? "kTRUE" : "kFALSE");
   printf("   -------- Flow related ----------------------------------------\n");
   printf("      fCutFlowDoFourCorrelations: (Bool_t) %s\n",    fCutFlowDoFourCorrelations ? "kTRUE" : "kFALSE");
-  printf("      fCutFlowRFPsPtMin: (Float_t) %g (GeV/c)\n",    fCutFlowRFPsPtMin);
-  printf("      fCutFlowRFPsPtMax: (Float_t) %g (GeV/c)\n",    fCutFlowRFPsPtMax);
+  printf("      fCutFlowRFPsPtMin: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMin);
+  printf("      fCutFlowRFPsPtMax: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMax);
   printf("      fFlowPOIsPtMin: (Float_t) %g (GeV/c)\n",    fFlowPOIsPtMin);
   printf("      fFlowPOIsPtMax: (Float_t) %g (GeV/c)\n",    fFlowPOIsPtMax);
   printf("      fFlowCentNumBins: (Int_t) %d (GeV/c)\n",    fFlowCentNumBins);
@@ -1556,17 +1556,18 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("   -------- Charge tracks ---------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
   printf("      fCutChargedNumTPCclsMin: (UShort_t) %d\n",    fCutChargedNumTPCclsMin);
-  printf("      fCutChargedEtaMax: (Float_t) %g\n",    fCutChargedEtaMax);
+  printf("      fCutChargedEtaMax: (Double_t) %g\n",    fCutChargedEtaMax);
   printf("      fCutChargedPtMin: (Float_t) %g (GeV/c)\n",    fCutChargedPtMin);
   printf("      fCutChargedPtMax: (Float_t) %g (GeV/c)\n",    fCutChargedPtMax);
-  printf("      fCutChargedDCAzMax: (Float_t) %g (cm)\n",    fCutChargedDCAzMax);
-  printf("      fCutChargedDCAxyMax: (Float_t) %g (cm)\n",    fCutChargedDCAxyMax);
+  printf("      fCutChargedDCAzMax: (Double_t) %g (cm)\n",    fCutChargedDCAzMax);
+  printf("      fCutChargedDCAxyMax: (Double_t) %g (cm)\n",    fCutChargedDCAxyMax);
   printf("   -------- PID (pi,K,p) tracks ---------------------------------\n");
   printf("      fCutPIDUseAntiProtonOnly: (Bool_t) %s\n",  fCutPIDUseAntiProtonOnly ? "kTRUE" : "kFALSE");
   printf("      fCutPIDnSigmaCombinedNoTOFrejection: (Bool_t) %s\n",  fCutPIDnSigmaCombinedNoTOFrejection ? "kTRUE" : "kFALSE");
-  printf("      fCutPIDnSigmaPionMax: (Double_t) %g\n",    fCutPIDnSigmaPionMax);
-  printf("      fCutPIDnSigmaKaonMax: (Double_t) %g\n",    fCutPIDnSigmaKaonMax);
-  printf("      fCutPIDnSigmaProtonMax: (Double_t) %g\n",    fCutPIDnSigmaProtonMax);
+  printf("      fCutPIDnSigmaTPCRejectElectron: (Float_t) %g\n",    fCutPIDnSigmaTPCRejectElectron);
+  printf("      fCutPIDnSigmaPionMax: (Float_t) %g\n",    fCutPIDnSigmaPionMax);
+  printf("      fCutPIDnSigmaKaonMax: (Float_t) %g\n",    fCutPIDnSigmaKaonMax);
+  printf("      fCutPIDnSigmaProtonMax: (Float_t) %g\n",    fCutPIDnSigmaProtonMax);
   printf("      fCutUseBayesPID: (Bool_t) %s\n",    fCutUseBayesPID ? "kTRUE" : "kFALSE");
   printf("      fCutPIDBayesPionMin: (Double_t) %g\n",    fCutPIDBayesPionMin);
   printf("      fCutPIDBayesKaonMin: (Double_t) %g\n",    fCutPIDBayesKaonMin);
@@ -2011,19 +2012,18 @@ void AliAnalysisTaskUniFlow::FilterCharged()
   // return kFALSE if any complications occurs
   // *************************************************************
 
-  const Short_t iNumTracks = fEventAOD->GetNumberOfTracks();
+  Int_t iNumTracks = fEventAOD->GetNumberOfTracks();
   if(iNumTracks < 1) return;
 
-  AliAODTrack* track = 0x0;
   Int_t iNumRefs = 0;
-  Double_t weight = 0;
-
-  for(Short_t iTrack(0); iTrack < iNumTracks; iTrack++)
+  for(Int_t iTrack(0); iTrack < iNumTracks; iTrack++)
   {
-    track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
+    AliAODTrack* track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
     if(!track) continue;
 
     if(fFillQA) FillQACharged(0,track); // QA before selection
+
+    Double_t weight = 0.;
 
     if(IsChargedSelected(track))
     {
@@ -2038,7 +2038,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
 
       // Filling refs QA plots
-      if(fCutFlowRFPsPtMin > 0. && track->Pt() >= fCutFlowRFPsPtMin && fCutFlowRFPsPtMax > 0. && track->Pt() <= fCutFlowRFPsPtMax)
+      if(fCutFlowRFPsPtMin > 0. && track->Pt() >= fCutFlowRFPsPtMin && fCutFlowRFPsPtMax > 0. && track->Pt() < fCutFlowRFPsPtMax)
       {
         iNumRefs++;
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt());
@@ -2081,9 +2081,9 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
 
   // track DCA coordinates
   // note AliAODTrack::XYZAtDCA() works only for constrained tracks
-  Double_t dTrackXYZ[3] = {0};
-  Double_t dVertexXYZ[3] = {0.};
-  Double_t dDCAXYZ[3] = {0.};
+  Double_t dTrackXYZ[3] = {0.,0.,0.};
+  Double_t dVertexXYZ[3] = {0.,0.,0.};
+  Double_t dDCAXYZ[3] = {0.,0.,0.};
   if( fCutChargedDCAzMax > 0. || fCutChargedDCAxyMax > 0.)
   {
     const AliAODVertex* vertex = fEventAOD->GetPrimaryVertex();
@@ -3100,16 +3100,12 @@ void AliAnalysisTaskUniFlow::FilterPID()
   // return kFALSE if any complications occurs
   // *************************************************************
 
-  const Short_t iNumTracks = fEventAOD->GetNumberOfTracks();
+  Int_t iNumTracks = fEventAOD->GetNumberOfTracks();
   if(iNumTracks < 1) return;
 
-  PartSpecies species = kUnknown;
-  AliAODTrack* track = 0x0;
-  Double_t weight = 0;
-
-  for(Short_t iTrack(0); iTrack < iNumTracks; iTrack++)
+  for(Int_t iTrack(0); iTrack < iNumTracks; iTrack++)
   {
-    track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
+    AliAODTrack* track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
     if(!track) continue;
 
     // PID tracks are subset of selected charged tracks (same quality requirements)
@@ -3121,6 +3117,8 @@ void AliAnalysisTaskUniFlow::FilterPID()
     PartSpecies species = IsPIDSelected(track);
     // check if only protons should be used
     if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) species = kUnknown;
+
+    Double_t weight = 0;
 
     // selection of PID tracks
     switch (species)
@@ -3180,12 +3178,10 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   if(!bIsTPCok) return kUnknown;
   // TODO: TOF check???
 
-  const Double_t dPt = track->Pt();
-
   if(fCutUseBayesPID)
   {
     // use Bayesian PID
-    Double_t dProbPID[5] = {0}; // array for Bayes PID probabilities:  0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+    Double_t dProbPID[5] = {0.}; // array for Bayes PID probabilities:  0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
     UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dProbPID); // filling probabilities to dPropPID array
     Double_t dMaxProb = TMath::MaxElement(5,dProbPID);
 
@@ -3202,10 +3198,11 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   }
   else
   {
-    // use nSigma cuts (based on combination of TPC / TOF nSigma cuts)
+    // use nSigma cuts (based on combination of TPC / TOF nSigma cuts
+    const Double_t dPt = track->Pt();
 
-    Double_t dNumSigmaTPC[5] = {-99,-99,-99,-99,-99}; // TPC nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
-    Double_t dNumSigmaTOF[5] = {-99,-99,-99,-99,-99}; // TOF nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+    Float_t dNumSigmaTPC[5] = {-99.,-99.,-99.,-99.,-99.}; // TPC nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+    Float_t dNumSigmaTOF[5] = {-99.,-99.,-99.,-99.,-99.}; // TOF nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
 
     // filling nSigma arrays
     if(bIsTPCok) // should be anyway
@@ -3229,7 +3226,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     // TPC nSigma cuts
     if(dPt <= 0.4)
     {
-      Double_t dMinSigmasTPC = TMath::MinElement(5,dNumSigmaTPC);
+      Float_t dMinSigmasTPC = TMath::MinElement(5,dNumSigmaTPC);
 
       // electron rejection
       if(dMinSigmasTPC == dNumSigmaTPC[0] && dNumSigmaTPC[0] <= fCutPIDnSigmaTPCRejectElectron) return kUnknown;
@@ -3241,7 +3238,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     // combined TPC + TOF nSigma cuts
     if(dPt > 0.4) // && < 4 GeV TODO once TPC dEdx parametrisation is available
     {
-      Double_t dNumSigmaCombined[5] = {-99,-99,-99,-99,-99};
+      Float_t dNumSigmaCombined[5] = {-99.,-99.,-99.,-99.,-99.};
 
       // discard candidates if no TOF is available if cut is on
       if(fCutPIDnSigmaCombinedNoTOFrejection && !bIsTOFok) return kUnknown;
@@ -3253,7 +3250,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
         else { dNumSigmaCombined[i] = dNumSigmaTPC[i]; }
       }
 
-      Double_t dMinSigmasCombined = TMath::MinElement(5,dNumSigmaCombined);
+      Float_t dMinSigmasCombined = TMath::MinElement(5,dNumSigmaCombined);
 
       // electron rejection
       if(dMinSigmasCombined == dNumSigmaCombined[0] && dNumSigmaCombined[0] <= fCutPIDnSigmaPionMax) return kUnknown;
