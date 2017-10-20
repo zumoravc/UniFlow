@@ -53,8 +53,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessPhi(Bool_t filter = kTRUE) { fProcessPhi = filter; }
       // flow related setters
       void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
-      void                    SetFlowRFPsPtMin(Float_t pt) { fCutFlowRFPsPtMin = pt; }
-      void                    SetFlowRFPsPtMax(Float_t pt) { fCutFlowRFPsPtMax = pt; }
+      void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
+      void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun = kTRUE) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; fFlowRunByRunWeights = bRunByRun; } //! NOTE file has to include "alien:///" if the file is on grid
@@ -67,17 +67,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       // track setters
       void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
-      void                    SetChargedPtMax(Double_t pt) { fCutChargedPtMax = pt; }
-      void                    SetChargedPtMin(Double_t pt) { fCutChargedPtMin = pt; }
       void                    SetChargedDCAzMax(Double_t dcaz) {  fCutChargedDCAzMax = dcaz; }
       void                    SetChargedDCAxyMax(Double_t dcaxy) {  fCutChargedDCAxyMax = dcaxy; }
       void                    SetChargedNumTPCclsMin(UShort_t tpcCls) { fCutChargedNumTPCclsMin = tpcCls; }
       void                    SetChargedTrackFilterBit(UInt_t filter) { fCutChargedTrackFilterBit = filter; }
       // PID (pi,K,p) setters
       void                    SetPIDUseAntiProtonOnly(Bool_t use = kTRUE) { fCutPIDUseAntiProtonOnly = use; }
-      void                    SetPIDNumSigmasPionMax(Double_t numSigmas) { fCutPIDnSigmaPionMax = numSigmas; }
-      void                    SetPIDNumSigmasKaonMax(Double_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
-      void                    SetPIDNumSigmasProtonMax(Double_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
+      void                    SetPIDNumSigmasPionMax(Float_t numSigmas) { fCutPIDnSigmaPionMax = numSigmas; }
+      void                    SetPIDNumSigmasKaonMax(Float_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
+      void                    SetPIDNumSigmasProtonMax(Float_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
       void                    SetPIDNumSigmasCombinedNoTOFrejection(Bool_t reject = kTRUE) { fCutPIDnSigmaCombinedNoTOFrejection = reject; }
       void                    SetUseBayesPID(Bool_t bayes = kTRUE) { fCutUseBayesPID = bayes; }
       void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesPionMin = probPi; }
@@ -90,10 +88,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetV0sTPCRefit(Bool_t refit) { fCutV0srefitTPC = refit; }
       void					          SetV0sRejectKinks(Bool_t reject) { fCutV0srejectKinks = reject; }
       void                    SetV0sDaughterNumTPCClsMin(UShort_t cls) { fCutV0sDaughterNumTPCClsMin = cls; }
-      void                    SetV0sDaughterNumTPCrossMin(Float_t cls) { fCutV0sDaughterNumTPCCrossMin = cls; }
+      void                    SetV0sDaughterNumTPCrossMin(UShort_t cls) { fCutV0sDaughterNumTPCCrossMin = cls; }
       void                    SetV0sDaughterNumTPCFindMin(UShort_t cls) { fCutV0sDaughterNumTPCFindMin = cls; }
       void                    SetV0sDaughterNumTPCClsPIDMin(UShort_t cls) { fCutV0sDaughterNumTPCClsPIDMin = cls; }
-      void                    SetV0sDaughterRatioCrossFindMin(Float_t ratio) { fCutV0sDaughterRatioCrossFindMin = ratio; }
+      void                    SetV0sDaughterRatioCrossFindMin(Double_t ratio) { fCutV0sDaughterRatioCrossFindMin = ratio; }
       void					          SetV0sUseCrossMassRejection(Bool_t reject) { fCutV0sCrossMassRejection = reject; }
       void					          SetV0sCrossMassCutK0s(Double_t mass) { fCutV0sCrossMassCutK0s = mass; }
       void					          SetV0sCrossMassCutLambda(Double_t mass) { fCutV0sCrossMassCutLambda = mass; }
@@ -120,9 +118,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0sNumTauLambdaMax = nTau; }
       void					          SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0sArmenterosAlphaK0sMin = alpha; }
       void					          SetV0sLambdaArmenterosAlphaMax(Double_t alpha) { fCutV0sArmenterosAlphaLambdaMax = alpha; }
-      void                    SetV0sK0sPionNumTPCSigmaMax(Double_t nSigma) { fCutV0sK0sPionNumTPCSigmaMax = nSigma; }
-      void                    SetV0sLambdaPionNumTPCSigmaMax(Double_t nSigma) { fCutV0sLambdaPionNumTPCSigmaMax = nSigma; }
-      void                    SetV0sLambdaProtonNumTPCSigmaMax(Double_t nSigma) { fCutV0sLambdaProtonNumTPCSigmaMax = nSigma; }
+      void                    SetV0sK0sPionNumTPCSigmaMax(Float_t nSigma) { fCutV0sK0sPionNumTPCSigmaMax = nSigma; }
+      void                    SetV0sLambdaPionNumTPCSigmaMax(Float_t nSigma) { fCutV0sLambdaPionNumTPCSigmaMax = nSigma; }
+      void                    SetV0sLambdaProtonNumTPCSigmaMax(Float_t nSigma) { fCutV0sLambdaProtonNumTPCSigmaMax = nSigma; }
       // phi setters
       void					          SetPhiMotherEtaMax(Double_t eta) { fCutPhiMotherEtaMax = eta; }
       void					          SetPhiInvMassMin(Double_t mass) { fCutPhiInvMassMin = mass; }
@@ -147,8 +145,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Short_t    fFlowNumHarmonicsMax = 10; // maximum harmonics length of flow vector array
       static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
       static const Short_t    fFlowPOIsPtNumBins = 200; // number of pT bins for POIs
-      const Float_t           fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
-      const Float_t           fFlowPOIsPtMax; // [20] (GeV/c) max pT treshold for POIs for differential flow
+      const Double_t          fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
+      const Double_t          fFlowPOIsPtMax; // [20] (GeV/c) max pT treshold for POIs for differential flow
       const Int_t             fFlowCentMin; // [0] min range for centrality/multiplicity histos
       const Int_t             fFlowCentMax; // [150] min range for centrality/multiplicity histos
       const Int_t             fFlowCentNumBins; // [150] min range for centrality/multiplicity histos
@@ -259,8 +257,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fProcessPhi; // flag for processing Phi meson candidates
       // cuts & selection: flow related
       Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
-      Float_t                 fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
-      Float_t                 fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
+      Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
+      Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
@@ -273,21 +271,19 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Short_t                 fTrigger; // physics selection trigger
       TString                 fMultEstimator; // [''] multiplicity estimator (suported: ''/Charged,VOA,V0C,V0M,CL0,CL1,ZNA,ZNC)
       Bool_t                  fUseAliEventCuts; // use decision of AliEventCuts in event selection
-      Float_t                 fPVtxCutZ; // (cm) PV z cut
+      Double_t                fPVtxCutZ; // (cm) PV z cut
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
       UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
-      Float_t                 fCutChargedEtaMax; // (-) Maximum pseudorapidity range
-      Float_t                 fCutChargedPtMax; // (GeV/c) Maximal track pT
-      Float_t                 fCutChargedPtMin; // (GeV/c) Minimal track pT
-      Float_t                 fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
-      Float_t                 fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
+      Double_t                fCutChargedEtaMax; // (-) Maximum pseudorapidity range
+      Double_t                fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
+      Double_t                fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
       // cuts & selection: PID selection
       Bool_t                  fCutPIDUseAntiProtonOnly; // [kFALSE] check proton PID charge to select AntiProtons only
-      Double_t                fCutPIDnSigmaPionMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
-      Double_t                fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
-      Double_t                fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
-      Double_t                fCutPIDnSigmaTPCRejectElectron; // [3] number of TPC nSigma for electron rejection
+      Float_t                 fCutPIDnSigmaPionMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
+      Float_t                 fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
+      Float_t                 fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
+      Float_t                 fCutPIDnSigmaTPCRejectElectron; // [3] number of TPC nSigma for electron rejection
       Bool_t                  fCutPIDnSigmaCombinedNoTOFrejection; // [kFALSE] flag for rejection candidates in TPC+TOF pt region if TOF is not available (if true and no TOF, only TPC is used)
       Bool_t                  fCutUseBayesPID; // [kFALSE] flag for using Bayes PID for pi,K,p instead nsigma cut
       Double_t                fCutPIDBayesPionMin; // [0.9] minimal value of Bayes PID probability for pion
@@ -300,10 +296,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
   		Bool_t					        fCutV0srefitTPC; // Check TPC refit of V0 daughters ?
   		Bool_t					        fCutV0srejectKinks; // Reject Kink V0 daughter tracks ?
       UShort_t                fCutV0sDaughterNumTPCClsMin; // min number of TPC clusters
-      Float_t                 fCutV0sDaughterNumTPCCrossMin; // min number of crossed TPC rows
+      UShort_t                fCutV0sDaughterNumTPCCrossMin; // min number of crossed TPC rows
       UShort_t                fCutV0sDaughterNumTPCFindMin; // min number of findable TPC clusters
       UShort_t                fCutV0sDaughterNumTPCClsPIDMin; // min number of TPC clusters used for PID
-      Float_t                 fCutV0sDaughterRatioCrossFindMin; // min ratio of crossed / findable TPC clusters
+      Double_t                fCutV0sDaughterRatioCrossFindMin; // min ratio of crossed / findable TPC clusters
   		Bool_t					        fCutV0sCrossMassRejection; // competing V0 rejection based on InvMass
       Double_t                fCutV0sCrossMassCutK0s; // [0.005] (GeV/c2) restricted vicinity of Lambda/ALambda inv. mass peak for K0s candidates
       Double_t                fCutV0sCrossMassCutLambda; // [0.020] (GeV/c2) restricted vicinity of K0s inv. mass peak for Lambda/ALambda candidates
@@ -330,9 +326,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutV0sInvMassLambdaMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
       Double_t				        fCutV0sArmenterosAlphaK0sMin; // (alpha) min Armenteros alpha for K0s
       Double_t                fCutV0sArmenterosAlphaLambdaMax; // (alpha) max Armenteros alpha for (Anti)Lambda
-      Double_t                fCutV0sK0sPionNumTPCSigmaMax; // (sigmaTPC) max number of TPC sigmas for kaon PID (K0s candidates)
-      Double_t                fCutV0sLambdaPionNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for pion PID (Lambda candidates)
-      Double_t                fCutV0sLambdaProtonNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
+      Float_t                 fCutV0sK0sPionNumTPCSigmaMax; // (sigmaTPC) max number of TPC sigmas for kaon PID (K0s candidates)
+      Float_t                 fCutV0sLambdaPionNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for pion PID (Lambda candidates)
+      Float_t                 fCutV0sLambdaProtonNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
       // cuts & selection: phi
       Double_t                fCutPhiMotherEtaMax; // (-) max value of phi candidate pseudorapidity
       Double_t                fCutPhiInvMassMin; // [0.99] (GeV/c2) min inv. mass window for selected phi candidates
