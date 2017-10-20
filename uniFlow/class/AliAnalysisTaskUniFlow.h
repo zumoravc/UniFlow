@@ -273,7 +273,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Short_t                 fTrigger; // physics selection trigger
       TString                 fMultEstimator; // [''] multiplicity estimator (suported: ''/Charged,VOA,V0C,V0M,CL0,CL1,ZNA,ZNC)
       Bool_t                  fUseAliEventCuts; // use decision of AliEventCuts in event selection
-      Float_t                 fPVtxCutZ; // (cm) PV z cut
+      Double_t                fPVtxCutZ; // (cm) PV z cut
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
       UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
