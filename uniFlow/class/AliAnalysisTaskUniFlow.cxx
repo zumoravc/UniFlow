@@ -122,8 +122,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 
   // charged tracks selection
   fCutChargedEtaMax(0.),
-  fCutChargedPtMax(0.),
-  fCutChargedPtMin(0.),
   fCutChargedDCAzMax(0.),
   fCutChargedDCAxyMax(0.),
   fCutChargedTrackFilterBit(0),
@@ -395,8 +393,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
   // charged tracks selection
   fCutChargedEtaMax(0.),
-  fCutChargedPtMax(0.),
-  fCutChargedPtMin(0.),
   fCutChargedDCAzMax(0.),
   fCutChargedDCAxyMax(0.),
   fCutChargedTrackFilterBit(0),
@@ -1557,8 +1553,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
   printf("      fCutChargedNumTPCclsMin: (UShort_t) %d\n",    fCutChargedNumTPCclsMin);
   printf("      fCutChargedEtaMax: (Double_t) %g\n",    fCutChargedEtaMax);
-  printf("      fCutChargedPtMin: (Float_t) %g (GeV/c)\n",    fCutChargedPtMin);
-  printf("      fCutChargedPtMax: (Float_t) %g (GeV/c)\n",    fCutChargedPtMax);
   printf("      fCutChargedDCAzMax: (Double_t) %g (cm)\n",    fCutChargedDCAzMax);
   printf("      fCutChargedDCAxyMax: (Double_t) %g (cm)\n",    fCutChargedDCAxyMax);
   printf("   -------- PID (pi,K,p) tracks ---------------------------------\n");

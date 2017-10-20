@@ -67,8 +67,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       // track setters
       void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
-      void                    SetChargedPtMax(Double_t pt) { fCutChargedPtMax = pt; }
-      void                    SetChargedPtMin(Double_t pt) { fCutChargedPtMin = pt; }
       void                    SetChargedDCAzMax(Double_t dcaz) {  fCutChargedDCAzMax = dcaz; }
       void                    SetChargedDCAxyMax(Double_t dcaxy) {  fCutChargedDCAxyMax = dcaxy; }
       void                    SetChargedNumTPCclsMin(UShort_t tpcCls) { fCutChargedNumTPCclsMin = tpcCls; }
@@ -278,8 +276,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
       UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
       Double_t                fCutChargedEtaMax; // (-) Maximum pseudorapidity range
-      Float_t                 fCutChargedPtMax; // (GeV/c) Maximal track pT
-      Float_t                 fCutChargedPtMin; // (GeV/c) Minimal track pT
       Double_t                fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
       Double_t                fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
       // cuts & selection: PID selection
