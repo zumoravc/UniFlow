@@ -2179,22 +2179,17 @@ void AliAnalysisTaskUniFlow::FilterV0s()
   // return kFALSE if any complications occurs
   // *************************************************************
 
-  Short_t iNumK0sSelected = 0;  // counter for selected K0s candidates
-  Short_t iNumLambdaSelected = 0; // counter for selected Lambda candidates
-  Short_t iNumALambdaSelected = 0; // counter for selected Anti-Lambda candidates
+  Int_t iNumK0sSelected = 0;  // counter for selected K0s candidates
+  Int_t iNumLambdaSelected = 0; // counter for selected Lambda candidates
+  Int_t iNumALambdaSelected = 0; // counter for selected Anti-Lambda candidates
 
-  const Short_t iNumV0s = fEventAOD->GetNumberOfV0s();
+  Int_t iNumV0s = fEventAOD->GetNumberOfV0s();
   if(iNumV0s < 1) return;
 
-  Bool_t bIsK0s = kFALSE;
-  Short_t iIsLambda = 0;
-  Double_t weight = 0;
-
-  AliAODv0* v0 = 0x0;
-  for(Short_t iV0(0); iV0 < iNumV0s; iV0++)
+  for(Int_t iV0(0); iV0 < iNumV0s; iV0++)
   {
     // the minimalistic dynamic allocation of the TClonesArray*
-    v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
+    AliAODv0* v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
     if(!v0) continue;
 
     if(fFillQA) FillQAV0s(0,v0); // QA BEFORE selection
@@ -2212,7 +2207,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
         if(fFlowUseWeights)
         {
-          weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindBin(v0->Eta(),v0->Phi()) );
+          Double_t weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindBin(v0->Eta(),v0->Phi()) );
           fh3AfterWeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt(),weight);
         }
       }
@@ -2221,8 +2216,8 @@ void AliAnalysisTaskUniFlow::FilterV0s()
     {
       if(IsV0Selected(v0))
       {
-        bIsK0s = IsV0aK0s(v0);
-        iIsLambda = IsV0aLambda(v0);
+        Bool_t bIsK0s = IsV0aK0s(v0);
+        Short_t iIsLambda = IsV0aLambda(v0);
 
         if(fFillQA && (bIsK0s || iIsLambda != 0))
         FillQAV0s(1,v0,bIsK0s,iIsLambda); // QA AFTER selection
@@ -2236,7 +2231,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
-            weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindBin(v0->Eta(),v0->Phi()) );
+            Double_t weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindBin(v0->Eta(),v0->Phi()) );
             fh3AfterWeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt(),weight);
           }
         }
@@ -2250,7 +2245,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
-            weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) );
+            Double_t weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) );
             fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt(),weight);
           }
         }
@@ -2264,7 +2259,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
-            weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) );
+            Double_t weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) );
             fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt(),weight);
           }
         }
@@ -2272,9 +2267,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(bIsK0s && iIsLambda != 0)
         fhV0sCounter->Fill("K^{0}_{S} && #Lambda/#bar{#Lambda}",1);
       }
-
     }
-
   }
 
   // fill QA charged multiplicity
@@ -2313,13 +2306,13 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   if( fCutV0sNumTauK0sMax > 0. )
   {
     AliAODVertex* primVtx2 = fEventAOD->GetPrimaryVertex();
-    Double_t dPrimVtxCoor[3] = {0}; // primary vertex position {x,y,z}
-    Double_t dSecVtxCoor[3] = {0}; // secondary vertex position {x,y,z}
-    Double_t dDecayCoor[3] = {0}; // decay vector coor {xyz}
+    Double_t dPrimVtxCoor[3] = {0.}; // primary vertex position {x,y,z}
+    Double_t dSecVtxCoor[3] = {0.}; // secondary vertex position {x,y,z}
+    Double_t dDecayCoor[3] = {0.}; // decay vector coor {xyz}
     primVtx2->GetXYZ(dPrimVtxCoor);
     v0->GetSecondaryVtx(dSecVtxCoor);
 
-    for(Int_t i(0); i < 2; i++)
+    for(Int_t i(0); i < 3; i++)
       dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
 
     Double_t dPropLife = ( (fPDGMassK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
@@ -2354,8 +2347,8 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
     if(!HasTrackPIDTPC(daughterPos) || !HasTrackPIDTPC(daughterNeg)) return kFALSE;
 
     if (daughterPos->GetTPCsignalN() < fCutV0sDaughterNumTPCClsPIDMin || daughterNeg->GetTPCsignalN() < fCutV0sDaughterNumTPCClsPIDMin) return kFALSE;
-    Double_t nSigmaPiPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(daughterPos, AliPID::kPion));
-    Double_t nSigmaPiNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(daughterNeg, AliPID::kPion));
+    Float_t nSigmaPiPos = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(daughterPos, AliPID::kPion));
+    Float_t nSigmaPiNeg = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(daughterNeg, AliPID::kPion));
     if(nSigmaPiPos > fCutV0sK0sPionNumTPCSigmaMax || nSigmaPiNeg > fCutV0sK0sPionNumTPCSigmaMax) return kFALSE;
   }
   fhV0sCounterK0s->Fill("Daughters PID",1);
@@ -2412,14 +2405,14 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   // proper life-time
   if( fCutV0sNumTauLambdaMax > 0. )
   {
-    Double_t dPrimVtxCoor[3] = {0}; // primary vertex position {x,y,z}
-    Double_t dSecVtxCoor[3] = {0}; // secondary vertex position {x,y,z}
-    Double_t dDecayCoor[3] = {0}; // decay vector coor {xyz}
+    Double_t dPrimVtxCoor[3] = {0.}; // primary vertex position {x,y,z}
+    Double_t dSecVtxCoor[3] = {0.}; // secondary vertex position {x,y,z}
+    Double_t dDecayCoor[3] = {0.}; // decay vector coor {xyz}
     AliAODVertex* primVtx2 = fEventAOD->GetPrimaryVertex();
     primVtx2->GetXYZ(dPrimVtxCoor);
     v0->GetSecondaryVtx(dSecVtxCoor);
 
-    for(Int_t i(0); i < 2; i++)
+    for(Int_t i(0); i < 3; i++)
       dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
 
     Double_t dPropLife = ( (fPDGMassLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
@@ -2473,8 +2466,8 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
     Bool_t bIsPosOK = HasTrackPIDTPC(trackDaughterPos);
     Bool_t bIsNegOK = HasTrackPIDTPC(trackDaughterNeg);
 
-    Double_t dSigmaPos = 999.;
-    Double_t dSigmaNeg = 999.;
+    Float_t dSigmaPos = 999.;
+    Float_t dSigmaNeg = 999.;
 
     if(fCutV0sLambdaPionNumTPCSigmaMax > 0.) // check pions
     {
@@ -2675,7 +2668,6 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   const AliAODTrack* daughterPos = (AliAODTrack*) v0->GetDaughter(0);
   const AliAODTrack* daughterNeg = (AliAODTrack*) v0->GetDaughter(1);
 
-
   // daughter track check
   if(!daughterPos || !daughterNeg) return kFALSE;
   fhV0sCounter->Fill("Daughters OK",1);
@@ -2711,20 +2703,20 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if(fCutV0sDaughterRatioCrossFindMin > -1.)
   {
     if(daughterPos->GetTPCNclsF() < 1 || daughterNeg->GetTPCNclsF() < 1) return kFALSE; // at least 1 findable cls for proper division
-    Double_t dRatioCrossFindPos = daughterPos->GetTPCNCrossedRows() / daughterPos->GetTPCNclsF();
-    Double_t dRatioCrossFindNeg = daughterNeg->GetTPCNCrossedRows() / daughterNeg->GetTPCNclsF();
+    Double_t dRatioCrossFindPos = (Double_t) daughterPos->GetTPCNCrossedRows() / daughterPos->GetTPCNclsF();
+    Double_t dRatioCrossFindNeg = (Double_t) daughterNeg->GetTPCNCrossedRows() / daughterNeg->GetTPCNclsF();
     if( dRatioCrossFindPos < fCutV0sDaughterRatioCrossFindMin || dRatioCrossFindNeg < fCutV0sDaughterRatioCrossFindMin) return kFALSE;
   }
   fhV0sCounter->Fill("Daughters track quality",1);
 
   // Daughters DCA to PV
-  const Float_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
-  const Float_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
+  Double_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
+  Double_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
 
   // note AliAODTrack::XYZAtDCA() works only for constrained tracks
   Double_t dVertexXYZ[3] = {0.};
-  Double_t dTrackXYZpos[3] = {0};
-  Double_t dTrackXYZneg[3] = {0};
+  Double_t dTrackXYZpos[3] = {0.};
+  Double_t dTrackXYZneg[3] = {0.};
   Double_t dDCAXYZpos[3] = {0.};
   Double_t dDCAXYZneg[3] = {0.};
   if( fCutV0sDCAtoPVzMax > 0. )
@@ -2747,7 +2739,6 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if(fCutV0sDCAtoPVMax > 0. && ( dDCAPosToPV > fCutV0sDCAtoPVMax || dDCANegToPV > fCutV0sDCAtoPVMax ) ) return kFALSE;
   if(fCutV0sDCAtoPVzMax > 0. && ( TMath::Abs(dDCAXYZpos[2]) > fCutV0sDCAtoPVzMax || TMath::Abs(dDCAXYZneg[2]) > fCutV0sDCAtoPVzMax ) ) return kFALSE;
   fhV0sCounter->Fill("DCA to PV",1);
-
 
   // Daughter DCA among themselves
   if(fCutV0sDCADaughtersMin > 0. && TMath::Abs(v0->DcaV0Daughters()) < fCutV0sDCADaughtersMin) return kFALSE;

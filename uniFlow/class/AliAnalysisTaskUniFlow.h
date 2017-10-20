@@ -90,10 +90,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetV0sTPCRefit(Bool_t refit) { fCutV0srefitTPC = refit; }
       void					          SetV0sRejectKinks(Bool_t reject) { fCutV0srejectKinks = reject; }
       void                    SetV0sDaughterNumTPCClsMin(UShort_t cls) { fCutV0sDaughterNumTPCClsMin = cls; }
-      void                    SetV0sDaughterNumTPCrossMin(Float_t cls) { fCutV0sDaughterNumTPCCrossMin = cls; }
+      void                    SetV0sDaughterNumTPCrossMin(UShort_t cls) { fCutV0sDaughterNumTPCCrossMin = cls; }
       void                    SetV0sDaughterNumTPCFindMin(UShort_t cls) { fCutV0sDaughterNumTPCFindMin = cls; }
       void                    SetV0sDaughterNumTPCClsPIDMin(UShort_t cls) { fCutV0sDaughterNumTPCClsPIDMin = cls; }
-      void                    SetV0sDaughterRatioCrossFindMin(Float_t ratio) { fCutV0sDaughterRatioCrossFindMin = ratio; }
+      void                    SetV0sDaughterRatioCrossFindMin(Double_t ratio) { fCutV0sDaughterRatioCrossFindMin = ratio; }
       void					          SetV0sUseCrossMassRejection(Bool_t reject) { fCutV0sCrossMassRejection = reject; }
       void					          SetV0sCrossMassCutK0s(Double_t mass) { fCutV0sCrossMassCutK0s = mass; }
       void					          SetV0sCrossMassCutLambda(Double_t mass) { fCutV0sCrossMassCutLambda = mass; }
@@ -120,9 +120,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetV0sLambdaNumTauMax(Double_t nTau) { fCutV0sNumTauLambdaMax = nTau; }
       void					          SetV0sK0sArmenterosAlphaMin(Double_t alpha) { fCutV0sArmenterosAlphaK0sMin = alpha; }
       void					          SetV0sLambdaArmenterosAlphaMax(Double_t alpha) { fCutV0sArmenterosAlphaLambdaMax = alpha; }
-      void                    SetV0sK0sPionNumTPCSigmaMax(Double_t nSigma) { fCutV0sK0sPionNumTPCSigmaMax = nSigma; }
-      void                    SetV0sLambdaPionNumTPCSigmaMax(Double_t nSigma) { fCutV0sLambdaPionNumTPCSigmaMax = nSigma; }
-      void                    SetV0sLambdaProtonNumTPCSigmaMax(Double_t nSigma) { fCutV0sLambdaProtonNumTPCSigmaMax = nSigma; }
+      void                    SetV0sK0sPionNumTPCSigmaMax(Float_t nSigma) { fCutV0sK0sPionNumTPCSigmaMax = nSigma; }
+      void                    SetV0sLambdaPionNumTPCSigmaMax(Float_t nSigma) { fCutV0sLambdaPionNumTPCSigmaMax = nSigma; }
+      void                    SetV0sLambdaProtonNumTPCSigmaMax(Float_t nSigma) { fCutV0sLambdaProtonNumTPCSigmaMax = nSigma; }
       // phi setters
       void					          SetPhiMotherEtaMax(Double_t eta) { fCutPhiMotherEtaMax = eta; }
       void					          SetPhiInvMassMin(Double_t mass) { fCutPhiInvMassMin = mass; }
@@ -300,10 +300,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
   		Bool_t					        fCutV0srefitTPC; // Check TPC refit of V0 daughters ?
   		Bool_t					        fCutV0srejectKinks; // Reject Kink V0 daughter tracks ?
       UShort_t                fCutV0sDaughterNumTPCClsMin; // min number of TPC clusters
-      Float_t                 fCutV0sDaughterNumTPCCrossMin; // min number of crossed TPC rows
+      UShort_t                fCutV0sDaughterNumTPCCrossMin; // min number of crossed TPC rows
       UShort_t                fCutV0sDaughterNumTPCFindMin; // min number of findable TPC clusters
       UShort_t                fCutV0sDaughterNumTPCClsPIDMin; // min number of TPC clusters used for PID
-      Float_t                 fCutV0sDaughterRatioCrossFindMin; // min ratio of crossed / findable TPC clusters
+      Double_t                fCutV0sDaughterRatioCrossFindMin; // min ratio of crossed / findable TPC clusters
   		Bool_t					        fCutV0sCrossMassRejection; // competing V0 rejection based on InvMass
       Double_t                fCutV0sCrossMassCutK0s; // [0.005] (GeV/c2) restricted vicinity of Lambda/ALambda inv. mass peak for K0s candidates
       Double_t                fCutV0sCrossMassCutLambda; // [0.020] (GeV/c2) restricted vicinity of K0s inv. mass peak for Lambda/ALambda candidates
@@ -330,9 +330,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutV0sInvMassLambdaMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
       Double_t				        fCutV0sArmenterosAlphaK0sMin; // (alpha) min Armenteros alpha for K0s
       Double_t                fCutV0sArmenterosAlphaLambdaMax; // (alpha) max Armenteros alpha for (Anti)Lambda
-      Double_t                fCutV0sK0sPionNumTPCSigmaMax; // (sigmaTPC) max number of TPC sigmas for kaon PID (K0s candidates)
-      Double_t                fCutV0sLambdaPionNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for pion PID (Lambda candidates)
-      Double_t                fCutV0sLambdaProtonNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
+      Float_t                 fCutV0sK0sPionNumTPCSigmaMax; // (sigmaTPC) max number of TPC sigmas for kaon PID (K0s candidates)
+      Float_t                 fCutV0sLambdaPionNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for pion PID (Lambda candidates)
+      Float_t                 fCutV0sLambdaProtonNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
       // cuts & selection: phi
       Double_t                fCutPhiMotherEtaMax; // (-) max value of phi candidate pseudorapidity
       Double_t                fCutPhiInvMassMin; // [0.99] (GeV/c2) min inv. mass window for selected phi candidates
