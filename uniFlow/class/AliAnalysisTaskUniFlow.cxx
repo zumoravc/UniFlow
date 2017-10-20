@@ -103,7 +103,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutFlowRFPsPtMax(0.),
   fCutFlowDoFourCorrelations(kTRUE),
   fFlowFillWeights(kFALSE),
-  fFlowPOIsPtMin(0),
+  fFlowPOIsPtMin(0.),
   fFlowPOIsPtMax(20.),
   fFlowCentMin(0),
   fFlowCentMax(150),
@@ -374,7 +374,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fUseFixedMultBins(kFALSE),
   fCutFlowRFPsPtMin(0.),
   fCutFlowRFPsPtMax(0.),
-  fFlowPOIsPtMin(0),
+  fFlowPOIsPtMin(0.),
   fFlowPOIsPtMax(20.),
   fCutFlowDoFourCorrelations(kTRUE),
   fFlowFillWeights(kFALSE),
@@ -1538,8 +1538,8 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutFlowDoFourCorrelations: (Bool_t) %s\n",    fCutFlowDoFourCorrelations ? "kTRUE" : "kFALSE");
   printf("      fCutFlowRFPsPtMin: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMin);
   printf("      fCutFlowRFPsPtMax: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMax);
-  printf("      fFlowPOIsPtMin: (Float_t) %g (GeV/c)\n",    fFlowPOIsPtMin);
-  printf("      fFlowPOIsPtMax: (Float_t) %g (GeV/c)\n",    fFlowPOIsPtMax);
+  printf("      fFlowPOIsPtMin: (Double_t) %g (GeV/c)\n",    fFlowPOIsPtMin);
+  printf("      fFlowPOIsPtMax: (Double_t) %g (GeV/c)\n",    fFlowPOIsPtMax);
   printf("      fFlowCentNumBins: (Int_t) %d (GeV/c)\n",    fFlowCentNumBins);
   printf("      fFlowCentMin: (Int_t) %d (GeV/c)\n",    fFlowCentMin);
   printf("      fFlowCentMax: (Int_t) %d (GeV/c)\n",    fFlowCentMax);
@@ -2982,31 +2982,24 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   // in FlowPart struct  and pushed to relevant vector container.
   // *************************************************************
 
-  // printf("== enter FilterPhi ==\n");
-
-  const Int_t iNumKaons = fVectorKaon->size();
-  // printf("Num Kaons: %d\n", iNumKaons);
+  Int_t iNumKaons = fVectorKaon->size();
   // check if there are at least 2 selected kaons in event (minimum for phi reconstruction)
   if(iNumKaons < 2) return;
 
   // start Phi reconstruction
-  FlowPart* kaon1 = 0x0;
-  FlowPart* kaon2 = 0x0;
-  FlowPart mother = FlowPart();
-
   Int_t iNumBG = 0;
-  for(Short_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++)
+  for(Int_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++)
   {
-    kaon1 = &(fVectorKaon->at(iKaon1));
+    FlowPart* kaon1 = &(fVectorKaon->at(iKaon1));
     if(!kaon1) continue;
 
-    for(Short_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++)
+    for(Int_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++)
     {
-      kaon2 = &(fVectorKaon->at(iKaon2));
+      FlowPart* kaon2 = &(fVectorKaon->at(iKaon2));
       if(!kaon2) continue;
 
       fhPhiCounter->Fill("Input",1);
-      mother = FlowPart::MakeMother(kaon1,kaon2,kPhi);
+      FlowPart mother = FlowPart::MakeMother(kaon1,kaon2,kPhi);
 
       // filling QA BEFORE selection
       if(fFillQA) FillQAPhi(0,&mother);
@@ -3048,7 +3041,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
         iNumBG++;
 
         // filing background entries for Phi candidates
-        for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+        for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
         {
           if(mother.eta > fEtaGap[iGap]/2 ) fh3PhiEntriesBGPos[iGap]->Fill(fIndexCentrality,mother.pt,mother.mass);
           if(fEtaGap[iGap] >= 0. && mother.eta < -fEtaGap[iGap]/2 ) fh3PhiEntriesBGNeg[iGap]->Fill(fIndexCentrality,mother.pt,mother.mass);
