@@ -239,7 +239,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]; // flow vector array for flow calculation
 
       // selected POIs containers
-      std::vector<FlowPart>*  fVectorCharged; //! container for selected charged particles
+      std::vector<AliAODTrack*>*  fVectorCharged; //! container for selected charged particles
+      // std::vector<FlowPart>*  fVectorCharged; //! container for selected charged particles
       std::vector<FlowPart>*  fVectorPion; //! container for selected pion candidates
       std::vector<FlowPart>*  fVectorKaon; //! container for selected kaon candidates
       std::vector<FlowPart>*  fVectorProton; //! container for selected proton candidates
