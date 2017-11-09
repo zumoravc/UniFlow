@@ -47,9 +47,10 @@
 #include "AliLog.h"
 #include "AliAODEvent.h"
 #include "AliESDEvent.h"
-#include "AliAODTrack.h"
-#include "AliAODv0.h"
 #include "AliVTrack.h"
+#include "AliPicoTrack.h"
+#include "AliAODv0.h"
+#include "AliAODTrack.h"
 
 class AliAnalysisTaskUniFlow;
 
@@ -854,7 +855,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fVectorProton = new std::vector<AliVTrack*>;
   fVectorK0s = new std::vector<AliVTrack*>;
   fVectorLambda = new std::vector<AliVTrack*>;
-  fVectorPhi = new std::vector<FlowPart>;
+  fVectorPhi = new std::vector<AliVTrack*>;
 
   fVectorCharged->reserve(300);
   if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(100); fVectorProton->reserve(100); }
@@ -1639,7 +1640,7 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   // pointers owned by task
   if(fVectorPhi)
   {
-    // for(Int_t i(0); i < fVectorPhi->size(); ++i) { delete fVectorPhi->at(i); }
+    for(Int_t i(0); i < fVectorPhi->size(); ++i) { delete fVectorPhi->at(i); }
     fVectorPhi->clear();
   }
 
@@ -1993,7 +1994,6 @@ void AliAnalysisTaskUniFlow::Filtering()
   if(!fProcessCharged && !fProcessPID && !fProcessV0s && !fProcessPhi) // if neither is ON, filtering is skipped
     return;
 
-  fVectorCharged->clear();
   FilterCharged();
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
@@ -2007,23 +2007,16 @@ void AliAnalysisTaskUniFlow::Filtering()
 
   if(fProcessPID || fProcessPhi)
   {
-    fVectorPion->clear();
-    fVectorKaon->clear();
-    fVectorProton->clear();
     FilterPID();
   }
 
   if(fProcessPhi)
   {
-    fVectorPhi->clear();
     FilterPhi();
-    // printf("Num Phi: %d | Num BG: %d\n",fVectorPhi->size(),fVectorPhiBG->size());
   }
 
   if(fProcessV0s)
   {
-    fVectorK0s->clear();
-    fVectorLambda->clear();
     FilterV0s();
   }
 
@@ -3018,45 +3011,42 @@ void AliAnalysisTaskUniFlow::FilterPhi()
 
       fhPhiCounter->Fill("Input",1);
 
-
-      AliWarning("\n\nFLOWPART NOT EXISTENTS: FIX!!!!!!!!!\n\n");
-      FlowPart mother = FlowPart();
-      // FlowPart mother = FlowPart::MakeMother(kaon1,kaon2,kPhi);
+      AliPicoTrack* mother = MakeMother(kaon1,kaon2);
 
       // filling QA BEFORE selection
-      if(fFillQA) FillQAPhi(0,&mother);
+      // if(fFillQA) FillQAPhi(0,&mother);
 
-      if(mother.mass < fCutPhiInvMassMin || mother.mass > fCutPhiInvMassMax) continue;
+      if(mother->M() < fCutPhiInvMassMin || mother->M() > fCutPhiInvMassMax) continue;
       fhPhiCounter->Fill("InvMass",1);
 
-      if(mother.pt < fFlowPOIsPtMin || mother.pt > fFlowPOIsPtMax) continue;
+      if(mother->Pt() < fFlowPOIsPtMin || mother->Pt() > fFlowPOIsPtMax) continue;
       fhPhiCounter->Fill("Pt",1);
 
-      if(fCutPhiMotherEtaMax > 0 && TMath::Abs(mother.eta) > fCutPhiMotherEtaMax)  continue;
+      if(fCutPhiMotherEtaMax > 0 && TMath::Abs(mother->Eta()) > fCutPhiMotherEtaMax)  continue;
       fhPhiCounter->Fill("Eta",1);
 
       // mother (phi) candidate passing all criteria
       fhPhiCounter->Fill("Selected",1);
 
       // filling QA AFTER selection
-      if(fFillQA) FillQAPhi(1,&mother);
+      // if(fFillQA) FillQAPhi(1,&mother);
 
       // filling weights
-      if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsPhi->Fill(mother.phi, mother.eta, mother.pt);
+      if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsPhi->Fill(mother->Phi(), mother->Eta(), mother->Pt());
       if(fFlowUseWeights)
       {
-        Double_t weight = fh2WeightPhi->GetBinContent( fh2WeightPhi->FindBin(mother.eta,mother.phi) );
-        fh3AfterWeightsPhi->Fill(mother.phi,mother.eta,mother.pt,weight);
+        Double_t weight = fh2WeightPhi->GetBinContent( fh2WeightPhi->FindBin(mother->Eta(),mother->Phi()) );
+        fh3AfterWeightsPhi->Fill(mother->Phi(),mother->Eta(),mother->Pt(),weight);
       }
 
-      if(mother.charge == 0)
+      if(mother->Charge() == 0)
       {
         // opposite-sign combination (signal+background)
         fhPhiCounter->Fill("Unlike-sign",1);
-        fVectorPhi->emplace_back(mother);
+        fVectorPhi->push_back(mother);
       }
 
-      if(TMath::Abs(mother.charge) == 2)
+      if(TMath::Abs(mother->Charge()) == 2)
       {
         // like-sign combination (background)
         fhPhiCounter->Fill("BG",1);
@@ -3065,10 +3055,11 @@ void AliAnalysisTaskUniFlow::FilterPhi()
         // filing background entries for Phi candidates
         for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
         {
-          if(mother.eta > fEtaGap[iGap]/2 ) fh3PhiEntriesBGPos[iGap]->Fill(fIndexCentrality,mother.pt,mother.mass);
-          if(fEtaGap[iGap] >= 0. && mother.eta < -fEtaGap[iGap]/2 ) fh3PhiEntriesBGNeg[iGap]->Fill(fIndexCentrality,mother.pt,mother.mass);
+          if(mother->Eta() > fEtaGap[iGap]/2 ) fh3PhiEntriesBGPos[iGap]->Fill(fIndexCentrality,mother->Pt(),mother->M());
+          if(fEtaGap[iGap] >= 0. && mother->Eta() < -fEtaGap[iGap]/2 ) fh3PhiEntriesBGNeg[iGap]->Fill(fIndexCentrality,mother->Pt(),mother->M());
         }
       }
+
     } // endfor {iKaon2} : second kaon
   } // endfor {iKaon1} : first Kaon
 
@@ -3078,29 +3069,54 @@ void AliAnalysisTaskUniFlow::FilterPhi()
 
   return;
 }
+//____________________________________________________________________
+AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const AliAODTrack* part2)
+{
+  // Reconstructing mother particle from two prongs and fill its properties.
+  // return ptr to created mother particle
+  // *************************************************************
+
+  if(!part1 || !part2) return 0x0;
+
+  // combining momenta
+  TVector3 mom1 = TVector3( part1->Px(), part1->Py(), part1->Pz() );
+  TVector3 mom2 = TVector3( part2->Px(), part2->Py(), part2->Pz() );
+  TVector3 mom = mom1 + mom2;
+
+  Byte_t iCharge = part1->Charge() + part2->Charge();
+
+  // calculating inv. mass
+  Double_t dMass = -999.;
+  Double_t dE1 = TMath::Sqrt( mom1.Mag2() + TMath::Power(fPDGMassKaon,2) );
+  Double_t dE2 = TMath::Sqrt( mom2.Mag2() + TMath::Power(fPDGMassKaon,2) );
+
+  Double_t dMassSq = TMath::Power((dE1+dE2),2) - mom.Mag2();
+  if(dMassSq >= 0.) dMass = TMath::Sqrt(dMassSq);
+
+  return new AliPicoTrack(mom.Pt(),mom.Eta(),mom.Phi(),iCharge,0,0,0,0,0,0,dMass);
+}
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillQAPhi(const Short_t iQAindex, const FlowPart* part)
+void AliAnalysisTaskUniFlow::FillQAPhi(const Short_t iQAindex, const AliPicoTrack* part)
 {
   if(!part) return;
-  if(part->species != kPhi) return;
 
   if(iQAindex == 0) return; // TODO not implemented (do not know what)
 
-  if(part->charge == 0)
+  if(part->Charge() == 0)
   {
     // phi candidate (unlike-sign pair)
-    fhPhiInvMass->Fill(part->mass);
-    fhPhiCharge->Fill(part->charge);
-    fhPhiPt->Fill(part->pt);
-    fhPhiEta->Fill(part->eta);
-    fhPhiPhi->Fill(part->phi);
+    fhPhiInvMass->Fill(part->M());
+    fhPhiCharge->Fill(part->Charge());
+    fhPhiPt->Fill(part->Pt());
+    fhPhiEta->Fill(part->Eta());
+    fhPhiPhi->Fill(part->Phi());
   }
 
-  if(TMath::Abs(part->charge) == 2)
+  if(TMath::Abs(part->Charge()) == 2)
   {
     // phi candidate (unlike-sign pair)
-    fhPhiBGInvMass->Fill(part->mass);
-    fhPhiBGCharge->Fill(part->charge);
+    fhPhiBGInvMass->Fill(part->M());
+    fhPhiBGCharge->Fill(part->Charge());
   }
 
   return;
@@ -3470,13 +3486,10 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   }
 
   // filtering particles
+  ClearVectors();
   Filtering();
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
   if(fIndexCentrality < 0) return kFALSE;
-
-  ClearVectors();
-  AliWarning("ONLY FOR DEBUG PURPOSES");
-  return kTRUE;
 
   // transfering centrality percentile to multiplicity bin (if fixed size bins are used)
   if(fUseFixedMultBins)
@@ -3534,6 +3547,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
       }
     }
 
+
     if(fProcessV0s)
     {
       const Int_t iSizeK0s = fVectorK0s->size();
@@ -3547,6 +3561,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
           DoFlowV0s(iGap,iMass,kK0s);
         }
       }
+
       if(iSizeLambda > 0)
       {
         for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++)
@@ -4002,6 +4017,9 @@ void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t
       return;
   }
 
+
+
+
   Double_t dMass = (dMassHigh+dMassLow) / 2;
 
   for(Short_t iPt(0); iPt < fFlowPOIsPtNumBins; iPt++)
@@ -4172,14 +4190,6 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
 
-
-    // // checking species of used particles (just for double checking purpose)
-    // if( part->species != kCharged)
-    // {
-    //   AliWarning(Form("Unexpected part. species (%d) in selected sample (expected %d)",part->species,kCharged));
-    //   continue;
-    // }
-
     // RFPs pT check
     if(fCutFlowRFPsPtMin > 0. && dPt < fCutFlowRFPsPtMin)
       continue;
@@ -4316,14 +4326,14 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       dMassHigh = fCutV0sInvMassLambdaMin + (iMassIndex+1)*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
       break;
 
-    // case kPhi:
-    //   vector = fVectorPhi;
-    //   histPos = fh3PhiEntriesSignalPos[iEtaGapIndex];
-    //   if(dEtaGap >= 0.) histNeg = fh3PhiEntriesSignalNeg[iEtaGapIndex];
-    //   if(fFlowUseWeights) { h2Weights = fh2WeightPhi; }
-    //   dMassLow = fCutPhiInvMassMin + iMassIndex*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
-    //   dMassHigh = fCutPhiInvMassMin + (iMassIndex+1)*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
-    //   break;
+    case kPhi:
+      vector = fVectorPhi;
+      histPos = fh3PhiEntriesSignalPos[iEtaGapIndex];
+      if(dEtaGap >= 0.) histNeg = fh3PhiEntriesSignalNeg[iEtaGapIndex];
+      if(fFlowUseWeights) { h2Weights = fh2WeightPhi; }
+      dMassLow = fCutPhiInvMassMin + iMassIndex*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
+      dMassHigh = fCutPhiInvMassMin + (iMassIndex+1)*(fCutPhiInvMassMax - fCutPhiInvMassMin)/fPhiNumBinsMass;
+      break;
 
     default:
       AliError("Selected species unknown.");
@@ -4342,19 +4352,13 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     Double_t dPt = (*part)->Pt();
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
+    Double_t dMassPart = (*part)->M();
 
-    // // checking species of used particles (just for double checking purpose)
-    // if( part->species != species)
-    // {
-    //   AliWarning(Form("Unexpected part. species (%d) in selected sample (expected %d)",part->species,species));
-    //   continue;
-    // }
-
-    // // POIs mass bin check for V0s candidates
-    // if(species == kK0s || species == kLambda || species == kPhi)
-    // {
-    //   if(part->mass < dMassLow || part->mass >= dMassHigh) { continue; }
-    // }
+    // POIs mass bin check for V0s candidates
+    if(species == kK0s || species == kLambda || species == kPhi)
+    {
+      if(dMassPart < dMassLow || dMassPart >= dMassHigh) { continue; }
+    }
 
     // assign iPtBin based on particle momenta
     iPtBin = GetPOIsPtBinIndex(dPt);
@@ -4691,48 +4695,4 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, co
 //   return out;
 //
 // }
-//____________________________________________________________________
-AliAnalysisTaskUniFlow::FlowPart AliAnalysisTaskUniFlow::FlowPart::MakeMother(const FlowPart* part1, const FlowPart* part2, const PartSpecies species)
-{
-  // Reconstructing mother particle from two daughters (FlowPart type) and fill its properties.
-  // return created mother particle
-  // *************************************************************
-
-  if(!part1 || !part2) return FlowPart();
-  // printf(" part1: "); part1->PrintPart();
-  // printf(" part2: "); part2->PrintPart();
-
-  if(species == kPhi && (part1->species != kKaon || part2->species != kKaon)) return FlowPart();
-
-  TVector3 vec1 = TVector3(part1->px, part1->py, part1->pz);
-  TVector3 vec2 = TVector3(part2->px, part2->py, part2->pz);
-  TVector3 mother = vec1 + vec2;
-
-  Double_t dMass = InvMass(part1,part2);
-  Short_t iCharge = part1->charge + part2->charge;
-
-  return FlowPart(mother.Pt(), mother.Phi(), mother.PseudoRapidity(), iCharge, species, dMass, mother.Px(), mother.Py(), mother.Pz());
-}
-//____________________________________________________________________
-Double_t AliAnalysisTaskUniFlow::FlowPart::InvMass(const FlowPart* part1, const FlowPart* part2)
-{
-  // Calculating invariant mass of potential mother from two daughter particles given their properties and species.
-  // return calculated invariant mass or -999 if an error occurs.
-  // *************************************************************
-
-  // checking if both poiters are valid
-  if(!part1 || !part2) return -999;
-
-  // checking daughter properties
-  if(part1->species == kUnknown || part2->species == kUnknown) return -999;
-
-  Double_t dP1Sq = TMath::Power(part1->px,2) + TMath::Power(part1->py,2) + TMath::Power(part1->pz,2);
-  Double_t dP2Sq = TMath::Power(part2->px,2) + TMath::Power(part2->py,2) + TMath::Power(part2->pz,2);
-  Double_t dE1 = TMath::Sqrt( dP1Sq + TMath::Power(part1->mass,2) );
-  Double_t dE2 = TMath::Sqrt( dP2Sq + TMath::Power(part2->mass,2) );
-  Double_t dMassSq = TMath::Power((dE1+dE2),2) - ( TMath::Power((part1->px + part2->px),2) + TMath::Power((part1->py + part2->py),2) + TMath::Power((part1->pz + part2->pz),2) );
-
-  if(dMassSq < 0) return -999;
-  return TMath::Sqrt(dMassSq);
-}
 //____________________________________________________________________
