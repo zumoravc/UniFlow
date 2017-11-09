@@ -772,6 +772,9 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   //   delete fPIDCombined;
   // }
 
+  // clearing vectors before deleting
+  ClearVectors();
+
   // deleting FlowPart vectors (containers)
   if(fVectorCharged) delete fVectorCharged;
   if(fVectorPion) delete fVectorPion;
@@ -1611,6 +1614,36 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sLambdaPionNumTPCSigmaMax: (Float_t) %g (n*sigma)\n",    fCutV0sLambdaPionNumTPCSigmaMax);
   printf("      fCutV0sLambdaProtonNumTPCSigmaMax: (Float_t) %g (n*sigma)\n",    fCutV0sLambdaProtonNumTPCSigmaMax);
   printf("=====================================================================\n\n");
+
+  return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::ClearVectors()
+{
+  // Properly clear all particle vectors (if exists)
+  // NOTE: should be called at the end of each event & before vectors deleting
+  // *************************************************************
+
+  printf("Charged\t Pion\t Kaon\t Proton\t K0s\t Lambda\t Phi | (bef)\n");
+  printf("%lu \t%lu \t%lu \t%lu \t%lu \t%lu \t%lu\n",fVectorCharged->size(),fVectorPion->size(),fVectorKaon->size(),fVectorProton->size(),fVectorK0s->size(),fVectorLambda->size(),fVectorPhi->size());
+
+  // pointers owned by AliEvent containers
+  if(fVectorCharged) { fVectorCharged->clear(); }
+  if(fVectorPion) { fVectorPion->clear(); }
+  if(fVectorKaon) { fVectorKaon->clear(); }
+  if(fVectorProton) { fVectorProton->clear(); }
+  if(fVectorK0s) { fVectorK0s->clear(); }
+  if(fVectorLambda) { fVectorLambda->clear(); }
+
+
+  // pointers owned by task
+  if(fVectorPhi)
+  {
+    // for(Int_t i(0); i < fVectorPhi->size(); ++i) { delete fVectorPhi->at(i); }
+    fVectorPhi->clear();
+  }
+
+  printf("%lu \t%lu \t%lu \t%lu \t%lu \t%lu \t%lu\n",fVectorCharged->size(),fVectorPion->size(),fVectorKaon->size(),fVectorProton->size(),fVectorK0s->size(),fVectorLambda->size(),fVectorPhi->size());
 
   return;
 }
@@ -3437,6 +3470,10 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   Filtering();
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
   if(fIndexCentrality < 0) return kFALSE;
+
+  ClearVectors();
+  AliWarning("ONLY FOR DEBUG PURPOSES");
+  return kTRUE;
 
   // transfering centrality percentile to multiplicity bin (if fixed size bins are used)
   if(fUseFixedMultBins)

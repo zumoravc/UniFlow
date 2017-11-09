@@ -165,6 +165,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       void                    ListParameters(); // list all task parameters
+      void                    ClearVectors(); // properly clear all particle vectors
 
       Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
       Bool_t                  IsEventSelected_2016(); // event selection for LHC2016 pp & pPb data
