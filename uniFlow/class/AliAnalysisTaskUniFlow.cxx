@@ -848,13 +848,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fQAV0s->SetOwner(kTRUE);
 
   // creating particle vectors
-  fVectorCharged = new std::vector<AliAODTrack*>;
-  fVectorPion = new std::vector<FlowPart>;
-  fVectorKaon = new std::vector<FlowPart>;
-  fVectorProton = new std::vector<FlowPart>;
+  fVectorCharged = new std::vector<AliVTrack*>;
+  fVectorPion = new std::vector<AliVTrack*>;
+  fVectorKaon = new std::vector<AliVTrack*>;
+  fVectorProton = new std::vector<AliVTrack*>;
+  fVectorK0s = new std::vector<AliVTrack*>;
+  fVectorLambda = new std::vector<AliVTrack*>;
   fVectorPhi = new std::vector<FlowPart>;
-  fVectorK0s = new std::vector<FlowPart>;
-  fVectorLambda = new std::vector<FlowPart>;
 
   fVectorCharged->reserve(300);
   if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(100); fVectorProton->reserve(100); }
@@ -2055,7 +2055,6 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     if(IsChargedSelected(track))
     {
       fVectorCharged->push_back(track);
-      // fVectorCharged->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kCharged) );
       if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt());
       if(fFlowUseWeights)
       {
@@ -2231,7 +2230,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         iNumK0sSelected++;
         fhV0sCounter->Fill("K^{0}_{S}",1);
         if(fFillQA)  FillQAV0s(1,v0,kTRUE,0); // QA AFTER selection
-        fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
+        fVectorK0s->push_back(v0);
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
         if(fFlowUseWeights)
         {
@@ -2255,7 +2254,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           iNumK0sSelected++;
           fhV0sCounter->Fill("K^{0}_{S}",1);
           fhV0sInvMassK0s->Fill(v0->MassK0Short(),v0->MassLambda());
-          fVectorK0s->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kK0s, v0->MassK0Short()) );
+          fVectorK0s->push_back(v0);
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
@@ -2269,7 +2268,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           iNumLambdaSelected++;
           fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
           fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassLambda());
-          fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassLambda()) );
+          fVectorLambda->push_back(v0);
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
@@ -2283,7 +2282,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           iNumALambdaSelected++;
           fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
           fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassAntiLambda());
-          fVectorLambda->emplace_back( FlowPart(v0->Pt(),v0->Phi(),v0->Eta(), 0, kLambda, v0->MassAntiLambda()) );
+          fVectorLambda->push_back(v0);
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
@@ -3009,16 +3008,20 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   Int_t iNumBG = 0;
   for(Int_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++)
   {
-    FlowPart* kaon1 = &(fVectorKaon->at(iKaon1));
+    AliAODTrack* kaon1 = dynamic_cast<AliAODTrack*>(fVectorKaon->at(iKaon1));
     if(!kaon1) continue;
 
     for(Int_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++)
     {
-      FlowPart* kaon2 = &(fVectorKaon->at(iKaon2));
+      AliAODTrack* kaon2 = dynamic_cast<AliAODTrack*>(fVectorKaon->at(iKaon2));
       if(!kaon2) continue;
 
       fhPhiCounter->Fill("Input",1);
-      FlowPart mother = FlowPart::MakeMother(kaon1,kaon2,kPhi);
+
+
+      AliWarning("\n\nFLOWPART NOT EXISTENTS: FIX!!!!!!!!!\n\n");
+      FlowPart mother = FlowPart();
+      // FlowPart mother = FlowPart::MakeMother(kaon1,kaon2,kPhi);
 
       // filling QA BEFORE selection
       if(fFillQA) FillQAPhi(0,&mother);
@@ -3136,7 +3139,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
     switch (species)
     {
       case kPion:
-        fVectorPion->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kPion, fPDGMassPion, track->Px(), track->Py(), track->Pz()) );
+        fVectorPion->push_back(track);
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsPion->Fill(track->Phi(), track->Eta(), track->Pt());
         if(fFlowUseWeights)
         {
@@ -3145,7 +3148,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         }
         break;
       case kKaon:
-        fVectorKaon->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kKaon, fPDGMassKaon, track->Px(), track->Py(), track->Pz()) );
+        fVectorKaon->push_back(track);
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsKaon->Fill(track->Phi(), track->Eta(), track->Pt());
         if(fFlowUseWeights)
         {
@@ -3154,7 +3157,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         }
         break;
       case kProton:
-        fVectorProton->emplace_back( FlowPart(track->Pt(),track->Phi(),track->Eta(), track->Charge(), kProton, fPDGMassProton, track->Px(), track->Py(), track->Pz()) );
+        fVectorProton->push_back(track);
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsProton->Fill(track->Phi(), track->Eta(), track->Pt());
         if(fFlowUseWeights)
         {
@@ -4265,8 +4268,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   ResetPOIsVector(fFlowVecPneg);
   ResetPOIsVector(fFlowVecS);
 
-  std::vector<AliAODTrack*>* vector = 0x0;
-  // std::vector<FlowPart>* vector = 0x0;
+  std::vector<AliVTrack*>* vector = 0x0;
   TH3D* histPos = 0x0;
   TH3D* histNeg = 0x0;
   Double_t dMassLow = 0, dMassHigh = 0;
@@ -4280,40 +4282,40 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       if(fFlowUseWeights) { h2Weights = fh2WeightCharged; }
       break;
 
-    // case kPion:
-    //   vector = fVectorPion;
-    //   if(fFlowUseWeights) { h2Weights = fh2WeightPion; }
-    //   break;
-    //
-    // case kKaon:
-    //   vector = fVectorKaon;
-    //   if(fFlowUseWeights) { h2Weights = fh2WeightKaon; }
-    //
-    //   break;
-    //
-    // case kProton:
-    //   vector = fVectorProton;
-    //   if(fFlowUseWeights) { h2Weights = fh2WeightProton; }
-    //   break;
-    //
-    // case kK0s:
-    //   vector = fVectorK0s;
-    //   histPos = fh3V0sEntriesK0sPos[iEtaGapIndex];
-    //   if(dEtaGap >= 0.) histNeg = fh3V0sEntriesK0sNeg[iEtaGapIndex];
-    //   if(fFlowUseWeights) { h2Weights = fh2WeightK0s; }
-    //   dMassLow = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
-    //   dMassHigh = fCutV0sInvMassK0sMin + (iMassIndex+1)*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
-    //   break;
-    //
-    // case kLambda: // if a Lambda/ALambda candidates: first go through Lambda array and then goes through ALambda array
-    //   vector = fVectorLambda;
-    //   histPos = fh3V0sEntriesLambdaPos[iEtaGapIndex];
-    //   if(dEtaGap >= 0.) histNeg = fh3V0sEntriesLambdaNeg[iEtaGapIndex];
-    //   if(fFlowUseWeights) { h2Weights = fh2WeightLambda; }
-    //   dMassLow = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
-    //   dMassHigh = fCutV0sInvMassLambdaMin + (iMassIndex+1)*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
-    //   break;
-    //
+    case kPion:
+      vector = fVectorPion;
+      if(fFlowUseWeights) { h2Weights = fh2WeightPion; }
+      break;
+
+    case kKaon:
+      vector = fVectorKaon;
+      if(fFlowUseWeights) { h2Weights = fh2WeightKaon; }
+
+      break;
+
+    case kProton:
+      vector = fVectorProton;
+      if(fFlowUseWeights) { h2Weights = fh2WeightProton; }
+      break;
+
+    case kK0s:
+      vector = fVectorK0s;
+      histPos = fh3V0sEntriesK0sPos[iEtaGapIndex];
+      if(dEtaGap >= 0.) histNeg = fh3V0sEntriesK0sNeg[iEtaGapIndex];
+      if(fFlowUseWeights) { h2Weights = fh2WeightK0s; }
+      dMassLow = fCutV0sInvMassK0sMin + iMassIndex*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
+      dMassHigh = fCutV0sInvMassK0sMin + (iMassIndex+1)*(fCutV0sInvMassK0sMax - fCutV0sInvMassK0sMin)/fV0sNumBinsMass;
+      break;
+
+    case kLambda: // if a Lambda/ALambda candidates: first go through Lambda array and then goes through ALambda array
+      vector = fVectorLambda;
+      histPos = fh3V0sEntriesLambdaPos[iEtaGapIndex];
+      if(dEtaGap >= 0.) histNeg = fh3V0sEntriesLambdaNeg[iEtaGapIndex];
+      if(fFlowUseWeights) { h2Weights = fh2WeightLambda; }
+      dMassLow = fCutV0sInvMassLambdaMin + iMassIndex*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
+      dMassHigh = fCutV0sInvMassLambdaMin + (iMassIndex+1)*(fCutV0sInvMassLambdaMax - fCutV0sInvMassLambdaMin)/fV0sNumBinsMass;
+      break;
+
     // case kPhi:
     //   vector = fVectorPhi;
     //   histPos = fh3PhiEntriesSignalPos[iEtaGapIndex];

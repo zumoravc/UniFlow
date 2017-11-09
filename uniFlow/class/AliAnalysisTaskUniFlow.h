@@ -240,13 +240,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]; // flow vector array for flow calculation
 
       // selected POIs containers
-      std::vector<AliAODTrack*>*  fVectorCharged; //! container for selected charged particles
-      // std::vector<FlowPart>*  fVectorCharged; //! container for selected charged particles
-      std::vector<FlowPart>*  fVectorPion; //! container for selected pion candidates
-      std::vector<FlowPart>*  fVectorKaon; //! container for selected kaon candidates
-      std::vector<FlowPart>*  fVectorProton; //! container for selected proton candidates
-      std::vector<FlowPart>*  fVectorK0s; //! container for selected K0s candidates
-      std::vector<FlowPart>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
+      std::vector<AliVTrack*>*  fVectorCharged; //! container for selected charged particles
+      std::vector<AliVTrack*>*  fVectorPion; //! container for selected pion candidates
+      std::vector<AliVTrack*>*  fVectorKaon; //! container for selected kaon candidates
+      std::vector<AliVTrack*>*  fVectorProton; //! container for selected proton candidates
+      std::vector<AliVTrack*>*  fVectorK0s; //! container for selected K0s candidates
+      std::vector<AliVTrack*>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
       std::vector<FlowPart>*  fVectorPhi; //! container for selected phi candidates (unlike-sign pairs)
 
       //cuts & selection: analysis
