@@ -1136,7 +1136,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     if(fProcessCharged)
     {
-      TString sChargedCounterLabel[] = {"Input","FB","#TPC-Cls","DCA-z","DCA-xy","Eta","Selected"};
+      TString sChargedCounterLabel[] = {"Input","Pt","Eta","FB","#TPC-Cls","DCA-z","DCA-xy","Selected"};
       const Short_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
       fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
       for(Short_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
@@ -1788,7 +1788,8 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // main method called for each event (event loop)
   // *************************************************************
 
-  if(!fInit) return; // check if initialization succesfull
+  // check if initialization succesfull (done within UserCreateOutputObjects())
+  if(!fInit) return;
 
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
   if(fRunMode == kTest && fEventCounter >= fNumEventsAnalyse) return;
@@ -1796,8 +1797,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // event selection
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!EventSelection()) return;
-
-  // fIndexCentrality = GetCentralityIndex();
 
   // processing of selected event
   Bool_t bProcessed = ProcessEvent();
@@ -1848,15 +1847,15 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   if(!eventSelected) return kFALSE;
 
   // Fill event QA AFTER cuts
-  if(fFillQA && eventSelected) FillEventsQA(1);
+  if(fFillQA) FillEventsQA(1);
 
-  return kTRUE;
+  return eventSelected;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
 {
   // Event selection for small system collision recorder in Run 2 year 2016
-  // pp (LHC16kl), pPb (LHC16rqts)
+  // pp (LHC16kl...), pPb (LHC16rqts)
   // return kTRUE if event passes all criteria, kFALSE otherwise
   // *************************************************************
 
@@ -1882,7 +1881,8 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
       isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
       break;
 
-    default: isTriggerSelected = kFALSE;
+    default:
+      isTriggerSelected = kFALSE;
   }
 
   if(!isTriggerSelected)
@@ -2011,39 +2011,25 @@ void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::Filtering()
 {
-  // main (envelope) method for filtering all particles of interests (POIs) in selected events
-  // All POIs passing selection criteria are saved to relevant TClonesArray for further processing
-  // return kTRUE if succesfull (no errors in process)
+  // main (envelope) method for filtering of all particles used for flow in selected events
+  // All particles passing given requirements are pushed to correspodning std::vectors
+  //  - in case of Charged & PID particles, only AliAODTrack* is stored (already loaded & stored by AliVEvent)
+  //  - otherwise a new AliPicoTrack is constructed with relevant informations (needed to be deleted at destructor)
   // *************************************************************
 
-  if(!fProcessCharged && !fProcessPID && !fProcessV0s && !fProcessPhi) // if neither is ON, filtering is skipped
+  // if neither is ON, filtering is skipped
+  if(!fProcessCharged && !fProcessPID && !fProcessV0s && !fProcessPhi)
     return;
 
+  // done anyway event if fProcessCharged is off (needed for Reference flow)
   FilterCharged();
-
-  // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
-  fIndexCentrality = GetCentralityIndex();
-  if(fIndexCentrality < 0) return; // not succesfull estimation
-  fhEventCentrality->Fill(fIndexCentrality);
-  fh2EventCentralityNumSelCharged->Fill(fVectorCharged->size(),fIndexCentrality);
 
   fIndexSampling = GetSamplingIndex();
   fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
 
-  if(fProcessPID || fProcessPhi)
-  {
-    FilterPID();
-  }
-
-  if(fProcessPhi)
-  {
-    FilterPhi();
-  }
-
-  if(fProcessV0s)
-  {
-    FilterV0s();
-  }
+  if(fProcessPID || fProcessPhi) { FilterPID(); }
+  if(fProcessPhi) { FilterPhi(); }
+  if(fProcessV0s) { FilterV0s(); }
 
   return;
 }
@@ -2052,9 +2038,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 {
   // Filtering input charged tracks
   // If track passes all requirements as defined in IsChargedSelected(),
-  // the relevant properties (pT, eta, phi) are stored in FlowPart struct
-  // and pushed to relevant vector container.
-  // return kFALSE if any complications occurs
+  // its pointer is pushed to relevant vector container
   // *************************************************************
 
   Int_t iNumTracks = fEventAOD->GetNumberOfTracks();
@@ -2068,37 +2052,36 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
     if(fFillQA) FillQACharged(0,track); // QA before selection
 
-    Double_t weight = 0.;
-
     if(IsChargedSelected(track))
     {
       fVectorCharged->push_back(track);
+      if(fFillQA) FillQACharged(1,track); // QA after selection
+
       if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt());
       if(fFlowUseWeights)
       {
-        weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi()) );
+        Double_t weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi()) );
         fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
       }
-      if(fFillQA) FillQACharged(1,track); // QA after selection
-      //printf("pt %g | phi %g | eta %g\n",track->Pt(),track->Phi(),track->Eta());
 
       // Filling refs QA plots
       if(fCutFlowRFPsPtMin > 0. && track->Pt() >= fCutFlowRFPsPtMin && fCutFlowRFPsPtMax > 0. && track->Pt() < fCutFlowRFPsPtMax)
       {
         iNumRefs++;
+        FillQARefs(1,track);
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt());
         if(fFlowUseWeights)
         {
-          weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) );
+          Double_t weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) );
           fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
         }
-        FillQARefs(1,track);
       }
     }
   }
 
   // fill QA charged multiplicity
   fhRefsMult->Fill(iNumRefs);
+
   if(fFillQA)
   {
     fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
@@ -2115,6 +2098,14 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
   // *************************************************************
   if(!track) return kFALSE;
   fhChargedCounter->Fill("Input",1);
+
+  // pt
+  if(track->Pt() >= fFlowPOIsPtMax) return kFALSE;
+  fhChargedCounter->Fill("Pt",1);
+
+  // pseudorapidity (eta)
+  if(fCutChargedEtaMax > 0. && TMath::Abs(track->Eta()) >= fCutChargedEtaMax) return kFALSE;
+  fhChargedCounter->Fill("Eta",1);
 
   // filter bit
   if( !track->TestFilterBit(fCutChargedTrackFilterBit) ) return kFALSE;
@@ -2137,8 +2128,7 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
     track->GetXYZ(dTrackXYZ);
     vertex->GetXYZ(dVertexXYZ);
 
-    for(Short_t i(0); i < 3; i++)
-      dDCAXYZ[i] = dTrackXYZ[i] - dVertexXYZ[i];
+    for(Short_t i(0); i < 3; i++) { dDCAXYZ[i] = dTrackXYZ[i] - dVertexXYZ[i]; }
   }
 
   if(fCutChargedDCAzMax > 0. && TMath::Abs(dDCAXYZ[2]) > fCutChargedDCAzMax) return kFALSE;
@@ -2147,9 +2137,6 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
   if(fCutChargedDCAxyMax > 0. && TMath::Sqrt(dDCAXYZ[0]*dDCAXYZ[0] + dDCAXYZ[1]*dDCAXYZ[1]) > fCutChargedDCAxyMax) return kFALSE;
   fhChargedCounter->Fill("DCA-xy",1);
 
-  // pseudorapidity (eta)
-  if(fCutChargedEtaMax > 0. && TMath::Abs(track->Eta()) > fCutChargedEtaMax) return kFALSE;
-  fhChargedCounter->Fill("Eta",1);
 
   // track passing all criteria
   fhChargedCounter->Fill("Selected",1);
@@ -3489,17 +3476,14 @@ void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 {
-  // main method for processing of (selected) event:
+  // main method for processing of selected events:
   // - Filtering of tracks / particles for flow calculations
   // - Phi,eta,pt weights for generic framework are calculated if specified
   // - Flow calculations
   // returns kTRUE if succesfull
   // *************************************************************
 
-  // printf("======= EVENT ================\n");
-
   // checking the run number for aplying weights & loading TList with weights
-  // if(fFlowUseWeights && fRunNumber < 0)
   if(fFlowUseWeights && fFlowRunByRunWeights && (fRunNumber != fEventAOD->GetRunNumber()))
   {
     fRunNumber = fEventAOD->GetRunNumber();
@@ -3518,96 +3502,57 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
     }
   }
 
-  // filtering particles
+  // Selection of relevant particles (pushing into corresponding vectors)
   Filtering();
 
-  // at this point, centrality index (percentile) should be properly estimated, if not, skip event
+  // checking if there is at least two charged track selected (min requirement or <<2>>)
+  // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
+  if(fVectorCharged->size() < 2)
+    return kFALSE;
+
+  // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
+  fIndexCentrality = GetCentralityIndex();
   if(fIndexCentrality < 0) return kFALSE;
 
-  // transfering centrality percentile to multiplicity bin (if fixed size bins are used)
-  if(fUseFixedMultBins)
-  {
-    Short_t oldCent = fIndexCentrality;
-    for(Int_t multIndex(0); multIndex < fNumMultBins; multIndex++)
-    {
-      if(oldCent >= fMultBins[multIndex] && oldCent < fMultBins[multIndex+1]) { fIndexCentrality = multIndex; break; }
-    }
-    // printf("Cent: old: %g | new %hd\n",oldCent,fIndexCentrality);
-  }
+  fhEventCentrality->Fill(fIndexCentrality);
+  fh2EventCentralityNumSelCharged->Fill(fVectorCharged->size(),fIndexCentrality);
+  // at this point, centrality index (percentile) should be properly estimated, if not, skip event
 
   // if running in kFillWeights mode, skip the remaining part
   if(fRunMode == kFillWeights) { fEventCounter++; return kTRUE; }
-
-  // checking if there is at least one charged track selected;
-  // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
-  if(fVectorCharged->size() < 1)
-    return kFALSE;
-
-  // at this point, all particles fullfiling relevant POIs (and REFs) criteria are filled in TClonesArrays
 
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
   for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
   {
-    // Reference (pT integrated) flow
-    DoFlowRefs(iGap);
+    DoFlowRefs(iGap); // Reference (pT integrated) flow
 
     // pT differential
     if(fProcessCharged)
     {
-      // charged track flow
-      DoFlowCharged(iGap);
+      DoFlowCharged(iGap);  // charged track flow
     }
 
-    if(fProcessPID)
+    if(fProcessPID) // pi,K,p flow
     {
-      const Int_t iSizePion = fVectorPion->size();
-      const Int_t iSizeKaon = fVectorKaon->size();
-      const Int_t iSizeProton = fVectorProton->size();
-
-      // pi,K,p flow
-      if(iSizePion > 0) DoFlowPID(iGap,kPion);
-      if(iSizeKaon > 0) DoFlowPID(iGap,kKaon);
-      if(iSizeProton > 0) DoFlowPID(iGap,kProton);
+      if(fVectorPion->size() > 0) DoFlowPID(iGap,kPion);
+      if(fVectorKaon->size() > 0) DoFlowPID(iGap,kKaon);
+      if(fVectorProton->size() > 0) DoFlowPID(iGap,kProton);
     }
 
-    if(fProcessPhi)
+    if(fProcessPhi) // phi flow
     {
-      const Int_t iSizePhi = fVectorPhi->size();
-      if(iSizePhi > 0)
-      {
-        for(Short_t iMass(0); iMass < fPhiNumBinsMass; iMass++) DoFlowPhi(iGap,iMass);
-      }
+      if(fVectorPhi->size() > 0) { for(Short_t iMass(0); iMass < fPhiNumBinsMass; iMass++) DoFlowPhi(iGap,iMass); }
     }
-
 
     if(fProcessV0s)
     {
-      const Int_t iSizeK0s = fVectorK0s->size();
-      const Int_t iSizeLambda = fVectorLambda->size();
-
-      if(iSizeK0s > 0)
-      {
-        for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++)
-        {
-          // V0s (K0s, Lambda/ALambda) flow
-          DoFlowV0s(iGap,iMass,kK0s);
-        }
-      }
-
-      if(iSizeLambda > 0)
-      {
-        for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++)
-        {
-          // V0s (K0s, Lambda/ALambda) flow
-          DoFlowV0s(iGap,iMass,kLambda);
-        }
-      }
+      if(fVectorK0s->size() > 0) { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kK0s); }
+      if(fVectorLambda->size() > 0)  { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kLambda); }
     }
   } // endfor {iGap} eta gaps
 
   fEventCounter++; // counter of processed events
-  //printf("event %d\n",fEventCounter);
 
   return kTRUE;
 }
@@ -4555,30 +4500,33 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   // If a valid multiplicity estimator is specified, centrality percentile is estimated via AliMultSelection
   // otherwise -1 is returned (and event is skipped)
   // *************************************************************
+
+  Short_t iCentralityIndex = -1;
+
   fMultEstimator.ToUpper();
 
-  if(
-      fMultEstimator.EqualTo("V0A") || fMultEstimator.EqualTo("V0C") || fMultEstimator.EqualTo("V0M") ||
-      fMultEstimator.EqualTo("CL0") || fMultEstimator.EqualTo("CL1") ||
-      fMultEstimator.EqualTo("ZNA") || fMultEstimator.EqualTo("ZNC")
-    )
+  // assigning centrality based on number of selected charged tracks
+  if( fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("CHARGED") )
   {
-    // some of supported AliMultSelection estimators (listed above)
-    Float_t dPercentile = 300;
-
-    // checking AliMultSelection
-    AliMultSelection* multSelection = 0x0;
-    multSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
-    if(!multSelection) { AliError("AliMultSelection object not found! Returning -1"); return -1;}
-
-    dPercentile = multSelection->GetMultiplicityPercentile(fMultEstimator.Data());
-    if(dPercentile > 100 || dPercentile < 0) { AliWarning("Centrality percentile estimated not within 0-100 range. Returning -1"); return -1;}
-    else {return dPercentile;}
+    iCentralityIndex = fVectorCharged->size();
   }
-  else if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("CHARGED"))
+  else if(
+    // some of supported AliMultSelection estimators
+    fMultEstimator.EqualTo("V0A") || fMultEstimator.EqualTo("V0C") ||
+    fMultEstimator.EqualTo("V0M") || fMultEstimator.EqualTo("CL0") ||
+    fMultEstimator.EqualTo("CL1") || fMultEstimator.EqualTo("ZNA") ||
+    fMultEstimator.EqualTo("ZNC")
+  )
   {
-    // assigning centrality based on number of selected charged tracks
-    return fVectorCharged->size();
+    // checking AliMultSelection
+    AliMultSelection* multSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
+    if(!multSelection) { AliError("AliMultSelection object not found! Returning -1"); return -1; }
+
+    Float_t dPercentile = multSelection->GetMultiplicityPercentile(fMultEstimator.Data());
+    if(dPercentile > 100 || dPercentile < 0)
+    { AliWarning("Centrality percentile estimated not within 0-100 range. Returning -1"); return -1; }
+
+    iCentralityIndex = (Short_t) dPercentile;
   }
   else
   {
@@ -4586,7 +4534,16 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
     return -1;
   }
 
-  return -1;
+  // transfering centrality percentile to multiplicity bin (if fixed size bins are used)
+  if(fUseFixedMultBins)
+  {
+    for(Int_t multIndex(0); multIndex < fNumMultBins; multIndex++)
+    {
+      if(iCentralityIndex >= fMultBins[multIndex] && iCentralityIndex < fMultBins[multIndex+1]) { iCentralityIndex = multIndex; break; }
+    }
+  }
+
+  return iCentralityIndex;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTPC(const AliAODTrack* track)
