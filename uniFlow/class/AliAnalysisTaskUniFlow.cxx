@@ -1625,26 +1625,35 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   // NOTE: should be called at the end of each event & before vectors deleting
   // *************************************************************
 
-  printf("Charged\t Pion\t Kaon\t Proton\t K0s\t Lambda\t Phi | (bef)\n");
-  printf("%lu \t%lu \t%lu \t%lu \t%lu \t%lu \t%lu\n",fVectorCharged->size(),fVectorPion->size(),fVectorKaon->size(),fVectorProton->size(),fVectorK0s->size(),fVectorLambda->size(),fVectorPhi->size());
+  // printf("Charged\t Pion\t Kaon\t Proton\t K0s\t Lambda\t Phi | (bef)\n");
+  // printf("%lu \t%lu \t%lu \t%lu \t%lu \t%lu \t%lu\n",fVectorCharged->size(),fVectorPion->size(),fVectorKaon->size(),fVectorProton->size(),fVectorK0s->size(),fVectorLambda->size(),fVectorPhi->size());
 
   // pointers owned by AliEvent containers
   if(fVectorCharged) { fVectorCharged->clear(); }
   if(fVectorPion) { fVectorPion->clear(); }
   if(fVectorKaon) { fVectorKaon->clear(); }
   if(fVectorProton) { fVectorProton->clear(); }
-  if(fVectorK0s) { fVectorK0s->clear(); }
-  if(fVectorLambda) { fVectorLambda->clear(); }
-
 
   // pointers owned by task
+  if(fVectorK0s)
+  {
+    for(Int_t i(0); i < fVectorK0s->size(); ++i) { delete fVectorK0s->at(i); }
+    fVectorK0s->clear();
+  }
+
+  if(fVectorLambda)
+  {
+    for(Int_t i(0); i < fVectorLambda->size(); ++i) { delete fVectorLambda->at(i); }
+    fVectorLambda->clear();
+  }
+
   if(fVectorPhi)
   {
     for(Int_t i(0); i < fVectorPhi->size(); ++i) { delete fVectorPhi->at(i); }
     fVectorPhi->clear();
   }
 
-  printf("%lu \t%lu \t%lu \t%lu \t%lu \t%lu \t%lu\n",fVectorCharged->size(),fVectorPion->size(),fVectorKaon->size(),fVectorProton->size(),fVectorK0s->size(),fVectorLambda->size(),fVectorPhi->size());
+  // printf("%lu \t%lu \t%lu \t%lu \t%lu \t%lu \t%lu\n",fVectorCharged->size(),fVectorPion->size(),fVectorKaon->size(),fVectorProton->size(),fVectorK0s->size(),fVectorLambda->size(),fVectorPhi->size());
 
   return;
 }
@@ -2223,7 +2232,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         iNumK0sSelected++;
         fhV0sCounter->Fill("K^{0}_{S}",1);
         if(fFillQA)  FillQAV0s(1,v0,kTRUE,0); // QA AFTER selection
-        fVectorK0s->push_back(v0);
+
+        fVectorK0s->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short()) );
+
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
         if(fFlowUseWeights)
         {
@@ -2247,7 +2258,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           iNumK0sSelected++;
           fhV0sCounter->Fill("K^{0}_{S}",1);
           fhV0sInvMassK0s->Fill(v0->MassK0Short(),v0->MassLambda());
-          fVectorK0s->push_back(v0);
+
+          fVectorK0s->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short()) );
+
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
@@ -2261,7 +2274,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           iNumLambdaSelected++;
           fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
           fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassLambda());
-          fVectorLambda->push_back(v0);
+
+          fVectorLambda->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassLambda()) );
+
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
@@ -2275,7 +2290,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
           iNumALambdaSelected++;
           fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
           fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassAntiLambda());
-          fVectorLambda->push_back(v0);
+
+          fVectorLambda->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassAntiLambda()) );
+
           if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt());
           if(fFlowUseWeights)
           {
@@ -4352,11 +4369,11 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     Double_t dPt = (*part)->Pt();
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
-    Double_t dMassPart = (*part)->M();
 
     // POIs mass bin check for V0s candidates
     if(species == kK0s || species == kLambda || species == kPhi)
     {
+      Double_t dMassPart = (*part)->M();
       if(dMassPart < dMassLow || dMassPart >= dMassHigh) { continue; }
     }
 
