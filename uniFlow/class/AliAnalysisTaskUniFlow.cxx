@@ -3031,7 +3031,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       AliPicoTrack* mother = MakeMother(kaon1,kaon2);
 
       // filling QA BEFORE selection
-      // if(fFillQA) FillQAPhi(0,&mother);
+      if(fFillQA) FillQAPhi(0,mother);
 
       if(mother->M() < fCutPhiInvMassMin || mother->M() > fCutPhiInvMassMax) continue;
       fhPhiCounter->Fill("InvMass",1);
@@ -3046,7 +3046,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       fhPhiCounter->Fill("Selected",1);
 
       // filling QA AFTER selection
-      // if(fFillQA) FillQAPhi(1,&mother);
+      if(fFillQA) FillQAPhi(1,mother);
 
       // filling weights
       if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsPhi->Fill(mother->Phi(), mother->Eta(), mother->Pt());
