@@ -2792,11 +2792,11 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   fhV0sCounter->Fill("Decay radius",1);
 
   // acceptance checks
-  if(fCutV0sDaughterEtaMax > 0. && ( (TMath::Abs(daughterNeg->Eta()) > fCutV0sDaughterEtaMax) || (TMath::Abs(daughterPos->Eta()) > fCutV0sDaughterEtaMax) ) ) return kFALSE;
+  if(fCutV0sDaughterEtaMax > 0. && ( (TMath::Abs(daughterNeg->Eta()) >= fCutV0sDaughterEtaMax) || (TMath::Abs(daughterPos->Eta()) >= fCutV0sDaughterEtaMax) ) ) return kFALSE;
   if(fCutV0sDaughterPtMin > 0. && (daughterPos->Pt() < fCutV0sDaughterPtMin  || daughterNeg->Pt() < fCutV0sDaughterPtMin) ) return kFALSE;
   if(fCutV0sDaughterPtMax > 0. && (daughterPos->Pt() > fCutV0sDaughterPtMax  || daughterNeg->Pt() > fCutV0sDaughterPtMax) ) return kFALSE;
 
-  if(fCutV0sMotherEtaMax > 0. && TMath::Abs(v0->Eta()) > fCutV0sDaughterEtaMax ) return kFALSE;
+  if(fCutV0sMotherEtaMax > 0. && TMath::Abs(v0->Eta()) >= fCutV0sMotherEtaMax ) return kFALSE;
   fhV0sCounter->Fill("Acceptance",1);
 
   // passing all common criteria
