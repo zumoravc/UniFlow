@@ -1611,10 +1611,7 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   // NOTE: should be called at the end of each event & before vectors deleting
   // *************************************************************
 
-  // printf("Charged\t Pion\t Kaon\t Proton\t K0s\t Lambda\t Phi | (bef)\n");
-  // printf("%lu \t%lu \t%lu \t%lu \t%lu \t%lu \t%lu\n",fVectorCharged->size(),fVectorPion->size(),fVectorKaon->size(),fVectorProton->size(),fVectorK0s->size(),fVectorLambda->size(),fVectorPhi->size());
-
-  // pointers owned by AliEvent containers
+  // pointers owned by Ali*Event containers
   if(fVectorCharged) { fVectorCharged->clear(); }
   if(fVectorPion) { fVectorPion->clear(); }
   if(fVectorKaon) { fVectorKaon->clear(); }
@@ -1623,23 +1620,21 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   // pointers owned by task
   if(fVectorK0s)
   {
-    for(Int_t i(0); i < fVectorK0s->size(); ++i) { delete fVectorK0s->at(i); }
+    for(size_t i(0); i < fVectorK0s->size(); ++i) { delete fVectorK0s->at(i); }
     fVectorK0s->clear();
   }
 
   if(fVectorLambda)
   {
-    for(Int_t i(0); i < fVectorLambda->size(); ++i) { delete fVectorLambda->at(i); }
+    for(size_t i(0); i < fVectorLambda->size(); ++i) { delete fVectorLambda->at(i); }
     fVectorLambda->clear();
   }
 
   if(fVectorPhi)
   {
-    for(Int_t i(0); i < fVectorPhi->size(); ++i) { delete fVectorPhi->at(i); }
+    for(size_t i(0); i < fVectorPhi->size(); ++i) { delete fVectorPhi->at(i); }
     fVectorPhi->clear();
   }
-
-  // printf("%lu \t%lu \t%lu \t%lu \t%lu \t%lu \t%lu\n",fVectorCharged->size(),fVectorPion->size(),fVectorKaon->size(),fVectorProton->size(),fVectorK0s->size(),fVectorLambda->size(),fVectorPhi->size());
 
   return;
 }
@@ -1755,6 +1750,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     }
   }
 
+  AliInfo("Preparing particle containers (std::vectors)");
   // creating particle vectors & reserving capacity in order to avoid memory re-allocation
   // when capacity is not enough later during filtering
   // NOTE: system and cuts dependent (should be modified accordingly)
