@@ -1790,7 +1790,13 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // fIndexCentrality = GetCentralityIndex();
 
   // processing of selected event
-  if(!ProcessEvent()) return;
+  Bool_t bProcessed = ProcessEvent();
+
+  // need to be done no matter if the event was completely processed or not
+  // because processing can return at various steps where tracks can be created/pushed to vectors
+  ClearVectors();
+
+  if(!bProcessed) return;
 
   // posting data (mandatory)
   PostData(1, fFlowRefs);
@@ -3503,8 +3509,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   }
 
   // filtering particles
-  ClearVectors();
   Filtering();
+  
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
   if(fIndexCentrality < 0) return kFALSE;
 
