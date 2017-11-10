@@ -848,20 +848,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fQAV0s = new TList();
   fQAV0s->SetOwner(kTRUE);
 
-  // creating particle vectors
-  fVectorCharged = new std::vector<AliVTrack*>;
-  fVectorPion = new std::vector<AliVTrack*>;
-  fVectorKaon = new std::vector<AliVTrack*>;
-  fVectorProton = new std::vector<AliVTrack*>;
-  fVectorK0s = new std::vector<AliVTrack*>;
-  fVectorLambda = new std::vector<AliVTrack*>;
-  fVectorPhi = new std::vector<AliVTrack*>;
-
-  fVectorCharged->reserve(300);
-  if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(100); fVectorProton->reserve(100); }
-  if(fProcessPhi) { fVectorPhi->reserve(200); }
-  if(fProcessV0s) { fVectorK0s->reserve(100); fVectorLambda->reserve(100); }
-
   // creating histograms
     // event histogram
     fhEventSampling = new TH2D("fhEventSampling","Event sampling; centrality/multiplicity; sample index", fFlowCentNumBins,0,fFlowCentNumBins, fNumSamples,0,fNumSamples);
@@ -1767,6 +1753,34 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
       fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
       fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
     }
+  }
+
+  // creating particle vectors & reserving capacity in order to avoid memory re-allocation
+  // when capacity is not enough later during filtering
+  // NOTE: system and cuts dependent (should be modified accordingly)
+
+  fVectorCharged = new std::vector<AliVTrack*>;
+  fVectorPion = new std::vector<AliVTrack*>;
+  fVectorKaon = new std::vector<AliVTrack*>;
+  fVectorProton = new std::vector<AliVTrack*>;
+  fVectorK0s = new std::vector<AliVTrack*>;
+  fVectorLambda = new std::vector<AliVTrack*>;
+  fVectorPhi = new std::vector<AliVTrack*>;
+
+  switch(fColSystem)
+  {
+    case kPPb :
+      fVectorCharged->reserve(200);
+      if(fProcessPID) { fVectorPion->reserve(100); fVectorKaon->reserve(40); fVectorProton->reserve(30); }
+      if(fProcessV0s) { fVectorK0s->reserve(100); fVectorLambda->reserve(150); }
+      if(fProcessPhi) { fVectorPhi->reserve(20); }
+      break;
+
+    default :
+      fVectorCharged->reserve(300);
+      if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(100); fVectorProton->reserve(100); }
+      if(fProcessV0s) { fVectorK0s->reserve(100); fVectorLambda->reserve(100); }
+      if(fProcessPhi) { fVectorPhi->reserve(200); }
   }
 
   AliInfo("Initialization succesfull!");
@@ -3510,7 +3524,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   // filtering particles
   Filtering();
-  
+
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
   if(fIndexCentrality < 0) return kFALSE;
 
