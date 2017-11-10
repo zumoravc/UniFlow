@@ -7,6 +7,7 @@
 
 #include "AliAnalysisTaskSE.h"
 #include "AliEventCuts.h"
+#include "AliPicoTrack.h"
 
 
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
@@ -18,21 +19,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
       enum    PartSpecies {kUnknown, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
-      AliEventCuts fEventCuts; //
-
-      struct FlowPart // representation of selected particle (species independent) storing only basic properties for flow calculations
-      {
-                FlowPart(Double_t dPt = 0, Double_t dPhi = 0, Double_t dEta = 0, Short_t iCharge = 0, PartSpecies sSpecies = kUnknown, Double_t dMass = 0, Double_t dPx = 0, Double_t dPy = 0, Double_t dPz = 0) :
-                  pt(dPt), px(dPx), py(dPy), pz(dPz), phi(dPhi), eta(dEta), mass(dMass), charge(iCharge), species(sSpecies) {} // constructor
-
-        void    PrintPart() const { printf("pt %g | px %g | py %g| pz %g | phi %g | eta %g | mass %g | charge %d | species %d \n",pt,px,py,pz,phi,eta,mass,charge,species); } // print struct members
-        static FlowPart MakeMother(const FlowPart* part1 = 0x0, const FlowPart* part2 = 0x0, const PartSpecies = kUnknown); // reconstruct & fill properties of potential mother from two FlowPart daughters
-        static Double_t InvMass(const FlowPart* part1, const FlowPart* part2); // calculate invariant mass from two FlowPart daughters
-
-        Double_t pt,px,py,pz,phi,eta,mass;
-        Short_t charge;
-        PartSpecies species;
-      };
                               AliAnalysisTaskUniFlow(); // constructor
                               AliAnalysisTaskUniFlow(const char *name); // named (primary) constructor
       virtual                 ~AliAnalysisTaskUniFlow(); // destructor
@@ -131,9 +117,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // related to Alex's code
       Bool_t                  IsV0SelectedK0sAlex(const AliAODv0* v0 = 0x0); //
       Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta); //
-      Bool_t       fDoAlexK0sSelection; //
-
+      Bool_t                  fDoAlexK0sSelection; //
       // end of Alex's code
+
+      AliEventCuts fEventCuts; //
 
     private:
       // array lenghts & constants
@@ -165,6 +152,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       void                    ListParameters(); // list all task parameters
+      void                    ClearVectors(); // properly clear all particle vectors
 
       Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
       Bool_t                  IsEventSelected_2016(); // event selection for LHC2016 pp & pPb data
@@ -190,7 +178,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
       void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
       void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
-      void                    FillQAPhi(const Short_t iQAindex, const FlowPart* part = 0x0); // filling QA plots for V0s candidates
+      AliPicoTrack*           MakeMother(const AliAODTrack* part1, const AliAODTrack* part2); // Combine two prongs into a mother particle stored in AliPicoTrack object
+      void                    FillQAPhi(const Short_t iQAindex, const AliPicoTrack* part = 0x0); // filling QA plots for V0s candidates
       // Flow related methods
       void                    DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       void                    DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
@@ -239,13 +228,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]; // flow vector array for flow calculation
 
       // selected POIs containers
-      std::vector<FlowPart>*  fVectorCharged; //! container for selected charged particles
-      std::vector<FlowPart>*  fVectorPion; //! container for selected pion candidates
-      std::vector<FlowPart>*  fVectorKaon; //! container for selected kaon candidates
-      std::vector<FlowPart>*  fVectorProton; //! container for selected proton candidates
-      std::vector<FlowPart>*  fVectorK0s; //! container for selected K0s candidates
-      std::vector<FlowPart>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
-      std::vector<FlowPart>*  fVectorPhi; //! container for selected phi candidates (unlike-sign pairs)
+      std::vector<AliVTrack*>*  fVectorCharged; //! container for selected charged particles
+      std::vector<AliVTrack*>*  fVectorPion; //! container for selected pion candidates
+      std::vector<AliVTrack*>*  fVectorKaon; //! container for selected kaon candidates
+      std::vector<AliVTrack*>*  fVectorProton; //! container for selected proton candidates
+      std::vector<AliVTrack*>*  fVectorK0s; //! container for selected K0s candidates
+      std::vector<AliVTrack*>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
+      std::vector<AliVTrack*>*  fVectorPhi; //! container for selected phi candidates (unlike-sign pairs)
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
