@@ -3006,8 +3006,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   // If track passes all requirements, the relevant properties (pT, eta, phi) are stored
   // in FlowPart struct  and pushed to relevant vector container.
   // *************************************************************
-
-  Int_t iNumKaons = fVectorKaon->size();
+  Int_t iNumKaons = (Int_t) fVectorKaon->size();
   // check if there are at least 2 selected kaons in event (minimum for phi reconstruction)
   if(iNumKaons < 2) return;
 
@@ -3023,20 +3022,19 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       AliAODTrack* kaon2 = dynamic_cast<AliAODTrack*>(fVectorKaon->at(iKaon2));
       if(!kaon2) continue;
 
-      fhPhiCounter->Fill("Input",1);
-
       AliPicoTrack* mother = MakeMother(kaon1,kaon2);
+      fhPhiCounter->Fill("Input",1);
 
       // filling QA BEFORE selection
       if(fFillQA) FillQAPhi(0,mother);
 
-      if(mother->M() < fCutPhiInvMassMin || mother->M() > fCutPhiInvMassMax) continue;
+      if(mother->M() < fCutPhiInvMassMin || mother->M() > fCutPhiInvMassMax) { delete mother; continue; }
       fhPhiCounter->Fill("InvMass",1);
 
-      if(mother->Pt() < fFlowPOIsPtMin || mother->Pt() > fFlowPOIsPtMax) continue;
+      if(mother->Pt() < fFlowPOIsPtMin || mother->Pt() > fFlowPOIsPtMax) { delete mother; continue; }
       fhPhiCounter->Fill("Pt",1);
 
-      if(fCutPhiMotherEtaMax > 0 && TMath::Abs(mother->Eta()) > fCutPhiMotherEtaMax)  continue;
+      if(fCutPhiMotherEtaMax > 0 && TMath::Abs(mother->Eta()) > fCutPhiMotherEtaMax) { delete mother; continue; }
       fhPhiCounter->Fill("Eta",1);
 
       // mother (phi) candidate passing all criteria
@@ -3070,7 +3068,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
         for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
         {
           if(mother->Eta() > fEtaGap[iGap]/2 ) fh3PhiEntriesBGPos[iGap]->Fill(fIndexCentrality,mother->Pt(),mother->M());
-          if(fEtaGap[iGap] >= 0. && mother->Eta() < -fEtaGap[iGap]/2 ) fh3PhiEntriesBGNeg[iGap]->Fill(fIndexCentrality,mother->Pt(),mother->M());
+          if(fEtaGap[iGap] > -1. && mother->Eta() < -fEtaGap[iGap]/2 ) fh3PhiEntriesBGNeg[iGap]->Fill(fIndexCentrality,mother->Pt(),mother->M());
         }
       }
 
