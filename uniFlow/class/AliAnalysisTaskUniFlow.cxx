@@ -3161,8 +3161,6 @@ void AliAnalysisTaskUniFlow::FilterPID()
     // check if only protons should be used
     if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) species = kUnknown;
 
-    Double_t weight = 0;
-
     // selection of PID tracks
     switch (species)
     {
@@ -3171,7 +3169,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsPion->Fill(track->Phi(), track->Eta(), track->Pt());
         if(fFlowUseWeights)
         {
-          weight = fh2WeightPion->GetBinContent( fh2WeightPion->FindBin(track->Eta(),track->Phi()) );
+          Double_t weight = fh2WeightPion->GetBinContent( fh2WeightPion->FindBin(track->Eta(),track->Phi()) );
           fh3AfterWeightsPion->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
         }
         break;
@@ -3180,7 +3178,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsKaon->Fill(track->Phi(), track->Eta(), track->Pt());
         if(fFlowUseWeights)
         {
-          weight = fh2WeightKaon->GetBinContent( fh2WeightKaon->FindBin(track->Eta(),track->Phi()) );
+          Double_t weight = fh2WeightKaon->GetBinContent( fh2WeightKaon->FindBin(track->Eta(),track->Phi()) );
           fh3AfterWeightsKaon->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
         }
         break;
@@ -3189,7 +3187,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsProton->Fill(track->Phi(), track->Eta(), track->Pt());
         if(fFlowUseWeights)
         {
-          weight = fh2WeightProton->GetBinContent( fh2WeightProton->FindBin(track->Eta(),track->Phi()) );
+          Double_t weight = fh2WeightProton->GetBinContent( fh2WeightProton->FindBin(track->Eta(),track->Phi()) );
           fh3AfterWeightsProton->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
         }
         break;
@@ -3279,7 +3277,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     }
 
     // combined TPC + TOF nSigma cuts
-    if(dPt > 0.4) // && < 4 GeV TODO once TPC dEdx parametrisation is available
+    if(dPt > 0.4 && dPt < 4.0)
     {
       Float_t dNumSigmaCombined[5] = {-99.,-99.,-99.,-99.,-99.};
 
@@ -3302,12 +3300,19 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       if(dMinSigmasCombined == dNumSigmaCombined[4] && dNumSigmaCombined[4] <= fCutPIDnSigmaProtonMax) return kProton;
     }
 
-    // TPC dEdx parametrisation (dEdx - <dEdx>)
-    // TODO: TPC dEdx parametrisation cuts
-    // if(dPt > 3.)
+    // if(dPt >= 4.0)
     // {
-    //
-    // }
+      // NOTE: in this pt range, nSigmaTPC is not enought to distinquish well between species
+      // all three values are close to each other -> minimum difference is not applied, just nSigma cut
+
+      // TPC dEdx parametrisation (dEdx - <dEdx>)
+      // TODO: TPC dEdx parametrisation cuts
+      // if(dPt > 3.)
+      // {
+      //
+      // }
+    }
+
   }
 
   return kUnknown;
