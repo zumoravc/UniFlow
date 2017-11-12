@@ -1281,19 +1281,19 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // V0 candidates histograms
     if(fProcessV0s)
     {
-      TString sV0sCounterLabel[] = {"Input","Daughters OK","Charge","Reconstruction method","TPC refit","Kinks","Daughters track quality","DCA to PV","Daughters DCA","Decay radius","Acceptance","Common passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
+      TString sV0sCounterLabel[] = {"Input","Daughters OK","Mother acceptance","Daughter acceptance","Charge","Reconstruction method","TPC refit","Kinks","Daughters track quality","DCA to PV","Daughters DCA","Decay radius","Common passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
       const Short_t iNBinsV0sCounter = sizeof(sV0sCounterLabel)/sizeof(sV0sCounterLabel[0]);
       fhV0sCounter = new TH1D("fhV0sCounter","V^{0}: Counter",iNBinsV0sCounter,0,iNBinsV0sCounter);
       for(Short_t i(0); i < iNBinsV0sCounter; i++) fhV0sCounter->GetXaxis()->SetBinLabel(i+1, sV0sCounterLabel[i].Data() );
       fQAV0s->Add(fhV0sCounter);
 
-      TString sV0sK0sCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Daughters PID","Competing InvMass","Selected"};
+      TString sV0sK0sCounterLabel[] = {"Input","#it{y}","InvMass","CPA","Armenteros-Podolanski","c#tau","Daughters PID","Competing InvMass","Selected"};
       const Short_t iNBinsV0sK0sCounter = sizeof(sV0sK0sCounterLabel)/sizeof(sV0sK0sCounterLabel[0]);
       fhV0sCounterK0s = new TH1D("fhV0sCounterK0s","V^{0}: K^{0}_{S} Counter",iNBinsV0sK0sCounter,0,iNBinsV0sK0sCounter);
       for(Short_t i(0); i < iNBinsV0sK0sCounter; i++) fhV0sCounterK0s->GetXaxis()->SetBinLabel(i+1, sV0sK0sCounterLabel[i].Data() );
       fQAV0s->Add(fhV0sCounterK0s);
 
-      TString sV0sLambdaCounterLabel[] = {"Input","CPA","c#tau","Armenteros-Podolanski","#it{y}","InvMass","Daughter PID","Competing InvMass","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
+      TString sV0sLambdaCounterLabel[] = {"Input","#it{y}","InvMass","CPA","Armenteros-Podolanski","c#tau","Daughter PID","Competing InvMass","Selected","only #Lambda","only #bar{#Lambda}","#Lambda && #bar{#Lambda}"};
       const Short_t iNBinsV0sLambdaCounter = sizeof(sV0sLambdaCounterLabel)/sizeof(sV0sLambdaCounterLabel[0]);
       fhV0sCounterLambda = new TH1D("fhV0sCounterLambda","V^{0}: #Lambda/#bar{#Lambda} Counter",iNBinsV0sLambdaCounter,0,iNBinsV0sLambdaCounter);
       for(Short_t i(0); i < iNBinsV0sLambdaCounter; i++) fhV0sCounterLambda->GetXaxis()->SetBinLabel(i+1, sV0sLambdaCounterLabel[i].Data() );
@@ -2206,9 +2206,8 @@ void AliAnalysisTaskUniFlow::FilterV0s()
 {
   // Filtering input V0s candidates (K0s, (Anti)Lambda)
   // If track passes all requirements as defined in IsV0sSelected() (and species dependent one)
-  // the relevant properties (pT, eta, phi,mass,species) are stored in FlowPart struct
+  // the relevant properties (pT, eta, phi,mass,species) are stored in a new AliPicoTrack
   // and pushed to relevant vector container.
-  // return kFALSE if any complications occurs
   // *************************************************************
 
   Int_t iNumK0sSelected = 0;  // counter for selected K0s candidates
@@ -2220,7 +2219,6 @@ void AliAnalysisTaskUniFlow::FilterV0s()
 
   for(Int_t iV0(0); iV0 < iNumV0s; iV0++)
   {
-    // the minimalistic dynamic allocation of the TClonesArray*
     AliAODv0* v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
     if(!v0) continue;
 
@@ -2234,7 +2232,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         // selected K0s according to Alex
         iNumK0sSelected++;
         fhV0sCounter->Fill("K^{0}_{S}",1);
-        if(fFillQA)  FillQAV0s(1,v0,kTRUE,0); // QA AFTER selection
+        if(fFillQA) FillQAV0s(1,v0,kTRUE,0); // QA AFTER selection
 
         fVectorK0s->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short()) );
 
@@ -2333,32 +2331,22 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   if(!v0) return kFALSE;
   fhV0sCounterK0s->Fill("Input",1);
 
+  // rapidity selection
+  if(fCutV0sMotherRapMax > 0. && ( TMath::Abs(v0->RapK0Short()) > fCutV0sMotherRapMax ) ) return kFALSE;
+  fhV0sCounterK0s->Fill("#it{y}",1);
+
+  // inv. mass window
+  Double_t dMass = v0->MassK0Short();
+  if( dMass < fCutV0sInvMassK0sMin || dMass > fCutV0sInvMassK0sMax ) return kFALSE;
+  fhV0sCounterK0s->Fill("InvMass",1);
+
   // cosine of pointing angle (CPA)
   if(fCutV0sCPAK0sMin > 0.)
   {
-    AliAODVertex* primVtx = fEventAOD->GetPrimaryVertex();
-    Double_t dCPA = v0->CosPointingAngle(primVtx);
+    Double_t dCPA = v0->CosPointingAngle(fEventAOD->GetPrimaryVertex());
     if( dCPA < fCutV0sCPAK0sMin ) return kFALSE;
   }
   fhV0sCounterK0s->Fill("CPA",1);
-
-  // proper life-time
-  if( fCutV0sNumTauK0sMax > 0. )
-  {
-    AliAODVertex* primVtx2 = fEventAOD->GetPrimaryVertex();
-    Double_t dPrimVtxCoor[3] = {0.}; // primary vertex position {x,y,z}
-    Double_t dSecVtxCoor[3] = {0.}; // secondary vertex position {x,y,z}
-    Double_t dDecayCoor[3] = {0.}; // decay vector coor {xyz}
-    primVtx2->GetXYZ(dPrimVtxCoor);
-    v0->GetSecondaryVtx(dSecVtxCoor);
-
-    for(Int_t i(0); i < 3; i++)
-      dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
-
-    Double_t dPropLife = ( (fPDGMassK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
-    if( dPropLife > (fCutV0sNumTauK0sMax * 2.68) ) return kFALSE;
-  }
-  fhV0sCounterK0s->Fill("c#tau",1);
 
   // Armenteros-Podolaski plot
   if(fCutV0sArmenterosAlphaK0sMin > 0.)
@@ -2369,14 +2357,22 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   }
   fhV0sCounterK0s->Fill("Armenteros-Podolanski",1);
 
-  // rapidity selection
-  if(fCutV0sMotherRapMax > 0. && ( TMath::Abs(v0->RapK0Short()) > fCutV0sMotherRapMax ) ) return kFALSE;
-  fhV0sCounterK0s->Fill("#it{y}",1);
+  // proper life-time
+  if( fCutV0sNumTauK0sMax > 0. )
+  {
+    Double_t dPrimVtxCoor[3] = {0.}; // primary vertex position {x,y,z}
+    Double_t dSecVtxCoor[3] = {0.}; // secondary vertex position {x,y,z}
+    Double_t dDecayCoor[3] = {0.}; // decay vector coor {xyz}
+    AliAODVertex* primVtx = fEventAOD->GetPrimaryVertex();
+    primVtx->GetXYZ(dPrimVtxCoor);
+    v0->GetSecondaryVtx(dSecVtxCoor);
 
-  // inv. mass window
-  Double_t dMass = v0->MassK0Short();
-  if( dMass < fCutV0sInvMassK0sMin || dMass > fCutV0sInvMassK0sMax ) return kFALSE;
-  fhV0sCounterK0s->Fill("InvMass",1);
+    for(Int_t i(0); i < 3; i++) { dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i]; }
+
+    Double_t dPropLife = ( (fPDGMassK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    if( dPropLife > (fCutV0sNumTauK0sMax * 2.68) ) return kFALSE;
+  }
+  fhV0sCounterK0s->Fill("c#tau",1);
 
   // Daughter PID
   if(fCutV0sK0sPionNumTPCSigmaMax > 0.)
@@ -2433,42 +2429,6 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   if(!v0) return 0;
   fhV0sCounterLambda->Fill("Input",1);
 
-  // cosine of pointing angle (CPA)
-  if( fCutV0sCPALambdaMin > 0. )
-  {
-    AliAODVertex* primVtx = fEventAOD->GetPrimaryVertex();
-    Double_t dCPA = v0->CosPointingAngle(primVtx);
-    if( dCPA < fCutV0sCPALambdaMin ) return 0;
-  }
-  fhV0sCounterLambda->Fill("CPA",1);
-
-  // proper life-time
-  if( fCutV0sNumTauLambdaMax > 0. )
-  {
-    Double_t dPrimVtxCoor[3] = {0.}; // primary vertex position {x,y,z}
-    Double_t dSecVtxCoor[3] = {0.}; // secondary vertex position {x,y,z}
-    Double_t dDecayCoor[3] = {0.}; // decay vector coor {xyz}
-    AliAODVertex* primVtx2 = fEventAOD->GetPrimaryVertex();
-    primVtx2->GetXYZ(dPrimVtxCoor);
-    v0->GetSecondaryVtx(dSecVtxCoor);
-
-    for(Int_t i(0); i < 3; i++)
-      dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i];
-
-    Double_t dPropLife = ( (fPDGMassLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
-    if( dPropLife > (fCutV0sNumTauLambdaMax * 7.89) ) return 0;
-  }
-  fhV0sCounterLambda->Fill("c#tau",1);
-
-  // Armenteros-Podolaski plot
-  if(fCutV0sArmenterosAlphaLambdaMax > 0.)
-  {
-    Double_t dPtArm = v0->PtArmV0();
-    Double_t dAlpha = v0->AlphaV0();
-    if(dPtArm > (fCutV0sArmenterosAlphaLambdaMax * TMath::Abs(dAlpha))) return 0;
-  }
-  fhV0sCounterLambda->Fill("Armenteros-Podolanski",1);
-
   // rapidity selection
   if(fCutV0sMotherRapMax > 0. && ( TMath::Abs(v0->RapLambda()) > fCutV0sMotherRapMax) ) return 0;
   fhV0sCounterLambda->Fill("#it{y}",1);
@@ -2480,15 +2440,28 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   // inv. mass window
   Double_t dMassLambda = v0->MassLambda();
   Double_t dMassALambda = v0->MassAntiLambda();
-  if( dMassLambda > fCutV0sInvMassLambdaMin && dMassLambda < fCutV0sInvMassLambdaMax)
-    bIsLambda = kTRUE;
+  if( dMassLambda > fCutV0sInvMassLambdaMin && dMassLambda < fCutV0sInvMassLambdaMax) { bIsLambda = kTRUE; }
+  if( dMassALambda > fCutV0sInvMassLambdaMin && dMassALambda < fCutV0sInvMassLambdaMax) { bIsALambda = kTRUE; }
 
-  if( dMassALambda > fCutV0sInvMassLambdaMin && dMassALambda < fCutV0sInvMassLambdaMax)
-    bIsALambda = kTRUE;
-
-  if(!bIsLambda && !bIsALambda) // if neither
-    return 0;
+  if(!bIsLambda && !bIsALambda) return 0;
   fhV0sCounterLambda->Fill("InvMass",1);
+
+  // cosine of pointing angle (CPA)
+  if( fCutV0sCPALambdaMin > 0. )
+  {
+    Double_t dCPA = v0->CosPointingAngle(fEventAOD->GetPrimaryVertex());
+    if( dCPA < fCutV0sCPALambdaMin ) return 0;
+  }
+  fhV0sCounterLambda->Fill("CPA",1);
+
+  // Armenteros-Podolaski plot
+  if(fCutV0sArmenterosAlphaLambdaMax > 0.)
+  {
+    Double_t dPtArm = v0->PtArmV0();
+    Double_t dAlpha = v0->AlphaV0();
+    if(dPtArm > (fCutV0sArmenterosAlphaLambdaMax * TMath::Abs(dAlpha))) return 0;
+  }
+  fhV0sCounterLambda->Fill("Armenteros-Podolanski",1);
 
   // // Armenteros-Podolanski for candidates fullfilling both Lambda and Anti-Lambda selection
   // if(bIsLambda && bIsALambda)
@@ -2496,6 +2469,23 @@ Short_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   //   if(v0->AlphaV0() < 0.) bIsLambda = kFALSE;
   //   if(v0->AlphaV0() > 0.) bIsALambda = kFALSE;
   // }
+
+  // proper life-time
+  if( fCutV0sNumTauLambdaMax > 0. )
+  {
+    Double_t dPrimVtxCoor[3] = {0.}; // primary vertex position {x,y,z}
+    Double_t dSecVtxCoor[3] = {0.}; // secondary vertex position {x,y,z}
+    Double_t dDecayCoor[3] = {0.}; // decay vector coor {xyz}
+    AliAODVertex* primVtx = fEventAOD->GetPrimaryVertex();
+    primVtx->GetXYZ(dPrimVtxCoor);
+    v0->GetSecondaryVtx(dSecVtxCoor);
+
+    for(Int_t i(0); i < 3; i++) { dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i]; }
+
+    Double_t dPropLife = ( (fPDGMassLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    if( dPropLife > (fCutV0sNumTauLambdaMax * 7.89) ) return 0;
+  }
+  fhV0sCounterLambda->Fill("c#tau",1);
 
   // daughter PID of Lambda Candidates
   if( fCutV0sLambdaProtonNumTPCSigmaMax > 0. || fCutV0sLambdaPionNumTPCSigmaMax > 0. )
@@ -2712,14 +2702,20 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if(!daughterPos || !daughterNeg) return kFALSE;
   fhV0sCounter->Fill("Daughters OK",1);
 
-  // filter bit
-  // printf("FB: %d\n",daughterPos->TestFilterBit(fCutV0sDaughterFilterBit));
-  if( fCutV0sDaughterFilterBit > 0 && (!daughterPos->TestFilterBit(fCutV0sDaughterFilterBit) || !daughterNeg->TestFilterBit(fCutV0sDaughterFilterBit) ) ) return kFALSE;
+  // acceptance checks
+  if(fCutV0sMotherEtaMax > 0. && TMath::Abs(v0->Eta()) >= fCutV0sMotherEtaMax ) return kFALSE;
+  if(v0->Pt() >= fFlowPOIsPtMax) return kFALSE;
+  fhV0sCounter->Fill("Mother acceptance",1);
+
+  if(fCutV0sDaughterPtMin > 0. && (daughterPos->Pt() <= fCutV0sDaughterPtMin  || daughterNeg->Pt() <= fCutV0sDaughterPtMin) ) return kFALSE;
+  if(fCutV0sDaughterPtMax > 0. && (daughterPos->Pt() >= fCutV0sDaughterPtMax  || daughterNeg->Pt() >= fCutV0sDaughterPtMax) ) return kFALSE;
+  if(fCutV0sDaughterEtaMax > 0. && ( (TMath::Abs(daughterNeg->Eta()) >= fCutV0sDaughterEtaMax) || (TMath::Abs(daughterPos->Eta()) >= fCutV0sDaughterEtaMax) ) ) return kFALSE;
+  fhV0sCounter->Fill("Daughter acceptance",1);
 
   // daughters & mother charge checks
-  if( (TMath::Abs(daughterPos->Charge()) != 1) || (TMath::Abs(daughterNeg->Charge()) != 1) ) return kFALSE;
-  if(daughterPos->Charge() == daughterNeg->Charge()) return kFALSE;
   if(v0->Charge() != 0) return kFALSE;
+  if(daughterPos->Charge() == daughterNeg->Charge()) return kFALSE;
+  if( (TMath::Abs(daughterPos->Charge()) != 1) || (TMath::Abs(daughterNeg->Charge()) != 1) ) return kFALSE;
   fhV0sCounter->Fill("Charge",1);
 
   // reconstruction method: online (on-the-fly) OR offline
@@ -2729,6 +2725,10 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   // TPC refit
   if(fCutV0srefitTPC && ( !daughterPos->IsOn(AliAODTrack::kTPCrefit) || !daughterNeg->IsOn(AliAODTrack::kTPCrefit) ) ) return kFALSE;
   fhV0sCounter->Fill("TPC refit",1);
+
+  // filter bit
+  if( fCutV0sDaughterFilterBit > 0 && (!daughterPos->TestFilterBit(fCutV0sDaughterFilterBit) || !daughterNeg->TestFilterBit(fCutV0sDaughterFilterBit) ) ) return kFALSE;
+  fhV0sCounter->Fill("Daughter FB",1);
 
   // Kinks
   const AliAODVertex* prodVtxDaughterPos = (AliAODVertex*) daughterPos->GetProdVertex(); // production vertex of the positive daughter track
@@ -2752,37 +2752,39 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   // Daughters DCA to PV
   Double_t dDCAPosToPV = TMath::Abs(v0->DcaPosToPrimVertex());
   Double_t dDCANegToPV = TMath::Abs(v0->DcaNegToPrimVertex());
+  if(fCutV0sDCAtoPVMin > 0. && ( dDCAPosToPV < fCutV0sDCAtoPVMin || dDCANegToPV < fCutV0sDCAtoPVMin ) ) return kFALSE;
+  if(fCutV0sDCAtoPVMax > 0. && ( dDCAPosToPV > fCutV0sDCAtoPVMax || dDCANegToPV > fCutV0sDCAtoPVMax ) ) return kFALSE;
 
   // note AliAODTrack::XYZAtDCA() works only for constrained tracks
-  Double_t dVertexXYZ[3] = {0.};
-  Double_t dTrackXYZpos[3] = {0.};
-  Double_t dTrackXYZneg[3] = {0.};
-  Double_t dDCAXYZpos[3] = {0.};
-  Double_t dDCAXYZneg[3] = {0.};
-  if( fCutV0sDCAtoPVzMax > 0. )
+  if(fCutV0sDCAtoPVzMax > 0.)
   {
+    Double_t dVertexXYZ[3] = {0.};
+    Double_t dTrackXYZpos[3] = {0.};
+    Double_t dTrackXYZneg[3] = {0.};
+    Double_t dDCAXYZpos[3] = {0.};
+    Double_t dDCAXYZneg[3] = {0.};
+
     const AliAODVertex* vertex = fEventAOD->GetPrimaryVertex();
     if(!vertex) return kFALSE; // event does not have a PV
 
+    vertex->GetXYZ(dVertexXYZ);
     daughterPos->GetXYZ(dTrackXYZpos);
     daughterNeg->GetXYZ(dTrackXYZneg);
-    vertex->GetXYZ(dVertexXYZ);
 
     for(Short_t i(0); i < 3; i++)
     {
       dDCAXYZpos[i] = dTrackXYZpos[i] - dVertexXYZ[i];
       dDCAXYZneg[i] = dTrackXYZneg[i] - dVertexXYZ[i];
     }
-  }
 
-  if(fCutV0sDCAtoPVMin > 0. && ( dDCAPosToPV < fCutV0sDCAtoPVMin || dDCANegToPV < fCutV0sDCAtoPVMin ) ) return kFALSE;
-  if(fCutV0sDCAtoPVMax > 0. && ( dDCAPosToPV > fCutV0sDCAtoPVMax || dDCANegToPV > fCutV0sDCAtoPVMax ) ) return kFALSE;
-  if(fCutV0sDCAtoPVzMax > 0. && ( TMath::Abs(dDCAXYZpos[2]) > fCutV0sDCAtoPVzMax || TMath::Abs(dDCAXYZneg[2]) > fCutV0sDCAtoPVzMax ) ) return kFALSE;
+    if( TMath::Abs(dDCAXYZpos[2]) > fCutV0sDCAtoPVzMax || TMath::Abs(dDCAXYZneg[2]) > fCutV0sDCAtoPVzMax ) return kFALSE;
+  }
   fhV0sCounter->Fill("DCA to PV",1);
 
   // Daughter DCA among themselves
-  if(fCutV0sDCADaughtersMin > 0. && TMath::Abs(v0->DcaV0Daughters()) < fCutV0sDCADaughtersMin) return kFALSE;
-  if(fCutV0sDCADaughtersMax > 0. && TMath::Abs(v0->DcaV0Daughters()) > fCutV0sDCADaughtersMax) return kFALSE;
+  Double_t dDCADaughters = v0->DcaV0Daughters();
+  if(fCutV0sDCADaughtersMin > 0. && TMath::Abs(dDCADaughters) < fCutV0sDCADaughtersMin) return kFALSE;
+  if(fCutV0sDCADaughtersMax > 0. && TMath::Abs(dDCADaughters) > fCutV0sDCADaughtersMax) return kFALSE;
   fhV0sCounter->Fill("Daughters DCA",1);
 
   // radius of decay vertex in transverse plane
@@ -2790,14 +2792,6 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   if( fCutV0sDecayRadiusMin > 0. && (dDecayRadius < fCutV0sDecayRadiusMin) ) return kFALSE;
   if( fCutV0sDecayRadiusMax > 0. && (dDecayRadius > fCutV0sDecayRadiusMax) ) return kFALSE;
   fhV0sCounter->Fill("Decay radius",1);
-
-  // acceptance checks
-  if(fCutV0sDaughterEtaMax > 0. && ( (TMath::Abs(daughterNeg->Eta()) >= fCutV0sDaughterEtaMax) || (TMath::Abs(daughterPos->Eta()) >= fCutV0sDaughterEtaMax) ) ) return kFALSE;
-  if(fCutV0sDaughterPtMin > 0. && (daughterPos->Pt() < fCutV0sDaughterPtMin  || daughterNeg->Pt() < fCutV0sDaughterPtMin) ) return kFALSE;
-  if(fCutV0sDaughterPtMax > 0. && (daughterPos->Pt() > fCutV0sDaughterPtMax  || daughterNeg->Pt() > fCutV0sDaughterPtMax) ) return kFALSE;
-
-  if(fCutV0sMotherEtaMax > 0. && TMath::Abs(v0->Eta()) >= fCutV0sMotherEtaMax ) return kFALSE;
-  fhV0sCounter->Fill("Acceptance",1);
 
   // passing all common criteria
   fhV0sCounter->Fill("Common passed",1);
