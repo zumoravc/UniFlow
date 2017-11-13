@@ -79,6 +79,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
 
   // FlowPart containers
+  fVectorRefs(0x0),
   fVectorCharged(0x0),
   fVectorPion(0x0),
   fVectorKaon(0x0),
@@ -350,6 +351,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
 
   // FlowPart containers
+  fVectorRefs(0x0),
   fVectorCharged(0x0),
   fVectorPion(0x0),
   fVectorKaon(0x0),
@@ -777,6 +779,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   ClearVectors();
 
   // deleting FlowPart vectors (containers)
+  if(fVectorRefs) delete fVectorRefs;
   if(fVectorCharged) delete fVectorCharged;
   if(fVectorPion) delete fVectorPion;
   if(fVectorKaon) delete fVectorKaon;
@@ -1612,6 +1615,7 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   // *************************************************************
 
   // pointers owned by Ali*Event containers
+  if(fVectorRefs) { fVectorRefs->clear(); }
   if(fVectorCharged) { fVectorCharged->clear(); }
   if(fVectorPion) { fVectorPion->clear(); }
   if(fVectorKaon) { fVectorKaon->clear(); }
@@ -1755,6 +1759,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // when capacity is not enough later during filtering
   // NOTE: system and cuts dependent (should be modified accordingly)
 
+  fVectorRefs = new std::vector<AliVTrack*>;
   fVectorCharged = new std::vector<AliVTrack*>;
   fVectorPion = new std::vector<AliVTrack*>;
   fVectorKaon = new std::vector<AliVTrack*>;
@@ -1766,6 +1771,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   switch(fColSystem)
   {
     case kPPb :
+      fVectorRefs->reserve(200);
       fVectorCharged->reserve(200);
       if(fProcessPID) { fVectorPion->reserve(100); fVectorKaon->reserve(40); fVectorProton->reserve(30); }
       if(fProcessV0s) { fVectorK0s->reserve(100); fVectorLambda->reserve(150); }
@@ -1773,6 +1779,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
       break;
 
     default :
+      fVectorRefs->reserve(300);
       fVectorCharged->reserve(300);
       if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(100); fVectorProton->reserve(100); }
       if(fProcessV0s) { fVectorK0s->reserve(100); fVectorLambda->reserve(100); }
@@ -2036,9 +2043,8 @@ void AliAnalysisTaskUniFlow::Filtering()
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FilterCharged()
 {
-  // Filtering input charged tracks
-  // If track passes all requirements as defined in IsChargedSelected(),
-  // its pointer is pushed to relevant vector container
+  // Filtering input charged tracks for POIs (stored in fVectorCharged) or RFPs (fVectorRefs)
+  // If track passes all requirements its pointer is pushed to relevant vector container
   // *************************************************************
 
   Int_t iNumTracks = fEventAOD->GetNumberOfTracks();
@@ -2052,30 +2058,31 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
     if(fFillQA) FillQACharged(0,track); // QA before selection
 
-    if(IsChargedSelected(track))
+    if(!IsChargedSelected(track)) continue;
+
+    fVectorCharged->push_back(track);
+    if(fFillQA) FillQACharged(1,track); // QA after selection
+
+    if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt());
+    if(fFlowUseWeights)
     {
-      fVectorCharged->push_back(track);
-      if(fFillQA) FillQACharged(1,track); // QA after selection
+      Double_t weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi()) );
+      fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
+    }
 
-      if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt());
-      if(fFlowUseWeights)
-      {
-        Double_t weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi()) );
-        fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
-      }
+    // Checking if selected track is eligible for Ref. flow
+    if(fCutFlowRFPsPtMin > 0.0 && track->Pt() < fCutFlowRFPsPtMin) continue;
+    if(fCutFlowRFPsPtMax > 0.0 && track->Pt() > fCutFlowRFPsPtMax) continue;
 
-      // Filling refs QA plots
-      if(fCutFlowRFPsPtMin > 0. && track->Pt() >= fCutFlowRFPsPtMin && fCutFlowRFPsPtMax > 0. && track->Pt() < fCutFlowRFPsPtMax)
-      {
-        iNumRefs++;
-        FillQARefs(1,track);
-        if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt());
-        if(fFlowUseWeights)
-        {
-          Double_t weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) );
-          fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
-        }
-      }
+    // track is used for Ref. flow
+    fVectorRefs->push_back(track);
+    iNumRefs++;
+    FillQARefs(1,track);
+    if(fRunMode == kFillWeights || fFlowFillWeights) fh3WeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt());
+    if(fFlowUseWeights)
+    {
+      Double_t weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) );
+      fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
     }
   }
 
@@ -3310,9 +3317,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       // if(dPt > 3.)
       // {
       //
-      // }
-    }
-
+    // }
   }
 
   return kUnknown;
