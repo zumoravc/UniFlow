@@ -4144,102 +4144,70 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   // Filling Q flow vector with RFPs
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
-  const Float_t dEtaGap = fEtaGap[iEtaGapIndex];
+  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
+  Double_t dEtaLimit = dEtaGap / 2.0;
+  Bool_t bHasGap = kFALSE;
+  if(dEtaGap > -1.0) bHasGap = kTRUE;
+
   TH2D* h2Weights = 0x0;
-  Double_t dWeight = 1.;
   if(fFlowUseWeights)
   {
     h2Weights = fh2WeightRefs;
-    if(!h2Weights) { AliError("Histogtram with weights not found."); return; }
+    if(!h2Weights) { AliError("Histogram with Refs weights not found."); return; }
   }
 
   // clearing output (global) flow vectors
   ResetRFPsVector(fFlowVecQpos);
   ResetRFPsVector(fFlowVecQneg);
 
-  Double_t dQcosPos, dQcosNeg, dQsinPos, dQsinNeg;
-
-  // Double_t dQcosPos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax] = {0};
-  // Double_t dQcosNeg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax] = {0};
-  // Double_t dQsinPos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax] = {0};
-  // Double_t dQsinNeg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax] = {0};
-
-  for (auto part = fVectorCharged->begin(); part != fVectorCharged->end(); part++)
+  for (auto part = fVectorRefs->begin(); part != fVectorRefs->end(); part++)
   {
-    Double_t dPt = (*part)->Pt();
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
-
-    // RFPs pT check
-    if(fCutFlowRFPsPtMin > 0. && dPt < fCutFlowRFPsPtMin)
-      continue;
-
-    if(fCutFlowRFPsPtMax > 0. && dPt > fCutFlowRFPsPtMax)
-      continue;
-
-    // 0-ing variables
-    dQcosPos = 0;
-    dQcosNeg = 0;
-    dQsinPos = 0;
-    dQsinNeg = 0;
+    Double_t dWeight = 1.0;
 
     // loading weights if needed
     if(fFlowUseWeights && h2Weights)
     {
       dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi));
-      if(dWeight <= 0) dWeight = 1.;
-      // if(iEtaGapIndex == 0) fh3AfterWeightsRefs->Fill(part->phi,part->eta,part->pt, dWeight);
+      if(dWeight <= 0) dWeight = 1.0;
     }
 
-    // RPF candidate passing all criteria: start filling flow vectors
-
-    if(dEtaGap == -1) // no eta gap
+    if(!bHasGap) // no eta gap
     {
       for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
         for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
         {
-          dQcosPos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
-          dQsinPos = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
-          fFlowVecQpos[iHarm][iPower] += TComplex(dQcosPos,dQsinPos,kFALSE);
-        } // endfor {iPower}
+          Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
+          Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
+          fFlowVecQpos[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+        }
     }
     else
     {
-      if(dEta > dEtaGap / 2 )
+      if(dEta > dEtaLimit)   // RFP in positive eta acceptance
       {
-        // RFP in positive eta acceptance
         for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
           for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
           {
-            dQcosPos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
-            dQsinPos = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
-            fFlowVecQpos[iHarm][iPower] += TComplex(dQcosPos,dQsinPos,kFALSE);
+            Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
+            Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
+            fFlowVecQpos[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
           }
       }
-      if(dEta < -dEtaGap / 2 )
+      if(dEta < -dEtaLimit)   // RFP in negative eta acceptance
       {
-        // RFP in negative eta acceptance
         for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
           for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
           {
-            dQcosNeg = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
-            dQsinNeg = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
-            fFlowVecQneg[iHarm][iPower] += TComplex(dQcosNeg,dQsinNeg,kFALSE);
+            Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
+            Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
+            fFlowVecQneg[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
           }
       }
     } // endif {dEtaGap}
   } // endfor {tracks} particle loop
 
-  // // filling local flow vectors to global flow vector arrays
-  // for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
-  //   for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
-  //   {
-  //     fFlowVecQpos[iHarm][iPower] = TComplex(dQcosPos[iHarm][iPower],dQsinPos[iHarm][iPower],kFALSE);
-  //     if(dEtaGap > -1)
-  //       fFlowVecQneg[iHarm][iPower] = TComplex(dQcosNeg[iHarm][iPower],dQsinNeg[iHarm][iPower],kFALSE);
-  //   }
-
-  // printf("RFPs EtaGap %g : number %g (pos) %g (neg) \n", dEtaGap,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re());
   return;
 }
 //_____________________________________________________________________________
