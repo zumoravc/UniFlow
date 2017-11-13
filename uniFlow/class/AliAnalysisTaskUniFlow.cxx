@@ -2071,8 +2071,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     }
 
     // Checking if selected track is eligible for Ref. flow
-    if(fCutFlowRFPsPtMin > 0.0 && track->Pt() < fCutFlowRFPsPtMin) continue;
-    if(fCutFlowRFPsPtMax > 0.0 && track->Pt() > fCutFlowRFPsPtMax) continue;
+    if(!IsWithinRefs(track)) continue;
 
     // track is used for Ref. flow
     fVectorRefs->push_back(track);
@@ -2147,6 +2146,19 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
 
   // track passing all criteria
   fhChargedCounter->Fill("Selected",1);
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track)
+{
+  // Checking if (preselected) track fulfills criteria for RFPs
+  // NOTE: This is not a standalone selection, but complementary check for IsChargedSelected()
+  // It is used to selecting RFPs out of selected charged tracks
+  // OR for estimating autocorrelations for Charged & PID particles
+  // *************************************************************
+  if(fCutFlowRFPsPtMin > 0.0 && track->Pt() < fCutFlowRFPsPtMin) return kFALSE;
+  if(fCutFlowRFPsPtMax > 0.0 && track->Pt() > fCutFlowRFPsPtMax) return kFALSE;
+
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -4335,7 +4347,8 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
           fFlowVecPpos[iHarm][iPower][iPtBin] += TComplex(dCos,dSin,kFALSE);
 
           // check if track (passing criteria) is overlapping with RFPs pT region; if so, fill S (q) vector
-          if(!bHasMass && dPt > fCutFlowRFPsPtMin && dPt < fCutFlowRFPsPtMax)
+          // in case of charged, pions, kaons or protons (one witout mass)
+          if(!bHasMass && IsWithinRefs(static_cast<const AliAODTrack*>(*part)))
           {
             Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
             Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);

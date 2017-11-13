@@ -167,6 +167,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    Filtering(); // main (envelope) method for filtering all POIs in event
       void                    FilterCharged(); // charged tracks filtering
       Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
+      Bool_t                  IsWithinRefs(const AliAODTrack* track); // check if track fulfill requirements for Refs (used for refs selection & autocorelations)
       void                    FillQARefs(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       void                    FilterPID(); // pi,K,p filtering
