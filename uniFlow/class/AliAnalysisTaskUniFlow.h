@@ -167,6 +167,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    Filtering(); // main (envelope) method for filtering all POIs in event
       void                    FilterCharged(); // charged tracks filtering
       Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
+      Bool_t                  IsWithinRefs(const AliAODTrack* track); // check if track fulfill requirements for Refs (used for refs selection & autocorelations)
       void                    FillQARefs(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       void                    FilterPID(); // pi,K,p filtering
@@ -228,6 +229,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]; // flow vector array for flow calculation
 
       // selected POIs containers
+      std::vector<AliVTrack*>*  fVectorRefs; //! container for selected Refs charged particles
       std::vector<AliVTrack*>*  fVectorCharged; //! container for selected charged particles
       std::vector<AliVTrack*>*  fVectorPion; //! container for selected pion candidates
       std::vector<AliVTrack*>*  fVectorKaon; //! container for selected kaon candidates
