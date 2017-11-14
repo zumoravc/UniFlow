@@ -13,7 +13,7 @@
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
     public:
-      enum    RunMode {kTest, kFillWeights, kFull}; // task running mode (NOT GRID MODE)
+      enum    RunMode {kFull, kTest, kFillWeights}; // task running mode (NOT GRID MODE)
       enum    ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
       enum    AnalType {kAOD, kESD}; // tag for analysis type
       enum    DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
@@ -159,40 +159,42 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
-      Bool_t                  HasTrackPIDTPC(const AliAODTrack* track); // is TPC PID OK for this track ?
-      Bool_t                  HasTrackPIDTOF(const AliAODTrack* track); // is TOF PID OK for this track ?
 
       Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
 
+
       void                    Filtering(); // main (envelope) method for filtering all POIs in event
       void                    FilterCharged(); // charged tracks filtering
-      Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
-      Bool_t                  IsWithinRefs(const AliAODTrack* track); // check if track fulfill requirements for Refs (used for refs selection & autocorelations)
-      void                    FillQARefs(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
-      void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       void                    FilterPID(); // pi,K,p filtering
-      PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
-      void                    FillPIDQA(const Short_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
       void                    FilterV0s(); // K0s, Lambda, ALambda filtering
+      void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
+      Bool_t                  HasTrackPIDTPC(const AliAODTrack* track); // is TPC PID OK for this track ?
+      Bool_t                  HasTrackPIDTOF(const AliAODTrack* track); // is TOF PID OK for this track ?
+      Bool_t                  IsWithinRefs(const AliAODTrack* track); // check if track fulfill requirements for Refs (used for refs selection & autocorelations)
+      Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
+      PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
       Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
       Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
       Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
-      void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
-      void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
       AliPicoTrack*           MakeMother(const AliAODTrack* part1, const AliAODTrack* part2); // Combine two prongs into a mother particle stored in AliPicoTrack object
+      void                    FillQARefs(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
+      void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
+      void                    FillQAPID(const Short_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
+      void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
       void                    FillQAPhi(const Short_t iQAindex, const AliPicoTrack* part = 0x0); // filling QA plots for V0s candidates
+
       // Flow related methods
+      void                    FillRefsVectors(const Short_t iEtaGapIndex = 0); // fill flow vector Q with RFPs for reference flow
+      void                    FillPOIsVectors(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown, const Short_t iMassIndex = 0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
+      void                    ResetRFPsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
+      void                    ResetPOIsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]); // set values to TComplex(0,0,0) for given array
+      void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
+      Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
       void                    DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       void                    DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
       void                    DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
       void                    DoFlowPhi(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0); // Estimate <2'> for pt diff. flow of phi particles
       void                    DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
-      void                    FillRefsVectors(const Short_t iEtaGapIndex = 0); // fill flow vector Q with RFPs for reference flow
-      void                    FillPOIsVectors(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown, const Short_t iMassIndex = 0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
-      Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
-      void                    ResetRFPsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
-      void                    ResetPOIsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax][fFlowPOIsPtNumBins]); // set values to TComplex(0,0,0) for given array
-      void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
 
       TComplex                Q(const Short_t n, const Short_t p);
       TComplex                QGapPos(const Short_t n, const Short_t p);
@@ -327,18 +329,18 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutPhiInvMassMax; // [1.07] (GeV/c2) min inv. mass window for selected phi candidates
 
       // output lists
-      TList*      fQAEvents; //! events list
-      TList*      fQACharged; //! charged tracks list
-      TList*      fQAPID; //! pi,K,p list
-      TList*      fQAV0s; //! V0s candidates list
-      TList*      fQAPhi; //! Phi candidates list
-      TList*      fFlowWeights; //! list for flow weights
-      TList*      fFlowRefs; //! list for flow of reference particles
-      TList*      fFlowCharged; //! list for flow of charged particles
-      TList*      fFlowPID; //! list for flow of PID (pi,K,p) particles
-      TList*      fFlowPhi; //! list for flow of Phi particles
-      TList*      fFlowK0s; //! list for flow of K0s particles
-      TList*      fFlowLambda; //! list for flow of (anti-)Lambda particles
+      TList*                  fQAEvents; //! events list
+      TList*                  fQACharged; //! charged tracks list
+      TList*                  fQAPID; //! pi,K,p list
+      TList*                  fQAV0s; //! V0s candidates list
+      TList*                  fQAPhi; //! Phi candidates list
+      TList*                  fFlowWeights; //! list for flow weights
+      TList*                  fFlowRefs; //! list for flow of reference particles
+      TList*                  fFlowCharged; //! list for flow of charged particles
+      TList*                  fFlowPID; //! list for flow of PID (pi,K,p) particles
+      TList*                  fFlowPhi; //! list for flow of Phi particles
+      TList*                  fFlowK0s; //! list for flow of K0s particles
+      TList*                  fFlowLambda; //! list for flow of (anti-)Lambda particles
 
       // histograms & profiles
 
@@ -577,9 +579,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t     fNsigCut;            // combined sigma cut value
       Int_t        fNoClusPid;          // no of TPC clusters used for PID
       // end of Alex selection
-
-
-
 
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
       AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented

@@ -3173,7 +3173,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
     // PID tracks are subset of selected charged tracks (same quality requirements)
     if(!IsChargedSelected(track)) continue;
 
-    if(fFillQA) FillPIDQA(0,track,kUnknown);   // filling QA for tracks before selection (but after charged criteria applied)
+    if(fFillQA) FillQAPID(0,track,kUnknown);   // filling QA for tracks before selection (but after charged criteria applied)
 
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
@@ -3214,7 +3214,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         continue;
     }
 
-    if(fFillQA) FillPIDQA(1,track,species); // filling QA for tracks AFTER selection
+    if(fFillQA) FillQAPID(1,track,species); // filling QA for tracks AFTER selection
   }
 
   fhPIDPionMult->Fill(fVectorPion->size());
@@ -3335,7 +3335,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   return kUnknown;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillPIDQA(const Short_t iQAindex, const AliAODTrack* track, const PartSpecies species)
+void AliAnalysisTaskUniFlow::FillQAPID(const Short_t iQAindex, const AliAODTrack* track, const PartSpecies species)
 {
   // Filling various QA plots related to PID (pi,K,p) track selection
   // *************************************************************
