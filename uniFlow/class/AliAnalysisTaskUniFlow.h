@@ -130,8 +130,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
       const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
       const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
-      static const Short_t    fFlowNumHarmonicsMax = 10; // maximum harmonics length of flow vector array
-      static const Short_t    fFlowNumWeightPowersMax = 10; // maximum weight power length of flow vector array
+      static const Short_t    fFlowNumHarmonicsMax = 3; // maximum harmonics length of flow vector array
+      static const Short_t    fFlowNumWeightPowersMax = 3; // maximum weight power length of flow vector array
       static const Short_t    fFlowPOIsPtNumBins = 200; // number of pT bins for POIs
       const Double_t          fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
       const Double_t          fFlowPOIsPtMax; // [20] (GeV/c) max pT treshold for POIs for differential flow
@@ -253,7 +253,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
-      Bool_t                  fCutFlowDoFourCorrelations; // [kTRUE] flag for processing <4>
+      Bool_t                  fCutFlowDoFourCorrelations; // [kFALSE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
       Bool_t                  fFlowRunByRunWeights; // [kTRUE] flag for using rub-by-run weigths from weigths file; if false, only one set of histrograms is provided

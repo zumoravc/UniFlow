@@ -103,7 +103,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fUseFixedMultBins(kFALSE),
   fCutFlowRFPsPtMin(0.),
   fCutFlowRFPsPtMax(0.),
-  fCutFlowDoFourCorrelations(kTRUE),
+  fCutFlowDoFourCorrelations(kFALSE),
   fFlowFillWeights(kFALSE),
   fFlowPOIsPtMin(0.),
   fFlowPOIsPtMax(20.),
@@ -377,7 +377,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutFlowRFPsPtMax(0.),
   fFlowPOIsPtMin(0.),
   fFlowPOIsPtMax(20.),
-  fCutFlowDoFourCorrelations(kTRUE),
+  fCutFlowDoFourCorrelations(kFALSE),
   fFlowFillWeights(kFALSE),
   fFlowCentMin(0),
   fFlowCentMax(150),
@@ -1542,7 +1542,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fMultEstimator: (TString) '%s'\n",    fMultEstimator.Data());
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
   printf("      fUseAliEventCuts: (Bool_t) %s\n",    fUseAliEventCuts ? "kTRUE" : "kFALSE");
-  printf("   -------- Charge tracks ---------------------------------------\n");
+  printf("   -------- Charged tracks --------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
   printf("      fCutChargedNumTPCclsMin: (UShort_t) %d\n",    fCutChargedNumTPCclsMin);
   printf("      fCutChargedEtaMax: (Double_t) %g\n",    fCutChargedEtaMax);
@@ -1653,25 +1653,25 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   if(fAnalType != kESD && fAnalType != kAOD)
   {
-    AliError("Analysis type not specified! Terminating!");
+    AliFatal("Analysis type not specified! Terminating!");
     return kFALSE;
   }
 
   if(fAnalType == kESD)
   {
-    AliError("Analysis type: ESD not implemented! Terminating!");
+    AliFatal("Analysis type: ESD not implemented! Terminating!");
     return kFALSE;
   }
 
   if(fColSystem != kPP && fColSystem != kPPb && fColSystem != kPbPb)
   {
-    AliError("Collisional system not specified! Terminating!");
+    AliFatal("Collisional system not specified! Terminating!");
     return kFALSE;
   }
 
   if(fPeriod == kNon)
   {
-    AliError("Period of data sample not selected! Terminating!");
+    AliFatal("Period of data sample not selected! Terminating!");
     return kFALSE;
   }
 
@@ -1683,24 +1683,31 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   fPIDResponse = inputHandler->GetPIDResponse();
   if(!fPIDResponse)
   {
-    AliError("AliPIDResponse object not found! Terminating!");
+    AliFatal("AliPIDResponse object not found! Terminating!");
     return kFALSE;
   }
 
   fPIDCombined = new AliPIDCombined();
   if(!fPIDCombined)
   {
-    AliError("AliPIDCombined object not found! Terminating!");
+    AliFatal("AliPIDCombined object not found! Terminating!");
     return kFALSE;
   }
   fPIDCombined->SetDefaultTPCPriors();
   fPIDCombined->SetSelectedSpecies(5); // all particle species
   fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
 
+  // checking the fFlowNumHarmonicsMax, fFlowNumWeightPowersMax dimensions of p,Q,S vectors
+  for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
+  {
+    if(fFlowNumWeightPowersMax < 3) { AliFatal("Low range of flow vector weight dimension! Not enought for <2>!"); return kFALSE; }
+    if(fCutFlowDoFourCorrelations && fFlowNumWeightPowersMax < 5) { AliFatal("Low range of flow vector weight dimension! Not enought for <4>!"); return kFALSE; }
+    if(fFlowNumHarmonicsMax < fHarmonics[iHarm]+1) { AliFatal("Low range of flow vector harmonics dimension!"); return kFALSE; }
+  }
 
   if(fSampling && fNumSamples == 0)
   {
-    AliError("Sampling used, but number of samples is 0! Terminating!");
+    AliFatal("Sampling used, but number of samples is 0! Terminating!");
     return kFALSE;
   }
 
@@ -1711,17 +1718,17 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   AliInfo("Checking task parameters setting conflicts (ranges, etc)");
   if(fCutFlowRFPsPtMin > 0. && fCutFlowRFPsPtMax > 0. && fCutFlowRFPsPtMin > fCutFlowRFPsPtMax)
   {
-    AliError("Cut: RFPs Pt range wrong! Terminating!");
+    AliFatal("Cut: RFPs Pt range wrong! Terminating!");
     return kFALSE;
   }
   if(fCutV0sInvMassK0sMin > fCutV0sInvMassK0sMax || fCutV0sInvMassK0sMin < 0. || fCutV0sInvMassK0sMax < 0.)
   {
-    AliError("Cut: InvMass (K0s) range wrong! Terminating! ");
+    AliFatal("Cut: InvMass (K0s) range wrong! Terminating! ");
     return kFALSE;
   }
   if(fCutV0sInvMassLambdaMin > fCutV0sInvMassLambdaMax || fCutV0sInvMassLambdaMin < 0. || fCutV0sInvMassLambdaMax < 0.)
   {
-    AliError("Cut: InvMass (Lambda) range wrong! Terminating!");
+    AliFatal("Cut: InvMass (Lambda) range wrong! Terminating!");
     return kFALSE;
   }
 
@@ -1734,7 +1741,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     fFlowWeightsFile = TFile::Open(Form("%s",fFlowWeightsPath.Data()));
     if(!fFlowWeightsFile)
     {
-      AliError("Flow weights file not found! Terminating!");
+      AliFatal("Flow weights file not found! Terminating!");
       return kFALSE;
     }
 
@@ -1743,14 +1750,14 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     {
       TList* listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
       if(!listFlowWeights) { AliError("TList from flow weights not found."); return kFALSE; }
-      fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
-      fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
-      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
-      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
-      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
-      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
-      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
-      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
+      fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliFatal("Refs weights not found"); return kFALSE; }
+      fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliFatal("Charged weights not found"); return kFALSE; }
+      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliFatal("Pion weights not found"); return kFALSE; }
+      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliFatal("Kaon weights not found"); return kFALSE; }
+      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliFatal("Proton weights not found"); return kFALSE; }
+      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliFatal("K0s weights not found"); return kFALSE; }
+      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliFatal("Phi weights not found"); return kFALSE; }
+      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
     }
   }
 
