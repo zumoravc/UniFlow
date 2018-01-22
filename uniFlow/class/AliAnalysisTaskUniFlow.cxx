@@ -1850,6 +1850,8 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
 
   if(!fEventAOD) return kFALSE;
 
+  fhEventCounter->Fill("Input",1);
+
   // Fill event QA BEFORE cuts
   if(fFillQA) FillEventsQA(0);
 
@@ -1859,6 +1861,8 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
     ) eventSelected = IsEventSelected_2016();
 
   if(!eventSelected) return kFALSE;
+
+  fhEventCounter->Fill("Selected",1);
 
   // Fill event QA AFTER cuts
   if(fFillQA) FillEventsQA(1);
@@ -1872,8 +1876,6 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
   // pp (LHC16kl...), pPb (LHC16rqts)
   // return kTRUE if event passes all criteria, kFALSE otherwise
   // *************************************************************
-
-  fhEventCounter->Fill("Input",1);
 
   // Physics selection (trigger)
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
@@ -1983,7 +1985,6 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
   }
   fhEventCounter->Fill("PV #it{z} OK",1);
 
-  fhEventCounter->Fill("Selected",1);
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -2031,15 +2032,16 @@ void AliAnalysisTaskUniFlow::Filtering()
   //  - otherwise a new AliPicoTrack is constructed with relevant informations (needed to be deleted at destructor)
   // *************************************************************
 
-  // if neither is ON, filtering is skipped
-  if(!fProcessCharged && !fProcessPID && !fProcessV0s && !fProcessPhi)
-    return;
-
   // done anyway event if fProcessCharged is off (needed for Reference flow)
   FilterCharged();
 
+
   fIndexSampling = GetSamplingIndex();
   fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
+
+  // // if neither is ON, filtering is skipped
+  // if(!fProcessCharged && !fProcessPID && !fProcessV0s && !fProcessPhi)
+  // return;
 
   if(fProcessPID || fProcessPhi) { FilterPID(); }
   if(fProcessPhi) { FilterPhi(); }
@@ -2189,6 +2191,8 @@ void AliAnalysisTaskUniFlow::FillQACharged(const Short_t iQAindex, const AliAODT
   // Filling various QA plots related to charged track selection
   // *************************************************************
   if(!track) return;
+
+  if(!fProcessCharged) return;
 
   // filter bit testing
   for(Short_t i(0); i < 32; i++)
@@ -3526,9 +3530,9 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // Selection of relevant particles (pushing into corresponding vectors)
   Filtering();
 
-  // checking if there is at least two charged track selected (min requirement or <<2>>)
+  // checking if there is at least one charged track selected (min requirement or <<2>>)
   // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
-  if(fVectorCharged->size() < 2)
+  if(fVectorRefs->size() < 1)
     return kFALSE;
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
@@ -4410,7 +4414,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   // assigning centrality based on number of selected charged tracks
   if( fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("CHARGED") )
   {
-    iCentralityIndex = fVectorCharged->size();
+    iCentralityIndex = fVectorRefs->size();
   }
   else if(
     // some of supported AliMultSelection estimators
