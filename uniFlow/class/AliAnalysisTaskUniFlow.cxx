@@ -117,7 +117,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // events selection
   fPVtxCutZ(0.),
   fColSystem(kPP),
-  fPeriod(kNon),
   fMultEstimator(),
   fTrigger(0),
   fUseAliEventCuts(kFALSE),
@@ -372,7 +371,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // events selection
   fPVtxCutZ(0.),
   fColSystem(kPP),
-  fPeriod(kNon),
   fMultEstimator(),
   fTrigger(0),
   fUseAliEventCuts(kFALSE),
@@ -1503,7 +1501,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fFlowWeightsPath: (TString) '%s' \n",    fFlowWeightsPath.Data());
   printf("   -------- Events ----------------------------------------------\n");
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
-  printf("      fPeriod: (DataPeriod) %d\n",    fPeriod);
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
   printf("      fMultEstimator: (TString) '%s'\n",    fMultEstimator.Data());
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
@@ -1632,12 +1629,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   if(fColSystem != kPP && fColSystem != kPPb && fColSystem != kPbPb)
   {
     AliFatal("Collisional system not specified! Terminating!");
-    return kFALSE;
-  }
-
-  if(fPeriod == kNon)
-  {
-    AliFatal("Period of data sample not selected! Terminating!");
     return kFALSE;
   }
 
@@ -1811,20 +1802,16 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   // Fill the event QA if event pass selection.
   // returns kTRUE if event pass all selection criteria kFALSE otherwise
   // *************************************************************
-
-  Bool_t eventSelected = kFALSE;
-
   if(!fEventAOD) return kFALSE;
-
   fhEventCounter->Fill("Input",1);
 
   // Fill event QA BEFORE cuts
   if(fFillQA) FillEventsQA(0);
 
+  Bool_t eventSelected = kFALSE;
+
   // event selection for small systems pp, pPb in Run2 (2016)
-  if( (fColSystem == kPP || fColSystem == kPPb)
-      && (fPeriod == k16k || fPeriod == k16l || fPeriod == k16q || fPeriod == k16r || fPeriod == k16s || fPeriod == k16t)
-    ) eventSelected = IsEventSelected_2016();
+  if(fColSystem == kPP || fColSystem == kPPb) eventSelected = IsEventSelected_small_2016();
 
   if(!eventSelected) return kFALSE;
 
@@ -1836,7 +1823,7 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   return eventSelected;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsEventSelected_2016()
+Bool_t AliAnalysisTaskUniFlow::IsEventSelected_small_2016()
 {
   // Event selection for small system collision recorder in Run 2 year 2016
   // pp (LHC16kl...), pPb (LHC16rqts)

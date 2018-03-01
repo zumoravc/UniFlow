@@ -16,7 +16,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    RunMode {kFull, kTest, kFillWeights}; // task running mode (NOT GRID MODE)
       enum    ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
       enum    AnalType {kAOD, kESD}; // tag for analysis type
-      enum    DataPeriod {kNon, k16k, k16l, k16q, k16r, k16s, k16t}; // tag for data period
       enum    PartSpecies {kUnknown, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
                               AliAnalysisTaskUniFlow(); // constructor
@@ -46,7 +45,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun = kTRUE) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; fFlowRunByRunWeights = bRunByRun; } //! NOTE file has to include "alien:///" if the file is on grid
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
-      void                    SetPeriod(DataPeriod period = kNon) { fPeriod = period; }
       void                    SetMultEstimator(const char* mult = "CHARGED") { fMultEstimator = mult; }
       void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
       void                    SetUseAliEventCuts(Bool_t bUseCuts = kTRUE) { fUseAliEventCuts = bUseCuts; }
@@ -149,7 +147,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    ClearVectors(); // properly clear all particle vectors
 
       Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
-      Bool_t                  IsEventSelected_2016(); // event selection for LHC2016 pp & pPb data
+      Bool_t                  IsEventSelected_small_2016(); // event selection for LHC2016 pp & pPb data
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
@@ -162,7 +160,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FilterPID(); // pi,K,p filtering
       void                    FilterV0s(); // K0s, Lambda, ALambda filtering
       void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
-      Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta); // calculate particle / track rapidity 
+      Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta); // calculate particle / track rapidity
       Bool_t                  HasTrackPIDTPC(const AliAODTrack* track); // is TPC PID OK for this track ?
       Bool_t                  HasTrackPIDTOF(const AliAODTrack* track); // is TOF PID OK for this track ?
       Bool_t                  IsWithinRefs(const AliAODTrack* track); // check if track fulfill requirements for Refs (used for refs selection & autocorelations)
@@ -256,7 +254,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
-      DataPeriod              fPeriod; // period of analysed data sample (e.g. LHC16k, ...)
       Short_t                 fTrigger; // physics selection trigger
       TString                 fMultEstimator; // [''] multiplicity estimator (suported: ''/Charged,VOA,V0C,V0M,CL0,CL1,ZNA,ZNC)
       Bool_t                  fUseAliEventCuts; // use decision of AliEventCuts in event selection

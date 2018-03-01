@@ -78,7 +78,7 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
     task1->SetNumEventsAnalyse(50);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     // task1->SetSampling(kTRUE);
@@ -98,7 +98,6 @@ void runAnalysis()
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
     task1->SetMultEstimator("V0A");
-    task1->SetPeriod(AliAnalysisTaskUniFlow::k16q);
     task1->SetPVtxZMax(10);
     // Charged selection
     task1->SetChargedEtaMax(0.8);
@@ -146,58 +145,7 @@ void runAnalysis()
     // task1->SetV0sLambdaPionNumTPCSigmaMax(3.);
     // task1->SetV0sLambdaProtonNumTPCSigmaMax(3.);
 
-    /*
-    AliAnalysisTaskUniFlow* task2 = AddTaskUniFlow("UniFlow_FB768_Nsigma");
-    // tracks & event selection cuts
-    task2->SetAODAnalysis(kTRUE);
-    task2->SetPbPbAnalysis(kTRUE);
-    task2->SetPPbAnalysis(kFALSE);
-    task2->SetPPAnalysis(kFALSE);
-    task2->SetPeriod10h(kFALSE);
-    task2->SetCentFlag(0);
-    task2->SetPVtxZMax(10);
-    task2->SetTrackEtaMax(0.8);
-    task2->SetTrackPtMin(0.2);
-    task2->SetTrackPtMax(5.);
-    task2->SetNumTPCclsMin(70);
-    task2->SetTrackFilterBit(768);
-    task2->SetPionNumSigmasMax(3);
-    task2->SetKaonNumSigmasMax(3);
-    task2->SetProtonNumSigmasMax(3);
-    //task2->SetDoFlow(kTRUE);
-    task2->SetDiffFlow(kTRUE);
-    task2->SetPID(kTRUE);
-    task2->SetDoV0s(kTRUE);
-    task2->SetSampling(kTRUE);
-    task2->SetDoFlowGenFramKatarina(kTRUE);
-    task2->SetDoOldFlow(kFALSE);
-    task2->SetUseBayesPID(kFALSE);
-    task2->SetPIDBayesProbPionMin(0.95);
-    task2->SetPIDBayesProbKaonMin(0.95);
-    task2->SetPIDBayesProbProtonMin(0.95);
-    // V0 selection cuts
-    task2->SetV0sOnFly(kFALSE);
-    task2->SetV0sTPCRefit(kTRUE);
-    task2->SetV0sRejectKinks(kTRUE);
-    task2->SetV0sDCAPVMin(0.1);
-    task2->SetV0sDCAPVMax(0.);
-    task2->SetV0sDCADaughtersMax(1.);
-    task2->SetV0sDecayRadiusMin(5.);
-    task2->SetV0sDecayRadiusMax(0.);
-    task2->SetV0sDaughterPtMin(0.1);
-    task2->SetV0sDaughterEtaMax(0.8);
-    task2->SetV0sMotherEtaMax(0.8);
-    task2->SetV0sMotherRapMax(0.);
-    task2->SetV0sMotherPtMin(0.2);
-    task2->SetV0sMotherPtMax(10.);
-    task2->SetV0sK0sCPAMin(0.998);
-    task2->SetV0sLambdaCPAMin(0.998);
-    task2->SetV0sK0sNumTauMax(3.);
-    task2->SetV0sK0sArmenterosAlphaMin(0.2);
-    task2->SetV0sLambdaNumTauMax(3.);
-    task2->SetV0sProtonNumSigmaMax(3.);
-    task2->SetV0sProtonPIDPtMax(1.2);
-    */
+
     if (!mgr->InitAnalysis()) return;
     //mgr->SetDebugLevel(2);
     //mgr->PrintStatus();
