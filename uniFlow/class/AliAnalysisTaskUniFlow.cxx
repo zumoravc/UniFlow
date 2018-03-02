@@ -3886,8 +3886,8 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   }
 
   // clearing output (global) flow vectors
-  ResetRFPsVector(fFlowVecQpos);
-  ResetRFPsVector(fFlowVecQneg);
+  ResetFlowVector(fFlowVecQpos);
+  ResetFlowVector(fFlowVecQneg);
 
   for (auto part = fVectorRefs->begin(); part != fVectorRefs->end(); part++)
   {
@@ -4012,9 +4012,8 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   if(fFlowUseWeights && !h2Weights) { AliError("Histogram with weights not found."); return; }
 
   // clearing output (global) flow vectors
-  ResetPOIsVector(fFlowVecPpos);
-  ResetPOIsVector(fFlowVecPneg);
-  ResetPOIsVector(fFlowVecS);
+  ResetFlowVector(fFlowVecPpos);
+  if(bHasGap) { ResetFlowVector(fFlowVecPneg); } else { ResetFlowVector(fFlowVecS); }
 
   for(auto part = vector->begin(); part != vector->end(); ++part)
   {
@@ -4100,18 +4099,10 @@ Short_t AliAnalysisTaskUniFlow::GetPOIsPtBinIndex(const Double_t pt)
   return (Short_t) (pt / dPtBinWidth);
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::ResetRFPsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
+void AliAnalysisTaskUniFlow::ResetFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
 {
   // Reset RFPs (Q) array values to TComplex(0,0,kFALSE) for given array
   // *************************************************************
-  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
-    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
-      array[iHarm][iPower] = TComplex(0,0,kFALSE);
-  return;
-}
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::ResetPOIsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
-{
   for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
     for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
       array[iHarm][iPower] = TComplex(0,0,kFALSE);
