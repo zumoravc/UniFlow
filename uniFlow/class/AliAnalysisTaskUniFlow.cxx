@@ -3374,76 +3374,54 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Int_t iEtaGapIndex)
   // Estimate <2> for reference flow for all harmonics based on relevant flow vectors
   // *************************************************************
 
-  Float_t dEtaGap = fEtaGap[iEtaGapIndex];
-  Short_t iHarmonics = 0;
-  Double_t Cn2 = 0;
-  TComplex vector = TComplex(0,0,kFALSE);
-  Double_t dValue = 999;
+  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
 
   FillRefsVectors(iEtaGapIndex); // filling RFPs (Q) flow vectors
 
-  // // filling mean Qx, Qy
-  // if(fFlowFillWeights)
-  // {
-  //   for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
-  //   {
-  //     fpMeanQxRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Re());
-  //     fpMeanQyRefsPos[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQpos[iHarm][0].Im());
-  //     fpMeanQxRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Re());
-  //     fpMeanQyRefsNeg[iEtaGapIndex][iHarm]->Fill(fIndexCentrality, fFlowVecQneg[iHarm][0].Im());
-  //   }
-  // }
-
-  if(dEtaGap == -1) // no gap
+  if(dEtaGap == -1.0) // no gap
   {
     // estimating <2>
-    Cn2 = Two(0,0).Re();
-    if(Cn2 != 0)
+    Double_t D02 = Two(0,0).Re();
+    if(D02 != 0.0)
     {
-      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
       {
-        iHarmonics = fHarmonics[iHarm];
-        vector = Two(iHarmonics,-iHarmonics);
-        dValue = vector.Re()/Cn2;
-        // printf("Gap (RFPs): %g Harm %d | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,Cn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
-        if( TMath::Abs(dValue) < 1.0 )
-          fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
+        Int_t iHarmonics = fHarmonics[iHarm];
+        Double_t Nn2 = Two(iHarmonics,-iHarmonics).Re();
+        Double_t dValue = Nn2 / D02;
+        if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D02); }
       }
     }
 
     // estimating <4>
     if(fCutFlowDoFourCorrelations)
     {
-      Cn2 = Four(0,0,0,0).Re();
-      if(Cn2 != 0)
+      Double_t D04 = Four(0,0,0,0).Re();
+      if(D04 != 0.0)
       {
-        for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+        for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
         {
-          iHarmonics = fHarmonics[iHarm];
-          vector = Four(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics);
-          dValue = vector.Re()/Cn2;
-          // printf("Gap (RFPs): %g Harm %d | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,Cn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
-          if( TMath::Abs(dValue) < 1.0 )
-          fpRefsCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
+          Int_t iHarmonics = fHarmonics[iHarm];
+          Double_t Nn4 = Four(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
+          Double_t dValue = Nn4 / D04;
+          if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, dValue, D04); }
         }
       }
     }
+
   }
   else // with gap
   {
     // estimating <2>
-    Cn2 = TwoGap(0,0).Re();
-    if(Cn2 != 0)
+    Double_t D02gap = TwoGap(0,0).Re();
+    if(D02gap != 0.0)
     {
-      for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+      for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
       {
-        iHarmonics = fHarmonics[iHarm];
-        vector = TwoGap(iHarmonics,-iHarmonics);
-        dValue = vector.Re()/Cn2;
-        // printf("Gap (RFPs): %g Harm %d | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,Cn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fIndexCentrality);
-        if( TMath::Abs(dValue) < 1.0 )
-          fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, Cn2);
-
+        Int_t iHarmonics = fHarmonics[iHarm];
+        Double_t Nn2gap = TwoGap(iHarmonics,-iHarmonics).Re();
+        Double_t dValue = Nn2gap / D02gap;
+        if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D02gap); }
       }
     }
   } // endif {dEtaGap}
