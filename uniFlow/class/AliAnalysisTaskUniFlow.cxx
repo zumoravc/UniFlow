@@ -3340,19 +3340,18 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
     DoFlowRefs(iGap); // Reference (pT integrated) flow
 
     // pT differential
-    if(fProcessCharged)
+    if(fProcessCharged && !fVectorCharged->empty())
     {
-      DoFlowCharged(iGap);  // charged track flow
-      // DoFlowPOIs(iGap, kCharged);  // charged track flow
+      DoFlowPOIs(iGap, kCharged);
     }
 
-    // if(fProcessPID) // pi,K,p flow
-    // {
-    //   if(fVectorPion->size() > 0) DoFlowPID(iGap,kPion);
-    //   if(fVectorKaon->size() > 0) DoFlowPID(iGap,kKaon);
-    //   if(fVectorProton->size() > 0) DoFlowPID(iGap,kProton);
-    // }
-    //
+    if(fProcessPID) // pi,K,p flow
+    {
+      if(!fVectorPion->empty()) DoFlowPOIs(iGap,kPion);
+      if(!fVectorKaon->empty()) DoFlowPOIs(iGap,kKaon);
+      if(!fVectorProton->empty()) DoFlowPOIs(iGap,kProton);
+    }
+
     // if(fProcessPhi) // phi flow
     // {
     //   if(fVectorPhi->size() > 0) { for(Short_t iMass(0); iMass < fPhiNumBinsMass; iMass++) DoFlowPhi(iGap,iMass); }
@@ -3455,10 +3454,6 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
 {
   // Estimate <2> for pT diff flow of POIs particles for all harmonics based on relevant flow vectors
   // *************************************************************
-
-  // TProfile2D*     fp2ChargedCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta>0
-
-
   TProfile2D** profTwoPos = 0x0;
   TProfile2D** profTwoNeg = 0x0;
   TProfile2D** profFour = 0x0;
@@ -3473,12 +3468,21 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
       break;
 
     case kPion:
+      profTwoPos = fp2PionCor2Pos[fIndexSampling][iEtaGapIndex];
+      profTwoNeg = fp2PionCor2Neg[fIndexSampling][iEtaGapIndex];
+      profFour = fp2PionCor4[fIndexSampling];
       break;
 
     case kKaon:
+      profTwoPos = fp2KaonCor2Pos[fIndexSampling][iEtaGapIndex];
+      profTwoNeg = fp2KaonCor2Neg[fIndexSampling][iEtaGapIndex];
+      profFour = fp2KaonCor4[fIndexSampling];
       break;
 
     case kProton:
+      profTwoPos = fp2ProtonCor2Pos[fIndexSampling][iEtaGapIndex];
+      profTwoNeg = fp2ProtonCor2Neg[fIndexSampling][iEtaGapIndex];
+      profFour = fp2ProtonCor4[fIndexSampling];
       break;
 
     // case kK0s:
@@ -4135,6 +4139,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       return;
   }
 
+  if(!vector) { AliError("Vector with selected POIs not found."); return; }
   if(bHasMass && !histPos) { AliError("Histogram for POIs in positive eta not found."); return; }
   if(bHasMass && bHasGap && !histNeg) { AliError("Historgam for POIs in negative eta not found."); return; }
   if(fFlowUseWeights && !h2Weights) { AliError("Histogram with weights not found."); return; }
