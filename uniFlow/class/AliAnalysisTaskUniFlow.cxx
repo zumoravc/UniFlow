@@ -3345,23 +3345,23 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
       DoFlowCharged(iGap);  // charged track flow
     }
 
-    if(fProcessPID) // pi,K,p flow
-    {
-      if(fVectorPion->size() > 0) DoFlowPID(iGap,kPion);
-      if(fVectorKaon->size() > 0) DoFlowPID(iGap,kKaon);
-      if(fVectorProton->size() > 0) DoFlowPID(iGap,kProton);
-    }
-
-    if(fProcessPhi) // phi flow
-    {
-      if(fVectorPhi->size() > 0) { for(Short_t iMass(0); iMass < fPhiNumBinsMass; iMass++) DoFlowPhi(iGap,iMass); }
-    }
-
-    if(fProcessV0s)
-    {
-      if(fVectorK0s->size() > 0) { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kK0s); }
-      if(fVectorLambda->size() > 0)  { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kLambda); }
-    }
+    // if(fProcessPID) // pi,K,p flow
+    // {
+    //   if(fVectorPion->size() > 0) DoFlowPID(iGap,kPion);
+    //   if(fVectorKaon->size() > 0) DoFlowPID(iGap,kKaon);
+    //   if(fVectorProton->size() > 0) DoFlowPID(iGap,kProton);
+    // }
+    //
+    // if(fProcessPhi) // phi flow
+    // {
+    //   if(fVectorPhi->size() > 0) { for(Short_t iMass(0); iMass < fPhiNumBinsMass; iMass++) DoFlowPhi(iGap,iMass); }
+    // }
+    //
+    // if(fProcessV0s)
+    // {
+    //   if(fVectorK0s->size() > 0) { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kK0s); }
+    //   if(fVectorLambda->size() > 0)  { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kLambda); }
+    // }
   } // endfor {iGap} eta gaps
 
   fEventCounter++; // counter of processed events
@@ -3454,9 +3454,6 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
 {
   // Estimate <2> for pT diff flow of charged tracks for all harmonics based on relevant flow vectors
   // *************************************************************
-
-  FillPOIsVectors(iEtaGapIndex,kCharged);  // filling POIs (P,S) flow vectors
-
   const Double_t dPtBinWidth = (fFlowPOIsPtMax - fFlowPOIsPtMin) / fFlowPOIsPtNumBins;
 
   Float_t dEtaGap = fEtaGap[iEtaGapIndex];
@@ -3465,9 +3462,18 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
   TComplex vector = TComplex(0,0,kFALSE);
   Double_t dValue = 999;
 
+  Int_t numPtBins = fp2ChargedCor2Pos[0][0][0]->GetNbinsY();
 
-  for(Short_t iPt(0); iPt < fFlowPOIsPtNumBins; iPt++)
+  for(Short_t iPt(1); iPt < numPtBins+1; ++iPt)
   {
+    Double_t dPt = fp2ChargedCor2Pos[0][0][0]->GetYaxis()->GetBinCenter(iPt);
+    Double_t dPtLow = fp2ChargedCor2Pos[0][0][0]->GetYaxis()->GetBinLowEdge(iPt);
+    Double_t dPtHigh = fp2ChargedCor2Pos[0][0][0]->GetYaxis()->GetBinUpEdge(iPt);
+    // printf("%d : %f - %f - %f \n",iPt,dPt_low,dPt,dPt_high);
+
+    // filling POIs (P,S) flow vectors
+    FillPOIsVectors(iEtaGapIndex,kCharged,dPtLow,dPtHigh);
+
     if(dEtaGap == -1) // no eta gap
     {
       // estimating <2'>
@@ -3481,7 +3487,7 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
           dValue = vector.Re()/Dn2;
           // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if(TMath::Abs(dValue) < 1.0)
-            fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
+            fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
         }
       }
 
@@ -3498,7 +3504,7 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
             dValue = vector.Re()/Dn2;
             // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
             if( TMath::Abs(dValue) < 1.0 )
-            fp2ChargedCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
+            fp2ChargedCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
           }
         }
       }
@@ -3517,7 +3523,7 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
           dValue = vector.Re()/Dn2;
           // printf("Gap (Pos): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if( TMath::Abs(dValue) < 1.0 )
-            fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
+            fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
         }
       }
 
@@ -3532,7 +3538,7 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
           dValue = vector.Re()/Dn2;
           // printf("Gap (Neg): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
           if( TMath::Abs(dValue) < 1.0 )
-            fp2ChargedCor2Neg[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, iPt*dPtBinWidth, dValue, Dn2);
+            fp2ChargedCor2Neg[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
         }
       }
     } // endif {dEtaGap}
@@ -3574,7 +3580,7 @@ void AliAnalysisTaskUniFlow::DoFlowPID(const Short_t iEtaGapIndex, const PartSpe
       return;
   }
 
-  FillPOIsVectors(iEtaGapIndex,species); // Filling POIs vectors
+  // FillPOIsVectors(iEtaGapIndex,species); // Filling POIs vectors
   Double_t dEtaGap = fEtaGap[iEtaGapIndex];
 
   for(Int_t iPt(0); iPt < fFlowPOIsPtNumBins; iPt++)
@@ -3649,7 +3655,7 @@ void AliAnalysisTaskUniFlow::DoFlowPhi(const Short_t iEtaGapIndex, const Short_t
   // Estimate the correlations for pT diff flow of phi candidates for all harmonics based on relevant flow vectors
   // *************************************************************
 
-  FillPOIsVectors(iEtaGapIndex,kPhi,iMassIndex); // filling POIs (P,S) flow vectors
+  // FillPOIsVectors(iEtaGapIndex,kPhi,iMassIndex); // filling POIs (P,S) flow vectors
 
   Double_t dEtaGap = fEtaGap[iEtaGapIndex];
   Double_t dMass = fh3PhiEntriesSignalPos[iEtaGapIndex]->GetZaxis()->GetBinCenter(iMassIndex+1);
@@ -3731,7 +3737,7 @@ void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t
   // Estimate <2> for pT diff flow of V0s for all harmonics based on relevant flow vectors
   // *************************************************************
 
-  FillPOIsVectors(iEtaGapIndex,species,iMassIndex);  // filling POIs (P,S) flow vectors
+  // FillPOIsVectors(iEtaGapIndex,species,iMassIndex);  // filling POIs (P,S) flow vectors
 
   Double_t dEtaGap = fEtaGap[iEtaGapIndex];
 
@@ -3948,21 +3954,14 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const PartSpecies species, const Short_t iMassIndex)
+void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
 {
   // Filling p,q and s flow vectors with POIs (given by species) for differential flow calculation
   // *************************************************************
-  if(species == kUnknown) return;
-
-  // clearing output (global) flow vectors
-  ResetPOIsVector(fFlowVecPpos);
-  ResetPOIsVector(fFlowVecPneg);
-  ResetPOIsVector(fFlowVecS);
-
-  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
-  Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE;
-  if(dEtaGap > -1.0) bHasGap = kTRUE;
+  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
+  if(dEtaGap > -1.0) { bHasGap = kTRUE; }
+  Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasMass = kFALSE;
 
   std::vector<AliVTrack*>* vector = 0x0;
@@ -3997,7 +3996,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       vector = fVectorK0s;
       h2Weights = fh2WeightK0s;
       histPos = fh3V0sEntriesK0sPos[iEtaGapIndex];
-      if(bHasGap) histNeg = fh3V0sEntriesK0sNeg[iEtaGapIndex];
+      if(bHasGap) { histNeg = fh3V0sEntriesK0sNeg[iEtaGapIndex]; }
       bHasMass = kTRUE;
       break;
 
@@ -4005,14 +4004,14 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       vector = fVectorLambda;
       h2Weights = fh2WeightLambda;
       histPos = fh3V0sEntriesLambdaPos[iEtaGapIndex];
-      if(bHasGap) histNeg = fh3V0sEntriesLambdaNeg[iEtaGapIndex];
+      if(bHasGap) { histNeg = fh3V0sEntriesLambdaNeg[iEtaGapIndex]; }
       bHasMass = kTRUE;
       break;
 
     case kPhi:
       vector = fVectorPhi;
       histPos = fh3PhiEntriesSignalPos[iEtaGapIndex];
-      if(bHasGap) histNeg = fh3PhiEntriesSignalNeg[iEtaGapIndex];
+      if(bHasGap) { histNeg = fh3PhiEntriesSignalNeg[iEtaGapIndex]; }
       h2Weights = fh2WeightPhi;
       bHasMass = kTRUE;
       break;
@@ -4022,43 +4021,36 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       return;
   }
 
-  if(fFlowUseWeights && !h2Weights) { AliError("Histogtram with weights not found."); return; }
-  if(bHasMass && !histPos) { AliError("Historgram for POIs in positive eta not found."); return; }
-  if(bHasMass && bHasGap && !histNeg) { AliError("Historgram for POIs in negative eta not found."); return; }
+  if(bHasMass && !histPos) { AliError("Histogram for POIs in positive eta not found."); return; }
+  if(bHasMass && bHasGap && !histNeg) { AliError("Historgam for POIs in negative eta not found."); return; }
+  if(fFlowUseWeights && !h2Weights) { AliError("Histogram with weights not found."); return; }
 
-  Double_t dMassLow = 0.0;
-  Double_t dMassHigh = 0.0;
-  if(bHasMass)
-  {
-    dMassLow = histPos->GetZaxis()->GetBinLowEdge(iMassIndex+1);
-    dMassHigh = histPos->GetZaxis()->GetBinUpEdge(iMassIndex+1);
-  }
+  // clearing output (global) flow vectors
+  ResetPOIsVector(fFlowVecPpos);
+  ResetPOIsVector(fFlowVecPneg);
+  ResetPOIsVector(fFlowVecS);
 
-  for (auto part = vector->begin(); part != vector->end(); part++)
+  for(auto part = vector->begin(); part != vector->end(); ++part)
   {
     Double_t dPt = (*part)->Pt();
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
-
-    // POIs mass bin check for V0s candidates
     Double_t dMass = 0.0;
-    if(bHasMass)
-    {
 
-      dMass = (*part)->M();
-      if(dMass < dMassLow || dMass >= dMassHigh) continue;
-    }
+    // checking if pt is within pt (bin) range
+    if(dPt < dPtLow || dPt >= dPtHigh) { continue; }
+
+    // checking if mass is within mass (bin) range
+    if(bHasMass) { dMass = (*part)->M(); if(dMass < dMassLow || dMass >= dMassHigh) { continue; } }
+
+    // at this point particles corresponding to this pt (& mass) bin survive
 
     Double_t dWeight = 1.0;
-    // loading weights if needed
     if(fFlowUseWeights)
     {
       dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi));
-      if(dWeight <= 0) dWeight = 1.0;
+      if(dWeight <= 0.0) dWeight = 1.0;
     }
-
-    // assign iPtBin based on particle momenta
-    Short_t iPtBin = GetPOIsPtBinIndex(dPt);
 
     if(!bHasGap) // no eta gap
     {
