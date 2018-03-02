@@ -181,13 +181,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FillPOIsVectors(const Short_t iEtaGapIndex, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow = 0.0, const Double_t dMassHigh = 0.0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
       void                    ResetFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
       void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
-      Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
       void                    DoFlowRefs(const Int_t iEtaGapIndex = 0); // Estimate <2> for reference flow
       void                    DoFlowPOIs(const Int_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of charged hadrons
-      void                    DoFlowCharged(const Int_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
-      void                    DoFlowPID(const Int_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
-      void                    DoFlowPhi(const Int_t iEtaGapIndex = 0, const Int_t iMassIndex = 0); // Estimate <2'> for pt diff. flow of phi particles
-      void                    DoFlowV0s(const Int_t iEtaGapIndex = 0, const Int_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
 
       TComplex                Q(const Short_t n, const Short_t p);
       TComplex                QGapPos(const Short_t n, const Short_t p);
