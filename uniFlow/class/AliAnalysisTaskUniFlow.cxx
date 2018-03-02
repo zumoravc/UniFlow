@@ -1583,19 +1583,19 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   // pointers owned by task
   if(fVectorK0s)
   {
-    for(size_t i(0); i < fVectorK0s->size(); ++i) { delete fVectorK0s->at(i); }
+    for(auto part = fVectorK0s->begin(); part != fVectorK0s->end(); ++part) { delete *part; }
     fVectorK0s->clear();
   }
 
   if(fVectorLambda)
   {
-    for(size_t i(0); i < fVectorLambda->size(); ++i) { delete fVectorLambda->at(i); }
+    for(auto part = fVectorLambda->begin(); part != fVectorLambda->end(); ++part) { delete *part; }
     fVectorLambda->clear();
   }
 
   if(fVectorPhi)
   {
-    for(size_t i(0); i < fVectorPhi->size(); ++i) { delete fVectorPhi->at(i); }
+    for(auto part = fVectorPhi->begin(); part != fVectorPhi->end(); ++part) { delete *part; }
     fVectorPhi->clear();
   }
 
@@ -3319,8 +3319,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   // checking if there is at least one charged track selected (min requirement or <<2>>)
   // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
-  if(fVectorRefs->size() < 1)
-    return kFALSE;
+  if(fVectorRefs->empty()) { return kFALSE; }
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
   fIndexCentrality = GetCentralityIndex();
@@ -3354,13 +3353,13 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
     // if(fProcessPhi) // phi flow
     // {
-    //   if(fVectorPhi->size() > 0) { for(Short_t iMass(0); iMass < fPhiNumBinsMass; iMass++) DoFlowPhi(iGap,iMass); }
+    //   if(!fVectorPhi->empty()) { for(Short_t iMass(0); iMass < fPhiNumBinsMass; iMass++) DoFlowPhi(iGap,iMass); }
     // }
     //
     // if(fProcessV0s)
     // {
-    //   if(fVectorK0s->size() > 0) { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kK0s); }
-    //   if(fVectorLambda->size() > 0)  { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kLambda); }
+    //   if(!fVectorK0s->empty()) { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kK0s); }
+    //   if(!fVectorLambda->empty())  { for(Short_t iMass(0); iMass < fV0sNumBinsMass; iMass++) DoFlowV0s(iGap,iMass,kLambda); }
     // }
   } // endfor {iGap} eta gaps
 
