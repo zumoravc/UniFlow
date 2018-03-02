@@ -1632,8 +1632,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     return kFALSE;
   }
 
-  // TODO check if period corresponds to selected collisional system
-
   // checking PID response
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
   AliInputEventHandler* inputHandler = (AliInputEventHandler*)mgr->GetInputEventHandler();
