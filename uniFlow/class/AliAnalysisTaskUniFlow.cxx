@@ -3335,7 +3335,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
-  for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+  for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
   {
     DoFlowRefs(iGap); // Reference (pT integrated) flow
 
@@ -3369,7 +3369,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   return kTRUE;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
+void AliAnalysisTaskUniFlow::DoFlowRefs(const Int_t iEtaGapIndex)
 {
   // Estimate <2> for reference flow for all harmonics based on relevant flow vectors
   // *************************************************************
@@ -3450,26 +3450,19 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Short_t iEtaGapIndex)
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
+void AliAnalysisTaskUniFlow::DoFlowCharged(const Int_t iEtaGapIndex)
 {
   // Estimate <2> for pT diff flow of charged tracks for all harmonics based on relevant flow vectors
   // *************************************************************
-  const Double_t dPtBinWidth = (fFlowPOIsPtMax - fFlowPOIsPtMin) / fFlowPOIsPtNumBins;
 
-  Float_t dEtaGap = fEtaGap[iEtaGapIndex];
-  Short_t iHarmonics = 0;
-  Double_t Dn2 = 0;
-  TComplex vector = TComplex(0,0,kFALSE);
-  Double_t dValue = 999;
+  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
 
-  Int_t numPtBins = fp2ChargedCor2Pos[0][0][0]->GetNbinsY();
-
-  for(Short_t iPt(1); iPt < numPtBins+1; ++iPt)
+  Int_t iNumPtBins = fp2ChargedCor2Pos[0][0][0]->GetNbinsY();
+  for(Short_t iPt(1); iPt < iNumPtBins+1; ++iPt)
   {
     Double_t dPt = fp2ChargedCor2Pos[0][0][0]->GetYaxis()->GetBinCenter(iPt);
     Double_t dPtLow = fp2ChargedCor2Pos[0][0][0]->GetYaxis()->GetBinLowEdge(iPt);
     Double_t dPtHigh = fp2ChargedCor2Pos[0][0][0]->GetYaxis()->GetBinUpEdge(iPt);
-    // printf("%d : %f - %f - %f \n",iPt,dPt_low,dPt,dPt_high);
 
     // filling POIs (P,S) flow vectors
     FillPOIsVectors(iEtaGapIndex,kCharged,dPtLow,dPtHigh);
@@ -3477,76 +3470,69 @@ void AliAnalysisTaskUniFlow::DoFlowCharged(const Short_t iEtaGapIndex)
     if(dEtaGap == -1) // no eta gap
     {
       // estimating <2'>
-      Dn2 = TwoDiff(0,0).Re();
-      if(Dn2 != 0)
+      Double_t D02 = TwoDiff(0,0).Re();
+      if(D02 != 0.0)
       {
-        for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+        for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
         {
-          iHarmonics = fHarmonics[iHarm];
-          vector = TwoDiff(iHarmonics,-iHarmonics);
-          dValue = vector.Re()/Dn2;
-          // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
-          if(TMath::Abs(dValue) < 1.0)
-            fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
+          Int_t iHarmonics = fHarmonics[iHarm];
+          Double_t Nn2 = TwoDiff(iHarmonics,-iHarmonics).Re();
+          Double_t dValue = Nn2 / D02;
+          if(TMath::Abs(dValue) <= 1.0) { fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, D02); }
         }
       }
 
       // estimating <4'>
       if(fCutFlowDoFourCorrelations)
       {
-        Dn2 = FourDiff(0,0,0,0).Re();
-        if(Dn2 != 0)
+        Double_t D04 = FourDiff(0,0,0,0).Re();
+        if(D04 != 0.0)
         {
-          for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+          for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
           {
-            iHarmonics = fHarmonics[iHarm];
-            vector = FourDiff(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics);
-            dValue = vector.Re()/Dn2;
-            // printf("Gap (no): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt, Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
-            if( TMath::Abs(dValue) < 1.0 )
-            fp2ChargedCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
+            Int_t iHarmonics = fHarmonics[iHarm];
+            Double_t Nn4 = FourDiff(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
+            Double_t dValue = Nn4 / D04;
+            if( TMath::Abs(dValue) <= 1.0 ) { fp2ChargedCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, dPt, dValue, D04); }
           }
         }
       }
+
     }
     else // eta gap
     {
-      // estimating <2'>
-      // POIs in positive eta
-      Dn2 = TwoDiffGapPos(0,0).Re();
-      if(Dn2 != 0)
+      // estimating <2'> : POIs in positive eta
+      Double_t D02pos = TwoDiffGapPos(0,0).Re();
+      if(D02pos != 0.0)
       {
-        for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+        for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
         {
-          iHarmonics = fHarmonics[iHarm];
-          vector = TwoDiffGapPos(iHarmonics,-iHarmonics);
-          dValue = vector.Re()/Dn2;
-          // printf("Gap (Pos): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
-          if( TMath::Abs(dValue) < 1.0 )
-            fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
+          Int_t iHarmonics = fHarmonics[iHarm];
+          Double_t Nn2pos = TwoDiffGapPos(iHarmonics,-iHarmonics).Re();
+          Double_t dValue = Nn2pos / D02pos;
+          if( TMath::Abs(dValue) <= 1.0 ) { fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, D02pos); }
         }
       }
 
-      // POIs in negative eta
-      Dn2 = TwoDiffGapNeg(0,0).Re();
-      if(Dn2 != 0)
+      // estimating <2'> : POIs in negative eta
+      Double_t D02neg = TwoDiffGapNeg(0,0).Re();
+      if(D02neg != 0.0)
       {
-        for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
+        for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
         {
-          iHarmonics = fHarmonics[iHarm];
-          vector = TwoDiffGapNeg(iHarmonics,-iHarmonics);
-          dValue = vector.Re()/Dn2;
-          // printf("Gap (Neg): %g Harm %d Pt %g | Dn2: %g | fFlowVecQpos[0][0]: %g | fFlowVecQneg[0][0]: %g | fFlowVecPpos[0][0]: %g | fFlowVecPneg[0][0]: %g | fFlowVecS[0][0]: %g | fIndexCentrality %d\n\n", dEtaGap,iHarmonics,dPt,Dn2,fFlowVecQpos[0][0].Re(),fFlowVecQneg[0][0].Re(),fFlowVecPpos[0][0].Re(),fFlowVecPneg[0][0].Re(),fFlowVecS[0][0].Re(),fIndexCentrality);
-          if( TMath::Abs(dValue) < 1.0 )
-            fp2ChargedCor2Neg[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, Dn2);
+          Int_t iHarmonics = fHarmonics[iHarm];
+          Double_t Nn2neg = TwoDiffGapNeg(iHarmonics,-iHarmonics).Re();
+          Double_t dValue = Nn2neg / D02neg;
+          if( TMath::Abs(dValue) <= 1.0 ) { fp2ChargedCor2Neg[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dPt, dValue, D02neg); }
         }
       }
     } // endif {dEtaGap}
+
   } // endfor {iPt}
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::DoFlowPID(const Short_t iEtaGapIndex, const PartSpecies species)
+void AliAnalysisTaskUniFlow::DoFlowPID(const Int_t iEtaGapIndex, const PartSpecies species)
 {
   // Estimate <2> for pT diff flow of pi/K/p tracks for all harmonics based on relevant flow vectors
   // *************************************************************
@@ -3650,7 +3636,7 @@ void AliAnalysisTaskUniFlow::DoFlowPID(const Short_t iEtaGapIndex, const PartSpe
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::DoFlowPhi(const Short_t iEtaGapIndex, const Short_t iMassIndex)
+void AliAnalysisTaskUniFlow::DoFlowPhi(const Int_t iEtaGapIndex, const Int_t iMassIndex)
 {
   // Estimate the correlations for pT diff flow of phi candidates for all harmonics based on relevant flow vectors
   // *************************************************************
@@ -3732,7 +3718,7 @@ void AliAnalysisTaskUniFlow::DoFlowPhi(const Short_t iEtaGapIndex, const Short_t
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::DoFlowV0s(const Short_t iEtaGapIndex, const Short_t iMassIndex, const PartSpecies species)
+void AliAnalysisTaskUniFlow::DoFlowV0s(const Int_t iEtaGapIndex, const Int_t iMassIndex, const PartSpecies species)
 {
   // Estimate <2> for pT diff flow of V0s for all harmonics based on relevant flow vectors
   // *************************************************************

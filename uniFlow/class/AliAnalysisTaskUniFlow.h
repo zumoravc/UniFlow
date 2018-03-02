@@ -183,11 +183,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    ResetPOIsVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
       void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
       Short_t                 GetPOIsPtBinIndex(const Double_t pt); // return pT bin index based on momenta value
-      void                    DoFlowRefs(const Short_t iEtaGapIndex = 0); // Estimate <2> for reference flow
-      void                    DoFlowCharged(const Short_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
-      void                    DoFlowPID(const Short_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
-      void                    DoFlowPhi(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0); // Estimate <2'> for pt diff. flow of phi particles
-      void                    DoFlowV0s(const Short_t iEtaGapIndex = 0, const Short_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
+      void                    DoFlowRefs(const Int_t iEtaGapIndex = 0); // Estimate <2> for reference flow
+      void                    DoFlowCharged(const Int_t iEtaGapIndex = 0); // Estimate <2'> for pt diff. flow of charged hadrons
+      void                    DoFlowPID(const Int_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of PID (pi,K,p) hadrons
+      void                    DoFlowPhi(const Int_t iEtaGapIndex = 0, const Int_t iMassIndex = 0); // Estimate <2'> for pt diff. flow of phi particles
+      void                    DoFlowV0s(const Int_t iEtaGapIndex = 0, const Int_t iMassIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of V0 particles
 
       TComplex                Q(const Short_t n, const Short_t p);
       TComplex                QGapPos(const Short_t n, const Short_t p);
