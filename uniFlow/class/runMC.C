@@ -13,24 +13,8 @@ void runMC()
     TString sOutDir = "output";
     TString sPeriod = "LHC17f2a_fix";
 
-    // run switcher
-    // Run2 8.16 TeV
-    // RunList_LHC16r_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [12 runs ~16,6M ]
-    //Int_t runNumber[] = {266318, 266317, 266316,   266208, 266197, 266196, 266187, 265754, 265744, 265607, 265596, 265594};
-    // RunList_LHC16s_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [16 runs ~10,5M ]
-    // Int_t runNumber[] = {267110, 267081, 267077, 267072, 267070, 267030, 266998, 266997, 266994, 266993, 266944, 266886, 266885, 266883, 266882, 266437};
-
-    // Run2 5.02 TeV
-    // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs]
-    // Int_t runNumber[] = {267166, 267165, 267164, 267163};
-    // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170318_v1.txt [31 runs]
-    // Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
-    // Int_t runNumber[] = {265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
-
-
     //test
     Int_t runNumber[] = {265385, 265384, 265383};
-
 
     // since we will compile a class, tell root where to look for headers
     gROOT->ProcessLine(".include $ROOTSYS/include");
@@ -80,6 +64,7 @@ void runMC()
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
     task1->SetRunMode(AliAnalysisTaskUniFlow::kSkipFlow);
+    task1->SetMC(kTRUE);
     task1->SetNumEventsAnalyse(50);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     // task1->SetSampling(kTRUE);

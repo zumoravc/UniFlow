@@ -93,6 +93,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPIDCombined(0x0),
   fFlowWeightsFile(0x0),
   fInit(kFALSE),
+  fMC(kFALSE),
+  fArrayMC(0x0),
   fIndexSampling(0),
   fIndexCentrality(-1),
   fEventCounter(0),
@@ -347,6 +349,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPIDCombined(0x0),
   fFlowWeightsFile(0x0),
   fInit(kFALSE),
+  fMC(kFALSE),
+  fArrayMC(0x0),
   fIndexSampling(0),
   fIndexCentrality(-1),
   fEventCounter(0),
@@ -1751,6 +1755,13 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // event selection
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!EventSelection()) return;
+
+  // loading array with MC particles
+  if(fMC)
+  {
+    fArrayMC = (TClonesArray*) fEventAOD->FindListObject("mcparticles");
+    if(!fArrayMC) { AliError("TClonesArray with MC particle not found!"); return; }
+  }
 
   // processing of selected event
   Bool_t bProcessed = ProcessEvent();

@@ -29,6 +29,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetRunMode(RunMode mode = kFull) { fRunMode = mode; }
       void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
+      void                    SetMC(Bool_t mc = kTRUE) { fMC = mc; }
       void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
       void                    SetFillQAhistos(Bool_t fill = kTRUE) { fFillQA = fill; }
       //void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; } // not implemented yet
@@ -204,6 +205,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
       TFile*                  fFlowWeightsFile; //! source file containing weights
+      TClonesArray*           fArrayMC; //! input list of MC particles
+      Bool_t                  fMC; // is running on mc?
       Bool_t                  fInit; // initialization check
       Short_t                 fIndexSampling; // sampling index (randomly generated)
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
