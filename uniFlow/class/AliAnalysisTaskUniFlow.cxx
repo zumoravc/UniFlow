@@ -1620,21 +1620,9 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // *************************************************************
   AliInfo("Checking task setting");
 
-  if(fAnalType != kESD && fAnalType != kAOD)
+  if(fAnalType != kAOD)
   {
-    AliFatal("Analysis type not specified! Terminating!");
-    return kFALSE;
-  }
-
-  if(fAnalType == kESD)
-  {
-    AliFatal("Analysis type: ESD not implemented! Terminating!");
-    return kFALSE;
-  }
-
-  if(fColSystem != kPP && fColSystem != kPPb && fColSystem != kPbPb)
-  {
-    AliFatal("Collisional system not specified! Terminating!");
+    AliFatal("Analysis type: not kAOD (not implemented for ESDs yet)! Terminating!");
     return kFALSE;
   }
 
@@ -1671,9 +1659,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     AliFatal("Sampling used, but number of samples is 0! Terminating!");
     return kFALSE;
   }
-
-  // if(!fSampling)
-  //fNumSamples = 1;
 
   // checking cut setting
   AliInfo("Checking task parameters setting conflicts (ranges, etc)");
