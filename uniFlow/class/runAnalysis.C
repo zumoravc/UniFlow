@@ -78,11 +78,11 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kSkipFlow);
     task1->SetNumEventsAnalyse(1);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     // task1->SetSampling(kTRUE);
-    // task1->SetFillQAhistos(kFALSE);
+    task1->SetFillQAhistos(kTRUE);
     task1->SetProcessCharged(kTRUE);
     task1->SetProcessPID(kTRUE);
     task1->SetProcessPhi(kTRUE);
@@ -90,8 +90,8 @@ void runAnalysis()
     // Flow
     task1->SetFlowRFPsPtMin(0.2);
     task1->SetFlowRFPsPtMax(5.);
-    // task1->SetFlowDoFourCorrelations(kFALSE);
-    task1->SetFlowFillWeights(kFALSE);
+    task1->SetFlowDoFourCorrelations(kFALSE);
+    task1->SetFlowFillWeights(kTRUE);
     // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights_preliminary_16q.root",kFALSE);
     // Events selection
     // task1->SetUseAliEventCuts();
