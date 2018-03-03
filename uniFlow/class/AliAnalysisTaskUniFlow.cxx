@@ -60,6 +60,7 @@
 #include "TProfile2D.h"
 #include "TProfile3D.h"
 #include "TList.h"
+#include "TClonesArray.h"
 #include "TComplex.h"
 #include "TRandom3.h"
 
@@ -70,7 +71,6 @@
 #include "AliMultSelection.h"
 #include "AliPIDResponse.h"
 #include "AliPIDCombined.h"
-#include "AliAnalysisTaskUniFlow.h"
 #include "AliLog.h"
 #include "AliAODEvent.h"
 #include "AliESDEvent.h"
@@ -78,6 +78,9 @@
 #include "AliPicoTrack.h"
 #include "AliAODv0.h"
 #include "AliAODTrack.h"
+#include "AliAODMCParticle.h"
+
+#include "AliAnalysisTaskUniFlow.h"
 
 class AliAnalysisTaskUniFlow;
 
@@ -2501,6 +2504,16 @@ Double_t AliAnalysisTaskUniFlow::GetRapidity(Double_t mass, Double_t Pt, Double_
 {
     Double_t rapid = TMath::Log( (TMath::Sqrt(mass*mass + Pt*Pt*TMath::CosH(Eta)*TMath::CosH(Eta)) + Pt*TMath::SinH(Eta)) / TMath::Sqrt(mass*mass + Pt*Pt) );
     return rapid;
+}
+//_____________________________________________________________________________
+AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(Int_t label)
+{
+  if(!fArrayMC) { AliError("fArrayMC not found!"); return 0x0; }
+  if(label < 0) { AliWarning("MC label negative"); return 0x0; }
+
+  AliAODMCParticle* mcTrack = (AliAODMCParticle*) fArrayMC->At(label);
+  if(!mcTrack) { AliError("Corresponding MC track not found!"); return 0x0; }
+  return mcTrack;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
