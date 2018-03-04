@@ -62,7 +62,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetPIDNumSigmasKaonMax(Float_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
       void                    SetPIDNumSigmasProtonMax(Float_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
       void                    SetPIDNumSigmasTPCRejectElectron(Float_t numSigmas) { fCutPIDnSigmaTPCRejectElectron = numSigmas; }
-      void                    SetPIDNumSigmasCombinedNoTOFrejection(Bool_t reject = kTRUE) { fCutPIDnSigmaCombinedNoTOFrejection = reject; }
+      void                    SetPIDNumSigmasCombinedNoTOFrejection(Bool_t reject = kTRUE) { fCutPIDnSigmaCombinedTOFrejection = reject; }
       void                    SetUseBayesPID(Bool_t bayes = kTRUE) { fCutUseBayesPID = bayes; }
       void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesPionMin = probPi; }
       void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutPIDBayesKaonMin = probK; }
@@ -264,7 +264,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
       // cuts & selection: PID selection
       Bool_t                  fCutPIDUseAntiProtonOnly; // [kFALSE] check proton PID charge to select AntiProtons only
-      Bool_t                  fCutPIDnSigmaCombinedNoTOFrejection; // [kFALSE] flag for rejection candidates in TPC+TOF pt region if TOF is not available (if true and no TOF, only TPC is used)
+      Bool_t                  fCutPIDnSigmaCombinedTOFrejection; // [kTRUE] flag for rejection candidates in TPC+TOF pt region if TOF is not available (if true and no TOF track is skipped, otherwise only TPC is used)
       Float_t                 fCutPIDnSigmaPionMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
       Float_t                 fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
       Float_t                 fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates

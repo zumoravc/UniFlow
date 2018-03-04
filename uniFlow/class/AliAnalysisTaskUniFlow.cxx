@@ -166,7 +166,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutPIDnSigmaKaonMax(3.),
   fCutPIDnSigmaProtonMax(3.),
   fCutPIDnSigmaTPCRejectElectron(3.),
-  fCutPIDnSigmaCombinedNoTOFrejection(kFALSE),
+  fCutPIDnSigmaCombinedTOFrejection(kTRUE),
   fCutUseBayesPID(kFALSE),
   fCutPIDBayesPionMin(0.9),
   fCutPIDBayesKaonMin(0.9),
@@ -434,7 +434,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutPIDnSigmaKaonMax(3.),
   fCutPIDnSigmaProtonMax(3.),
   fCutPIDnSigmaTPCRejectElectron(3.),
-  fCutPIDnSigmaCombinedNoTOFrejection(kFALSE),
+  fCutPIDnSigmaCombinedTOFrejection(kTRUE),
   fCutUseBayesPID(kFALSE),
   fCutPIDBayesPionMin(0.9),
   fCutPIDBayesKaonMin(0.9),
@@ -1575,7 +1575,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutChargedDCAxyMax: (Double_t) %g (cm)\n",    fCutChargedDCAxyMax);
   printf("   -------- PID (pi,K,p) tracks ---------------------------------\n");
   printf("      fCutPIDUseAntiProtonOnly: (Bool_t) %s\n",  fCutPIDUseAntiProtonOnly ? "kTRUE" : "kFALSE");
-  printf("      fCutPIDnSigmaCombinedNoTOFrejection: (Bool_t) %s\n",  fCutPIDnSigmaCombinedNoTOFrejection ? "kTRUE" : "kFALSE");
+  printf("      fCutPIDnSigmaCombinedTOFrejection: (Bool_t) %s\n",  fCutPIDnSigmaCombinedTOFrejection ? "kTRUE" : "kFALSE");
   printf("      fCutPIDnSigmaPionMax: (Float_t) %g\n",    fCutPIDnSigmaPionMax);
   printf("      fCutPIDnSigmaKaonMax: (Float_t) %g\n",    fCutPIDnSigmaKaonMax);
   printf("      fCutPIDnSigmaProtonMax: (Float_t) %g\n",    fCutPIDnSigmaProtonMax);
@@ -3211,7 +3211,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       Float_t dNumSigmaCombined[5] = {-99.,-99.,-99.,-99.,-99.};
 
       // discard candidates if no TOF is available if cut is on
-      if(fCutPIDnSigmaCombinedNoTOFrejection && !bIsTOFok) return kUnknown;
+      if(fCutPIDnSigmaCombinedTOFrejection && !bIsTOFok) return kUnknown;
 
       // calculating combined nSigmas
       for(Short_t i(0); i < 5; i++)
