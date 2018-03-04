@@ -2084,6 +2084,19 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
     }
 
+    if(fMC)
+    {
+      AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
+      if(!trackMC) { continue; }
+
+      Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
+
+      // filling info about all (i.e. before selection) reconstructed PID particles
+      if(iPDG == 211) { fhMCRecoAllPionPt->Fill(track->Pt()); }
+      if(iPDG == 321) { fhMCRecoAllKaonPt->Fill(track->Pt()); }
+      if(iPDG == 2212) { fhMCRecoAllProtonPt->Fill(track->Pt()); }
+    }
+
     // Checking if selected track is eligible for Ref. flow
     if(!IsWithinRefs(track)) continue;
 
@@ -2098,18 +2111,6 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
     }
 
-    if(fMC)
-    {
-      AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
-      if(!trackMC) { continue; }
-
-      Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
-
-      // filling info about all (i.e. before selection) reconstructed PID particles
-      if(iPDG == 211) { fhMCRecoAllPionPt->Fill(track->Pt()); }
-      if(iPDG == 321) { fhMCRecoAllKaonPt->Fill(track->Pt()); }
-      if(iPDG == 2212) { fhMCRecoAllProtonPt->Fill(track->Pt()); }
-    }
   }
 
   // fill QA charged multiplicity
