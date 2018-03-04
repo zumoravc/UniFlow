@@ -45,7 +45,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun = kTRUE) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; fFlowRunByRunWeights = bRunByRun; } //! NOTE file has to include "alien:///" if the file is on grid
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
-      void                    SetMultEstimator(const char* mult = "CHARGED") { fMultEstimator = mult; }
+      void                    SetMultEstimator(const char* mult = "V0A") { fMultEstimator = mult; }
       void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
       void                    SetUseAliEventCuts(Bool_t bUseCuts = kTRUE) { fUseAliEventCuts = bUseCuts; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
@@ -126,9 +126,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Short_t    fFlowNumWeightPowersMax = 3; // maximum weight power length of flow vector array
       const Double_t          fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
       const Double_t          fFlowPOIsPtMax; // [15] (GeV/c) max pT treshold for POIs for differential flow
-      const Int_t             fFlowCentMin; // [0] min range for centrality/multiplicity histos
-      const Int_t             fFlowCentMax; // [150] min range for centrality/multiplicity histos
-      const Int_t             fFlowCentNumBins; // [150] min range for centrality/multiplicity histos
+      Int_t                   fFlowCentMin; // [set in InitializeTask()] min range for centrality/multiplicity histos
+      Int_t                   fFlowCentMax; // [set in InitializeTask()] max range for centrality/multiplicity histos
       static const Short_t    fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
       static const Short_t    fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
