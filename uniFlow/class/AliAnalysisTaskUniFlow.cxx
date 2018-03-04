@@ -272,6 +272,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhChargedCounter(0x0),
 
   // PID histogram
+  fhMCRecoSelectedPionPt(0x0),
+  fhMCRecoSelectedTruePionPt(0x0),
+  fhMCRecoAllPionPt(0x0),
+  fhMCGenAllPionPt(0x0),
+  fhMCRecoSelectedKaonPt(0x0),
+  fhMCRecoSelectedTrueKaonPt(0x0),
+  fhMCRecoAllKaonPt(0x0),
+  fhMCGenAllKaonPt(0x0),
+  fhMCRecoSelectedProtonPt(0x0),
+  fhMCRecoSelectedTrueProtonPt(0x0),
+  fhMCRecoAllProtonPt(0x0),
+  fhMCGenAllProtonPt(0x0),
   fhPIDPionMult(0x0),
   fhPIDPionPt(0x0),
   fhPIDPionPhi(0x0),
@@ -528,6 +540,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhChargedCounter(0x0),
 
   // PID histogram
+  fhMCRecoSelectedPionPt(0x0),
+  fhMCRecoSelectedTruePionPt(0x0),
+  fhMCRecoAllPionPt(0x0),
+  fhMCGenAllPionPt(0x0),
+  fhMCRecoSelectedKaonPt(0x0),
+  fhMCRecoSelectedTrueKaonPt(0x0),
+  fhMCRecoAllKaonPt(0x0),
+  fhMCGenAllKaonPt(0x0),
+  fhMCRecoSelectedProtonPt(0x0),
+  fhMCRecoSelectedTrueProtonPt(0x0),
+  fhMCRecoAllProtonPt(0x0),
+  fhMCGenAllProtonPt(0x0),
   fhPIDPionMult(0x0),
   fhPIDPionPt(0x0),
   fhPIDPionPhi(0x0),
@@ -1126,6 +1150,37 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fhPIDKaonMult);
       fhPIDProtonMult = new TH1D("fhPIDProtonMult","PID: p: Multiplicity; multiplicity", 100,0,100);
       fQAPID->Add(fhPIDProtonMult);
+
+      if(fMC)
+      {
+        fhMCRecoSelectedPionPt = new TH1D("fhMCRecoSelectedPionPt","fhMCRecoSelectedPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedPionPt);
+        fhMCRecoSelectedTruePionPt = new TH1D("fhMCRecoSelectedTruePionPt","fhMCRecoSelectedTruePionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedTruePionPt);
+        fhMCRecoAllPionPt = new TH1D("fhMCRecoAllPionPt","fhMCRecoAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoAllPionPt);
+        fhMCGenAllPionPt = new TH1D("fhMCGenAllPionPt","fhMCGenAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCGenAllPionPt);
+
+        fhMCRecoSelectedKaonPt = new TH1D("fhMCRecoSelectedKaonPt","fhMCRecoSelectedKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedKaonPt);
+        fhMCRecoSelectedTrueKaonPt = new TH1D("fhMCRecoSelectedTrueKaonPt","fhMCRecoSelectedTrueKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedTrueKaonPt);
+        fhMCRecoAllKaonPt = new TH1D("fhMCRecoAllKaonPt","fhMCRecoAllKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoAllKaonPt);
+        fhMCGenAllKaonPt = new TH1D("fhMCGenAllKaonPt","fhMCGenAllKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCGenAllKaonPt);
+
+        fhMCRecoSelectedProtonPt = new TH1D("fhMCRecoSelectedProtonPt","fhMCRecoSelectedProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedProtonPt);
+        fhMCRecoSelectedTrueProtonPt = new TH1D("fhMCRecoSelectedTrueProtonPt","fhMCRecoSelectedTrueProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedTrueProtonPt);
+        fhMCRecoAllProtonPt = new TH1D("fhMCRecoAllProtonPt","fhMCRecoAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoAllProtonPt);
+        fhMCGenAllProtonPt = new TH1D("fhMCGenAllProtonPt","fhMCGenAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCGenAllProtonPt);
+      }
+
 
       if(fFillQA)
       {
@@ -2042,6 +2097,19 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       Double_t weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) );
       fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
     }
+
+    if(fMC)
+    {
+      AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
+      if(!trackMC) { continue; }
+
+      Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
+
+      // filling info about all (i.e. before selection) reconstructed PID particles
+      if(iPDG == 211) { fhMCRecoAllPionPt->Fill(track->Pt()); }
+      if(iPDG == 321) { fhMCRecoAllKaonPt->Fill(track->Pt()); }
+      if(iPDG == 2212) { fhMCRecoAllProtonPt->Fill(track->Pt()); }
+    }
   }
 
   // fill QA charged multiplicity
@@ -2509,7 +2577,7 @@ Double_t AliAnalysisTaskUniFlow::GetRapidity(Double_t mass, Double_t Pt, Double_
 AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(Int_t label)
 {
   if(!fArrayMC) { AliError("fArrayMC not found!"); return 0x0; }
-  if(label < 0) { AliWarning("MC label negative"); return 0x0; }
+  if(label < 0) { /*AliWarning("MC label negative");*/ return 0x0; }
 
   AliAODMCParticle* mcTrack = (AliAODMCParticle*) fArrayMC->At(label);
   if(!mcTrack) { AliError("Corresponding MC track not found!"); return 0x0; }
@@ -3026,6 +3094,34 @@ void AliAnalysisTaskUniFlow::FilterPID()
     }
 
     if(fFillQA) FillQAPID(1,track,species); // filling QA for tracks AFTER selection
+
+    // process MC data
+    if(fMC)
+    {
+      AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
+      if(!trackMC) { continue; }
+
+      Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
+
+      switch (species)
+      {
+        case kPion:
+            fhMCRecoSelectedPionPt->Fill(track->Pt());
+            if(iPDG == 211) { fhMCRecoSelectedTruePionPt->Fill(track->Pt()); }
+          break;
+        case kKaon:
+            fhMCRecoSelectedKaonPt->Fill(track->Pt());
+            if(iPDG == 321) { fhMCRecoSelectedTrueKaonPt->Fill(track->Pt()); }
+          break;
+        case kProton:
+            fhMCRecoSelectedProtonPt->Fill(track->Pt());
+            if(iPDG == 2212) { fhMCRecoSelectedTrueProtonPt->Fill(track->Pt()); }
+          break;
+        default:
+          continue;
+      }
+    }
+
   }
 
   fhPIDPionMult->Fill(fVectorPion->size());

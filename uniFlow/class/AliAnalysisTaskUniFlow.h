@@ -160,7 +160,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FilterPID(); // pi,K,p filtering
       void                    FilterV0s(); // K0s, Lambda, ALambda filtering
       void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
-      AliAODMCParticle*       GetMCParticle(Int_t label); // find corresponding MC particle from fArrayMC depending of AOD track label 
+      AliAODMCParticle*       GetMCParticle(Int_t label); // find corresponding MC particle from fArrayMC depending of AOD track label
       Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta); // calculate particle / track rapidity
       Bool_t                  HasTrackPIDTPC(const AliAODTrack* track); // is TPC PID OK for this track ?
       Bool_t                  HasTrackPIDTOF(const AliAODTrack* track); // is TOF PID OK for this track ?
@@ -456,6 +456,18 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH2D*           fh2PIDProtonTPCnSigmaProton; //! TPC nSigma vs pT for selected protons (proton hypothesis)
       TH2D*           fh2PIDProtonTOFnSigmaProton; //! TOF nSigma vs pT for selected protons (proton hypothesis)
       TH2D*           fh2PIDProtonBayesProton; //! Bayesian PID probability vs pT for selected protons (proton hypothesis)
+      TH1D*           fhMCRecoSelectedPionPt; //! pt dist of selected (MC reco) pions
+      TH1D*           fhMCRecoSelectedTruePionPt; //! pt dist of selected (MC reco) true (tagged in MC gen) pions
+      TH1D*           fhMCRecoAllPionPt; //! pt dist of all (MC reco) pions (i.e. selected charged tracks that are tagged in MC)
+      TH1D*           fhMCGenAllPionPt; //! pt dist of all (MC) generated pions
+      TH1D*           fhMCRecoSelectedKaonPt; //! pt dist of selected (MC reco) Kaons
+      TH1D*           fhMCRecoSelectedTrueKaonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Kaons
+      TH1D*           fhMCRecoAllKaonPt; //! pt dist of all (MC reco) Kaons (i.e. selected charged tracks that are tagged in MC)
+      TH1D*           fhMCGenAllKaonPt; //! pt dist of all (MC) generated Kaons
+      TH1D*           fhMCRecoSelectedProtonPt; //! pt dist of selected (MC reco) Protons
+      TH1D*           fhMCRecoSelectedTrueProtonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Protons
+      TH1D*           fhMCRecoAllProtonPt; //! pt dist of all (MC reco) Protons (i.e. selected charged tracks that are tagged in MC)
+      TH1D*           fhMCGenAllProtonPt; //! pt dist of all (MC) generated Protons
       // Phi
       TH1D*           fhPhiCounter; //! counter following phi candidate selection
       TH1D*           fhPhiMult; //! multiplicity distribution of selected phi candidates
