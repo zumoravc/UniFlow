@@ -634,12 +634,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
         fh3PhiEntriesBGNeg[iGap] = 0x0;
       }
 
-      // mean Qx,Qy
-      fpMeanQxRefsPos[iGap][iHarm] = 0x0;
-      fpMeanQxRefsNeg[iGap][iHarm] = 0x0;
-      fpMeanQyRefsPos[iGap][iHarm] = 0x0;
-      fpMeanQyRefsNeg[iGap][iHarm] = 0x0;
-
       for(Short_t iSample(0); iSample < fNumSamples; iSample++)
       {
         fpRefsCor2[iSample][iGap][iHarm] = 0x0;
