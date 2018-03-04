@@ -60,6 +60,7 @@
 #include "TProfile2D.h"
 #include "TProfile3D.h"
 #include "TList.h"
+#include "TClonesArray.h"
 #include "TComplex.h"
 #include "TRandom3.h"
 
@@ -70,7 +71,6 @@
 #include "AliMultSelection.h"
 #include "AliPIDResponse.h"
 #include "AliPIDCombined.h"
-#include "AliAnalysisTaskUniFlow.h"
 #include "AliLog.h"
 #include "AliAODEvent.h"
 #include "AliESDEvent.h"
@@ -78,6 +78,9 @@
 #include "AliPicoTrack.h"
 #include "AliAODv0.h"
 #include "AliAODTrack.h"
+#include "AliAODMCParticle.h"
+
+#include "AliAnalysisTaskUniFlow.h"
 
 class AliAnalysisTaskUniFlow;
 
@@ -93,6 +96,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPIDCombined(0x0),
   fFlowWeightsFile(0x0),
   fInit(kFALSE),
+  fMC(kFALSE),
+  fArrayMC(0x0),
   fIndexSampling(0),
   fIndexCentrality(-1),
   fEventCounter(0),
@@ -161,7 +166,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutPIDnSigmaKaonMax(3.),
   fCutPIDnSigmaProtonMax(3.),
   fCutPIDnSigmaTPCRejectElectron(3.),
-  fCutPIDnSigmaCombinedNoTOFrejection(kFALSE),
+  fCutPIDnSigmaCombinedTOFrejection(kTRUE),
   fCutUseBayesPID(kFALSE),
   fCutPIDBayesPionMin(0.9),
   fCutPIDBayesKaonMin(0.9),
@@ -267,6 +272,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhChargedCounter(0x0),
 
   // PID histogram
+  fhMCRecoSelectedPionPt(0x0),
+  fhMCRecoSelectedTruePionPt(0x0),
+  fhMCRecoAllPionPt(0x0),
+  fhMCGenAllPionPt(0x0),
+  fhMCRecoSelectedKaonPt(0x0),
+  fhMCRecoSelectedTrueKaonPt(0x0),
+  fhMCRecoAllKaonPt(0x0),
+  fhMCGenAllKaonPt(0x0),
+  fhMCRecoSelectedProtonPt(0x0),
+  fhMCRecoSelectedTrueProtonPt(0x0),
+  fhMCRecoAllProtonPt(0x0),
+  fhMCGenAllProtonPt(0x0),
   fhPIDPionMult(0x0),
   fhPIDPionPt(0x0),
   fhPIDPionPhi(0x0),
@@ -347,6 +364,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPIDCombined(0x0),
   fFlowWeightsFile(0x0),
   fInit(kFALSE),
+  fMC(kFALSE),
+  fArrayMC(0x0),
   fIndexSampling(0),
   fIndexCentrality(-1),
   fEventCounter(0),
@@ -415,7 +434,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutPIDnSigmaKaonMax(3.),
   fCutPIDnSigmaProtonMax(3.),
   fCutPIDnSigmaTPCRejectElectron(3.),
-  fCutPIDnSigmaCombinedNoTOFrejection(kFALSE),
+  fCutPIDnSigmaCombinedTOFrejection(kTRUE),
   fCutUseBayesPID(kFALSE),
   fCutPIDBayesPionMin(0.9),
   fCutPIDBayesKaonMin(0.9),
@@ -521,6 +540,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhChargedCounter(0x0),
 
   // PID histogram
+  fhMCRecoSelectedPionPt(0x0),
+  fhMCRecoSelectedTruePionPt(0x0),
+  fhMCRecoAllPionPt(0x0),
+  fhMCGenAllPionPt(0x0),
+  fhMCRecoSelectedKaonPt(0x0),
+  fhMCRecoSelectedTrueKaonPt(0x0),
+  fhMCRecoAllKaonPt(0x0),
+  fhMCGenAllKaonPt(0x0),
+  fhMCRecoSelectedProtonPt(0x0),
+  fhMCRecoSelectedTrueProtonPt(0x0),
+  fhMCRecoAllProtonPt(0x0),
+  fhMCGenAllProtonPt(0x0),
   fhPIDPionMult(0x0),
   fhPIDPionPt(0x0),
   fhPIDPionPhi(0x0),
@@ -682,6 +713,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fhQAPIDTOFstatus[iQA] = 0x0;
     fhQAPIDTPCdEdx[iQA] = 0x0;
     fhQAPIDTOFbeta[iQA] = 0x0;
+    fh3QAPIDnSigmaTPCTOFPtPion[iQA] = 0x0;
+    fh3QAPIDnSigmaTPCTOFPtKaon[iQA] = 0x0;
+    fh3QAPIDnSigmaTPCTOFPtProton[iQA] = 0x0;
     fh3QAPIDnSigmaBayesElectron[iQA] = 0x0;
     fh3QAPIDnSigmaBayesMuon[iQA] = 0x0;
     fh3QAPIDnSigmaBayesPion[iQA] = 0x0;
@@ -1120,6 +1154,37 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fhPIDProtonMult = new TH1D("fhPIDProtonMult","PID: p: Multiplicity; multiplicity", 100,0,100);
       fQAPID->Add(fhPIDProtonMult);
 
+      if(fMC)
+      {
+        fhMCRecoSelectedPionPt = new TH1D("fhMCRecoSelectedPionPt","fhMCRecoSelectedPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedPionPt);
+        fhMCRecoSelectedTruePionPt = new TH1D("fhMCRecoSelectedTruePionPt","fhMCRecoSelectedTruePionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedTruePionPt);
+        fhMCRecoAllPionPt = new TH1D("fhMCRecoAllPionPt","fhMCRecoAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoAllPionPt);
+        fhMCGenAllPionPt = new TH1D("fhMCGenAllPionPt","fhMCGenAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCGenAllPionPt);
+
+        fhMCRecoSelectedKaonPt = new TH1D("fhMCRecoSelectedKaonPt","fhMCRecoSelectedKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedKaonPt);
+        fhMCRecoSelectedTrueKaonPt = new TH1D("fhMCRecoSelectedTrueKaonPt","fhMCRecoSelectedTrueKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedTrueKaonPt);
+        fhMCRecoAllKaonPt = new TH1D("fhMCRecoAllKaonPt","fhMCRecoAllKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoAllKaonPt);
+        fhMCGenAllKaonPt = new TH1D("fhMCGenAllKaonPt","fhMCGenAllKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCGenAllKaonPt);
+
+        fhMCRecoSelectedProtonPt = new TH1D("fhMCRecoSelectedProtonPt","fhMCRecoSelectedProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedProtonPt);
+        fhMCRecoSelectedTrueProtonPt = new TH1D("fhMCRecoSelectedTrueProtonPt","fhMCRecoSelectedTrueProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoSelectedTrueProtonPt);
+        fhMCRecoAllProtonPt = new TH1D("fhMCRecoAllProtonPt","fhMCRecoAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCRecoAllProtonPt);
+        fhMCGenAllProtonPt = new TH1D("fhMCGenAllProtonPt","fhMCGenAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+        fQAPID->Add(fhMCGenAllProtonPt);
+      }
+
+
       if(fFillQA)
       {
         fhPIDPionPt = new TH1D("fhPIDPionPt","PID: #pi: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
@@ -1333,6 +1398,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           fQAPID->Add(fhQAPIDTOFstatus[iQA]);
           fhQAPIDTOFbeta[iQA] = new TH2D(Form("fhQAPIDTOFbeta_%s",sQAindex[iQA].Data()),"QA PID: TOF #beta information; #it{p} (GeV/#it{c}); TOF #beta", 100,0,10, 101,-0.1,1.5);
           fQAPID->Add(fhQAPIDTOFbeta[iQA]);
+
+          fh3QAPIDnSigmaTPCTOFPtPion[iQA] = new TH3D(Form("fh3QAPIDnSigmaTPCTOFPtPion_%s",sQAindex[iQA].Data()), "QA PID: nSigma Pion vs. p_{T}; n#sigma TPC; n#sigma TOF; p_{T} (GeV/c)", 22,-11,10, 22,-11,10, fFlowPOIsPtNumBins, fFlowPOIsPtMin, fFlowPOIsPtMax);
+          fQAPID->Add(fh3QAPIDnSigmaTPCTOFPtPion[iQA]);
+          fh3QAPIDnSigmaTPCTOFPtKaon[iQA] = new TH3D(Form("fh3QAPIDnSigmaTPCTOFPtKaon_%s",sQAindex[iQA].Data()), "QA PID: nSigma Kaon vs. p_{T}; n#sigma TPC; n#sigma TOF; p_{T} (GeV/c)", 22,-11,10, 22,-11,10, fFlowPOIsPtNumBins, fFlowPOIsPtMin, fFlowPOIsPtMax);
+          fQAPID->Add(fh3QAPIDnSigmaTPCTOFPtKaon[iQA]);
+          fh3QAPIDnSigmaTPCTOFPtProton[iQA] = new TH3D(Form("fh3QAPIDnSigmaTPCTOFPtProton_%s",sQAindex[iQA].Data()), "QA PID: nSigma Proton vs. p_{T}; n#sigma TPC; n#sigma TOF; p_{T} (GeV/c)", 22,-11,10, 22,-11,10, fFlowPOIsPtNumBins, fFlowPOIsPtMin, fFlowPOIsPtMax);
+          fQAPID->Add(fh3QAPIDnSigmaTPCTOFPtProton[iQA]);
+
           fh3QAPIDnSigmaBayesElectron[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesElectron_%s",sQAindex[iQA].Data()),"QA PID: e; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
           fQAPID->Add(fh3QAPIDnSigmaBayesElectron[iQA]);
           fh3QAPIDnSigmaBayesMuon[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesMuon_%s",sQAindex[iQA].Data()),"QA PID: #mu; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
@@ -1513,7 +1586,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutChargedDCAxyMax: (Double_t) %g (cm)\n",    fCutChargedDCAxyMax);
   printf("   -------- PID (pi,K,p) tracks ---------------------------------\n");
   printf("      fCutPIDUseAntiProtonOnly: (Bool_t) %s\n",  fCutPIDUseAntiProtonOnly ? "kTRUE" : "kFALSE");
-  printf("      fCutPIDnSigmaCombinedNoTOFrejection: (Bool_t) %s\n",  fCutPIDnSigmaCombinedNoTOFrejection ? "kTRUE" : "kFALSE");
+  printf("      fCutPIDnSigmaCombinedTOFrejection: (Bool_t) %s\n",  fCutPIDnSigmaCombinedTOFrejection ? "kTRUE" : "kFALSE");
   printf("      fCutPIDnSigmaPionMax: (Float_t) %g\n",    fCutPIDnSigmaPionMax);
   printf("      fCutPIDnSigmaKaonMax: (Float_t) %g\n",    fCutPIDnSigmaKaonMax);
   printf("      fCutPIDnSigmaProtonMax: (Float_t) %g\n",    fCutPIDnSigmaProtonMax);
@@ -1751,6 +1824,13 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // event selection
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!EventSelection()) return;
+
+  // loading array with MC particles
+  if(fMC)
+  {
+    fArrayMC = (TClonesArray*) fEventAOD->FindListObject("mcparticles");
+    if(!fArrayMC) { AliError("TClonesArray with MC particle not found!"); return; }
+  }
 
   // processing of selected event
   Bool_t bProcessed = ProcessEvent();
@@ -2015,6 +2095,19 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
     }
 
+    if(fMC)
+    {
+      AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
+      if(!trackMC) { continue; }
+
+      Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
+
+      // filling info about all (i.e. before selection) reconstructed PID particles
+      if(iPDG == 211) { fhMCRecoAllPionPt->Fill(track->Pt()); }
+      if(iPDG == 321) { fhMCRecoAllKaonPt->Fill(track->Pt()); }
+      if(iPDG == 2212) { fhMCRecoAllProtonPt->Fill(track->Pt()); }
+    }
+
     // Checking if selected track is eligible for Ref. flow
     if(!IsWithinRefs(track)) continue;
 
@@ -2028,6 +2121,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       Double_t weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) );
       fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
     }
+
   }
 
   // fill QA charged multiplicity
@@ -2490,6 +2584,16 @@ Double_t AliAnalysisTaskUniFlow::GetRapidity(Double_t mass, Double_t Pt, Double_
 {
     Double_t rapid = TMath::Log( (TMath::Sqrt(mass*mass + Pt*Pt*TMath::CosH(Eta)*TMath::CosH(Eta)) + Pt*TMath::SinH(Eta)) / TMath::Sqrt(mass*mass + Pt*Pt) );
     return rapid;
+}
+//_____________________________________________________________________________
+AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(Int_t label)
+{
+  if(!fArrayMC) { AliError("fArrayMC not found!"); return 0x0; }
+  if(label < 0) { /*AliWarning("MC label negative");*/ return 0x0; }
+
+  AliAODMCParticle* mcTrack = (AliAODMCParticle*) fArrayMC->At(label);
+  if(!mcTrack) { AliError("Corresponding MC track not found!"); return 0x0; }
+  return mcTrack;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
@@ -3002,6 +3106,34 @@ void AliAnalysisTaskUniFlow::FilterPID()
     }
 
     if(fFillQA) FillQAPID(1,track,species); // filling QA for tracks AFTER selection
+
+    // process MC data
+    if(fMC)
+    {
+      AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
+      if(!trackMC) { continue; }
+
+      Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
+
+      switch (species)
+      {
+        case kPion:
+            fhMCRecoSelectedPionPt->Fill(track->Pt());
+            if(iPDG == 211) { fhMCRecoSelectedTruePionPt->Fill(track->Pt()); }
+          break;
+        case kKaon:
+            fhMCRecoSelectedKaonPt->Fill(track->Pt());
+            if(iPDG == 321) { fhMCRecoSelectedTrueKaonPt->Fill(track->Pt()); }
+          break;
+        case kProton:
+            fhMCRecoSelectedProtonPt->Fill(track->Pt());
+            if(iPDG == 2212) { fhMCRecoSelectedTrueProtonPt->Fill(track->Pt()); }
+          break;
+        default:
+          continue;
+      }
+    }
+
   }
 
   fhPIDPionMult->Fill(fVectorPion->size());
@@ -3083,12 +3215,14 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     }
 
     // combined TPC + TOF nSigma cuts
-    if(dPt > 0.4 && dPt < 4.0)
+    // NB: for testing of efficiency removed the upper limmit for PID
+    // if(dPt > 0.4 && dPt < 4.0)
+    if(dPt > 0.4)
     {
       Float_t dNumSigmaCombined[5] = {-99.,-99.,-99.,-99.,-99.};
 
       // discard candidates if no TOF is available if cut is on
-      if(fCutPIDnSigmaCombinedNoTOFrejection && !bIsTOFok) return kUnknown;
+      if(fCutPIDnSigmaCombinedTOFrejection && !bIsTOFok) return kUnknown;
 
       // calculating combined nSigmas
       for(Short_t i(0); i < 5; i++)
@@ -3114,7 +3248,6 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       // TPC dEdx parametrisation (dEdx - <dEdx>)
       // TODO: TPC dEdx parametrisation cuts
       // if(dPt > 3.)
-      // {
       //
     // }
   }
@@ -3203,6 +3336,10 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Short_t iQAindex, const AliAODTrack
 
     fhQAPIDTOFbeta[iQAindex]->Fill(track->P(),-0.05);
   }
+
+  fh3QAPIDnSigmaTPCTOFPtPion[iQAindex]->Fill(dNumSigmaTPC[2],dNumSigmaTOF[2],track->Pt());
+  fh3QAPIDnSigmaTPCTOFPtKaon[iQAindex]->Fill(dNumSigmaTPC[3],dNumSigmaTOF[3],track->Pt());
+  fh3QAPIDnSigmaTPCTOFPtProton[iQAindex]->Fill(dNumSigmaTPC[4],dNumSigmaTOF[4],track->Pt());
 
   fh3QAPIDnSigmaBayesElectron[iQAindex]->Fill(dNumSigmaTPC[0],dNumSigmaTOF[0],dBayesProb[0]);
   fh3QAPIDnSigmaBayesMuon[iQAindex]->Fill(dNumSigmaTPC[1],dNumSigmaTOF[1],dBayesProb[1]);
