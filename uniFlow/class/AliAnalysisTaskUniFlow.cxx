@@ -16,35 +16,52 @@
 // =================================================================================================
 // AliAnalysisTaskUniFlow - ALICE Unified Flow framework
 // Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016-2018
+// =================================================================================================
 //
-// ALICE analysis task for universal study of flow using 2-(or multi-)particle correlations
-// using Generic Framework notation for calculations inclusing per-particle weights.
+// ALICE analysis task for universal study of flow via 2-(or multi-)particle correlations
+// using Generic Framework notation for calculations including per-particle weights.
 //
 // Implemented flow calculation for both reference & pt-differential flow
-// of both inclusice charged & identified particles (pi,K,p,K0s,Lambda,phi).
+// of both inclusive charged (done anyway) & identified particles (pi,K,p,K0s,Lambda,phi).
 //
-// Note: So far implemented only for AOD analysis!
+// Note: So far implemented only for AOD analysis and tuned on Run2 pp & pPb analyses!
+//
+// PLEASE READ THE INSTRUCTION BELLOW BEFORE RUNNING !!!
 //
 // =================================================================================================
-// Analysis can run in these mode setup via AliAnalysisTaskUniFlow::SetRunMode(RunMode)
+// Analysis can run in these modes setup via AliAnalysisTaskUniFlow::SetRunMode(RunMode)
 //  -- AnalysisTaskUniFlow::kFull : running mode
 //      - full scale analysis
 //
 //  -- AnalysisTaskUniFlow::kTest : development / testing / debugging mode
 //      - only limited number of events is processed (AliAnalysisTaskUniFlow::SetNumEventsAnalyse(Int_t))
 //
-//  -- AnalysisTaskUniFlow::kSkipFlow : usbale for QA and(or) weights estimation before full scale running
-//      - events are processed whils skipping Flow calculations, i.e. event loop ends after particles are filtered
+//  -- AnalysisTaskUniFlow::kSkipFlow : usable for QA and(or) weights estimation before full scale running
+//      - events are processed whilst skipping correlation calculations, i.e. event loop ends after particles are filtered
+//
+//  NOTE: by default, all modes includes :
+//  - filling QA plots : can be turned-off by AliAnalysisTaskUniFlow::SetFillQAhistos(kFALSE)
+//    (might be heavy while running several tasks at once)
+//  - filling GF weights : can be turned-off by AliAnalysisTaskUniFlow::SetFlowFillWeights(kFALSE)
 //
 // =================================================================================================
 // Overview of analysis flow (see implementation of corresonding method for details)
 // 1) Event selection : EventSelection()
 //
 // 2) Particle selection & reconstruction : Filtering()
+//        - whether or not are particles processed is driven by 'fProcess?' flag setup by AliAnalysisTaskUniFlow::SetProcess?(kTRUE)
+//          (except for incl. charged, which are processed anyway)
 //        - filling QA plots
 //        - filling GF weights
 //
+//    !!! here the event loop ends in case of running in 'kSkipFlow' mode
+//
 // 3) Flow / correlation calculations : DoFlowPOIs(), DoFlowRefs()
+//        - to setup harmonics to be calculated, modify 'AliAnalysisTaskUniFlow::fHarmonics[]' (in .cxx) AND 'fNumHarmonics' (in .h)
+//        - to setup eta gaps (2part) to be calculated, modify 'AliAnalysisTaskUniFlow::fEtaGap[]' (in .cxx) AND 'fNumEtaGap' (in .h)
+//              - for NO gap case, fill in value '-1.0'
+//        - 2-particle cumulants are run by default (in 'kFull' mode)
+//        - 4-particle cumulants has to be setup by invoking AliAnalysisTaskUniFlow::SetFlowDoFourCorrelations(kTRUE)
 //
 // =================================================================================================
 
@@ -84,7 +101,7 @@
 
 class AliAnalysisTaskUniFlow;
 
-ClassImp(AliAnalysisTaskUniFlow); // classimp: necessary for root
+ClassImp(AliAnalysisTaskUniFlow);
 
 Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2};
 Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {0.8};
@@ -126,7 +143,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fSampling(kFALSE),
   fFillQA(kTRUE),
   //fNumSamples(10),
-  fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
   fProcessPhi(kFALSE),
@@ -136,7 +152,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutFlowRFPsPtMin(0.),
   fCutFlowRFPsPtMax(0.),
   fCutFlowDoFourCorrelations(kFALSE),
-  fFlowFillWeights(kFALSE),
+  fFlowFillWeights(kTRUE),
   fFlowPOIsPtMin(0.),
   fFlowPOIsPtMax(20.),
   fFlowCentMin(0),
@@ -394,7 +410,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fSampling(kFALSE),
   fFillQA(kTRUE),
   // fNumSamples(10),
-  fProcessCharged(kFALSE),
   fProcessPID(kFALSE),
   fProcessV0s(kFALSE),
   fProcessPhi(kFALSE),
@@ -406,7 +421,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowPOIsPtMin(0.),
   fFlowPOIsPtMax(20.),
   fCutFlowDoFourCorrelations(kFALSE),
-  fFlowFillWeights(kFALSE),
+  fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
   fFlowCentMax(150),
   fFlowCentNumBins(150),
@@ -1005,26 +1020,24 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
               fFlowRefs->Add(fpRefsCor4[iSample][iHarm]);
             }
 
-            if(fProcessCharged)
+            fp2ChargedCor2Pos[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g_Pos_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<2'>> | Gap %g | n=%d | sample %d | POIs pos; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+            fp2ChargedCor2Pos[iSample][iGap][iHarm]->Sumw2(kTRUE);
+            fFlowCharged->Add(fp2ChargedCor2Pos[iSample][iGap][iHarm]);
+
+            if(fEtaGap[iGap] != -1.)
             {
-              fp2ChargedCor2Pos[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g_Pos_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<2'>> | Gap %g | n=%d | sample %d | POIs pos; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-              fp2ChargedCor2Pos[iSample][iGap][iHarm]->Sumw2(kTRUE);
-              fFlowCharged->Add(fp2ChargedCor2Pos[iSample][iGap][iHarm]);
-
-              if(fEtaGap[iGap] != -1.)
-              {
-                fp2ChargedCor2Neg[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g_Neg_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<2'>> | Gap %g | n=%d | sample %d | POIs neg; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-                fp2ChargedCor2Neg[iSample][iGap][iHarm]->Sumw2(kTRUE);
-                fFlowCharged->Add(fp2ChargedCor2Neg[iSample][iGap][iHarm]);
-              }
-
-              if(fCutFlowDoFourCorrelations && iGap == 0)
-              {
-                fp2ChargedCor4[iSample][iHarm] = new TProfile2D(Form("fp2Charged_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<4'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-                fp2ChargedCor4[iSample][iHarm]->Sumw2(kTRUE);
-                fFlowCharged->Add(fp2ChargedCor4[iSample][iHarm]);
-              }
+              fp2ChargedCor2Neg[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g_Neg_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<2'>> | Gap %g | n=%d | sample %d | POIs neg; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+              fp2ChargedCor2Neg[iSample][iGap][iHarm]->Sumw2(kTRUE);
+              fFlowCharged->Add(fp2ChargedCor2Neg[iSample][iGap][iHarm]);
             }
+
+            if(fCutFlowDoFourCorrelations && iGap == 0)
+            {
+              fp2ChargedCor4[iSample][iHarm] = new TProfile2D(Form("fp2Charged_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<4'>> | Gap %g | n=%d | sample %d; centrality/multiplicity; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample), fFlowCentNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+              fp2ChargedCor4[iSample][iHarm]->Sumw2(kTRUE);
+              fFlowCharged->Add(fp2ChargedCor4[iSample][iHarm]);
+            }
+
 
             if(fProcessPID)
             {
@@ -1135,14 +1148,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", 100,0,TMath::TwoPi());
     fQACharged->Add(fhRefsPhi);
 
-    if(fProcessCharged)
-    {
-      TString sChargedCounterLabel[] = {"Input","Pt","Eta","FB","#TPC-Cls","DCA-z","DCA-xy","Selected"};
-      const Short_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
-      fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
-      for(Short_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
-      fQACharged->Add(fhChargedCounter);
-    } // endif {fProcessCharged}
+    TString sChargedCounterLabel[] = {"Input","Pt","Eta","FB","#TPC-Cls","DCA-z","DCA-xy","Selected"};
+    const Short_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
+    fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
+    for(Short_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
+    fQACharged->Add(fhChargedCounter);
 
     // PID tracks histograms
     if(fProcessPID || fProcessPhi)
@@ -1364,28 +1374,25 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fQAEvents->Add(fhQAEventsSPDresol[iQA]);
 
         // Charged tracks QA
-        if(fProcessCharged)
-        {
-          fhQAChargedMult[iQA] = new TH1D(Form("fhQAChargedMult_%s",sQAindex[iQA].Data()),"QA Charged: Number of Charged in selected events; #it{N}^{Charged}", 1500,0,1500);
-          fQACharged->Add(fhQAChargedMult[iQA]);
-          fhQAChargedCharge[iQA] = new TH1D(Form("fhQAChargedCharge_%s",sQAindex[iQA].Data()),"QA Charged: Track charge; charge;", 3,-1.5,1.5);
-          fQACharged->Add(fhQAChargedCharge[iQA]);
-          fhQAChargedPt[iQA] = new TH1D(Form("fhQAChargedPt_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 300,0.,30.);
-          fQACharged->Add(fhQAChargedPt[iQA]);
-          fhQAChargedEta[iQA] = new TH1D(Form("fhQAChargedEta_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#eta}; #it{#eta}", 151,-1.5,1.5);
-          fQACharged->Add(fhQAChargedEta[iQA]);
-          fhQAChargedPhi[iQA] = new TH1D(Form("fhQAChargedPhi_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#varphi}; #it{#varphi}", 100,0.,TMath::TwoPi());
-          fQACharged->Add(fhQAChargedPhi[iQA]);
-          fhQAChargedFilterBit[iQA] = new TH1D(Form("fhQAChargedFilterBit_%s",sQAindex[iQA].Data()), "QA Charged: Filter bit",iNFilterMapBinBins,0,iNFilterMapBinBins);
-          for(Int_t j = 0x0; j < iNFilterMapBinBins; j++) fhQAChargedFilterBit[iQA]->GetXaxis()->SetBinLabel(j+1, Form("%g",TMath::Power(2,j)));
-          fQACharged->Add(fhQAChargedFilterBit[iQA]);
-          fhQAChargedNumTPCcls[iQA] = new TH1D(Form("fhQAChargedNumTPCcls_%s",sQAindex[iQA].Data()),"QA Charged: Track number of TPC clusters; #it{N}^{TPC clusters}", 160,0,160);
-          fQACharged->Add(fhQAChargedNumTPCcls[iQA]);
-          fhQAChargedDCAxy[iQA] = new TH1D(Form("fhQAChargedDCAxy_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-xy; DCA_{#it{xy}} (cm)", 100,0.,10);
-          fQACharged->Add(fhQAChargedDCAxy[iQA]);
-          fhQAChargedDCAz[iQA] = new TH1D(Form("fhQAChargedDCAz_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-z; DCA_{#it{z}} (cm)", 200,-10.,10.);
-          fQACharged->Add(fhQAChargedDCAz[iQA]);
-        } // endif {fProcessCharged}
+        fhQAChargedMult[iQA] = new TH1D(Form("fhQAChargedMult_%s",sQAindex[iQA].Data()),"QA Charged: Number of Charged in selected events; #it{N}^{Charged}", 1500,0,1500);
+        fQACharged->Add(fhQAChargedMult[iQA]);
+        fhQAChargedCharge[iQA] = new TH1D(Form("fhQAChargedCharge_%s",sQAindex[iQA].Data()),"QA Charged: Track charge; charge;", 3,-1.5,1.5);
+        fQACharged->Add(fhQAChargedCharge[iQA]);
+        fhQAChargedPt[iQA] = new TH1D(Form("fhQAChargedPt_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 300,0.,30.);
+        fQACharged->Add(fhQAChargedPt[iQA]);
+        fhQAChargedEta[iQA] = new TH1D(Form("fhQAChargedEta_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#eta}; #it{#eta}", 151,-1.5,1.5);
+        fQACharged->Add(fhQAChargedEta[iQA]);
+        fhQAChargedPhi[iQA] = new TH1D(Form("fhQAChargedPhi_%s",sQAindex[iQA].Data()),"QA Charged: Track #it{#varphi}; #it{#varphi}", 100,0.,TMath::TwoPi());
+        fQACharged->Add(fhQAChargedPhi[iQA]);
+        fhQAChargedFilterBit[iQA] = new TH1D(Form("fhQAChargedFilterBit_%s",sQAindex[iQA].Data()), "QA Charged: Filter bit",iNFilterMapBinBins,0,iNFilterMapBinBins);
+        for(Int_t j = 0x0; j < iNFilterMapBinBins; j++) fhQAChargedFilterBit[iQA]->GetXaxis()->SetBinLabel(j+1, Form("%g",TMath::Power(2,j)));
+        fQACharged->Add(fhQAChargedFilterBit[iQA]);
+        fhQAChargedNumTPCcls[iQA] = new TH1D(Form("fhQAChargedNumTPCcls_%s",sQAindex[iQA].Data()),"QA Charged: Track number of TPC clusters; #it{N}^{TPC clusters}", 160,0,160);
+        fQACharged->Add(fhQAChargedNumTPCcls[iQA]);
+        fhQAChargedDCAxy[iQA] = new TH1D(Form("fhQAChargedDCAxy_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-xy; DCA_{#it{xy}} (cm)", 100,0.,10);
+        fQACharged->Add(fhQAChargedDCAxy[iQA]);
+        fhQAChargedDCAz[iQA] = new TH1D(Form("fhQAChargedDCAz_%s",sQAindex[iQA].Data()),"QA Charged: Track DCA-z; DCA_{#it{z}} (cm)", 200,-10.,10.);
+        fQACharged->Add(fhQAChargedDCAz[iQA]);
 
         // PID tracks QA
         if(fProcessPID || fProcessPhi)
@@ -1556,7 +1563,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fAnalType: (AnalType) %d\n",    fAnalType);
   printf("      fSampling: (Bool_t) %s\n",    fSampling ? "kTRUE" : "kFALSE");
   printf("      fFillQA: (Bool_t) %s\n",    fFillQA ? "kTRUE" : "kFALSE");
-  printf("      fProcessCharged: (Bool_t) %s\n",    fProcessCharged ? "kTRUE" : "kFALSE");
   printf("      fProcessPID: (Bool_t) %s\n",    fProcessPID ? "kTRUE" : "kFALSE");
   printf("      fProcessPhi: (Bool_t) %s\n",    fProcessPhi ? "kTRUE" : "kFALSE");
   printf("      fProcessV0s: (Bool_t) %s\n",    fProcessV0s ? "kTRUE" : "kFALSE");
@@ -2048,15 +2054,13 @@ void AliAnalysisTaskUniFlow::Filtering()
   //  - otherwise a new AliPicoTrack is constructed with relevant informations (needed to be deleted at destructor)
   // *************************************************************
 
-  // done anyway event if fProcessCharged is off (needed for Reference flow)
   FilterCharged();
-
 
   fIndexSampling = GetSamplingIndex();
   fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
 
   // // if neither is ON, filtering is skipped
-  // if(!fProcessCharged && !fProcessPID && !fProcessV0s && !fProcessPhi)
+  // if(!fProcessPID && !fProcessV0s && !fProcessPhi)
   // return;
 
   if(fProcessPID || fProcessPhi) { FilterPID(); }
@@ -2221,8 +2225,6 @@ void AliAnalysisTaskUniFlow::FillQACharged(const Short_t iQAindex, const AliAODT
   // Filling various QA plots related to charged track selection
   // *************************************************************
   if(!track) return;
-
-  if(!fProcessCharged) return;
 
   // filter bit testing
   for(Short_t i(0); i < 32; i++)
@@ -3466,10 +3468,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
     DoFlowRefs(iGap);
 
     // pT differential flow
-    if(fProcessCharged)
-    {
-      if(!fVectorCharged->empty()) { DoFlowPOIs(iGap, kCharged); }
-    }
+    if(!fVectorCharged->empty()) { DoFlowPOIs(iGap, kCharged); }
 
     if(fProcessPID)
     {

@@ -1,5 +1,9 @@
 void runAnalysisWithBench()
 {
+    // number of times the task will be run for benchmarking
+    Int_t iNumRuns = 10;
+
+
     // since we will compile a class, tell root where to look for headers
     gROOT->ProcessLine(".include $ROOTSYS/include");
     gROOT->ProcessLine(".include $ALICE_ROOT/include");
@@ -46,13 +50,12 @@ void runAnalysisWithBench()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
-    // task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
-    task1->SetNumEventsAnalyse(50);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
+    task1->SetNumEventsAnalyse(50);
+    task1->SetMC(kFALSE);
     // task1->SetSampling(kTRUE);
     // task1->SetFillQAhistos(kFALSE);
-    task1->SetProcessCharged(kTRUE);
     task1->SetProcessPID(kTRUE);
     task1->SetProcessPhi(kTRUE);
     task1->SetProcessV0s(kTRUE);
@@ -125,8 +128,6 @@ void runAnalysisWithBench()
     //chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");
     // chain->Add("~/NBI/Flow/flow/testData/2016/LHC16l/000259888/pass1/AOD/015/AliAOD.root");
     chain->Add("~/NBI/Flow/data/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
-
-    Int_t iNumRuns = 20;
 
     TH1D* hCPU = new TH1D("hCPU","CPU time dist; CPU time; Counts", 1000, 0, 100);
     TH1D* hReal = new TH1D("hReal","Real time dist; Real time; Counts", 1000, 0, 100);

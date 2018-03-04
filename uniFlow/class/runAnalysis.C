@@ -78,12 +78,12 @@ void runAnalysis()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kSkipFlow);
-    task1->SetNumEventsAnalyse(1);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
+    task1->SetNumEventsAnalyse(1);
+    task1->SetMC(kFALSE);
     // task1->SetSampling(kTRUE);
     task1->SetFillQAhistos(kTRUE);
-    task1->SetProcessCharged(kTRUE);
     task1->SetProcessPID(kTRUE);
     task1->SetProcessPhi(kTRUE);
     task1->SetProcessV0s(kTRUE);

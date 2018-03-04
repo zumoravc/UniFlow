@@ -63,13 +63,12 @@ void runMC()
 
     AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kSkipFlow);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
     task1->SetMC(kTRUE);
     task1->SetNumEventsAnalyse(50);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     // task1->SetSampling(kTRUE);
     task1->SetFillQAhistos(kTRUE);
-    task1->SetProcessCharged(kTRUE);
     task1->SetProcessPID(kTRUE);
     task1->SetProcessPhi(kTRUE);
     task1->SetProcessV0s(kTRUE);
