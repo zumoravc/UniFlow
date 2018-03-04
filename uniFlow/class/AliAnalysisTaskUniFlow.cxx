@@ -713,6 +713,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fhQAPIDTOFstatus[iQA] = 0x0;
     fhQAPIDTPCdEdx[iQA] = 0x0;
     fhQAPIDTOFbeta[iQA] = 0x0;
+    fh3QAPIDnSigmaTPCTOFPtPion[iQA] = 0x0;
+    fh3QAPIDnSigmaTPCTOFPtKaon[iQA] = 0x0;
+    fh3QAPIDnSigmaTPCTOFPtProton[iQA] = 0x0;
     fh3QAPIDnSigmaBayesElectron[iQA] = 0x0;
     fh3QAPIDnSigmaBayesMuon[iQA] = 0x0;
     fh3QAPIDnSigmaBayesPion[iQA] = 0x0;
@@ -1395,6 +1398,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           fQAPID->Add(fhQAPIDTOFstatus[iQA]);
           fhQAPIDTOFbeta[iQA] = new TH2D(Form("fhQAPIDTOFbeta_%s",sQAindex[iQA].Data()),"QA PID: TOF #beta information; #it{p} (GeV/#it{c}); TOF #beta", 100,0,10, 101,-0.1,1.5);
           fQAPID->Add(fhQAPIDTOFbeta[iQA]);
+
+          fh3QAPIDnSigmaTPCTOFPtPion[iQA] = new TH3D(Form("fh3QAPIDnSigmaTPCTOFPtPion_%s",sQAindex[iQA].Data()), "QA PID: nSigma Pion vs. p_{T}; n#sigma TPC; n#sigma TOF; p_{T} (GeV/c)", 22,-11,10, 22,-11,10, fFlowPOIsPtNumBins, fFlowPOIsPtMin, fFlowPOIsPtMax);
+          fQAPID->Add(fh3QAPIDnSigmaTPCTOFPtPion[iQA]);
+          fh3QAPIDnSigmaTPCTOFPtKaon[iQA] = new TH3D(Form("fh3QAPIDnSigmaTPCTOFPtKaon_%s",sQAindex[iQA].Data()), "QA PID: nSigma Kaon vs. p_{T}; n#sigma TPC; n#sigma TOF; p_{T} (GeV/c)", 22,-11,10, 22,-11,10, fFlowPOIsPtNumBins, fFlowPOIsPtMin, fFlowPOIsPtMax);
+          fQAPID->Add(fh3QAPIDnSigmaTPCTOFPtKaon[iQA]);
+          fh3QAPIDnSigmaTPCTOFPtProton[iQA] = new TH3D(Form("fh3QAPIDnSigmaTPCTOFPtProton_%s",sQAindex[iQA].Data()), "QA PID: nSigma Proton vs. p_{T}; n#sigma TPC; n#sigma TOF; p_{T} (GeV/c)", 22,-11,10, 22,-11,10, fFlowPOIsPtNumBins, fFlowPOIsPtMin, fFlowPOIsPtMax);
+          fQAPID->Add(fh3QAPIDnSigmaTPCTOFPtProton[iQA]);
+
           fh3QAPIDnSigmaBayesElectron[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesElectron_%s",sQAindex[iQA].Data()),"QA PID: e; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
           fQAPID->Add(fh3QAPIDnSigmaBayesElectron[iQA]);
           fh3QAPIDnSigmaBayesMuon[iQA] = new TH3D(Form("fh3QAPIDnSigmaBayesMuon_%s",sQAindex[iQA].Data()),"QA PID: #mu; n#sigma^{TPC}; n#sigma^{TOF}; Bayes prob.", 22,-11,10, 22,-11,10, 22,-0.1,1);
@@ -3325,6 +3336,10 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Short_t iQAindex, const AliAODTrack
 
     fhQAPIDTOFbeta[iQAindex]->Fill(track->P(),-0.05);
   }
+
+  fh3QAPIDnSigmaTPCTOFPtPion[iQAindex]->Fill(dNumSigmaTPC[2],dNumSigmaTOF[2],track->Pt());
+  fh3QAPIDnSigmaTPCTOFPtKaon[iQAindex]->Fill(dNumSigmaTPC[3],dNumSigmaTOF[3],track->Pt());
+  fh3QAPIDnSigmaTPCTOFPtProton[iQAindex]->Fill(dNumSigmaTPC[4],dNumSigmaTOF[4],track->Pt());
 
   fh3QAPIDnSigmaBayesElectron[iQAindex]->Fill(dNumSigmaTPC[0],dNumSigmaTOF[0],dBayesProb[0]);
   fh3QAPIDnSigmaBayesMuon[iQAindex]->Fill(dNumSigmaTPC[1],dNumSigmaTOF[1],dBayesProb[1]);
