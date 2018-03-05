@@ -200,6 +200,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       // properties
       AliAODEvent*            fEventAOD; //! AOD event countainer
+      Double_t                fPVz; // PV z-coordinate used for weights
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
       TFile*                  fFlowWeightsFile; //! source file containing weights

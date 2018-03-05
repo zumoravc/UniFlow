@@ -109,6 +109,7 @@ Double_t AliAnalysisTaskUniFlow::fMultBins[] = {0.,5.,10.,20.,40.,60.,100.};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventAOD(0x0),
+  fPVz(0.0),
   fPIDResponse(0x0),
   fPIDCombined(0x0),
   fFlowWeightsFile(0x0),
@@ -375,6 +376,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
   fEventAOD(0x0),
+  fPVz(0.0),
   fPIDResponse(0x0),
   fPIDCombined(0x0),
   fFlowWeightsFile(0x0),
@@ -902,56 +904,56 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // weights
     if(fFlowFillWeights)
     {
-      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsRefs->Sumw2();
       fFlowWeights->Add(fh3WeightsRefs);
-      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsCharged->Sumw2();
       fFlowWeights->Add(fh3WeightsCharged);
-      fh3WeightsPion = new TH3D("fh3WeightsPion","Weights: #pi; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsPion = new TH3D("fh3WeightsPion","Weights: #pi; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsPion->Sumw2();
       fFlowWeights->Add(fh3WeightsPion);
-      fh3WeightsKaon = new TH3D("fh3WeightsKaon","Weights: K; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsKaon = new TH3D("fh3WeightsKaon","Weights: K; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsKaon->Sumw2();
       fFlowWeights->Add(fh3WeightsKaon);
-      fh3WeightsProton = new TH3D("fh3WeightsProton","Weights: p; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsProton = new TH3D("fh3WeightsProton","Weights: p; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsProton->Sumw2();
       fFlowWeights->Add(fh3WeightsProton);
-      fh3WeightsPhi = new TH3D("fh3WeightsPhi","Weights: #phi; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,-TMath::Pi(),TMath::Pi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsPhi = new TH3D("fh3WeightsPhi","Weights: #phi; #varphi; #eta; PV-z (cm)", 100,-TMath::Pi(),TMath::Pi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsPhi->Sumw2();
       fFlowWeights->Add(fh3WeightsPhi);
-      fh3WeightsK0s = new TH3D("fh3WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsK0s = new TH3D("fh3WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsK0s->Sumw2();
       fFlowWeights->Add(fh3WeightsK0s);
-      fh3WeightsLambda = new TH3D("fh3WeightsLambda","Weights: #Lambda; #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3WeightsLambda = new TH3D("fh3WeightsLambda","Weights: #Lambda; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsLambda->Sumw2();
       fFlowWeights->Add(fh3WeightsLambda);
     }
 
     if(fFlowUseWeights)
     {
-      fh3AfterWeightsRefs = new TH3D("fh3AfterWeightsRefs","Weights: Refs; #varphi (After); #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsRefs = new TH3D("fh3AfterWeightsRefs","Weights: Refs; #varphi (After); #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsRefs->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsRefs);
-      fh3AfterWeightsCharged = new TH3D("fh3AfterWeightsCharged","Weights: Charged (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsCharged = new TH3D("fh3AfterWeightsCharged","Weights: Charged (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsCharged->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsCharged);
-      fh3AfterWeightsPion = new TH3D("fh3AfterWeightsPion","Weights: #pi (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsPion = new TH3D("fh3AfterWeightsPion","Weights: #pi (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsPion->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsPion);
-      fh3AfterWeightsKaon = new TH3D("fh3AfterWeightsKaon","Weights: K (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsKaon = new TH3D("fh3AfterWeightsKaon","Weights: K (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsKaon->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsKaon);
-      fh3AfterWeightsProton = new TH3D("fh3AfterWeightsProton","Weights: p (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsProton = new TH3D("fh3AfterWeightsProton","Weights: p (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsProton->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsProton);
-      fh3AfterWeightsPhi = new TH3D("fh3AfterWeightsPhi","Weights: #phi (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,-TMath::Pi(),TMath::Pi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsPhi = new TH3D("fh3AfterWeightsPhi","Weights: #phi (After); #varphi; #eta; PV-z (cm)", 100,-TMath::Pi(),TMath::Pi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsPhi->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsPhi);
-      fh3AfterWeightsK0s = new TH3D("fh3AfterWeightsK0s","Weights: K^{0}_{S} (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsK0s = new TH3D("fh3AfterWeightsK0s","Weights: K^{0}_{S} (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsK0s->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsK0s);
-      fh3AfterWeightsLambda = new TH3D("fh3AfterWeightsLambda","Weights: #Lambda (After); #varphi; #eta; #it{p}_{T} (GeV/#it{c})", 100,0,TMath::TwoPi(), 151,-1.5,1.5, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+      fh3AfterWeightsLambda = new TH3D("fh3AfterWeightsLambda","Weights: #Lambda (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsLambda->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsLambda);
     }
@@ -1897,6 +1899,9 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   // Fill event QA AFTER cuts
   if(fFillQA) FillEventsQA(1);
 
+  // extract PV-z for weights
+  fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
+
   return eventSelected;
 }
 //_____________________________________________________________________________
@@ -2100,11 +2105,11 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     fVectorCharged->push_back(track);
     if(fFillQA) FillQACharged(1,track); // QA after selection
 
-    if(fFlowFillWeights) { fh3WeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt()); }
+    if(fFlowFillWeights) { fh3WeightsCharged->Fill(track->Phi(),track->Eta(),fPVz); }
     if(fFlowUseWeights)
     {
       Double_t weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi()) );
-      fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
+      fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
     if(fMC)
@@ -2127,11 +2132,11 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     fVectorRefs->push_back(track);
     iNumRefs++;
     FillQARefs(1,track);
-    if(fFlowFillWeights) { fh3WeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt()); }
+    if(fFlowFillWeights) { fh3WeightsRefs->Fill(track->Phi(),track->Eta(),fPVz); }
     if(fFlowUseWeights)
     {
       Double_t weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) );
-      fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
+      fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
   }
@@ -2310,11 +2315,11 @@ void AliAnalysisTaskUniFlow::FilterV0s()
 
         fVectorK0s->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short()) );
 
-        if(fFlowFillWeights) { fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt()); }
+        if(fFlowFillWeights) { fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindBin(v0->Eta(),v0->Phi()) );
-          fh3AfterWeightsK0s->Fill(v0->Phi(),v0->Eta(),v0->Pt(),weight);
+          fh3AfterWeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
 
@@ -2326,11 +2331,11 @@ void AliAnalysisTaskUniFlow::FilterV0s()
 
         fVectorLambda->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassLambda()) );
 
-        if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt()); }
+        if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) );
-          fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt(),weight);
+          fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
 
@@ -2342,11 +2347,11 @@ void AliAnalysisTaskUniFlow::FilterV0s()
 
         fVectorLambda->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassAntiLambda()) );
 
-        if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt()); }
+        if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) );
-          fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),v0->Pt(),weight);
+          fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
 
@@ -2968,11 +2973,11 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       if(fFillQA) FillQAPhi(1,mother);
 
       // filling weights
-      if(fFlowFillWeights) { fh3WeightsPhi->Fill(mother->Phi(), mother->Eta(), mother->Pt()); }
+      if(fFlowFillWeights) { fh3WeightsPhi->Fill(mother->Phi(), mother->Eta(), fPVz); }
       if(fFlowUseWeights)
       {
         Double_t weight = fh2WeightPhi->GetBinContent( fh2WeightPhi->FindBin(mother->Eta(),mother->Phi()) );
-        fh3AfterWeightsPhi->Fill(mother->Phi(),mother->Eta(),mother->Pt(),weight);
+        fh3AfterWeightsPhi->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
       }
 
       if(mother->Charge() == 0)
@@ -3090,29 +3095,29 @@ void AliAnalysisTaskUniFlow::FilterPID()
     {
       case kPion:
         fVectorPion->push_back(track);
-        if(fFlowFillWeights) { fh3WeightsPion->Fill(track->Phi(), track->Eta(), track->Pt()); }
+        if(fFlowFillWeights) { fh3WeightsPion->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = fh2WeightPion->GetBinContent( fh2WeightPion->FindBin(track->Eta(),track->Phi()) );
-          fh3AfterWeightsPion->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
+          fh3AfterWeightsPion->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
       case kKaon:
         fVectorKaon->push_back(track);
-        if(fFlowFillWeights) { fh3WeightsKaon->Fill(track->Phi(), track->Eta(), track->Pt()); }
+        if(fFlowFillWeights) { fh3WeightsKaon->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = fh2WeightKaon->GetBinContent( fh2WeightKaon->FindBin(track->Eta(),track->Phi()) );
-          fh3AfterWeightsKaon->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
+          fh3AfterWeightsKaon->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
       case kProton:
         fVectorProton->push_back(track);
-        if(fFlowFillWeights) { fh3WeightsProton->Fill(track->Phi(), track->Eta(), track->Pt()); }
+        if(fFlowFillWeights) { fh3WeightsProton->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = fh2WeightProton->GetBinContent( fh2WeightProton->FindBin(track->Eta(),track->Phi()) );
-          fh3AfterWeightsProton->Fill(track->Phi(),track->Eta(),track->Pt(),weight);
+          fh3AfterWeightsProton->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
       default:
