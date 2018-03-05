@@ -169,7 +169,7 @@ void runAnalysis()
         alienHandler->SetAnalysisSource("AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20170820-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20180123-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
         alienHandler->SetGridDataDir(Form("/alice/data/2016/%s/",sPeriod.Data()));
