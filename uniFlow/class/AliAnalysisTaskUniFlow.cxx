@@ -3073,16 +3073,13 @@ void AliAnalysisTaskUniFlow::FilterPID()
   // return kFALSE if any complications occurs
   // *************************************************************
 
-  Int_t iNumTracks = fEventAOD->GetNumberOfTracks();
-  if(iNumTracks < 1) return;
-
-  for(Int_t iTrack(0); iTrack < iNumTracks; iTrack++)
+  for(auto part = fVectorCharged->begin(); part != fVectorCharged->end(); ++part)
   {
-    AliAODTrack* track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
+    AliAODTrack* track = static_cast<AliAODTrack*>(*part);
     if(!track) continue;
 
     // PID tracks are subset of selected charged tracks (same quality requirements)
-    if(!IsChargedSelected(track)) continue;
+    // if(!IsChargedSelected(track)) continue;
 
     if(fFillQA) FillQAPID(0,track,kUnknown);   // filling QA for tracks before selection (but after charged criteria applied)
 
