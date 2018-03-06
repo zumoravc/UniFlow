@@ -3862,7 +3862,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
     // loading weights if needed
     if(fFlowUseWeights)
     {
-      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi,fPVz)); }
+      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindBin(dEta,dPhi,fPVz)); }
       else { dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi)); }
       if(dWeight <= 0.0) dWeight = 1.0;
     }
@@ -4013,7 +4013,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     {
       if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindBin(dEta,dPhi,fPVz)); }
       else { dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi)); }
-      dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi));
       if(dWeight <= 0.0) dWeight = 1.0;
     }
 
