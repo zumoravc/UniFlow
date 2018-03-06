@@ -2115,14 +2115,15 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     if(fMC)
     {
       AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
-      if(!trackMC) { continue; }
+      if(trackMC)
+      {
+        Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
 
-      Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
-
-      // filling info about all (i.e. before selection) reconstructed PID particles
-      if(iPDG == 211) { fhMCRecoAllPionPt->Fill(track->Pt()); }
-      if(iPDG == 321) { fhMCRecoAllKaonPt->Fill(track->Pt()); }
-      if(iPDG == 2212) { fhMCRecoAllProtonPt->Fill(track->Pt()); }
+        // filling info about all (i.e. before selection) reconstructed PID particles
+        if(iPDG == 211) { fhMCRecoAllPionPt->Fill(track->Pt()); }
+        if(iPDG == 321) { fhMCRecoAllKaonPt->Fill(track->Pt()); }
+        if(iPDG == 2212) { fhMCRecoAllProtonPt->Fill(track->Pt()); }
+      }
     }
 
     // Checking if selected track is eligible for Ref. flow
@@ -3088,7 +3089,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
     // check if only protons should be used
-    if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) species = kUnknown;
+    if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) { species = kUnknown; }
 
     // selection of PID tracks
     switch (species)
@@ -3130,26 +3131,25 @@ void AliAnalysisTaskUniFlow::FilterPID()
     if(fMC)
     {
       AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
-      if(!trackMC) { continue; }
-
-      Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
-
-      switch (species)
+      if(trackMC)
       {
-        case kPion:
+        Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
+
+        switch (species)
+        {
+          case kPion:
             fhMCRecoSelectedPionPt->Fill(track->Pt());
             if(iPDG == 211) { fhMCRecoSelectedTruePionPt->Fill(track->Pt()); }
           break;
-        case kKaon:
+          case kKaon:
             fhMCRecoSelectedKaonPt->Fill(track->Pt());
             if(iPDG == 321) { fhMCRecoSelectedTrueKaonPt->Fill(track->Pt()); }
           break;
-        case kProton:
+          case kProton:
             fhMCRecoSelectedProtonPt->Fill(track->Pt());
             if(iPDG == 2212) { fhMCRecoSelectedTrueProtonPt->Fill(track->Pt()); }
           break;
-        default:
-          continue;
+        }
       }
     }
 
