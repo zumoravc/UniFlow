@@ -13,13 +13,20 @@
  #include "TH2.h"
  #include "TH3.h"
  #include "TCanvas.h"
+ #include "TSystem.h"
+ #include "TPad.h"
 
 void CheckWeights(const TH3D* weight = 0x0, const Int_t runNumber = -1);
+TH2D* SliceWeights(const TH3D* weights, Int_t iBinLow, Int_t iBinHigh);
 TH2D* ProcessWeights(const TH3D* weight = 0x0);
+TH3D* ProcessWeights3D(const TH3D* dist);
+TH1D* CalculateWeight(TH1D* proj);
 
-const TString sPath = "/Users/vpacik/NBI/Flow/uniFlow/results/KchK0s-rerun/preliminary";
+const TString sPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pp-16l";
+const TString sOutputPath = sPath+"/weights/";
 const Bool_t bRunByRun = kFALSE;
-void PrepareWeights()
+
+void PrepareWeights3D()
 {
   const TString sTaskTag = "UniFlow";
 
@@ -27,13 +34,20 @@ void PrepareWeights()
 
   const Short_t iNumPart = 8;
   const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+  // const Short_t iNumPart = 1;
+  // const TString species[iNumPart] = {"Refs"};
+
+  gSystem->mkdir(sOutputPath.Data(),kTRUE);
 
   TList* listRun = new TList();
   if(!bRunByRun)
   {
-    TFile* fInput = TFile::Open(Form("%s/AnalysisResults.root",sPath.Data()),"READ");
+    TFile* fInput = TFile::Open(Form("%s/AnalysisResults_intermerge.root",sPath.Data()),"READ");
+    if(!fInput) return;
+
     fInput->cd(sTaskTag.Data());
     TList* list =  (TList*) gDirectory->Get("Flow_Weights_UniFlow");
+    if(!list) return;
 
     for(Short_t part = 0; part < iNumPart; part++)
     {
@@ -41,11 +55,45 @@ void PrepareWeights()
       // h3Weights = (TH3D*) listTemp->FindObject(Form("fh3Weights%s",species[part].Data()));
       TH3D* h3Weights = (TH3D*) list->FindObject(Form("fh3Weights%s",species[part].Data()));
       if(!h3Weights) { printf("Hist 'fh3Weights%s' not found\n",species[part].Data()); continue; }
-      TH2D* h2Weights = ProcessWeights(h3Weights);
+
+      TCanvas* canDist = new TCanvas("canDist","canDist",1600,2000);
+      canDist->Divide(5,4);
+      for(Int_t iBinZ(1); iBinZ < h3Weights->GetNbinsZ()+1; ++iBinZ)
+      {
+        TH2D* slice = SliceWeights(h3Weights,iBinZ,iBinZ);
+        slice->SetStats(0);
+        // if(!slice) continue;
+
+        canDist->cd(iBinZ);
+        // gPad->SetLogz();
+        slice->DrawCopy("colz");
+      }
+
+      canDist->SaveAs(Form("%s/dist_%s_all.pdf",sOutputPath.Data(), species[part].Data()), "pdf");
+
+      TH3D* weights = ProcessWeights3D(h3Weights);
+      if(!weights) { printf("Hist with 3D weights not processed!\n"); continue; }
+
       // CheckWeights(h3Weights, iRunList[iRun]);
-      h2Weights->SetName(Form("%s",species[part].Data()));
-      h2Weights->SetTitle(Form("%s",species[part].Data()));
-      listRun->Add(h2Weights);
+      weights->SetName(Form("%s",species[part].Data()));
+      weights->SetTitle(Form("%s",species[part].Data()));
+      listRun->Add(weights);
+
+      // Plot slices in z of weights
+      TCanvas* canSlices = new TCanvas("canSlices","canSlices",1600,2000);
+      canSlices->Divide(5,4);
+      for(Int_t iBinZ(1); iBinZ < weights->GetNbinsZ()+1; ++iBinZ)
+      {
+        TH2D* slice = SliceWeights(weights,iBinZ,iBinZ);
+        slice->SetStats(0);
+        // if(!slice) continue;
+
+        canSlices->cd(iBinZ);
+        // gPad->SetLogz();
+        slice->DrawCopy("colz");
+      }
+
+      canSlices->SaveAs(Form("%s/weights_%s_all.pdf",sOutputPath.Data(), species[part].Data()), "pdf");
     }
 
     fOutput->cd();
@@ -53,6 +101,9 @@ void PrepareWeights()
   }
   else
   {
+    printf("WARNING Run-By-Run need reimplementation !!!\n");
+    return;
+
     // const Short_t iNumRuns = 1; const Int_t iRunList[iNumRuns] = {265387};
     const Short_t iNumRuns = 31; const Int_t iRunList[iNumRuns] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387, 265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
     // const Short_t iNumRuns = 16; const Int_t iRunList[iNumRuns] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};//,265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
@@ -157,24 +208,87 @@ TH2D* ProcessWeights(const TH3D* weights)
   const Short_t iNumBinY = weights_2d->GetNbinsY();
   const Double_t dMax = weights_2d->GetMaximum();
 
-  Double_t dContent = 0;
+  Double_t dContent = 0.0;
 
   for(Short_t binX(0); binX < iNumBinX+2; binX++)
     for(Short_t binY(0); binY < iNumBinY+2; binY++)
     {
       dContent = weights_2d->GetBinContent(binX,binY);
-      if(dContent > 0.) { weights_2d->SetBinContent(binX,binY, dMax / dContent); }
-      else {weights_2d->SetBinContent(binX,binY, 1); }
-
-      weights_2d->SetBinError(binX,binY,0);
+      if(dContent > 0.0) { weights_2d->SetBinContent(binX,binY, dMax / dContent); }
+      else {weights_2d->SetBinContent(binX,binY, 1.0); }
+      weights_2d->SetBinError(binX,binY,0.0);
     }
 
-  // weights_2d->Scale(1/weights_2d->GetMaximum());
-  // weights_2d->Scale(1/weights_2d->GetEntries());
-  // weights_2d->SetName(Form("%s_%d",species.Data(),runNumber));
-  // weights_2d->SetTitle(Form("%s | Run %d",species.Data(),runNumber));
-  // weights_2d->Draw("colz");
+  return weights_2d;
+}
+//_____________________________________________________________________________
+TH3D* ProcessWeights3D(const TH3D* dist)
+{
+  if(!dist) { printf("PrepareWeights: no input histo\n"); return 0x0;}
 
+  TH3D* distTemp = (TH3D*) dist->Clone("distTemp");
+  // distTemp->Draw();
+
+  // phi dist is on x-axis
+  TH3D* weights = (TH3D*) dist->Clone("weights");
+  weights->Reset();
+
+  // preparing weigths:  bin content = max / bincontent
+  for(Short_t binY(1); binY < dist->GetNbinsY()+1; binY++)
+  {
+    for(Short_t binZ(1); binZ < dist->GetNbinsZ()+1; binZ++)
+    {
+      distTemp->GetYaxis()->SetRange(binY,binY);
+      distTemp->GetZaxis()->SetRange(binZ,binZ);
+
+      TH1D* proj = (TH1D*) distTemp->Project3D(Form("x_%d_%d",binY,binZ));
+      if(!proj) { printf("No projection! Something went wrong!\n"); return 0x0; }
+
+
+      // calculating weights in this 1D projection
+      TH1D* hWeight = CalculateWeight(proj);
+      for(Short_t binPhi(1); binPhi < hWeight->GetNbinsX()+1; binPhi++)
+      {
+        weights->SetBinContent(binPhi,binY,binZ, hWeight->GetBinContent(binPhi));
+        weights->SetBinError(binPhi,binY,binZ, 0.0);
+      }
+
+    }
+  }
+
+  return weights;
+}
+//_____________________________________________________________________________
+TH1D* CalculateWeight(TH1D* proj)
+{
+  if(!proj) { printf("CalculateWeight-ERROR: Input proj not found!\n"); return 0x0; }
+
+  TH1D* hWeight = (TH1D*) proj->Clone("weight");
+  if(!hWeight) { printf("CalculateWeight-ERROR: hWeight not cloned!\n"); return 0x0; }
+
+  Double_t dMax = proj->GetMaximum();
+  // printf("dMax %f\n",dMax);
+
+  for(Int_t iBin(0); iBin < proj->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContent = proj->GetBinContent(iBin);
+    if(dContent > 0.0) { hWeight->SetBinContent(iBin, dMax / dContent); }
+    else { hWeight->SetBinContent(iBin, 1.0); }
+    hWeight->SetBinError(iBin, 0.0);
+  }
+
+  return hWeight;
+}
+//_____________________________________________________________________________
+TH2D* SliceWeights(const TH3D* weights, Int_t iBinLow, Int_t iBinHigh)
+{
+  if(!weights) { printf("PrepareWeights: no input histo\n"); return 0x0;}
+
+  TH3D* weightsTemp = (TH3D*) weights->Clone();
+
+  weightsTemp->GetZaxis()->SetRange(iBinLow,iBinHigh);
+
+  TH2D* weights_2d = (TH2D*) weightsTemp->Project3D("xy");
   return weights_2d;
 }
 //_____________________________________________________________________________
