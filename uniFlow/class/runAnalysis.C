@@ -93,6 +93,8 @@ void runAnalysis()
     task1->SetFlowFillWeights(kTRUE);
     // task1->SetFlowDoFourCorrelations(kFALSE);
     // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights_preliminary_16q.root",kFALSE);
+    task1->SetUseWeigthsFile("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pp-16l/weights.root",kFALSE);
+    task1->SetUseWeights3D(kTRUE);
     // Events selection
     // task1->SetUseAliEventCuts();
     task1->SetTrigger(0);

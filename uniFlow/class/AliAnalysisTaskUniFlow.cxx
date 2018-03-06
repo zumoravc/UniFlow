@@ -161,6 +161,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowWeightsPath(),
   fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
+  fFlowUse3Dweights(kFALSE),
 
   // events selection
   fPVtxCutZ(10.0),
@@ -273,6 +274,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fh2WeightK0s(0x0),
   fh2WeightLambda(0x0),
   fh2WeightPhi(0x0),
+  fh3WeightRefs(0x0),
+  fh3WeightCharged(0x0),
+  fh3WeightPion(0x0),
+  fh3WeightKaon(0x0),
+  fh3WeightProton(0x0),
+  fh3WeightK0s(0x0),
+  fh3WeightLambda(0x0),
+  fh3WeightPhi(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -428,6 +437,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowWeightsPath(),
   fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
+  fFlowUse3Dweights(kFALSE),
 
   // events selection
   fPVtxCutZ(10.0),
@@ -540,6 +550,14 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fh2WeightK0s(0x0),
   fh2WeightLambda(0x0),
   fh2WeightPhi(0x0),
+  fh3WeightRefs(0x0),
+  fh3WeightCharged(0x0),
+  fh3WeightPion(0x0),
+  fh3WeightKaon(0x0),
+  fh3WeightProton(0x0),
+  fh3WeightK0s(0x0),
+  fh3WeightLambda(0x0),
+  fh3WeightPhi(0x0),
 
   // event histograms
   fhEventSampling(0x0),
@@ -1779,14 +1797,29 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     {
       TList* listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
       if(!listFlowWeights) { AliError("TList from flow weights not found."); return kFALSE; }
-      fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliFatal("Refs weights not found"); return kFALSE; }
-      fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliFatal("Charged weights not found"); return kFALSE; }
-      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliFatal("Pion weights not found"); return kFALSE; }
-      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliFatal("Kaon weights not found"); return kFALSE; }
-      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliFatal("Proton weights not found"); return kFALSE; }
-      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliFatal("K0s weights not found"); return kFALSE; }
-      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliFatal("Phi weights not found"); return kFALSE; }
-      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
+
+      if(fFlowUse3Dweights)
+      {
+        fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs"); if(!fh3WeightRefs) { AliFatal("Refs weights not found"); return kFALSE; }
+        fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged"); if(!fh3WeightCharged) { AliFatal("Charged weights not found"); return kFALSE; }
+        fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion"); if(!fh3WeightPion) { AliFatal("Pion weights not found"); return kFALSE; }
+        fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon"); if(!fh3WeightKaon) { AliFatal("Kaon weights not found"); return kFALSE; }
+        fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton"); if(!fh3WeightProton) { AliFatal("Proton weights not found"); return kFALSE; }
+        fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s"); if(!fh3WeightK0s) { AliFatal("K0s weights not found"); return kFALSE; }
+        fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda"); if(!fh3WeightLambda) { AliFatal("Phi weights not found"); return kFALSE; }
+        fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi"); if(!fh3WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
+      }
+      else
+      {
+        fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliFatal("Refs weights not found"); return kFALSE; }
+        fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliFatal("Charged weights not found"); return kFALSE; }
+        fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliFatal("Pion weights not found"); return kFALSE; }
+        fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliFatal("Kaon weights not found"); return kFALSE; }
+        fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliFatal("Proton weights not found"); return kFALSE; }
+        fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliFatal("K0s weights not found"); return kFALSE; }
+        fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliFatal("Phi weights not found"); return kFALSE; }
+        fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
+      }
     }
   }
 
@@ -2108,7 +2141,9 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     if(fFlowFillWeights) { fh3WeightsCharged->Fill(track->Phi(),track->Eta(),fPVz); }
     if(fFlowUseWeights)
     {
-      Double_t weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi()) );
+      Double_t weight = 1.0;
+      if(fFlowUse3Dweights){ weight = fh3WeightCharged->GetBinContent( fh3WeightCharged->FindBin(track->Eta(),track->Phi(),fPVz)); }
+      else { weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi())); }
       fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
@@ -2136,7 +2171,9 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     if(fFlowFillWeights) { fh3WeightsRefs->Fill(track->Phi(),track->Eta(),fPVz); }
     if(fFlowUseWeights)
     {
-      Double_t weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) );
+      Double_t weight = 1.0;
+      if(fFlowUse3Dweights) {weight = fh3WeightRefs->GetBinContent( fh3WeightRefs->FindBin(track->Eta(),track->Phi(),fPVz)); }
+      else { weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) ); }
       fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
@@ -2319,7 +2356,10 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(fFlowFillWeights) { fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
-          Double_t weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindBin(v0->Eta(),v0->Phi()) );
+          Double_t weight = 1.0;
+          if(fFlowUse3Dweights) { weight = fh3WeightK0s->GetBinContent( fh3WeightK0s->FindBin(v0->Eta(),v0->Phi(),fPVz) ); }
+
+          else { weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindBin(v0->Eta(),v0->Phi()) ); }
           fh3AfterWeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
@@ -2335,7 +2375,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
-          Double_t weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) );
+          Double_t weight = 1.0;
+          if(fFlowUse3Dweights) { weight = fh3WeightLambda->GetBinContent( fh3WeightLambda->FindBin(v0->Eta(),v0->Phi(),fPVz) ); }
+          else { weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) ); }
           fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
@@ -2351,7 +2393,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
-          Double_t weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) );
+          Double_t weight = 1.0;
+          if(fFlowUse3Dweights) { weight = fh3WeightLambda->GetBinContent( fh3WeightLambda->FindBin(v0->Eta(),v0->Phi(), fPVz) );}
+          else { weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) ); }
           fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
@@ -2977,7 +3021,9 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       if(fFlowFillWeights) { fh3WeightsPhi->Fill(mother->Phi(), mother->Eta(), fPVz); }
       if(fFlowUseWeights)
       {
-        Double_t weight = fh2WeightPhi->GetBinContent( fh2WeightPhi->FindBin(mother->Eta(),mother->Phi()) );
+        Double_t weight = 1.0;
+        if(fFlowUse3Dweights) { weight = fh3WeightPhi->GetBinContent( fh3WeightPhi->FindBin(mother->Eta(),mother->Phi(), fPVz) ); }
+        else { weight = fh2WeightPhi->GetBinContent( fh2WeightPhi->FindBin(mother->Eta(),mother->Phi()) ) ; }
         fh3AfterWeightsPhi->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
       }
 
@@ -3096,7 +3142,9 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fFlowFillWeights) { fh3WeightsPion->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
-          Double_t weight = fh2WeightPion->GetBinContent( fh2WeightPion->FindBin(track->Eta(),track->Phi()) );
+          Double_t weight = 1.0;
+          if(fFlowUse3Dweights) { weight = fh3WeightPion->GetBinContent( fh3WeightPion->FindBin(track->Eta(),track->Phi(), fPVz)); }
+          else { weight = fh2WeightPion->GetBinContent( fh2WeightPion->FindBin(track->Eta(),track->Phi()) ); }
           fh3AfterWeightsPion->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
@@ -3105,7 +3153,9 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fFlowFillWeights) { fh3WeightsKaon->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
-          Double_t weight = fh2WeightKaon->GetBinContent( fh2WeightKaon->FindBin(track->Eta(),track->Phi()) );
+          Double_t weight = 1.0;
+          if(fFlowUse3Dweights) { weight = fh3WeightKaon->GetBinContent( fh3WeightKaon->FindBin(track->Eta(),track->Phi(),fPVz) ); }
+          else { weight = fh2WeightKaon->GetBinContent( fh2WeightKaon->FindBin(track->Eta(),track->Phi()) ); }
           fh3AfterWeightsKaon->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
@@ -3114,7 +3164,9 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fFlowFillWeights) { fh3WeightsProton->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
-          Double_t weight = fh2WeightProton->GetBinContent( fh2WeightProton->FindBin(track->Eta(),track->Phi()) );
+          Double_t weight = 1.0;
+          if(fFlowUse3Dweights) { weight = fh3WeightProton->GetBinContent( fh3WeightProton->FindBin(track->Eta(),track->Phi(),fPVz) );}
+          else { weight = fh2WeightProton->GetBinContent( fh2WeightProton->FindBin(track->Eta(),track->Phi()) ); }
           fh3AfterWeightsProton->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
@@ -3445,14 +3497,29 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
     {
       TList* listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber));
       if(!listFlowWeights) {AliError("TList from flow weights not found."); return kFALSE; }
-      fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
-      fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
-      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
-      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
-      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
-      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
-      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
-      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
+
+      if(fFlowUse3Dweights)
+      {
+        fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs"); if(!fh3WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
+        fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged"); if(!fh3WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
+        fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion"); if(!fh3WeightPion) { AliError("Pion weights not found"); return kFALSE; }
+        fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon"); if(!fh3WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
+        fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton"); if(!fh3WeightProton) { AliError("Proton weights not found"); return kFALSE; }
+        fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s"); if(!fh3WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
+        fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda"); if(!fh3WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
+        fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi"); if(!fh3WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
+      }
+      else
+      {
+        fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
+        fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
+        fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
+        fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
+        fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
+        fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
+        fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
+        fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
+      }
     }
   }
 
@@ -3773,11 +3840,12 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   Bool_t bHasGap = kFALSE;
   if(dEtaGap > -1.0) bHasGap = kTRUE;
 
-  TH2D* h2Weights = 0x0;
+  TH2D* h2Weights = fh2WeightRefs;
+  TH3D* h3Weights = fh3WeightRefs;
   if(fFlowUseWeights)
   {
-    h2Weights = fh2WeightRefs;
-    if(!h2Weights) { AliError("Histogram with Refs weights not found."); return; }
+    if(fFlowUse3Dweights && !fh3WeightRefs) { AliError("Histogram with Refs weights not found."); return; }
+    if(!fFlowUse3Dweights && !fh2WeightRefs) { AliError("Histogram with Refs weights not found."); return; }
   }
 
   // clearing output (global) flow vectors
@@ -3788,13 +3856,15 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   {
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
+
     Double_t dWeight = 1.0;
 
     // loading weights if needed
     if(fFlowUseWeights)
     {
-      dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi));
-      if(dWeight <= 0) dWeight = 1.0;
+      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi,fPVz)); }
+      else { dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi)); }
+      if(dWeight <= 0.0) dWeight = 1.0;
     }
 
     if(!bHasGap) // no eta gap
@@ -3849,6 +3919,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   TH3D* histPos = 0x0;
   TH3D* histNeg = 0x0;
   TH2D* h2Weights = 0x0;
+  TH3D* h3Weights = 0x0;
 
   // swich based on species
   switch (species)
@@ -3856,26 +3927,31 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     case kCharged:
       vector = fVectorCharged;
       h2Weights = fh2WeightCharged;
+      h3Weights = fh3WeightCharged;
       break;
 
     case kPion:
       vector = fVectorPion;
       h2Weights = fh2WeightPion;
+      h3Weights = fh3WeightPion;
       break;
 
     case kKaon:
       vector = fVectorKaon;
       h2Weights = fh2WeightKaon;
+      h3Weights = fh3WeightKaon;
       break;
 
     case kProton:
       vector = fVectorProton;
       h2Weights = fh2WeightProton;
+      h3Weights = fh3WeightProton;
       break;
 
     case kK0s:
       vector = fVectorK0s;
       h2Weights = fh2WeightK0s;
+      h3Weights = fh3WeightK0s;
       histPos = fh3V0sEntriesK0sPos[iEtaGapIndex];
       if(bHasGap) { histNeg = fh3V0sEntriesK0sNeg[iEtaGapIndex]; }
       bHasMass = kTRUE;
@@ -3884,6 +3960,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     case kLambda:
       vector = fVectorLambda;
       h2Weights = fh2WeightLambda;
+      h3Weights = fh3WeightLambda;
       histPos = fh3V0sEntriesLambdaPos[iEtaGapIndex];
       if(bHasGap) { histNeg = fh3V0sEntriesLambdaNeg[iEtaGapIndex]; }
       bHasMass = kTRUE;
@@ -3892,8 +3969,9 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     case kPhi:
       vector = fVectorPhi;
       histPos = fh3PhiEntriesSignalPos[iEtaGapIndex];
-      if(bHasGap) { histNeg = fh3PhiEntriesSignalNeg[iEtaGapIndex]; }
       h2Weights = fh2WeightPhi;
+      h3Weights = fh3WeightPhi;
+      if(bHasGap) { histNeg = fh3PhiEntriesSignalNeg[iEtaGapIndex]; }
       bHasMass = kTRUE;
       break;
 
@@ -3905,7 +3983,11 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   if(!vector) { AliError("Vector with selected POIs not found."); return; }
   if(bHasMass && !histPos) { AliError("Histogram for POIs in positive eta not found."); return; }
   if(bHasMass && bHasGap && !histNeg) { AliError("Historgam for POIs in negative eta not found."); return; }
-  if(fFlowUseWeights && !h2Weights) { AliError("Histogram with weights not found."); return; }
+  if(fFlowUseWeights)
+  {
+    if(!fFlowUse3Dweights && !h2Weights) { AliError("Histogram with weights not found."); return; }
+    if(fFlowUse3Dweights && !h3Weights) { AliError("Histogram with weights not found."); return; }
+  }
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecPpos);
@@ -3929,6 +4011,8 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     Double_t dWeight = 1.0;
     if(fFlowUseWeights)
     {
+      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindBin(dEta,dPhi,fPVz)); }
+      else { dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi)); }
       dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi));
       if(dWeight <= 0.0) dWeight = 1.0;
     }

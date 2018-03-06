@@ -42,7 +42,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
-      void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun = kTRUE) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; fFlowRunByRunWeights = bRunByRun; } //! NOTE file has to include "alien:///" if the file is on grid
+      void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; fFlowRunByRunWeights = bRunByRun; } //! NOTE file has to include "alien:///" if the file is on grid
+      void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
       void                    SetMultEstimator(const char* mult = "V0A") { fMultEstimator = mult; }
@@ -244,8 +245,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fCutFlowDoFourCorrelations; // [kFALSE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
+      Bool_t                  fFlowUse3Dweights; // [kFALSE] flag for using 3D GF weights, if kFALSE, 2D weights are expected
       Bool_t                  fFlowRunByRunWeights; // [kTRUE] flag for using rub-by-run weigths from weigths file; if false, only one set of histrograms is provided
       TString                 fFlowWeightsPath; //[] path to source root file with weigthts (if empty unit weights are applied) e.g. "alice/cern.ch/user/k/kgajdoso/EfficienciesWeights/2016/PhiWeight_LHC16kl.root"
+
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
@@ -367,6 +370,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH2D*           fh2WeightK0s; //! container for loading weights for given run
       TH2D*           fh2WeightLambda; //! container for loading weights for given run
       TH2D*           fh2WeightPhi; //! container for loading weights for given run
+      TH3D*           fh3WeightRefs; //! container for loading weights for given run
+      TH3D*           fh3WeightCharged; //! container for loading weights for given run
+      TH3D*           fh3WeightPion; //! container for loading weights for given run
+      TH3D*           fh3WeightKaon; //! container for loading weights for given run
+      TH3D*           fh3WeightProton; //! container for loading weights for given run
+      TH3D*           fh3WeightK0s; //! container for loading weights for given run
+      TH3D*           fh3WeightLambda; //! container for loading weights for given run
+      TH3D*           fh3WeightPhi; //! container for loading weights for given run
 
       TProfile*       fpRefsCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
       TProfile2D*     fp2ChargedCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta>0
