@@ -135,7 +135,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
       const static Int_t      fNumHarmonics = 1; // number of harmonics
       static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-      const static Int_t      fNumEtaGap = 1; // number of harmonics
+      const static Int_t      fNumEtaGap = 3; // number of harmonics
       static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
       const static Int_t      fNumMultBins = 6; // number of multiplicity bins
       static Double_t         fMultBins[fNumMultBins+1]; // multiplicity bins

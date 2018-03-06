@@ -104,7 +104,7 @@ class AliAnalysisTaskUniFlow;
 ClassImp(AliAnalysisTaskUniFlow);
 
 Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2};
-Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {0.8};
+Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {0.0,0.4,0.8};
 Double_t AliAnalysisTaskUniFlow::fMultBins[] = {0.,5.,10.,20.,40.,60.,100.};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
@@ -141,21 +141,21 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
-  fSampling(kFALSE),
+  fSampling(kTRUE),
   fFillQA(kTRUE),
-  //fNumSamples(10),
-  fProcessPID(kFALSE),
-  fProcessV0s(kFALSE),
-  fProcessPhi(kFALSE),
+  // fNumSamples(10),
+  fProcessPID(kTRUE),
+  fProcessV0s(kTRUE),
+  fProcessPhi(kTRUE),
 
   // flow related
   fUseFixedMultBins(kFALSE),
-  fCutFlowRFPsPtMin(0.),
-  fCutFlowRFPsPtMax(0.),
-  fCutFlowDoFourCorrelations(kFALSE),
-  fFlowFillWeights(kTRUE),
+  fCutFlowRFPsPtMin(0.2),
+  fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
   fFlowPOIsPtMax(15.0),
+  fCutFlowDoFourCorrelations(kFALSE),
+  fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
   fFlowCentMax(0),
   fFlowWeightsPath(),
@@ -163,18 +163,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowUseWeights(kFALSE),
 
   // events selection
-  fPVtxCutZ(0.),
-  fColSystem(kPP),
-  fMultEstimator(),
+  fPVtxCutZ(10.0),
+  fColSystem(kPPb),
+  fMultEstimator("V0A"),
   fTrigger(0),
   fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
-  fCutChargedEtaMax(0.),
+  fCutChargedEtaMax(0.8),
   fCutChargedDCAzMax(0.),
   fCutChargedDCAxyMax(0.),
-  fCutChargedTrackFilterBit(0),
-  fCutChargedNumTPCclsMin(0),
+  fCutChargedTrackFilterBit(96),
+  fCutChargedNumTPCclsMin(70),
 
   // PID tracks selection
   fCutPIDUseAntiProtonOnly(kFALSE),
@@ -183,10 +183,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutPIDnSigmaProtonMax(3.),
   fCutPIDnSigmaTPCRejectElectron(3.),
   fCutPIDnSigmaCombinedTOFrejection(kTRUE),
-  fCutUseBayesPID(kFALSE),
-  fCutPIDBayesPionMin(0.9),
-  fCutPIDBayesKaonMin(0.9),
-  fCutPIDBayesProtonMin(0.9),
+  fCutUseBayesPID(kTRUE),
+  fCutPIDBayesPionMin(0.8),
+  fCutPIDBayesKaonMin(0.8),
+  fCutPIDBayesProtonMin(0.8),
   fCutPIDBayesRejectElectron(0.5),
   fCutPIDBayesRejectMuon(0.5),
 
@@ -230,7 +230,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sLambdaProtonNumTPCSigmaMax(5.0),
 
   // phi selection
-  fCutPhiMotherEtaMax(0),
+  fCutPhiMotherEtaMax(0.8),
   fCutPhiInvMassMin(0.99),
   fCutPhiInvMassMax(1.07),
 
@@ -408,17 +408,17 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
-  fSampling(kFALSE),
+  fSampling(kTRUE),
   fFillQA(kTRUE),
   // fNumSamples(10),
-  fProcessPID(kFALSE),
-  fProcessV0s(kFALSE),
-  fProcessPhi(kFALSE),
+  fProcessPID(kTRUE),
+  fProcessV0s(kTRUE),
+  fProcessPhi(kTRUE),
 
   // flow related
   fUseFixedMultBins(kFALSE),
-  fCutFlowRFPsPtMin(0.),
-  fCutFlowRFPsPtMax(0.),
+  fCutFlowRFPsPtMin(0.2),
+  fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
   fFlowPOIsPtMax(15.0),
   fCutFlowDoFourCorrelations(kFALSE),
@@ -430,18 +430,18 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowUseWeights(kFALSE),
 
   // events selection
-  fPVtxCutZ(0.),
-  fColSystem(kPP),
-  fMultEstimator(),
+  fPVtxCutZ(10.0),
+  fColSystem(kPPb),
+  fMultEstimator("V0A"),
   fTrigger(0),
   fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
-  fCutChargedEtaMax(0.),
+  fCutChargedEtaMax(0.8),
   fCutChargedDCAzMax(0.),
   fCutChargedDCAxyMax(0.),
-  fCutChargedTrackFilterBit(0),
-  fCutChargedNumTPCclsMin(0),
+  fCutChargedTrackFilterBit(96),
+  fCutChargedNumTPCclsMin(70),
 
   // PID tracks selection
   fCutPIDUseAntiProtonOnly(kFALSE),
@@ -450,10 +450,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutPIDnSigmaProtonMax(3.),
   fCutPIDnSigmaTPCRejectElectron(3.),
   fCutPIDnSigmaCombinedTOFrejection(kTRUE),
-  fCutUseBayesPID(kFALSE),
-  fCutPIDBayesPionMin(0.9),
-  fCutPIDBayesKaonMin(0.9),
-  fCutPIDBayesProtonMin(0.9),
+  fCutUseBayesPID(kTRUE),
+  fCutPIDBayesPionMin(0.8),
+  fCutPIDBayesKaonMin(0.8),
+  fCutPIDBayesProtonMin(0.8),
   fCutPIDBayesRejectElectron(0.5),
   fCutPIDBayesRejectMuon(0.5),
 
@@ -497,7 +497,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sLambdaProtonNumTPCSigmaMax(5.0),
 
   // phi selection
-  fCutPhiMotherEtaMax(0),
+  fCutPhiMotherEtaMax(0.8),
   fCutPhiInvMassMin(0.99),
   fCutPhiInvMassMax(1.07),
 

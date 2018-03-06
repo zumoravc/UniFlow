@@ -88,34 +88,34 @@ void runAnalysis()
     task1->SetProcessPhi(kTRUE);
     task1->SetProcessV0s(kTRUE);
     // Flow
-    task1->SetFlowRFPsPtMin(0.2);
-    task1->SetFlowRFPsPtMax(5.);
-    task1->SetFlowDoFourCorrelations(kFALSE);
+    // task1->SetFlowRFPsPtMin(0.2);
+    // task1->SetFlowRFPsPtMax(5.0);
     task1->SetFlowFillWeights(kTRUE);
+    // task1->SetFlowDoFourCorrelations(kFALSE);
     // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights_preliminary_16q.root",kFALSE);
     // Events selection
     // task1->SetUseAliEventCuts();
     task1->SetTrigger(0);
     task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
     task1->SetMultEstimator("V0A");
-    task1->SetPVtxZMax(10);
+    // task1->SetPVtxZMax(10);
     // Charged selection
-    task1->SetChargedEtaMax(0.8);
-    // task1->SetChargedPtMin(0.2);
-    // task1->SetChargedPtMax(5.);
-    // task1->SetChargedDCAzMax(0.1);
-    // task1->SetChargedDCAxyMax(0.2);
-    task1->SetChargedNumTPCclsMin(70);
-    task1->SetChargedTrackFilterBit(96);
-    // PID selection
-    task1->SetPIDUseAntiProtonOnly(kFALSE);
-    task1->SetPIDNumSigmasPionMax(3);
-    task1->SetPIDNumSigmasKaonMax(3);
-    task1->SetPIDNumSigmasProtonMax(3);
-    task1->SetUseBayesPID(kTRUE);
-    task1->SetPIDBayesProbPionMin(0.95);
-    task1->SetPIDBayesProbKaonMin(0.85);
-    task1->SetPIDBayesProbProtonMin(0.85);
+    // task1->SetChargedEtaMax(0.8);
+    // // task1->SetChargedPtMin(0.2);
+    // // task1->SetChargedPtMax(5.);
+    // // task1->SetChargedDCAzMax(0.1);
+    // // task1->SetChargedDCAxyMax(0.2);
+    // task1->SetChargedNumTPCclsMin(70);
+    // task1->SetChargedTrackFilterBit(96);
+    // // PID selection
+    // task1->SetPIDUseAntiProtonOnly(kFALSE);
+    // task1->SetPIDNumSigmasPionMax(3);
+    // task1->SetPIDNumSigmasKaonMax(3);
+    // task1->SetPIDNumSigmasProtonMax(3);
+    // task1->SetUseBayesPID(kTRUE);
+    // task1->SetPIDBayesProbPionMin(0.95);
+    // task1->SetPIDBayesProbKaonMin(0.85);
+    // task1->SetPIDBayesProbProtonMin(0.85);
     // Phi selection
     // task1->SetPhiMotherEtaMax(0.8);
 
