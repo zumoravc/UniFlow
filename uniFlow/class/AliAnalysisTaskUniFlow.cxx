@@ -187,8 +187,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutPIDBayesPionMin(0.8),
   fCutPIDBayesKaonMin(0.8),
   fCutPIDBayesProtonMin(0.8),
-  fCutPIDBayesRejectElectron(0.5),
-  fCutPIDBayesRejectMuon(0.5),
+  fCutPIDBayesRejectElectron(0.8),
+  fCutPIDBayesRejectMuon(0.8),
 
   // V0s selection
   fCutV0sOnFly(kFALSE),
@@ -454,8 +454,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutPIDBayesPionMin(0.8),
   fCutPIDBayesKaonMin(0.8),
   fCutPIDBayesProtonMin(0.8),
-  fCutPIDBayesRejectElectron(0.5),
-  fCutPIDBayesRejectMuon(0.5),
+  fCutPIDBayesRejectElectron(0.8),
+  fCutPIDBayesRejectMuon(0.8),
 
   // V0s selection
   fCutV0sOnFly(kFALSE),
