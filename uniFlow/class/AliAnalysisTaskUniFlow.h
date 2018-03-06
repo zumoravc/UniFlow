@@ -507,9 +507,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhQAPIDTOFstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
       TH2D*           fhQAPIDTPCdEdx[fiNumIndexQA];    //! TPC PID information
       TH2D*           fhQAPIDTOFbeta[fiNumIndexQA];    //! TOF PID information
-      TH3D*           fh3QAPIDnSigmaTPCTOFPtPion[fiNumIndexQA]; // nSigma TPC vs nSigma TOF vs pt
-      TH3D*           fh3QAPIDnSigmaTPCTOFPtKaon[fiNumIndexQA]; // nSigma TPC vs nSigma TOF vs pt
-      TH3D*           fh3QAPIDnSigmaTPCTOFPtProton[fiNumIndexQA]; // nSigma TPC vs nSigma TOF vs pt
+      TH3D*           fh3QAPIDnSigmaTPCTOFPtPion[fiNumIndexQA]; //! nSigma TPC vs nSigma TOF vs pt
+      TH3D*           fh3QAPIDnSigmaTPCTOFPtKaon[fiNumIndexQA]; //! nSigma TPC vs nSigma TOF vs pt
+      TH3D*           fh3QAPIDnSigmaTPCTOFPtProton[fiNumIndexQA]; //! nSigma TPC vs nSigma TOF vs pt
       TH3D*           fh3QAPIDnSigmaBayesElectron[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
       TH3D*           fh3QAPIDnSigmaBayesMuon[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
       TH3D*           fh3QAPIDnSigmaBayesPion[fiNumIndexQA]; //! PID information (nSigma TPC, nSigma TOF, Bayes) for pions
@@ -562,7 +562,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
       AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
 
-      ClassDef(AliAnalysisTaskUniFlow, 5);
+      ClassDef(AliAnalysisTaskUniFlow, 6);
 };
 
 #endif
