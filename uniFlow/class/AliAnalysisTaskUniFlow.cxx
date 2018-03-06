@@ -904,56 +904,56 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // weights
     if(fFlowFillWeights)
     {
-      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsRefs->Sumw2();
       fFlowWeights->Add(fh3WeightsRefs);
-      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsCharged->Sumw2();
       fFlowWeights->Add(fh3WeightsCharged);
-      fh3WeightsPion = new TH3D("fh3WeightsPion","Weights: #pi; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3WeightsPion = new TH3D("fh3WeightsPion","Weights: #pi; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsPion->Sumw2();
       fFlowWeights->Add(fh3WeightsPion);
-      fh3WeightsKaon = new TH3D("fh3WeightsKaon","Weights: K; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3WeightsKaon = new TH3D("fh3WeightsKaon","Weights: K; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsKaon->Sumw2();
       fFlowWeights->Add(fh3WeightsKaon);
-      fh3WeightsProton = new TH3D("fh3WeightsProton","Weights: p; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3WeightsProton = new TH3D("fh3WeightsProton","Weights: p; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsProton->Sumw2();
       fFlowWeights->Add(fh3WeightsProton);
-      fh3WeightsPhi = new TH3D("fh3WeightsPhi","Weights: #phi; #varphi; #eta; PV-z (cm)", 100,-TMath::Pi(),TMath::Pi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3WeightsPhi = new TH3D("fh3WeightsPhi","Weights: #phi; #varphi; #eta; PV-z (cm)", 100,-TMath::Pi(),TMath::Pi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsPhi->Sumw2();
       fFlowWeights->Add(fh3WeightsPhi);
-      fh3WeightsK0s = new TH3D("fh3WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3WeightsK0s = new TH3D("fh3WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsK0s->Sumw2();
       fFlowWeights->Add(fh3WeightsK0s);
-      fh3WeightsLambda = new TH3D("fh3WeightsLambda","Weights: #Lambda; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3WeightsLambda = new TH3D("fh3WeightsLambda","Weights: #Lambda; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3WeightsLambda->Sumw2();
       fFlowWeights->Add(fh3WeightsLambda);
     }
 
     if(fFlowUseWeights)
     {
-      fh3AfterWeightsRefs = new TH3D("fh3AfterWeightsRefs","Weights: Refs; #varphi (After); #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeightsRefs = new TH3D("fh3AfterWeightsRefs","Weights: Refs; #varphi (After); #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsRefs->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsRefs);
-      fh3AfterWeightsCharged = new TH3D("fh3AfterWeightsCharged","Weights: Charged (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeightsCharged = new TH3D("fh3AfterWeightsCharged","Weights: Charged (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsCharged->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsCharged);
-      fh3AfterWeightsPion = new TH3D("fh3AfterWeightsPion","Weights: #pi (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeightsPion = new TH3D("fh3AfterWeightsPion","Weights: #pi (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsPion->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsPion);
-      fh3AfterWeightsKaon = new TH3D("fh3AfterWeightsKaon","Weights: K (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeightsKaon = new TH3D("fh3AfterWeightsKaon","Weights: K (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsKaon->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsKaon);
-      fh3AfterWeightsProton = new TH3D("fh3AfterWeightsProton","Weights: p (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeightsProton = new TH3D("fh3AfterWeightsProton","Weights: p (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsProton->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsProton);
-      fh3AfterWeightsPhi = new TH3D("fh3AfterWeightsPhi","Weights: #phi (After); #varphi; #eta; PV-z (cm)", 100,-TMath::Pi(),TMath::Pi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeightsPhi = new TH3D("fh3AfterWeightsPhi","Weights: #phi (After); #varphi; #eta; PV-z (cm)", 100,-TMath::Pi(),TMath::Pi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsPhi->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsPhi);
-      fh3AfterWeightsK0s = new TH3D("fh3AfterWeightsK0s","Weights: K^{0}_{S} (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeightsK0s = new TH3D("fh3AfterWeightsK0s","Weights: K^{0}_{S} (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsK0s->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsK0s);
-      fh3AfterWeightsLambda = new TH3D("fh3AfterWeightsLambda","Weights: #Lambda (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 151,-1.5,1.5, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeightsLambda = new TH3D("fh3AfterWeightsLambda","Weights: #Lambda (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsLambda->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsLambda);
     }
