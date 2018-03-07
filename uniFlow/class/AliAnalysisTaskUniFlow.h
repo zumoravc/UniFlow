@@ -414,6 +414,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhRefsPt; //! pt distribution of selected RFPs
       TH1D*           fhRefsEta; //! pt distribution of selected RFPs
       TH1D*           fhRefsPhi; //! pt distribution of selected RFPs
+      TProfile*       fpRefsMult; //! <multiplicity> 
       TH1D*           fhChargedCounter; //! counter following charged track selection
       // PID
       TH1D*           fhPIDPionMult; //! multiplicity distribution of selected pions

@@ -294,6 +294,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhRefsPt(0x0),
   fhRefsEta(0x0),
   fhRefsPhi(0x0),
+  fpRefsMult(0x0),
   fhChargedCounter(0x0),
 
   // PID histogram
@@ -570,6 +571,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhRefsPt(0x0),
   fhRefsEta(0x0),
   fhRefsPhi(0x0),
+  fpRefsMult(0x0),
   fhChargedCounter(0x0),
 
   // PID histogram
@@ -1169,6 +1171,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fQACharged->Add(fhRefsEta);
     fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", 100,0,TMath::TwoPi());
     fQACharged->Add(fhRefsPhi);
+    fpRefsMult = new TProfile("fpRefsMult","Ref mult; centrality/multiplicity", iMultNumBins,fFlowCentMin,fFlowCentMax);
+    fpRefsMult->Sumw2();
+    fQACharged->Add(fpRefsMult);
 
     TString sChargedCounterLabel[] = {"Input","Pt","Eta","FB","#TPC-Cls","DCA-z","DCA-xy","Selected"};
     const Short_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
@@ -3544,6 +3549,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
   fhEventCentrality->Fill(fIndexCentrality);
   fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
+  fpRefsMult->Fill(fIndexCentrality,fVectorRefs->size(),1.0);
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
 
   // if running in kSkipFlow mode, skip the remaining part
