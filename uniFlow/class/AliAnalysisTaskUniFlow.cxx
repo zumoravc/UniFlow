@@ -1839,6 +1839,14 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   switch(fColSystem)
   {
+    case kPP :
+      fVectorRefs->reserve(150);
+      fVectorCharged->reserve(150);
+      if(fProcessPID) { fVectorPion->reserve(100); fVectorKaon->reserve(20); fVectorProton->reserve(20); }
+      if(fProcessV0s) { fVectorK0s->reserve(30); fVectorLambda->reserve(30); }
+      if(fProcessPhi) { fVectorPhi->reserve(20); }
+      break;
+
     case kPPb :
       fVectorRefs->reserve(200);
       fVectorCharged->reserve(200);
