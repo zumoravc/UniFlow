@@ -1800,14 +1800,14 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
       if(fFlowUse3Dweights)
       {
-        fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs"); if(!fh3WeightRefs) { AliFatal("Refs weights not found"); return kFALSE; }
-        fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged"); if(!fh3WeightCharged) { AliFatal("Charged weights not found"); return kFALSE; }
-        fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion"); if(!fh3WeightPion) { AliFatal("Pion weights not found"); return kFALSE; }
-        fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon"); if(!fh3WeightKaon) { AliFatal("Kaon weights not found"); return kFALSE; }
-        fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton"); if(!fh3WeightProton) { AliFatal("Proton weights not found"); return kFALSE; }
-        fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s"); if(!fh3WeightK0s) { AliFatal("K0s weights not found"); return kFALSE; }
-        fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda"); if(!fh3WeightLambda) { AliFatal("Phi weights not found"); return kFALSE; }
-        fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi"); if(!fh3WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
+        fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs3D"); if(!fh3WeightRefs) { AliFatal("Refs weights not found"); return kFALSE; }
+        fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged3D"); if(!fh3WeightCharged) { AliFatal("Charged weights not found"); return kFALSE; }
+        fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion3D"); if(!fh3WeightPion) { AliFatal("Pion weights not found"); return kFALSE; }
+        fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon3D"); if(!fh3WeightKaon) { AliFatal("Kaon weights not found"); return kFALSE; }
+        fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton3D"); if(!fh3WeightProton) { AliFatal("Proton weights not found"); return kFALSE; }
+        fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s3D"); if(!fh3WeightK0s) { AliFatal("K0s weights not found"); return kFALSE; }
+        fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda3D"); if(!fh3WeightLambda) { AliFatal("Phi weights not found"); return kFALSE; }
+        fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi3D"); if(!fh3WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
       }
       else
       {
@@ -3500,14 +3500,14 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
 
       if(fFlowUse3Dweights)
       {
-        fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs"); if(!fh3WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
-        fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged"); if(!fh3WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
-        fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion"); if(!fh3WeightPion) { AliError("Pion weights not found"); return kFALSE; }
-        fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon"); if(!fh3WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
-        fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton"); if(!fh3WeightProton) { AliError("Proton weights not found"); return kFALSE; }
-        fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s"); if(!fh3WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
-        fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda"); if(!fh3WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
-        fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi"); if(!fh3WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
+        fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs3D"); if(!fh3WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
+        fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged3D"); if(!fh3WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
+        fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion3D"); if(!fh3WeightPion) { AliError("Pion weights not found"); return kFALSE; }
+        fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon3D"); if(!fh3WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
+        fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton3D"); if(!fh3WeightProton) { AliError("Proton weights not found"); return kFALSE; }
+        fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s3D"); if(!fh3WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
+        fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda3D"); if(!fh3WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
+        fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi3D"); if(!fh3WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
       }
       else
       {
