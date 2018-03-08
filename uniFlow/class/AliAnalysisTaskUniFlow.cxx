@@ -2155,8 +2155,8 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     if(fFlowUseWeights)
     {
       Double_t weight = 1.0;
-      if(fFlowUse3Dweights){ weight = fh3WeightCharged->GetBinContent( fh3WeightCharged->FindBin(track->Eta(),track->Phi(),fPVz)); }
-      else { weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindBin(track->Eta(),track->Phi())); }
+      if(fFlowUse3Dweights){ weight = fh3WeightCharged->GetBinContent( fh3WeightCharged->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
+      else { weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindFixBin(track->Eta(),track->Phi())); }
       fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
@@ -2185,8 +2185,8 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     if(fFlowUseWeights)
     {
       Double_t weight = 1.0;
-      if(fFlowUse3Dweights) {weight = fh3WeightRefs->GetBinContent( fh3WeightRefs->FindBin(track->Eta(),track->Phi(),fPVz)); }
-      else { weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindBin(track->Eta(),track->Phi()) ); }
+      if(fFlowUse3Dweights) {weight = fh3WeightRefs->GetBinContent( fh3WeightRefs->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
+      else { weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindFixBin(track->Eta(),track->Phi()) ); }
       fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
@@ -2370,9 +2370,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightK0s->GetBinContent( fh3WeightK0s->FindBin(v0->Eta(),v0->Phi(),fPVz) ); }
+          if(fFlowUse3Dweights) { weight = fh3WeightK0s->GetBinContent( fh3WeightK0s->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
 
-          else { weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindBin(v0->Eta(),v0->Phi()) ); }
+          else { weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindFixBin(v0->Eta(),v0->Phi()) ); }
           fh3AfterWeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
@@ -2389,8 +2389,8 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightLambda->GetBinContent( fh3WeightLambda->FindBin(v0->Eta(),v0->Phi(),fPVz) ); }
-          else { weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) ); }
+          if(fFlowUse3Dweights) { weight = fh3WeightLambda->GetBinContent( fh3WeightLambda->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
+          else { weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindFixBin(v0->Eta(),v0->Phi()) ); }
           fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
@@ -2407,8 +2407,8 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightLambda->GetBinContent( fh3WeightLambda->FindBin(v0->Eta(),v0->Phi(), fPVz) );}
-          else { weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindBin(v0->Eta(),v0->Phi()) ); }
+          if(fFlowUse3Dweights) { weight = fh3WeightLambda->GetBinContent( fh3WeightLambda->FindFixBin(v0->Eta(),v0->Phi(), fPVz) );}
+          else { weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindFixBin(v0->Eta(),v0->Phi()) ); }
           fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
@@ -3035,8 +3035,8 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       if(fFlowUseWeights)
       {
         Double_t weight = 1.0;
-        if(fFlowUse3Dweights) { weight = fh3WeightPhi->GetBinContent( fh3WeightPhi->FindBin(mother->Eta(),mother->Phi(), fPVz) ); }
-        else { weight = fh2WeightPhi->GetBinContent( fh2WeightPhi->FindBin(mother->Eta(),mother->Phi()) ) ; }
+        if(fFlowUse3Dweights) { weight = fh3WeightPhi->GetBinContent( fh3WeightPhi->FindFixBin(mother->Eta(),mother->Phi(), fPVz) ); }
+        else { weight = fh2WeightPhi->GetBinContent( fh2WeightPhi->FindFixBin(mother->Eta(),mother->Phi()) ) ; }
         fh3AfterWeightsPhi->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
       }
 
@@ -3156,8 +3156,8 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightPion->GetBinContent( fh3WeightPion->FindBin(track->Eta(),track->Phi(), fPVz)); }
-          else { weight = fh2WeightPion->GetBinContent( fh2WeightPion->FindBin(track->Eta(),track->Phi()) ); }
+          if(fFlowUse3Dweights) { weight = fh3WeightPion->GetBinContent( fh3WeightPion->FindFixBin(track->Eta(),track->Phi(), fPVz)); }
+          else { weight = fh2WeightPion->GetBinContent( fh2WeightPion->FindFixBin(track->Eta(),track->Phi()) ); }
           fh3AfterWeightsPion->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
@@ -3167,8 +3167,8 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightKaon->GetBinContent( fh3WeightKaon->FindBin(track->Eta(),track->Phi(),fPVz) ); }
-          else { weight = fh2WeightKaon->GetBinContent( fh2WeightKaon->FindBin(track->Eta(),track->Phi()) ); }
+          if(fFlowUse3Dweights) { weight = fh3WeightKaon->GetBinContent( fh3WeightKaon->FindFixBin(track->Eta(),track->Phi(),fPVz) ); }
+          else { weight = fh2WeightKaon->GetBinContent( fh2WeightKaon->FindFixBin(track->Eta(),track->Phi()) ); }
           fh3AfterWeightsKaon->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
@@ -3178,8 +3178,8 @@ void AliAnalysisTaskUniFlow::FilterPID()
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightProton->GetBinContent( fh3WeightProton->FindBin(track->Eta(),track->Phi(),fPVz) );}
-          else { weight = fh2WeightProton->GetBinContent( fh2WeightProton->FindBin(track->Eta(),track->Phi()) ); }
+          if(fFlowUse3Dweights) { weight = fh3WeightProton->GetBinContent( fh3WeightProton->FindFixBin(track->Eta(),track->Phi(),fPVz) );}
+          else { weight = fh2WeightProton->GetBinContent( fh2WeightProton->FindFixBin(track->Eta(),track->Phi()) ); }
           fh3AfterWeightsProton->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
@@ -3876,8 +3876,8 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
     // loading weights if needed
     if(fFlowUseWeights)
     {
-      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindBin(dEta,dPhi,fPVz)); }
-      else { dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi)); }
+      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindFixBin(dEta,dPhi,fPVz)); }
+      else { dWeight = h2Weights->GetBinContent(h2Weights->FindFixBin(dEta,dPhi)); }
       if(dWeight <= 0.0) dWeight = 1.0;
     }
 
@@ -4025,8 +4025,8 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     Double_t dWeight = 1.0;
     if(fFlowUseWeights)
     {
-      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindBin(dEta,dPhi,fPVz)); }
-      else { dWeight = h2Weights->GetBinContent(h2Weights->FindBin(dEta,dPhi)); }
+      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindFixBin(dEta,dPhi,fPVz)); }
+      else { dWeight = h2Weights->GetBinContent(h2Weights->FindFixBin(dEta,dPhi)); }
       if(dWeight <= 0.0) dWeight = 1.0;
     }
 
