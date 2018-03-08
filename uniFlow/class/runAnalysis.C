@@ -92,9 +92,9 @@ void runAnalysis()
     // task1->SetFlowRFPsPtMax(5.0);
     task1->SetFlowFillWeights(kTRUE);
     // task1->SetFlowDoFourCorrelations(kFALSE);
-    // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights_preliminary_16q.root",kFALSE);
-    task1->SetUseWeigthsFile("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pp-16l/weights.root",kFALSE);
-    task1->SetUseWeights3D(kTRUE);
+    // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights-prel/weights_16l.root",kFALSE);
+    task1->SetUseWeigthsFile("./weights_16l.root",kTRUE);
+    task1->SetUseWeights3D(kFALSE);
     // Events selection
     // task1->SetUseAliEventCuts();
     task1->SetTrigger(0);
@@ -157,9 +157,8 @@ void runAnalysis()
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
-        //chain->Add("~/NBI/Flow/flow/testData/2010/LHC10h/000138275/ESDs/pass2/AOD160/0803/AliAOD.root");
-        // chain->Add("~/NBI/Flow/flow/testData/2016/LHC16l/000259888/pass1/AOD/015/AliAOD.root");
-        chain->Add("~/NBI/Flow/data/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
+        chain->Add("~/NBI/Flow/data/2016/LHC16l/000259888/pass1/AOD/001/AliAOD.root");
+        // chain->Add("~/NBI/Flow/data/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
         // if we want to run on grid, we create and configure the plugin

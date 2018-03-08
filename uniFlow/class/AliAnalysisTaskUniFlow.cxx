@@ -3509,7 +3509,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
     if(fFlowWeightsFile)
     {
       TList* listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber));
-      if(!listFlowWeights) {AliError("TList from flow weights not found."); return kFALSE; }
+      if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fRunNumber)); return kFALSE; }
 
       if(fFlowUse3Dweights)
       {

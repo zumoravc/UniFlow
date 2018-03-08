@@ -42,7 +42,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
-      void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowUseWeights = kTRUE; fFlowRunByRunWeights = bRunByRun; } //! NOTE file has to include "alien:///" if the file is on grid
+      void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
       void                    SetColisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
@@ -414,7 +414,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhRefsPt; //! pt distribution of selected RFPs
       TH1D*           fhRefsEta; //! pt distribution of selected RFPs
       TH1D*           fhRefsPhi; //! pt distribution of selected RFPs
-      TProfile*       fpRefsMult; //! <multiplicity> 
+      TProfile*       fpRefsMult; //! <multiplicity>
       TH1D*           fhChargedCounter; //! counter following charged track selection
       // PID
       TH1D*           fhPIDPionMult; //! multiplicity distribution of selected pions
