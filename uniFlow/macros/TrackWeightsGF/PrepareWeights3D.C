@@ -1,6 +1,6 @@
 /* PrepareWeights
  *
- * Macro for extracting the phi,eta,pt weights for Generic Framework calculations
+ * Macro for extracting the phi,eta,pt distribution and make them into 2D weights (eta,phi) for Generic Framework calculations
  * and preparing source ROOT file used for running the analysis (on run-by-run basis).
  * Also contains QA tools for weights.
  *
@@ -18,19 +18,20 @@
 
 void CheckWeights(const TH3D* weight = 0x0, const Int_t runNumber = -1);
 TH2D* SliceWeights(const TH3D* weights, Int_t iBinLow, Int_t iBinHigh);
-TH2D* ProcessWeights(const TH3D* dist);
+TH2D* ProcessWeights2D(const TH3D* dist);
 TH3D* ProcessWeights3D(const TH3D* dist);
 TH1D* CalculateWeight(TH1D* proj);
 
 const TString sPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pp-16l-run2";
 const TString sOutputPath = sPath+"/weights/";
+const TString sOutFileName = "weights_test.root";
 const Bool_t bRunByRun = kFALSE;
 
 void PrepareWeights3D()
 {
   const TString sTaskTag = "UniFlow";
 
-  TFile* fOutput = new TFile(Form("%s/weights_test.root",sPath.Data()),"RECREATE");
+  TFile* fOutput = new TFile(Form("%s/%s",sPath.Data(),sOutFileName.Data()),"RECREATE");
 
   const Short_t iNumPart = 8;
   const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
@@ -70,7 +71,7 @@ void PrepareWeights3D()
       }
       canDist->SaveAs(Form("%s/dist_%s_all.pdf",sOutputPath.Data(), species[part].Data()), "pdf");
 
-      TH2D* weights = ProcessWeights(h3Weights);
+      TH2D* weights = ProcessWeights2D(h3Weights);
       if(!weights) { printf("Hist with 2D weights not processed!\n"); continue; }
 
       // CheckWeights(h3Weights, iRunList[iRun]);
@@ -203,7 +204,7 @@ void CheckWeights(const TH3D* weights, const Int_t runNumber)
   return;
 }
 //_____________________________________________________________________________
-TH2D* ProcessWeights(const TH3D* dist)
+TH2D* ProcessWeights2D(const TH3D* dist)
 {
   if(!dist) { printf("PrepareWeights: no input histo\n"); return 0x0;}
 
@@ -213,18 +214,18 @@ TH2D* ProcessWeights(const TH3D* dist)
 
   // weights_2d->DrawCopy();
 
-  // for(Short_t binX(0); binX < iNumBinX+2; binX++)
-  for(Short_t binY(1); binY < dist_2d->GetNbinsY()+1; binY++)
+  for(Short_t binEta(1); binEta < dist_2d->GetNbinsX()+1; ++binEta)
   {
-    TH1D* proj = (TH1D*) dist_2d->ProjectionX(Form("x_%d",binY), binY,binY);
+    // projection onto phi (in eta bin)
+    TH1D* proj = (TH1D*) dist_2d->ProjectionY(Form("y_%d",binEta), binEta,binEta);
     if(!proj) { printf("No projection! Something went wrong!\n"); return 0x0; }
 
     TH1D* hWeight = CalculateWeight(proj);
 
-    for(Short_t binX(1); binX < weights_2d->GetNbinsX()+1; ++binX)
+    for(Short_t binPhi(1); binPhi < weights_2d->GetNbinsY()+1; ++binPhi)
     {
-      weights_2d->SetBinContent(binX,binY, hWeight->GetBinContent(binX));
-      weights_2d->SetBinError(binX,binY, 0.0);
+      weights_2d->SetBinContent(binEta,binPhi, hWeight->GetBinContent(binPhi));
+      weights_2d->SetBinError(binEta,binPhi, 0.0);
     }
 
   }
@@ -239,28 +240,28 @@ TH3D* ProcessWeights3D(const TH3D* dist)
   TH3D* distTemp = (TH3D*) dist->Clone("distTemp");
   // distTemp->Draw();
 
-  // phi dist is on x-axis
+  // phi dist is on y-axis
   TH3D* weights = (TH3D*) dist->Clone("weights");
   weights->Reset();
 
   // preparing weigths:  bin content = max / bincontent
-  for(Short_t binY(1); binY < dist->GetNbinsY()+1; binY++)
+  for(Short_t binEta(1); binEta < dist->GetNbinsX()+1; ++binEta)
   {
-    for(Short_t binZ(1); binZ < dist->GetNbinsZ()+1; binZ++)
+    for(Short_t binZ(1); binZ < dist->GetNbinsZ()+1; ++binZ)
     {
-      distTemp->GetYaxis()->SetRange(binY,binY);
+      distTemp->GetXaxis()->SetRange(binEta,binEta);
       distTemp->GetZaxis()->SetRange(binZ,binZ);
 
-      TH1D* proj = (TH1D*) distTemp->Project3D(Form("x_%d_%d",binY,binZ));
+      // projection into phi
+      TH1D* proj = (TH1D*) distTemp->Project3D(Form("y_%d_%d",binEta,binZ));
       if(!proj) { printf("No projection! Something went wrong!\n"); return 0x0; }
-
 
       // calculating weights in this 1D projection
       TH1D* hWeight = CalculateWeight(proj);
-      for(Short_t binPhi(1); binPhi < hWeight->GetNbinsX()+1; binPhi++)
+      for(Short_t binPhi(1); binPhi < hWeight->GetNbinsX()+1; ++binPhi)
       {
-        weights->SetBinContent(binPhi,binY,binZ, hWeight->GetBinContent(binPhi));
-        weights->SetBinError(binPhi,binY,binZ, 0.0);
+        weights->SetBinContent(binEta,binPhi,binZ, hWeight->GetBinContent(binPhi));
+        weights->SetBinError(binEta,binPhi,binZ, 0.0);
       }
 
     }
