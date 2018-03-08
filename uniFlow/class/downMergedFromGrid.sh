@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ===========================================================
-# Script for local merging & download output on Grid
+# Script for download merged output (run-by-run) from Grid
 # ===========================================================
 
 tag=pp-16l-run2
@@ -14,10 +14,6 @@ for i in $(cat ${runList})
 do
 	mkdir -pv merge_${i}
 	cd merge_${i}
-	path="/alice/cern.ch/user/v/vpacik/${tag}/output/000${i}/"
-
-	root -l -b -q ~/NBI/Flow/macros/mergeOutputOnGrid.C\(\"${path}\"\) &
-	# alien_cp alien:${path}AnalysisResults.root ./
-
+	alien_cp alien:/alice/cern.ch/user/v/vpacik/${tag}/output/000${i}/AnalysisResults.root ./
 	cd ../
 done
