@@ -281,6 +281,10 @@ class ProcessUniFlow
     TList*      flFlowPhi; //! TList from input file with Phi flow profiles
     TList*      flFlowK0s; //! TList from input file with K0s flow profiles
     TList*      flFlowLambda; //! TList from input file with Lambda flow profiles
+    TList*      flQACharged; //! TList from input file with Charged QA plots / profiles
+    TList*      flQAPID; //! TList from input file with PID (pi,K,p) QA plots / profiles
+    TList*      flQAPhi; //! TList from input file with Phi QA plots / profiles
+    TList*      flQAV0s; //! TList from input file with K0s QA plots / profiles
     std::vector<FlowTask*> fvTasks; // vector of task for individual species proccesing
 
 };
@@ -297,7 +301,11 @@ ProcessUniFlow::ProcessUniFlow() :
   flFlowPID(0x0),
   flFlowPhi(0x0),
   flFlowK0s(0x0),
-  flFlowLambda(0x0)
+  flFlowLambda(0x0),
+  flQACharged(0x0),
+  flQAPID(0x0),
+  flQAPhi(0x0),
+  flQAV0s(0x0)
 {
   // default constructor
   fsInputFilePath = TString("");
@@ -505,6 +513,15 @@ Bool_t ProcessUniFlow::LoadLists()
   flFlowLambda = (TList*) gDirectory->Get(Form("Flow_Lambda_%s",fsTaskName.Data()));
   if(!flFlowLambda) { Fatal("flFlow_Lambda list does not exists!","LoadLists"); return kFALSE; }
 
+  flQACharged = (TList*) gDirectory->Get(Form("QA_Charged_%s",fsTaskName.Data()));
+  if(!flQACharged) { Fatal("flQACharged list does not exists!","LoadLists"); return kFALSE; }
+  flQAPID = (TList*) gDirectory->Get(Form("QA_PID_%s",fsTaskName.Data()));
+  if(!flQAPID) { Fatal("flQAPID list does not exists!","LoadLists"); return kFALSE; }
+  flQAPhi = (TList*) gDirectory->Get(Form("QA_Phi_%s",fsTaskName.Data()));
+  if(!flQAPhi) { Fatal("flQAPhi list does not exists!","LoadLists"); return kFALSE; }
+  flQAV0s = (TList*) gDirectory->Get(Form("QA_V0s_%s",fsTaskName.Data()));
+  if(!flQAV0s) { Fatal("flQAV0s list does not exists!","LoadLists"); return kFALSE; }
+
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -561,16 +578,16 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // rebinning <multiplicity>
   if(fbSaveMult)
   {
-    TProfile* profMult = (TProfile*) flFlowRefs->FindObject(Form("fpRefsMult"));
+    TProfile* profMult = (TProfile*) flQACharged->FindObject(Form("fpRefsMult"));
     if(!profMult) { Error("MeanMult profile not found!"); flFlowRefs->ls(); return kFALSE; }
     TProfile* profMult_rebin = (TProfile*) profMult->Rebin(fiNumMultBins,Form("%s_rebin",profMult->GetName()),fdMultBins);
 
-    TFile* fileMult = TFile::Open(Form("%s/../../%s",fsOutputFilePath.Data(),fsMultFile.Data()),"RECREATE");
+    TFile* fileMult = TFile::Open(Form("%s/../%s",fsOutputFilePath.Data(),fsMultFile.Data()),"RECREATE");
     if(!fileMult) { Error("Output fileMult file not found!"); return kFALSE; }
     fileMult->cd();
     profMult_rebin->Write(profMult_rebin->GetName());
 
-    printf("saving to ... %s/%s\n",fsOutputFilePath.Data(),fsMultFile.Data());
+    printf("saving to ... %s/../%s\n",fsOutputFilePath.Data(),fsMultFile.Data());
   }
 
 
