@@ -212,7 +212,7 @@ class ProcessUniFlow
     void        SetOutputFileMode(const char* mode = "RECREATE") { fsOutputFileMode = mode; }
     void        SetTaskName(const char* name) { fsTaskName = name; }
     void        SetGlobalProfNameLabel(const char* label = "") { fsGlobalProfNameLabel = label; } // add global profile label for all tasks NOTE: for the purpose of Flow sub
-    void        SetSaveMult(const char* file) { fbSaveMult = kTRUE; fsMultFile = TString(file); } // save reference multiplicity
+    void        SetSaveMult(Bool_t bSave = kTRUE) { fbSaveMult = bSave; } // save reference multiplicity
     void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
     void        SetFitCumulants(Bool_t cum = kTRUE) { fFlowFitCumulants = cum; } // use cn{2} vs m_inv instead of vn{2} vs. m_inv
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
@@ -267,7 +267,6 @@ class ProcessUniFlow
     TString     fsTaskName; // name of task (inchluded in data structure names)
     TString     fsOutputFileFormat; // [pdf] format of output files (pictures)
     TString     fsGlobalProfNameLabel; // global profile label for all task
-    TString     fsMultFile; // [""]
     Bool_t      fbSaveMult; // [kFALSE]
     Bool_t      fFlowFitCumulants; // [kFALSE]
 
@@ -316,7 +315,6 @@ ProcessUniFlow::ProcessUniFlow() :
   fsOutputFilePath = TString("");
   fsOutputFileName = TString("UniFlow.root");
   fsOutputFileMode = TString("RECREATE");
-  fsMultFile = TString("");
   fsTaskName = TString("UniFlow");
   fsOutputFileFormat = TString("pdf");
   fsGlobalProfNameLabel = TString("");
@@ -588,12 +586,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     if(!profMult) { Error("MeanMult profile not found!"); flFlowRefs->ls(); return kFALSE; }
     TProfile* profMult_rebin = (TProfile*) profMult->Rebin(fiNumMultBins,Form("%s_rebin",profMult->GetName()),fdMultBins);
 
-    TFile* fileMult = TFile::Open(Form("%s/../%s",fsOutputFilePath.Data(),fsMultFile.Data()),"RECREATE");
-    if(!fileMult) { Error("Output fileMult file not found!"); return kFALSE; }
-    fileMult->cd();
+    ffOutputFile->cd();
     profMult_rebin->Write(profMult_rebin->GetName());
-
-    printf("saving to ... %s/../%s\n",fsOutputFilePath.Data(),fsMultFile.Data());
   }
 
 
