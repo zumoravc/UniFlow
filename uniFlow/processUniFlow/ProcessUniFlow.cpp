@@ -274,7 +274,8 @@ class ProcessUniFlow
     Bool_t      fbInit; // flag for initialization status
     Bool_t      fbDebug; // flag for debugging : if kTRUE Debug() messages are displayed
     TFile*      ffInputFile; //! input file container
-    TFile*      ffOutputFile; //! input file container
+    TFile*      ffOutputFile; //! output file container
+    TFile*      ffDesampleFile; //! output file for results of desampling
     TList*      flFlowRefs; //! TList from input file with RFPs flow profiles
     TList*      flFlowCharged; //! TList from input file with Charged flow profiles
     TList*      flFlowPID; //! TList from input file with PID (pi,K,p) flow profiles
@@ -296,6 +297,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fFlowFitCumulants(kFALSE),
   ffInputFile(0x0),
   ffOutputFile(0x0),
+  ffDesampleFile(0x0),
   flFlowRefs(0x0),
   flFlowCharged(0x0),
   flFlowPID(0x0),
@@ -405,14 +407,18 @@ Bool_t ProcessUniFlow::Initialize()
   // checking specified output folder & required sub-folders
   gSystem->mkdir(fsOutputFilePath.Data(),kTRUE);
 
-
   // opening output file
-  ffOutputFile = new TFile(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),fsOutputFileMode.Data());
+  ffOutputFile = TFile::Open(Form("%s/%s",fsOutputFilePath.Data(),fsOutputFileName.Data()),fsOutputFileMode.Data());
   if(!ffOutputFile || !ffOutputFile->IsOpen())
   {
     Fatal(Form("Output file %s/%s not open",fsOutputFilePath.Data(),fsOutputFileName.Data()),"Initialize");
     return kFALSE;
   }
+
+  // creating output file for Desampling
+  ffDesampleFile = TFile::Open(Form("%s/desampling.root",fsOutputFilePath.Data()),"RECREATE");
+  if(!ffDesampleFile) { Fatal(Form("Output desampling file '%s/desampling.root' not open!","Initialize")); return kFALSE; }
+
   Info("Files loaded","Initialize");
 
   if(!LoadLists()) return kFALSE;
@@ -1392,7 +1398,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
   canDesample->SaveAs(Form("%s/Desampling_%s_harm%d_gap%g_mult%d_%s.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,task->fName.Data(),fsOutputFileFormat.Data()));
 
   Info("Saving desampling QA into output file","DesampleList");
-  ffOutputFile->cd();
+  ffDesampleFile->cd();
   listOutput->Add(canDesample);
   listOutput->Write(Form("Desampling_%s_mult%d_%s",task->GetSpeciesName().Data(),iMultBin,task->fName.Data()),TObject::kSingleKey);
 
