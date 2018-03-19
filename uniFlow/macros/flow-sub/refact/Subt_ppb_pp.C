@@ -7,6 +7,8 @@
 #include "TSystem.h"
 #include "TMath.h"
 
+void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap="gap08");
+
 TFile* OpenFile(TString sFileName, TString sMode = "READ");
 TH1D* LoadHisto(TString sHistName, TFile* file);
 void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircle);
@@ -19,35 +21,63 @@ TH1D* Subtract(TH1D* raw, TH1D* base, Double_t factor = 1.0);
 Color_t colors[] = {kGreen+2, kBlue, kBlack, kMagenta+1};
 
 
-void Subt_ppb_pp(TString sGap="gap00")
+void Subt_ppb_pp()
 {
-  TString sSpecies = "Proton";
+  TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+  TString sGap[] = {"gap00","gap04","gap08"};
+
+  Int_t iNumSpecies = sizeof(sSpecies_list) / sizeof(sSpecies_list[0]);
+  Int_t iNumGaps = sizeof(sGap) / sizeof(sGap[0]);
+
+  for(Int_t g(0); g < iNumGaps; ++g)
+  {
+    for(Int_t i(0); i < iNumSpecies; ++i)
+    {
+      Subt_ppb_pp_species_gap(sSpecies_list[i], sGap[g]);
+    }
+
+  }
+
+  return;
+}
+
+
+void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap)
+{
+  // TString sSpecies = "Charged";
+  // TString sSpecies = "Pion";
+  // TString sSpecies = "Kaon";
+  // TString sSpecies = "Proton";
+  // TString sSpecies = "Phi";
+  // TString sSpecies = "K0s";
+  // TString sSpecies = "Lambda";
+
   // TString sMethod = "GF_eventweighted";
   // TString sOutputTag = "output_vn";
   // TString sOutputTagInt = sOutputTag + "_int";
 
   TString sGapBase = sGap;
+  // TString sGapBase = "gap00";
   TString sGapRaw = sGapBase;
 
-  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt/output/" + sGapBase; // + "/" + sMethod;
-  TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pp-16kl/output_int/" + sGapBase; // + "/"; + sMethod;
+  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt/output-2/" + sGapBase; // + "/" + sMethod;
+  TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pp-16kl/output_forsubt-3/" + sGapBase; // + "/"; + sMethod;
   // TString sOutFolder = sInFileRaw+"/"+sMethod+"/pPb_pp_subt_"+sGapRaw+"/"+sSpecies;
-  TString sOutFolder = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt/subt-pPb-pp/"+sGapBase+"/"+sSpecies;
+  TString sOutFolder = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt/subt-pPb-pp-3/"+sGapBase+"/"+sSpecies;
   TString sOutFile = sOutFolder+"/Subt_results.root";
 
-  const Int_t iNumCent = 4;
-  TString sCentLabel[iNumCent] = {"0-20%", "20-40%", "40-60%", "60-100%"};
+  const Int_t iNumCent = 5;
+  TString sCentLabel[iNumCent] = {"0-10%","10-20%", "20-40%", "40-60%", "60-100%"};
 
   // ==================================================================================================================
 
   // === LOADING INPUT ===
   // multiplicities
-  TFile* fileInRaw_Mult = OpenFile(sInFileRaw+"/Mult.root"); if(!fileInRaw_Mult) { return; }
-  TProfile* hRaw_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInRaw_Mult); if(!hRaw_Mult) { return; }
+  // TFile* fileInRaw_Mult = OpenFile(sInFileRaw+"/Mult.root"); if(!fileInRaw_Mult) { return; }
+  // TProfile* hRaw_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInRaw_Mult); if(!hRaw_Mult) { return; }
 
-  TFile* fileInBase_MultInt = OpenFile(sInFileBaseInt+"/Mult.root"); if(!fileInBase_MultInt) { return; }
-  TProfile* hBase_MultInt = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInBase_MultInt); if(!hBase_MultInt) { return; }
-  Double_t dMult_Base_Int = hBase_MultInt->GetBinContent(1);
+  // TFile* fileInBase_MultInt = OpenFile(sInFileBaseInt+"/Mult.root"); if(!fileInBase_MultInt) { return; }
+  // TProfile* hBase_MultInt = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInBase_MultInt); if(!hBase_MultInt) { return; }
 
   // output files
   gSystem->mkdir(sOutFolder,kTRUE);  // Making output folder
@@ -56,6 +86,10 @@ void Subt_ppb_pp(TString sGap="gap00")
   // input files
   TFile* fileInRaw = OpenFile(sInFileRaw+"/Processed.root"); if(!fileInRaw) { return; }
   TFile* fileInBaseInt = OpenFile(sInFileBaseInt+"/Processed.root"); if(!fileInBaseInt) { return; }
+
+  TProfile* hRaw_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInRaw); if(!hRaw_Mult) { return; }
+  TProfile* hBase_MultInt = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInBaseInt); if(!hBase_MultInt) { return; }
+  Double_t dMult_Base_Int = hBase_MultInt->GetBinContent(1);
 
   // cn
   TH1D* hRaw_cn = LoadHisto(Form("hCum2_Refs_harm2_%s",sGapRaw.Data()),fileInRaw); if(!hRaw_cn) { return; }

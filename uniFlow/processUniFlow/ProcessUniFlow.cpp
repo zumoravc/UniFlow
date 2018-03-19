@@ -796,7 +796,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     // rebinning according in mult bin
     binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
     binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
-    prof = prof2->ProfileY(Form("%s_mult%d",prof2->GetName(),iMultBin),binMultLow,binMultHigh);
+    prof = prof2->ProfileY(Form("%s_cent%d",prof2->GetName(),iMultBin),binMultLow,binMultHigh);
 
     if(task->fNumPtBins > 0)
     {
@@ -1080,11 +1080,11 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   TH1D* hFlow = 0x0;
   if(!fFlowFitCumulants)
   {
-    hFlow = new TH1D(Form("hFlow2_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
+    hFlow = new TH1D(Form("hFlow2_%s_harm%d_gap%02.2g_cent%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
   }
   else
   {
-    hFlow = new TH1D(Form("hCum2_%s_harm%d_gap%02.2g_mult%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: d_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
+    hFlow = new TH1D(Form("hCum2_%s_harm%d_gap%02.2g_cent%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: d_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
   }
 
   TH1D* hInvMass = 0x0;
@@ -1389,12 +1389,12 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
   hTempError->Draw("hist p same");
 
   // saving QA plots
-  canDesample->SaveAs(Form("%s/Desampling_%s_harm%d_gap%g_mult%d_%s.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,task->fName.Data(),fsOutputFileFormat.Data()));
+  canDesample->SaveAs(Form("%s/Desampling_%s_harm%d_gap%g_cent%d_%s.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,task->fName.Data(),fsOutputFileFormat.Data()));
 
   Info("Saving desampling QA into output file","DesampleList");
   ffDesampleFile->cd();
   listOutput->Add(canDesample);
-  listOutput->Write(Form("Desampling_%s_mult%d_%s",task->GetSpeciesName().Data(),iMultBin,task->fName.Data()),TObject::kSingleKey);
+  listOutput->Write(Form("Desampling_%s_cent%d_%s",task->GetSpeciesName().Data(),iMultBin,task->fName.Data()),TObject::kSingleKey);
 
   // deleting created stuff
   delete listOutput;
@@ -1467,7 +1467,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   TProfile* profFlowMass_temp = 0x0;
   TH1D* hFlowMass_temp = 0x0;
 
-  prof3Flow_temp = (TProfile3D*) p3Cor->Clone(Form("prof3Flow_temp_mult%d",multBin));
+  prof3Flow_temp = (TProfile3D*) p3Cor->Clone(Form("prof3Flow_temp_cent%d",multBin));
   prof3Flow_temp->GetXaxis()->SetRange(binMultLow,binMultHigh);
   prof2FlowMass_temp = Project3DProfile(prof3Flow_temp);
 
@@ -1490,20 +1490,20 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
     printf("   Pt: %g(%d) -  %g(%d)\n",task->fPtBinsEdges[binPt],binPtLow,task->fPtBinsEdges[binPt+1],binPtHigh);
 
     // rebinning entries based on mult & pt binning
-    hInvMass_temp = (TH1D*) h3Entries->ProjectionZ(Form("hInvMass_mult%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
-    if(h3EntriesBG) hInvMassBG_temp = (TH1D*) h3EntriesBG->ProjectionZ(Form("hInvMassBG_mult%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+    hInvMass_temp = (TH1D*) h3Entries->ProjectionZ(Form("hInvMass_cent%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
+    if(h3EntriesBG) hInvMassBG_temp = (TH1D*) h3EntriesBG->ProjectionZ(Form("hInvMassBG_cent%d_pt%d",multBin,binPt),binMultLow,binMultHigh,binPtLow,binPtHigh,"e");
 
     // checking if rebinning inv mass hist
     if(task->fRebinInvMass > 1) { hInvMass_temp->Rebin(task->fRebinInvMass); if(h3EntriesBG){ hInvMassBG_temp->Rebin(task->fRebinInvMass); } }
 
 
     // projection of flow-mass profile
-    profFlowMass_temp = (TProfile*) prof2FlowMass_temp->ProfileX(Form("profFlowMass_mult%d_pt%d",multBin,binPt),binPtLow,binPtHigh);
+    profFlowMass_temp = (TProfile*) prof2FlowMass_temp->ProfileX(Form("profFlowMass_cent%d_pt%d",multBin,binPt),binPtLow,binPtHigh);
 
     // checking for rebinning the flow-mass profile
     if(task->fRebinFlowMass > 1) { profFlowMass_temp->Rebin(task->fRebinFlowMass); }
 
-    hFlowMass_temp = (TH1D*) profFlowMass_temp->ProjectionX(Form("hFlowMass_mult%d_pt%d",multBin,binPt));
+    hFlowMass_temp = (TH1D*) profFlowMass_temp->ProjectionX(Form("hFlowMass_cent%d_pt%d",multBin,binPt));
     // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
 
     // scaling flow-mass with reference flow
@@ -1547,9 +1547,9 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   printf(" # of slices: InvMass: %lu | InvMassBG %lu | FlowMass %lu\n",task->fVecHistInvMass->size(),task->fVecHistInvMassBG->size(),task->fVecHistFlowMass->size());
 
   gSystem->mkdir(Form("%s/slices/",fsOutputFilePath.Data()));
-  canFlowMass->SaveAs(Form("%s/slices/Slices_FlowMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
-  canInvMass->SaveAs(Form("%s/slices/Slices_InvMass_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
-  if(h3EntriesBG) canInvMassBG->SaveAs(Form("%s/slices/Slices_InvMassBG_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  canFlowMass->SaveAs(Form("%s/slices/Slices_FlowMass_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  canInvMass->SaveAs(Form("%s/slices/Slices_InvMass_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  if(h3EntriesBG) canInvMassBG->SaveAs(Form("%s/slices/Slices_InvMassBG_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
 
   if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1 || task->fVecHistFlowMass->size() != task->fVecHistInvMass->size()) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
   if(h3EntriesBG && (task->fVecHistInvMassBG->size() < 1 || task->fVecHistInvMassBG->size() != task->fVecHistInvMass->size()) ) { Error("Output vector empty. Something went wrong with BG histograms","PrepareSlices"); return kFALSE; }
@@ -1689,7 +1689,7 @@ void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOri
   }
   printf("\n");
 
-  cPtBins->SaveAs(Form("%s/suggestBins/SuggestPtBins_%s_gap%g_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,binMult,fsOutputFileFormat.Data()));
+  cPtBins->SaveAs(Form("%s/suggestBins/SuggestPtBins_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,binMult,fsOutputFileFormat.Data()));
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
