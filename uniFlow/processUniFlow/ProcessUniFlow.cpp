@@ -63,7 +63,7 @@ class FlowTask
     void        SetFittingRejectNumSigmas(UShort_t sigmas) { fFlowFitRejectNumSigmas = sigmas; }
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
     void        SetFlowMassRebin(Short_t rebin = 2) { fRebinFlowMass = rebin; }
-    void        SetAlexFitting(Bool_t fit = kTRUE) { fFitByAlex = fit; }
+    void        SetFittingOneGo(Bool_t fit = kTRUE) { fFitOneGo = fit; }
   protected:
   private:
 
@@ -92,7 +92,7 @@ class FlowTask
     UShort_t    fFlowFitRejectNumSigmas; // number of sigmas for rejection peak region
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
     Short_t     fRebinFlowMass; // flag for rebinning flow-mass profile
-    Bool_t      fFitByAlex; // flag for fitting according to Alexandru procedure
+    Bool_t      fFitOneGo; // flag for simplified (onego) fitting
 
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
@@ -119,7 +119,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fSuggestPtBinEntries = 20000;
   fFlowFitFixTerms = kTRUE;
   fFlowPhiSubtLS = kFALSE;
-  fFitByAlex = kFALSE;
+  fFitOneGo = kTRUE;
   fFlowFitRangeLow = 0;
   fFlowFitRangeHigh = 0;
   fFlowFitRejectNumSigmas = 0;
@@ -234,9 +234,9 @@ class ProcessUniFlow
     Bool_t 	    ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 		Bool_t 	    ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
+    Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
-    Bool_t 	    ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 
     void        SuggestMultBinning(const Short_t numFractions);
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
@@ -1128,9 +1128,9 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       break;
 
       case FlowTask::kK0s :
-        if(task->fFitByAlex)
+        if(task->fFitOneGo)
         {
-          if( !ExtractFlowK0sAlex(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull (Alex's procedure)","ProcessReconstructed"); return kFALSE; }
+          if( !ExtractFlowK0sOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
         }
         else
         {
@@ -1139,7 +1139,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       break;
 
       case FlowTask::kLambda :
-        if(task->fFitByAlex)
+        if(task->fFitOneGo)
         {
           if( !ExtractFlowLambdaOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
         }
@@ -2676,12 +2676,12 @@ leg2->SetFillColorAlpha(0,0);
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
+Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
 {
-  if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowK0sAlex"); return kFALSE; }
-  if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowK0sAlex"); return kFALSE; }
-  if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowK0sAlex"); return kFALSE; }
-  if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowK0sAlex"); return kFALSE; }
+  if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowK0sOneGo"); return kFALSE; }
+  if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowK0sOneGo"); return kFALSE; }
+  if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowK0sOneGo"); return kFALSE; }
+  if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowK0sOneGo"); return kFALSE; }
 
   // Reseting the canvas (removing drawn things)
   canFitInvMass->Clear();
@@ -2691,8 +2691,6 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
   // latex->SetLineColor(kRed);
   latex->SetNDC();
 
-  // ####### Alex's code
-  Info("#### Start of Alex's segment #######################","ExtractFlowK0sAlex");
   TH1D* hInvMassA = (TH1D*) hInvMass;
   TH1D* hVnK0APx = (TH1D*) hFlowMass;
 
@@ -2808,9 +2806,6 @@ Bool_t ProcessUniFlow::ExtractFlowK0sAlex(FlowTask* task, TH1* hInvMass, TH1* hF
 
   latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
   latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fvna->GetChisquare(), fvna->GetNDF(),fvna->GetChisquare()/fvna->GetNDF()));
-
-  Info("#### End of Alex's segment #######################","ExtractFlowK0sAlex");
-  // ####### END of Alex's code
 
   return kTRUE;
 }

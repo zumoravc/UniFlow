@@ -18,13 +18,15 @@ void RunProcess()
 	TString sOutputFilePath = "./test/";
 	// TString sOutputFilePath = sInputPath+"/output_forsubt-3/"+sEtaGap+"/";
 
+	Double_t dMultBinning[] = {0,20};
 	// Double_t dMultBinning[] = {0,100};
-	Double_t dMultBinning[] = {0,10,20,40,60,100};
+	// Double_t dMultBinning[] = {0,10,20,40,60,100};
 	printf("bins %d\n",sizeof(dMultBinning)/sizeof(dMultBinning[0]));
 
+	Double_t dPtBinningK0s[] = {2.0,3.0};
 	// Double_t dPtBinningK0s[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,10.,20.};
 	// Double_t dPtBinningK0s[] = {0.2,1.,2.,3.,4.,5.,7.,10.,20.};
-	Double_t dPtBinningK0s[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0,10.0,15.0};
+	// Double_t dPtBinningK0s[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0,10.0,15.0};
 	// Double_t dPtBinningK0s[] = {0.3,0.5,0.75,1.,1.25,1.5,2.,2.5,3.}; // Run1
 	Double_t dPtBinningPhi[] = {0.2,1.0,2.0,3.0,4.0,7.0,10.0,15.0};
 
@@ -72,7 +74,7 @@ void RunProcess()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
  	FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
-	taskK0s->SetAlexFitting(kTRUE);
+	taskK0s->SetFittingOneGo(kTRUE);
 	taskK0s->SetNumSamples(iNumSamples);
 	taskK0s->SetHarmonics(2);
 	taskK0s->SetEtaGap(dEtaGap);
@@ -85,12 +87,12 @@ void RunProcess()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
 	FlowTask* taskLambda = new FlowTask(FlowTask::kLambda	);
-	taskLambda->SetAlexFitting(kTRUE);
+	taskLambda->SetFittingOneGo(kTRUE);
 	taskLambda->SetNumSamples(iNumSamples);
 	taskLambda->SetHarmonics(2);
 	taskLambda->SetEtaGap(dEtaGap);
-	taskLambda->SetInvMassRebin(2);
-	taskLambda->SetFlowMassRebin(2);
+	// taskLambda->SetInvMassRebin(2);
+	// taskLambda->SetFlowMassRebin(2);
 	taskLambda->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
 	taskLambda->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
@@ -98,7 +100,7 @@ void RunProcess()
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
 	FlowTask* taskPhi = new FlowTask(FlowTask::kPhi);
-	taskPhi->SetAlexFitting(kTRUE);
+	taskPhi->SetFittingOneGo(kTRUE);
 	taskPhi->SetNumSamples(iNumSamples);
 	taskPhi->SetHarmonics(2);
 	taskPhi->SetEtaGap(dEtaGap);
@@ -121,6 +123,7 @@ void RunProcess()
 	process->SetMultiplicityBins(dMultBinning,sizeof(dMultBinning)/sizeof(dMultBinning[0]));
 	process->SetSaveMult(kTRUE);
 	process->SetFitCumulants(kTRUE);
+	process->SetDebug();
 	process->AddTask(taskRefs);
 	// process->AddTask(taskCharged);
 	// process->AddTask(taskPion);
@@ -128,7 +131,7 @@ void RunProcess()
 	// process->AddTask(taskProton);
 	// process->AddTask(taskK0s);
 	// process->AddTask(taskLambda);
-	// process->AddTask(taskPhi);
+	process->AddTask(taskPhi);
 	process->Run();
 
 	return;
