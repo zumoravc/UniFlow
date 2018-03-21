@@ -2810,20 +2810,28 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   TH1D* hVnK0APx = (TH1D*) hFlowMass;
 
   canFitInvMass->cd(1);
-
-  hInvMassA->Sumw2();
+  // hInvMassA->Sumw2();
   hInvMassA->GetXaxis()->SetTitle("M_{K^{0}} (GeV/c^{2})");
   hInvMassA->SetMarkerStyle(20);
-  hInvMassA->SetMinimum(0);
+  hInvMassA->SetMinimum(0.1);
   hInvMassA->DrawCopy();
 
+  canFitInvMass->cd(2);
+  hVnK0APx->GetXaxis()->SetTitle("M_{K^{0}} (GeV/c^{2})");
+  hVnK0APx->DrawCopy();
 
-  TF1* fitA = new TF1(Form("fitA"), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(6)", 0.4, 0.6);
-  fitA->SetParameters(hInvMassA->GetMaximum()/10., -hInvMassA->GetMaximum()/50., hInvMassA->GetMaximum()/30., hInvMassA->GetMaximum()/10., hInvMassA->GetMaximum()/20., hInvMassA->GetMaximum()/20., hInvMassA->GetMaximum(), 0.4976, 0.001);
-  fitA->SetParLimits(6, 0, hInvMassA->GetMaximum()*100);
-  //fitA->FixParameter(7, 0.4976);
-  fitA->SetParLimits(7, 0.48, 0.52);
-  fitA->SetParLimits(8, 0, 1);
+  Double_t dMassRangeLow = hInvMassA->GetXaxis()->GetXmin();
+  Double_t dMassRangeHigh = hInvMassA->GetXaxis()->GetXmax();
+  Double_t dMaximum = hInvMassA->GetMaximum();
+
+  Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh),"ExtractFlowK0sOneGo");
+
+  // TF1* fitA = new TF1(Form("fitA"), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(6)", 0.4, 0.6);
+  TF1* fitA = new TF1(Form("fitA"), "[0] + [1]*x + [2]*x*x + [3]*x*x*x + gaus(4)", dMassRangeLow,dMassRangeHigh);
+  fitA->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 0.4976, 0.001);
+  fitA->SetParLimits(4, 0, hInvMassA->GetMaximum()*2.0);
+  fitA->SetParLimits(5, 0.48, 0.52);
+  fitA->SetParLimits(6, 0, 1);
   hInvMassA->Fit(fitA, "RNL");
 
   // checking the status of convergence
@@ -2832,10 +2840,9 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
 
   while ((!statusA.Contains("CONVERGED")) && (nfitsA < 10)){
 
-      fitA->SetParameters(fitA->GetParameter(0)/nfitsA, fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5), fitA->GetParameter(6), 0.4976, fitA->GetParameter(8)*nfitsA);
-      //fitA->FixParameter(7, 0.4976);
-      fitA->SetParLimits(7, 0.48, 0.52);
-      fitA->SetParLimits(8, 0, 1);
+      fitA->SetParameters(fitA->GetParameter(0)/nfitsA, fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), 0.4976, fitA->GetParameter(6)*nfitsA);
+      fitA->SetParLimits(5, 0.48, 0.52);
+      fitA->SetParLimits(6, 0, 1);
       hInvMassA->Fit(fitA, "RNL");
 
       statusA = gMinuit->fCstatu.Data();
@@ -2844,81 +2851,52 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
 
   cout<<"Fit iteration: "<<nfitsA<<endl;
 
+  canFitInvMass->cd(1);
   fitA->DrawCopy("same");
 
   latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitA->GetChisquare(), fitA->GetNDF(),fitA->GetChisquare()/fitA->GetNDF()));
-  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitA->GetParameter(7),fitA->GetParError(7)));
-  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitA->GetParameter(8),fitA->GetParError(8)));
+  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitA->GetParameter(5),fitA->GetParError(5)));
+  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitA->GetParameter(6),fitA->GetParError(6)));
 
-  TF1* poliA = new TF1(Form("poliA"), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4)", 0.4, 0.6);
-  poliA->SetParameters(fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5));
-  poliA->SetLineColor(2);
-  poliA->SetLineStyle(2);
-  poliA->DrawCopy("same");
+  // TF1* poliA = new TF1(Form("poliA"), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4)", 0.4, 0.6);
+  // poliA->SetParameters(fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5));
+  // poliA->SetLineColor(2);
+  // poliA->SetLineStyle(2);
+  // poliA->DrawCopy("same");
+  //
+  // TF1* gA = new TF1(Form("gausA"), "gaus", 0.4, 0.6);
+  // gA->SetParameters(fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8));
+  // gA->SetLineColor(4);
+  // gA->SetLineStyle(2);
+  // gA->DrawCopy("same");
 
-  TF1* gA = new TF1(Form("gausA"), "gaus", 0.4, 0.6);
-  gA->SetParameters(fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8));
-  gA->SetLineColor(4);
-  gA->SetLineStyle(2);
-  gA->DrawCopy("same");
-
-  cout<<fitA->GetParameter(6)<<"     "<<fitA->GetParameter(7)<<"    "<<fitA->GetParameter(8)<<endl;
-
-  canFitInvMass->cd(2);
-
-  hVnK0APx->GetXaxis()->SetTitle("M_{K^{0}} (GeV/c^{2})");
-  hVnK0APx->DrawCopy();
-
-  TF1* fvna = new TF1(Form("fvna"), "[0]*gaus(1)/(gaus(4) + [7] + [8]*(x-0.4) + [9]*(x-0.4)*sqrt(x-0.4) + [10]*(x-0.4)*(x-0.4) + [11]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [12]*(x-0.4)*(x-0.4)*(x-0.4)) + ([13] + [14]*(x-0.4) + [15]*(x-0.4)*sqrt(x-0.4) + [16]*(x-0.4)*(x-0.4) + [17]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [18]*(x-0.4)*(x-0.4)*(x-0.4)) / ( [19] + [20]*(x-0.4) + [21]*(x-0.4)*sqrt(x-0.4) + [22]*(x-0.4)*(x-0.4) + [23]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [24]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(25))*([28]+[29]*x)", 0.4, 0.6);
-
- Double_t parama[30] = {0.1, fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8), fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8), fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5), fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5), fitA->GetParameter(0), fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5), fitA->GetParameter(6), fitA->GetParameter(7), fitA->GetParameter(8), 4.65731e-01, -5.44560e+00};
+  // cout<<fitA->GetParameter(6)<<"     "<<fitA->GetParameter(7)<<"    "<<fitA->GetParameter(8)<<endl;
 
 
- fvna->SetParName(0, "v_{2}");
- //fvna->SetParLimits(0, 0.001, 0.4);
- fvna->SetLineColor(2);
- fvna->SetParameters(parama);
+  TF1* fvna = new TF1(Form("fvna"), "[0]*gaus(1)/(gaus(1) + [4] + [5]*x + [6]*x*x + [7]*x*x*x) + ([8]+[9]*x)*([4] + [5]*x + [6]*x*x + [7]*x*x*x) / ( [4] + [5]*x + [6]*x*x + [7]*x*x*x + gaus(1))", dMassRangeLow,dMassRangeHigh);
+  // fvna->SetLineColor(2);
+  // fvna->SetParName(0, "v_{2}");
 
- fvna->FixParameter(1, fitA->GetParameter(6));
- fvna->FixParameter(2, fitA->GetParameter(7));
- fvna->FixParameter(3, fitA->GetParameter(8));
+  fvna->SetParameter(0, 0.1);
+  fvna->SetParameter(8, 1.0);
+  fvna->SetParameter(9, 1.0);
 
- fvna->FixParameter(4, fitA->GetParameter(6));
- fvna->FixParameter(5, fitA->GetParameter(7));
- fvna->FixParameter(6, fitA->GetParameter(8));
+  fvna->FixParameter(1, fitA->GetParameter(4));
+  fvna->FixParameter(2, fitA->GetParameter(5));
+  fvna->FixParameter(3, fitA->GetParameter(6));
 
- fvna->FixParameter(7, fitA->GetParameter(0));
- fvna->FixParameter(8, fitA->GetParameter(1));
- fvna->FixParameter(9, fitA->GetParameter(2));
- fvna->FixParameter(10, fitA->GetParameter(3));
- fvna->FixParameter(11, fitA->GetParameter(4));
- fvna->FixParameter(12, fitA->GetParameter(5));
-
- fvna->FixParameter(13, fitA->GetParameter(0));
- fvna->FixParameter(14, fitA->GetParameter(1));
- fvna->FixParameter(15, fitA->GetParameter(2));
- fvna->FixParameter(16, fitA->GetParameter(3));
- fvna->FixParameter(17, fitA->GetParameter(4));
- fvna->FixParameter(18, fitA->GetParameter(5));
-
- fvna->FixParameter(19, fitA->GetParameter(0));
- fvna->FixParameter(20, fitA->GetParameter(1));
- fvna->FixParameter(21, fitA->GetParameter(2));
- fvna->FixParameter(22, fitA->GetParameter(3));
- fvna->FixParameter(23, fitA->GetParameter(4));
- fvna->FixParameter(24, fitA->GetParameter(5));
-
- fvna->FixParameter(25, fitA->GetParameter(6));
- fvna->FixParameter(26, fitA->GetParameter(7));
- fvna->FixParameter(27, fitA->GetParameter(8));
-
+  fvna->FixParameter(4, fitA->GetParameter(0));
+  fvna->FixParameter(5, fitA->GetParameter(1));
+  fvna->FixParameter(6, fitA->GetParameter(2));
+  fvna->FixParameter(7, fitA->GetParameter(3));
 
   hVnK0APx->Fit(fvna, "RN");
-  fvna->DrawCopy("same");
 
   dFlow = fvna->GetParameter(0);
   dFlowError = fvna->GetParError(0);
 
+  canFitInvMass->cd(2);
+  fvna->DrawCopy("same");
   latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
   latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fvna->GetChisquare(), fvna->GetNDF(),fvna->GetChisquare()/fvna->GetNDF()));
 

@@ -130,9 +130,9 @@ void RunProcess()
 	// process->AddTask(taskPion);
 	// process->AddTask(taskKch);
 	// process->AddTask(taskProton);
-	// process->AddTask(taskK0s);
+	process->AddTask(taskK0s);
 	// process->AddTask(taskLambda);
-	process->AddTask(taskPhi);
+	// process->AddTask(taskPhi);
 	process->Run();
 
 	return;
