@@ -234,6 +234,7 @@ class ProcessUniFlow
     Bool_t 	    ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 		Bool_t 	    ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
+    Bool_t 	    ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
@@ -1124,7 +1125,14 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     {
       case FlowTask::kPhi :
         hInvMassBG = task->fVecHistInvMassBG->at(binPt);
-        if( !ExtractFlowPhi(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+        if(task->fFitOneGo)
+        {
+          if( !ExtractFlowPhiOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+        }
+        else
+        {
+          if( !ExtractFlowPhi(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+        }
       break;
 
       case FlowTask::kK0s :
@@ -2676,6 +2684,113 @@ leg2->SetFillColorAlpha(0,0);
   return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
+{
+  if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowPhiOneGo"); return kFALSE; }
+  if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowPhiOneGo"); return kFALSE; }
+  if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowPhiOneGo"); return kFALSE; }
+  if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowPhiOneGo"); return kFALSE; }
+
+
+  // Reseting the canvas (removing drawn things)
+  canFitInvMass->Clear();
+  canFitInvMass->Divide(2,1);
+
+  TLatex* latex = new TLatex();
+  // latex->SetLineColor(kRed);
+  latex->SetNDC();
+
+  TH1D* hInvMassA = (TH1D*) hInvMass;
+  TH1D* hVnK0APx = (TH1D*) hFlowMass;
+
+  // subtraction of LS?
+
+
+  canFitInvMass->cd(1);
+  // hInvMassA->Sumw2();
+  hInvMassA->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
+  hInvMassA->SetMarkerStyle(20);
+  hInvMassA->SetMinimum(0.1);
+  hInvMassA->DrawCopy();
+
+  canFitInvMass->cd(2);
+  hVnK0APx->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
+  hVnK0APx->SetMarkerStyle(20);
+  hVnK0APx->DrawCopy();
+
+  Double_t dMassRangeLow = hInvMassA->GetXaxis()->GetXmin();
+  Double_t dMassRangeHigh = hInvMassA->GetXaxis()->GetXmax();
+  // Double_t dMassRangeLow = 1.096;
+  // Double_t dMassRangeHigh =1.134;
+  Double_t dMaximum = hInvMassA->GetMaximum();
+
+  Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh),"ExtractFlowPhiOneGo");
+
+  TF1* fitA = new TF1(Form("fitA"), "[0] + [1]*x + [2]*x*x + [3]*x*x*x + [4]*TMath::BreitWigner(x,[5],[6])", dMassRangeLow,dMassRangeHigh);
+  fitA->SetNpx(500);
+  fitA->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 1.019445, 0.005);
+
+  fitA->SetNpx(5000);
+  fitA->SetParLimits(5,1.018,1.020);
+  fitA->SetParLimits(6,0.004,0.006);
+  hInvMassA->Fit(fitA, "RNL");
+
+  // checking the status of convergence
+  Int_t nfitsA = 1;
+  TString statusA = gMinuit->fCstatu.Data();
+
+  while ((!statusA.Contains("CONVERGED")) && (nfitsA < 10))
+  {
+    fitA->SetParameters(fitA->GetParameter(0)/nfitsA, fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), 1.019445, fitA->GetParameter(5)*nfitsA);
+    // fitA->SetParameters(fitA->GetParameter(0)/nfitsA, fitA->GetParameter(1), fitA->GetParameter(2), fitA->GetParameter(3), fitA->GetParameter(4), fitA->GetParameter(5), fitA->GetParameter(6), 0.4976, fitA->GetParameter(8)*nfitsA);
+    //fitA->FixParameter(7, 0.4976);
+    // fitA->SetParLimits(5, 1.1, 0.52);
+    // fitA->SetParLimits(6, 0, 1);
+    hInvMassA->Fit(fitA, "RNL");
+
+    statusA = gMinuit->fCstatu.Data();
+    nfitsA++;
+  }
+
+  cout<<"Fit iteration: "<<nfitsA<<endl;
+
+  canFitInvMass->cd(1);
+  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitA->GetChisquare(), fitA->GetNDF(),fitA->GetChisquare()/fitA->GetNDF()));
+  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitA->GetParameter(5),fitA->GetParError(5)));
+  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitA->GetParameter(6),fitA->GetParError(6)));
+
+  fitA->DrawCopy("same");
+
+// [0] + [1]*x + [2]*x*x + [3]*x*x*x + [4]*TMath::BreitWigner(x,[5],[6])
+  TF1* fvna = new TF1(Form("fvna"), "[0]*([1]*TMath::BreitWigner(x,[2],[3]))/([1]*TMath::BreitWigner(x,[2],[3]) + [4] + [5]*x + [6]*x*x + [7]*x*x*x) + ([8]+[9]*x)*([4] + [5]*x + [6]*x*x + [7]*x*x*x) / ([4] + [5]*x + [6]*x*x + [7]*x*x*x + [1]*TMath::BreitWigner(x,[2],[3]))", dMassRangeLow,dMassRangeHigh);
+  // TF1* fvna = new TF1(Form("fvna"), "[0]*gaus(1)/(gaus(4) + [7] + [8]*x + [9]*x*x + [10]*x*x*x) + ([11] + [12]*x + [13]*x*x + [14]*x*x*x) / ([15] + [16]*x + [17]*x*x + [18]*x*x*x + gaus(19))*([22]+[23]*x)", 1.10,1.13);
+  fvna->SetParameter(0, 0.1);
+  fvna->SetParameter(8, 1.0);
+  fvna->SetParameter(9, 1.0);
+
+  fvna->FixParameter(1, fitA->GetParameter(4));
+  fvna->FixParameter(2, fitA->GetParameter(5));
+  fvna->FixParameter(3, fitA->GetParameter(6));
+
+  fvna->FixParameter(4, fitA->GetParameter(0));
+  fvna->FixParameter(5, fitA->GetParameter(1));
+  fvna->FixParameter(6, fitA->GetParameter(2));
+  fvna->FixParameter(7, fitA->GetParameter(3));
+
+  hVnK0APx->Fit(fvna, "RN");
+
+  dFlow = fvna->GetParameter(0);
+  dFlowError = fvna->GetParError(0);
+
+  canFitInvMass->cd(2);
+  fvna->DrawCopy("same");
+
+  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
+  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fvna->GetChisquare(), fvna->GetNDF(),fvna->GetChisquare()/fvna->GetNDF()));
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
 Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
 {
   if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowK0sOneGo"); return kFALSE; }
@@ -2853,7 +2968,7 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   // TF1* fitA = new TF1(Form("fitA"), "[0] + [1]*(x-0.4) + [2]*(x-0.4)*sqrt(x-0.4) + [3]*(x-0.4)*(x-0.4) + [4]*(x-0.4)*(x-0.4)*sqrt(x-0.4) + [5]*(x-0.4)*(x-0.4)*(x-0.4) + gaus(6)", dMassRangeLow,dMassRangeHigh);
   // fitA->SetParameters(hInvMassA->GetMaximum()/10., -hInvMassA->GetMaximum()/50., hInvMassA->GetMaximum()/30., hInvMassA->GetMaximum()/10., hInvMassA->GetMaximum()/20., hInvMassA->GetMaximum()/20., hInvMassA->GetMaximum(), 0.4976, 0.001);
   TF1* fitA = new TF1(Form("fitA"), "[0] + [1]*x + [2]*x*x + [3]*x*x*x + gaus(4)+gaus(7)", dMassRangeLow,dMassRangeHigh);
-  fitA->SetNpx(5000);
+  fitA->SetNpx(500);
   fitA->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 1.115, 0.001);
 
   fitA->SetParLimits(4, 0, hInvMassA->GetMaximum()*2.0);

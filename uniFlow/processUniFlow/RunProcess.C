@@ -28,7 +28,8 @@ void RunProcess()
 	// Double_t dPtBinningK0s[] = {0.2,1.,2.,3.,4.,5.,7.,10.,20.};
 	// Double_t dPtBinningK0s[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0,10.0,15.0};
 	// Double_t dPtBinningK0s[] = {0.3,0.5,0.75,1.,1.25,1.5,2.,2.5,3.}; // Run1
-	Double_t dPtBinningPhi[] = {0.2,1.0,2.0,3.0,4.0,7.0,10.0,15.0};
+	// Double_t dPtBinningPhi[] = {0.2,1.0,2.0,3.0,4.0,7.0,10.0,15.0};
+	Double_t dPtBinningPhi[] = {1.0,2.0,};
 
 	// ##### END Parameters setting ######
 
@@ -78,8 +79,8 @@ void RunProcess()
 	taskK0s->SetNumSamples(iNumSamples);
 	taskK0s->SetHarmonics(2);
 	taskK0s->SetEtaGap(dEtaGap);
-	taskK0s->SetInvMassRebin(2);
-	taskK0s->SetFlowMassRebin(2);
+	// taskK0s->SetInvMassRebin(2);
+	// taskK0s->SetFlowMassRebin(2);
 	taskK0s->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
 	taskK0s->SetMergePosNeg();
 	// taskK0s->SetFittingRange(0.45,0.55);
@@ -104,8 +105,8 @@ void RunProcess()
 	taskPhi->SetNumSamples(iNumSamples);
 	taskPhi->SetHarmonics(2);
 	taskPhi->SetEtaGap(dEtaGap);
-	taskPhi->SetInvMassRebin(2);
-	taskPhi->SetFlowMassRebin(2);
+	// taskPhi->SetInvMassRebin(2);
+	// taskPhi->SetFlowMassRebin(2);
 	taskPhi->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
 	taskPhi->SetMergePosNeg();
 	// taskPhi->SetFittingRange(0.45,0.55);
