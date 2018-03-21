@@ -3,10 +3,12 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
+#include "TProfile2D.h"
 #include "TProfile3D.h"
 #include "TCanvas.h"
 #include "TPad.h"
 #include "TSystem.h"
+#include "TMath.h"
 
 TList* flFlowRefs;
 TList* flFlowCharged;
@@ -35,8 +37,8 @@ TString sSpecies = "K0s";
 Bool_t LoadLists(TFile* ffInputFile, TString fsTaskName);
 Bool_t PrepareSlices(TH3D* h3Entries, TProfile3D* p3Flow);
 TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
-TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
-TH2D*       DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
+TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF);
+TH2D*       DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF);
 
 void StudySlices()
 {
@@ -177,8 +179,13 @@ Bool_t PrepareSlices(TH3D* h3Entries, TProfile3D* p3Flow)
       TH1D* hEntries = (TH1D*) h3Entries->ProjectionZ(Form("%s_pz_mult%d_pt%d",h3Entries->GetName(),multBin,ptBin), binMultLow,binMultHigh, binPtLow,binPtHigh,"e");
       if(!hEntries) { printf("E-PrepareSlices: projection failed\n"); return kFALSE; }
 
-      TH1D* hFlow = (TH1D*) p3Flow->ProjectionZ(Form("%s_pz_mult%d_pt%d",p3Flow->GetName(),multBin,ptBin), binMultLow,binMultHigh, binPtLow,binPtHigh);
+      p3Flow->GetXaxis()->SetRange(binMultLow,binMultHigh);
+      TProfile2D* p2Flow = Project3DProfile(p3Flow);
+      TProfile* p1Flow = (TProfile*) p2Flow->ProfileX(Form("profFlowMass_cent%d_pt%d",multBin,ptBin),binPtLow,binPtHigh);
+      TH1D* hFlow = (TH1D*) p1Flow->ProjectionX(Form("hFlowMass_cent%d_pt%d",multBin,ptBin));
+      // TH1D* hFlow = (TH1D*) p3Flow->ProjectionZ(Form("%s_pz_mult%d_pt%d",p3Flow->GetName(),multBin,ptBin), binMultLow,binMultHigh, binPtLow,binPtHigh);
       if(!hFlow) { printf("E-PrepareSlices: projection failed\n"); return kFALSE; }
+
 
       hNumEntriesMult->SetBinContent(ptBin+1, hEntries->GetEntries());
 
@@ -267,7 +274,7 @@ TProfile2D* Project3DProfile(const TProfile3D* prof3dorig)
 }
 //_____________________________________________________________________________
 TProfile2D * DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,
-                                           bool originalRange, bool useUF, bool useOF) const
+                                           bool originalRange, bool useUF, bool useOF)
 {
 // internal method to project to a 2D Profile
  // called from TH3::Project3DProfile but re-implemented in case of the TPRofile3D since what is done is different
@@ -376,7 +383,7 @@ TProfile2D * DoProjectProfile2D(TProfile3D* h3, const char* name, const char * t
 //_____________________________________________________________________________
 TH2D* DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY,
                     bool computeErrors, bool originalRange,
-                    bool useUF, bool useOF) const
+                    bool useUF, bool useOF)
 {
   // internal method performing the projection to a 2D histogram
      // called from TH3::Project3D
