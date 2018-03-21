@@ -2771,9 +2771,10 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   latex->SetNDC();
 
   canFitInvMass->cd(1);
+  gPad->SetLogy();
   hInvMass->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
   hInvMass->SetMarkerStyle(20);
-  hInvMass->SetMinimum(0.1);
+  hInvMass->SetStats(0);
   hInvMass->DrawCopy();
   fitMass->DrawCopy("same");
   fitBg->DrawCopy("same");
@@ -2785,6 +2786,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   canFitInvMass->cd(2);
   hFlowMass->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
   hFlowMass->SetMarkerStyle(20);
+  hFlowMass->SetStats(0);
   hFlowMass->DrawCopy();
   fitVn->DrawCopy("same");
   latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
@@ -2879,6 +2881,8 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   canFitInvMass->Divide(2,1);
 
   canFitInvMass->cd(1);
+  gPad->SetLogy();
+  hInvMass->SetStats(0);
   hInvMass->DrawCopy();
   fitMass->DrawCopy("same");
   fitSig->DrawCopy("same");
@@ -2889,6 +2893,7 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
 
   canFitInvMass->cd(2);
   hFlowMass->GetXaxis()->SetTitle("M_{K^{0}} (GeV/c^{2})");
+  hFlowMass->SetStats(0);
   hFlowMass->DrawCopy();
   fitVn->DrawCopy("same");
   latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
@@ -2988,9 +2993,10 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   latex->SetNDC();
 
   canFitInvMass->cd(1);
+  gPad->SetLogy();
+  hInvMass->SetStats(0);
   hInvMass->GetXaxis()->SetTitle("M_{#Lambda} (GeV/c^{2})");
   hInvMass->SetMarkerStyle(20);
-  hInvMass->SetMinimum(0.1);
   hInvMass->DrawCopy();
   fitMass->DrawCopy("same");
   fitSig->DrawCopy("same");
@@ -3001,6 +3007,7 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
 
   canFitInvMass->cd(2);
   hFlowMass->GetXaxis()->SetTitle("M_{#Lambda} (GeV/c^{2})");
+  hFlowMass->SetStats(0);
   hFlowMass->SetMarkerStyle(20);
   hFlowMass->DrawCopy();
   fitVn->DrawCopy("same");
