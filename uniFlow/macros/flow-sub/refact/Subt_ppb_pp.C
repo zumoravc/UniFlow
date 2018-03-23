@@ -23,8 +23,11 @@ Color_t colors[] = {kGreen+2, kBlue, kBlack, kMagenta+1};
 
 void Subt_ppb_pp()
 {
+  // TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton"};
+  // TString sSpecies_list[] = {"K0s","Lambda"};
   TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
-  TString sGap[] = {"gap00","gap04","gap08"};
+  // TString sGap[] = {"gap00","gap04","gap08"};
+  TString sGap[] = {"gap04"};
 
   Int_t iNumSpecies = sizeof(sSpecies_list) / sizeof(sSpecies_list[0]);
   Int_t iNumGaps = sizeof(sGap) / sizeof(sGap[0]);
@@ -44,14 +47,6 @@ void Subt_ppb_pp()
 
 void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap)
 {
-  // TString sSpecies = "Charged";
-  // TString sSpecies = "Pion";
-  // TString sSpecies = "Kaon";
-  // TString sSpecies = "Proton";
-  // TString sSpecies = "Phi";
-  // TString sSpecies = "K0s";
-  // TString sSpecies = "Lambda";
-
   // TString sMethod = "GF_eventweighted";
   // TString sOutputTag = "output_vn";
   // TString sOutputTagInt = sOutputTag + "_int";
@@ -60,10 +55,10 @@ void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap)
   // TString sGapBase = "gap00";
   TString sGapRaw = sGapBase;
 
-  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt/output-2/" + sGapBase; // + "/" + sMethod;
-  TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pp-16kl/output_forsubt-3/" + sGapBase; // + "/"; + sMethod;
+  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/output_binning/" + sGapBase; // + "/" + sMethod;
+  TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua/output_binning/" + sGapBase; // + "/"; + sMethod;
   // TString sOutFolder = sInFileRaw+"/"+sMethod+"/pPb_pp_subt_"+sGapRaw+"/"+sSpecies;
-  TString sOutFolder = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt/subt-pPb-pp-3/"+sGapBase+"/"+sSpecies;
+  TString sOutFolder = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt/output_binning/"+sGapBase+"/"+sSpecies;
   TString sOutFile = sOutFolder+"/Subt_results.root";
 
   const Int_t iNumCent = 5;
