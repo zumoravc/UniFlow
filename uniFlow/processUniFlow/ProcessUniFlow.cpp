@@ -2915,9 +2915,9 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   TString sFuncMass = Form("%s + %s",sFuncBG.Data(),sFuncSig.Data());
   TString sFuncVn = Form("[12]*(%s)/(%s + %s) + ([10]*x+[11])*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data(), sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data());
 
-  Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
+  // Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
   Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
-  // Double_t dMassRangeLow = 1.096;
+  Double_t dMassRangeLow = 1.096;
   // Double_t dMassRangeHigh =1.134;
   Double_t dMaximum = hInvMass->GetMaximum();
 
