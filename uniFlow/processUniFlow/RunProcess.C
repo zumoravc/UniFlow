@@ -8,28 +8,34 @@
 
 void RunProcess()
 {
-	Double_t dEtaGap = 0.0;
 	Int_t iNumSamples = 10;
-	TString sEtaGap = "gap00";
-	TString sInputPath = "./test/";
+	Double_t dEtaGap = 0.4;
+	TString sEtaGap = "gap04";
+	// TString sInputPath = "./test/";
 	// TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt-nua/";
-	// TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pp-16kl";
 	// TString sOutputFilePath = sInputPath+"/output-2/"+sEtaGap+"/";
-	TString sOutputFilePath = "./test/";
-	// TString sOutputFilePath = sInputPath+"/output_forsubt-3/"+sEtaGap+"/";
+	// TString sOutputFilePath = "./test/";
 
-	Double_t dMultBinning[] = {0,20};
-	// Double_t dMultBinning[] = {0,100};
-	// Double_t dMultBinning[] = {0,10,20,40,60,100};
-	printf("bins %d\n",sizeof(dMultBinning)/sizeof(dMultBinning[0]));
+	TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua";
+	TString sOutputFilePath = sInputPath+"/output_binning/"+sEtaGap+"/";
 
-	Double_t dPtBinningK0s[] = {2.0,3.0};
-	// Double_t dPtBinningK0s[] = {0.2,0.4,0.6,0.8,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.,3.5,4.,5.,6.,7.,8.,10.,20.};
+	TString sInputPathPP = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua";
+	TString sOutputFilePathPP = sInputPathPP+"/output_binning/"+sEtaGap+"/";
+
+	Double_t dMultBinningPP[] = {0,100};
+	Double_t dMultBinning[] = {0,10,20,40,60,100};
+
+	// Double_t dPtBinningK0s[] = {2.0,3.0};
+	Double_t dPtBinningPID[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,6.0,7.0};
+	Double_t dPtBinningProton[] = {0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,6.0,7.0};
 	// Double_t dPtBinningK0s[] = {0.2,1.,2.,3.,4.,5.,7.,10.,20.};
-	// Double_t dPtBinningK0s[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0,10.0,15.0};
+	// Double_t dPtBinningK0s[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0};
+	Double_t dPtBinningK0s[] = {0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,2.0,2.5,3.0,3.5,4.2,5.0,6.0,7.0};
+	Double_t dPtBinningLambda[] = {0.3,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.5,3.0,3.5,4.2,5.0,6.0,7.0};
 	// Double_t dPtBinningK0s[] = {0.3,0.5,0.75,1.,1.25,1.5,2.,2.5,3.}; // Run1
 	// Double_t dPtBinningPhi[] = {0.2,1.0,2.0,3.0,4.0,7.0,10.0,15.0};
-	Double_t dPtBinningPhi[] = {1.0,2.0,};
+	// Double_t dPtBinningPhi[] = {1.0,2.0,};
+	Double_t dPtBinningPhi[] = {0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0};
 
 	// ##### END Parameters setting ######
 
@@ -47,7 +53,7 @@ void RunProcess()
 	taskCharged->SetNumSamples(iNumSamples);
 	taskCharged->SetHarmonics(2);
 	taskCharged->SetEtaGap(dEtaGap);
-	taskCharged->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
+	taskCharged->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
 	taskCharged->SetMergePosNeg();
 
 
@@ -55,14 +61,14 @@ void RunProcess()
 	taskPion->SetNumSamples(iNumSamples);
 	taskPion->SetHarmonics(2);
 	taskPion->SetEtaGap(dEtaGap);
-	taskPion->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
+	taskPion->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
 	taskPion->SetMergePosNeg();
 
 	FlowTask* taskKch = new FlowTask(FlowTask::kKaon);
 	taskKch->SetNumSamples(iNumSamples);
 	taskKch->SetHarmonics(2);
 	taskKch->SetEtaGap(dEtaGap);
-	taskKch->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
+	taskKch->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
 	taskKch->SetMergePosNeg();
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
@@ -70,7 +76,7 @@ void RunProcess()
 	taskProton->SetNumSamples(iNumSamples);
 	taskProton->SetHarmonics(2);
 	taskProton->SetEtaGap(dEtaGap);
-	taskProton->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
+	taskProton->SetPtBins(dPtBinningProton,sizeof(dPtBinningProton)/sizeof(dPtBinningProton[0]));
 	taskProton->SetMergePosNeg();
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
@@ -94,7 +100,7 @@ void RunProcess()
 	taskLambda->SetEtaGap(dEtaGap);
 	// taskLambda->SetInvMassRebin(2);
 	// taskLambda->SetFlowMassRebin(2);
-	taskLambda->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
+	taskLambda->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
 	taskLambda->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
 	// taskLambda->SetFittingRejectNumSigmas(3);
@@ -106,7 +112,7 @@ void RunProcess()
 	taskPhi->SetHarmonics(2);
 	taskPhi->SetEtaGap(dEtaGap);
 	// taskPhi->SetInvMassRebin(2);
-	// taskPhi->SetFlowMassRebin(2);
+	taskPhi->SetFlowMassRebin(2);
 	taskPhi->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
 	taskPhi->SetMergePosNeg();
 	// taskPhi->SetFittingRange(0.45,0.55);
@@ -126,14 +132,34 @@ void RunProcess()
 	process->SetFitCumulants(kTRUE);
 	process->SetDebug();
 	process->AddTask(taskRefs);
-	// process->AddTask(taskCharged);
-	// process->AddTask(taskPion);
-	// process->AddTask(taskKch);
-	// process->AddTask(taskProton);
+	process->AddTask(taskCharged);
+	process->AddTask(taskPion);
+	process->AddTask(taskKch);
+	process->AddTask(taskProton);
 	process->AddTask(taskK0s);
-	// process->AddTask(taskLambda);
-	// process->AddTask(taskPhi);
+	process->AddTask(taskLambda);
+	process->AddTask(taskPhi);
 	process->Run();
+
+	ProcessUniFlow* processPP = new ProcessUniFlow();
+	processPP->SetInputFilePath(sInputPathPP.Data());
+	processPP->SetInputFileName("AnalysisResults.root");
+	processPP->SetTaskName("UniFlow");
+	processPP->SetOutputFilePath(sOutputFilePathPP.Data());
+	processPP->SetOutputFileName("Processed.root");
+	processPP->SetMultiplicityBins(dMultBinningPP,sizeof(dMultBinningPP)/sizeof(dMultBinningPP[0]));
+	processPP->SetSaveMult(kTRUE);
+	processPP->SetFitCumulants(kTRUE);
+	processPP->SetDebug();
+	processPP->AddTask(taskRefs);
+	processPP->AddTask(taskCharged);
+	processPP->AddTask(taskPion);
+	processPP->AddTask(taskKch);
+	processPP->AddTask(taskProton);
+	processPP->AddTask(taskK0s);
+	processPP->AddTask(taskLambda);
+	processPP->AddTask(taskPhi);
+	processPP->Run();
 
 	return;
 }
