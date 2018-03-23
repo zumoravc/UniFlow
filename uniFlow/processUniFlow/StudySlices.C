@@ -20,16 +20,16 @@ TList* flFlowLambda;
 // Double_t fdMultBinning[] = {0,100};
 Double_t fdMultBinning[] = {0,10,20,40,60,100};
 Int_t fiNumMultBins = sizeof(fdMultBinning) / sizeof(fdMultBinning[0]) - 1;
-Double_t fdPtBinning[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0,10.0,15.0};
+Double_t fdPtBinning[] = {0.2,0.4,0.6,0.7,0.8,0.9,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0};
 Int_t fiNumPtBins = sizeof(fdPtBinning) / sizeof(fdPtBinning[0]) - 1;
 
 Bool_t bUsePtBinning = kTRUE;
 Bool_t bMergePosNeg = kTRUE;
 
-TString sInputFile = "/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test/AnalysisResults.root";
-TString sOutputPath = "/Users/vpacik/NBI/Flow/uniFlow/processUniFlow/test-StudySlices/";
+TString sInputFile = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/AnalysisResults.root";
+TString sOutputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/study-slices/rebin/";
 TString sTaskName = "UniFlow";
-TString sGap = "gap00";
+TString sGap = "gap04";
 TString sSpecies = "K0s";
 // TString sSpecies = "Lambda";
 // TString sSpecies = "Phi";
