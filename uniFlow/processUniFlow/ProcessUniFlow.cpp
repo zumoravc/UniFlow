@@ -234,9 +234,9 @@ class ProcessUniFlow
     Bool_t 	    ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
 		Bool_t 	    ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
-    Bool_t 	    ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
-    Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
-    Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
+    Bool_t 	    ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
+    Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
+    Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for Lambda candidates
 
 
     void        SuggestMultBinning(const Short_t numFractions);
@@ -278,6 +278,7 @@ class ProcessUniFlow
     TFile*      ffInputFile; //! input file container
     TFile*      ffOutputFile; //! output file container
     TFile*      ffDesampleFile; //! output file for results of desampling
+    TFile*      ffFitsFile; //! output file for fitting procedure
     TList*      flFlowRefs; //! TList from input file with RFPs flow profiles
     TList*      flFlowCharged; //! TList from input file with Charged flow profiles
     TList*      flFlowPID; //! TList from input file with PID (pi,K,p) flow profiles
@@ -299,6 +300,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fFlowFitCumulants(kFALSE),
   ffInputFile(0x0),
   ffOutputFile(0x0),
+  ffFitsFile(0x0),
   ffDesampleFile(0x0),
   flFlowRefs(0x0),
   flFlowCharged(0x0),
@@ -331,6 +333,7 @@ ProcessUniFlow::~ProcessUniFlow()
   // default destructor
   if(ffInputFile) delete ffInputFile;
   if(ffOutputFile) delete ffOutputFile;
+  if(ffFitsFile) delete ffFitsFile;
 
   if(flFlowRefs) delete flFlowRefs;
   if(flFlowCharged) delete flFlowCharged;
@@ -419,6 +422,10 @@ Bool_t ProcessUniFlow::Initialize()
   // creating output file for Desampling
   ffDesampleFile = TFile::Open(Form("%s/desampling.root",fsOutputFilePath.Data()),"RECREATE");
   if(!ffDesampleFile) { Fatal(Form("Output desampling file '%s/desampling.root' not open!","Initialize")); return kFALSE; }
+
+  // creating output file for fits
+  ffFitsFile = TFile::Open(Form("%s/fits.root",fsOutputFilePath.Data()),"RECREATE");
+  if(!ffFitsFile) { Fatal(Form("Output desampling file '%s/fits.root' not open!","Initialize")); return kFALSE; }
 
   Info("Files loaded","Initialize");
 
@@ -1120,6 +1127,8 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     hInvMass->SetMarkerStyle(kFullCircle);
     hFlowMass->SetMarkerStyle(kFullCircle);
 
+    TList* listFits = new TList();
+
     // extracting flow
     switch (task->fSpecies)
     {
@@ -1127,7 +1136,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         hInvMassBG = task->fVecHistInvMassBG->at(binPt);
         if(task->fFitOneGo)
         {
-          if( !ExtractFlowPhiOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+          if( !ExtractFlowPhiOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
         }
         else
         {
@@ -1138,7 +1147,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       case FlowTask::kK0s :
         if(task->fFitOneGo)
         {
-          if( !ExtractFlowK0sOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
+          if( !ExtractFlowK0sOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
         }
         else
         {
@@ -1149,7 +1158,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       case FlowTask::kLambda :
         if(task->fFitOneGo)
         {
-          if( !ExtractFlowLambdaOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
+          if( !ExtractFlowLambdaOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
         }
         else
         {
@@ -1161,6 +1170,10 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         Error("Uknown species","ProcessReconstructed");
         return kFALSE;
     }
+
+    ffFitsFile->cd();
+    listFits->Write(Form("fits_%s_cent%d_pt%d",sSpeciesName.Data(),iMultBin,binPt),TObject::kSingleKey);
+
 
     gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
 
@@ -2684,12 +2697,13 @@ leg2->SetFillColorAlpha(0,0);
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
+Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits)
 {
   if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowPhiOneGo"); return kFALSE; }
   if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowPhiOneGo"); return kFALSE; }
   if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowPhiOneGo"); return kFALSE; }
   if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowPhiOneGo"); return kFALSE; }
+  if(!listFits) { Error("TList for fits not found!","ExtractFlowPhiOneGo"); return kFALSE; }
 
   // subtraction of LS?
 
@@ -2750,18 +2764,43 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   dFlowError = fitVn->GetParError(9);
   Info(Form("=================================\n Final flow: %g +- %g\n =================================\n", dFlow,dFlowError));
 
-  // Drawing stuff
-  TF1* fitBg = new TF1("fitBG",sFuncBG.Data(),dMassRangeLow,dMassRangeHigh);
+  TF1* fitBg = new TF1("fitMassBG",sFuncBG.Data(),dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG; ++iPar) { fitBg->SetParameter(iPar, fitMass->GetParameter(iPar)); }
-  fitBg->SetLineColor(2);
+  fitBg->SetLineColor(kBlue);
   fitBg->SetLineStyle(2);
 
-  TF1* fitSig = new TF1("fitSig", sFuncSig.Data(), dMassRangeLow,dMassRangeHigh);
+  TF1* fitSig = new TF1("fitMassSig", sFuncSig.Data(), dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG; ++iPar) { fitSig->SetParameter(iPar, 0.0); }
   for(Int_t iPar(iNumParsFuncBG); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitSig->SetParameter(iPar, fitMass->GetParameter(iPar)); }
-  fitSig->SetLineColor(4);
+  fitSig->SetLineColor(kGreen+2);
   fitSig->SetLineStyle(2);
 
+  TF1* fitFlowBg = new TF1("fitFlowBG", Form("([7]*x+[8])*(%s)/(%s + %s)",sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data()),dMassRangeLow,dMassRangeHigh);
+  for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowBg->SetParameter(iPar, fitVn->GetParameter(iPar)); }
+  fitFlowBg->SetParameter(7, fitVn->GetParameter(7));
+  fitFlowBg->SetParameter(8, fitVn->GetParameter(8));
+  fitFlowBg->SetLineColor(kBlue);
+  fitFlowBg->SetLineStyle(2);
+  //
+  TF1* fitFlowSig = new TF1("fitFlowSig", Form("[9]*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data()), dMassRangeLow,dMassRangeHigh);
+  for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowSig->SetParameter(iPar, fitVn->GetParameter(iPar)); }
+  fitFlowSig->SetParameter(7, 0.0);
+  fitFlowSig->SetParameter(8, 0.0);
+  fitFlowSig->SetParameter(9, fitVn->GetParameter(9));
+  fitFlowSig->SetLineColor(kGreen+2);
+  fitFlowSig->SetLineStyle(2);
+
+  // saving fitting related stuff to TList listFits
+  listFits->Add(hInvMass);
+  listFits->Add(fitMass);
+  listFits->Add(fitBg);
+  listFits->Add(fitSig);
+  listFits->Add(hFlowMass);
+  listFits->Add(fitVn);
+  listFits->Add(fitFlowBg);
+  listFits->Add(fitFlowSig);
+
+  // Drawing stuff
   // Reseting the canvas (removing drawn things)
   canFitInvMass->Clear();
   canFitInvMass->Divide(2,1);
@@ -2789,18 +2828,22 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   hFlowMass->SetStats(0);
   hFlowMass->DrawCopy();
   fitVn->DrawCopy("same");
+  // fitFlowSig->DrawCopy("same");
+  // fitFlowBg->DrawCopy("same");
   latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
   latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
+Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits)
 {
   if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowK0sOneGo"); return kFALSE; }
   if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowK0sOneGo"); return kFALSE; }
   if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowK0sOneGo"); return kFALSE; }
   if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowK0sOneGo"); return kFALSE; }
+  if(!listFits) { Error("TList for fits not found!","ExtractFlowK0sOneGo"); return kFALSE; }
+
 
   Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
   Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
@@ -2859,14 +2902,40 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   // Drawing stuff
   TF1* fitBg = new TF1("fitBG",sFuncBG.Data(),dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG; ++iPar) { fitBg->SetParameter(iPar, fitMass->GetParameter(iPar)); }
-  fitBg->SetLineColor(2);
+  fitBg->SetLineColor(kBlue);
   fitBg->SetLineStyle(2);
 
   TF1* fitSig = new TF1("fitSig", sFuncSig.Data(), dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG; ++iPar) { fitSig->SetParameter(iPar, 0.0); }
   for(Int_t iPar(iNumParsFuncBG); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitSig->SetParameter(iPar, fitMass->GetParameter(iPar)); }
-  fitSig->SetLineColor(4);
+  fitSig->SetLineColor(kGreen+2);
   fitSig->SetLineStyle(2);
+
+  TF1* fitFlowBg = new TF1("fitFlowBG", Form("([7]*x+[8])*(%s)/(%s + %s)",sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data()),dMassRangeLow,dMassRangeHigh);
+  for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowBg->SetParameter(iPar, fitVn->GetParameter(iPar)); }
+  fitFlowBg->SetParameter(7, fitVn->GetParameter(7));
+  fitFlowBg->SetParameter(8, fitVn->GetParameter(8));
+  fitFlowBg->SetLineColor(kBlue);
+  fitFlowBg->SetLineStyle(2);
+  //
+  TF1* fitFlowSig = new TF1("fitFlowSig", Form("[9]*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data()), dMassRangeLow,dMassRangeHigh);
+  for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowSig->SetParameter(iPar, fitVn->GetParameter(iPar)); }
+  fitFlowSig->SetParameter(7, 0.0);
+  fitFlowSig->SetParameter(8, 0.0);
+  fitFlowSig->SetParameter(9, fitVn->GetParameter(9));
+  fitFlowSig->SetLineColor(kGreen+2);
+  fitFlowSig->SetLineStyle(2);
+
+  // saving fitting related stuff to TList listFits
+  listFits->Add(hInvMass);
+  listFits->Add(fitMass);
+  listFits->Add(fitBg);
+  listFits->Add(fitSig);
+  listFits->Add(hFlowMass);
+  listFits->Add(fitVn);
+  listFits->Add(fitFlowBg);
+  listFits->Add(fitFlowSig);
+
 
   // Reseting the canvas (removing drawn things)
   canFitInvMass->Clear();
@@ -2902,12 +2971,14 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
+Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits)
 {
   if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowLambdaOneGo"); return kFALSE; }
   if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowLambdaOneGo"); return kFALSE; }
   if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowLambdaOneGo"); return kFALSE; }
   if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowLambdaOneGo"); return kFALSE; }
+  if(!listFits) { Error("TList for fits not found!","ExtractFlowLambdaOneGo"); return kFALSE; }
+
 
   TString sFuncBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; Int_t iNumParsFuncBG = 4;
   TString sFuncSig = "gaus(4)+gaus(7)"; Int_t iNumParsFuncSig = 6;
@@ -2975,14 +3046,39 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   // Drawing stuff
   TF1* fitBg = new TF1("fitBG",sFuncBG.Data(),dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG; ++iPar) { fitBg->SetParameter(iPar, fitMass->GetParameter(iPar)); }
-  fitBg->SetLineColor(2);
+  fitBg->SetLineColor(kBlue);
   fitBg->SetLineStyle(2);
 
   TF1* fitSig = new TF1("fitSig", sFuncSig.Data(), dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG; ++iPar) { fitSig->SetParameter(iPar, 0.0); }
   for(Int_t iPar(iNumParsFuncBG); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitSig->SetParameter(iPar, fitMass->GetParameter(iPar)); }
-  fitSig->SetLineColor(4);
+  fitSig->SetLineColor(kGreen+2);
   fitSig->SetLineStyle(2);
+
+  TF1* fitFlowBg = new TF1("fitFlowBG", Form("([10]*x+[11])*(%s)/(%s + %s)",sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data()),dMassRangeLow,dMassRangeHigh);
+  for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowBg->SetParameter(iPar, fitVn->GetParameter(iPar)); }
+  fitFlowBg->SetParameter(10, fitVn->GetParameter(12));
+  fitFlowBg->SetParameter(11, fitVn->GetParameter(11));
+  fitFlowBg->SetLineColor(kBlue);
+  fitFlowBg->SetLineStyle(2);
+  //
+  TF1* fitFlowSig = new TF1("fitFlowSig", Form("[12]*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data()), dMassRangeLow,dMassRangeHigh);
+  for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowSig->SetParameter(iPar, fitVn->GetParameter(iPar)); }
+  fitFlowSig->SetParameter(10, 0.0);
+  fitFlowSig->SetParameter(11, 0.0);
+  fitFlowSig->SetParameter(12, fitVn->GetParameter(12));
+  fitFlowSig->SetLineColor(kGreen+2);
+  fitFlowSig->SetLineStyle(2);
+
+  // saving fitting related stuff to TList listFits
+  listFits->Add(hInvMass);
+  listFits->Add(fitMass);
+  listFits->Add(fitBg);
+  listFits->Add(fitSig);
+  listFits->Add(hFlowMass);
+  listFits->Add(fitVn);
+  listFits->Add(fitFlowBg);
+  listFits->Add(fitFlowSig);
 
   // Reseting the canvas (removing drawn things)
   canFitInvMass->Clear();
