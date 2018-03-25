@@ -7,7 +7,7 @@
 #include "TSystem.h"
 #include "TMath.h"
 
-void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap="gap08");
+void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap, TString sTag);
 
 TFile* OpenFile(TString sFileName, TString sMode = "READ");
 TH1D* LoadHisto(TString sHistName, TFile* file);
@@ -21,28 +21,39 @@ TH1D* Subtract(TH1D* raw, TH1D* base, Double_t factor = 1.0);
 Color_t colors[] = {kGreen+2, kBlue, kBlack, kMagenta+1};
 
 TFile* fileOutSubt = 0x0;
-TString sOutPath;
 
-void Subt_ppb_pp()
+void Subt_ppb_pp_syst()
 {
   // TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton"};
   // TString sSpecies_list[] = {"K0s","Lambda"};
   TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
-  TString sGap[] = {"gap00","gap04","gap08"};
-  // TString sGap[] = {"gap04"};
+  // TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton"};
+  // TString sGap[] = {"gap00","gap04","gap08"};
+  TString sGap[] = {"gap04"};
+
+  // tracking
+  TString sTags[] = {"FB","PV","cls"};
 
   Int_t iNumSpecies = sizeof(sSpecies_list) / sizeof(sSpecies_list[0]);
   Int_t iNumGaps = sizeof(sGap) / sizeof(sGap[0]);
+  Int_t iNumTags = sizeof(sTags) / sizeof(sTags[0]);
+
+
 
   for(Int_t g(0); g < iNumGaps; ++g)
   {
-    sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt/output_binning-2/"+sGap[g]+"/";
-    gSystem->mkdir(sOutPath.Data(),kTRUE);
-    fileOutSubt = TFile::Open(Form("%sSubtracted.root",sOutPath.Data()),"RECREATE");
-
-    for(Int_t i(0); i < iNumSpecies; ++i)
+    for(Int_t t(0); t < iNumTags; ++t)
     {
-      Subt_ppb_pp_species_gap(sSpecies_list[i], sGap[g]);
+      TString sGapBase = sGap[g];
+      TString sTag = sTags[t];
+      TString sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/tracking/merged-16qt/subt/output_binning/" + sGapBase + "/"+sTag;
+      gSystem->mkdir(sOutPath.Data(),kTRUE);
+      fileOutSubt = TFile::Open(Form("%s/Subtracted.root",sOutPath.Data()),"RECREATE");
+
+      for(Int_t i(0); i < iNumSpecies; ++i)
+      {
+        Subt_ppb_pp_species_gap(sSpecies_list[i], sGapBase, sTag);
+      }
     }
 
   }
@@ -51,7 +62,7 @@ void Subt_ppb_pp()
 }
 
 
-void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap)
+void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap, TString sTag)
 {
   // TString sMethod = "GF_eventweighted";
   // TString sOutputTag = "output_vn";
@@ -61,10 +72,11 @@ void Subt_ppb_pp_species_gap(TString sSpecies, TString sGap)
   // TString sGapBase = "gap00";
   TString sGapRaw = sGapBase;
 
-  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/output_binning/" + sGapBase; // + "/" + sMethod;
+  // TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/output_binning/" + sGapBase; // + "/" + sMethod;
+  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/tracking/merged-16qt/output_binning/" + sGapBase + "/"+sTag+"/"; // + "/" + sMethod;
   TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua/output_binning/" + sGapBase; // + "/"; + sMethod;
   // TString sOutFolder = sInFileRaw+"/"+sMethod+"/pPb_pp_subt_"+sGapRaw+"/"+sSpecies;
-  TString sOutFolder = sOutPath+sSpecies;
+  TString sOutFolder = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/tracking/merged-16qt/subt/output_binning/" + sGapBase + "/"+sTag+"/"+sSpecies+"/"; // + "/" + sMethod;
   TString sOutFile = sOutFolder+"/Subt_results.root";
 
   const Int_t iNumCent = 5;
