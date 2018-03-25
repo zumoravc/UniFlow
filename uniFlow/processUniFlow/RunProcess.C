@@ -9,33 +9,32 @@
 void RunProcess()
 {
 	Int_t iNumSamples = 10;
-	Double_t dEtaGap = 0.4;
-	TString sEtaGap = "gap04";
+	Double_t dEtaGap = 0.8;
+	TString sEtaGap = "gap08";
 	// TString sInputPath = "./test/";
 	// TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt-nua/";
 	// TString sOutputFilePath = sInputPath+"/output-2/"+sEtaGap+"/";
 	// TString sOutputFilePath = "./test/";
 
 	TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua";
-	TString sOutputFilePath = sInputPath+"/output_binning/"+sEtaGap+"/";
+	TString sOutputFilePath = sInputPath+"/output_run1comp/"+sEtaGap+"/";
 
-	TString sInputPathPP = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua";
-	TString sOutputFilePathPP = sInputPathPP+"/output_binning/"+sEtaGap+"/";
+	// Double_t dMultBinning[] = {0,10,20,40,60,100};
 
-	Double_t dMultBinningPP[] = {0,100};
-	Double_t dMultBinning[] = {0,10,20,40,60,100};
+	// Double_t dPtBinningPID[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,6.0,7.0};
+	// Double_t dPtBinningProton[] = {0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,6.0,7.0};
+	// Double_t dPtBinningK0s[] = {0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,2.0,2.5,3.0,3.5,4.2,5.0,6.0,7.0};
+	// Double_t dPtBinningLambda[] = {0.3,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.5,3.0,3.5,4.2,5.0,6.0,7.0};
+	// Double_t dPtBinningPhi[] = {0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0};
 
-	// Double_t dPtBinningK0s[] = {2.0,3.0};
-	Double_t dPtBinningPID[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,6.0,7.0};
-	Double_t dPtBinningProton[] = {0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,6.0,7.0};
-	// Double_t dPtBinningK0s[] = {0.2,1.,2.,3.,4.,5.,7.,10.,20.};
-	// Double_t dPtBinningK0s[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0};
-	Double_t dPtBinningK0s[] = {0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,2.0,2.5,3.0,3.5,4.2,5.0,6.0,7.0};
-	Double_t dPtBinningLambda[] = {0.3,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.5,3.0,3.5,4.2,5.0,6.0,7.0};
-	// Double_t dPtBinningK0s[] = {0.3,0.5,0.75,1.,1.25,1.5,2.,2.5,3.}; // Run1
-	// Double_t dPtBinningPhi[] = {0.2,1.0,2.0,3.0,4.0,7.0,10.0,15.0};
-	// Double_t dPtBinningPhi[] = {1.0,2.0,};
-	Double_t dPtBinningPhi[] = {0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0};
+	// Binning Run1 SP
+	Double_t dMultBinning[] = {0,20,40,60,100};
+	Double_t dPtBinningPID[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+	Double_t dPtBinningProton[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+	Double_t dPtBinningK0s[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+	Double_t dPtBinningLambda[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+	Double_t dPtBinningPhi[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+
 
 	// ##### END Parameters setting ######
 
@@ -129,7 +128,7 @@ void RunProcess()
 	process->SetOutputFileName("Processed.root");
 	process->SetMultiplicityBins(dMultBinning,sizeof(dMultBinning)/sizeof(dMultBinning[0]));
 	process->SetSaveMult(kTRUE);
-	process->SetFitCumulants(kTRUE);
+	process->SetFitCumulants(kFALSE);
 	process->SetDebug();
 	process->AddTask(taskRefs);
 	process->AddTask(taskCharged);
@@ -140,26 +139,6 @@ void RunProcess()
 	process->AddTask(taskLambda);
 	process->AddTask(taskPhi);
 	process->Run();
-
-	ProcessUniFlow* processPP = new ProcessUniFlow();
-	processPP->SetInputFilePath(sInputPathPP.Data());
-	processPP->SetInputFileName("AnalysisResults.root");
-	processPP->SetTaskName("UniFlow");
-	processPP->SetOutputFilePath(sOutputFilePathPP.Data());
-	processPP->SetOutputFileName("Processed.root");
-	processPP->SetMultiplicityBins(dMultBinningPP,sizeof(dMultBinningPP)/sizeof(dMultBinningPP[0]));
-	processPP->SetSaveMult(kTRUE);
-	processPP->SetFitCumulants(kTRUE);
-	processPP->SetDebug();
-	processPP->AddTask(taskRefs);
-	processPP->AddTask(taskCharged);
-	processPP->AddTask(taskPion);
-	processPP->AddTask(taskKch);
-	processPP->AddTask(taskProton);
-	processPP->AddTask(taskK0s);
-	processPP->AddTask(taskLambda);
-	processPP->AddTask(taskPhi);
-	processPP->Run();
 
 	return;
 }
