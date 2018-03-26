@@ -1109,7 +1109,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   canInvMassAll->Divide(3,ceil(task->fNumPtBins/3.));
 
   TLatex* latex = new TLatex();
-  latex->SetTextSize(0.12);
+  latex->SetTextSize(0.08);
   latex->SetNDC();
 
   TLatex* latex2 = new TLatex();
@@ -1179,17 +1179,26 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
     canFitInvMass->cd(1);
     // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
-    latex2->DrawLatex(0.18,0.58,Form("pt %g-%g cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    latex2->DrawLatex(0.15,0.58,Form("pt %g-%g cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
 
     canFitInvMass->SaveAs(Form("%s/fits/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
     canFlowAll->cd(binPt+1);
+    hFlowMass->SetLabelFont(43,"XY");
+    hFlowMass->SetLabelSize(18,"XY");
     hFlowMass->DrawCopy();
-    latex->DrawLatex(0.18,0.73,Form("pt%g-%g cent%g-%g",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    TF1* fitVn = (TF1*) listFits->FindObject("fitVn");
+    fitVn->DrawCopy("same");
+    latex->DrawLatex(0.15,0.8,Form("#color[9]{pt %1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
 
     canInvMassAll->cd(binPt+1);
+    gPad->SetLogy();
+    hInvMass->SetLabelFont(43,"XY");
+    hInvMass->SetLabelSize(18,"XY");
     hInvMass->DrawCopy();
-    latex->DrawLatex(0.18,0.73,Form("pt%g-%g cent%g-%g",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    TF1* fitInvMass = (TF1*) listFits->FindObject("fitMass");
+    fitInvMass->DrawCopy("same");
+    latex->DrawLatex(0.18,0.16,Form("#color[9]{pt %1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
 
 
     if(TMath::Abs(dFlow) > 1 )
@@ -2714,9 +2723,9 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   TString sFuncVn = Form("[9]*(%s)/(%s + %s) + ([7]*x+[8])*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data(), sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data());
   TString sFuncMass = Form("%s + %s",sFuncBG.Data(),sFuncSig.Data());
 
-  Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
+  // Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
   Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
-  // Double_t dMassRangeLow = 0.995;
+  Double_t dMassRangeLow = 0.994;
   // Double_t dMassRangeHigh =1.134;
   Double_t dMaximum = hInvMass->GetMaximum();
 
