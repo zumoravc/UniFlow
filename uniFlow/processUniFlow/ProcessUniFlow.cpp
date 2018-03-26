@@ -2716,7 +2716,7 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
 
   Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
   Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
-  // Double_t dMassRangeLow = 1.096;
+  // Double_t dMassRangeLow = 0.995;
   // Double_t dMassRangeHigh =1.134;
   Double_t dMaximum = hInvMass->GetMaximum();
 
@@ -2726,10 +2726,10 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
 
 
   TF1* fitMass = new TF1(Form("fitMass"), sFuncMass.Data(), dMassRangeLow,dMassRangeHigh);
-  fitMass->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 1.019445, 0.005);
+  fitMass->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 1.019445, 0.0046);
   fitMass->SetNpx(5000);
-  fitMass->SetParLimits(5,1.018,1.020);
-  fitMass->SetParLimits(6,0.004,0.006);
+  fitMass->SetParLimits(5,1.018,1.022);
+  fitMass->SetParLimits(6,0.001,0.006);
   hInvMass->Fit(fitMass, "RNL");
 
   // checking the status of convergence
@@ -2739,8 +2739,8 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   while ((!statusA.Contains("CONVERGED")) && (nfitsA < 10))
   {
     fitMass->SetParameters(fitMass->GetParameter(0)/nfitsA, fitMass->GetParameter(1), fitMass->GetParameter(2), fitMass->GetParameter(3), fitMass->GetParameter(4), 1.019445, fitMass->GetParameter(5)*nfitsA);
-    fitMass->SetParLimits(5,1.018,1.020);
-    fitMass->SetParLimits(6,0.004,0.006);
+    fitMass->SetParLimits(5,1.018,1.022);
+    fitMass->SetParLimits(6,0.001,0.006);
     hInvMass->Fit(fitMass, "RNL");
 
     statusA = gMinuit->fCstatu.Data();
@@ -2847,13 +2847,15 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
 
   Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
   Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
+  // Double_t dMassRangeLow = 0.41;
+  // Double_t dMassRangeHigh = 0.59;
   Double_t dMaximum = hInvMass->GetMaximum();
 
   // fitting parametrisation
   TString sFuncBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; Int_t iNumParsFuncBG = 4;
-  TString sFuncSig = "gaus(4)"; Int_t iNumParsFuncSig = 3;
+  TString sFuncSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; Int_t iNumParsFuncSig = 5;
 
-  TString sFuncVn = Form("[9]*(%s)/(%s + %s) + ([7]*x+[8])*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data(), sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data());
+  TString sFuncVn = Form("[11]*(%s)/(%s + %s) + ([9]*x+[10])*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data(), sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data());
   TString sFuncMass = Form("%s + %s",sFuncBG.Data(),sFuncSig.Data());
 
   Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh),"ExtractFlowPhiOneGo");
@@ -2861,21 +2863,26 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   Debug(Form("Fit func vn:\n%s",sFuncVn.Data()));
 
   TF1* fitMass = new TF1(Form("fitMass"), sFuncMass.Data(), dMassRangeLow,dMassRangeHigh);
-  fitMass->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 0.4976, 0.001);
+  fitMass->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 0.4976, 0.001,dMaximum,0.001);
   fitMass->SetParLimits(4, 0, dMaximum*2.0);
   fitMass->SetParLimits(5, 0.48, 0.52);
-  fitMass->SetParLimits(6, 0, 1);
+  fitMass->SetParLimits(6, 0.003, 0.006);
+  fitMass->SetParLimits(7, 0, dMaximum*2.0);
+  fitMass->SetParLimits(8, 0.003, 0.01);
   hInvMass->Fit(fitMass, "RNL");
 
   // checking the status of convergence
   Int_t nfitsA = 1;
   TString statusA = gMinuit->fCstatu.Data();
 
-  while ((!statusA.Contains("CONVERGED")) && (nfitsA < 10)){
+  while ((!statusA.Contains("CONVERGED")) && (nfitsA < 15)){
 
-      fitMass->SetParameters(fitMass->GetParameter(0)/nfitsA, fitMass->GetParameter(1), fitMass->GetParameter(2), fitMass->GetParameter(3), fitMass->GetParameter(4), 0.4976, fitMass->GetParameter(6)*nfitsA);
+      fitMass->SetParameters(fitMass->GetParameter(0)/nfitsA, fitMass->GetParameter(1), fitMass->GetParameter(2), fitMass->GetParameter(3), fitMass->GetParameter(4), 0.4976, fitMass->GetParameter(6)*nfitsA,fitMass->GetParameter(7), fitMass->GetParameter(8)*nfitsA);
+      // fitMass->SetParLimits(4, 0, dMaximum*2.0);
       fitMass->SetParLimits(5, 0.48, 0.52);
-      fitMass->SetParLimits(6, 0, 1);
+      fitMass->SetParLimits(6, 0.003, 0.006);
+      // fitMass->SetParLimits(7, 0, dMaximum*2.0);
+      fitMass->SetParLimits(8, 0.003, 0.01);
       hInvMass->Fit(fitMass, "RNL");
 
       statusA = gMinuit->fCstatu.Data();
@@ -2886,17 +2893,17 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   Info(Form("Number of iterations: %d\n",nfitsA));
 
   TF1* fitVn = new TF1(Form("fitVn"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
-  fitVn->SetParameter(7, 1.0);
-  fitVn->SetParameter(8, 1.0);
-  fitVn->SetParameter(9, 0.1);
+  fitVn->SetParameter(9, 1.0);
+  fitVn->SetParameter(10, 1.0);
+  fitVn->SetParameter(11, 0.1);
 
   for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitVn->FixParameter(iPar, fitMass->GetParameter(iPar)); }
   hFlowMass->Fit(fitVn, "RN");
   if(!gMinuit->fCstatu.Contains("CONVERGED")) { Error(Form("Inv. mass fit does not converged!")); return kFALSE; }
 
   // saving flow to output
-  dFlow = fitVn->GetParameter(9);
-  dFlowError = fitVn->GetParError(9);
+  dFlow = fitVn->GetParameter(11);
+  dFlowError = fitVn->GetParError(11);
   Info(Form("=================================\n Final flow: %g +- %g\n =================================\n", dFlow,dFlowError));
 
   // Drawing stuff
@@ -2913,16 +2920,16 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
 
   TF1* fitFlowBg = new TF1("fitFlowBG", Form("([7]*x+[8])*(%s)/(%s + %s)",sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data()),dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowBg->SetParameter(iPar, fitVn->GetParameter(iPar)); }
-  fitFlowBg->SetParameter(7, fitVn->GetParameter(7));
-  fitFlowBg->SetParameter(8, fitVn->GetParameter(8));
+  fitFlowBg->SetParameter(9, fitVn->GetParameter(9));
+  fitFlowBg->SetParameter(10, fitVn->GetParameter(10));
   fitFlowBg->SetLineColor(kBlue);
   fitFlowBg->SetLineStyle(2);
   //
   TF1* fitFlowSig = new TF1("fitFlowSig", Form("[9]*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data()), dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowSig->SetParameter(iPar, fitVn->GetParameter(iPar)); }
-  fitFlowSig->SetParameter(7, 0.0);
-  fitFlowSig->SetParameter(8, 0.0);
-  fitFlowSig->SetParameter(9, fitVn->GetParameter(9));
+  fitFlowSig->SetParameter(9, 0.0);
+  fitFlowSig->SetParameter(10, 0.0);
+  fitFlowSig->SetParameter(11, fitVn->GetParameter(11));
   fitFlowSig->SetLineColor(kGreen+2);
   fitFlowSig->SetLineStyle(2);
 
@@ -2981,15 +2988,16 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
 
 
   TString sFuncBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; Int_t iNumParsFuncBG = 4;
-  TString sFuncSig = "gaus(4)+gaus(7)"; Int_t iNumParsFuncSig = 6;
+  TString sFuncSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; Int_t iNumParsFuncSig = 5;
+  // TString sFuncSig = "gaus(4)+gaus(7)"; Int_t iNumParsFuncSig = 6;
 
   TString sFuncMass = Form("%s + %s",sFuncBG.Data(),sFuncSig.Data());
-  TString sFuncVn = Form("[12]*(%s)/(%s + %s) + ([10]*x+[11])*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data(), sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data());
+  TString sFuncVn = Form("[11]*(%s)/(%s + %s) + ([9]*x+[10])*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data(), sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data());
 
   // Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
-  Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
-  Double_t dMassRangeLow = 1.096;
-  // Double_t dMassRangeHigh =1.134;
+  // Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
+  Double_t dMassRangeLow = 1.098;
+  Double_t dMassRangeHigh =1.154;
   Double_t dMaximum = hInvMass->GetMaximum();
 
   Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh),"ExtractFlowPhiOneGo");
@@ -2997,14 +3005,13 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   Debug(Form("Fit func vn:\n%s",sFuncVn.Data()));
 
   TF1* fitMass = new TF1(Form("fitMass"), sFuncMass.Data(), dMassRangeLow,dMassRangeHigh);
-  fitMass->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 1.115, 0.001,dMaximum, 1.115, 0.001);
+  fitMass->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 1.115, 0.001,dMaximum, 0.001);
   fitMass->SetNpx(5000);
   fitMass->SetParLimits(4, 0, dMaximum*2.0);
   fitMass->SetParLimits(5, 1.10, 1.13);
-  fitMass->SetParLimits(6, 0, 1);
+  fitMass->SetParLimits(6, 0.001,0.006);
   fitMass->SetParLimits(7, 0, dMaximum*2.0);
-  fitMass->SetParLimits(8, 1.10, 1.13);
-  fitMass->SetParLimits(9, 0, 1);
+  fitMass->SetParLimits(8, 0.001,0.01);
   hInvMass->Fit(fitMass, "RNL");
 
   // checking the status of convergence
@@ -3013,13 +3020,12 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
 
   while ((!statusA.Contains("CONVERGED")) && (nfitsA < 10))
   {
-    fitMass->SetParameters(fitMass->GetParameter(0)/nfitsA, fitMass->GetParameter(1), fitMass->GetParameter(2), fitMass->GetParameter(3), fitMass->GetParameter(4), 1.115, fitMass->GetParameter(6)*nfitsA, fitMass->GetParameter(7) ,1.115, fitMass->GetParameter(9)*nfitsA);
+    fitMass->SetParameters(fitMass->GetParameter(0)/nfitsA, fitMass->GetParameter(1), fitMass->GetParameter(2), fitMass->GetParameter(3), fitMass->GetParameter(4), 1.115, fitMass->GetParameter(6)*nfitsA, fitMass->GetParameter(7), fitMass->GetParameter(9)*nfitsA);
     fitMass->SetParLimits(4, 0, dMaximum*2.0);
     fitMass->SetParLimits(5, 1.10, 1.13);
-    fitMass->SetParLimits(6, 0, 1);
+    fitMass->SetParLimits(6, 0.001,0.006);
     fitMass->SetParLimits(7, 0, dMaximum*2.0);
-    fitMass->SetParLimits(8, 1.10, 1.13);
-    fitMass->SetParLimits(9, 0, 1);
+    fitMass->SetParLimits(8, 0.001,0.01);
     hInvMass->Fit(fitMass, "RNL");
 
     statusA = gMinuit->fCstatu.Data();
@@ -3030,17 +3036,17 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   Info(Form("Number of iterations: %d\n",nfitsA));
 
   TF1* fitVn = new TF1(Form("fitVn"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
+  fitVn->SetParameter(9, 1.0);
   fitVn->SetParameter(10, 1.0);
-  fitVn->SetParameter(11, 1.0);
-  fitVn->SetParameter(12, 0.1);
+  fitVn->SetParameter(11, 0.1);
 
   for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitVn->FixParameter(iPar, fitMass->GetParameter(iPar)); }
   hFlowMass->Fit(fitVn, "RN");
   if(!gMinuit->fCstatu.Contains("CONVERGED")) { Error(Form("Inv. mass fit does not converged!")); return kFALSE; }
 
   // saving flow to output
-  dFlow = fitVn->GetParameter(12);
-  dFlowError = fitVn->GetParError(12);
+  dFlow = fitVn->GetParameter(11);
+  dFlowError = fitVn->GetParError(11);
   Info(Form("=================================\n Final flow: %g +- %g\n =================================\n", dFlow,dFlowError));
 
   // Drawing stuff
@@ -3055,18 +3061,18 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   fitSig->SetLineColor(kGreen+2);
   fitSig->SetLineStyle(2);
 
-  TF1* fitFlowBg = new TF1("fitFlowBG", Form("([10]*x+[11])*(%s)/(%s + %s)",sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data()),dMassRangeLow,dMassRangeHigh);
+  TF1* fitFlowBg = new TF1("fitFlowBG", Form("([9]*x+[10])*(%s)/(%s + %s)",sFuncBG.Data(),sFuncSig.Data(),sFuncBG.Data()),dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowBg->SetParameter(iPar, fitVn->GetParameter(iPar)); }
-  fitFlowBg->SetParameter(10, fitVn->GetParameter(12));
-  fitFlowBg->SetParameter(11, fitVn->GetParameter(11));
+  fitFlowBg->SetParameter(9, fitVn->GetParameter(9));
+  fitFlowBg->SetParameter(10, fitVn->GetParameter(10));
   fitFlowBg->SetLineColor(kBlue);
   fitFlowBg->SetLineStyle(2);
   //
   TF1* fitFlowSig = new TF1("fitFlowSig", Form("[12]*(%s)/(%s + %s)",sFuncSig.Data(), sFuncSig.Data(), sFuncBG.Data()), dMassRangeLow,dMassRangeHigh);
   for(Int_t iPar(0); iPar < iNumParsFuncBG+iNumParsFuncSig; ++iPar) { fitFlowSig->SetParameter(iPar, fitVn->GetParameter(iPar)); }
-  fitFlowSig->SetParameter(10, 0.0);
-  fitFlowSig->SetParameter(11, 0.0);
-  fitFlowSig->SetParameter(12, fitVn->GetParameter(12));
+  // fitFlowSig->SetParameter(10, 0.0);
+  // fitFlowSig->SetParameter(11, 0.0);
+  fitFlowSig->SetParameter(11, fitVn->GetParameter(11));
   fitFlowSig->SetLineColor(kGreen+2);
   fitFlowSig->SetLineStyle(2);
 

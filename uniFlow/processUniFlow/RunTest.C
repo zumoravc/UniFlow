@@ -9,8 +9,8 @@
 void RunTest()
 {
 	Int_t iNumSamples = 10;
-	Double_t dEtaGap = 0.8;
-	TString sEtaGap = "gap08";
+	Double_t dEtaGap = 0.4;
+	TString sEtaGap = "gap04";
 	// TString sInputPath = "./test/";
 	// TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt-nua/";
 	// TString sOutputFilePath = sInputPath+"/output-2/"+sEtaGap+"/";
@@ -19,7 +19,9 @@ void RunTest()
 	TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua";
 	// TString sOutputFilePath = sInputPath+"/output_run1comp/"+sEtaGap+"/";
 
-	Double_t dMultBinning[] = {0,20};
+	// Double_t dMultBinning[] = {0,20};
+
+	Double_t dMultBinning[] = {0,10,20,40,60,100};
 
 	// Double_t dPtBinningPID[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,6.0,7.0};
 	// Double_t dPtBinningProton[] = {0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,6.0,7.0};
@@ -27,7 +29,16 @@ void RunTest()
 	// Double_t dPtBinningLambda[] = {0.3,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.5,3.0,3.5,4.2,5.0,6.0,7.0};
 	// Double_t dPtBinningPhi[] = {0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0};
 
-	Double_t dBinning[] = {2.0,5.0};
+	// Binning Run1 SP
+	// Double_t dMultBinning[] = {0,20,40,60,100};
+	// Double_t dPtBinningPID[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+	// Double_t dPtBinningProton[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+	// Double_t dPtBinningK0s[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+	// Double_t dPtBinningLambda[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+	// Double_t dPtBinningPhi[] = {0.3,0.5,0.75,1.0,1.25,1.5,2.0,2.5,3.0,4.0};
+
+
+	Double_t dBinning[] =  {0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,7.0};
 
 	// ##### END Parameters setting ######
 
@@ -78,7 +89,7 @@ void RunTest()
 	taskK0s->SetHarmonics(2);
 	taskK0s->SetEtaGap(dEtaGap);
 	// taskK0s->SetInvMassRebin(2);
-	// taskK0s->SetFlowMassRebin(2);
+	taskK0s->SetFlowMassRebin(2);
 	taskK0s->SetPtBins(dBinning,sizeof(dBinning)/sizeof(dBinning[0]));
 	taskK0s->SetMergePosNeg();
 	// taskK0s->SetFittingRange(0.45,0.55);
@@ -91,7 +102,7 @@ void RunTest()
 	taskLambda->SetHarmonics(2);
 	taskLambda->SetEtaGap(dEtaGap);
 	// taskLambda->SetInvMassRebin(2);
-	// taskLambda->SetFlowMassRebin(2);
+	taskLambda->SetFlowMassRebin(2);
 	taskLambda->SetPtBins(dBinning,sizeof(dBinning)/sizeof(dBinning[0]));
 	taskLambda->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
