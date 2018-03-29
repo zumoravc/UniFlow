@@ -225,7 +225,7 @@ class ProcessUniFlow
     Bool_t      Initialize(); // initialization task
     Bool_t      LoadLists(); // loading flow lists from input file
 
-    void        ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
+    Bool_t      ProcessTask(FlowTask* task = 0x0); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task = 0x0); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task = 0x0, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
@@ -386,7 +386,7 @@ void ProcessUniFlow::Run()
   {
     FlowTask* currentTask = fvTasks.at(iTask);
     if(!currentTask) continue;
-    ProcessTask(currentTask);
+    if(!ProcessTask(currentTask)) {return;}
   }
 
   return;
@@ -539,41 +539,38 @@ Bool_t ProcessUniFlow::LoadLists()
   return kTRUE;
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::ProcessTask(FlowTask* task)
+Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 {
   fsOutputFilePath = Form("%s/%s",fsOutputFilePathRoot.Data(),task->fTaskTag.Data());
   gSystem->mkdir(fsOutputFilePath.Data(),kTRUE);
 
   Info(Form("Processing task: %s",task->fName.Data()),"ProcessTask");
-  if(!task) { Error("Task not valid!","ProcessTask"); return; }
+  if(!task) { Error("Task not valid!","ProcessTask"); return kFALSE; }
 
   task->PrintTask();
 
-  Bool_t bProcessed = kFALSE;
   switch (task->fSpecies)
   {
     case FlowTask::kRefs:
-      bProcessed = ProcessRefs(task);
+      if(!ProcessRefs(task)) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return kFALSE; }
       break;
 
     case FlowTask::kCharged:
     case FlowTask::kPion:
     case FlowTask::kKaon:
     case FlowTask::kProton:
-      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessDirect(task,binMult); }
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { if(!ProcessDirect(task,binMult)) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return kFALSE; }}
       break;
 
     case FlowTask::kPhi:
     case FlowTask::kK0s:
     case FlowTask::kLambda:
-      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { bProcessed = ProcessReconstructed(task,binMult); }
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { if(!ProcessReconstructed(task,binMult)) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return kFALSE; } }
       break;
     default: break;
   }
 
-  if(!bProcessed) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return; }
-
-  return;
+  return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
@@ -3027,12 +3024,12 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   Int_t nfitsA = 1;
   TString statusA = gMinuit->fCstatu.Data();
 
-  while ((!statusA.Contains("CONVERGED")) && (nfitsA < 10))
+  while ((!statusA.Contains("CONVERGED")) && (nfitsA < 15))
   {
     fitMass->SetParameters(fitMass->GetParameter(0)/nfitsA, fitMass->GetParameter(1), fitMass->GetParameter(2), fitMass->GetParameter(3), fitMass->GetParameter(4), 1.115, fitMass->GetParameter(6)*nfitsA, fitMass->GetParameter(7), fitMass->GetParameter(9)*nfitsA);
     fitMass->SetParLimits(4, 0, dMaximum*2.0);
     fitMass->SetParLimits(5, 1.10, 1.13);
-    fitMass->SetParLimits(6, 0.001,0.006);
+    fitMass->SetParLimits(6, 0.001,0.008);
     fitMass->SetParLimits(7, 0, dMaximum*2.0);
     fitMass->SetParLimits(8, 0.001,0.01);
     hInvMass->Fit(fitMass, "RNL");
