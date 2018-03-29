@@ -2726,6 +2726,10 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   // Double_t dMassRangeHigh =1.134;
   Double_t dMaximum = hInvMass->GetMaximum();
 
+  // changes the axis
+  hInvMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+  hFlowMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+
   Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh),"ExtractFlowPhiOneGo");
   Debug(Form("Fit func invmass:\n%s",sFuncVn.Data()));
   Debug(Form("Fit func vn:\n%s",sFuncVn.Data()));
@@ -2856,6 +2860,10 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   // Double_t dMassRangeLow = 0.41;
   // Double_t dMassRangeHigh = 0.59;
   Double_t dMaximum = hInvMass->GetMaximum();
+
+  // changes the axis
+  hInvMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+  hFlowMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
 
   // fitting parametrisation
   TString sFuncBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; Int_t iNumParsFuncBG = 4;
@@ -3002,9 +3010,14 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
 
   // Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
   // Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
-  Double_t dMassRangeLow = 1.098;
-  Double_t dMassRangeHigh =1.154;
+  Double_t dMassRangeLow = 1.096;
+  Double_t dMassRangeHigh =1.150;
   Double_t dMaximum = hInvMass->GetMaximum();
+
+  // changes the axis
+  hInvMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+  hFlowMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+
 
   Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh),"ExtractFlowPhiOneGo");
   Debug(Form("Fit func invmass:\n%s",sFuncVn.Data()));
