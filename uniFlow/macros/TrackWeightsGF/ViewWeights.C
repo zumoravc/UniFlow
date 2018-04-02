@@ -10,6 +10,7 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TCanvas.h"
+#include "TSystem.h"
 
 TH2D* LoadWeights(const TH3D* weights);
 
@@ -18,7 +19,6 @@ void ViewWeights()
   Bool_t bSavePlots = kTRUE;
   TString sWeightName = "fh3AfterWeights";
   // TString sWeightName = "fh3Weights";
-  // TString sPath = "./hadd_test/";
 
   // TString sPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/tracking/merged-16q-nua/";
   // TString sPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/tracking/pPb-16q-FAST-nua/";
@@ -33,11 +33,15 @@ void ViewWeights()
 
  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+  if(bSavePlots) { gSystem->mkdir(Form("%s/weights/",sPath.Data()),kTRUE); }
+
   Int_t iNumPart = sizeof(species)/sizeof(species[0]);
 
   TFile* fInput = TFile::Open(Form("%s%s",sPath.Data(),sFileName.Data()),"READ");
   fInput->cd(sTaskTag.Data());
   TList* list =  (TList*) gDirectory->Get(Form("Flow_Weights_%s",sTaskTag.Data()));
+
+
 
   TCanvas* can = new TCanvas("can","can",iNumPart*400,400);
   can->Divide(iNumPart,2);
@@ -57,14 +61,26 @@ void ViewWeights()
     can->cd(part+1);
     // gPad->SetLogz();
     // h2Weights->SetStats(0);
-    h2Weights->Draw("colz");
+    h2Weights->DrawCopy("colz");
     can->cd(part+1+iNumPart);
-    // hWeights->SetMinimum(0.0);
     // hWeights->SetStats(0);
-    hWeights->Draw("colz");
+    hWeights->DrawCopy("colz");
+
+    TCanvas* canPart = new TCanvas("canPart","canPart",400,600);
+    canPart->Divide(1,2);
+    canPart->cd(1);
+    h2Weights->SetStats(0);
+    h2Weights->DrawCopy("colz");
+    canPart->cd(2);
+    hWeights->SetMinimum(0.0);
+    hWeights->SetMarkerStyle(kFullCircle);
+    hWeights->SetMarkerSize(0.5);
+    hWeights->SetStats(0);
+    hWeights->DrawCopy("colz");
+    if(bSavePlots) { canPart->SaveAs(Form("%s/weights/%s_%s_%s.pdf",sPath.Data(),sWeightName.Data(),sTaskTag.Data(),species[part].Data())); }
   }
 
-  if(bSavePlots) { can->SaveAs(Form("%s/%s_%s.pdf",sPath.Data(),sWeightName.Data(), sTaskTag.Data())); }
+  if(bSavePlots) { can->SaveAs(Form("%s/weights/%s_%s.pdf",sPath.Data(),sWeightName.Data(), sTaskTag.Data())); }
 
 }
 
