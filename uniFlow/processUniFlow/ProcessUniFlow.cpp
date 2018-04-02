@@ -845,7 +845,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   if(!hDesampled_Cum) { Error("Desampling unsuccesfull","ProcessDirect"); return kFALSE; }
 
   hDesampled_Cum->SetName(Form("hCum2_%s_harm%d_gap%s_cent%d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
-  hDesampled_Cum->SetTitle(Form("%s v_{%d}{2} | Gap %s | Cent %d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
+  hDesampled_Cum->SetTitle(Form("%s d_{%d}{2} | Gap %s | Cent %d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
 
 
   // saving to output file
@@ -1106,11 +1106,13 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   canInvMassAll->Divide(3,ceil(task->fNumPtBins/3.));
 
   TLatex* latex = new TLatex();
-  latex->SetTextSize(0.08);
+  latex->SetTextSize(0.1);
+  if(task->fSpecies == FlowTask::kPhi) {  latex->SetTextSize(0.08); }
   latex->SetNDC();
 
   TLatex* latex2 = new TLatex();
-  // latex2->SetTextSize(0.12);
+  // latex2->SetTextFont(43);
+  // latex2->SetTextSize(40);
   latex2->SetNDC();
 
   for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
@@ -1174,10 +1176,15 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
     gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
 
+
+    TF1* fitInvMass2 = (TF1*) listFits->At(1);
+    // printf("InvMass chi2 %g\n",fitInvMass2->GetChisquare());
+    TF1* fitFlowMass2 = (TF1*) listFits->At(5);
+    // printf("FlowMass chi2 %g\n",fitFlowMass2->GetChisquare());
+
     canFitInvMass->cd(1);
     // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
-    latex2->DrawLatex(0.15,0.58,Form("pt %g-%g cent %g-%g%%",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
-
+    latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
     canFitInvMass->SaveAs(Form("%s/fits/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
     canFlowAll->cd(binPt+1);
@@ -1186,16 +1193,20 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     hFlowMass->DrawCopy();
     TF1* fitVn = (TF1*) listFits->FindObject("fitVn");
     fitVn->DrawCopy("same");
-    latex->DrawLatex(0.15,0.8,Form("#color[9]{pt %1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    latex->DrawLatex(0.13,0.8,Form("#color[9]{%1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    latex->DrawLatex(0.13,0.2,Form("#color[9]{#chi2/ndf = %.1f/%d = %.1f (p=%.3f)}",fitFlowMass2->GetChisquare(), fitFlowMass2->GetNDF(),fitFlowMass2->GetChisquare()/fitFlowMass2->GetNDF(),fitFlowMass2->GetProb()));
+    latex->DrawLatex(0.13,0.33,Form("#color[9]{d_{2} = %.2g +- %.2g }",dFlow,dFlowError));
 
     canInvMassAll->cd(binPt+1);
-    gPad->SetLogy();
+    // gPad->SetLogy();
     hInvMass->SetLabelFont(43,"XY");
     hInvMass->SetLabelSize(18,"XY");
+    // hInvMass->SetMinimum(1);
     hInvMass->DrawCopy();
     TF1* fitInvMass = (TF1*) listFits->FindObject("fitMass");
     fitInvMass->DrawCopy("same");
-    latex->DrawLatex(0.18,0.16,Form("#color[9]{pt %1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    latex->DrawLatex(0.13,0.2,Form("#color[9]{#chi2/ndf = %.1f/%d = %.1f (p=%.3f)}",fitInvMass2->GetChisquare(), fitInvMass2->GetNDF(),fitInvMass2->GetChisquare()/fitInvMass2->GetNDF(),fitInvMass2->GetProb()));
+    latex->DrawLatex(0.13,0.8,Form("#color[9]{%1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
 
 
     if(TMath::Abs(dFlow) > 1 )
@@ -2820,17 +2831,18 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   latex->SetNDC();
 
   canFitInvMass->cd(1);
-  gPad->SetLogy();
+  // gPad->SetLogy();
   hInvMass->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
   hInvMass->SetMarkerStyle(20);
   hInvMass->SetStats(0);
+  hInvMass->SetMinimum(0);
   hInvMass->DrawCopy();
   fitMass->DrawCopy("same");
   fitBg->DrawCopy("same");
   fitSig->DrawCopy("same");
-  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF()));
-  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitMass->GetParameter(5),fitMass->GetParError(5)));
-  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitMass->GetParameter(6),fitMass->GetParError(6)));
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF()));
+  latex->DrawLatex(0.17,0.75,Form("#color[9]{#mu = %.6f #pm %.6f}",fitMass->GetParameter(5),fitMass->GetParError(5)));
+  latex->DrawLatex(0.17,0.70,Form("#color[9]{#Gamma = %.6f #pm %.6f}",fitMass->GetParameter(6),fitMass->GetParError(6)));
 
   canFitInvMass->cd(2);
   hFlowMass->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
@@ -2840,8 +2852,8 @@ Bool_t ProcessUniFlow::ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   fitVn->DrawCopy("same");
   // fitFlowSig->DrawCopy("same");
   // fitFlowBg->DrawCopy("same");
-  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{v_{2} = %.4f #pm %.4f}",dFlow,dFlowError));
+  latex->DrawLatex(0.17,0.75,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
 
   return kTRUE;
 }
@@ -2877,6 +2889,7 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   Debug(Form("Fit func vn:\n%s",sFuncVn.Data()));
 
   TF1* fitMass = new TF1(Form("fitMass"), sFuncMass.Data(), dMassRangeLow,dMassRangeHigh);
+  fitMass->SetNpx(10000);
   fitMass->SetParameters(dMaximum/10.0, 1.0, 1.0, 1.0, dMaximum, 0.4976, 0.001,dMaximum,0.001);
   fitMass->SetParLimits(4, 0, dMaximum*2.0);
   fitMass->SetParLimits(5, 0.48, 0.52);
@@ -2971,23 +2984,25 @@ Bool_t ProcessUniFlow::ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* h
   canFitInvMass->Divide(2,1);
 
   canFitInvMass->cd(1);
-  gPad->SetLogy();
+  // gPad->SetLogy();
   hInvMass->SetStats(0);
+  hInvMass->SetMinimum(0);
   hInvMass->DrawCopy();
   fitMass->DrawCopy("same");
   fitSig->DrawCopy("same");
   fitBg->DrawCopy("same");
-  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF()));
-  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitMass->GetParameter(5),fitMass->GetParError(5)));
-  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitMass->GetParameter(6),fitMass->GetParError(6)));
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF()));
+  latex->DrawLatex(0.17,0.75,Form("#color[9]{#mu = %.6f #pm %.6f}",fitMass->GetParameter(5),fitMass->GetParError(5)));
+  latex->DrawLatex(0.17,0.70,Form("#color[9]{#sigma_{1} = %.6f #pm %.6f}",fitMass->GetParameter(6),fitMass->GetParError(6)));
+  latex->DrawLatex(0.17,0.65,Form("#color[9]{#sigma_{2} = %.6f #pm %.6f}",fitMass->GetParameter(8),fitMass->GetParError(8)));
 
   canFitInvMass->cd(2);
   hFlowMass->GetXaxis()->SetTitle("M_{K^{0}} (GeV/c^{2})");
   hFlowMass->SetStats(0);
   hFlowMass->DrawCopy();
   fitVn->DrawCopy("same");
-  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{v_{2} = %.4f #pm %.4f}",dFlow,dFlowError));
+  latex->DrawLatex(0.17,0.75,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
 
   return kTRUE;
 }
@@ -3114,26 +3129,27 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   latex->SetNDC();
 
   canFitInvMass->cd(1);
-  gPad->SetLogy();
+  // gPad->SetLogy();
   hInvMass->SetStats(0);
+  hInvMass->SetMinimum(0);
   hInvMass->GetXaxis()->SetTitle("M_{#Lambda} (GeV/c^{2})");
   hInvMass->SetMarkerStyle(20);
   hInvMass->DrawCopy();
   fitMass->DrawCopy("same");
   fitSig->DrawCopy("same");
   fitBg->DrawCopy("same");
-  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF()));
-  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitMass->GetParameter(5),fitMass->GetParError(5)));
-  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitMass->GetParameter(6),fitMass->GetParError(6)));
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF()));
+  latex->DrawLatex(0.17,0.75,Form("#color[9]{#mu = %.6f #pm %.6f}",fitMass->GetParameter(5),fitMass->GetParError(5)));
+  latex->DrawLatex(0.17,0.70,Form("#color[9]{#sigma_{1} = %.6f #pm %.6f}",fitMass->GetParameter(6),fitMass->GetParError(6)));
+  latex->DrawLatex(0.17,0.65,Form("#color[9]{#sigma_{2} = %.6f #pm %.6f}",fitMass->GetParameter(8),fitMass->GetParError(8)));
 
   canFitInvMass->cd(2);
-  hFlowMass->GetXaxis()->SetTitle("M_{#Lambda} (GeV/c^{2})");
+  hFlowMass->GetXaxis()->SetTitle("M_{K^{0}} (GeV/c^{2})");
   hFlowMass->SetStats(0);
-  hFlowMass->SetMarkerStyle(20);
   hFlowMass->DrawCopy();
   fitVn->DrawCopy("same");
-  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{v_{2} = %.4f #pm %.4f}",dFlow,dFlowError));
+  latex->DrawLatex(0.17,0.75,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
 
   return kTRUE;
 }
