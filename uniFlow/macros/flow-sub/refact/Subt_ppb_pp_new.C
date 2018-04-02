@@ -21,11 +21,18 @@ TH1D* Subtract_new_dn(TH1D* raw, TH1D* base,  Double_t dFactor, Double_t dFactor
 
 
 // colors for centrality
-Color_t colors[] = {kGreen+2, kBlue, kBlack, kMagenta+1};
+
+Color_t colBase = kBlue;
+Color_t colRaw = kRed;
+Color_t colSubt = kGreen+2;
+
+Int_t markBase = kFullCircle;
+Int_t markRaw = kOpenSquare;
+Int_t markSubt = kFullSquare;
 
 // TString sSpecies_list[] = {"Charged"};
 // TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton"};
-// TString sSpecies_list[] = {"K0s","Lambda"};
+// TString sSpecies_list[] = {"K0s","Kaon"};
 TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 Int_t iNumSpecies = sizeof(sSpecies_list) / sizeof(sSpecies_list[0]);
 
@@ -34,15 +41,15 @@ TString sOutPath;
 
 void Subt_ppb_pp_new()
 {
-  // TString sGap[] = {"gap00","gap04","gap08"};
-  TString sGap[] = {"gap04"};
+  TString sGap[] = {"gap00","gap04","gap08"};
+  // TString sGap[] = {"gap04"};
 
   Int_t iNumGaps = sizeof(sGap) / sizeof(sGap[0]);
 
   for(Int_t g(0); g < iNumGaps; ++g)
   {
-    sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/test/output_binning/"+sGap[g]+"/";
-    // sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt/output_binning/"+sGap[g]+"/";
+    // sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/test/output_binning/"+sGap[g]+"/";
+    sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt/output_binning-2/"+sGap[g]+"/";
     gSystem->mkdir(sOutPath.Data(),kTRUE);
     fileOutSubt = TFile::Open(Form("%sSubtracted.root",sOutPath.Data()),"RECREATE");
 
@@ -60,21 +67,13 @@ void Subt_ppb_pp_species_gap(TString sGap)
   // TString sOutputTag = "output_vn";
   // TString sOutputTagInt = sOutputTag + "_int";
 
-  Color_t colBase = kBlue;
-  Color_t colRaw = kRed;
-  Color_t colSubt = kGreen+2;
-
-  Int_t markBase = kFullCircle;
-  Int_t markRaw = kOpenSquare;
-  Int_t markSubt = kFullSquare;
-
 
   TString sGapBase = sGap;
   // TString sGapBase = "gap00";
   TString sGapRaw = sGapBase;
 
-  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/output_binning/" + sGapBase; // + "/" + sMethod;
-  TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua/output_binning/" + sGapBase; // + "/"; + sMethod;
+  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/output_binning-2/" + sGapBase; // + "/" + sMethod;
+  TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua/output_binning-2/" + sGapBase; // + "/"; + sMethod;
   // TString sOutFolder = sInFileRaw+"/"+sMethod+"/pPb_pp_subt_"+sGapRaw+"/"+sSpecies;
   TString sOutFolder = sOutPath;
   // TString sOutFolder = sOutPath+sSpecies;
