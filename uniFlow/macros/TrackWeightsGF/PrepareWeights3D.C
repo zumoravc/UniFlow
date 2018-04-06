@@ -17,11 +17,11 @@
  #include "TSystem.h"
  #include "TPad.h"
 
-
-const TString sTaskTag = "UniFlow";
-const TString sPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16q-woSDD";
-const TString sOutputPath = sPath+"/weights/";
-const TString sOutFileName = "weights_16q_woSDD.root";
+TString sTag = "_bayes90";
+TString sTaskTag = "UniFlow" + sTag;
+TString sPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/pid/pPb-16q-FAST";
+TString sOutputPath = sPath+"/weights"+sTag+"/";
+TString sOutFileName = "weights"+sTag+"_16q_FAST.root";
 
 const Short_t iNumPart = 8;
 const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
@@ -60,7 +60,7 @@ void PrepareWeights3D()
   if(!fInput) return;
 
   fInput->cd(sTaskTag.Data());
-  TList* list =  (TList*) gDirectory->Get("Flow_Weights_UniFlow");
+  TList* list =  (TList*) gDirectory->Get(Form("Flow_Weights_%s",sTaskTag.Data()));
   if(!list) return;
 
   TList* listRun = new TList();
