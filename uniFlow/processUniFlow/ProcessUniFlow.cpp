@@ -63,7 +63,6 @@ class FlowTask
     void        SetFittingRejectNumSigmas(UShort_t sigmas) { fFlowFitRejectNumSigmas = sigmas; }
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
     void        SetFlowMassRebin(Short_t rebin = 2) { fRebinFlowMass = rebin; }
-    void        SetFittingOneGo(Bool_t fit = kTRUE) { fFitOneGo = fit; }
   protected:
   private:
 
@@ -92,7 +91,6 @@ class FlowTask
     UShort_t    fFlowFitRejectNumSigmas; // number of sigmas for rejection peak region
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
     Short_t     fRebinFlowMass; // flag for rebinning flow-mass profile
-    Bool_t      fFitOneGo; // flag for simplified (onego) fitting
 
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
@@ -119,7 +117,6 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fSuggestPtBinEntries = 20000;
   fFlowFitFixTerms = kTRUE;
   fFlowPhiSubtLS = kFALSE;
-  fFitOneGo = kTRUE;
   fFlowFitRangeLow = 0;
   fFlowFitRangeHigh = 0;
   fFlowFitRejectNumSigmas = 0;
@@ -1130,36 +1127,15 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     {
       case FlowTask::kPhi :
         hInvMassBG = task->fVecHistInvMassBG->at(binPt);
-        if(task->fFitOneGo)
-        {
-          if( !ExtractFlowPhiOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        }
-        else
-        {
-          if( !ExtractFlowPhi(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        }
+        if( !ExtractFlowPhiOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
       break;
 
       case FlowTask::kK0s :
-        if(task->fFitOneGo)
-        {
-          if( !ExtractFlowK0sOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
-        }
-        else
-        {
-          if( !ExtractFlowK0s(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        }
+        if( !ExtractFlowK0sOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
       break;
 
       case FlowTask::kLambda :
-        if(task->fFitOneGo)
-        {
-          if( !ExtractFlowLambdaOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
-        }
-        else
-        {
-          if( !ExtractFlowLambda(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        }
+        if( !ExtractFlowLambdaOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
       break;
 
       default :
