@@ -1160,6 +1160,8 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     canFitInvMass->cd(1);
     // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
     latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    canFitInvMass->cd(2);
+    latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
     canFitInvMass->SaveAs(Form("%s/fits/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
     canFlowAll->cd(binPt+1);
@@ -2228,13 +2230,6 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   Debug(Form("Fit Dist :\n%s",sFuncMass.Data()), "ExtractFlowOneGo");
   Debug(Form("Fit Flow :\n%s\n",sFuncVn.Data()), "ExtractFlowOneGo");
 
-  // just for compiler {
-  // Int_t iNumParsFuncBG = 0;
-  // Int_t iNumParsFuncSig = 0;
-  // TString sFuncSig = "";
-  // TString sFuncBG = "";
-  // } END: just for compiler
-
   // changes the axis
   hInvMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
   hFlowMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
@@ -2251,7 +2246,6 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   fitMass->SetParLimits(iParMass, dParMassLimitLow, dParMassLimitHigh);
   fitMass->SetParameter(iParWidth, dParWidthDef);
   fitMass->SetParLimits(iParWidth, dParWidthLimitLow, dParWidthLimitHigh);
-
   hInvMass->Fit(fitMass, sFitOptMass.Data());
 
   // checking the status of convergence
@@ -2273,7 +2267,7 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   }
 
   if(!statusA.Contains("CONVERGED")) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); return kFALSE; }
-  Info(Form("Inv.mass distribution fit: SUCCESSFULL (%d iterations)\n",nfitsA), "ExtractFlowOneGo");
+  Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "ExtractFlowOneGo");
 
   // fitting invariant mass distribution
   TF1* fitVn = new TF1(Form("fitVn"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
@@ -2283,7 +2277,7 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   hFlowMass->Fit(fitVn, sFitOptFlow.Data());
 
   if(!gMinuit->fCstatu.Contains("CONVERGED")) { Error(Form("Flow-mass fit does not converged!"), "ExtractFlowOneGo"); return kFALSE; }
-  Info(Form("Flow-mass fit: SUCCESSFULL"), "ExtractFlowOneGo");
+  Info(Form("Flow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "ExtractFlowOneGo");
 
   // saving flow to output
   dFlow = fitVn->GetParameter(iParFlow);
@@ -2372,8 +2366,11 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   fitVn->DrawCopy("same");
   // fitFlowSig->DrawCopy("same");
   // fitFlowBg->DrawCopy("same");
-  latex->DrawLatex(0.17,0.80,Form("#color[9]{v_{2} = %.4f #pm %.4f}",dFlow,dFlowError));
+
+  TString sResult = "v_{2}"; if(fFlowFitCumulants) { sResult = "d_{2}"; }
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{%s = %.4f #pm %.4f}",sResult.Data(),dFlow,dFlowError));
   latex->DrawLatex(0.17,0.75,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
+  latex->DrawLatex(0.17,0.70,Form("#color[9]{p = %.3g}",fitVn->GetProb()));
 
   return kTRUE;
 }
