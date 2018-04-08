@@ -1133,11 +1133,11 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       break;
 
       case FlowTask::kK0s :
-        if( !ExtractFlowK0sOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
+        if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
       break;
 
       case FlowTask::kLambda :
-        if( !ExtractFlowLambdaOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
+        if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
       break;
 
       default :
@@ -2196,25 +2196,62 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
   if(task->fSpecies == FlowTask::kPhi && !hInvMassBG) { Error("Inv. Mass (BG) histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
 
-  // === Fitting parametrisation (species dependent) ===
+  // === Fitting parametrisation (species dependent default) ===
+
   TString sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; Int_t iNumParsMassBG = 4; // function for inv. mass dist. (BG component)
   TString sMassSig = "[4]*TMath::BreitWigner(x,[5],[6])";  Int_t iNumParsMassSig = 3; // function for inv. mass dist. (sig component)
   TString sFlowBG = "[7]*x+[8]";  Int_t iNumParsFlowBG = 2; // function for flow-mass (BG component)
 
-
-  // Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
+  Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
   Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
-  Double_t dMassRangeLow = 0.994;
-  // Double_t dMassRangeHigh =1.134;
   Double_t dMaximum = hInvMass->GetMaximum();
-
   Double_t dParMassDef = 1.019445; Double_t dParMassLimitLow = 1.018; Double_t dParMassLimitHigh = 1.022;
   Double_t dParWidthDef = 0.0046; Double_t dParWidthLimitLow = 0.001; Double_t dParWidthLimitHigh = 0.006;
-
-  Int_t iNpx = 5000;
+  Int_t iNpx = 10000;
   TString sFitOptMass = "RNL";
   TString sFitOptFlow = "RN";
-  // === END: Fitting parametrisation (species dependent) ===
+
+  switch(task->fSpecies)
+  {
+    case FlowTask::kPhi :
+      sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+      sMassSig = "[4]*TMath::BreitWigner(x,[5],[6])"; iNumParsMassSig = 3;
+      sFlowBG = "[7]*x+[8]"; iNumParsFlowBG = 2;
+      dMassRangeLow = 0.994;
+      // dMassRangeHigh = 1.134;
+      dParMassDef = 1.019445; dParMassLimitLow = 1.018; dParMassLimitHigh = 1.022;
+      dParWidthDef = 0.0046; dParWidthLimitLow = 0.001; dParWidthLimitHigh = 0.006;
+    break;
+
+    case FlowTask::kK0s :
+      sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+      sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+      sFlowBG = "[9]*x+[10]"; iNumParsFlowBG = 2;
+      dParMassDef = 0.4976; dParMassLimitLow = 0.48; dParMassLimitHigh = 0.52;
+      dParWidthDef = 0.006; dParWidthLimitLow = 0.003; dParWidthLimitHigh = 0.01;
+    break;
+
+    case FlowTask::kLambda :
+      sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+      sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+      sFlowBG = "[9]*x+[10]"; iNumParsFlowBG = 2;
+      dMassRangeLow = 1.096;
+      dMassRangeHigh = 1.150;
+      dParMassDef = 1.115; dParMassLimitLow = 1.10; dParMassLimitHigh = 1.13;
+      dParWidthDef = 0.002; dParWidthLimitLow = 0.001; dParWidthLimitHigh = 0.006;
+    break;
+
+    default:
+      Error("Invalid species","ExtractFlowOneGo");
+      return kFALSE;
+  }
+
+  // check if parametrisation is setup manually
+
+
+
+
+  // === Initialision ===
 
   Int_t iParMass = iNumParsMassBG+1; // index of mean mass
   Int_t iParWidth = iNumParsMassBG+2; // index of mass width
@@ -2241,7 +2278,7 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   fitMass->SetNpx(iNpx);
   fitMass->SetParameter(0, dMaximum/10.0);
   for(Int_t par(1); par < iNumParsMassBG; ++par) { fitMass->SetParameter(par, 1.0); }
-  fitMass->SetParameter(iNumParsMassBG, dMaximum);
+  fitMass->SetParameter(iNumParsMassBG, 2.0*dMaximum);
   fitMass->SetParameter(iParMass, dParMassDef);
   fitMass->SetParLimits(iParMass, dParMassLimitLow, dParMassLimitHigh);
   fitMass->SetParameter(iParWidth, dParWidthDef);
@@ -2252,7 +2289,7 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   Int_t nfitsA = 1;
   TString statusA = gMinuit->fCstatu.Data();
 
-  while ((!statusA.Contains("CONVERGED")) && (nfitsA < 10))
+  while ((!statusA.Contains("CONVERGED")) && (nfitsA < 15))
   {
     fitMass->SetParameter(0, fitMass->GetParameter(0)/nfitsA);
     for(Int_t par(1); par < iNumParsMassBG+1; ++par) { fitMass->SetParameter(par, fitMass->GetParameter(par)); }
