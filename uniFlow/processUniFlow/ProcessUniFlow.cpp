@@ -2333,14 +2333,30 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
 
   // check if parametrisation is setup manually
   if(task->fFlowFitRangeLow > 0.0) { dMassRangeLow = task->fFlowFitRangeLow; }
-  if(task->fFlowFitRangeHigh > 0.0) { dMassRangeLow = task->fFlowFitRangeHigh; }
+  if(task->fFlowFitRangeHigh > 0.0) { dMassRangeHigh = task->fFlowFitRangeHigh; }
   if(task->fFlowFitRangeLow > 0.0 && task->fFlowFitRangeLow > 0.0 && task->fFlowFitRangeLow >= task->fFlowFitRangeHigh) { Error("Wrong fitting ranges set!","ExtractFlowOneGo"); return kFALSE; }
 
-  if(task->fNumParMassSig > 0) { sMassSig = task->fFlowFitMassSig; iNumParsMassSig = task->fNumParMassSig; Debug(" Task massSig set","ExtractFlowOneGo"); }
-  if(task->fNumParMassBG > 0) { sMassBG = task->fFlowFitMassBG; iNumParsMassBG = task->fNumParMassBG; Debug(" Task massBG set","ExtractFlowOneGo"); }
-  if(task->fNumParFlowBG > 0) { sFlowBG = task->fFlowFitFlowBG; iNumParsFlowBG = task->fNumParFlowBG; Debug(" Task flowBG set","ExtractFlowOneGo"); }
+  Bool_t bUserPars = kFALSE;
+  if(task->fNumParMassSig > 0) { bUserPars = kTRUE; sMassSig = task->fFlowFitMassSig; iNumParsMassSig = task->fNumParMassSig; Debug(" Task massSig set","ExtractFlowOneGo"); }
+  if(task->fNumParMassBG > 0) { bUserPars = kTRUE; sMassBG = task->fFlowFitMassBG; iNumParsMassBG = task->fNumParMassBG; Debug(" Task massBG set","ExtractFlowOneGo"); }
+  if(task->fNumParFlowBG > 0) { bUserPars = kTRUE; sFlowBG = task->fFlowFitFlowBG; iNumParsFlowBG = task->fNumParFlowBG; Debug(" Task flowBG set","ExtractFlowOneGo"); }
 
-  // TODO paramatetrisaion
+  if(bUserPars && (task->fNumParMassSig == 0 || task->fNumParMassBG == 0|| task->fNumParFlowBG == 0)) { Error("Only a subset of functions has been changed. Provide all, or non.","ExtractFlowOneGo"); return kFALSE; }
+
+  if(bUserPars)
+  {
+    dParDef.clear();
+    dParLimLow.clear();
+    dParLimHigh.clear();
+
+    Int_t iNumParTot = task->fNumParMassSig + task->fNumParMassBG + task->fNumParFlowBG;
+    for(Int_t par(0); par < iNumParTot; ++par)
+    {
+      dParDef.push_back(task->fFitParDefaults[par]);
+      dParLimLow.push_back(task->fFitParLimLow[par]);
+      dParLimHigh.push_back(task->fFitParLimHigh[par]);
+    }
+  }
 
   Int_t iNumParDefs = dParDef.size();
   Int_t iNumParLimLow = dParLimLow.size();

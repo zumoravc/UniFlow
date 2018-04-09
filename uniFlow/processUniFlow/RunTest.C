@@ -92,9 +92,21 @@ void RunTest()
 	taskK0s->SetFlowMassRebin(2);
 	taskK0s->SetPtBins(dBinning,sizeof(dBinning)/sizeof(dBinning[0]));
 	taskK0s->SetMergePosNeg();
-	// taskK0s->SetFittingRange(0.45,0.55);
-	// taskK0s->SetFittingRejectNumSigmas(3);
+	// taskK0s->SetFitMassRange(0.45,0.55);
+
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
+
+	// Double_t dDef[] =      {1.0,1.0,1.0,0.0,   10000,0.4976,0.003,10000,0.01, 1.0,1.0};
+	// Double_t dLimLow[] =   {-1,-1,-1,1.0,    -1,0.48,0.003,-1,0.003, -1,-1};
+	// Double_t dLimHigh[] =  {-1,-1,-1,1.0,  -1,0.52,0.006,-1,0.01,  -1,-1};
+	//
+	// taskK0s->SetFitMassBG(TString("[0] + [1]*x + [2]*x*x+[3]"), 4);
+	// taskK0s->SetFitMassSig(TString("[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[6],[8])"), 5);
+	// taskK0s->SetFitFlowBG(TString("[9]*x+[10]"), 2);
+	// taskK0s->SetFitParDefaults(dDef, sizeof(dDef)/sizeof(dDef[0]));
+	// taskK0s->SetFitParLimitsLow(dLimLow, sizeof(dLimLow)/sizeof(dLimLow[0]));
+	// taskK0s->SetFitParLimitsHigh(dLimHigh, sizeof(dLimHigh)/sizeof(dLimHigh[0]));
+	//
 
 	FlowTask* taskLambda = new FlowTask(FlowTask::kLambda	);
 	taskLambda->SetNumSamples(iNumSamples);
@@ -104,7 +116,6 @@ void RunTest()
 	taskLambda->SetFlowMassRebin(2);
 	taskLambda->SetPtBins(dBinning,sizeof(dBinning)/sizeof(dBinning[0]));
 	taskLambda->SetMergePosNeg();
-	// taskLambda->SetFittingRange(0.45,0.55);
 	// taskLambda->SetFittingRejectNumSigmas(3);
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
@@ -136,8 +147,8 @@ void RunTest()
 	// process->AddTask(taskKch);
 	// process->AddTask(taskProton);
 	process->AddTask(taskK0s);
-	process->AddTask(taskLambda);
-	process->AddTask(taskPhi);
+	// process->AddTask(taskLambda);
+	// process->AddTask(taskPhi);
 	process->Run();
 
 
