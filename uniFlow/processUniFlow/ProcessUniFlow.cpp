@@ -2267,6 +2267,7 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
 
   Int_t iParMass = 0;
   Int_t iParWidth = 0;
+  Int_t iParWidth_2 = 0;
 
   std::vector<Double_t> dParDef;
   std::vector<Double_t> dParLimLow;
@@ -2301,8 +2302,9 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
 
     iParMass = 5;
     iParWidth = 6;
+    iParWidth_2 = 8;
 
-    Double_t dDef[] =      {1.0,1.0,1.0,1.0,   dMaximum,0.4976,0.005,dMaximum,0.005, 1.0,1.0};
+    Double_t dDef[] =      {1.0,1.0,1.0,1.0,   dMaximum,0.4976,0.003,dMaximum,0.01, 1.0,1.0};
     Double_t dLimLow[] =   {-1,-1,-1,-1,    0.0,0.48,0.003,0.0,0.003, -1,-1};
     Double_t dLimHigh[] =  {-1,-1,-1,-1,  2.0*dMaximum,0.52,0.006,2.0*dMaximum,0.01,  -1,-1};
 
@@ -2322,10 +2324,11 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
 
     iParMass = 5;
     iParWidth = 6;
+    iParWidth_2 = 8;
 
-    Double_t dDef[] =      {1.0,1.0,1.0,1.0,   dMaximum,1.115, 0.0012,dMaximum,0.0012, 1.0,1.0};
+    Double_t dDef[] =      {1.0,1.0,1.0,1.0,   dMaximum,1.115, 0.001,dMaximum,0.01, 1.0,1.0};
     Double_t dLimLow[] =   {-1,-1,-1,-1,    0.0,1.10,0.001,0.0,0.001, -1,-1};
-    Double_t dLimHigh[] =  {-1,-1,-1,-1,  2.0*dMaximum,1.13,0.006,2.0*dMaximum,0.01,  -1,-1};
+    Double_t dLimHigh[] =  {-1,-1,-1,-1,  2.0*dMaximum,1.13,0.008,2.0*dMaximum,0.01,  -1,-1};
 
     // assignment to external arrays
     for(Int_t par(0); par < (Int_t) (sizeof(dDef)/sizeof(dDef[0])); ++par) { dParDef.push_back(dDef[par]); }
@@ -2520,7 +2523,16 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   fitSig->DrawCopy("same");
   latex->DrawLatex(0.17,0.80,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF()));
   latex->DrawLatex(0.17,0.75,Form("#color[9]{#mu = %.6f #pm %.6f}",fitMass->GetParameter(iParMass),fitMass->GetParError(iParMass)));
-  latex->DrawLatex(0.17,0.70,Form("#color[9]{#Gamma = %.6f #pm %.6f}",fitMass->GetParameter(iParWidth),fitMass->GetParError(iParWidth)));
+
+  if(task->fSpecies == FlowTask::kPhi)
+  {
+    latex->DrawLatex(0.17,0.70,Form("#color[9]{#Gamma = %.6f #pm %.6f}",fitMass->GetParameter(iParWidth),fitMass->GetParError(iParWidth)));
+  }
+  else if(task->fSpecies == FlowTask::kK0s || task->fSpecies == FlowTask::kLambda)
+  {
+    latex->DrawLatex(0.17,0.70,Form("#color[9]{#sigma_{1} = %.6f #pm %.6f}",fitMass->GetParameter(iParWidth),fitMass->GetParError(iParWidth)));
+    latex->DrawLatex(0.17,0.65,Form("#color[9]{#sigma_{2} = %.6f #pm %.6f}",fitMass->GetParameter(iParWidth_2),fitMass->GetParError(iParWidth_2)));
+  }
 
   canFitInvMass->cd(2);
   hFlowMass->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
