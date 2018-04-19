@@ -57,13 +57,18 @@ class FlowTask
     void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
 
     // fitting
-    void        SetFlowFitFixTerms(Bool_t fix = kTRUE) { fFlowFitFixTerms = fix; }
-    void        SetFlowPhiSubtLS(Bool_t sub = kTRUE) { fFlowPhiSubtLS = sub; }
-    void        SetFittingRange(Double_t low = 0., Double_t high = 0.) { if(low > 0. && high > 0. && low < high) { fFlowFitRangeLow = low; fFlowFitRangeHigh = high; } else printf("E-SetFittingRange: One of the edges unspecified: values not set."); }
-    void        SetFittingRejectNumSigmas(UShort_t sigmas) { fFlowFitRejectNumSigmas = sigmas; }
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
     void        SetFlowMassRebin(Short_t rebin = 2) { fRebinFlowMass = rebin; }
-    void        SetFittingOneGo(Bool_t fit = kTRUE) { fFitOneGo = fit; }
+    // fitting parameters
+    void        SetFitPhiSubtLS(Bool_t sub = kTRUE) { fFlowFitPhiSubtLS = sub; }
+    void        SetFitMassRange(Double_t dLow, Double_t dHigh) { fFlowFitRangeLow = dLow; fFlowFitRangeHigh = dHigh; }
+    void        SetFitMassSig(TString func, Int_t pars) { fFlowFitMassSig = func; fNumParMassSig = pars; }
+    void        SetFitMassBG(TString func, Int_t pars) { fFlowFitMassBG = func; fNumParMassBG = pars; }
+    void        SetFitFlowBG(TString func, Int_t pars) { fFlowFitFlowBG = func; fNumParFlowBG = pars; }
+    void        SetFitParDefaults(Double_t* array, Int_t size);
+    void        SetFitParLimitsLow(Double_t* array, Int_t size);
+    void        SetFitParLimitsHigh(Double_t* array, Int_t size);
+
   protected:
   private:
 
@@ -85,14 +90,22 @@ class FlowTask
     Bool_t      fSuggestPtBins; // suggest pt binning
     Double_t    fSuggestPtBinEntries; // suggest pt binning
     // Reconstructed fitting
-    Bool_t      fFlowPhiSubtLS; // [kFALSE] flag for subtraction of like-sign background from the unlike-sign one
-    Bool_t      fFlowFitFixTerms; // [kTRUE] flag for using sequential flow extraction (fixing all terms in master formula)
-    Double_t    fFlowFitRangeLow; // lower edge for fitting during flow extraction
-    Double_t    fFlowFitRangeHigh; // high edge for fitting during flow extraction
-    UShort_t    fFlowFitRejectNumSigmas; // number of sigmas for rejection peak region
+    Bool_t      fFlowFitPhiSubtLS; // [kFALSE] flag for subtraction of like-sign background from the unlike-sign one
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
     Short_t     fRebinFlowMass; // flag for rebinning flow-mass profile
-    Bool_t      fFitOneGo; // flag for simplified (onego) fitting
+
+    Double_t    fFlowFitRangeLow; // lower edge for fitting during flow extraction
+    Double_t    fFlowFitRangeHigh; // high edge for fitting during flow extraction
+    TString     fFlowFitMassSig; // formula for signal contribution of inv.mass fit
+    TString     fFlowFitMassBG; // formula for bg contribution of inv.mass fit
+    TString     fFlowFitFlowBG; // formula for bg contribution of flow-mass fit
+    Int_t       fNumParMassSig; // number of parameters in 'fFlowFitMassSig'
+    Int_t       fNumParMassBG; // number of parameters in 'fFlowFitMassBG'
+    Int_t       fNumParFlowBG; // number of parameters in 'fFlowFitFlowBG'
+    static const Int_t fNumParsMax = 20;
+    Double_t    fFitParDefaults[fNumParsMax]; // default values for all parameters in all formulas (i.e. master flow-mass formula)
+    Double_t    fFitParLimLow[fNumParsMax]; // low limit values for all parameters in all formulas (i.e. master flow-mass formula)
+    Double_t    fFitParLimHigh[fNumParsMax]; // high limit values for all parameters in all formulas (i.e. master flow-mass formula)
 
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
@@ -117,14 +130,17 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fMergePosNeg = kFALSE;
   fSuggestPtBins = kFALSE;
   fSuggestPtBinEntries = 20000;
-  fFlowFitFixTerms = kTRUE;
-  fFlowPhiSubtLS = kFALSE;
-  fFitOneGo = kTRUE;
-  fFlowFitRangeLow = 0;
-  fFlowFitRangeHigh = 0;
-  fFlowFitRejectNumSigmas = 0;
+  fFlowFitPhiSubtLS = kFALSE;
   fRebinFlowMass = 0;
   fRebinInvMass = 0;
+  fFlowFitRangeLow = -1.0;
+  fFlowFitRangeHigh = -1.0;
+  fFlowFitMassSig = TString();
+  fFlowFitMassBG = TString();
+  fFlowFitFlowBG = TString();
+  fNumParMassSig = 0;
+  fNumParMassBG = 0;
+  fNumParFlowBG = 0;
   fVecHistInvMass = new std::vector<TH1D*>;
   fVecHistInvMassBG = new std::vector<TH1D*>;
   fVecHistFlowMass = new std::vector<TH1D*>;
@@ -152,6 +168,36 @@ void FlowTask::SetPtBins(Double_t* array, const Short_t size)
   {
     fPtBinsEdges[i] = array[i];
   }
+
+  return;
+}
+//_____________________________________________________________________________
+void FlowTask::SetFitParDefaults(Double_t* array, Int_t size)
+{
+  if(size < 0 || size > fNumParsMax) { Error("Wrong size of parameters array.","SetFitParDefaults"); return; }
+  if(!array) { Error("Wrong array.","SetFitParDefaults"); return; }
+
+  for(Int_t i(0); i < size; ++i) { fFitParDefaults[i] = array[i]; }
+
+  return;
+}
+//_____________________________________________________________________________
+void FlowTask::SetFitParLimitsLow(Double_t* array, Int_t size)
+{
+  if(size < 0 || size > fNumParsMax) { Error("Wrong size of parameters array.","SetFitParLimitsLow"); return; }
+  if(!array) { Error("Wrong array.","SetFitParLimitsLow"); return; }
+
+  for(Int_t i(0); i < size; ++i) { fFitParLimLow[i] = array[i]; }
+
+  return;
+}
+//_____________________________________________________________________________
+void FlowTask::SetFitParLimitsHigh(Double_t* array, Int_t size)
+{
+  if(size < 0 || size > fNumParsMax) { Error("Wrong size of parameters array.","SetFitParLimitsHigh"); return; }
+  if(!array) { Error("Wrong array.","SetFitParLimitsHigh"); return; }
+
+  for(Int_t i(0); i < size; ++i) { fFitParLimHigh[i] = array[i]; }
 
   return;
 }
@@ -188,7 +234,6 @@ void FlowTask::PrintTask()
   printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
   printf("   fFlowFitRangeLow: %g\n",fFlowFitRangeLow);
   printf("   fFlowFitRangeHigh: %g\n",fFlowFitRangeHigh);
-  printf("   fFlowFitRejectNumSigmas: %u\n",fFlowFitRejectNumSigmas);
   printf("   fNumPtBins: %d (limit %d)\n",fNumPtBins,fNumPtBinsMax);
   if(fNumPtBins > -1) { printf("   fPtBinsEdges: "); for(Short_t i(0); i < fNumPtBins+1; i++) printf("%g ",fPtBinsEdges[i]); printf("\n"); }
   printf("------------------------------\n");
@@ -230,10 +275,8 @@ class ProcessUniFlow
     Bool_t      ProcessDirect(FlowTask* task = 0x0, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
-    Bool_t 	    ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
-    Bool_t 	    ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for K0s candidates
-		Bool_t 	    ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass); // extract flow via flow-mass method for Lambda candidates
 
+    Bool_t 	    ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for Lambda candidates
@@ -1133,36 +1176,16 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     {
       case FlowTask::kPhi :
         hInvMassBG = task->fVecHistInvMassBG->at(binPt);
-        if(task->fFitOneGo)
-        {
-          if( !ExtractFlowPhiOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        }
-        else
-        {
-          if( !ExtractFlowPhi(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        }
+        if( !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+        // if( !ExtractFlowPhiOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
       break;
 
       case FlowTask::kK0s :
-        if(task->fFitOneGo)
-        {
-          if( !ExtractFlowK0sOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
-        }
-        else
-        {
-          if( !ExtractFlowK0s(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        }
+        if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
       break;
 
       case FlowTask::kLambda :
-        if(task->fFitOneGo)
-        {
-          if( !ExtractFlowLambdaOneGo(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
-        }
-        else
-        {
-          if( !ExtractFlowLambda(task,hInvMass,hFlowMass,dFlow,dFlowError,canFitInvMass) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        }
+        if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
       break;
 
       default :
@@ -1184,6 +1207,8 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
     canFitInvMass->cd(1);
     // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
+    latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+    canFitInvMass->cd(2);
     latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
     canFitInvMass->SaveAs(Form("%s/fits/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
@@ -2209,507 +2234,329 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
      return h2;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowPhi(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
+Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits)
 {
-  //gStyle->SetOptFit(1110);
+  if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowOneGo"); return kFALSE; }
+  if(!listFits) { Error("TList for fits not found!","ExtractFlowOneGo"); return kFALSE; }
+  if(listFits->GetEntries() > 0) { Error("TList not empty!","ExtractFlowOneGo"); return kFALSE; }
+  if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowOneGo"); return kFALSE; }
+  if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
+  if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
+  if(task->fSpecies == FlowTask::kPhi && task->fFlowFitPhiSubtLS && !hInvMassBG) { Error("Inv. Mass (BG) histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
+  if(task->fFlowFitPhiSubtLS) { Error("Phi like-sign subtraction not implemented ATM. Please turn the switch off.","ExtractFlowOneGo"); return kFALSE; }
 
-  if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowPhi"); return kFALSE; }
-  if(!hInvMass) { Error("InvMass (signal) histogram does not exists!","ExtractFlowPhi"); return kFALSE; }
-  if(!hInvMassBG) { Error("InvMass (BG) histogram does not exists!","ExtractFlowPhi"); return kFALSE; }
-	if(!hFlowMass) { Error("Flow-mass histogram does not exists!","ExtractFlowPhi"); return kFALSE;	}
-	if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowPhi"); return kFALSE; }
+  // === Fitting parametrisation (species dependent default) ===
 
-  TString sFitOpt = TString("R");
-  if(!fbDebug) sFitOpt.Append("Q");
+  Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
+  Double_t dMassRangeHigh = hInvMass->GetXaxis()->GetXmax();
+  Double_t dMaximum = hInvMass->GetMaximum();
 
-  hFlowMass->SetMinimum(-0.1);
-  // if(hFlowMass->GetMaximum() < 0.5) hFlowMass->SetMaximum(0.5);
-  hFlowMass->SetMaximum(0.5);
+  Int_t iNpx = 10000;
+  TString sFitOptMass = "RNL";
+  TString sFitOptFlow = "RN";
 
-	// Reseting the canvas (removing drawn things)
-	canFitInvMass->Clear();
+  TString sMassBG = TString(); Int_t iNumParsMassBG = 0; // function for inv. mass dist. (BG component)
+  TString sMassSig = TString();  Int_t iNumParsMassSig = 0; // function for inv. mass dist. (sig component)
+  TString sFlowBG = TString();  Int_t iNumParsFlowBG = 0; // function for flow-mass (BG component)
+
+  Int_t iParMass = 0;
+  Int_t iParWidth = 0;
+  Int_t iParWidth_2 = 0;
+
+  std::vector<Double_t> dParDef;
+  std::vector<Double_t> dParLimLow;
+  std::vector<Double_t> dParLimHigh;
+
+  if(task->fSpecies == FlowTask::kPhi)
+  {
+    dMassRangeLow = 0.994;
+    // dMassRangeHigh = 1.134;
+
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::BreitWigner(x,[5],[6])"; iNumParsMassSig = 3;
+    sFlowBG = "[7]*x+[8]"; iNumParsFlowBG = 2;
+
+    iParMass = 5;
+    iParWidth = 6;
+
+    Double_t dDef[] =      {1.0,1.0,1.0,1.0,   dMaximum,1.019445,0.0046, 1.0,1.0};
+    Double_t dLimLow[] =   {-1,-1,-1,-1,    0.0,1.018,0.001, -1,-1};
+    Double_t dLimHigh[] =  {-1,-1,-1,-1,  2.0*dMaximum,1.022,0.006,  -1,-1};
+
+    // assignment to external arrays
+    for(Int_t par(0); par < (Int_t) (sizeof(dDef)/sizeof(dDef[0])); ++par) { dParDef.push_back(dDef[par]); }
+    for(Int_t par(0); par < (Int_t) (sizeof(dLimLow)/sizeof(dLimLow[0])); ++par) { dParLimLow.push_back(dLimLow[par]); }
+    for(Int_t par(0); par < (Int_t) (sizeof(dLimHigh)/sizeof(dLimHigh[0])); ++par) { dParLimHigh.push_back(dLimHigh[par]); }
+  }
+  else if(task->fSpecies == FlowTask::kK0s)
+  {
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+    sFlowBG = "[9]*x+[10]"; iNumParsFlowBG = 2;
+
+    iParMass = 5;
+    iParWidth = 6;
+    iParWidth_2 = 8;
+
+    Double_t dDef[] =      {1.0,1.0,1.0,1.0,   dMaximum,0.4976,0.003,dMaximum,0.01, 1.0,1.0};
+    Double_t dLimLow[] =   {-1,-1,-1,-1,    0.0,0.48,0.003,0.0,0.003, -1,-1};
+    Double_t dLimHigh[] =  {-1,-1,-1,-1,  2.0*dMaximum,0.52,0.006,2.0*dMaximum,0.01,  -1,-1};
+
+    // assignment to external arrays
+    for(Int_t par(0); par < (Int_t) (sizeof(dDef)/sizeof(dDef[0])); ++par) { dParDef.push_back(dDef[par]); }
+    for(Int_t par(0); par < (Int_t) (sizeof(dLimLow)/sizeof(dLimLow[0])); ++par) { dParLimLow.push_back(dLimLow[par]); }
+    for(Int_t par(0); par < (Int_t) (sizeof(dLimHigh)/sizeof(dLimHigh[0])); ++par) { dParLimHigh.push_back(dLimHigh[par]); }
+  }
+  else if(task->fSpecies == FlowTask::kLambda)
+  {
+    dMassRangeLow = 1.096;
+    dMassRangeHigh = 1.150;
+
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+    sFlowBG = "[9]*x+[10]"; iNumParsFlowBG = 2;
+
+    iParMass = 5;
+    iParWidth = 6;
+    iParWidth_2 = 8;
+
+    Double_t dDef[] =      {1.0,1.0,1.0,1.0,   dMaximum,1.115, 0.001,dMaximum,0.01, 1.0,1.0};
+    Double_t dLimLow[] =   {-1,-1,-1,-1,    0.0,1.10,0.001,0.0,0.001, -1,-1};
+    Double_t dLimHigh[] =  {-1,-1,-1,-1,  2.0*dMaximum,1.13,0.008,2.0*dMaximum,0.01,  -1,-1};
+
+    // assignment to external arrays
+    for(Int_t par(0); par < (Int_t) (sizeof(dDef)/sizeof(dDef[0])); ++par) { dParDef.push_back(dDef[par]); }
+    for(Int_t par(0); par < (Int_t) (sizeof(dLimLow)/sizeof(dLimLow[0])); ++par) { dParLimLow.push_back(dLimLow[par]); }
+    for(Int_t par(0); par < (Int_t) (sizeof(dLimHigh)/sizeof(dLimHigh[0])); ++par) { dParLimHigh.push_back(dLimHigh[par]); }
+  }
+  else { Error("Invalid species","ExtractFlowOneGo"); return kFALSE; }
+
+  // check if parametrisation is setup manually
+  if(task->fFlowFitRangeLow > 0.0) { dMassRangeLow = task->fFlowFitRangeLow; }
+  if(task->fFlowFitRangeHigh > 0.0) { dMassRangeHigh = task->fFlowFitRangeHigh; }
+  if(task->fFlowFitRangeLow > 0.0 && task->fFlowFitRangeLow > 0.0 && task->fFlowFitRangeLow >= task->fFlowFitRangeHigh) { Error("Wrong fitting ranges set!","ExtractFlowOneGo"); return kFALSE; }
+
+  Bool_t bUserPars = kFALSE;
+  if(task->fNumParMassSig > 0) { bUserPars = kTRUE; sMassSig = task->fFlowFitMassSig; iNumParsMassSig = task->fNumParMassSig; Debug(" Task massSig set","ExtractFlowOneGo"); }
+  if(task->fNumParMassBG > 0) { bUserPars = kTRUE; sMassBG = task->fFlowFitMassBG; iNumParsMassBG = task->fNumParMassBG; Debug(" Task massBG set","ExtractFlowOneGo"); }
+  if(task->fNumParFlowBG > 0) { bUserPars = kTRUE; sFlowBG = task->fFlowFitFlowBG; iNumParsFlowBG = task->fNumParFlowBG; Debug(" Task flowBG set","ExtractFlowOneGo"); }
+
+  if(bUserPars && (task->fNumParMassSig == 0 || task->fNumParMassBG == 0|| task->fNumParFlowBG == 0)) { Error("Only a subset of functions has been changed. Provide all, or non.","ExtractFlowOneGo"); return kFALSE; }
+
+  if(bUserPars)
+  {
+    dParDef.clear();
+    dParLimLow.clear();
+    dParLimHigh.clear();
+
+    Int_t iNumParTot = task->fNumParMassSig + task->fNumParMassBG + task->fNumParFlowBG;
+    for(Int_t par(0); par < iNumParTot; ++par)
+    {
+      dParDef.push_back(task->fFitParDefaults[par]);
+      dParLimLow.push_back(task->fFitParLimLow[par]);
+      dParLimHigh.push_back(task->fFitParLimHigh[par]);
+    }
+  }
+
+  Int_t iNumParDefs = dParDef.size();
+  Int_t iNumParLimLow = dParLimLow.size();
+  Int_t iNumParLimHigh = dParLimHigh.size();
+
+  // check the output of the vector assigment
+  if(fbDebug)
+  {
+    Debug("Post ifs","ExtractFlowOneGo");
+    for(Int_t par(0); par < iNumParDefs; ++par) { printf("  par %d: %g (%g<%g)\n",par, dParDef.at(par), dParLimLow.at(par), dParLimHigh.at(par)); }
+  }
+
+  if(iNumParDefs != iNumParsMassBG+iNumParsMassSig+iNumParsFlowBG) { Error(Form("Length of dParDef array does not match number of parameters (%d != %d)",iNumParDefs,iNumParsMassBG+iNumParsMassSig+iNumParsFlowBG),"ExtractFlowOneGo"); return kFALSE; }
+  if(iNumParDefs != iNumParLimLow) { Error(Form("Different length of arrays with parameter defauls and low limit values (%d != %d).",iNumParDefs,iNumParLimLow),"ExtractFlowOneGo"); return kFALSE; }
+  if(iNumParDefs != iNumParLimHigh) { Error(Form("Different length of arrays with parameter defauls and high limit values (%d != %d).",iNumParDefs,iNumParLimHigh),"ExtractFlowOneGo"); return kFALSE; }
+
+  // === Initialision ===
+  Int_t iNumParMass = iNumParsMassSig+iNumParsMassBG;
+  Int_t iParFlow = iNumParsMassBG+iNumParsMassSig+iNumParsFlowBG; // index of Flow (vn/dn) parameter
+
+  // master formula used in the fitting procedure
+  if(!fbDebug) { sFitOptFlow += "Q"; sFitOptMass += "Q"; } // quite fitting option if NOT in debug
+
+  TString sFuncMass = Form("%s + %s",sMassBG.Data(),sMassSig.Data());
+  TString sFuncVn = Form("[%d]*(%s)/(%s + %s) + (%s)*(%s)/(%s + %s)", iParFlow, sMassSig.Data(), sMassSig.Data(), sMassBG.Data(), sFlowBG.Data(),sMassBG.Data(),sMassSig.Data(),sMassBG.Data());
+
+  Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh), "ExtractFlowOneGo");
+  Debug(Form("Fit Dist :\n    %s",sFuncMass.Data()), "ExtractFlowOneGo");
+  Debug(Form("Fit Flow :\n    %s\n",sFuncVn.Data()), "ExtractFlowOneGo");
+
+  // changes the axis
+  hInvMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+  hFlowMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+
+  // === Fitting procedure ===
+
+  // fitting invariant mass distribution
+  TF1* fitMass = new TF1(Form("fitMass"), sFuncMass.Data(), dMassRangeLow,dMassRangeHigh);
+  fitMass->SetNpx(iNpx);
+
+  for(Int_t par(0); par < iNumParMass; ++par)
+  {
+    fitMass->SetParameter(par, dParDef.at(par));
+
+    Double_t dLimLow = dParLimLow.at(par);
+    Double_t dLimHigh = dParLimHigh.at(par);
+
+    if(dLimLow > -1.0 && dLimHigh > -1.0) { fitMass->SetParLimits(par, dLimLow, dLimHigh); }
+    else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"ExtractFlowOneGo"); return kFALSE; }
+  }
+
+  hInvMass->Fit(fitMass, sFitOptMass.Data());
+
+  // checking the status of convergence
+  Int_t nfitsA = 1;
+  TString statusA = gMinuit->fCstatu.Data();
+
+  while ((!statusA.Contains("CONVERGED")) && (nfitsA < 15))
+  {
+    fitMass->SetParameter(0, fitMass->GetParameter(0)/nfitsA);
+    for(Int_t par(0); par < iNumParMass; ++par)
+    {
+      fitMass->SetParameter(par, fitMass->GetParameter(par));
+
+      Double_t dLimLow = dParLimLow.at(par);
+      Double_t dLimHigh = dParLimHigh.at(par);
+
+      if(dLimLow > -1.0 && dLimHigh > -1.0) { fitMass->SetParLimits(par, dLimLow, dLimHigh); }
+      else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"ExtractFlowOneGo"); return kFALSE; }
+    }
+
+    hInvMass->Fit(fitMass, sFitOptMass.Data());
+
+    statusA = gMinuit->fCstatu.Data();
+    nfitsA++;
+  }
+
+  if(!statusA.Contains("CONVERGED")) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); return kFALSE; }
+  Info(Form("\n Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)\n",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "ExtractFlowOneGo");
+
+  // fitting invariant mass distribution
+  TF1* fitVn = new TF1(Form("fitVn"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
+  // fixing Nsig & Nbg terms extracted in previous step
+  for(Int_t par(0); par < iNumParMass; ++par) { fitVn->FixParameter(par, fitMass->GetParameter(par)); }
+  for(Int_t par(iNumParMass); par < iParFlow; ++par)
+  {
+    fitVn->SetParameter(par, dParDef.at(par));
+
+    Double_t dLimLow = dParLimLow.at(par);
+    Double_t dLimHigh = dParLimHigh.at(par);
+
+    if(dLimLow > -1.0 && dLimHigh > -1.0) { fitVn->SetParLimits(par, dLimLow,dLimHigh); }
+    else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Flow-mass: Only one of the parameter limits is set (par %d). Fix this!",par),"ExtractFlowOneGo"); return kFALSE; }
+  }
+  hFlowMass->Fit(fitVn, sFitOptFlow.Data());
+
+  if(!gMinuit->fCstatu.Contains("CONVERGED")) { Error(Form("Flow-mass fit does not converged!"), "ExtractFlowOneGo"); return kFALSE; }
+  Info(Form("\nFlow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)\n",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "ExtractFlowOneGo");
+
+  // saving flow to output
+  dFlow = fitVn->GetParameter(iParFlow);
+  dFlowError = fitVn->GetParError(iParFlow);
+  Info(Form("Final flow: %g +- %g\n=================================\n", dFlow,dFlowError), "ExtractFlowOneGo");
+
+  // === Extracting fitting components to separated TF1's ===
+
+  TF1* fitBg = new TF1("fitMassBG",sMassBG.Data(),dMassRangeLow,dMassRangeHigh);
+  fitBg->SetLineColor(kBlue);
+  fitBg->SetLineStyle(2);
+  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar)
+  {
+    fitBg->SetParameter(iPar, fitMass->GetParameter(iPar));
+    fitBg->SetParError(iPar, fitMass->GetParError(iPar));
+  }
+
+  TF1* fitSig = new TF1("fitMassSig", sMassSig.Data(), dMassRangeLow,dMassRangeHigh);
+  fitSig->SetLineColor(kGreen+2);
+  fitSig->SetLineStyle(2);
+  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) { fitSig->SetParameter(iPar, 0.0); }
+  for(Int_t iPar(iNumParsMassBG); iPar < iNumParsMassBG+iNumParsMassSig; ++iPar)
+  {
+    fitSig->SetParameter(iPar, fitMass->GetParameter(iPar));
+    fitSig->SetParError(iPar, fitMass->GetParError(iPar));
+  }
+
+  TF1* fitFlowBg = new TF1("fitFlowBG", Form("(%s)*(%s)/(%s + %s)", sFlowBG.Data(), sMassBG.Data(), sMassSig.Data(), sMassBG.Data()), dMassRangeLow,dMassRangeHigh);
+  fitFlowBg->SetLineColor(kBlue);
+  fitFlowBg->SetLineStyle(2);
+  for(Int_t iPar(0); iPar < iParFlow; ++iPar)
+  {
+    fitFlowBg->SetParameter(iPar, fitVn->GetParameter(iPar));
+    fitFlowBg->SetParError(iPar, fitVn->GetParError(iPar));
+  }
+
+  TF1* fitFlowSig = new TF1("fitFlowSig", Form("[%d]*(%s)/(%s + %s)", iParFlow, sMassSig.Data(), sMassSig.Data(), sMassBG.Data()), dMassRangeLow,dMassRangeHigh);
+  fitFlowSig->SetLineColor(kGreen+2);
+  fitFlowSig->SetLineStyle(2);
+  fitFlowSig->SetParameter(iParFlow, fitVn->GetParameter(iParFlow));
+  for(Int_t iPar(0); iPar < iNumParsMassBG+iNumParsMassSig; ++iPar)
+  {
+    fitFlowSig->SetParameter(iPar, fitVn->GetParameter(iPar));
+    fitFlowSig->SetParError(iPar, fitVn->GetParError(iPar));
+  }
+  for(Int_t iPar(iNumParsMassBG+iNumParsMassSig); iPar < iParFlow; ++iPar) { fitFlowSig->SetParameter(iPar, 0.0); }
+
+  // saving fitting related stuff to TList listFits
+  listFits->Add(hInvMass);
+  listFits->Add(fitMass);
+  listFits->Add(fitBg);
+  listFits->Add(fitSig);
+  listFits->Add(hFlowMass);
+  listFits->Add(fitVn);
+  listFits->Add(fitFlowBg);
+  listFits->Add(fitFlowSig);
+
+  // === Drawing stuff to canvas ===
+
+  // Reseting the canvas (removing drawn things)
+  canFitInvMass->Clear();
+  canFitInvMass->Divide(2,1);
 
   TLatex* latex = new TLatex();
   latex->SetNDC();
-  // latex->SetLineColor(kRed);
 
-	// Fitting Phi
-	const TString sOutputFormat = fsOutputFileFormat;
-  // Overall fitting region
-  Double_t dFittingLow = hInvMass->GetXaxis()->GetXmin();
-  Double_t dFittingHigh = hInvMass->GetXaxis()->GetXmax();
-
-  // InvMass rejection region for sidebands fitting (based on mean ± iNumSigmas*sigma)
-  Double_t dMassLow = 0.;
-  Double_t dMassHigh = 0.;
-
-	UShort_t iNumSigmas = 3; if(task->fFlowFitRejectNumSigmas > 0) iNumSigmas = task->fFlowFitRejectNumSigmas;
-	Double_t dMeanShot = 0;
-	Double_t dSigmaShot = 0;
-
-  // subtraction of BG
-  // normalisation BG to Signal in region of interest
-  const Double_t dNormMassLow = 1.03;
-  const Double_t dNormMassHigh = 1.06;
-
-  Short_t iBinNormLow = hInvMassBG->FindFixBin(dNormMassLow);
-  Short_t iBinNormHigh = hInvMassBG->FindFixBin(dNormMassHigh);
-  printf("Bin low %g | high %g\n",hInvMassBG->GetBinCenter(iBinNormLow),hInvMassBG->GetBinCenter(iBinNormHigh));
-
-  Double_t dIntSignal = 0;
-  Double_t dIntBG = 0;
-  for(Short_t iBin(iBinNormLow); iBin < iBinNormHigh+1; iBin++)
-  {
-    dIntSignal += hInvMass->GetBinContent(iBin);
-    dIntBG += hInvMassBG->GetBinContent(iBin);
-  }
-  Double_t dScaleFact = dIntSignal/dIntBG;
-  // printf("integral: sig %g | bg %g | scale %g\n",dIntSignal,dIntBG,dScaleFact);
-
-  // TODO which one?
-  TH1D* hInvMassBG_scaled = (TH1D*) hInvMassBG->Clone("hInvMassBG_scaled");
-  // hInvMass->Scale(1/dIntSignal);
-  // hInvMassBG_scaled->Scale(dScaleFact);
-  // hInvMassBG_scaled->Scale(1/dScaleFact);
-  hInvMassBG_scaled->SetLineColor(kRed);
-
-  TH1D* hInvMass_subs = (TH1D*) hInvMass->Clone("hInvMass_subs");
-  if(task->fFlowPhiSubtLS) { hInvMass_subs->Add(hInvMassBG_scaled,-1); }
-
-
-  // TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
-	canFitInvMass->Divide(3,2);
-  // canFitInvMass->cd(1);
-  // hInvMass->Draw();
-  // if(task->fFlowPhiSubtLS)
-  // {
-  //   hInvMassBG->Draw("same");
-  //   hInvMassBG_scaled->Draw("same");
-  // }
-  // // canFitInvMass->cd(8);
-  // // hInvMass_subs->Draw();
-
-	TH1D* hInvMass_shot = 0x0;
-	TH1D* hInvMass_side = 0x0;
-	TH1D* hInvMass_residual = 0x0;
-	TH1D* hInvMass_ratio = 0x0;
-
-	TH1D* hFlowMass_side = 0x0;
-
-	const Short_t iNumBinsMassFlow = hFlowMass->GetNbinsX();
-
-	// inv mass fitts
-	TF1* fitShot = 0x0;
-	TF1* fitSide = 0x0;
-	TF1* fitRatio = 0x0;
-
-	// flow mass fits
-	TF1* fitFlowSide = 0x0;
-	TF1* fitFlowTot = 0x0;
-
-	hInvMass_shot = (TH1D*) hInvMass_subs->Clone("hInvMass_shot");
-  hInvMass_shot->SetMaximum(hInvMass_shot->GetMaximum()*2);
-	hInvMass_side = (TH1D*) hInvMass_subs->Clone("hInvMass_side");
-	hInvMass_residual = (TH1D*) hInvMass_subs->Clone("hInvMass_residual");
-  hInvMass_residual->GetYaxis()->SetTitle("Residuals");
-
-  // fitting first shot
-  // Short_t iBinPeakLow = hInvMass_shot->FindFixBin(dInvMassPeakLow);
-  // Short_t iBinPeakHigh = hInvMass_shot->FindFixBin(dInvMassPeakHigh);
-  // for(Short_t bin(iBinPeakLow); bin < iBinPeakHigh; bin++)
-  // {
-  //   // hInvMass_shot->SetBinError(bin,10*hInvMass_subs->GetMaximum());
-  // }
-  // hInvMass_shot->SetMaximum(hInvMass_subs->GetMaximum());
-  // hInvMass_shot->SetMinimum(hInvMass_subs->GetMinimum());
-
-  Debug("====== Fitting InvMass first shot ========","ExtractFlowPhi");
   canFitInvMass->cd(1);
-	fitShot = new TF1("fitShot","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
-	fitShot->SetNpx(10000);
-  fitShot->SetParameter(0,hInvMass_shot->GetMaximum());
-  fitShot->SetParameter(1,1.019445);
-  fitShot->SetParLimits(1,1.018,1.020);
-  fitShot->SetParameter(2,0.005);
-  fitShot->SetParLimits(2,0.004,0.006);
-	// fitShot->SetParameter(1,0.5);
-	// fitShot->SetParLimits(1,0.485,0.515);
-	// fitShot->SetParameter(2,0.01);
-	// fitShot->SetParLimits(2,0.,0.05);
-  // fitShot->SetParameter(3,hInvMass_shot->GetMaximum());
-	hInvMass_shot->Fit("fitShot",sFitOpt.Data());
+  // gPad->SetLogy();
+  hInvMass->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
+  hInvMass->SetMarkerStyle(20);
+  hInvMass->SetStats(0);
+  hInvMass->SetMinimum(0);
+  hInvMass->DrawCopy();
+  fitMass->DrawCopy("same");
+  fitBg->DrawCopy("same");
+  fitSig->DrawCopy("same");
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF()));
+  latex->DrawLatex(0.17,0.75,Form("#color[9]{#mu = %.6f #pm %.6f}",fitMass->GetParameter(iParMass),fitMass->GetParError(iParMass)));
 
-  latex->DrawLatex(0.18,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitShot->GetChisquare(), fitShot->GetNDF(),fitShot->GetChisquare()/fitShot->GetNDF()));
-  latex->DrawLatex(0.18,0.73,Form("#color[8]{M = %.6g#pm%.2g}",fitShot->GetParameter(1),fitShot->GetParError(1)));
-  latex->DrawLatex(0.18,0.65,Form("#color[8]{#Gamma = %0.5g#pm%.2g}",fitShot->GetParameter(2),fitShot->GetParError(2)));
+  if(task->fSpecies == FlowTask::kPhi)
+  {
+    latex->DrawLatex(0.17,0.70,Form("#color[9]{#Gamma = %.6f #pm %.6f}",fitMass->GetParameter(iParWidth),fitMass->GetParError(iParWidth)));
+  }
+  else if(task->fSpecies == FlowTask::kK0s || task->fSpecies == FlowTask::kLambda)
+  {
+    latex->DrawLatex(0.17,0.70,Form("#color[9]{#sigma_{1} = %.6f #pm %.6f}",fitMass->GetParameter(iParWidth),fitMass->GetParError(iParWidth)));
+    latex->DrawLatex(0.17,0.65,Form("#color[9]{#sigma_{2} = %.6f #pm %.6f}",fitMass->GetParameter(iParWidth_2),fitMass->GetParError(iParWidth_2)));
+  }
 
-
-
-	// TODO checking the fitting results
-
-  // extract mean & sigma for sidebands fitting reagion
-  dMeanShot = fitShot->GetParameter(4);
-  dSigmaShot = fitShot->GetParameter(5);
-  // dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
-  // dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
-  dMassLow = 1.005;
-  // Short_t iBinPeakLow = hInvMass_shot->FindFixBin(dInvMassPeakLow);
-  dMassHigh = 1.038;
-
-	Debug(Form("  Fitting region: %f - %f \n", dMassLow,dMassHigh), "ExtractFlowPhi");
-
-  // Excluding mass peak window (setting errors to inf)
-	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
-	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
-	{
-		if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh) { hInvMass_side->SetBinError(iMass,9999999999999); }
-	}
-	hInvMass_side->SetMaximum(0.55*hInvMass_shot->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
-	hInvMass_side->SetMinimum(0);
-	// hInvMass_side->SetMinimum(hInvMass_shot->GetMinimum());
-
-
-  // checking User defined fitting range
-  if(task->fFlowFitRangeLow >= dFittingLow && task->fFlowFitRangeLow < dMassLow) dFittingLow = task->fFlowFitRangeLow;
-  if(task->fFlowFitRangeHigh <= dFittingHigh && task->fFlowFitRangeHigh > dMassHigh) dFittingHigh = task->fFlowFitRangeHigh;
-
-  Debug("====== Fitting InvMass sidebands ========","ExtractFlowPhi");
   canFitInvMass->cd(2);
-  hInvMass_side->Draw();
-	// fitSide = new TF1("fitSide","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
-	fitSide = new TF1("fitSide","pol2(0)",dFittingLow,dFittingHigh);
-	fitSide->SetNpx(10000);
-  // fitSide->SetParameter(0,hInvMass_side->GetMaximum());
-  // fitSide->SetParameter(1,fitShot->GetParameter(1));
-  // fitSide->SetParLimits(1,1.018,1.020);
-  // fitSide->SetParameter(2,fitShot->GetParameter(2));
-  // fitSide->SetParLimits(2,0.004,0.006);
-  // fitSide->SetParameter(3,fitShot->GetParameter(3));
-  // fitSide->SetParameter(4,fitShot->GetParameter(4));
-  // fitSide->SetParameter(5,fitShot->GetParameter(5));
-
-  // fitSide->SetParameter(0,hInvMass_side->GetMaximum());
-  fitSide->SetParameter(1,fitShot->GetParameter(3));
-  // fitSide->SetParLimits(1,1.018,1.020);
-  fitSide->SetParameter(2,fitShot->GetParameter(4));
-  // fitSide->SetParLimits(2,0.004,0.006);
-  fitSide->SetParameter(3,fitShot->GetParameter(5));
-  // fitSide->SetParameter(4,fitShot->GetParameter(4));
-  // fitSide->SetParameter(5,fitShot->GetParameter(5));
-	hInvMass_side->Fit("fitSide",sFitOpt.Data());
-  latex->DrawLatex(0.38,0.15,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitSide->GetChisquare(), fitSide->GetNDF(),fitSide->GetChisquare()/fitSide->GetNDF()));
-
-
-  TF1* fitResBG = new TF1("fitResBG","pol2(0)",dFittingLow,dFittingHigh);
-  // fitResBG->SetParameter(0,fitShot->GetParameter(3));
-  // fitResBG->SetParameter(1,fitShot->GetParameter(4));
-  // fitResBG->SetParameter(2,fitShot->GetParameter(5));
-  fitResBG->SetParameter(0,fitSide->GetParameter(0));
-  fitResBG->SetParameter(1,fitSide->GetParameter(1));
-  fitResBG->SetParameter(2,fitSide->GetParameter(2));
-  fitResBG->SetLineColor(kBlue);
-  fitResBG->SetLineStyle(kDashed);
-  fitResBG->SetLineWidth(2);
-  // fitResBG->Draw("same");
-
-
-  Double_t dContent = 0;
-	for(Short_t iMass(1); iMass < hInvMass->GetNbinsX()+1; iMass++)
-	{
-		dContent = hInvMass_side->GetBinContent(iMass) - fitResBG->Eval(hInvMass_side->GetBinCenter(iMass));
-		hInvMass_residual->SetBinContent(iMass,dContent);
-	}
-  hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
-
-	canFitInvMass->cd(3);
-  hInvMass_residual->SetMaximum(0.1*hInvMass_residual->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
-	hInvMass_residual->Draw();
-
-  TLine* vert = new TLine();
-  vert->SetLineColor(kRed);
-  vert->SetLineStyle(7);
-  vert->DrawLine(task->fFlowFitRangeLow,hInvMass_residual->GetMinimum(),task->fFlowFitRangeLow,hInvMass_residual->GetMaximum());
-  vert->DrawLine(task->fFlowFitRangeHigh,hInvMass_residual->GetMinimum(),task->fFlowFitRangeHigh,hInvMass_residual->GetMaximum());
-
-	hInvMass_ratio->Sumw2();
-	hInvMass_ratio->Divide(hInvMass);
-  hInvMass_ratio->GetYaxis()->SetTitle("signal/total ratio");
-
-  Debug("====== Fitting InvMass sig/tot ratio ========","ExtractFlowPhi");
-	canFitInvMass->cd(4);
-
-	//hInvMass_ratio->Draw();
-	// fitRatio = new TF1("fitRatio","pol2(0)+[3]*TMath::BreitWigner(x,[4],[5])",0.99,1.07);
-	// fitRatio->SetNpx(1000);
-  // fitRatio->SetParameter(0,fitSide->GetParameter(0));
-  // fitRatio->SetParameter(1,fitSide->GetParameter(1));
-  // fitRatio->SetParameter(2,fitSide->GetParameter(2));
-  // fitRatio->SetParameter(3,1);
-  // fitRatio->SetParameter(4,fitSide->GetParameter(4));
-  // fitRatio->SetParLimits(4,1.01,1.03);
-  // fitRatio->SetParameter(5,fitSide->GetParameter(5));
-  // fitRatio->SetParLimits(5,0.004,0.008);
-	// hInvMass_ratio->Fit("fitRatio","R");
-
-	fitRatio = new TF1("fitRatio","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
-	// fitRatio = new TF1("fitRatio","[0]*TMath::BreitWigner(x,[1],[2])+pol3(3)",dFittingLow,dFittingHigh);
-	// fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",dFittingLow,dFittingHigh);
-	// fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",dFittingLow,dFittingHigh);
-	fitRatio->SetNpx(1000);
-  fitRatio->SetParameter(0,0.8);
-  // fitRatio->SetParLimits(0,0.5,1.);
-  fitRatio->SetParameter(1,fitShot->GetParameter(1));
-  fitRatio->SetParLimits(1,1.014,1.025);
-  fitRatio->SetParameter(2,fitShot->GetParameter(2));
-  fitRatio->SetParLimits(2,0.003,0.03);
-  // fitRatio->SetParameter(3,10);
-  // fitRatio->SetParLimits(3,-300,300);
-  // fitRatio->SetParameter(4,10);
-  // fitRatio->SetParLimits(4,-300,300);
-  // fitRatio->SetParameter(5,10);
-  // fitRatio->SetParLimits(5,-300,300);
-  // fitRatio->SetParameter(6,10);
-  // fitRatio->SetParLimits(6,-300,300);
-	hInvMass_ratio->Fit("fitRatio",sFitOpt.Data());
-
-  latex->DrawLatex(0.38,0.15,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitRatio->GetChisquare(), fitRatio->GetNDF(),fitRatio->GetChisquare()/fitRatio->GetNDF()));
-
-
-  // return kFALSE;
-
-	// flow mass Fitting
-	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
-	hFlowMass_side->SetMaximum(1.2*hFlowMass->GetMaximum());
-	hFlowMass_side->SetMinimum(0.8*hFlowMass->GetMinimum());
-  hFlowMass_side->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
-  hFlowMass_side->GetYaxis()->SetTitle("v_{2}^{tot}");
-  hFlowMass->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
-  hFlowMass->GetYaxis()->SetTitle("v_{2}^{tot}");
-
-	// fitting side bands
-  // Excluding mass peak window (setting errors to inf)
-  for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
-  {
-    if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
-      hFlowMass_side->SetBinError(iMass,9999999999999);
-	}
-
-  Debug("====== Fitting FlowMass sidebands ========","ExtractFlowPhi");
-	canFitInvMass->cd(5);
-
-  if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
-  else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
-	// fitFlowSide = new TF1("fitFlowSide","pol3(0)",dFittingLow,dFittingHigh);
-	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
-
-  Debug("====== Fitting FlowMass total ========","ExtractFlowPhi");
-	canFitInvMass->cd(6);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",0.99,1.07);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
-	fitFlowTot = new TF1("fitFlowTot","[0]*([1]*TMath::BreitWigner(x,[2],[3])+pol2(4)) + ( 1-([1]*TMath::BreitWigner(x,[2],[3])+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*([1]*TMath::BreitWigner(x,[2],[3])+pol3(4)) + ( 1-([1]*TMath::BreitWigner(x,[2],[3])+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol3(7)",dFittingLow,dFittingHigh);
-	// Inv mass ratio signal/total
-	// fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-	// fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-	// fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-	// fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-	// fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-	// fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-	// fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
-	// // FlowMass backround / sidebands
-	// fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
-	// fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
-	// fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
-
-  if(task->fFlowFitFixTerms) // fix terms from background flowe stiamtion
-  {
-    // Inv mass ratio signal/total
-
-    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-    // FlowMass backround / sidebands
-    // fitFlowTot->SetParameter(7,fitFlowSide->GetParameter(0));
-    fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
-    fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
-  	// fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(3));
-  }
-  else
-  {
-    // Inv mass ratio signal/total
-    fitFlowTot->SetParameter(0,dFlow);
-    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-    // fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
-    // FlowMass backround / sidebands
-    // fitFlowTot->SetParameter(7,fitFlowSide->GetParameter(0));
-    fitFlowTot->SetParameter(7,fitFlowSide->GetParameter(0));
-    fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(1));
-    // fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(0));
-    // fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
-    // fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
-    // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(3));
-  }
-
-  fitFlowTot->SetLineColor(8);
-	hFlowMass->Fit("fitFlowTot","RIB");
-
-	dFlow = fitFlowTot->GetParameter(0);
-	dFlowError = fitFlowTot->GetParError(0);
-
-  canFitInvMass->cd(6);
-
-  latex->SetNDC();
-  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
-
-
-  fitShot = new TF1("fitShot","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",dFittingLow,dFittingHigh);
-	fitShot->SetNpx(10000);
-	// fitShot->SetParameter(1,0.5);
-	// fitShot->SetParLimits(1,0.485,0.515);
-	// fitShot->SetParameter(2,0.01);
-	// fitShot->SetParLimits(2,0.,0.05);
-  // fitShot->SetParameter(3,hInvMass_shot->GetMaximum());
-	hInvMass_shot->Fit("fitShot",sFitOpt.Data());
-
-
-
-TLegend* leg = new TLegend(0.55,0.3,0.88,0.61);
-leg->SetBorderSize(0);
-leg->SetFillColorAlpha(0,0);
-
-TLegend* leg2 = new TLegend(0.55,0.3,0.88,0.43);
-leg2->SetBorderSize(0);
-leg2->SetFillColorAlpha(0,0);
-
-
-  TF1* fitMass = new TF1("fitMass","[0]*TMath::BreitWigner(x,[1],[2])+pol2(3)",1,1.06);
-	// fitMass->SetNpx(50000);
-  fitMass->SetParameter(0,hInvMass_shot->GetMaximum());
-  fitMass->SetParameter(1,1.019445);
-  fitMass->SetParLimits(1,1.018,1.020);
-  fitMass->SetParameter(2,0.005);
-  fitMass->SetParLimits(2,0.004,0.006);
-  fitMass->SetLineColor(kBlue);
-
-
-  SetStyle();
-
-
-  TLatex * text = new TLatex();
-  text->SetTextFont(42);
-
-  TLatex * text2 = new TLatex();
-  text2->SetTextFont(42);
-  // text2->SetTextSizePixels(22);
-
-
-
-  // TCanvas* canNice = new TCanvas("canNice","canNice",500,1000);
-  TCanvas* canNice = new TCanvas("canNice","canNice",600,800);
-  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
-  pad1->SetBottomMargin(0.0);
-  pad1->SetLeftMargin(0.15);
-  pad1->Draw();
-  TPad *pad2 = new TPad("pad2", "pad2", 0, 0., 1, 0.3);
-  pad2->SetTopMargin(0.0);
-  pad2->SetBottomMargin(0.25);
-  pad2->SetLeftMargin(0.15);
-  pad2->Draw();
-
-  pad1->cd();
-  // canNice->Divide(1,2);
-  // canNice->cd(1);
-  TH1* h1 = pad1->DrawFrame(1.,0.02 ,1.06, 300000);
-  h1->SetStats(0);
-  // h1->SetTitleSize(0.2,"xy");
-  h1->SetTitle(";#it{m}_{inv} (GeV/#it{c}^{2}); Counts");
-  h1->GetXaxis()->SetLabelSize(0.);
-  hInvMass_subs->SetStats(0);
-  hInvMass_subs->SetLineColor(kBlack);
-  // fitMass->SetLineStyle(kDashed);
-  fitMass->SetNpx(300);
-  hInvMass_subs->SetMarkerColor(kBlack);
-  hInvMass_subs->Draw("same");
-  hInvMass_subs->Fit("fitMass","R");
-  fitMass->Draw("same");
-    // TGaxis *axis = new TGaxis( -5, 20, -5, 220, 20,220,510,"");
-    // axis->SetLabelFont(43); // Absolute font size in pixel (precision 3)
-    // axis->SetLabelSize(15);
-    // axis->Draw();
-
-
-  TF1* fitSig = new TF1("fitMass","[0]*TMath::BreitWigner(x,[1],[2])",1,1.06);
-  fitSig->SetParameter(0,fitMass->GetParameter(0));
-  fitSig->SetParameter(1,fitMass->GetParameter(1));
-  fitSig->SetParameter(2,fitMass->GetParameter(2));
-  fitSig->SetParameter(0,fitMass->GetParameter(0));
-  fitSig->SetLineColor(kRed);
-  fitSig->SetNpx(300);
-
-  TF1* fitBg = new TF1("fitMass","pol2(3)",1,1.06);
-  fitBg->SetParameter(3,fitMass->GetParameter(3));
-  fitBg->SetParameter(4,fitMass->GetParameter(4));
-  fitBg->SetParameter(5,fitMass->GetParameter(5));
-  fitBg->SetLineColor(kBlack);
-  fitBg->SetLineStyle(kDashed);
-
-  leg->AddEntry(hInvMass_subs,"data","pl");
-  leg->AddEntry(fitMass,"combined fit","l");
-  leg->AddEntry(fitSig,"#phi signal (Breit-Wigner)","l");
-  leg->AddEntry(fitBg,"background (pol2)","l");
-  // leg->AddEntry(hInvMass_subs,"K^{+}+K^{-} yield","pel");
-  // leg->AddEntry(fitMass,"Breit-Wigner + pol2","l");
-  // leg->AddEntry(fitSig,"#phi #rightarrow K^{+}+K^{-}","l");
-  // leg->AddEntry(fitBg,"comb. bg.","l");
-
-
-
-
-  fitSig->Draw("same");
-  fitBg->Draw("same");
-  leg->Draw();
-
-
-  leg2->AddEntry(fitFlowTot,"#it{v}_{2}^{ tot} fit","l");
-
-  DrawLogo(1, 0.2, 0.83);
-  text->DrawLatexNDC(0.2,0.77,"p-Pb #sqrt{#it{s}_{NN}} = 5.02 TeV");
-  text2->DrawLatexNDC(0.2,0.7,Form("0-20%% (V0A)"));
-  text2->DrawLatexNDC(0.2,0.63,Form("|#eta| < 0.8, 1.5 < #it{p}_{T} < 2 GeV/#it{c}"));
-  text2->DrawLatexNDC(0.65,0.83,Form("#phi #rightarrow K^{+} + K^{-}"));
-
-  pad2->cd();
-  // gPad->SetBottomMargin(0.5);
-  TH1* h2 = pad2->DrawFrame(1.,0.08 ,1.06,0.199 );
+  hFlowMass->GetXaxis()->SetTitle("M_{#phi} (GeV/c^{2})");
+  hFlowMass->SetMarkerStyle(20);
   hFlowMass->SetStats(0);
-  hFlowMass->SetLineColor(kBlack);
-  h2->SetTickLength(0.07,"X");
-  h2->SetTitle(";#it{m}_{K^{+}K^{-}} (GeV/#it{c}^{2}); v_{2}^{tot} {2,|#Delta#eta|>0.8}");
-  h2->SetTitleSize(0.09,"X");
-  h2->SetTitleSize(0.09,"Y");
-  h2->SetTitleOffset(0.7,"Y");
-  // h2->SetLabelSize(0.045,"xyz");
-  h2->SetLabelSize(0.09,"xy");
-  // h2->SetLabelOffset(0.01,"x");
-  // h2->SetLabelOffset(0.01,"y");
-  // h2->SetLabelOffset(0.01,"x");
-  // h2->SetTitleOffset(0.1,"XY");
-  hFlowMass->Draw("same");
-  leg2->Draw();
-  canNice->SaveAs(Form("%s/NICE_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),"Phi",task->fHarmonics,10*task->fEtaGap,1,"pdf"),"pdf");
-  canNice->SaveAs(Form("%s/NICE_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),"Phi",task->fHarmonics,10*task->fEtaGap,1,"eps"),"eps");
-//
+  hFlowMass->DrawCopy();
+  fitVn->DrawCopy("same");
+  // fitFlowSig->DrawCopy("same");
+  // fitFlowBg->DrawCopy("same");
+
+  TString sResult = "v_{2}"; if(fFlowFitCumulants) { sResult = "d_{2}"; }
+  latex->DrawLatex(0.17,0.80,Form("#color[9]{%s = %.4f #pm %.4f}",sResult.Data(),dFlow,dFlowError));
+  latex->DrawLatex(0.17,0.75,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
+  latex->DrawLatex(0.17,0.70,Form("#color[9]{p = %.3g}",fitVn->GetProb()));
 
   return kTRUE;
 }
@@ -3152,513 +2999,6 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
   latex->DrawLatex(0.17,0.75,Form("#color[9]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF()));
 
   return kTRUE;
-}
-//_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowK0s(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
-{
-  //gStyle->SetOptFit(1110);
-
-	if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowK0s"); return kFALSE; }
-	if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowK0s"); return kFALSE; }
-	if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowK0s"); return kFALSE; }
-	if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowK0s"); return kFALSE; }
-
-  // setting fitting options
-  TString sFitOpt = TString("R");
-  if(!fbDebug) sFitOpt.Append("Q");
-
-  hFlowMass->SetMinimum(-0.1);
-  if(hFlowMass->GetMaximum() < 0.5) hFlowMass->SetMaximum(0.5);
-
-	// Reseting the canvas (removing drawn things)
-	canFitInvMass->Clear();
-
-  TLatex* latex = new TLatex();
-  // latex->SetLineColor(kRed);
-  latex->SetNDC();
-
-	// Fitting K0s
-	const TString sOutputFormat = fsOutputFileFormat;
-  // Overall fitting region
-  Double_t dFittingLow = hInvMass->GetXaxis()->GetXmin();
-  Double_t dFittingHigh = hInvMass->GetXaxis()->GetXmax();
-
-  // InvMass rejection region for sidebands fitting (based on mean ± iNumSigmas*sigma)
-  Double_t dMassLow = 0.;
-  Double_t dMassHigh = 0.;
-
-	UShort_t iNumSigmas = 7; if(task->fFlowFitRejectNumSigmas > 0) iNumSigmas = task->fFlowFitRejectNumSigmas;
-	Double_t dMeanShot = 0;
-	Double_t dSigmaShot = 0;
-
-	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
-	canFitInvMass->Divide(3,2);
-
-	TH1D* hInvMass_side = 0x0;
-	TH1D* hInvMass_residual = 0x0;
-	TH1D* hInvMass_ratio = 0x0;
-
-	TH1D* hFlowMass_side = 0x0;
-
-	const Short_t iNumBinsMassFlow = hFlowMass->GetNbinsX();
-
-	// inv mass fitts
-	TF1* fitShot = 0x0;
-	TF1* fitSide = 0x0;
-	TF1* fitRatio = 0x0;
-
-	// flow mass fits
-	TF1* fitFlowSide = 0x0;
-	TF1* fitFlowTot = 0x0;
-
-
-	hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side");
-	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
-
-	Debug("====== Fitting InvMass first shot ========","ExtractFlowK0s");
-	canFitInvMass->cd(1);
-	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",dFittingLow,dFittingHigh);
-	fitShot->SetNpx(10000);
-	fitShot->SetParameter(1,0.5);
-	fitShot->SetParLimits(1,0.485,0.515);
-	fitShot->SetParameter(2,0.01);
-	fitShot->SetParLimits(2,0.,0.05);
-	hInvMass->Fit("fitShot",Form("%s N",sFitOpt.Data()));
-	hInvMass->Draw();
-  fitShot->Draw("same");
-
-
-  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitShot->GetChisquare(), fitShot->GetNDF(),fitShot->GetChisquare()/fitShot->GetNDF()));
-  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitShot->GetParameter(1),fitShot->GetParError(1)));
-  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitShot->GetParameter(2),fitShot->GetParError(2)));
-
-
-
-	// TODO checking the fitting results
-
-  // extract mean & sigma for sidebands fitting reagion
-  dMeanShot = fitShot->GetParameter(1);
-  dSigmaShot = fitShot->GetParameter(2);
-  dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
-  dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
-	Debug(Form("  Fitting region: %f - %f \n", dMassLow,dMassHigh), "ExtractFlowK0s");
-
-  // Excluding mass peak window (setting errors to inf)
-	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
-	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
-	{
-		if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh) { hInvMass_side->SetBinError(iMass,9999999999999); }
-	}
-	canFitInvMass->cd(2);
-	hInvMass_side->SetMaximum(0.2*hInvMass->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
-	hInvMass_side->SetMinimum(0);
-	hInvMass_side->Draw();
-
-  // checking User defined fitting range
-  if(task->fFlowFitRangeLow >= dFittingLow && task->fFlowFitRangeLow < dMassLow) dFittingLow = task->fFlowFitRangeLow;
-  if(task->fFlowFitRangeHigh <= dFittingHigh && task->fFlowFitRangeHigh > dMassHigh) dFittingHigh = task->fFlowFitRangeHigh;
-
-	// fitting background in sidebands
-  Debug("====== Fitting InvMass side bands ========","ExtractFlowK0s");
-	fitSide = new TF1("fitSide","pol3(0)",dFittingLow,dFittingHigh);
-	fitSide->SetNpx(10000);
-	hInvMass_side->Fit("fitSide",sFitOpt.Data());
-
-  // latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitSide->GetChisquare(), fitSide->GetNDF(),fitSide->GetChisquare()/fitSide->GetNDF()));
-
-
-	Double_t dContent = 0;
-	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
-	{
-		dContent = hInvMass_side->GetBinContent(iMass) - fitSide->Eval(hInvMass_side->GetBinCenter(iMass));
-		hInvMass_residual->SetBinContent(iMass,dContent);
-	}
-
-  hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
-  hInvMass_ratio->GetYaxis()->SetTitle("signal/total ratio");
-
-	canFitInvMass->cd(3);
-  hInvMass_residual->SetMaximum(0.01*hInvMass_residual->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
-	hInvMass_residual->Draw();
-  hInvMass_residual->GetYaxis()->SetTitle("Residuals");
-
-
-  TLine* vert = new TLine();
-  vert->SetLineColor(kRed);
-  vert->SetLineStyle(7);
-  vert->DrawLine(task->fFlowFitRangeLow,hInvMass_residual->GetMinimum(),task->fFlowFitRangeLow,hInvMass_residual->GetMaximum());
-  vert->DrawLine(task->fFlowFitRangeHigh,hInvMass_residual->GetMinimum(),task->fFlowFitRangeHigh,hInvMass_residual->GetMaximum());
-
-  hInvMass_ratio->Sumw2();
-  hInvMass_ratio->Divide(hInvMass);
-	// hInvMass_ratio->Divide(hInvMass_ratio,hInvMass,1.,1.,"b");
-
-  Debug("====== Fitting InvMass sig/tot ratio ========","ExtractFlowK0s");
-
-	canFitInvMass->cd(4);
-
-	//hInvMass_ratio->Draw();
-	fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",dFittingLow,dFittingHigh);
-	// fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",dFittingLow,dFittingHigh);
-	// fitRatio = new TF1("fitRatio","gaus(0)+gaus(3)+pol2(6)",dFittingLow,dFittingHigh);
-	fitRatio->SetNpx(1000);
-	fitRatio->SetParameter(0,0.98);
-	fitRatio->SetParLimits(0,0.1,1.);
-	fitRatio->SetParameter(1,0.5);
-	fitRatio->SetParLimits(1,0.48,0.51);
-	fitRatio->SetParameter(2,0.01);
-	fitRatio->SetParLimits(2,0.,0.05);
-	// fitRatio->SetParameter(3,0.3);
-	// fitRatio->SetParLimits(3,0.1,0.9);
-	// fitRatio->SetParameter(4,0.5);
-	// fitRatio->SetParLimits(4,0.48,0.51);
-	// fitRatio->SetParameter(5,0.05);
-	// fitRatio->SetParLimits(5,0.003,0.01);
-	hInvMass_ratio->Fit("fitRatio",sFitOpt.Data());
-
-  // latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitRatio->GetChisquare(), fitRatio->GetNDF(),fitRatio->GetChisquare()/fitRatio->GetNDF()));
-
-
-	// flow mass Fitting
-	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
-	hFlowMass_side->SetMaximum(1.5*hFlowMass->GetMaximum());
-	hFlowMass_side->SetMinimum(0.5*hFlowMass->GetMinimum());
-  hFlowMass_side->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
-  hFlowMass_side->GetYaxis()->SetTitle("v_{2}^{tot}");
-  hFlowMass->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
-  hFlowMass->GetYaxis()->SetTitle("v_{2}^{tot}");
-
-	// fitting side bands
-	for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
-	{
-		// Excluding mass peak window (setting errors to inf)
-		if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
-		{
-			hFlowMass_side->SetBinError(iMass,9999999999999);
-		}
-	}
-
-  Debug("====== Fitting FlowMass sidebands ========","ExtractFlowK0s");
-	canFitInvMass->cd(5);
-
-  if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
-  else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
-
-	// fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
-	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
-
-  Debug("====== Fitting FlowMass total flow ========","ExtractFlowK0s");
-  canFitInvMass->cd(6);
-
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+gaus(4)+pol2(7)) + ( 1-(gaus(1)+gaus(4)+pol3(7)) )*pol1(10)",dFittingLow,dFittingHigh);
-	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
-
-  if(task->fFlowFitFixTerms) // fix terms from background flowe stiamtion
-  {
-    // Inv mass ratio signal/total
-    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-    fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
-    // fitFlowTot->FixParameter(8,fitRatio->GetParameter(7));
-    // fitFlowTot->FixParameter(9,fitRatio->GetParameter(8));
-    // fitFlowTot->FixParameter(10,fitRatio->GetParameter(6));
-    // FlowMass backround / sidebands
-    fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(0));
-    fitFlowTot->FixParameter(9,fitFlowSide->GetParameter(1));
-    // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
-  }
-  else
-  {
-    // Inv mass ratio signal/total
-    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-    fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
-    // fitFlowTot->FixParameter(8,fitRatio->GetParameter(7));
-    // fitFlowTot->FixParameter(9,fitRatio->GetParameter(8));
-    // FlowMass backround / sidebands
-    // fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(0));
-    // fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
-    // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
-  }
-  fitFlowTot->SetParLimits(0,0.,1.);
-	hFlowMass->Fit("fitFlowTot","R");
-
-	dFlow = fitFlowTot->GetParameter(0);
-	dFlowError = fitFlowTot->GetParError(0);
-
-  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
-
-	return kTRUE;
-}
-//_____________________________________________________________________________
-Bool_t ProcessUniFlow::ExtractFlowLambda(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass)
-{
-  if(!task) { Error("Coresponding FlowTask not found!","ExtractFlowLambda"); return kFALSE; }
-	if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowLambda"); return kFALSE; }
-	if(!hFlowMass) { Error("Flow Mass histogram does not exists!","ExtractFlowLambda");	return kFALSE; }
-	if(!canFitInvMass) { Error("Canvas not found!","ExtractFlowLambda"); return kFALSE; }
-
-	// Reseting the canvas (removing drawn things)
-	canFitInvMass->Clear();
-
-  TString sFitOpt = TString("RI");
-  if(!fbDebug) sFitOpt.Append("Q");
-
-  //gStyle->SetOptFit(1110);
-
-    hFlowMass->SetMinimum(-0.1);
-    if(hFlowMass->GetMaximum() < 0.5) hFlowMass->SetMaximum(0.5);
-
-
-  // Fitting Lambda
-  const TString sOutputFormat = fsOutputFileFormat;
-  // Overall fitting region
-  Double_t dFittingLow = hInvMass->GetXaxis()->GetXmin();
-  Double_t dFittingHigh = hInvMass->GetXaxis()->GetXmax();
-
-  // InvMass rejection region for sidebands fitting (based on mean ± iNumSigmas*sigma)
-  Double_t dMassLow = 0.;
-  Double_t dMassHigh = 0.;
-
-  UShort_t iNumSigmas = 6; if(task->fFlowFitRejectNumSigmas > 0) iNumSigmas = task->fFlowFitRejectNumSigmas;
-  Double_t dMeanShot = 0;
-  Double_t dSigmaShot = 0;
-
-  TLatex* latex = new TLatex();
-  // latex->SetLineColor(kRed);
-  latex->SetNDC();
-
-	//TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1200,1200);
-	canFitInvMass->Divide(3,2);
-
-	TH1D* hInvMass_side = 0x0;
-	TH1D* hInvMass_residual = 0x0;
-	TH1D* hInvMass_ratio = 0x0;
-
-	TH1D* hFlowMass_side = 0x0;
-
-	const Short_t iNumBinsMassFlow = hFlowMass->GetNbinsX();
-
-	// inv mass fitts
-	TF1* fitShot = 0x0;
-	TF1* fitSide = 0x0;
-	TF1* fitRatio = 0x0;
-
-	// flow mass fits
-	TF1* fitFlowSide = 0x0;
-	TF1* fitFlowTot = 0x0;
-
-
-	hInvMass_side = (TH1D*) hInvMass->Clone("hInvMass_side");
-	hInvMass_residual = (TH1D*) hInvMass->Clone("hInvMass_residual");
-	hInvMass_residual->GetYaxis()->SetTitle("Residuals");
-
-  Debug("====== Fitting InvMass first shot ========","ExtractFlowLambda");
-  canFitInvMass->cd(1);
-	// fitShot = new TF1("fitShot","gaus(0)+pol2(3)",dFittingLow,dFittingHigh);
-	fitShot = new TF1("fitShot","gaus(0)+pol2(3)",1.095,1.135);
-	fitShot->SetNpx(10000);
-	fitShot->SetParameter(1,1.115);
-	fitShot->SetParLimits(1,1.113,1.12);
-	fitShot->SetParameter(2,0.001);
-  fitShot->SetParLimits(2,0.,0.0025);
-  hInvMass->Fit("fitShot",Form("%s N",sFitOpt.Data()));
-  hInvMass->Draw();
-  fitShot->Draw("same");
-
-  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitShot->GetChisquare(), fitShot->GetNDF(),fitShot->GetChisquare()/fitShot->GetNDF()));
-  latex->DrawLatex(0.17,0.73,Form("#color[8]{#mu = %.6g#pm%.2g}",fitShot->GetParameter(1),fitShot->GetParError(1)));
-  latex->DrawLatex(0.17,0.65,Form("#color[8]{#sigma = %0.5g#pm%.2g}",fitShot->GetParameter(2),fitShot->GetParError(2)));
-
-
-
-
-	// TODO checking the fitting results
-
-	// extract mean & sigma for sidebands fitting reagion
-	dMeanShot = fitShot->GetParameter(1);
-	dSigmaShot = fitShot->GetParameter(2);
-	dMassLow = dMeanShot - iNumSigmas*dSigmaShot;
-	dMassHigh = dMeanShot + iNumSigmas*dSigmaShot;
-  Debug(Form(" Fitting region: %f - %f\n", dMassLow,dMassHigh),"ExtractFlowLambda");
-
-  dMassLow = 1.105;
-  dMassHigh = 1.131;
-
-	const Short_t iNumBinsMass = hInvMass->GetNbinsX();
-	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
-	{
-		// Excluding mass peak window (setting errors to inf)
-		if(hInvMass_side->GetBinCenter(iMass) > dMassLow && hInvMass_side->GetBinCenter(iMass) < dMassHigh)
-		{
-			hInvMass_side->SetBinError(iMass,9999999999999);
-		}
-	}
-	canFitInvMass->cd(2);
-	hInvMass_side->SetMaximum(0.55*hInvMass->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
-	hInvMass_side->SetMinimum(0);
-	hInvMass_side->Draw();
-
-  // checking User defined fitting range
-  if(task->fFlowFitRangeLow >= dFittingLow && task->fFlowFitRangeLow < dMassLow) dFittingLow = task->fFlowFitRangeLow;
-  if(task->fFlowFitRangeHigh <= dFittingHigh && task->fFlowFitRangeHigh > dMassHigh) dFittingHigh = task->fFlowFitRangeHigh;
-
-  Debug("====== Fitting InvMass sidebands ========","ExtractFlowLambda");
-  	fitSide = new TF1("fitSide","pol3(0)",dFittingLow,dFittingHigh);
-	fitSide->SetNpx(10000);
-	hInvMass_side->Fit("fitSide",sFitOpt.Data());
-  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitSide->GetChisquare(), fitSide->GetNDF(),fitSide->GetChisquare()/fitSide->GetNDF()));
-
-	Double_t dContent = 0;
-	for(Short_t iMass(1); iMass < iNumBinsMass+1; iMass++)
-	{
-		dContent = hInvMass_side->GetBinContent(iMass) - fitSide->Eval(hInvMass_side->GetBinCenter(iMass));
-		hInvMass_residual->SetBinContent(iMass,dContent);
-	}
-
-  hInvMass_ratio = (TH1D*) hInvMass_residual->Clone("hInvMass_ratio");
-  hInvMass_ratio->GetYaxis()->SetTitle("signal/total ratio");
-
-
-  canFitInvMass->cd(3);
-  hInvMass_residual->SetMaximum(0.1*hInvMass_residual->GetMaximum()); // setting maximum & minimum (otherwise overshoteed with errors)
-	hInvMass_residual->Draw();
-
-  TLine* vert = new TLine();
-  vert->SetLineColor(kRed);
-  vert->SetLineStyle(7);
-  vert->DrawLine(task->fFlowFitRangeLow,hInvMass_residual->GetMinimum(),task->fFlowFitRangeLow,hInvMass_residual->GetMaximum());
-  vert->DrawLine(task->fFlowFitRangeHigh,hInvMass_residual->GetMinimum(),task->fFlowFitRangeHigh,hInvMass_residual->GetMaximum());
-
-
-	hInvMass_ratio->Sumw2();
-	hInvMass_ratio->Divide(hInvMass);
-	hInvMass_ratio->SetMinimum(-0.5);
-	hInvMass_ratio->SetMaximum(1.);
-
-  Debug("====== Fitting InvMass sig/tot ratio ========","ExtractFlowLambda");
-  canFitInvMass->cd(4);
-	//hInvMass_ratio->Draw();
-	fitRatio = new TF1("fitRatio","gaus(0)+pol2(3)",dFittingLow,dFittingHigh);
-	// fitRatio = new TF1("fitRatio","gaus(0)+pol3(3)",dFittingLow,dFittingHigh);
-	// fitRatio = new TF1("fitRatio","gaus(0)+gaus(3)+pol2(6)",dFittingLow,dFittingHigh);
-	fitRatio->SetNpx(1000);
-	fitRatio->SetParameter(0,hInvMass_ratio->GetMaximum());
-  fitRatio->SetParLimits(0,0.7,1.);
-	fitRatio->SetParameter(1,1.115);
-	fitRatio->SetParameter(2,0.001);
-	// fitRatio->SetParameter(3,0.98);
-  // fitRatio->SetParLimits(3,0.,5.);
-	// fitRatio->SetParameter(4,1.115);
-	// fitRatio->SetParameter(5,0.005);
-	// fitRatio->SetParLimits(5,0.01,0.3);
-	hInvMass_ratio->Fit("fitRatio",sFitOpt.Data());
-  latex->DrawLatex(0.17,0.81,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitRatio->GetChisquare(), fitRatio->GetNDF(),fitRatio->GetChisquare()/fitRatio->GetNDF()));
-
-	// flow mass Fitting
-	hFlowMass_side = (TH1D*) hFlowMass->Clone("hFlowMass_side");
-	hFlowMass_side->SetMaximum(1.5*hFlowMass->GetMaximum());
-	hFlowMass_side->SetMinimum(0.5*hFlowMass->GetMinimum());
-  hFlowMass_side->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
-  hFlowMass_side->GetYaxis()->SetTitle("v_{2}^{tot}");
-  hFlowMass->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
-  hFlowMass->GetYaxis()->SetTitle("v_{2}^{tot}");
-
-	// fitting side bands
-	for(Short_t iMass(1); iMass < iNumBinsMassFlow+1; iMass++)
-	{
-		// Excluding mass peak window (setting errors to inf)
-		if(hFlowMass_side->GetBinCenter(iMass) > dMassLow && hFlowMass_side->GetBinCenter(iMass) < dMassHigh)
-		{
-			hFlowMass_side->SetBinError(iMass,9999999999999);
-		}
-	}
-  Debug("====== Fitting FlowMass sidebands ========","ExtractFlowLambda");
-  canFitInvMass->cd(5);
-
-  if(task->fFlowFitFixTerms) { fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh); }
-  else { fitFlowSide = new TF1("fitFlowSide","pol1(0)",hFlowMass_side->GetXaxis()->GetXmin(),hFlowMass_side->GetXaxis()->GetXmax()); }
-
-  // fitFlowSide = new TF1("fitFlowSide","pol1(0)",dFittingLow,dFittingHigh);
-	// fitFlowSide = new TF1("fitFlowSide","pol2(0)",dFittingLow,dFittingHigh);
-	hFlowMass_side->Fit("fitFlowSide",sFitOpt.Data());
-
-  Debug("====== Fitting FlowMass total flow ========","ExtractFlowLambda");
-	canFitInvMass->cd(6);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+gaus(4)+pol2(7)) + ( 1-(gaus(1)+gaus(4)+pol2(7)) )*pol1(9)",dFittingLow,dFittingHigh);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+gaus(4)+pol3(7)) + ( 1-(gaus(1)+gaus(4)+pol3(7)) )*pol1(11)",dFittingLow,dFittingHigh);
-	fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol2(4)) + ( 1-(gaus(1)+pol2(4)) )*pol1(7)",dFittingLow,dFittingHigh);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol1(8)",dFittingLow,dFittingHigh);
-	// fitFlowTot = new TF1("fitFlowTot","[0]*(gaus(1)+pol3(4)) + ( 1-(gaus(1)+pol3(4)) )*pol2(8)",dFittingLow,dFittingHigh);
-
-  if(task->fFlowFitFixTerms) // fix terms from background flowe stiamtion
-  {
-    // Inv mass ratio signal/total
-    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-    // fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
-    // fitFlowTot->FixParameter(8,fitRatio->GetParameter(7));
-    // fitFlowTot->FixParameter(9,fitRatio->GetParameter(8));
-    // fitFlowTot->FixParameter(10,fitRatio->GetParameter(9));
-    // FlowMass backround / sidebands
-    fitFlowTot->FixParameter(7,fitFlowSide->GetParameter(0));
-    fitFlowTot->FixParameter(8,fitFlowSide->GetParameter(1));
-    // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
-  }
-  else
-  {
-    // Inv mass ratio signal/total
-    fitFlowTot->FixParameter(1,fitRatio->GetParameter(0));
-    fitFlowTot->FixParameter(2,fitRatio->GetParameter(1));
-    fitFlowTot->FixParameter(3,fitRatio->GetParameter(2));
-    fitFlowTot->FixParameter(4,fitRatio->GetParameter(3));
-    fitFlowTot->FixParameter(5,fitRatio->GetParameter(4));
-    fitFlowTot->FixParameter(6,fitRatio->GetParameter(5));
-    // fitFlowTot->FixParameter(7,fitRatio->GetParameter(6));
-    // fitFlowTot->FixParameter(8,fitRatio->GetParameter(7));
-    // fitFlowTot->FixParameter(9,fitRatio->GetParameter(8));
-    // FlowMass backround / sidebands
-    fitFlowTot->SetParameter(0,dFlow);
-    // fitFlowTot->SetParLimits(0,0.01,0.5);
-    // if(dFlow > 0.01) fitFlowTot->SetParLimits(0,0.5*dFlow,2*dFlow);
-
-
-    fitFlowTot->SetParameter(7,fitFlowSide->GetParameter(0));
-    fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(1));
-    // fitFlowTot->SetParameter(8,fitFlowSide->GetParameter(0));
-    // fitFlowTot->SetParameter(9,fitFlowSide->GetParameter(1));
-    // fitFlowTot->SetParameter(12,fitFlowSide->GetParameter(1));
-    // fitFlowTot->FixParameter(10,fitFlowSide->GetParameter(2));
-  }
-  hFlowMass->SetMinimum(-0.1);
-  hFlowMass->SetMaximum(0.5);
-	hFlowMass->Fit("fitFlowTot","RIB");
-
-	dFlow = fitFlowTot->GetParameter(0);
-	dFlowError = fitFlowTot->GetParError(0);
-
-  canFitInvMass->cd(6);
-
-  latex->DrawLatex(0.2,0.83,Form("#color[8]{v_{2} = %.3g#pm%.2g}",dFlow,dFlowError));
-  latex->DrawLatex(0.2,0.75,Form("#color[8]{#chi^{2}/ndf = %.3g/%d = %.3g}",fitFlowTot->GetChisquare(), fitFlowTot->GetNDF(),fitFlowTot->GetChisquare()/fitFlowTot->GetNDF()));
-
-	return kTRUE;
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Fatal(TString sMsg, TString sMethod)
