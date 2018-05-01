@@ -912,7 +912,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   if(!task) { Error("Task not valid!","ProcessReconstructed"); return kFALSE; }
   // if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
-
   TList* listMerge = 0x0;
   // preparing particle dependent variables for switch
   //  -- input histos / profiles with entries and correlations
@@ -1193,6 +1192,10 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         return kFALSE;
     }
 
+    // setting the flow
+    hFlow->SetBinContent(binPt+1,dFlow);
+    hFlow->SetBinError(binPt+1,dFlowError);
+
     ffFitsFile->cd();
     listFits->Write(Form("fits_%s_cent%d_pt%d",sSpeciesName.Data(),iMultBin,binPt),TObject::kSingleKey);
 
@@ -1232,19 +1235,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     fitInvMass->DrawCopy("same");
     latex->DrawLatex(0.13,0.2,Form("#color[9]{#chi2/ndf = %.1f/%d = %.1f (p=%.3f)}",fitInvMass2->GetChisquare(), fitInvMass2->GetNDF(),fitInvMass2->GetChisquare()/fitInvMass2->GetNDF(),fitInvMass2->GetProb()));
     latex->DrawLatex(0.13,0.8,Form("#color[9]{%1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
-
-
-    if(TMath::Abs(dFlow) > 1 )
-    {
-      hFlow->SetBinContent(binPt+1,0);
-      hFlow->SetBinError(binPt+1,0);
-    }
-    else
-    {
-      hFlow->SetBinContent(binPt+1,dFlow);
-      hFlow->SetBinError(binPt+1,dFlowError);
-    }
-
   } // endfor {binPt}
 
   // task->fCanvas->Draw();
