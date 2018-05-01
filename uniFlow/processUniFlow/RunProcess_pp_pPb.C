@@ -14,14 +14,14 @@ void RunProcess_pp_pPb()
 	Double_t dEtaGap = 0.8;	TString sEtaGap = "gap08";
 
 	TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua";
-	TString sOutputFilePath = sInputPath+"/output_binning-3-0204060100/"+sEtaGap+"/";
+	TString sOutputFilePath = sInputPath+"/output_binning-3/"+sEtaGap+"/";
 
 	TString sInputPathPP = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua";
 	TString sOutputFilePathPP = sInputPathPP+"/output_binning-3/"+sEtaGap+"/";
 
 	Double_t dMultBinningPP[] = {0,100};
-	// Double_t dMultBinning[] = {0,20,40,60,100};
-	Double_t dMultBinning[] = {0,10,20,40,60,100};
+	Double_t dMultBinning[] = {0,20,40,60,100};
+	// Double_t dMultBinning[] = {0,10,20,40,60,100};
 
 	Double_t dPtBinningPID[] = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,7.0};
 	Double_t dPtBinningProton[] = {0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.,1.2,1.4,1.6,1.8,2.,2.2,2.4,2.6,3.0,3.5,4.2,5.0,7.0};
@@ -140,7 +140,7 @@ void RunProcess_pp_pPb()
 	processPP->AddTask(taskK0s);
 	processPP->AddTask(taskLambda);
 	processPP->AddTask(taskPhi);
-	// processPP->Run();
+	processPP->Run();
 
 	return;
 }
