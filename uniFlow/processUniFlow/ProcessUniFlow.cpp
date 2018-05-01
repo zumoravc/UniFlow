@@ -1251,6 +1251,34 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   ffOutputFile->cd();
   hFlow->Write();
 
+  if(fFlowFitCumulants)
+  {
+    TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+    if(!hRefFlow) { Error("Something went wrong when running automatic refs flow task:","ProcessReconstructed"); return kFALSE; }
+
+    TH1D* hFlow_vn = new TH1D(Form("hFlow2_%s_harm%d_gap%02.2g_cent%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2 | Gap %g} (%g - %g); #it{p}_{T} (GeV/#it{c})",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1]), task->fNumPtBins,task->fPtBinsEdges);
+
+    Double_t dRefFlow = hRefFlow->GetBinContent(iMultBin+1);
+    Double_t dRefFlowErr = hRefFlow->GetBinError(iMultBin+1);
+    Debug(Form("Ref (bin %d): %g +- %g\n",iMultBin,dRefFlow,dRefFlowErr),"ProcessReconstructed");
+
+    for(Int_t bin(1); bin < hFlow_vn->GetNbinsX()+1; ++bin)
+    {
+      if(dRefFlow == 0.0) continue;
+
+      Double_t dContent = hFlow->GetBinContent(bin);
+      Double_t dError = hFlow->GetBinError(bin);
+
+      Double_t dCont = dContent / dRefFlow;
+      Double_t dErrSq = TMath::Power(dError/dRefFlow,2) + TMath::Power(dRefFlowErr*dContent/(dRefFlow*dRefFlow),2) - 2*(dError*dRefFlowErr*dContent*TMath::Power(dRefFlow,-3));
+
+      hFlow_vn->SetBinContent(bin,dCont);
+      hFlow_vn->SetBinError(bin,TMath::Sqrt(dErrSq));
+    }
+
+    hFlow_vn->Write();
+  }
+
   return kTRUE;
 }
 //_____________________________________________________________________________
