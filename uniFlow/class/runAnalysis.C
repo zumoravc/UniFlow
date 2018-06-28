@@ -157,7 +157,7 @@ void runAnalysis()
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
-        chain->Add("~/NBI/Flow/data/2016/LHC16l/000259888/pass1/AOD/001/AliAOD.root");
+        chain->Add("~/Codes/ALICE/Flow/data/2016/LHC16l/000259888/pass1/AOD/001/AliAOD.root");
         // chain->Add("~/NBI/Flow/data/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
