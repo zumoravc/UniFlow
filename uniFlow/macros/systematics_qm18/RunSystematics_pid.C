@@ -13,7 +13,7 @@ void RunSystematics_pid()
 	TString sEtaGaps[] = {"gap00","gap04","gap08"};
 	Int_t iNumGaps = sizeof(dEtaGaps)/sizeof(dEtaGaps[0]);
 
-	TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/pid/merged-16qt";
+	TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/pid/merged-16q-nua";
 
 	TString sTags[] = {"3sigma","bayes90"};
 	Int_t iNumTags = 2;
@@ -90,7 +90,7 @@ void RunSystematics_pid()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
  	FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
-	taskK0s->SetFittingOneGo(kTRUE);
+	// taskK0s->SetFittingOneGo(kTRUE);
 	taskK0s->SetNumSamples(iNumSamples);
 	taskK0s->SetHarmonics(2);
 	// taskK0s->SetEtaGap(dEtaGap);
@@ -103,7 +103,7 @@ void RunSystematics_pid()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
 	FlowTask* taskLambda = new FlowTask(FlowTask::kLambda	);
-	taskLambda->SetFittingOneGo(kTRUE);
+	// taskLambda->SetFittingOneGo(kTRUE);
 	taskLambda->SetNumSamples(iNumSamples);
 	taskLambda->SetHarmonics(2);
 	// taskLambda->SetEtaGap(dEtaGap);
@@ -116,7 +116,7 @@ void RunSystematics_pid()
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
 	FlowTask* taskPhi = new FlowTask(FlowTask::kPhi);
-	taskPhi->SetFittingOneGo(kTRUE);
+	// taskPhi->SetFittingOneGo(kTRUE);
 	taskPhi->SetNumSamples(iNumSamples);
 	taskPhi->SetHarmonics(2);
 	// taskPhi->SetEtaGap(dEtaGap);

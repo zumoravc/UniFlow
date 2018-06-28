@@ -16,8 +16,8 @@ TH1D* ProcessList(TList* listDiff, TList* listBarlow, Double_t dCutBarlow);
 
 Double_t dCutBarlow = 1.0;
 
-TString sTopInputPath = "./out/";
-TString sOutPath = "./out/figures_wBarlowCheck/";
+TString sTopInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-test/";
+TString sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-test/figures_wBarlowCheck/";
 // TString sOutPath = "./out/figures_noFB/";
 // TString sOutPath = "./out/figures_wBarlowCheck_noFB/";
 
@@ -25,9 +25,9 @@ TString sOutPath = "./out/figures_wBarlowCheck/";
 // TString sSpecies[] = {"Pion","Kaon","Proton","Phi"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "pid/3sigma", "pid/bayes90"};
 // TString sSpecies[] = {"K0s","Lambda"}; TString sFiles[] = {"tracking/cls", "tracking/PV","v0s/3sigma", "v0s/CPA", "v0s/decayRad", "v0s/DCAdaughters"};
 
-// TString sSpecies[] = {"Charged"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB"};
+TString sSpecies[] = {"Charged"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB"};
 // TString sSpecies[] = {"Pion","Kaon","Proton","Phi"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB", "pid/3sigma", "pid/bayes90"};
-TString sSpecies[] = {"K0s","Lambda"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB","v0s/3sigma", "v0s/CPA", "v0s/decayRad", "v0s/DCAdaughters"};
+// TString sSpecies[] = {"K0s","Lambda"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB","v0s/3sigma", "v0s/CPA", "v0s/decayRad", "v0s/DCAdaughters"};
 
 // // TString sSpecies[] = {"Charged"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB"};
 // // TString sSpecies[] = {"Pion","Kaon","Proton","Phi"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB", "pid/3sigma", "pid/bayes90"};
@@ -125,8 +125,6 @@ void EvaluateSyst()
       fileOut->cd();
       hSum->Write(Form("hSum_cent%d",iCent));
     }
-
-
   }
 
   return;

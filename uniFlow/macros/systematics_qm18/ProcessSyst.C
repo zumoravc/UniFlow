@@ -1,15 +1,18 @@
 #include "TFile.h"
 #include "TH1.h"
+#include "TF1.h"
 #include "TList.h"
 #include "TCanvas.h"
 #include "TPad.h"
 #include "TLine.h"
 #include "TLegend.h"
+#include "TLatex.h"
 #include "TMath.h"
 #include "TSystem.h"
 
 TH1D* DivideHistos(TH1* nom, TH1* denom, Bool_t bCor = kFALSE);
 TH1D* BarlowTest(TH1* nom, TH1* denom);
+TH1D* ApplyBarlow(TH1* diff, TH1* barlow, Double_t dCut);
 TH1D* Diff(TH1* ratio);
 void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircle, Bool_t showStats = kFALSE);
 TList* PrepareCanvas(TCanvas* can);
@@ -20,20 +23,22 @@ Color_t colSyst = kBlue+2;
 Int_t markBase = kOpenSquare;
 Int_t markSyst = kFullCircle;
 
+Double_t dBarlowCut = -1.0;
+
 void ProcessSyst()
 {
   TString sGap = "gap04";
 
-  // TString sType = "tracking"; TString sTag[] = {"FB","PV","cls"}; TString sSpecies[] = {"Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
-  TString sType = "pid"; TString sTag[] = {"3sigma","bayes90"}; TString sSpecies[] = {"Pion","Kaon","Proton","Phi"};
+  TString sType = "tracking"; TString sTag[] = {"FB","PV","cls"}; TString sSpecies[] = {"Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+  // TString sType = "pid"; TString sTag[] = {"3sigma","bayes90"}; TString sSpecies[] = {"Pion","Kaon","Proton","Phi"};
   // TString sType = "v0s"; TString sTag[] = {"3sigma","decayRad","DCAdaughters","CPA"}; TString sSpecies[] = {"K0s","Lambda"};
   Int_t iNumTags = sizeof(sTag)/sizeof(sTag[0]);
   Int_t iNumSpecies = sizeof(sSpecies)/sizeof(sSpecies[0]);
 
   TString sInputBase = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt/output_binning-3/"+sGap+"/Subtracted.root";
-  TString sOutputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-binning-3/"+sType+"/";
+  TString sOutputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-test/"+sType+"/";
 
-  TString sCentLabels[] = {"0-10%","10-20%","20-40%","40-60%","60-100%"};
+  TString sCentLabels[] = {"0-10%","10-20%","20-40%","40-60%"};
   Int_t iNumCent = sizeof(sCentLabels)/sizeof(sCentLabels[0]);
   // Int_t iNumCent = 1;
 
@@ -54,6 +59,9 @@ void ProcessSyst()
 
     for(Int_t iSpecies(0); iSpecies < iNumSpecies; ++iSpecies)
     {
+
+      TH1D* histOverSyst = new TH1D("histOverSyst","histOverSyst; cent bin; %%", iNumCent,0, iNumCent);
+
       for(Int_t iCent(0); iCent < iNumCent; ++iCent)
       {
         TString sHistName = Form("hFlow2_%s_harm2_%s_cent%d",sSpecies[iSpecies].Data(),sGap.Data(),iCent);
@@ -78,6 +86,17 @@ void ProcessSyst()
         if(!histBarlow) { printf("ERROR : Barlow failed\n"); return; }
         StyleHist(histBarlow,colSyst,markSyst);
 
+        // TH1D* histDiff_clone = (TH1D*) histDiff->Clone(Form("%s_clone",histDiff->GetName()));
+        TH1D* histDiff_clone = ApplyBarlow(histDiff,histBarlow,dBarlowCut);
+        TF1* fitDiff = new TF1("fitDiff","[0]",histDiff->GetXaxis()->GetXmin(),histDiff->GetXaxis()->GetXmax());
+        histDiff_clone->Fit("fitDiff","MINR");
+
+        TF1* fitRatio = new TF1("fitRatio","[0]",histRatio->GetXaxis()->GetXmin(),histRatio->GetXaxis()->GetXmax());
+        histRatio->Fit("fitRatio","MINR");
+
+        histOverSyst->SetBinContent(iCent+1, fitDiff->GetParameter(0));
+        histOverSyst->SetBinError(iCent+1, fitDiff->GetParError(0));
+
         TList* listOut = new TList();
 
         histBase->SetNameTitle("histBase",Form("%s (%s): %s; p_{T} (GeV/c); v_{2}{2,%s}",sSpecies[iSpecies].Data(),sCentLabels[iCent].Data(),sTag[iTag].Data(),sGap.Data()));
@@ -90,9 +109,14 @@ void ProcessSyst()
         listOut->Add(histRatio);
         listOut->Add(histDiff);
         listOut->Add(histBarlow);
+        listOut->Add(fitDiff);
 
         fileOutput->cd();
         listOut->Write(Form("%s_cent%d",sSpecies[iSpecies].Data(),iCent),TObject::kSingleKey);
+
+        TLatex* latex = new TLatex();
+        latex->SetTextSize(0.05);
+        latex->SetNDC();
 
         TLegend* leg = new TLegend(0.55,0.15,0.88,0.38);
         leg->SetBorderSize(0);
@@ -136,6 +160,7 @@ void ProcessSyst()
         histRatio->SetTitleOffset(1.5,"X");
 
         histRatio->Draw();
+        fitRatio->Draw("same");
         lineUnity->DrawLine(histRatio->GetXaxis()->GetXmin(),1.0,histRatio->GetXaxis()->GetXmax(),1.0);
 
         can->cd(3);
@@ -149,6 +174,8 @@ void ProcessSyst()
         histDiff->SetTitleOffset(2.1,"Y");
         histDiff->SetTitleOffset(1.5,"X");
         histDiff->DrawCopy();
+        fitDiff->DrawCopy("same");
+        latex->DrawLatex(0.2,0.8,Form("#color[2]{%.2f #pm %.2f}",fitDiff->GetParameter(0), fitDiff->GetParError(0)));
 
         can->cd(4);
         gPad->SetBottomMargin(0.13);
@@ -161,12 +188,17 @@ void ProcessSyst()
         histBarlow->SetTitleOffset(2.1,"Y");
         histBarlow->SetTitleOffset(1.5,"X");
         histBarlow->DrawCopy();
+        lineUnity->DrawLine(histRatio->GetXaxis()->GetXmin(),1.0,histRatio->GetXaxis()->GetXmax(),1.0);
 
 
         TString sOut = Form("%s/plots_%s",sOutputPath.Data(),sTag[iTag].Data());
         gSystem->mkdir(sOut.Data(),kTRUE);
         can->SaveAs(Form("%s/%s_cent%d.pdf",sOut.Data(),sSpecies[iSpecies].Data(),iCent));
       }
+      TCanvas* canOverSyst = new TCanvas("canOverSyst","canOverSyst",400,400);
+      canOverSyst->cd();
+      histOverSyst->DrawCopy();
+      canOverSyst->SaveAs(Form("%s/plots_%s/%s_over.pdf",sOutputPath.Data(),sTag[iTag].Data(),sSpecies[iSpecies].Data()));
     }
   }
 
@@ -286,6 +318,25 @@ TH1D* BarlowTest(TH1* nom, TH1* denom)
   hBarlow->SetMinimum(0.0);
 
   return hBarlow;
+}
+// ==================================================================================================================
+TH1D* ApplyBarlow(TH1* diff, TH1* barlow, Double_t dCut)
+{
+  if(!diff) { printf("ERROR-ApplyBarlow : no diff\n"); return 0x0; }
+  if(!barlow) { printf("ERROR-ApplyBarlow : no barlow\n"); return 0x0; }
+
+  TH1D* after = (TH1D*) diff->Clone(Form("%s_Barlowed",diff->GetName()));
+  if(dCut < 0.0) { return after; }
+
+  for(Int_t iBin(1); iBin < after->GetNbinsX()+1; ++iBin)
+  {
+    if(barlow->GetBinContent(iBin) <= dCut)
+    {
+      after->SetBinError(iBin, 999.9);
+    }
+  }
+
+  return after;
 }
 // ==================================================================================================================
 TList* PrepareCanvas(TCanvas* can)
