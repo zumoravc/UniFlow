@@ -1,202 +1,301 @@
 #include "TFile.h"
 #include "TH1.h"
+#include "TF1.h"
 #include "TList.h"
 #include "TCanvas.h"
 #include "TPad.h"
 #include "TLine.h"
 #include "TLegend.h"
+#include "TLatex.h"
 #include "TMath.h"
+#include "TColor.h"
 #include "TSystem.h"
 #include "TStyle.h"
-#include "TColor.h"
 
-void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircle, Bool_t showStats = kFALSE);
+// void Eval_single(TString sSpecies, Double_t* dDiffs, Bool_t bPtDep);
 void SetCustomPalette();
-TH1D* ProcessList(TList* listDiff, TList* listBarlow, Double_t dCutBarlow);
 
-Double_t dCutBarlow = 1.0;
-
-TString sTopInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-test/";
-TString sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-test/figures_wBarlowCheck/";
-// TString sOutPath = "./out/figures_noFB/";
-// TString sOutPath = "./out/figures_wBarlowCheck_noFB/";
-
-// TString sSpecies[] = {"Charged"}; TString sFiles[] = {"tracking/cls", "tracking/PV"};
-// TString sSpecies[] = {"Pion","Kaon","Proton","Phi"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "pid/3sigma", "pid/bayes90"};
-// TString sSpecies[] = {"K0s","Lambda"}; TString sFiles[] = {"tracking/cls", "tracking/PV","v0s/3sigma", "v0s/CPA", "v0s/decayRad", "v0s/DCAdaughters"};
-
-TString sSpecies[] = {"Charged"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB"};
-// TString sSpecies[] = {"Pion","Kaon","Proton","Phi"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB", "pid/3sigma", "pid/bayes90"};
-// TString sSpecies[] = {"K0s","Lambda"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB","v0s/3sigma", "v0s/CPA", "v0s/decayRad", "v0s/DCAdaughters"};
-
-// // TString sSpecies[] = {"Charged"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB"};
-// // TString sSpecies[] = {"Pion","Kaon","Proton","Phi"}; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB", "pid/3sigma", "pid/bayes90"};
-// TString sSpecies = "Kaon"; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB", "pid/3sigma", "pid/bayes90"};
-// // TString sSpecies = "Proton"; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB", "pid/3sigma", "pid/bayes90"};
-// // TString sSpecies = "K0s"; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB","v0s/3sigma", "v0s/CPA", "v0s/decayRad", "v0s/DCAdaughters"};
-// // TString sSpecies = "Lambda"; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB","v0s/3sigma", "v0s/CPA", "v0s/decayRad", "v0s/DCAdaughters"};
-// // TString sSpecies = "Phi"; TString sFiles[] = {"tracking/cls", "tracking/PV", "tracking/FB", "pid/3sigma", "pid/bayes90"};
-Int_t iNumFiles = sizeof(sFiles)/sizeof(sFiles[0]);
-Int_t iNumSpecies = sizeof(sSpecies)/sizeof(sSpecies[0]);
 
 TString sCentLabel[] = {"0-10%","10-20%","20-40%","40-60%"};
-Int_t iNumCent = sizeof(sCentLabel)/sizeof(sCentLabel[0]);
+Int_t iNumCent = 4;
 
-Color_t colors[] = {kBlack,kRed, kBlue, kGreen+2, kViolet-1, kOrange+1, kMagenta-1, kOrange-4};
+TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-binning-3/";
+TString sOutputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-binning-3/final/";
+
+TH1D* histTotal = 0x0;
+Int_t iNumBins = 0;
+
+
+Color_t col[] = {kRed, kGreen+2, kBlue, kMagenta-1, kOrange+2, kSpring+1};
 
 void EvaluateSyst()
 {
-  // SetCustomPalette();
 
-  gSystem->mkdir(sOutPath.Data(),kTRUE);
+  // TString sSpecies = "Charged"; TString sSpeciesFB = "Charged";  Bool_t bFB = kTRUE; Bool_t bFitting = kFALSE; Bool_t bUsePalette = kTRUE;
+  // TString sLabels[] = {"PV","TPCcls","FB"};  Double_t dDiffs[4][2] = {{2,1},{2,1},{2,1},{2,1}};
 
+  // TString sSpecies = "Pion"; TString sSpeciesFB = "Pion";  Bool_t bFB = kTRUE; Bool_t bFitting = kFALSE;Bool_t bUsePalette = kTRUE;
+  // TString sLabels[] = {"PV","TPCcls","PID (Bayes)","PID(nsgima)"};  Double_t dDiffs[4][4] = {{2,1,0,2},{2,1,0,2},{2,1,0,2},{2,1,0,2}};
 
-  for(Int_t iSpec(0); iSpec < iNumSpecies; ++iSpec)
+  // TString sSpecies = "Kaon"; TString sSpeciesFB = "Pion";  Bool_t bFB = kTRUE; Bool_t bFitting = kFALSE;Bool_t bUsePalette = kTRUE;
+  // TString sLabels[] = {"PV","TPCcls","PID (Bayes)","PID(nsgima)"};  Double_t dDiffs[4][4] = {{2,2,2,2},{2,2,2,2},{4,2,0,4},{4,2,0,5}};
+
+  // TString sSpecies = "Proton"; TString sSpeciesFB = "Pion";  Bool_t bFB = kTRUE; Bool_t bFitting = kFALSE;Bool_t bUsePalette = kTRUE;
+  // TString sLabels[] = {"PV","TPCcls","PID (Bayes)","PID(nsgima)"};  Double_t dDiffs[4][4] = {{2,2,0,4},{2,2,0,4},{4,2,0,4},{4,2,0,6}};
+
+  // TString sSpecies = "K0s"; TString sSpeciesFB = ""; Bool_t bFB = kFALSE; Bool_t bFitting = kTRUE; Bool_t bUsePalette = kTRUE;
+  // TString sLabels[] = {"PV","TPCcls","FB","DCA","Decay radius","CPA","PID (nsigma)",};  Double_t dDiffs[4][7] = {{4,2,7,1,2,2,2},{4,2,7,1,2,2,2},{4,2,7,2,3,3,2},{6,2,7,4,5,6,5}};
+
+  // TString sSpecies = "Lambda"; TString sSpeciesFB = ""; Bool_t bFB = kFALSE; Bool_t bFitting = kTRUE; Bool_t bUsePalette = kTRUE;
+  // TString sLabels[] = {"PV","TPCcls","FB","DCA","Decay radius","CPA","PID (nsigma)",};  Double_t dDiffs[4][7] = {{4,2,7,1,2,2,2},{4,2,7,2,2,3,2},{4,2,7,2,3,3,2},{6,2,7,4,4,6,5}};
+
+  TString sSpecies = "Phi"; TString sSpeciesFB = ""; Bool_t bFB = kFALSE; Bool_t bFitting = kTRUE; Bool_t bUsePalette = kTRUE;
+  TString sLabels[] = {"PV","TPCcls","FB","PID (Bayes)","PID (nsigma)",};  Double_t dDiffs[4][5] = {{4,2,7,2,0},{4,2,7,2,0},{4,2,7,4,0},{6,2,7,5,0}};
+
+  Int_t iNumDiffs = sizeof(dDiffs[0]) / sizeof(dDiffs[0][0]);
+  // printf("%d",iNumDiffs);
+
+  // ======================
+
+  gSystem->mkdir(sOutputPath.Data(),1);
+  TFile* fileOutput = TFile::Open(Form("%s/syst_%s.root",sOutputPath.Data(),sSpecies.Data()),"RECREATE");
+  if(!fileOutput) return;
+
+  for(Int_t iCent = 0; iCent < iNumCent; ++iCent)
   {
 
-    TFile* fileOut = TFile::Open(Form("%s/syst_%s.root",sOutPath.Data(),sSpecies[iSpec].Data()),"RECREATE");
-    if(!fileOut) { printf("No fileOut \n"); return;}
+    TLegend* leg = new TLegend(0.5,0.45,0.88,0.88);
+    leg->SetBorderSize(0);
+    leg->SetFillColorAlpha(0,0);
+    leg->SetHeader(Form("%s (%s)",sSpecies.Data(), sCentLabel[iCent].Data()));
 
-    for(Int_t iCent(0); iCent < iNumCent; ++iCent)
+    TList* listSyst = new TList();
+
+    for(Int_t iDiff = 0; iDiff < iNumDiffs; ++iDiff)
     {
+      Double_t dValue = dDiffs[iCent][iDiff] / 100.0;
 
-      TList* listDiff = new TList();
-      TList* listBarlow = new TList();
-
-      TLegend* leg = new TLegend(0.3,0.3,0.7,0.7);
-      leg->SetBorderSize(0);
-      leg->SetFillColorAlpha(0,0);
-      leg->SetHeader(Form("%s (%s)",sSpecies[iSpec].Data(),sCentLabel[iCent].Data()));
-
-      for(Int_t iFile(0); iFile < iNumFiles; ++iFile)
+      // extract binning for given species (only once)
+      if(iDiff == 0)
       {
-        TString sInputFile = sFiles[iFile];
-        TFile* fileInput = TFile::Open(Form("%s%s.root",sTopInputPath.Data(),sInputFile.Data()),"READ");
-        if(!fileInput) { printf("ERROR : fileInput not found\n"); return; }
-        // fileInput->ls();
+        TString sInputFile = sInputPath + "tracking/FB.root";
 
-        TList* list = (TList*) fileInput->Get(Form("%s_cent%d",sSpecies[iSpec].Data(),iCent));
-        if(!list) { printf("ERROR : list not found\n"); return; }
+        TFile* fileInput = TFile::Open(sInputFile.Data(),"READ");
+        if(!fileInput) { return; }
 
+        TList* list = (TList*) fileInput->Get(Form("%s_cent%d",sSpecies.Data(),iCent));
+        if(!list) { printf("no list\n"); return; }
         // list->ls();
+        TH1D* hist = (TH1D*) list->FindObject("histBase");
+        if(!hist) { printf("no hist\n"); return; }
 
-        TH1D* histBarlow = (TH1D*) list->FindObject("histBarlow");
-        if(!histBarlow) { printf("ERROR : histBarlow not found\n"); return; }
-        TH1D* histDiff = (TH1D*) list->FindObject("histDiff");
-        if(!histDiff) { printf("ERROR : histDiff not found\n"); return; }
+        histTotal = (TH1D*) hist->Clone(Form("total_%s_cent%d",sSpecies.Data(), iCent));
+        if(!histTotal) { printf("no hist syst\n"); return; }
 
-        histBarlow->SetMaximum(10.0);
-
-        StyleHist(histDiff, colors[iFile+1], kOpenCircle);
-        StyleHist(histBarlow, colors[iFile+1], kOpenCircle);
-
-        leg->AddEntry(histDiff,sInputFile.Data(),"pl");
-
-        listDiff->Add(histDiff);
-        listBarlow->Add(histBarlow);
+        iNumBins = histTotal->GetNbinsX();
+        histTotal->Reset();
       }
 
-      // Int_t nPnt  = listDiff->GetEntries() ; // number of points
-      // Int_t nnCol = gStyle->GetNumberOfColors();
+      TH1D* histSyst = (TH1D*) histTotal->Clone(Form("syst_%s_%s_cent%d",sSpecies.Data(), sLabels[iDiff].Data(), iCent));
+      histSyst->Reset();
+      leg->AddEntry(histSyst,sLabels[iDiff].Data(),"l");
 
-      // processing lists
-      TH1D* hSum = ProcessList(listDiff,listBarlow,dCutBarlow);
-      StyleHist(hSum,colors[0],kDot);
+      for(Int_t bin(1); bin < iNumBins+1; ++bin)
+      {
+        Double_t dOld = histTotal->GetBinContent(bin);
+        Double_t dNew = dValue*dValue + dOld*dOld;
 
+        histTotal->SetBinContent(bin, TMath::Sqrt(dNew));
+        histSyst->SetBinContent(bin, dValue);
 
-      if(hSum->GetMaximum() > 1.0) { hSum->SetMaximum(1.0); }
-      // hSum->SetMaximum(1.0);
-      leg->AddEntry(hSum,"Sum in quad.","l");
-
-      TCanvas* can = new TCanvas("can","can",1500,500);
-      can->Divide(3,1);
-      can->cd(1);
-      leg->Draw();
-      can->cd(2);
-      hSum->Draw();
-      for(Int_t i(0); i < listDiff->GetEntries(); ++i) { ((TH1D*) listDiff->At(i))->DrawCopy("same"); }
-
-      can->cd(3);
-      ((TH1D*) listBarlow->At(0))->Draw("hist");
-      for(Int_t i(1); i < listBarlow->GetEntries(); ++i) { ((TH1D*) listBarlow->At(i))->DrawCopy("same  hist"); }
-
-
-      can->SaveAs(Form("%s/syst_%s_cent%d.pdf",sOutPath.Data(),sSpecies[iSpec].Data(), iCent));
-      fileOut->cd();
-      hSum->Write(Form("hSum_cent%d",iCent));
+      }
+      listSyst->Add(histSyst);
     }
-  }
 
-  return;
-}
-// ==================================================================================================================
-TH1D* ProcessList(TList* listDiff, TList* listBarlow, Double_t dCut)
-{
-  if(!listDiff) { printf("ERROR-ProcessList : listDiff not found!\n"); return 0x0; }
-  if(!listBarlow) { printf("ERROR-ProcessList : listBarlow not found!\n"); return 0x0; }
+    // pT dependent
 
-  TH1D* hSum = (TH1D*) listDiff->At(0)->Clone("hSum");
-
-  for(Int_t iEntry(1); iEntry < listDiff->GetEntries(); ++iEntry)
-  {
-    // 0 already done;
-    TH1D* hNew = (TH1D*) listDiff->At(iEntry);
-
-    TH1D* hBarlow = (TH1D*) listBarlow->At(iEntry);
-
-    for(Int_t bin(1); bin < hSum->GetNbinsX()+1; ++bin)
+    // FB
+    if(bFB)
     {
-      Double_t dBarlow = hBarlow->GetBinContent(bin);
+      TFile* fileFB = TFile::Open(Form("%s/tracking/FB.root",sInputPath.Data()),"READ");
+      if(!fileFB) { return; }
+      TList* listFB = (TList*) fileFB->Get(Form("%s_cent%d",sSpeciesFB.Data(),iCent));
+      TF1* fitRatioDiff = (TF1*)listFB->FindObject("fitRatioDiff");
+      if(!fitRatioDiff) {printf("no fb fit"); return; }
 
-      if(dCut > 0.0 && dBarlow < dCut) continue;
+      TH1D* histFB = (TH1D*) histTotal->Clone(Form("syst_%s_%s_cent%d",sSpecies.Data(), "FB", iCent));
+      histFB->Reset();
+      leg->AddEntry(histFB,"FB","l");
 
-      Double_t dOldCont = hSum->GetBinContent(bin);
-      // Double_t dOldErr = hSum->GetBinError(bin);
+      for(Int_t bin(1); bin < iNumBins+1; ++bin)
+      {
+        Double_t dBinCenter = histFB->GetBinCenter(bin);
 
-      Double_t dNewCont = hNew->GetBinContent(bin);
-      // Double_t dNewErr = 0.0;
+        Double_t dUnc = 0.0;
+        if(dBinCenter <= fitRatioDiff->GetXmax())
+        {
+          dUnc = fitRatioDiff->Eval(dBinCenter);
+        }
 
-      hSum->SetBinContent(bin,TMath::Sqrt(dOldCont*dOldCont + dNewCont*dNewCont));
-      hSum->SetBinError(bin,0.0);
-      // hSum->SetBinError(bin,TMath::Sqrt(dNewErrSq));
+        histFB->SetBinContent(bin,dUnc);
+
+        Double_t dOld = histTotal->GetBinContent(bin);
+        Double_t dNew = dUnc*dUnc + dOld*dOld;
+        histTotal->SetBinContent(bin, TMath::Sqrt(dNew));
+      }
+
+      listSyst->Add(histFB);
+    }
+
+    if(bFitting)
+    {
+      TFile* fileFit = TFile::Open(Form("%s/fitting/fitting_%s.root",sInputPath.Data(),sSpecies.Data()),"READ");
+      if(!fileFit) { printf("no fileFit\n"); return; }
+      TH1D* histFit = (TH1D*) fileFit->Get(Form("sigma_cent%d",iCent));
+      if(iCent == 3) { histFit = (TH1D*) fileFit->Get(Form("sigma_cent%d",2)); }
+      if(!histFit) { printf("no histFit\n"); fileFit->ls(); return; }
+
+
+      leg->AddEntry(histFit,"fitting","l");
+      listSyst->Add(histFit);
+
+      for(Int_t bin(1); bin < iNumBins+1; ++bin)
+      {
+        Double_t dUnc = histFit->GetBinContent(bin);
+
+        Double_t dOld = histTotal->GetBinContent(bin);
+        Double_t dNew = dUnc*dUnc + dOld*dOld;
+        histTotal->SetBinContent(bin, TMath::Sqrt(dNew));
+      }
 
     }
-  }
 
-  return hSum;
+    // here all contrib in list;
+
+    // saving
+    fileOutput->cd();
+    listSyst->Write(Form("cent%d",iCent),TObject::kSingleKey);
+    histTotal->Write(Form("syst_cent%d",iCent));
+
+
+    // now drawing
+
+    SetCustomPalette();
+    Int_t nnCol = gStyle->GetNumberOfColors();
+    Int_t nPnt  = listSyst->GetEntries();
+
+
+    TCanvas* can = new TCanvas("can","can",600,600);
+    can->cd();
+    // TH1* frame_can = (TH1*) gPad->DrawFrame(histTotal->GetXaxis()->GetXmin(), 0.0, histTotal->GetXaxis()->GetXmax(), histTotal->GetMaximum()+0.05);
+    TH1* frame_can = (TH1*) gPad->DrawFrame(histTotal->GetXaxis()->GetXmin(), 0.0, histTotal->GetXaxis()->GetXmax(), 0.3);
+    frame_can->SetTitle("; p_{T} (GeV/c); Relative uncertainy");
+
+    for(Int_t i(0); i < nPnt; ++i)
+    {
+      TH1D* hist = (TH1D*) listSyst->At(i);
+      if(!hist) { printf("no form list \n"); return; }
+
+      Int_t idx = i * Float_t(nnCol-1) / (nPnt-1);
+
+      can->cd();
+      if(bUsePalette){ hist->SetLineColor(gStyle->GetColorPalette(idx)); }
+      else {  hist->SetLineColor(col[i]); }
+
+
+      hist->Draw("hist same");
+    }
+
+    can->cd();
+    histTotal->SetLineColor(kRed);
+    histTotal->SetLineWidth(2);
+
+
+
+    histTotal->DrawCopy("hist same");
+    leg->AddEntry(histTotal, "Total","l");
+    leg->Draw();
+
+    can->SaveAs(Form("%s/syst_%s_cent%d.pdf",sOutputPath.Data(), sSpecies.Data(), iCent),"pdf");
+  }
 }
-// ==================================================================================================================
-void StyleHist(TH1* hist, Color_t color, Style_t markerStyle, Bool_t showStats)
-{
-  if(!hist) { printf("ERROR-DrawHist: Hist does not found.\n"); return; }
-  hist->SetStats(showStats);
-  hist->SetLineColor(color);
-  hist->SetMarkerColor(color);
-  hist->SetMarkerStyle(markerStyle);
-  return;
-};
-// ==================================================================================================================
+
+
+
+// void Eval_single(TString sSpecies, Double_t* dDiffs, Bool_t bPtDep)
+// {
+//
+//   TFile* fileInput = TFile::Open(sInputFile.Data(),"READ");
+//   if(!fileInput) { return; }
+//
+//   gSystem->mkdir(sOutputPath.Data(),1);
+//   TFile* fileOutput = TFile::Open(Form("%s/syst_%s.root",sOutputPath.Data(),sSpecies.Data()),"RECREATE");
+//   if(!fileOutput) { return; }
+//
+//   // fileInput->ls();
+//
+//   for(Int_t iCent(0); iCent < iNumCent; ++iCent)
+//   {
+//     TList* list = (TList*) fileInput->Get(Form("%s_cent%d",sSpecies.Data(),iCent));
+//     if(!list) { printf("no list\n"); return; }
+//     TH1D* hist = (TH1D*) list->FindObject("histBase");
+//     if(!hist) { printf("no hist\n"); return; }
+//
+//
+//     TH1D* histSyst = (TH1D*) hist->Clone(Form("syst_%s_cent%d",sSpecies.Data(), iCent));
+//     if(!histSyst) { printf("no hist syst\n"); return; }
+//
+//     TF1* fitDiff = 0x0;
+//     if(bPtDep) { fitDiff = (TF1*) list->FindObject("fitRatioDiff"); if(!fitDiff) { printf("no fit diff\n"); return; } }
+//
+//     histSyst->Reset();
+//
+//     for(Int_t iBin(1); iBin<histSyst->GetNbinsX()+1; ++iBin)
+//     {
+//       Double_t dUnc = dDiffs[iCent]*dDiffs[iCent];
+//
+//       if(bPtDep)
+//       {
+//         Double_t dBinCenter = histSyst->GetBinCenter(iBin);
+//
+//         if(dBinCenter <= fitDiff->GetXmax())
+//         {
+//           Double_t dDiff = fitDiff->Eval(dBinCenter);
+//           dUnc += dDiff*dDiff;
+//         }
+//       }
+//
+//       histSyst->SetBinContent(iBin, TMath::Sqrt(dUnc));
+//     }
+//
+//     histSyst->Draw();
+//     fileOutput->cd();
+//     histSyst->Write();
+//
+//   }
+//
+//
+//   return;
+//
+// }
 void SetCustomPalette()
 {
-  // # Usage for getting the color out of pallete
-  // Int_t nPnt  = 2 ; // number of points
-  // Int_t nnCol = gStyle->GetNumberOfColors();
-  // Int_t iLegInx = 0;
-  // for(Int_t iMult(iMultMin); iMult < 2; ++iMult)
-  // {
-  //   Int_t idx = loop * Float_t(nnCol-1) / (nPnt-1);
-  //   StyleHist(histUnit, gStyle->GetColorPalette(idx), kOpenCircle);
-  // }
-  // ==================================================================================================================
+  // Setting custom (ala ROOT6) color palette
+  // See https://root.cern.ch/doc/master/TColor_8cxx_source.html#l02400
+  // for definition of color setting (array bellow) for ROOT 6 defined palettes
 
   Double_t stops[9] = { 0.0000, 0.1250, 0.2500, 0.3750, 0.5000,	0.6250, 0.7500, 0.8750, 1.0000};
 
+  // // Rain Bow
+  Double_t red[9]   = {  0./255.,   5./255.,  15./255.,  35./255., 102./255., 196./255., 208./255., 199./255., 110./255.};
+  Double_t green[9] = {  0./255.,  48./255., 124./255., 192./255., 206./255., 226./255.,  97./255.,  16./255.,   0./255.};
+  Double_t blue[9]  = { 99./255., 142./255., 198./255., 201./255.,  90./255.,  22./255.,  13./255.,   8./255.,   2./255.};
 
-  // Rain Bow
-  // case 55:
-  // Double_t red[9]   = {  0./255.,   5./255.,  15./255.,  35./255., 102./255., 196./255., 208./255., 199./255., 110./255.};
-  // Double_t green[9] = {  0./255.,  48./255., 124./255., 192./255., 206./255., 226./255.,  97./255.,  16./255.,   0./255.};
-  // Double_t blue[9]  = { 99./255., 142./255., 198./255., 201./255.,  90./255.,  22./255.,  13./255.,   8./255.,   2./255.};
+  // Visible Spectrum
+  // Double_t red[9]   = { 18./255.,  72./255.,   5./255.,  23./255.,  29./255., 201./255., 200./255., 98./255., 29./255.};
+  // Double_t green[9] = {  0./255.,   0./255.,  43./255., 167./255., 211./255., 117./255.,   0./255.,  0./255.,  0./255.};
+  // Double_t blue[9]  = { 51./255., 203./255., 177./255.,  26./255.,  10./255.,   9./255.,   8./255.,  3./255.,  0./255.};
+
 
   // Bird
   //case 57:
@@ -205,16 +304,10 @@ void SetCustomPalette()
   // Double_t blue[9]  = { 0.5293, 0.8684, 0.8385, 0.7914, 0.6425, 0.4662, 0.3499, 0.1968, 0.0539};
 
   // Blue Green Yellow
-  //case 71:
+  // //case 71:
   // Double_t red[9]   = { 22./255., 19./255.,  19./255.,  25./255.,  35./255.,  53./255.,  88./255., 139./255., 210./255.};
   // Double_t green[9] = {  0./255., 32./255.,  69./255., 108./255., 135./255., 159./255., 183./255., 198./255., 215./255.};
   // Double_t blue[9]  = { 77./255., 96./255., 110./255., 116./255., 110./255., 100./255.,  90./255.,  78./255.,  70./255.};
-
-  // Solar
-  // case 100:
-  Double_t red[9]   = { 99./255., 116./255., 154./255., 174./255., 200./255., 196./255., 201./255., 201./255., 230./255.};
-  Double_t green[9] = {  0./255.,   0./255.,   8./255.,  32./255.,  58./255.,  83./255., 119./255., 136./255., 173./255.};
-  Double_t blue[9]  = {  5./255.,   6./255.,   7./255.,   9./255.,   9./255.,  14./255.,  17./255.,  19./255.,  24./255.};
 
   // Viridis
   // case 112:
@@ -231,7 +324,7 @@ void SetCustomPalette()
   Int_t pal = TColor::CreateGradientColorTable(9, stops, red, green, blue, 255, 1);
   const Int_t nCol = 255;
   Int_t colors[nCol];
-  for (int i=0; i<nCol; i++) colors[i] =pal+i;
+  for (int i=0; i<nCol; i++) colors[i] = pal+i;
 
   gStyle->SetPalette(nCol,colors);
 }
