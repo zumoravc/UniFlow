@@ -35,6 +35,7 @@
 
 ### Directories ###
 uniFlow/results/*
+uniFlow/macros_bk
 results/*
 data/
 AnalNote/

@@ -60,7 +60,7 @@
 //        - to setup harmonics to be calculated, modify 'AliAnalysisTaskUniFlow::fHarmonics[]' (in .cxx) AND 'fNumHarmonics' (in .h)
 //        - to setup eta gaps (2part) to be calculated, modify 'AliAnalysisTaskUniFlow::fEtaGap[]' (in .cxx) AND 'fNumEtaGap' (in .h)
 //              - for NO gap case, fill in value '-1.0'
-//        - 2-particle cumulants are run by default (in 'kFull' mode)
+//        - 2-particle cumulants are run by ©default (in 'kFull' mode)
 //        - 4-particle cumulants has to be setup by invoking AliAnalysisTaskUniFlow::SetFlowDoFourCorrelations(kTRUE)
 //
 // =================================================================================================
@@ -3161,6 +3161,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
           fh3AfterWeightsPion->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
+
       case kKaon:
         fVectorKaon->push_back(track);
         if(fFlowFillWeights) { fh3WeightsKaon->Fill(track->Phi(), track->Eta(), fPVz); }
@@ -3172,6 +3173,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
           fh3AfterWeightsKaon->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
+
       case kProton:
         fVectorProton->push_back(track);
         if(fFlowFillWeights) { fh3WeightsProton->Fill(track->Phi(), track->Eta(), fPVz); }
@@ -3183,6 +3185,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
           fh3AfterWeightsProton->Fill(track->Phi(),track->Eta(),fPVz,weight);
         }
         break;
+
       default:
         continue;
     }
@@ -3211,7 +3214,11 @@ void AliAnalysisTaskUniFlow::FilterPID()
             fhMCRecoSelectedProtonPt->Fill(track->Pt());
             if(iPDG == 2212) { fhMCRecoSelectedTrueProtonPt->Fill(track->Pt()); }
           break;
+
+          default :
+            continue;
         }
+
       }
     }
 
@@ -4211,7 +4218,7 @@ void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
 {
   // called on end of task, after all events are processed
   // *************************************************************
-
+  AliAnalysisTaskSE::Terminate(option);
   return;
 }
 //_____________________________________________________________________________
