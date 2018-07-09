@@ -39,6 +39,8 @@ Double_t dPtMax = 10.0; // x axis max
 
 
 Double_t dRatioJetYield = 1.5;
+Double_t dPowerRaw = 1.0;
+Double_t dPowerBase = 1.0;
 
 
 
@@ -80,9 +82,9 @@ void Subt_methods()
       sInFileRaw = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/output_binning-3/%s",sGap[g].Data());
 
       // pp (MB)
-      sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt-010204060100-M2/%s/pPb-pp-MB/",sGap[g].Data());
-      sInFileBase = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua/output_binning-3/%s/",sGap[g].Data());
-      iCentBaseIndex = 0;
+      // sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt-010204060100-Mpow/%s/pPb-pp-MB/",sGap[g].Data());
+      // sInFileBase = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua/output_binning-3/%s/",sGap[g].Data());
+      // iCentBaseIndex = 0;
 
       // // pp (same cent)
       // sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/output-comp/%s/%s/pPb-pp-cent/",sGap[g].Data(),sMethod.Data());
@@ -90,9 +92,9 @@ void Subt_methods()
       // iCentBaseIndex = -1;
 
       // // pPb (periph)
-      // sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt-010204060100-M2/%s/pPb-pPb-perp/",sGap[g].Data());
-      // sInFileBase = sInFileRaw;
-      // iCentBaseIndex = 4;
+      sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt-010204060100-scaling-2/%s/pPb-pPb-perp/",sGap[g].Data());
+      sInFileBase = sInFileRaw;
+      iCentBaseIndex = 4;
 
 
       gSystem->mkdir(sOutPath.Data(),kTRUE);
@@ -168,7 +170,7 @@ void Subt_ppb_pp_species_gap(TString sGap)
 
     Double_t dErrSq = TMath::Power(dMultBaseErr/dMultRaw,2.0) + TMath::Power( dMultBase * dMultRawErr / (dMultRaw*dMultRaw),2.0);
 
-    hScaled_Mult->SetBinContent(bin, dMultBase / (dMultRaw) * dRatioJetYield);
+    hScaled_Mult->SetBinContent(bin, TMath::Power(dMultBase, dPowerBase) / TMath::Power(dMultRaw, dPowerRaw) * dRatioJetYield);
     hScaled_Mult->SetBinError(bin, TMath::Sqrt(dErrSq));
   }
 
