@@ -7,391 +7,344 @@
 #include "TSystem.h"
 #include "TMath.h"
 
+void Subt_ppb_pp_species_gap(TString sGap="gap08");
+
 TFile* OpenFile(TString sFileName, TString sMode = "READ");
 TH1D* LoadHisto(TString sHistName, TFile* file);
 void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircle);
 
-TH1D* Scale(TH1D* base, Double_t factor);
+TH1D* Scale(TH1D* base, Double_t factor, Double_t factorErrSq);
 TH1D* ScaleCn(TH1D* base, TH1D* mult);
-TH1D* Subtract(TH1D* raw, TH1D* base, Double_t factor = 1.0);
+TH1D* Subtract(TH1D* raw, TH1D* base);
+TH1D* Subtract_new_cn(TH1D* raw, TH1D* base, TProfile* mult_raw, TProfile* mult_base);
+TH1D* Subtract_new_dn(TH1D* raw, TH1D* base,  Double_t dFactor, Double_t dFactor_err_sq);
+
 
 // colors for centrality
-Color_t colors[] = {kGreen+2, kBlue, kBlack, kMagenta+1};
 
+Color_t colBase = kBlue;
+Color_t colRaw = kRed;
+Color_t colSubt = kGreen+2;
+// Color_t colSubt = colRaw;
 
-void Subt_ppb_pp(TString sGap)
+Int_t markBase = kOpenCircle;
+Int_t markBaseScaled = kFullCircle;
+Int_t markRaw = kOpenSquare;
+Int_t markSubt = kFullSquare;
+
+// TString sSpecies_list[] = {"Charged"};
+// TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton","K0s"};
+// TString sSpecies_list[] = {"K0s","Kaon"};
+TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+Int_t iNumSpecies = sizeof(sSpecies_list) / sizeof(sSpecies_list[0]);
+
+TFile* fileOutSubt = 0x0;
+TString sOutPath;
+
+void Subt_ppb_pp()
 {
-  TString sSpecies = "Charged";
-  TString sMethod = "GF_eventweighted";
+  TString sGap[] = {"gap00","gap04","gap08"};
+  // TString sGap[] = {"gap08"};
+
+  Int_t iNumGaps = sizeof(sGap) / sizeof(sGap[0]);
+
+  for(Int_t g(0); g < iNumGaps; ++g)
+  {
+    // sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/test/output_binning/"+sGap[g]+"/";
+    sOutPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt/subt/output_binning-3/"+sGap[g]+"/";
+    gSystem->mkdir(sOutPath.Data(),kTRUE);
+    fileOutSubt = TFile::Open(Form("%sSubtracted.root",sOutPath.Data()),"RECREATE");
+
+    Subt_ppb_pp_species_gap(sGap[g]);
+    // Subt_ppb_pp_species_gap(sSpecies_list[i], sGap[g]);
+  }
+
+  return;
+}
+
+
+void Subt_ppb_pp_species_gap(TString sGap)
+{
+  // TString sMethod = "GF_eventweighted";
   // TString sOutputTag = "output_vn";
   // TString sOutputTagInt = sOutputTag + "_int";
 
+
   TString sGapBase = sGap;
+  // TString sGapBase = "gap00";
   TString sGapRaw = sGapBase;
 
-  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/output_0510/pPb/" + sGapBase; // + "/" + sMethod;
-  TString sInFileBase = "/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/output_0510/pp/" + sGapBase; // + "/"; + sMethod;
-  TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/output_int/pp/" + sGapBase; // + "/"; + sMethod;
+  TString sInFileRaw = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt/output_binning-3-test/" + sGapBase; // + "/" + sMethod;
+  TString sInFileBaseInt = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua/output_binning-3/" + sGapBase; // + "/"; + sMethod;
   // TString sOutFolder = sInFileRaw+"/"+sMethod+"/pPb_pp_subt_"+sGapRaw+"/"+sSpecies;
-  TString sOutFolder = "/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/output_0510/subt/"+sGapBase+"/"+sMethod+"/"+sSpecies;
+
+  TString sOutFolder = sOutPath+"/test/";
+  // TString sOutFolder = sOutPath+sSpecies;
   TString sOutFile = sOutFolder+"/Subt_results.root";
 
-  const Int_t iNumCent = 4;
-  TString sCentLabel[iNumCent] = {"0-5%", "5-10%", "10-60%", "60-100%"};
+  const Int_t iNumCent = 5;
+  TString sCentLabel[iNumCent] = {"0-10%","10-20%", "20-40%", "40-60%", "60-100%"};
 
   // ==================================================================================================================
 
   // === LOADING INPUT ===
   // multiplicities
-  TFile* fileInRaw_Mult = OpenFile(sInFileRaw+"/Mult.root"); if(!fileInRaw_Mult) { return; }
-  TProfile* hRaw_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInRaw_Mult); if(!hRaw_Mult) { return; }
+  // TFile* fileInRaw_Mult = OpenFile(sInFileRaw+"/Mult.root"); if(!fileInRaw_Mult) { return; }
+  // TProfile* hRaw_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInRaw_Mult); if(!hRaw_Mult) { return; }
 
-  TFile* fileInBase_Mult = OpenFile(sInFileBase+"/Mult.root"); if(!fileInBase_Mult) { return; }
-  TProfile* hBase_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInBase_Mult); if(!hBase_Mult) { return; }
-
-  TFile* fileInBase_MultInt = OpenFile(sInFileBaseInt+"/Mult.root"); if(!fileInBase_MultInt) { return; }
-  TProfile* hBase_MultInt = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInBase_MultInt); if(!hBase_MultInt) { return; }
-  Double_t dMult_Base_Int = hBase_MultInt->GetBinContent(1);
+  // TFile* fileInBase_MultInt = OpenFile(sInFileBaseInt+"/Mult.root"); if(!fileInBase_MultInt) { return; }
+  // TProfile* hBase_MultInt = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInBase_MultInt); if(!hBase_MultInt) { return; }
 
   // output files
   gSystem->mkdir(sOutFolder,kTRUE);  // Making output folder
   TFile* fileOut = OpenFile(sOutFile,"RECREATE"); if(!fileOut) { return; }
 
   // input files
-  TFile* fileInRaw = OpenFile(sInFileRaw+"/"+sMethod+"/Processed.root"); if(!fileInRaw) { return; }
-  TFile* fileInBase = OpenFile(sInFileBase+"/"+sMethod+"/Processed.root"); if(!fileInBase) { return; }
-  TFile* fileInBaseInt = OpenFile(sInFileBaseInt+"/"+sMethod+"/Processed.root"); if(!fileInBaseInt) { return; }
+  TFile* fileInRaw = OpenFile(sInFileRaw+"/Processed.root"); if(!fileInRaw) { return; }
+  TFile* fileInBaseInt = OpenFile(sInFileBaseInt+"/Processed.root"); if(!fileInBaseInt) { return; }
+
+  // mult
+  TProfile* hRaw_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInRaw); if(!hRaw_Mult) { return; }
+  TProfile* hBase_MultInt = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInBaseInt); if(!hBase_MultInt) { return; }
+
+  TH1D* hScaled_Mult = (TH1D*) hRaw_Mult->ProjectionX("hScaled_Mult");
+  hScaled_Mult->Reset();
+
+  StyleHist(hRaw_Mult,colRaw,markRaw);
+  StyleHist(hBase_MultInt,colBase,markBase);
+  StyleHist(hScaled_Mult,colSubt,markSubt);
+
+  Double_t dMultBase = hBase_MultInt->GetBinContent(1);
+  Double_t dMultBaseErr = hBase_MultInt->GetBinError(1);
+
+  for(Int_t bin(1); bin < hScaled_Mult->GetNbinsX()+1; ++bin)
+  {
+    Double_t dMultRaw = hRaw_Mult->GetBinContent(bin);
+    Double_t dMultRawErr = hRaw_Mult->GetBinError(bin);
+
+    if(dMultRaw <= 0.0) { hScaled_Mult->SetBinContent(bin,0.0); hScaled_Mult->SetBinError(bin,999.9);  continue; }
+
+    Double_t dErrSq = TMath::Power(dMultBaseErr/dMultRaw,2.0) + TMath::Power( dMultBase * dMultRawErr / (dMultRaw*dMultRaw),2.0);
+
+    hScaled_Mult->SetBinContent(bin, dMultBase / dMultRaw);
+    hScaled_Mult->SetBinError(bin, TMath::Sqrt(dErrSq));
+  }
+
+  TLegend* legMult = new TLegend(0.52,0.7,0.8,0.88);
+  legMult->SetBorderSize(0);
+  legMult->SetFillColorAlpha(0,0);
+  // legMult->SetHeader(Form(""));
+  legMult->AddEntry(hRaw_Mult,"p-Pb","p");
+  legMult->AddEntry(hBase_MultInt,"pp","p");
+
+
+  TCanvas* canMult = new TCanvas("canMult","canMult",800,400);
+  canMult->Divide(2,1);
+  canMult->cd(1);
+  TH1* frame_Mult_1 = (TH1*) gPad->DrawFrame(hRaw_Mult->GetXaxis()->GetXmin(),0.0,hRaw_Mult->GetXaxis()->GetXmax(),1.2*hRaw_Mult->GetMaximum());
+  frame_Mult_1->SetTitle("<M>; multiplicity %; <M>");
+  hRaw_Mult->SetStats(0);
+  hRaw_Mult->DrawCopy("same");
+  hBase_MultInt->DrawCopy("same");
+  legMult->Draw();
+  canMult->cd(2);
+  TH1* frame_Mult_2 = (TH1*) gPad->DrawFrame(hRaw_Mult->GetXaxis()->GetXmin(),0.0,hRaw_Mult->GetXaxis()->GetXmax(),1.3);
+  frame_Mult_2->SetTitle("scaling factor k; multiplicity %; k");
+  hScaled_Mult->DrawCopy("same");
+  canMult->SaveAs(Form("%s/Mult.pdf",sOutPath.Data()));
+
+  // TCanvas* canMult = new TCanvas("canMult","canMult",800,400);
+  // canMult->Divide(2,1);
+  // canMult->cd(1);
+  // hRaw_Mult->SetStats(0);
+  // hRaw_Mult->DrawCopy();
+  // hBase_MultInt->DrawCopy("same");
+  // canMult->cd(2);
+  // hScaled_Mult->SetStats(0);
+  // hScaled_Mult->DrawCopy();
+  // canMult->SaveAs(Form("%s/Mult.pdf",sOutPath.Data()));
+
 
   // cn
   TH1D* hRaw_cn = LoadHisto(Form("hCum2_Refs_harm2_%s",sGapRaw.Data()),fileInRaw); if(!hRaw_cn) { return; }
-  StyleHist(hRaw_cn, kRed, kOpenSquare);
-  TH1D* hBase_cn = LoadHisto(Form("hCum2_Refs_harm2_%s",sGapBase.Data()),fileInBase); if(!hBase_cn) { return; }
-  StyleHist(hBase_cn, kGreen+2, kFullCircle);
+  StyleHist(hRaw_cn, colRaw, markRaw);
   TH1D* hBase_cn_int = LoadHisto(Form("hCum2_Refs_harm2_%s",sGapBase.Data()),fileInBaseInt); if(!hBase_cn_int) { return; }
-  StyleHist(hBase_cn_int, kBlue, kFullCircle);
+  StyleHist(hBase_cn_int, colBase, markBase);
 
-  TH1D* hRaw_cn_scaled = ScaleCn(hRaw_cn,hRaw_Mult);
-  TH1D* hBase_cn_scaled = ScaleCn(hBase_cn,hBase_Mult);
-  TH1D* hBase_cn_int_scaled = ScaleCn(hBase_cn_int,hBase_MultInt);
+  Double_t dBaseCn = hBase_cn_int->GetBinContent(1);
+  Double_t dBaseCnErr = hBase_cn_int->GetBinError(1);
+
+  TH1D* hSubt_cn = (TH1D*) hRaw_cn->Clone(Form("%s_subt",hRaw_cn->GetName()));  if(!hSubt_cn) { return; }
+  StyleHist(hSubt_cn, colSubt, markSubt);
+
+  TH1D* hBase_cn_scaled = (TH1D*) hRaw_cn->Clone(Form("%s_scaled",hRaw_cn->GetName()));  if(!hBase_cn_scaled) { return; }
+  StyleHist(hBase_cn_scaled, colBase, markBaseScaled);
+
+  for(Int_t cnBin(1); cnBin < hSubt_cn->GetNbinsX()+1; ++cnBin)
+  {
+    Double_t dFactor = hScaled_Mult->GetBinContent(cnBin);
+    Double_t dFactorErr = hScaled_Mult->GetBinError(cnBin);
+
+    Double_t dRawCn = hRaw_cn->GetBinContent(cnBin);
+    Double_t dRawCnErr = hRaw_cn->GetBinError(cnBin);
+
+    // subtraction
+    Double_t dCont = dRawCn - dBaseCn * dFactor;
+    Double_t dErrSq = TMath::Power(dRawCnErr,2.0) + TMath::Power(dBaseCnErr*dFactor,2.0) + TMath::Power(dBaseCn*dFactorErr,2.0);
+
+    hSubt_cn->SetBinContent(cnBin, dCont);
+    hSubt_cn->SetBinError(cnBin, TMath::Sqrt(dErrSq));
+
+    // at this point, the subtracted cn is ready in hSubt_cn
+
+    // scaling
+    Double_t dContScaled = dBaseCn * dFactor;
+    Double_t dErrScaled = TMath::Power(dBaseCnErr*dFactor,2.0) + TMath::Power(dBaseCn*dFactorErr,2.0);
+
+    hBase_cn_scaled->SetBinContent(cnBin, dContScaled);
+    hBase_cn_scaled->SetBinError(cnBin, TMath::Sqrt(dErrScaled));
+  }
+
+  TLegend* legRefs = new TLegend(0.12,0.6,0.4,0.88);
+  legRefs->SetBorderSize(0);
+  legRefs->SetFillColorAlpha(0,0);
+  legRefs->SetHeader(Form("RFPs"));
+  legRefs->AddEntry(hBase_cn_int,"pp (raw)","p");
+  legRefs->AddEntry(hBase_cn_scaled,"pp (scaled)","p");
+  legRefs->AddEntry(hRaw_cn,"p-Pb (raw)","p");
+  legRefs->AddEntry(hSubt_cn,"p-Pb (subt)","p");
+
+
+  TCanvas* canRef = new TCanvas("canRef","canRef", 600,600);
+  canRef->cd(1);
+  TH1* frame_Ref_1 = (TH1*) gPad->DrawFrame(hBase_cn_int->GetXaxis()->GetXmin(),-0.001+hSubt_cn->GetMinimum(),hBase_cn_int->GetXaxis()->GetXmax(),2.0*hBase_cn_int->GetMaximum());
+  frame_Ref_1->SetTitle("c_{2}{2}; multiplicity %; c_{2}{2}");
+  hBase_cn_int->DrawCopy("same");
+  hRaw_cn->DrawCopy("same");
+  hBase_cn_scaled->DrawCopy("same");
+  hSubt_cn->DrawCopy("same");
+  legRefs->Draw();
+  canRef->SaveAs(Form("%s/Refs.pdf",sOutPath.Data()));
+
+  // TCanvas* canRef = new TCanvas("canRef","canRef", 800,400);
+  // canRef->Divide(2,1);
+  // canRef->cd(1);
+  // TH1* frame_Ref_1 = (TH1*) gPad->DrawFrame(hBase_cn_int->GetXaxis()->GetXmin(),-0.001+hSubt_cn->GetMinimum(),hBase_cn_int->GetXaxis()->GetXmax(),1.5*hBase_cn_int->GetMaximum());
+  // frame_Ref_1->SetTitle("; multiplicity %; c_{2}{2}");
+  // hBase_cn_int->DrawCopy("same");
+  // hRaw_cn->DrawCopy("same");
+  // hBase_cn_scaled->DrawCopy("same");
+  // hSubt_cn->DrawCopy("same");
+  // canRef->cd(2);
+  // hSubt_cn->DrawCopy();
+  // canRef->SaveAs(Form("%s/Refs.pdf",sOutPath.Data()));
+
+  fileOut->cd();
+  hRaw_Mult->Write();
+  hBase_MultInt->Write();
+  hRaw_cn->Write();
+  hBase_cn_int->Write();
+  hSubt_cn->Write();
+
+  fileOutSubt->cd();
+  hSubt_cn->Write();
 
   // dn
-  TList* list_Raw_dn = new TList();
-  TList* list_Raw_dn_scaled = new TList();
-  TList* list_Base_dn = new TList();
-  TList* list_Base_dn_scaled = new TList();
-
-
-  for(Int_t cent(0); cent < iNumCent; ++cent)
+  for(Int_t iSpecies(0); iSpecies < iNumSpecies; ++iSpecies)
   {
-    TH1D* temp = LoadHisto(Form("hCum2_%s_harm2_%s_cent%d",sSpecies.Data(),sGapRaw.Data(),cent),fileInRaw); if(!temp) { return; }
-    StyleHist(temp, kRed, kOpenSquare);
-    list_Raw_dn->Add(temp);
+    TString sSpecies = sSpecies_list[iSpecies];
 
-    temp = LoadHisto(Form("hCum2_%s_harm2_%s_cent%d",sSpecies.Data(),sGapBase.Data(),cent),fileInBase); if(!temp) { return; }
-    StyleHist(temp, kGreen+2, kFullCircle);
-    list_Base_dn->Add(temp);
+    TH1D* hBase_dn_int = LoadHisto(Form("hCum2_%s_harm2_%s_cent0",sSpecies.Data(),sGapBase.Data()),fileInBaseInt); if(!hBase_dn_int) { return; }
+    StyleHist(hBase_dn_int, colBase, markBase);
 
-    TH1D* raw_scaled = Scale((TH1D*) list_Raw_dn->At(cent), hRaw_Mult->GetBinContent(cent+1)); if(!raw_scaled) { return; }
-    list_Raw_dn_scaled->Add(raw_scaled);
+    TH1D* hBase_dn_int_scaled = (TH1D*) hBase_dn_int->Clone(Form("%s_scaled",hBase_dn_int->GetName()));
+    StyleHist(hBase_dn_int_scaled, colBase, markBaseScaled);
 
-    TH1D* base_scaled = Scale((TH1D*) list_Base_dn->At(cent), hBase_Mult->GetBinContent(cent+1)); if(!base_scaled) { return; }
-    list_Base_dn_scaled->Add(base_scaled);
-  }
+    fileOut->cd();
+    hBase_dn_int->Write(Form("hCum2_%s_harm2_%s_cent0_int",sSpecies.Data(),sGapBase.Data()));
 
-  TH1D* hBase_dn_int = LoadHisto(Form("hCum2_%s_harm2_%s_cent0",sSpecies.Data(),sGapBase.Data()),fileInBaseInt); if(!hBase_dn_int) { return; }
-  StyleHist(hBase_dn_int, kBlue, kFullCircle);
-  TH1D* hBase_dn_int_scaled = Scale(hBase_dn_int, hBase_MultInt->GetBinContent(1));
-
-  fileOut->cd();
-  hRaw_cn->Write("hRaw_cn");
-  hBase_cn->Write("hBase_cn");
-  hBase_cn_int->Write("hBase_cn_int");
-  hRaw_cn_scaled->Write("hRaw_cn_scaled");
-  hBase_cn_scaled->Write("hBase_cn_scaled");
-  hBase_cn_int_scaled->Write("hBase_cn_int_scaled");
-
-  list_Raw_dn->Write("list_Raw_dn",TObject::kSingleKey);
-  list_Base_dn->Write("list_Base_dn",TObject::kSingleKey);
-  hBase_dn_int->Write("hBase_dn_int");
-  list_Raw_dn_scaled->Write("list_Raw_dn_scaled",TObject::kSingleKey);
-  list_Base_dn_scaled->Write("list_Base_dn_scaled",TObject::kSingleKey);
-  hBase_dn_int_scaled->Write("hBase_dn_int_scaled");
-
-  // === SUBTRACTING pPb(cent) - pp (MB / cent) ===
-
-  // cn{2}^sub = <M>^raw * cn{2}^raw - <M>^base * cn{2}^base
-  TH1D* hSub_cn = Subtract(hRaw_cn_scaled, hBase_cn_scaled,1.0); if(!hSub_cn) { return; }
-  TH1D* hSub_cn_int = Subtract(hRaw_cn_scaled, hBase_cn_int_scaled,1.0); if(!hSub_cn_int) { return; }
-
-  // dn{2}^sub = <M>dn{2}^raw - <M>dn{2}^base
-  TList* list_SubPP_dn = new TList();
-  TList* list_SubPP_dn_int = new TList();
-  for(Int_t centRaw(0); centRaw < iNumCent; ++centRaw)
-  {
-    TH1D* temp_raw_cent = (TH1D*) list_Raw_dn_scaled->At(centRaw);
-    // subtracting (cent) pp
-    TH1D* hSubPP_dn = Subtract(temp_raw_cent, (TH1D*) list_Base_dn_scaled->At(centRaw));
-    list_SubPP_dn->Add(hSubPP_dn);
-
-    // subtracting (int) pp
-    TH1D* hSubPP_dn_int = Subtract(temp_raw_cent, hBase_dn_int_scaled);
-    list_SubPP_dn_int->Add(hSubPP_dn_int);
-  }
-
-  // Making vn^sub out of dn^sub / sqrt(cn^sub)
-  TList* list_SubPP_vn = new TList();
-  TList* list_SubPP_vn_int = new TList();
-  for(Int_t centRaw(0); centRaw < iNumCent; ++centRaw)
-  {
-    TH1D* hSub_dn = (TH1D*) list_SubPP_dn->At(centRaw); if(!hSub_dn) { return; }
-
-    // dividing by cn{2}^sub (cent)
-    TH1D* hSubPP_vn = (TH1D*) hSub_dn->Clone(Form("%s_vn", hSub_dn->GetName())); if(!hSubPP_vn) { return; }
-    StyleHist(hSubPP_vn, kGreen+2, kFullCircle);
-    hSubPP_vn->Scale(1.0/TMath::Sqrt(hSub_cn->GetBinContent(centRaw+1)));
-    hSubPP_vn->SetName(Form("hSubPP_vn_cent%d",centRaw));
-    list_SubPP_vn->Add(hSubPP_vn);
-
-    // dividing by cn{2}^sub (int)
-    TH1D* hSubPP_vn_int = (TH1D*) hSub_dn->Clone(Form("%s_vn_int", hSub_dn->GetName())); if(!hSubPP_vn_int) { return; }
-    StyleHist(hSubPP_vn_int, kBlue, kFullCircle);
-    hSubPP_vn_int->Scale(1.0/TMath::Sqrt(hSub_cn_int->GetBinContent(1)));
-    hSubPP_vn_int->SetName(Form("hSubPP_vn_int_cent%d",centRaw));
-    list_SubPP_vn_int->Add(hSubPP_vn_int);
-
-  }
-
-  fileOut->cd();
-  hSub_cn->Write("hSub_cn");
-  hSub_cn_int->Write("hSub_cn_int");
-  list_SubPP_dn->Write("list_SubtPP_dn_ppcent",TObject::kSingleKey);
-  list_SubPP_dn_int->Write("list_SubtPP_dn_ppint",TObject::kSingleKey);
-  list_SubPP_vn->Write("list_SubtPP_vn_ppcent",TObject::kSingleKey);
-  list_SubPP_vn_int->Write("list_SubtPP_vn_ppint",TObject::kSingleKey);
-
-
-  // === SUBTRACTING pPb(cent) - pPb (peripheral) ===
-
-  // cn
-  TH1D* hSubPPb_cn = (TH1D*) hRaw_cn_scaled->Clone(Form("%s_sub",hRaw_cn_scaled->GetName()));
-  for(Int_t bin(1); bin < hRaw_cn_scaled->GetNbinsX()+1; ++bin)
-  {
-    Double_t base_con = hRaw_cn_scaled->GetBinContent(4);
-    Double_t base_err = hRaw_cn_scaled->GetBinError(4);
-    Double_t con = hRaw_cn_scaled->GetBinContent(bin);
-    Double_t err = hRaw_cn_scaled->GetBinError(bin);
-    hSubPPb_cn->SetBinContent(bin, con - base_con);
-    hSubPPb_cn->SetBinError(bin,TMath::Sqrt(err*err + base_err*base_err));
-  }
-
-  TCanvas* can_pPb_ref = new TCanvas("can_pPb_ref","can_pPb_ref",1200,400);
-  can_pPb_ref->Divide(3,1);
-  can_pPb_ref->cd(1);
-  TH1* frame_pPb_ref_1 = (TH1*) gPad->DrawFrame(0.,0.,100.,0.01);
-  frame_pPb_ref_1->SetTitle("<<2>>; cent %");
-  hRaw_cn->Draw("same");
-  can_pPb_ref->cd(2);
-  TH1* frame_pPb_ref_2 = (TH1*) gPad->DrawFrame(0.,0.,100.,10.0);
-  frame_pPb_ref_2->SetTitle("<M>^{2}<<2>>; cent %");
-  hRaw_cn_scaled->Draw("same");
-  can_pPb_ref->cd(3);
-  TH1* frame_pPb_ref_3 = (TH1*) gPad->DrawFrame(0.,0.,100.,10.);
-  frame_pPb_ref_3->SetTitle("<M>^{raw,2}<<2>>^{raw} - <M>^{base,2}<<2>>^{base}; cent %");
-  hSubPPb_cn->Draw("same");
-  can_pPb_ref->SaveAs(Form("%s/Subt_ppb_ppb_cn.pdf",sOutFolder.Data()),"pdf");
-
-  // dn
-  TList* list_SubtPPb_dn = new TList();
-  for(Int_t cent(0); cent < iNumCent; ++cent)
-  {
-    TH1D* hSubPPb = Subtract((TH1D*)list_Raw_dn_scaled->At(cent),(TH1D*)list_Raw_dn_scaled->At(3));
-    list_SubtPPb_dn->Add(hSubPPb);
-
-    TCanvas* can_pPb_dn = new TCanvas("can_pPb_dn","can_pPb_dn",1200,400);
-    can_pPb_dn->Divide(3,1);
-    can_pPb_dn->cd(1);
-    TH1* frame_pPb = (TH1*) gPad->DrawFrame(0.,0.0,10.,0.2);
-    frame_pPb->SetTitle("<<2'>>; p_{T} (GeV/c)");
-    ((TH1D*) list_Raw_dn->At(cent))->Draw("same");
-    ((TH1D*) list_Raw_dn->At(3))->Draw("same");
-    can_pPb_dn->cd(2);
-    TH1* frame_pPb_2 = (TH1*) gPad->DrawFrame(0.,0.0,10.,1.);
-    frame_pPb_2->SetTitle("<M><<2'>>; p_{T} (GeV/c)");
-    ((TH1D*) list_Raw_dn_scaled->At(cent))->Draw("same");
-    ((TH1D*) list_Raw_dn_scaled->At(3))->Draw("same");
-    can_pPb_dn->cd(3);
-    TH1* frame_pPb_3 = (TH1*) gPad->DrawFrame(0.,0.0,10.,1.);
-    frame_pPb_3->SetTitle("<M>^{raw}<<2'>>^{raw} - <M>^{base}<<2'>>^{base} ; p_{T} (GeV/c)");
-    hSubPPb->Draw("same");
-    can_pPb_dn->SaveAs(Form("%s/Subt_ppb_ppb_dn_cent%d.pdf",sOutFolder.Data(),cent),"pdf");
-  }
-
-  // vn
-  TList* list_SubtPPb_vn = new TList();
-  for(Int_t cent(0); cent < iNumCent-1; ++cent)
-  {
-    TH1D* hSubPPb_vn = (TH1D*) ((TH1D*) list_SubtPPb_dn->At(cent))->Clone(Form("hSubPPb_vn_cent%d",cent));
-    hSubPPb_vn->Scale(1.0/TMath::Sqrt(hSubPPb_cn->GetBinContent(cent+1)));
-    list_SubtPPb_vn->Add(hSubPPb_vn);
-
-    TCanvas* can_pPb_vn = new TCanvas("can_pPb_vn","can_pPb_vn",400,400);
-    can_pPb_vn->cd();
-    TH1* frame_pPb_vn = (TH1*) gPad->DrawFrame(0.,0.,10.,0.2);
-    frame_pPb_vn->SetTitle("v_{2}{2}^{sub}; p_{T} (GeV/c)");
-    hSubPPb_vn->Draw("same");
-    can_pPb_vn->SaveAs(Form("%s/Subt_ppb_ppb_vn_cent%d.pdf",sOutFolder.Data(),cent),"pdf");
-  }
-  fileOut->cd();
-  hSubPPb_cn->Write("list_SubtPPb_cn");
-  // StyleHist(hSubPPb,kRed, kFullCircle);
-  list_SubtPPb_dn->Write("list_SubtPPb_dn",TObject::kSingleKey);
-  list_SubtPPb_vn->Write("list_SubtPPb_vn",TObject::kSingleKey);
-
-  // UNIVERSALL PLOTTING
-  // RFPs
-  TLegend* leg_Refs = new TLegend(0.12,0.12,0.6,0.3);
-  leg_Refs->SetBorderSize(0.);
-  leg_Refs->SetFillColor(0);
-  leg_Refs->AddEntry(hRaw_cn,"pPb","p");
-  leg_Refs->AddEntry(hBase_cn,"pp ","p");
-  leg_Refs->AddEntry(hBase_cn_int,"pp (0-100%)","p");
-
-  TCanvas* canRefs = new TCanvas("canRefs","canRefs",1200,400);
-  canRefs->Divide(3,1);
-  canRefs->cd(1);
-  TH1* frame_Ref = (TH1*) gPad->DrawFrame(0,0,100,0.01);
-  frame_Ref->SetTitle("raw <<2>>; cent %");
-  hRaw_cn->Draw("same");
-  hBase_cn->Draw("same");
-  hBase_cn_int->Draw("same");
-  leg_Refs->Draw();
-  canRefs->cd(2);
-  TH1* frame_Ref_2 = (TH1*) gPad->DrawFrame(0,-1.0,100,10.0);
-  frame_Ref_2->SetTitle("<M>^{2} * <<2>>; cent %");
-  hRaw_cn_scaled->Draw("same");
-  hBase_cn_scaled->Draw("same");
-  hBase_cn_int_scaled->Draw("same");
-  canRefs->cd(3);
-  TH1* frame_Ref_3 = (TH1*) gPad->DrawFrame(0,0,100,10.0);
-  frame_Ref_3->SetTitle("<M>^{raw,2} <<2>> - <M>^{base,2}<<2>>; cent %");
-  hSub_cn->Draw("same");
-  hSub_cn_int->Draw("same");
-  hSubPPb_cn->Draw("same");
-  canRefs->SaveAs(Form("%s/cn_subt.pdf",sOutFolder.Data()),"pdf");
-
-  for(Int_t centRaw(0); centRaw < iNumCent; ++centRaw)
-  {
-    TH1D* temp_raw_cent = (TH1D*) list_Raw_dn_scaled->At(centRaw);
-    TH1D* hSubPP_dn = (TH1D*) list_SubPP_dn->At(centRaw);
-    TH1D* hSubPP_dn_int = (TH1D*) list_SubPP_dn_int->At(centRaw);
-    TH1D* hRaw_dn_peri = (TH1D*) list_Raw_dn->At(3);
-    StyleHist(hRaw_dn_peri,kRed,kFullCircle);
-    TH1D* hRaw_dn_peri_scaled = (TH1D*) list_Raw_dn_scaled->At(3);
-    StyleHist(hRaw_dn_peri_scaled,kRed,kFullCircle);
-    TH1D* hSubPpb_vn = ((TH1D*) list_SubtPPb_dn->At(centRaw));
-    StyleHist(hSubPpb_vn,kRed,kFullCircle);
-
-
-    TLegend* leg = new TLegend(0.12,0.5,0.6,0.89);
-    leg->SetBorderSize(0.);
-    leg->SetFillColor(0);
-    leg->AddEntry(temp_raw_cent,Form("pPb (unsub, %s)",sCentLabel[centRaw].Data()),"p");
-    leg->AddEntry(hRaw_dn_peri,Form("pPb (%s)",sCentLabel[3].Data()),"p");
-    leg->AddEntry(hSubPP_dn,Form("pp (%s)",sCentLabel[centRaw].Data()),"p");
-    leg->AddEntry(hBase_dn_int,"pp (0-100%)","p");
-
-    TCanvas* can = new TCanvas("can","can",1200,400);
-    can->Divide(3,1);
-    can->cd(1);
-    TH1* frame = gPad->DrawFrame(0,0,10,0.2);
-    frame->SetTitle("raw <<2'>>; p_{T} (GeV/c)");
-    ((TH1D*) list_Raw_dn->At(centRaw))->Draw("same");
-    hBase_dn_int->Draw("same");
-    ((TH1D*) list_Base_dn->At(centRaw))->Draw("same");
-    hRaw_dn_peri->Draw("same");
-    leg->Draw();
-
-    can->cd(2);
-    TH1* frame2 = gPad->DrawFrame(0,-0.03,10,1.0);
-    frame2->SetTitle("<M> * <<2'>>; p_{T} (GeV/c)");
-    temp_raw_cent->Draw("same");
-    hBase_dn_int_scaled->Draw("same");
-    ((TH1D*) list_Base_dn_scaled->At(centRaw))->Draw("same");
-    hRaw_dn_peri_scaled->Draw("same");
-
-    can->cd(3);
-    TH1* frame3 = gPad->DrawFrame(0,-0.05,10,1.0);
-    frame3->SetTitle("<M>^{pPb}<<2'>>^{pPb} - <M>^{pp}<<2'>>^{pp}; p_{T} (GeV/c)");
-    hSubPP_dn_int->Draw("same");
-    hSubPP_dn->Draw("same");
-    hSubPpb_vn->Draw("same");
-
-
-    can->SaveAs(Form("%s/Subt_pp-pbp_cent%d.pdf",sOutFolder.Data(),centRaw),"pdf");
-  }
-  for(Int_t centRaw(0); centRaw < iNumCent; ++centRaw)
-  {
-    TH1D* hSubPP_vn = (TH1D*) list_SubPP_vn->At(centRaw);
-    TH1D* hSubPP_vn_int = (TH1D*) list_SubPP_vn_int->At(centRaw);
-    TH1D* hSubPPb_vn = (TH1D*) list_SubtPPb_vn->At(centRaw);
-    StyleHist(hSubPPb_vn, kRed, kFullCircle);
-
-    TLegend* leg = new TLegend(0.12,0.65,0.6,0.89);
-    leg->SetBorderSize(0.);
-    leg->SetFillColor(0);
-    if(centRaw < 3) leg->AddEntry(hSubPPb_vn,Form("pPb (%s)",sCentLabel[3].Data()),"p");
-    leg->AddEntry(hSubPP_vn,Form("pp (%s)",sCentLabel[centRaw].Data()),"p");
-    leg->AddEntry(hSubPP_vn_int,"pp (0-100%)","p");
-
-    TCanvas* canVn = new TCanvas("canVn","canVn",400,400);
-    // canVn->Divide(,1);
-    canVn->cd(1);
-    TH1* frame_vn = (TH1*) gPad->DrawFrame(0.,-0.05,10.,0.3);
-    frame_vn->SetTitle(Form("v_{2}{2}^{sub} (%s V0A); p_{T} (GeV/c)",sCentLabel[centRaw].Data()));
-    hSubPP_vn->Draw("same");
-    hSubPP_vn_int->Draw("same");
-    if(hSubPPb_vn) hSubPPb_vn->Draw("same");
-    // canVn->cd(2);
-    // canVn->cd(3);
-    leg->Draw();
-
-    canVn->SaveAs(Form("%s/Subt_ppb_pp_vn_cent%d.pdf",sOutFolder.Data(),centRaw),"pdf");
-  }
-
-  // Comparison of various methods
-  for(Int_t cent(0); cent < iNumCent; ++cent)
-  {
-
-    TH1D* hRaw_vn = LoadHisto(Form("hFlow2_%s_harm2_%s_cent%d",sSpecies.Data(),sGapRaw.Data(),cent),fileInRaw); if(!hRaw_vn) { return; }
-    StyleHist(hRaw_vn,kBlack, kOpenSquare);
-    // hRaw_vn->SetLineWidth(2);
-
-
-    TLegend* leg_comp = new TLegend(0.12,0.6,0.4,0.89);
-    leg_comp->SetBorderSize(0);
-    leg_comp->SetFillColor(0);
-    leg_comp->SetFillStyle(0);
-    leg_comp->SetHeader(Form("%s (V0A)", sCentLabel[cent].Data()));
-    leg_comp->AddEntry(hRaw_vn,"Unsubt pPb","p");
-    TCanvas* can_comp = new TCanvas("can_comp","can_comp",400,400);
-    can_comp->cd();
-    TH1* frame_comp = (TH1*) gPad->DrawFrame(0.,0.,10.,0.5);
-    frame_comp->SetTitle("h^{#pm} v_{2}{2}^{sub}; p_{T} (Gev/c)");
-    hRaw_vn->Draw("same");
-    ((TH1D*)list_SubPP_vn->At(cent))->Draw("same");
-    leg_comp->AddEntry((TH1D*)list_SubPP_vn->At(cent),Form("pp (%s)",sCentLabel[cent].Data()),"p");
-    ((TH1D*)list_SubPP_vn_int->At(cent))->Draw("same");
-    leg_comp->AddEntry((TH1D*)list_SubPP_vn_int->At(cent),"pp (MB)","p");
-    if(cent < 3)
+    for(Int_t cnBin(1); cnBin < hSubt_cn->GetNbinsX()+1; ++cnBin)
     {
-      ((TH1D*)list_SubtPPb_vn->At(cent))->Draw("same");
-      leg_comp->AddEntry((TH1D*)list_SubtPPb_vn->At(cent),"pPb (60-100%)","p");
+      Int_t cent = cnBin-1;
+      TH1D* hRaw_dn = LoadHisto(Form("hCum2_%s_harm2_%s_cent%d",sSpecies.Data(),sGapRaw.Data(),cent),fileInRaw); if(!hRaw_dn) { return; }
+      StyleHist(hRaw_dn, colRaw, markRaw);
+
+      TH1D* hSubt_dn = (TH1D*) hRaw_dn->Clone(Form("%s_subt",hRaw_dn->GetName()));  if(!hSubt_dn) { return; }
+      StyleHist(hSubt_dn, colSubt, markSubt);
+
+      Double_t dFactor = hScaled_Mult->GetBinContent(cnBin);
+      Double_t dFactorErr = hScaled_Mult->GetBinError(cnBin);
+
+      for(Int_t pt(1); pt < hSubt_dn->GetNbinsX()+1; ++pt)
+      {
+        Double_t dRawDn = hRaw_dn->GetBinContent(pt);
+        Double_t dRawDnErr = hRaw_dn->GetBinError(pt);
+
+        Double_t dBaseDn = hBase_dn_int->GetBinContent(pt);
+        Double_t dBaseDnErr = hBase_dn_int->GetBinError(pt);
+
+        // subtraction
+
+        Double_t dCont = dRawDn - dBaseDn * dFactor;
+        Double_t dErrSq = TMath::Power(dRawDnErr,2.0) + TMath::Power(dBaseDnErr*dFactor,2.0) + TMath::Power(dBaseDn*dFactorErr,2.0);
+
+        hSubt_dn->SetBinContent(pt,dCont);
+        hSubt_dn->SetBinError(pt,TMath::Sqrt(dErrSq));
+
+        // scaling
+        Double_t dContScaled = dBaseDn * dFactor;
+        Double_t dErrScaled = TMath::Power(dBaseDnErr*dFactor,2.0) + TMath::Power(dBaseDn*dFactorErr,2.0);
+        hBase_dn_int_scaled->SetBinContent(pt,dContScaled);
+        hBase_dn_int_scaled->SetBinError(pt,TMath::Sqrt(dErrScaled));
+      }
+
+      // making vn^subt out of cn^sub and dn^sub
+      TH1D* hSubt_vn = (TH1D*) hSubt_dn->Clone(Form("hFlow2_%s_harm2_%s_cent%d",sSpecies.Data(), sGap.Data(), cent));
+      hSubt_vn->Scale(1.0/TMath::Sqrt(hSubt_cn->GetBinContent(cnBin)));
+
+      TLegend* legDiff = new TLegend(0.12,0.6,0.4,0.88);
+      legDiff->SetBorderSize(0);
+      legDiff->SetFillColorAlpha(0,0);
+      legDiff->SetHeader(Form("%s (%s)",sSpecies.Data(), sCentLabel[cent].Data()));
+      legDiff->AddEntry(hBase_dn_int,"pp (raw)","p");
+      legDiff->AddEntry(hBase_dn_int_scaled,"pp (scaled)","p");
+      legDiff->AddEntry(hRaw_dn,"p-Pb (raw)","p");
+      legDiff->AddEntry(hSubt_dn,"p-Pb (subt)","p");
+
+      TCanvas* canDiff = new TCanvas("canDiff","canDiff",600,600);
+      canDiff->cd(1);
+      TH1* frame_Diff1 = (TH1*) gPad->DrawFrame(hBase_dn_int->GetXaxis()->GetXmin(),-0.001+hSubt_dn->GetMinimum(),hBase_dn_int->GetXaxis()->GetXmax(),1.5*hBase_dn_int->GetMaximum());
+      frame_Diff1->SetTitle("d_{2}{2}; p_{T} (GeV/c); d_{2}{2}");
+      hBase_dn_int->SetStats(0);
+      hBase_dn_int->SetMinimum(0.0);
+      hBase_dn_int->DrawCopy("same");
+      hBase_dn_int_scaled->DrawCopy("same");
+      hRaw_dn->DrawCopy("same");
+      hSubt_dn->DrawCopy("same");
+      legDiff->Draw();
+      canDiff->SaveAs(Form("%s/%s_cent%d.pdf",sOutPath.Data(),sSpecies.Data(),cent));
+
+      // TCanvas* canDiff = new TCanvas("canDiff","canDiff",800,400);
+      // canDiff->Divide(2,1);
+      // canDiff->cd(1);
+      // hBase_dn_int->SetMinimum(0.0);
+      // hBase_dn_int->DrawCopy();
+      // hBase_dn_int_scaled->DrawCopy("same");
+      // hRaw_dn->DrawCopy("same");
+      // hSubt_dn->DrawCopy("same");
+      // canDiff->cd(2);
+      // hSubt_dn->DrawCopy();
+      // canDiff->SaveAs(Form("%s/%s_cent%d.pdf",sOutPath.Data(),sSpecies.Data(),cent));
+
+      // save
+      fileOutSubt->cd();
+      hSubt_vn->Write();
+
+      fileOut->cd();
+      hBase_dn_int->Write();
+      hRaw_dn->Write();
+      hSubt_dn->Write();
     }
-
-
-
-    leg_comp->Draw();
-    can_comp->SaveAs(Form("%s/comp_cent%d.pdf",sOutFolder.Data(),cent),"pdf");
   }
 
   return;
@@ -426,7 +379,7 @@ void StyleHist(TH1* hist, Color_t color, Style_t markerStyle)
   return;
 };
 // ==================================================================================================================
-TH1D* Scale(TH1D* base, Double_t factor)
+TH1D* Scale(TH1D* base, Double_t factor, Double_t factorErrSq)
 {
   if(!base) { printf("ERROR-Scale: Hist 'base' does not found.\n"); return 0x0; }
 
@@ -435,8 +388,13 @@ TH1D* Scale(TH1D* base, Double_t factor)
 
   for(Int_t bin(1); bin < base->GetNbinsX()+1; ++bin)
   {
-    scale->SetBinContent(bin, factor * base->GetBinContent(bin));
-    scale->SetBinError(bin, TMath::Abs(factor * base->GetBinError(bin)));
+    Double_t dCon = base->GetBinContent(bin);
+    Double_t dErr = base->GetBinError(bin);
+
+    Double_t dErrSq = factorErrSq*dCon*dCon + factor*factor*dErr*dErr;
+
+    scale->SetBinContent(bin, factor * dCon);
+    scale->SetBinError(bin, TMath::Sqrt(dErrSq));
   }
 
   return scale;
@@ -463,12 +421,12 @@ TH1D* ScaleCn(TH1D* base, TH1D* mult)
   return scaled;
 }
 // ==================================================================================================================
-TH1D* Subtract(TH1D* raw, TH1D* base, Double_t factor)
+TH1D* Subtract(TH1D* raw, TH1D* base)
 {
   if(!raw) { printf("ERROR-Subtract: Hist 'raw' does not found.\n"); return 0x0; }
   if(!base) { printf("ERROR-Subtract: Hist 'base' does not found.\n"); return 0x0; }
 
-  TH1D* sub = (TH1D*) base->Clone(Form("%s_sub",raw->GetName()));
+  TH1D* sub = (TH1D*) raw->Clone(Form("%s_sub",raw->GetName()));
   if(!sub) { printf("ERROR-Subtract: Hist 'sub' does not cloned properly.\n"); return 0x0; }
 
   for(Int_t bin(1); bin < sub->GetNbinsX()+1; ++bin)
@@ -478,9 +436,83 @@ TH1D* Subtract(TH1D* raw, TH1D* base, Double_t factor)
     Double_t con_base = base->GetBinContent(bin);
     Double_t err_base = base->GetBinError(bin);
 
-    sub->SetBinContent(bin, con_raw - factor * con_base);
+    // sub->SetBinContent(bin, con_raw - factor * con_base);
     // sub->GetBinError(bin, 0.01*con_raw);
-    sub->GetBinError(bin, err_raw*err_raw + factor*factor*err_base*err_base );
+    // sub->GetBinError(bin, err_raw*err_raw + factor*factor*err_base*err_base );
+
+  }
+  return sub;
+}
+// ==================================================================================================================
+TH1D* Subtract_new_cn(TH1D* raw, TH1D* base, TProfile* mult_raw, TProfile* mult_base)
+{
+  if(!raw) { printf("ERROR-Subtract_new_cn: Hist 'raw' does not found.\n"); return 0x0; }
+  if(!base) { printf("ERROR-Subtract_new_cn: Hist 'base' does not found.\n"); return 0x0; }
+  if(!mult_raw) { printf("ERROR-Subtract_new_cn: Hist 'mult_raw' does not found.\n"); return 0x0; }
+  if(!mult_base) { printf("ERROR-Subtract_new_cn: Hist 'mult_base' does not found.\n"); return 0x0; }
+
+  TH1D* sub = (TH1D*) raw->Clone(Form("%s_sub",raw->GetName()));
+  if(!sub) { printf("ERROR-Subtract_new_cn: Hist 'sub' does not cloned properly.\n"); return 0x0; }
+
+  Double_t dMult_base = mult_base->GetBinContent(1);
+  Double_t dMult_base_err = mult_base->GetBinError(1);
+  Double_t con_base = base->GetBinContent(1);
+  Double_t err_base = base->GetBinError(1);
+
+  for(Int_t bin(1); bin < sub->GetNbinsX()+1; ++bin)
+  {
+    Double_t dMult_raw = mult_raw->GetBinContent(bin);
+    Double_t dMult_raw_err = mult_raw->GetBinError(bin);
+
+    Double_t con_raw = raw->GetBinContent(bin);
+    Double_t err_raw = raw->GetBinError(bin);
+
+    if(dMult_base <= 0.0) { printf("ERROR-Subtract_new_cn dMultBase is 0.\n"); return 0x0; }
+    Double_t dFactor = dMult_base / dMult_raw;
+    Double_t dFactor_err_sq = TMath::Power(dMult_base_err/dMult_raw,2.0) + TMath::Power(dMult_base*dMult_raw_err,2.0) * TMath::Power(dMult_raw,-4.0);
+
+    Double_t dCon = con_raw - dFactor*con_base;
+    Double_t dErr = err_raw*err_raw + err_base*err_base*dFactor*dFactor + con_base*con_base*dFactor_err_sq;
+
+    sub->SetBinContent(bin, dCon);
+    sub->GetBinError(bin, TMath::Sqrt(dErr));
+
+  }
+  return sub;
+}
+// ==================================================================================================================
+TH1D* Subtract_new_dn(TH1D* raw, TH1D* base, Double_t dFactor, Double_t dFactor_err_sq)
+{
+  if(!raw) { printf("ERROR-Subtract_new_dn: Hist 'raw' does not found.\n"); return 0x0; }
+  if(!base) { printf("ERROR-Subtract_new_dn: Hist 'base' does not found.\n"); return 0x0; }
+  // if(!mult_raw) { printf("ERROR-Subtract_new_dn: Hist 'mult_raw' does not found.\n"); return 0x0; }
+  // if(!mult_base) { printf("ERROR-Subtract_new_dn: Hist 'mult_base' does not found.\n"); return 0x0; }
+
+  TH1D* sub = (TH1D*) raw->Clone(Form("%s_sub",raw->GetName()));
+  if(!sub) { printf("ERROR-Subtract_new_dn: Hist 'sub' does not cloned properly.\n"); return 0x0; }
+
+  // Double_t dMult_base = mult_base->GetBinContent(1);
+  // Double_t dMult_base_err = mult_base->GetBinError(1);
+
+  for(Int_t bin(1); bin < sub->GetNbinsX()+1; ++bin)
+  {
+    // Double_t dMult_raw = mult_raw->GetBinContent(bin);
+    // Double_t dMult_raw_err = mult_raw->GetBinError(bin);
+
+    Double_t con_raw = raw->GetBinContent(bin);
+    Double_t err_raw = raw->GetBinError(bin);
+    Double_t con_base = base->GetBinContent(bin);
+    Double_t err_base = base->GetBinError(bin);
+
+    // if(dMult_raw <= 0.0) { printf("ERROR-Subtract_new_dn: dMultBase is 0.\n"); return 0x0; }
+    // Double_t dFactor = dMult_base / dMult_raw;
+    // Double_t dFactor_err_sq = TMath::Power(dMult_base_err/dMult_raw,2.0) + TMath::Power(dMult_base*dMult_raw_err,2.0) * TMath::Power(dMult_raw,-4.0);
+
+    Double_t dCon = con_raw - dFactor*con_base;
+    Double_t dErr = err_raw*err_raw + err_base*err_base*dFactor*dFactor + con_base*con_base*dFactor_err_sq;
+
+    sub->SetBinContent(bin, dCon);
+    sub->GetBinError(bin, TMath::Sqrt(dErr));
 
   }
   return sub;
