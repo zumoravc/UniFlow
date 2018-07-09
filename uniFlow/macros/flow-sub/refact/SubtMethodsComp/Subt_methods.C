@@ -43,7 +43,8 @@ Double_t dPtMax = 10.0; // x axis max
 // TString sGap[] = {"gap00","gap04","gap08"};
 
 
-TString sMethods[] = {"GF_eventweighted","GF_noneventweighted","SP_nonscaled_noneventweighted"};
+// TString sMethods[] = {"GF_eventweighted","GF_noneventweighted","SP_nonscaled_noneventweighted"};
+TString sMethods[] = {""};
 TString sGap[] = {"gap04"};
 TString sSpecies_list[] = {"Charged"};
 // TString sSpecies_list[] = {"Charged","Pion","Kaon","Proton","K0s"};
@@ -69,12 +70,12 @@ void Subt_methods()
     {
 
       TString sMethod = sMethods[m];
-      sInFileRaw = Form("/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/pPb-run3-gaps-04-06-10-12/output_vn/%s/%s/",sGap[g].Data(),sMethod.Data());
+      sInFileRaw = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/output_binning-3/%s",sGap[g].Data());
 
       // pp (MB)
-      // sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/output-comp/%s/%s/pPb-pp-int/",sGap[g].Data(),sMethod.Data());
-      // sInFileBase = Form("/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/pp-run3-gaps-04-06-10-12/output_vn_int/%s/%s/",sGap[g].Data(),sMethod.Data());
-      // iCentBaseIndex = 0;
+      sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt-010204060100/%s/pPb-pp-MB/",sGap[g].Data());
+      sInFileBase = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pp-16kl-nua/output_binning-3/%s/",sGap[g].Data());
+      iCentBaseIndex = 0;
 
       // // pp (same cent)
       // sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/output-comp/%s/%s/pPb-pp-cent/",sGap[g].Data(),sMethod.Data());
@@ -82,9 +83,9 @@ void Subt_methods()
       // iCentBaseIndex = -1;
 
       // // pPb (periph)
-      sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/flowsub/etegap-dependence/output-comp-01020/%s/%s/pPb-pPb-perp/",sGap[g].Data(),sMethod.Data());
-      sInFileBase = sInFileRaw;
-      iCentBaseIndex = 3;
+      // sOutPath = Form("/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt-010204060100/%s/pPb-pPb-perp/",sGap[g].Data());
+      // sInFileBase = sInFileRaw;
+      // iCentBaseIndex = 4;
 
 
       gSystem->mkdir(sOutPath.Data(),kTRUE);
@@ -109,8 +110,8 @@ void Subt_ppb_pp_species_gap(TString sGap)
   TString sOutFolder = sOutPath;
   TString sOutFile = sOutFolder+"/Subt_results.root";
 
-  const Int_t iNumCent = 4;
-  TString sCentLabel[iNumCent] = {"0-20%", "20-40%", "40-60%", "60-100%"};
+  const Int_t iNumCent = 5;
+  TString sCentLabel[iNumCent] = {"0-10%", "10-20%", "20-40%", "40-60%", "60-100%"};
 
   // ==================================================================================================================
 
@@ -124,10 +125,12 @@ void Subt_ppb_pp_species_gap(TString sGap)
   TFile* fileInBase = OpenFile(sInFileBase+"/Processed.root"); if(!fileInBase) { return; }
 
   // mult
-  TFile* fileInRaw_Mult = OpenFile(sInFileRaw+"/../Mult.root"); if(!fileInRaw_Mult) { return; }
+  // TFile* fileInRaw_Mult = OpenFile(sInFileRaw+"/../Mult.root"); if(!fileInRaw_Mult) { return; }
+  TFile* fileInRaw_Mult = fileInRaw;
   TProfile* hRaw_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInRaw_Mult); if(!hRaw_Mult) { return; }
 
-  TFile* fileInBase_MultInt = OpenFile(sInFileBase+"/../Mult.root"); if(!fileInBase_MultInt) { return; }
+  // TFile* fileInBase_MultInt = OpenFile(sInFileBase+"/../Mult.root"); if(!fileInBase_MultInt) { return; }
+  TFile* fileInBase_MultInt = fileInBase;
   TProfile* hBase_MultInt = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInBase_MultInt); if(!hBase_MultInt) { return; }
 
   // TProfile* hRaw_Mult = (TProfile*) LoadHisto("fpRefsMult_rebin",fileInRaw); if(!hRaw_Mult) { return; }
