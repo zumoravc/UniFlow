@@ -1,6 +1,14 @@
+#ifdef __CLING__
+#include "AliAnalysisAlien.h"
+#include "AliAnalysisManager.h"
+#include "AliESDInputHandler.h"
+#include "AliAODInputHandler.h"
+#include "AliAnalysisTaskUniFlow.h"
+#endif
+
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -9,7 +17,7 @@ void runAnalysis()
     Bool_t bMergeViaJDL = kTRUE;
     //Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "uniflow_testD";
+    TString sWorkDir = "test";
     TString sOutDir = "output";
     TString sPeriod = "LHC16q";
 
@@ -29,43 +37,29 @@ void runAnalysis()
 
 
     //test
-    Int_t runNumber[] = {265385, 265384, 265383};
+    Int_t runNumber[] = {265385, 265384};
 
-
-    // since we will compile a class, tell root where to look for headers
+    #if !defined (__CINT__) || defined (__CLING__)
+    gInterpreter->ProcessLine(".include $ROOTSYS/include");
+    gInterpreter->ProcessLine(".include $ALICE_ROOT/include");
+    gInterpreter->ProcessLine(".include $ALICE_PHYSICS/include");
+    #else
     gROOT->ProcessLine(".include $ROOTSYS/include");
     gROOT->ProcessLine(".include $ALICE_ROOT/include");
-
-    gSystem->AddIncludePath("-I$ALICE_ROOT/include");
-    gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
-    //gSystem->AddIncludePath("-I$ALICE_PHYSICS/../src/OADB/COMMON/MULTIPLICITY");
-    gSystem->Load("libPhysics.so");
-    gSystem->Load("libOADB.so");
-    gSystem->Load("libSTEERBase");
-    gSystem->Load("libESD");
-    gSystem->Load("libAOD");
-    gSystem->Load("libANALYSIS");
-    gSystem->Load("libANALYSISalice");
-    gSystem->Load("libANALYSISaliceBase");
-    gSystem->Load("libCORRFW");
+    gROOT->ProcessLine(".include $ALICE_PHYSICS/include");
+    #endif
 
     // create the analysis manager
     AliAnalysisManager *mgr = new AliAnalysisManager("AnalysisTaskUniFlow");
     AliAODInputHandler *aodH = new AliAODInputHandler();
     mgr->SetInputEventHandler(aodH);
 
-    // Physics selection as suggested by HMTF
-    gROOT->ProcessLine(".L $ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C");
-    AliPhysicsSelectionTask* physSelTask = AddTaskPhysicsSelection(kFALSE,kTRUE);
+    AliPhysicsSelectionTask* physSelTask = reinterpret_cast<AliPhysicsSelectionTask*>(gInterpreter->ProcessLine(Form(".x %s(kFALSE,kTRUE)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"))));
 
-    //Add this here: run before your task, but after definition of manager and input handler
-    gROOT->LoadMacro("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C");
-    AliMultSelectionTask* taskMultSelection = AddTaskMultSelection(kFALSE); // user mode:
+    AliMultSelectionTask* taskMultSelection = reinterpret_cast<AliMultSelectionTask*>(gInterpreter->ProcessLine(Form(".x %s(kFALSE)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"))));
     taskMultSelection->SetSelectedTriggerClass(AliVEvent::kINT7);
 
-    // PID response needed for PID
-    gROOT->LoadMacro("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C");
-    AliAnalysisTaskPIDResponse* taskPIDResponse = AddTaskPIDResponse(kFALSE); // not MC
+    AliAnalysisTaskPIDResponse* taskPIDResponse = reinterpret_cast<AliAnalysisTaskPIDResponse*>(gInterpreter->ProcessLine(Form(".x %s(kFALSE)", gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"))));
 
     /*
     // PID response QA by ALICE
@@ -73,10 +67,16 @@ void runAnalysis()
     AliAnalysisTaskPIDqa* taskPIDqa = AddTaskPIDqa("PID_QA.root");
     */
 
-    gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g"); // compile the class (locally)
-    gROOT->LoadMacro("AddTaskUniFlow.C"); // load the addtask macro
+    #if !defined (__CINT__) || defined (__CLING__)
+      gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
+      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(\"UniFlow\")"));
+    #else
+      gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
+      gROOT->LoadMacro("AddTaskUniFlow.C");
+      AliAnalysisTaskUniFlow *task1 = AddTaskUniFlow("UniFlow");
+    #endif
 
-    AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
+    // AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
@@ -93,7 +93,7 @@ void runAnalysis()
     task1->SetFlowFillWeights(kTRUE);
     // task1->SetFlowDoFourCorrelations(kFALSE);
     // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights-prel/weights_16l.root",kFALSE);
-    task1->SetUseWeigthsFile("./weights_16l.root",kTRUE);
+    // task1->SetUseWeigthsFile("./weights_16l.root",kTRUE);
     task1->SetUseWeights3D(kFALSE);
     // Events selection
     // task1->SetUseAliEventCuts();
@@ -170,7 +170,7 @@ void runAnalysis()
         alienHandler->SetAnalysisSource("AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20180123-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20180701-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
         alienHandler->SetGridDataDir(Form("/alice/data/2016/%s/",sPeriod.Data()));
