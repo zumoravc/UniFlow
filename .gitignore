@@ -19,6 +19,7 @@
 *_merge.C
 *_merge.sh
 *_validation.sh
+*.pcm
 
 ### OTHERS ###
 *.xml
