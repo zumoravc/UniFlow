@@ -1,3 +1,7 @@
+#ifdef __CLING__
+#include "ProcessUniFlow.cpp"
+#endif
+
 /* RunProcess.C
  *
  * Steer macro for procesing flow results of AliAnalysisTaskUniFlow task.
@@ -8,16 +12,12 @@
 
 void RunProcess()
 {
-	Int_t iNumSamples = 10;
+	Int_t iNumSamples = 1;
 	Double_t dEtaGap = 0.8;
 	TString sEtaGap = "gap08";
-	// TString sInputPath = "./test/";
-	// TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/pPb-16qt-nua/";
-	// TString sOutputFilePath = sInputPath+"/output-2/"+sEtaGap+"/";
-	// TString sOutputFilePath = "./test/";
 
-	TString sInputPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua";
-	TString sOutputFilePath = sInputPath+"/output_run1comp/"+sEtaGap+"/";
+	TString sInputPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/multNch/16q_FAST";
+	TString sOutputFilePath = sInputPath+"/output_test/"+sEtaGap+"/";
 
 	// Double_t dMultBinning[] = {0,10,20,40,60,100};
 
@@ -38,8 +38,9 @@ void RunProcess()
 
 	// ##### END Parameters setting ######
 
-	// gROOT->AddIncludePath("-I~/NBI/Flow/uniFlow/processUniFlow/");
-	gROOT->LoadMacro("~vpacik/NBI/Flow/uniFlow/processUniFlow/ProcessUniFlow.cpp++g");
+	#if defined (__CINT__)
+		gROOT->LoadMacro("~vpacik/Codes/ALICE/Flow/uniFlow/processUniFlow/ProcessUniFlow.cpp++g");
+	#endif
 
 	FlowTask* taskRefs = new FlowTask(FlowTask::kRefs);
 	taskRefs->SetNumSamples(iNumSamples);
@@ -80,7 +81,6 @@ void RunProcess()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
  	FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
-	taskK0s->SetFittingOneGo(kTRUE);
 	taskK0s->SetNumSamples(iNumSamples);
 	taskK0s->SetHarmonics(2);
 	taskK0s->SetEtaGap(dEtaGap);
@@ -93,7 +93,6 @@ void RunProcess()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
 	FlowTask* taskLambda = new FlowTask(FlowTask::kLambda	);
-	taskLambda->SetFittingOneGo(kTRUE);
 	taskLambda->SetNumSamples(iNumSamples);
 	taskLambda->SetHarmonics(2);
 	taskLambda->SetEtaGap(dEtaGap);
@@ -106,7 +105,6 @@ void RunProcess()
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 
 	FlowTask* taskPhi = new FlowTask(FlowTask::kPhi);
-	taskPhi->SetFittingOneGo(kTRUE);
 	taskPhi->SetNumSamples(iNumSamples);
 	taskPhi->SetHarmonics(2);
 	taskPhi->SetEtaGap(dEtaGap);
@@ -131,13 +129,13 @@ void RunProcess()
 	process->SetFitCumulants(kFALSE);
 	process->SetDebug();
 	process->AddTask(taskRefs);
-	process->AddTask(taskCharged);
-	process->AddTask(taskPion);
-	process->AddTask(taskKch);
-	process->AddTask(taskProton);
+	// process->AddTask(taskCharged);
+	// process->AddTask(taskPion);
+	// process->AddTask(taskKch);
+	// process->AddTask(taskProton);
 	process->AddTask(taskK0s);
-	process->AddTask(taskLambda);
-	process->AddTask(taskPhi);
+	// process->AddTask(taskLambda);
+	// process->AddTask(taskPhi);
 	process->Run();
 
 	return;

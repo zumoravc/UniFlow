@@ -69,9 +69,6 @@ class FlowTask
     void        SetFitParLimitsLow(Double_t* array, Int_t size);
     void        SetFitParLimitsHigh(Double_t* array, Int_t size);
 
-  protected:
-  private:
-
     TString     fTaskTag; // "unique" tag used primarily for storing output
     TString     fName; // task name
     PartSpecies fSpecies; // species involved
@@ -111,6 +108,10 @@ class FlowTask
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
     std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
     TCanvas*     fCanvas; // temporary canvas for mass plotting
+
+  protected:
+  private:
+
 };
 
 //_____________________________________________________________________________
@@ -1557,6 +1558,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
 
   prof3Flow_temp = (TProfile3D*) p3Cor->Clone(Form("prof3Flow_temp_cent%d",multBin));
   prof3Flow_temp->GetXaxis()->SetRange(binMultLow,binMultHigh);
+  // prof2FlowMass_temp = (TProfile2D*) prof3Flow_temp->Project3DProfile("yz"); // NOTE: standard ROOT way - working properly in ROOTv6-12 onwards
   prof2FlowMass_temp = Project3DProfile(prof3Flow_temp);
 
   Short_t iNumPtBins = task->fNumPtBins;
@@ -1962,7 +1964,7 @@ TProfile2D * ProcessUniFlow::DoProjectProfile2D(TProfile3D* h3, const char* name
  // new profile p2 is set according to axis ranges (keeping originals or not)
 
  // weights
- bool useWeights = (h3->fBinSumw2.fN != 0); //array elements
+ bool useWeights = (h3->GetBinSumw2()->fN != 0); //array elements
  if (useWeights) p2->Sumw2();
 
  // make projection in a 3D first // from 3D profile -> TH3
@@ -2180,8 +2182,13 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
      // or keep original statistics if consistent sumw2
      bool resetStats = true;
      double eps = 1.E-12;
+
+     Double_t stats[TH1::kNstat] = {0};
+     h3->GetStats(stats);
+     double dfTsumw = stats[0];
+
      if (h3->IsA() == TH3F::Class() ) eps = 1.E-6;
-     if (h3->fTsumw != 0 && TMath::Abs( h3->fTsumw - totcont) <  TMath::Abs(h3->fTsumw) * eps) resetStats = false;
+     if (dfTsumw != 0 && TMath::Abs( dfTsumw - totcont) <  TMath::Abs(dfTsumw) * eps) resetStats = false;
 
      bool resetEntries = resetStats;
      // entries are calculated using underflow/overflow. If excluded entries must be reset
@@ -2243,7 +2250,7 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
         h2->SetEntries( entries );
      }
      else {
-        h2->SetEntries( h3->fEntries );
+        h2->SetEntries( h3->GetEntries() );
      }
 
 
