@@ -51,6 +51,7 @@ class FlowTask
     void        SetInputTag(const char* name) { fInputTag = name; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
+    void        SetDoFourCorrelations(Bool_t four = kTRUE) { fDoFour = four; }
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
     void        SetMergePosNeg(Bool_t merge = kTRUE) {fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
@@ -75,6 +76,7 @@ class FlowTask
     TString     fInputTag; // alterinative tag appended to name of input histos & profiles
     Int_t       fHarmonics; // harmonics
     Double_t    fEtaGap; // eta gap
+    Bool_t      fDoFour; // process 4-particle correlations
     Short_t     fNumSamples; // [10] number of samples
     static const Short_t fNumPtBinsMax = 100; // initialization (maximum) number of pt bins
     Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
@@ -124,6 +126,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fInputTag = "";
   fNumSamples = 10;
   fNumPtBins = -1;
+  fDoFour = kFALSE;
   fShowMult = kFALSE;
   fRebinning = kTRUE;
   fSampleMerging = kFALSE;
@@ -230,6 +233,7 @@ void FlowTask::PrintTask()
   printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
+  printf("   fDoFour: %s\n", fDoFour ? "true" : "false");
   printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
   printf("   fSuggestPtBins: %s\n", fSuggestPtBins ? "true" : "false");
   printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
@@ -277,11 +281,12 @@ class ProcessUniFlow
     Bool_t      ProcessReconstructed(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
 
+    TH1D*       EstimateFourRef(TH1D* hFourRef, TH1D* hTwoRef); // calculate cn{4} out of correlation
+
     Bool_t 	    ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for Lambda candidates
-
 
     void        SuggestMultBinning(const Short_t numFractions);
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
@@ -630,6 +635,11 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TList* list = new TList();
   TList* listMerge = new TList();
 
+  TProfile* profFour = 0x0;
+  TProfile* profFourRebin = 0x0;
+  TH1D* histFourProj = 0x0;
+  TH1D* histCumFour = 0x0; // general hist for cn{N}
+
   // rebinning <multiplicity>
   if(fbSaveMult)
   {
@@ -647,7 +657,12 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     prof = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,i));
     if(!prof) { Warning(Form("Profile sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
 
-
+    // Process 4-particle correlations
+    if(task->fDoFour)
+    {
+      profFour = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<4>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,i));
+      if(!profFour) { Warning(Form("Profile Four sample %d does not exits. Skipping",i),"ProcesRefs"); continue; }
+    }
 
     if(task->fRebinning)
     {
@@ -655,14 +670,38 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       profRebin = (TProfile*) prof->Rebin(fiNumMultBins,Form("%s_rebin",prof->GetName()),fdMultBins);
       histProj = profRebin->ProjectionX(Form("%s_proj",profRebin->GetName()));
       listMerge->Add(profRebin);
+
+      if(task->fDoFour)
+      {
+        profFourRebin = (TProfile*) profFour->Rebin(fiNumMultBins,Form("%s_rebin",profFour->GetName()),fdMultBins);
+        histFourProj = profFourRebin->ProjectionX(Form("%s_proj",profFourRebin->GetName()));
+      }
+
     }
     else
     {
       // no rebinning
       histProj = prof->ProjectionX(Form("%s_proj",prof->GetName()));
       listMerge->Add(prof);
+
+      if(task->fDoFour)
+      {
+        histFourProj = profFour->ProjectionX(Form("%s_proj",profFour->GetName()));
+      }
     }
     list->Add(histProj);
+
+    // <<N>>_n -> c_n{N}
+
+    // TODO: implement transfer from cn{2} -> vn{2} here as well (before desampling)
+
+
+    if(task->fDoFour)
+    {
+      TH1D* histCumFour = EstimateFourRef(histFourProj, histProj);
+      if(!histCumFour) { Error(Form("Cn{4} (sample %d) not processed correctly!",i),"ProcessRefs"); return kFALSE; }
+    }
+
   }
 
   // desampling (similarly to PID & Charged tracks)
@@ -764,6 +803,37 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(listMerge) delete listMerge;
 
   return kTRUE;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::EstimateFourRef(TH1D* hFourRef, TH1D* hTwoRef)
+{
+  // Calculate reference c_n{4} out of correlations
+  // cn{4} = <<4>> - 2*<<2>>^2
+
+  if(!hFourRef) { Error("Histo 'hFourRef' not valid!","EstimateFourRef"); return 0x0; }
+  if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","EstimateFourRef"); return 0x0; }
+
+  if(hFourRef->GetNbinsX() != hTwoRef->GetNbinsX()) { Error("Different number of bins!","EstimateFourRef"); return 0x0; }
+
+  TH1D* histCum = (TH1D*) hFourRef->Clone(Form("%s_cn4",hFourRef->GetName()));
+  histCum->Reset();
+
+  for(Int_t iBin(0); iBin < hFourRef->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContFour = hFourRef->GetBinContent(iBin);
+    Double_t dErrFour = hFourRef->GetBinError(iBin);
+
+    Double_t dContTwo = hTwoRef->GetBinContent(iBin);
+    Double_t dErrTwo = hTwoRef->GetBinError(iBin);
+
+    Double_t dContCum = dContFour - 2.0*dContTwo*dContTwo;
+    Double_t dErrCumSq = TMath::Power(dContFour, 2.0) + TMath::Power(-4.0*dContTwo*dErrTwo, 2.0);
+
+    histCum->SetBinContent(iBin, dContCum);
+    histCum->SetBinError(iBin, TMath::Sqrt(dErrCumSq));
+  }
+
+  return histCum;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
