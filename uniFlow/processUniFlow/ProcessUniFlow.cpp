@@ -51,6 +51,7 @@ class FlowTask
     void        SetInputTag(const char* name) { fInputTag = name; }
     void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
+    void        SetConsiderCorrelations(Bool_t cor = kTRUE) { fConsCorr = cor; }
     void        SetDoFourCorrelations(Bool_t four = kTRUE) { fDoFour = four; }
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
     void        SetMergePosNeg(Bool_t merge = kTRUE) {fMergePosNeg = merge; }
@@ -77,6 +78,7 @@ class FlowTask
     Int_t       fHarmonics; // harmonics
     Double_t    fEtaGap; // eta gap
     Bool_t      fDoFour; // process 4-particle correlations
+    Bool_t      fConsCorr; // consider correlations in cumulant / flow calculations
     Short_t     fNumSamples; // [10] number of samples
     static const Short_t fNumPtBinsMax = 100; // initialization (maximum) number of pt bins
     Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
@@ -127,6 +129,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fNumSamples = 10;
   fNumPtBins = -1;
   fDoFour = kFALSE;
+  fConsCorr = kFALSE;
   fShowMult = kFALSE;
   fRebinning = kTRUE;
   fSampleMerging = kFALSE;
@@ -282,10 +285,14 @@ class ProcessUniFlow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
 
     TH1D*       CalcRefCumTwo(TH1D* hTwoRef); // calculate cn{2} out of correlation
-    TH1D*       CalcRefCumFour(TH1D* hFourRef, TH1D* hTwoRef); // calculate cn{4} out of correlation
+    TH1D*       CalcRefCumFour(TH1D* hFourRef, TH1D* hTwoRef, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
+    TH1D*       CalcDifCumTwo(TH1D* hTwoDif); // calculate dn{2} out of correlation
+    TH1D*       CalcDifCumFour(TH1D* hFourDif, TH1D* hTwoDif, TH1D* hTwoRef, Bool_t bCorrel = kFALSE); // calculate dn{4} out of correlation
 
     TH1D*       CalcRefFlowTwo(TH1D* hTwoRef); // calculate vn{2} out of cn{2}
     TH1D*       CalcRefFlowFour(TH1D* hFourRef); // calculate vn{4} out of cn{4}
+    TH1D*       CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin, Bool_t bCorrel = kFALSE); // calculate vn'{2} out of cumulants
+    TH1D*       CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, Bool_t bCorrel = kFALSE); // calculate vn'{4} out of cumulants
 
     Bool_t 	    ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
@@ -644,6 +651,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TList* listFlowTwo = new TList();
   TList* listFlowFour = new TList();
 
+  Bool_t bCorrelated = task->fConsCorr;
+
   // rebinning <multiplicity>
   if(fbSaveMult)
   {
@@ -695,7 +704,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       listProfFour->Add(profFour);
       TH1D* histFour = (TH1D*) profFour->ProjectionX(Form("%s_proj",profFour->GetName()));
 
-      TH1D* histCumFour = CalcRefCumFour(histFour, histTwo);
+      TH1D* histCumFour = CalcRefCumFour(histFour, histTwo, bCorrelated);
       if(!histCumFour) { Error(Form("Cn{4} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
       listCumFour->Add(histCumFour);
 
@@ -799,20 +808,17 @@ TH1D* ProcessUniFlow::CalcRefCumTwo(TH1D* hTwoRef)
   // cn{2} = <<2>>
 
   if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcRefCumTwo"); return 0x0; }
-
   TH1D* histCum = (TH1D*) hTwoRef->Clone(Form("%s_cn2",hTwoRef->GetName()));
-
   return histCum;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::CalcRefCumFour(TH1D* hFourRef, TH1D* hTwoRef)
+TH1D* ProcessUniFlow::CalcRefCumFour(TH1D* hFourRef, TH1D* hTwoRef, Bool_t bCorrel)
 {
   // Calculate reference c_n{4} out of correlations
   // cn{4} = <<4>> - 2*<<2>>^2
 
   if(!hFourRef) { Error("Histo 'hFourRef' not valid!","CalcRefCumFour"); return 0x0; }
   if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcRefCumFour"); return 0x0; }
-
   if(hFourRef->GetNbinsX() != hTwoRef->GetNbinsX()) { Error("Different number of bins!","CalcRefCumFour"); return 0x0; }
 
   TH1D* histCum = (TH1D*) hFourRef->Clone(Form("%s_cn4",hFourRef->GetName()));
@@ -820,17 +826,73 @@ TH1D* ProcessUniFlow::CalcRefCumFour(TH1D* hFourRef, TH1D* hTwoRef)
 
   for(Int_t iBin(0); iBin < hFourRef->GetNbinsX()+2; ++iBin)
   {
-    Double_t dContFour = hFourRef->GetBinContent(iBin);
-    Double_t dErrFour = hFourRef->GetBinError(iBin);
+    Double_t dContInFour = hFourRef->GetBinContent(iBin);
+    Double_t dErrInFour = hFourRef->GetBinError(iBin);
 
-    Double_t dContTwo = hTwoRef->GetBinContent(iBin);
-    Double_t dErrTwo = hTwoRef->GetBinError(iBin);
+    Double_t dContInTwo = hTwoRef->GetBinContent(iBin);
+    Double_t dErrInTwo = hTwoRef->GetBinError(iBin);
 
-    Double_t dContCum = dContFour - 2.0*dContTwo*dContTwo;
-    Double_t dErrCumSq = TMath::Power(dErrFour, 2.0) + TMath::Power(-4.0*dContTwo*dErrTwo, 2.0);
+    Double_t dContOut = dContInFour - 2.0 * dContInTwo * dContInTwo;
+    histCum->SetBinContent(iBin, dContOut);
 
-    histCum->SetBinContent(iBin, dContCum);
-    histCum->SetBinError(iBin, TMath::Sqrt(dErrCumSq));
+    Double_t dErrOutFour = dErrInFour; // wrt. <4>
+    Double_t dErrOutTwo = -4.0 * dContInTwo * dErrInTwo; // wrt. <2>
+
+    Double_t dErrOut = TMath::Power(dErrOutFour, 2.0) + TMath::Power(dErrOutTwo, 2.0);
+    if(bCorrel) { dErrOut += 2.0 * dErrOutFour * dErrOutTwo; }
+    histCum->SetBinError(iBin, TMath::Sqrt(dErrOut));
+  }
+
+  return histCum;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcDifCumTwo(TH1D* hTwoDif)
+{
+  // Calculate reference d_n{2} out of correlations
+  // NOTE: it is just a fancier Clone(): for consistency
+  // dn{2} = <<2'>>
+
+  if(!hTwoDif) { Error("Histo 'hTwoDif' not valid!","CalcDifCumTwo"); return 0x0; }
+  TH1D* histCum = (TH1D*) hTwoDif->Clone(Form("%s_dn2",hTwoDif->GetName()));
+  return histCum;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcDifCumFour(TH1D* hFourDif, TH1D* hTwoDif, TH1D* hTwoRef, Bool_t bCorrel)
+{
+  // Calculate reference d_n{4} out of correlations
+  // NOTE: it is just a fancier Clone(): for consistency
+  // dn{4} = <<4'>> - <<2>><<2'>>
+
+  if(!hFourDif) { Error("Histo 'hFourDif' not valid!","CalcDifCumFour"); return 0x0; }
+  if(!hTwoDif) { Error("Histo 'hTwoDif' not valid!","CalcDifCumFour"); return 0x0; }
+  if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcDifCumFour"); return 0x0; }
+  if(hFourDif->GetNbinsX() != hTwoDif->GetNbinsX() || hFourDif->GetNbinsX() != hTwoRef->GetNbinsX())
+  { Error("Different number of bins!","CalcDifFCumFlow"); return 0x0; }
+
+  TH1D* histCum = (TH1D*) hFourDif->Clone(Form("%s_dn4",hFourDif->GetName()));
+  histCum->Reset();
+
+  for(Int_t iBin(0); iBin < histCum->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContInFourDif = hFourDif->GetBinContent(iBin);
+    Double_t dErrInFourDif = hFourDif->GetBinError(iBin);
+
+    Double_t dContInTwoDif = hTwoDif->GetBinContent(iBin);
+    Double_t dErrInTwoDif = hTwoDif->GetBinError(iBin);
+
+    Double_t dContInTwoRef = hTwoRef->GetBinContent(iBin);
+    Double_t dErrInTwoRef = hTwoRef->GetBinError(iBin);
+
+    Double_t dContOut = dContInFourDif - 2.0 * dContInTwoDif * dContInTwoRef;
+    histCum->SetBinContent(iBin, dContOut);
+
+    Double_t dErrOutFour = dErrInFourDif; // wrt. <4>
+    Double_t dErrOutTwoDif =  -2.0 * dContInTwoRef * dErrInTwoDif; // wrt. <2'>
+    Double_t dErrOutTwoRef =  -2.0 * dContInTwoDif * dErrInTwoRef; // wrt. <2>
+
+    Double_t dErrOutSq = TMath::Power(dErrOutFour, 2.0) + TMath::Power(dErrOutTwoDif, 2.0) + TMath::Power(dErrOutTwoRef, 2.0);
+    if(bCorrel) { dErrOutSq += 2.0 * dErrOutFour * dErrOutTwoDif + 2.0 * dErrOutFour * dErrOutTwoRef + 2.0 * dErrOutTwoDif * dErrOutTwoRef; }
+    histCum->SetBinError(iBin, TMath::Sqrt(dErrOutSq));
   }
 
   return histCum;
@@ -848,16 +910,15 @@ TH1D* ProcessUniFlow::CalcRefFlowTwo(TH1D* hTwoRef)
 
   for(Short_t iBin(0); iBin < hTwoRef->GetNbinsX()+2; ++iBin)
   {
-    Double_t dContent = hTwoRef->GetBinContent(iBin);
-    Double_t dError = hTwoRef->GetBinError(iBin);
+    Double_t dContIn = hTwoRef->GetBinContent(iBin);
+    Double_t dErrIn = hTwoRef->GetBinError(iBin);
 
-    if(dContent > 0.0 && dError > 0.0)
+    if(dContIn > 0.0 && dErrIn >= 0.0)
     {
-      Double_t dContFlow = TMath::Sqrt(dContent);
-      Double_t dErrFlowSq = 0.25 * dError*dError / dContent;
-
-      histFlow->SetBinContent(iBin, dContFlow);
-      histFlow->SetBinError(iBin, TMath::Sqrt(dErrFlowSq));
+      Double_t dContOut = TMath::Sqrt(dContIn);
+      histFlow->SetBinContent(iBin, dContOut);
+      Double_t dErrOutSq = 0.25 * dErrIn * dErrIn / dContIn;
+      histFlow->SetBinError(iBin, TMath::Sqrt(dErrOutSq));
     }
     else
     {
@@ -881,22 +942,115 @@ TH1D* ProcessUniFlow::CalcRefFlowFour(TH1D* hFourRef)
 
   for(Short_t iBin(0); iBin < hFourRef->GetNbinsX()+2; ++iBin)
   {
-    Double_t dContent = hFourRef->GetBinContent(iBin);
-    Double_t dError = hFourRef->GetBinError(iBin);
+    Double_t dContIn = hFourRef->GetBinContent(iBin);
+    Double_t dErrIn = hFourRef->GetBinError(iBin);
 
-    if(dContent > 0.0 && dError >= 0.0)
+    if(dContIn > 0.0 && dErrIn >= 0.0)
     {
-      Double_t dContFlow = TMath::Power(-1.0 * dContent, 0.25);
-      Double_t dErrFlowSq = TMath::Power(0.25 * dError * TMath::Power(-dContent, -0.75), 2.0);
-
-      histFlow->SetBinContent(iBin, dContFlow);
-      histFlow->SetBinError(iBin, TMath::Sqrt(dErrFlowSq));
+      Double_t dContOut = TMath::Power(-1.0 * dContIn, 0.25);
+      histFlow->SetBinContent(iBin, dContOut);
+      Double_t dErrOutSq = TMath::Power(0.25 * dErrIn * TMath::Power(-dContIn, -0.75), 2.0);
+      histFlow->SetBinError(iBin, TMath::Sqrt(dErrOutSq));
     }
     else
     {
       histFlow->SetBinContent(iBin, 9.9);
       histFlow->SetBinError(iBin, 99999.9);
     }
+  }
+
+  return histFlow;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin, Bool_t bCorrel)
+{
+  // Calculate differential v_n{2} out of d_n{2} & v_n{2} (!)
+  // vn'{2} = dn{2} / vn{2}
+
+  if(!hTwoDif) { Error("Histo 'hTwoDif' not valid!","CalcDifFlowTwo"); return 0x0; }
+  if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcDifFlowTwo"); return 0x0; }
+  if(iRefBin < 1) { Error("Bin 'iRefBin; < 1!'","CalcDifFlowTwo"); return 0x0; }
+
+  TH1D* histFlow = (TH1D*) hTwoDif->Clone(Form("%s_vn{2}",hTwoDif->GetName()));
+  histFlow->Reset();
+
+  Double_t dContInRef = hTwoRef->GetBinContent(iRefBin);
+  Double_t dErrInRef = hTwoRef->GetBinError(iRefBin);
+
+  // flow not real -> putting 'wrong' numbers in
+  if(dContInRef > 9.5 || (dContInRef <= 0.0 && dErrInRef > 1000))
+  {
+    for(Short_t iBin(0); iBin < histFlow->GetNbinsX()+2; ++iBin)
+    {
+      histFlow->SetBinContent(iBin, 9.9);
+      histFlow->SetBinError(iBin, 99999.9);
+    }
+
+    return histFlow;
+  }
+
+  // flow real -> correct analytical calculation
+  for(Short_t iBin(0); iBin < histFlow->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContInDif = hTwoDif->GetBinContent(iBin);
+    Double_t dErrInDif = hTwoDif->GetBinError(iBin);
+
+    Double_t dContOut = dContInDif / dContInRef;
+    histFlow->SetBinContent(iBin, dContOut);
+
+    Double_t dErrOutDif = dErrInDif * dContInRef;
+    Double_t dErrOutRef = -1.0 * dContInDif * TMath::Power(dContInRef, -2.0) * dErrInRef;
+
+    Double_t dErrOutSq = TMath::Power(dErrOutDif, 2.0) + TMath::Power(dErrOutRef, 2.0);
+    if(bCorrel) { dErrOutSq += 2.0 * dErrOutDif * dErrOutRef; }
+    histFlow->SetBinError(iBin, TMath::Sqrt(dErrOutSq));
+  }
+
+  return histFlow;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, Bool_t bCorrel)
+{
+  // Calculate differential v_n{4} out of d_n{4} & v_n{4} (!)
+  // vn'{2} = - dn{4} / vn{4}^3
+
+  if(!hFourDif) { Error("Histo 'hFourDif' not valid!","CalcDifFlowFour"); return 0x0; }
+  if(!hFourRef) { Error("Histo 'hFourRef' not valid!","CalcDifFlowFour"); return 0x0; }
+  if(iRefBin < 1) { Error("Bin 'iRefBin; < 1!","CalcDifFlowFour"); return 0x0; }
+
+  TH1D* histFlow = (TH1D*) hFourDif->Clone(Form("%s_vn{4}",hFourDif->GetName()));
+  histFlow->Reset();
+
+  Double_t dContInRef = hFourRef->GetBinContent(iRefBin);
+  Double_t dErrInRef = hFourRef->GetBinError(iRefBin);
+
+  // flow not real -> putting 'wrong' numbers in
+  if(dContInRef <= 0.0 || (dContInRef > 9.5 && dErrInRef > 1000))
+  {
+    for(Short_t iBin(0); iBin < histFlow->GetNbinsX()+2; ++iBin)
+    {
+      histFlow->SetBinContent(iBin, 9.9);
+      histFlow->SetBinError(iBin, 99999.9);
+    }
+
+    return histFlow;
+  }
+
+  // flow real -> correct analytical calculation
+  for(Short_t iBin(0); iBin < histFlow->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContInDif = hFourDif->GetBinContent(iBin);
+    Double_t dErrInDif = hFourDif->GetBinError(iBin);
+
+    Double_t dContOut = -1.0 * dContInDif * TMath::Power(dContInRef, -3.0);
+    histFlow->SetBinContent(iBin, dContOut);
+
+    Double_t dErrOutDif = -1.0 * dErrInDif * TMath::Power(dContInRef, -3.0); // wrt. dn
+    Double_t dErrOutRef = 3.0 * dContInDif * dErrInRef * TMath::Power(dContInRef, -4.0); // wrt. vn
+
+    Double_t dErrOutSq = TMath::Power(dErrOutDif, 2.0) + TMath::Power(dErrOutRef, 2.0);
+    if(bCorrel) { dErrOutSq += 2.0 * dErrOutDif * dErrOutRef; }
+    histFlow->SetBinError(iBin, TMath::Sqrt(dErrOutSq));
   }
 
   return histFlow;
