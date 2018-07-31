@@ -281,6 +281,7 @@ class ProcessUniFlow
     Bool_t      ProcessReconstructed(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
 
+    TH1D*       EstimateTwoRef(TH1D* hTwoRef); // calculate cn{2} out of correlation
     TH1D*       EstimateFourRef(TH1D* hFourRef, TH1D* hTwoRef); // calculate cn{4} out of correlation
 
     Bool_t 	    ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
@@ -692,9 +693,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     list->Add(histProj);
 
     // <<N>>_n -> c_n{N}
-
-    // TODO: implement transfer from cn{2} -> vn{2} here as well (before desampling)
-
+    TH1D* histCumTwo = EstimateTwoRef(histProj);
+    if(!histCumTwo) { Error(Form("Cn{2} (sample %d) not processed correctly!",i),"ProcessRefs"); return kFALSE; }
 
     if(task->fDoFour)
     {
@@ -803,6 +803,19 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(listMerge) delete listMerge;
 
   return kTRUE;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::EstimateTwoRef(TH1D* hTwoRef)
+{
+  // Calculate reference c_n{2} out of correlations
+  // NOTE: it is just a fancier Clone(): for consistency
+  // cn{2} = <<2>>
+
+  if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","EstimateTwoRef"); return 0x0; }
+
+  TH1D* histCum = (TH1D*) hTwoRef->Clone(Form("%s_cn2",hTwoRef->GetName()));
+
+  return histCum;
 }
 //_____________________________________________________________________________
 TH1D* ProcessUniFlow::EstimateFourRef(TH1D* hFourRef, TH1D* hTwoRef)
