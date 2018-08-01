@@ -1783,7 +1783,18 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   fMultEstimator.ToUpper();
 
   // setting fFlowCentMax according to estimator : 0-100 for %'s and 0-150 for CHARGED
-  if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("CHARGED")) { fFlowCentMin = 0; fFlowCentMax = 200; }
+  if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("CHARGED"))
+  {
+    switch(fColSystem)
+    {
+      case kPbPb:
+        fFlowCentMin = 0; fFlowCentMax = 1000;  
+      break;
+
+      default:
+        fFlowCentMin = 0; fFlowCentMax = 200;
+    }
+  }
   else { fFlowCentMin = 0; fFlowCentMax = 100; }
 
   // increasing fFlowCentMax+1 (just to be sure)
