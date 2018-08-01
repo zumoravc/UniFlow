@@ -1788,7 +1788,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     switch(fColSystem)
     {
       case kPbPb:
-        fFlowCentMin = 0; fFlowCentMax = 1000;  
+        fFlowCentMin = 0; fFlowCentMax = 500;  
       break;
 
       default:
