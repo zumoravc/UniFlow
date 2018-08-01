@@ -859,7 +859,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // create output objects
   // this function is called ONCE at the start of your analysis (RUNTIME)
   // *************************************************************
-  
+
   // task initialization
   fInit = InitializeTask();
   if(!fInit) return;
@@ -2175,9 +2175,6 @@ void AliAnalysisTaskUniFlow::Filtering()
   // *************************************************************
 
   FilterCharged();
-
-  fIndexSampling = GetSamplingIndex();
-  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
 
   // // if neither is ON, filtering is skipped
   // if(!fProcessPID && !fProcessV0s && !fProcessPhi)
@@ -3618,6 +3615,10 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   fhEventCentrality->Fill(fIndexCentrality);
   fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
   fpRefsMult->Fill(fIndexCentrality,fVectorRefs->size(),1.0);
+
+  // event sampling
+  fIndexSampling = GetSamplingIndex();
+  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
 
   // if running in kSkipFlow mode, skip the remaining part
@@ -4184,7 +4185,7 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
   // returns centrality index
   // *************************************************************
 
-  Short_t index = 0x0;
+  Short_t index = 0;
 
   if(fSampling && fNumSamples > 1)
   {
