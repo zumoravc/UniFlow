@@ -901,6 +901,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fQAV0s = new TList();
   fQAV0s->SetOwner(kTRUE);
 
+  if(fUseAliEventCuts) { fEventCuts.AddQAplotsToList(fQAEvents); }
+
   // setting number of bins based on set range with fixed width
   const Int_t iPOIsPtNumBins = (Int_t) (fFlowPOIsPtMax - fFlowPOIsPtMin) / 0.1 + 0.5; // fixed width 0.1 GeV/c
   const Int_t iMultNumBins = fFlowCentMax - fFlowCentMin; // fixed unit percentile or Nch bin width
@@ -1826,6 +1828,18 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
         fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
       }
     }
+  }
+
+  AliInfo("Setting collision system dependent variables");
+  switch(fColSystem)
+  {
+    case kPbPb :
+      fUseAliEventCuts = kTRUE; // Required for event selection
+      AliWarning("    'fUseAliEventCuts' switched on!");
+    break;
+
+    default: ;
+      AliInfo("   Nothing changed.");
   }
 
   AliInfo("Preparing particle containers (std::vectors)");
