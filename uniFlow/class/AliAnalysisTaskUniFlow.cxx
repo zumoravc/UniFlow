@@ -859,13 +859,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // create output objects
   // this function is called ONCE at the start of your analysis (RUNTIME)
   // *************************************************************
-
-  // list all parameters used in this analysis
-  ListParameters();
-
+  
   // task initialization
   fInit = InitializeTask();
   if(!fInit) return;
+
+  // list all parameters used in this analysis
+  ListParameters();
 
   // creating output lists
   fFlowRefs = new TList();
