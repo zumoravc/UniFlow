@@ -860,12 +860,12 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // this function is called ONCE at the start of your analysis (RUNTIME)
   // *************************************************************
 
-  // list all parameters used in this analysis
-  ListParameters();
-
   // task initialization
   fInit = InitializeTask();
   if(!fInit) return;
+
+  // list all parameters used in this analysis
+  ListParameters();
 
   // creating output lists
   fFlowRefs = new TList();
@@ -900,6 +900,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fQAPhi->SetOwner(kTRUE);
   fQAV0s = new TList();
   fQAV0s->SetOwner(kTRUE);
+
+  if(fUseAliEventCuts) { fEventCuts.AddQAplotsToList(fQAEvents); }
 
   // setting number of bins based on set range with fixed width
   const Int_t iPOIsPtNumBins = (Int_t) (fFlowPOIsPtMax - fFlowPOIsPtMin) / 0.1 + 0.5; // fixed width 0.1 GeV/c
@@ -1781,7 +1783,18 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   fMultEstimator.ToUpper();
 
   // setting fFlowCentMax according to estimator : 0-100 for %'s and 0-150 for CHARGED
-  if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("CHARGED")) { fFlowCentMin = 0; fFlowCentMax = 200; }
+  if(fMultEstimator.EqualTo("") || fMultEstimator.EqualTo("CHARGED"))
+  {
+    switch(fColSystem)
+    {
+      case kPbPb:
+        fFlowCentMin = 0; fFlowCentMax = 500;  
+      break;
+
+      default:
+        fFlowCentMin = 0; fFlowCentMax = 200;
+    }
+  }
   else { fFlowCentMin = 0; fFlowCentMax = 100; }
 
   // increasing fFlowCentMax+1 (just to be sure)
@@ -1826,6 +1839,18 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
         fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
       }
     }
+  }
+
+  AliInfo("Setting collision system dependent variables");
+  switch(fColSystem)
+  {
+    case kPbPb :
+      fUseAliEventCuts = kTRUE; // Required for event selection
+      AliWarning("    'fUseAliEventCuts' switched on!");
+    break;
+
+    default: ;
+      AliInfo("   Nothing changed.");
   }
 
   AliInfo("Preparing particle containers (std::vectors)");
@@ -1927,6 +1952,7 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   // Fill the event QA if event pass selection.
   // returns kTRUE if event pass all selection criteria kFALSE otherwise
   // *************************************************************
+
   if(!fEventAOD) return kFALSE;
   fhEventCounter->Fill("Input",1);
 
@@ -1934,21 +1960,21 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   if(fFillQA) FillEventsQA(0);
 
   Bool_t eventSelected = kFALSE;
-
   // event selection for small systems pp, pPb in Run2 (2016)
-  if(fColSystem == kPP || fColSystem == kPPb) eventSelected = IsEventSelected_small_2016();
+  if(fColSystem == kPP || fColSystem == kPPb) { eventSelected = IsEventSelected_small_2016(); }
+  // event selection for Pb-Pb in Run2 (2015o)
+  if(fColSystem == kPbPb) { eventSelected = IsEventSelected_PbPb(); }
 
-  if(!eventSelected) return kFALSE;
-
+  if(!eventSelected) { return kFALSE; }
   fhEventCounter->Fill("Selected",1);
 
   // Fill event QA AFTER cuts
-  if(fFillQA) FillEventsQA(1);
+  if(fFillQA) { FillEventsQA(1); }
 
   // extract PV-z for weights
   fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
 
-  return eventSelected;
+  return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsEventSelected_small_2016()
@@ -2069,6 +2095,52 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_small_2016()
   return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsEventSelected_PbPb()
+{
+  // Event selection for Pb-Pb collision recorded in Run 2 (15o)
+  // return kTRUE if event passes all criteria, kFALSE otherwise
+  // *************************************************************
+
+  // Physics selection (trigger)
+  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
+  UInt_t fSelectMask = inputHandler->IsEventSelected();
+
+  Bool_t isTriggerSelected = kFALSE;
+  switch(fTrigger) // check for high multiplicity trigger
+  {
+    case 0:
+      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
+      break;
+
+    // case 1:
+    //   isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
+    //   break;
+    //
+    // case 2:
+    //   isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
+    //   break;
+
+    default:
+      isTriggerSelected = kFALSE;
+  }
+
+  // events passing physics selection
+  if(!isTriggerSelected) { return kFALSE; }
+  fhEventCounter->Fill("Physics selection OK",1);
+
+  // events passing AliEventCuts selection
+  if(!fEventCuts.AcceptEvent(fEventAOD)) { return kFALSE; }
+  fhEventCounter->Fill("EventCuts OK",1);
+
+  // primary vertex selection
+  const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertex());
+  if(!vtx || vtx->GetNContributors() < 1) { return kFALSE; }
+  fhEventCounter->Fill("PV OK",1);
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
 {
   // Filling various QA plots related with event selection
@@ -2114,9 +2186,6 @@ void AliAnalysisTaskUniFlow::Filtering()
   // *************************************************************
 
   FilterCharged();
-
-  fIndexSampling = GetSamplingIndex();
-  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
 
   // // if neither is ON, filtering is skipped
   // if(!fProcessPID && !fProcessV0s && !fProcessPhi)
@@ -3557,6 +3626,10 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   fhEventCentrality->Fill(fIndexCentrality);
   fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
   fpRefsMult->Fill(fIndexCentrality,fVectorRefs->size(),1.0);
+
+  // event sampling
+  fIndexSampling = GetSamplingIndex();
+  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
   // at this point, centrality index (percentile) should be properly estimated, if not, skip event
 
   // if running in kSkipFlow mode, skip the remaining part
@@ -4123,7 +4196,7 @@ Short_t AliAnalysisTaskUniFlow::GetSamplingIndex()
   // returns centrality index
   // *************************************************************
 
-  Short_t index = 0x0;
+  Short_t index = 0;
 
   if(fSampling && fNumSamples > 1)
   {

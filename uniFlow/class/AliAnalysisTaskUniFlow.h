@@ -45,7 +45,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
-      void                    SetColisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
+      void                    SetCollisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
       void                    SetMultEstimator(const char* mult = "V0A") { fMultEstimator = mult; }
       void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
       void                    SetUseAliEventCuts(Bool_t bUseCuts = kTRUE) { fUseAliEventCuts = bUseCuts; }
@@ -147,6 +147,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
       Bool_t                  IsEventSelected_small_2016(); // event selection for LHC2016 pp & pPb data
+      Bool_t                  IsEventSelected_PbPb(); // event selection for Pb-Pb (LHC15o)
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks

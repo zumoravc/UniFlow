@@ -9,7 +9,7 @@
 void runAnalysis()
 {
     Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
-    Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
+    Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
     //TString sGridMode = "terminate";
@@ -19,25 +19,22 @@ void runAnalysis()
 
     TString sWorkDir = "test";
     TString sOutDir = "output";
-    TString sPeriod = "LHC16q";
 
-    // run switcher
-    // Run2 8.16 TeV
-    // RunList_LHC16r_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [12 runs ~16,6M ]
-    //Int_t runNumber[] = {266318, 266317, 266316,   266208, 266197, 266196, 266187, 265754, 265744, 265607, 265596, 265594};
-    // RunList_LHC16s_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [16 runs ~10,5M ]
-    // Int_t runNumber[] = {267110, 267081, 267077, 267072, 267070, 267030, 266998, 266997, 266994, 266993, 266944, 266886, 266885, 266883, 266882, 266437};
-
-    // Run2 5.02 TeV
-    // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs]
-    // Int_t runNumber[] = {267166, 267165, 267164, 267163};
-    // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20170318_v1.txt [31 runs]
-    // Int_t runNumber[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387};
-    // Int_t runNumber[] = {265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
-
-
-    //test
-    Int_t runNumber[] = {265385, 265384};
+    // Pb-Pb Run2 5.02 TeV (Run2) : RunList_LHC15o_pass1_pidfix_CentralBarrelTracking_hadronPID_20161018_v0.txt [6 runs]
+    TString sPeriod = "2015/LHC15o"; TString sPass = "pass1_pidfix"; Int_t runNumber[] = {
+      245232, 245231, 245152, 245151, 245146, 245145
+    };
+    // Pb-Pb Run2 5.02 TeV (Run2) : RunList_LHC15o_pass1_CentralBarrelTracking_hadronPID_20161130_v6.txt [77 runs]
+    // TString sPeriod = "2015/LHC15o"; TString sPass = "pass1"; Int_t runNumber[] = {
+    //   246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
+    //   246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804, 246766,
+    //   246765, 246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
+    //   246488, 246487, 246434, 246431, 246424, 246276, 246275, 246272, 246271, 246225,
+    //   246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151,
+    //   246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049, 246048, 246042,
+    //   246037, 246036, 246012, 246003, 246001, 245963, 245954, 245952, 245949, 245923,
+    //   245833, 245831, 245829, 245705, 245702, 245692, 245683
+    // };
 
     #if !defined (__CINT__) || defined (__CLING__)
     gInterpreter->ProcessLine(".include $ROOTSYS/include");
@@ -82,7 +79,7 @@ void runAnalysis()
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(1);
     task1->SetMC(kFALSE);
-    // task1->SetSampling(kTRUE);
+    task1->SetSampling(kFALSE);
     task1->SetFillQAhistos(kTRUE);
     task1->SetProcessPID(kTRUE);
     task1->SetProcessPhi(kTRUE);
@@ -98,8 +95,8 @@ void runAnalysis()
     // Events selection
     // task1->SetUseAliEventCuts();
     task1->SetTrigger(0);
-    task1->SetColisionSystem(AliAnalysisTaskUniFlow::kPPb);
-    task1->SetMultEstimator("V0A");
+    task1->SetCollisionSystem(AliAnalysisTaskUniFlow::kPbPb);
+    task1->SetMultEstimator("charged");
     // task1->SetPVtxZMax(10);
     // Charged selection
     // task1->SetChargedEtaMax(0.8);
@@ -173,8 +170,9 @@ void runAnalysis()
         alienHandler->SetAliPhysicsVersion("vAN-20180701-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
-        alienHandler->SetGridDataDir(Form("/alice/data/2016/%s/",sPeriod.Data()));
-        alienHandler->SetDataPattern("/pass1_CENT_wSDD/AOD/*/AliAOD.root");
+        alienHandler->SetGridDataDir(Form("/alice/data/%s/",sPeriod.Data()));
+        alienHandler->SetDataPattern(Form("/%s/AOD/*/AliAOD.root",sPass.Data()));
+        // alienHandler->SetDataPattern("/pass1_CENT_wSDD/AOD/*/AliAOD.root");
         // MC has no prefix, data has prefix 000
         alienHandler->SetRunPrefix("000");
         // runnumber
@@ -192,7 +190,7 @@ void runAnalysis()
         alienHandler->SetSplitMaxInputFileNumber(5);
         alienHandler->SetExecutable("FlowPID.sh");
         // specify how many seconds your job may take
-        alienHandler->SetTTL(50000);
+        alienHandler->SetTTL(20000);
         alienHandler->SetJDLName("FlowPID.jdl");
         alienHandler->SetPrice(1);
         alienHandler->SetOutputToRunNo(kTRUE);
