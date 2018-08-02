@@ -12,11 +12,11 @@
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
     public:
-      enum    RunMode {kFull, kTest, kSkipFlow}; // task running mode (NOT GRID MODE)
-      enum    ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
-      enum    AnalType {kAOD, kESD}; // tag for analysis type
-      enum    MultiEst {kRFP, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity estimator as AliMultSelection
-      enum    PartSpecies {kUnknown, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+      enum    RunMode {kFull = 0, kTest, kSkipFlow}; // task running mode (NOT GRID MODE)
+      enum    ColSystem {kPP = 0, kPPb, kPbPb}; // tag for collisional system
+      enum    AnalType {kAOD = 0, kESD}; // tag for analysis type
+      enum    MultiEst {kRFP = 0, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity estimator as AliMultSelection
+      enum    PartSpecies {kUnknown = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
                               AliAnalysisTaskUniFlow(); // constructor
                               AliAnalysisTaskUniFlow(const char *name); // named (primary) constructor
