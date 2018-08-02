@@ -9,13 +9,13 @@
 #include "AliEventCuts.h"
 #include "AliPicoTrack.h"
 
-
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
     public:
       enum    RunMode {kFull, kTest, kSkipFlow}; // task running mode (NOT GRID MODE)
       enum    ColSystem {kPP, kPPb, kPbPb}; // tag for collisional system
       enum    AnalType {kAOD, kESD}; // tag for analysis type
+      enum    MultiEst {kRFP, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity estimator as AliMultSelection
       enum    PartSpecies {kUnknown, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
                               AliAnalysisTaskUniFlow(); // constructor
@@ -46,7 +46,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
       void                    SetCollisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
-      void                    SetMultEstimator(const char* mult = "V0A") { fMultEstimator = mult; }
+      void                    SetMultEstimator(MultiEst est) { fMultEstimator = est; }
       void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
       void                    SetUseAliEventCuts(Bool_t bUseCuts = kTRUE) { fUseAliEventCuts = bUseCuts; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
@@ -151,6 +151,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
+      const char*             GetMultiEstimatorName(MultiEst est); // returns mult/cent estimator string or 'n/a' if not available
 
       Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
 
@@ -254,7 +255,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
       Short_t                 fTrigger; // physics selection trigger
-      TString                 fMultEstimator; // [''] multiplicity estimator (suported: ''/Charged,VOA,V0C,V0M,CL0,CL1,ZNA,ZNC)
+      MultiEst                fMultEstimator; // multiplicity/centrality estimator as in AliMultSelection
       Bool_t                  fUseAliEventCuts; // use decision of AliEventCuts in event selection
       Double_t                fPVtxCutZ; // (cm) PV z cut
       //cuts & selection: tracks

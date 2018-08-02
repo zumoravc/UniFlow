@@ -96,7 +96,7 @@ void runAnalysis()
     // task1->SetUseAliEventCuts();
     task1->SetTrigger(0);
     task1->SetCollisionSystem(AliAnalysisTaskUniFlow::kPbPb);
-    task1->SetMultEstimator("charged");
+    task1->SetMultEstimator(AliAnalysisTaskUniFlow::kRFP);
     // task1->SetPVtxZMax(10);
     // Charged selection
     // task1->SetChargedEtaMax(0.8);
