@@ -284,10 +284,10 @@ class ProcessUniFlow
     Bool_t      ProcessReconstructed(FlowTask* task = 0x0, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task = 0x0, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
 
-    TH1D*       CalcRefCumTwo(TH1D* hTwoRef); // calculate cn{2} out of correlation
-    TH1D*       CalcRefCumFour(TH1D* hFourRef, TH1D* hTwoRef, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
-    TH1D*       CalcDifCumTwo(TH1D* hTwoDif); // calculate dn{2} out of correlation
-    TH1D*       CalcDifCumFour(TH1D* hFourDif, TH1D* hTwoDif, TH1D* hTwoRef, Bool_t bCorrel = kFALSE); // calculate dn{4} out of correlation
+    TH1D*       CalcRefCumTwo(TProfile* hTwoRef); // calculate cn{2} out of correlation
+    TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
+    TH1D*       CalcDifCumTwo(TProfile* hTwoDif); // calculate dn{2} out of correlation
+    TH1D*       CalcDifCumFour(TProfile* hFourDif, TProfile* hTwoDif, TProfile* hTwoRef, Bool_t bCorrel = kFALSE); // calculate dn{4} out of correlation
 
     TH1D*       CalcRefFlowTwo(TH1D* hTwoRef); // calculate vn{2} out of cn{2}
     TH1D*       CalcRefFlowFour(TH1D* hFourRef); // calculate vn{4} out of cn{4}
@@ -803,27 +803,27 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   return kTRUE;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::CalcRefCumTwo(TH1D* hTwoRef)
+TH1D* ProcessUniFlow::CalcRefCumTwo(TProfile* hTwoRef)
 {
   // Calculate reference c_n{2} out of correlations
   // NOTE: it is just a fancier Clone(): for consistency
   // cn{2} = <<2>>
 
-  if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcRefCumTwo"); return 0x0; }
-  TH1D* histCum = (TH1D*) hTwoRef->Clone(Form("%s_cn2",hTwoRef->GetName()));
+  if(!hTwoRef) { Error("Profile 'hTwoRef' not valid!","CalcRefCumTwo"); return 0x0; }
+  TH1D* histCum = (TH1D*) hTwoRef->ProjectionX(Form("%s_cn2",hTwoRef->GetName()));
   return histCum;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::CalcRefCumFour(TH1D* hFourRef, TH1D* hTwoRef, Bool_t bCorrel)
+TH1D* ProcessUniFlow::CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, Bool_t bCorrel)
 {
   // Calculate reference c_n{4} out of correlations
   // cn{4} = <<4>> - 2*<<2>>^2
 
-  if(!hFourRef) { Error("Histo 'hFourRef' not valid!","CalcRefCumFour"); return 0x0; }
-  if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcRefCumFour"); return 0x0; }
+  if(!hFourRef) { Error("Profile 'hFourRef' not valid!","CalcRefCumFour"); return 0x0; }
+  if(!hTwoRef) { Error("Profile 'hTwoRef' not valid!","CalcRefCumFour"); return 0x0; }
   if(hFourRef->GetNbinsX() != hTwoRef->GetNbinsX()) { Error("Different number of bins!","CalcRefCumFour"); return 0x0; }
 
-  TH1D* histCum = (TH1D*) hFourRef->Clone(Form("%s_cn4",hFourRef->GetName()));
+  TH1D* histCum = (TH1D*) hFourRef->ProjectionX(Form("%s_cn4",hFourRef->GetName()));
   histCum->Reset();
 
   for(Int_t iBin(0); iBin < hFourRef->GetNbinsX()+2; ++iBin)
@@ -848,30 +848,30 @@ TH1D* ProcessUniFlow::CalcRefCumFour(TH1D* hFourRef, TH1D* hTwoRef, Bool_t bCorr
   return histCum;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::CalcDifCumTwo(TH1D* hTwoDif)
+TH1D* ProcessUniFlow::CalcDifCumTwo(TProfile* hTwoDif)
 {
   // Calculate reference d_n{2} out of correlations
   // NOTE: it is just a fancier Clone(): for consistency
   // dn{2} = <<2'>>
 
-  if(!hTwoDif) { Error("Histo 'hTwoDif' not valid!","CalcDifCumTwo"); return 0x0; }
-  TH1D* histCum = (TH1D*) hTwoDif->Clone(Form("%s_dn2",hTwoDif->GetName()));
+  if(!hTwoDif) { Error("TProfile 'hTwoDif' not valid!","CalcDifCumTwo"); return 0x0; }
+  TH1D* histCum = (TH1D*) hTwoDif->ProjectionX(Form("%s_dn2",hTwoDif->GetName()));
   return histCum;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::CalcDifCumFour(TH1D* hFourDif, TH1D* hTwoDif, TH1D* hTwoRef, Bool_t bCorrel)
+TH1D* ProcessUniFlow::CalcDifCumFour(TProfile* hFourDif, TProfile* hTwoDif, TProfile* hTwoRef, Bool_t bCorrel)
 {
   // Calculate reference d_n{4} out of correlations
   // NOTE: it is just a fancier Clone(): for consistency
   // dn{4} = <<4'>> - <<2>><<2'>>
 
-  if(!hFourDif) { Error("Histo 'hFourDif' not valid!","CalcDifCumFour"); return 0x0; }
-  if(!hTwoDif) { Error("Histo 'hTwoDif' not valid!","CalcDifCumFour"); return 0x0; }
-  if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcDifCumFour"); return 0x0; }
+  if(!hFourDif) { Error("Profile 'hFourDif' not valid!","CalcDifCumFour"); return 0x0; }
+  if(!hTwoDif) { Error("Profile 'hTwoDif' not valid!","CalcDifCumFour"); return 0x0; }
+  if(!hTwoRef) { Error("Profile 'hTwoRef' not valid!","CalcDifCumFour"); return 0x0; }
   if(hFourDif->GetNbinsX() != hTwoDif->GetNbinsX() || hFourDif->GetNbinsX() != hTwoRef->GetNbinsX())
   { Error("Different number of bins!","CalcDifFCumFlow"); return 0x0; }
 
-  TH1D* histCum = (TH1D*) hFourDif->Clone(Form("%s_dn4",hFourDif->GetName()));
+  TH1D* histCum = (TH1D*) hFourDif->ProjectionX(Form("%s_dn4",hFourDif->GetName()));
   histCum->Reset();
 
   for(Int_t iBin(0); iBin < histCum->GetNbinsX()+2; ++iBin)
