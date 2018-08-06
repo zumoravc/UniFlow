@@ -753,7 +753,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   ffOutputFile->cd();
   hFlowTwoDesampled->Write(Form("%s",hFlowTwoDesampled->GetName()));
-  if(hFlowTwoDesampled) delete hFlowTwoDesampled;
+  listFlowTwo->Write("list_RefsFlowTwo_samples",TObject::kSingleKey);
+  // if(hFlowTwoDesampled) delete hFlowTwoDesampled;
 
   if(bDoFour)
   {
@@ -764,7 +765,9 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
     ffOutputFile->cd();
     hFlowFourDesampled->Write(Form("%s",hFlowFourDesampled->GetName()));
-    if(hFlowFourDesampled) delete hFlowFourDesampled;
+    listFlowFour->Write("list_RefsFlowFour_samples",TObject::kSingleKey);
+
+    // if(hFlowFourDesampled) delete hFlowFourDesampled;
   }
 
   // Comment :: Not sure what this is about =====>
@@ -783,6 +786,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // <=====
 
   Debug("Processing done","ProcessRefs");
+
+
 
   if(listCorTwo) delete listCorTwo;
   if(listCumTwo) delete listCumTwo;
@@ -1080,89 +1085,90 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   // preparing vn' samples
   TList* listFlow = new TList();
   TList* listCum = new TList();
-  TList* listMerge = new TList();
-  TProfile2D* prof2 = 0x0;
-  TProfile2D* prof2pos = 0x0;
-  TProfile2D* prof2neg = 0x0;
   TProfile* prof = 0x0;
   TProfile* profRebin = 0x0;
   TProfile* profRef = 0x0;
   TProfile* profRefRebin = 0x0;
   TH1D* hFlow = 0x0;
 
-  Short_t binMultLow = 0;
-  Short_t binMultHigh = 0;
-  Double_t dRef = 0;
+  TList* listCorTwo = new TList();
+  TList* listCumTwo = new TList();
+  TList* listFlowTwo = new TList();
 
+  Debug("Processing samples","ProcessDirect");
   for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
   {
+    Debug(Form("Processing sample %d",iSample), "ProcessDirect");
+
+    TProfile2D* p2CorTwoDif = 0x0;
     if(task->fMergePosNeg)
     {
-      // loading Pos & Neg if fMergePosNeg is ON
-      prof2pos = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
-      prof2neg = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Neg_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+      // loading pos & neg if fMergePosNeg is ON
+      TProfile2D* prof2pos = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+      TProfile2D* prof2neg = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Neg_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+      if(!prof2pos || !prof2neg) { Error("Pos & Neg profile merging: 'prof2pos' OR 'prof2neg' not found!.","ProcessDirect"); return kFALSE; }
 
-      if(!prof2pos || !prof2neg) { Error("Pos OR Neg profile not found for Pos&Neg merging.","ProcessDirect"); return kFALSE; }
-      listMerge->Clear();
+      // merging pos & neg
+      TList* listMerge = new TList();
       listMerge->Add(prof2pos);
       listMerge->Add(prof2neg);
-
-      prof2 = (TProfile2D*) listMerge->At(0)->Clone();
-      prof2->Reset();
-      Double_t mergeStatus = prof2->Merge(listMerge);
-      if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessDirect"); return kFALSE; }
+      p2CorTwoDif = (TProfile2D*) MergeListProfiles(listMerge);
+      delete listMerge;
+      if(!p2CorTwoDif) { Error("Pos & Neg profile merging failed!","ProcessDirect"); return kFALSE; }
     }
     else
     {
-      // loading single profile
-      if(task->fInputTag.EqualTo(""))
-      { prof2 = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample)); }
-      else
-      { prof2 = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_%s_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,task->fInputTag.Data(),iSample)); }
+      // loading single (Pos) profile
+      if(task->fInputTag.EqualTo("")) // loading default-ly named profile
+      { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample)); }
+      else // loading "non-standardly" named profile
+      { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_%s_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,task->fInputTag.Data(),iSample)); }
     }
-    if(!prof2) { Error(Form("Profile sample %d does not exists.",iSample),"ProcessDirect"); return kFALSE; }
+    if(!p2CorTwoDif) { Error(Form("Profile sample %d does not exists.",iSample),"ProcessDirect"); return kFALSE; }
+
+
+    // TODO =======>
 
     // preparing Refs
     profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
     if(!profRef) { Error(Form("Profile sample %d does not exists",iSample),"ProcesPID"); return kFALSE; }
 
     profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
-    dRef = profRefRebin->GetBinContent(iMultBin+1);
+    Double_t dRef = profRefRebin->GetBinContent(iMultBin+1);
     profRefRebin->Draw();
     // printf("dRef %g\n",dRef);
     // NOTE: complains about Sumw2
 
-    // rebinning according in mult bin
-    binMultLow = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
-    binMultHigh = prof2->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
-    prof = prof2->ProfileY(Form("%s_cent%d",prof2->GetName(),iMultBin),binMultLow,binMultHigh);
+    // <===========
 
+    TH1D* hFlowTwoRef = 0x0; // ref. vn{2} i-th sample
+
+    // slicing according to mult bin
+    Short_t binMultLow = p2CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
+    Short_t binMultHigh = p2CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
+    TProfile* pCorTwoDif = p2CorTwoDif->ProfileY(Form("%s_cent%d",p2CorTwoDif->GetName(),iMultBin),binMultLow,binMultHigh);
+
+    // rebinning according to pt bins
     if(task->fNumPtBins > 0)
-    {
-      // rebinning according to pt bins
-      profRebin = (TProfile*) prof->Rebin(task->fNumPtBins,Form("%s_rebin",prof->GetName()),task->fPtBinsEdges);
-    }
+    { pCorTwoDif = (TProfile*) pCorTwoDif->Rebin(task->fNumPtBins,Form("%s_rebin",pCorTwoDif->GetName()),task->fPtBinsEdges); }
     else
-    {
-      profRebin = (TProfile*) prof->Clone(Form("%s_rebin",prof->GetName()));
-    }
+    { pCorTwoDif = (TProfile*) pCorTwoDif->Clone(Form("%s_rebin",pCorTwoDif->GetName())); }
 
+    // NOTE: Here the <2'> is ready
+    listCorTwo->Add(pCorTwoDif);
 
+    // dn{2}
+    TH1D* hCumTwoDif = CalcDifCumTwo(pCorTwoDif);
+    if(!hCumTwoDif) { Error(Form("dn{2} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+    listCumTwo->Add(hCumTwoDif);
 
-    // making TH1D projection (to avoid handling of bin entries)
-    TH1D* hCum = (TH1D*) profRebin->ProjectionX();
-    hCum->SetName(Form("%s_Cum",prof->GetName()));
-    listCum->Add(hCum);
-
-    hFlow = (TH1D*) profRebin->ProjectionX();
-    // printf("Pre %g\n",hFlow->GetBinContent(20));
-    // printf("Scale %g\n",1/TMath::Sqrt(dRef));
-    hFlow->SetName(Form("%s_Flow",prof->GetName()));
-    hFlow->Scale(1/TMath::Sqrt(dRef));
-    // printf("Post %g\n",hFlow->GetBinContent(20));
-    listFlow->Add(hFlow);
+    // v'n{2}
+    TH1D* hFlowTwoDif = CalcDifFlowTwo(hCumTwoDif, hFlowTwoRef, iMultBin, bCorrelated);
+    if(!hFlowTwoDif) { Error(Form("vn{2}(dif) (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+    listFlowTwo->Add(hFlowTwoDif);
   }
-  delete listMerge;
+  Debug("Processing samples done","ProcessDirect");
+
 
   Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessDirect");
 
