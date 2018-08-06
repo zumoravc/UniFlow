@@ -612,22 +612,24 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   switch (task->fSpecies)
   {
     case FlowTask::kRefs:
-      if(!ProcessRefs(task)) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return kFALSE; }
-      break;
+      if(!ProcessRefs(task)) { Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(), task->GetSpeciesName().Data()),"ProcessTask"); return kFALSE; }
+    break;
 
     case FlowTask::kCharged:
     case FlowTask::kPion:
     case FlowTask::kKaon:
     case FlowTask::kProton:
-      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { if(!ProcessDirect(task,binMult)) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return kFALSE; }}
-      break;
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { if(!ProcessDirect(task,binMult)) { Error(Form("Task '%s' (%s; mult. bin %d) not processed correctly!",task->fName.Data(),task->GetSpeciesName().Data(),binMult),"ProcessTask"); return kFALSE; }}
+    break;
 
     case FlowTask::kPhi:
     case FlowTask::kK0s:
     case FlowTask::kLambda:
-      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { if(!ProcessReconstructed(task,binMult)) { Error(Form("Task '%s' not processed correctly!",task->fName.Data()),"ProcessTask"); return kFALSE; } }
-      break;
-    default: break;
+      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { if(!ProcessReconstructed(task,binMult)) { Error(Form("Task '%s' (%s; mult. bin %d) not processed correctly!",task->fName.Data(),task->GetSpeciesName().Data(),binMult),"ProcessTask"); return kFALSE; } }
+    break;
+
+    default:
+    break;
   }
 
   return kTRUE;
