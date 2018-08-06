@@ -291,7 +291,7 @@ class ProcessUniFlow
 
     TH1D*       CalcRefFlowTwo(TH1D* hTwoRef); // calculate vn{2} out of cn{2}
     TH1D*       CalcRefFlowFour(TH1D* hFourRef); // calculate vn{4} out of cn{4}
-    TH1D*       CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin, Bool_t bCorrel = kFALSE); // calculate vn'{2} out of cumulants
+    TH1D*       CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin, Bool_t bCorrel = kFALSE); // calculate vn'{2} out of dn & vn
     TH1D*       CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, Bool_t bCorrel = kFALSE); // calculate vn'{4} out of cumulants
 
     Bool_t 	    ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
@@ -642,9 +642,12 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(!task) { Error("Task not valid!","ProcessRefs"); return kFALSE; }
   if(task->fSpecies != FlowTask::kRefs) { Error("Task species not kRefs!","ProcessRefs"); return kFALSE; }
 
+  Bool_t bDoFour = task->fDoFour; // check if cn{4} should be processed
+  Bool_t bCorrelated = task->fConsCorr; // check if correlated uncrt. are considered
+
   // for saving profiles into TList for merging (into single one) -> estimation for central values
-  TList* listProfTwo = new TList();
-  TList* listProfFour = new TList();
+  TList* listCorTwo = new TList();
+  TList* listCorFour = new TList();
 
   // for cumulants (applicable for diff. flow)
   TList* listCumTwo = new TList();
@@ -654,9 +657,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TList* listFlowTwo = new TList();
   TList* listFlowFour = new TList();
 
-  Bool_t bCorrelated = task->fConsCorr;
-
-  // rebinning <multiplicity>
+  // estimating <multiplicity>
   if(fbSaveMult)
   {
     TProfile* profMult = (TProfile*) flQACharged->FindObject(Form("fpRefsMult"));
@@ -667,137 +668,126 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     profMult_rebin->Write(profMult_rebin->GetName());
   }
 
+  Debug("Processing samples","ProcessRefs");
   for(Short_t iSample(0); iSample < task->fNumSamples; ++iSample)
   {
-    TProfile* profTwo = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
-    if(!profTwo) { Warning(Form("Profile 'profTwo' (sample %d) not valid",iSample),"ProcesRefs"); return kFALSE; }
+    TProfile* pCorTwo = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+    if(!pCorTwo) { Warning(Form("Profile 'pCorTwo' (sample %d) not loaded",iSample),"ProcesRefs"); return kFALSE; }
 
     // Process 4-particle correlations
-    TProfile* profFour = 0x0;
-    if(task->fDoFour)
+    TProfile* pCorFour = 0x0;
+    if(bDoFour)
     {
-      profFour = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<4>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
-      if(!profFour) { Warning(Form("Profile 'profFour' (sample %d) not valid!",iSample),"ProcesRefs"); return kFALSE; }
+      pCorFour = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<4>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+      if(!pCorFour) { Warning(Form("Profile 'pCorFour' (sample %d) not loaded!",iSample),"ProcesRefs"); return kFALSE; }
     }
 
     // rebinning the profiles
     if(task->fRebinning)
     {
-      profTwo = (TProfile*) profTwo->Rebin(fiNumMultBins,Form("%s_rebin",profTwo->GetName()),fdMultBins);
-      if(task->fDoFour) { profFour = (TProfile*) profFour->Rebin(fiNumMultBins,Form("%s_rebin",profFour->GetName()),fdMultBins); }
+      pCorTwo = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_rebin",pCorTwo->GetName()),fdMultBins);
+      if(bDoFour) { pCorFour = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_rebin",pCorFour->GetName()),fdMultBins); }
     }
+
+    listCorTwo->Add(pCorTwo);
+    if(bDoFour) { listCorFour->Add(pCorFour); }
 
     // Making cumulants out of correlations : <<N>>_n -> c_n{N} -> v_n{N}
 
     // cn{2}
-    listProfTwo->Add(profTwo);
-    TH1D* histTwo = (TH1D*) profTwo->ProjectionX(Form("%s_proj",profTwo->GetName()));
-
-    TH1D* histCumTwo = CalcRefCumTwo(histTwo);
-    if(!histCumTwo) { Error(Form("Cn{2} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
-    listCumTwo->Add(histCumTwo);
+    TH1D* hCumTwo = CalcRefCumTwo(pCorTwo);
+    if(!hCumTwo) { Error(Form("cn{2} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+    listCumTwo->Add(hCumTwo);
 
     // vn{2}
-    TH1D* histFlowTwo = CalcRefFlowTwo(histCumTwo);
-    listFlowTwo->Add(histFlowTwo);
+    TH1D* hFlowTwo = CalcRefFlowTwo(hCumTwo);
+    if(!hFlowTwo) { Error(Form("vn{2} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+    listFlowTwo->Add(hFlowTwo);
 
     if(task->fDoFour)
     {
       // cn{4}
-      listProfFour->Add(profFour);
-      TH1D* histFour = (TH1D*) profFour->ProjectionX(Form("%s_proj",profFour->GetName()));
-
-      TH1D* histCumFour = CalcRefCumFour(histFour, histTwo, bCorrelated);
-      if(!histCumFour) { Error(Form("Cn{4} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
-      listCumFour->Add(histCumFour);
+      TH1D* hCumFour = CalcRefCumFour(pCorFour, pCorTwo, bCorrelated);
+      if(!hCumFour) { Error(Form("cn{4} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+      listCumFour->Add(hCumFour);
 
       // vn{4}
-      TH1D* histFlowFour = CalcRefFlowFour(histCumFour);
-      listFlowFour->Add(histFlowFour);
+      TH1D* hFlowFour = CalcRefFlowFour(hCumFour);
+      if(!hFlowFour) { Error(Form("vn{4} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+      listFlowFour->Add(hFlowFour);
     }
-
   } // end-for {iSample}: samples
+  Debug("Samples processing done!","ProcessRefs");
 
-  // desampling (similarly to PID & Charged tracks)
-  TH1D* hDesampled = DesampleList(listCumTwo,task);
-  if(!hDesampled) { Error("Desampling unsuccesfull","ProcessRefs"); return kFALSE; }
-  hDesampled->SetName(Form("hCum2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
-  hDesampled->SetTitle(Form("%s c_{%d}{2,|#Delta#eta|>%g}; centrality/multiplicity; c_{%d}{2,|#Delta#eta|>%g}",task->GetSpeciesName().Data(),task->fHarmonics,task->fEtaGap,task->fHarmonics,task->fEtaGap));
+  // merging correlation profiles to get central values
+  Debug("Merging correlations for central values", "ProcessRefs");
+  TProfile* pCorTwoMerged = MergeListProfiles(listCorTwo);
+  if(!pCorTwoMerged) { Error("Merging of 'pCorTwoMerged' failed!","ProcessRefs"); return kFALSE; }
 
-  TH1D* hDesampledFlow = DesampleList(listFlowTwo,task);
-  hDesampledFlow->SetName(Form("hFlow2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
-  hDesampledFlow->SetTitle(Form("%s v_{%d}{2,|#Delta#eta|>%g}; centrality/multiplicity; v_{%d}{2,|#Delta#eta|>%g}",task->GetSpeciesName().Data(),task->fHarmonics,task->fEtaGap,task->fHarmonics,task->fEtaGap));
+  TH1D* hCumTwoMerged = CalcRefCumTwo(pCorTwoMerged);
+  if(!hCumTwoMerged) { Error(Form("cn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
 
-  // saving to output file
+  TH1D* hFlowTwoMerged = CalcRefFlowTwo(hCumTwoMerged);
+  if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+
+  if(bDoFour)
+  {
+    TProfile* pCorFourMerged = MergeListProfiles(listCorFour);
+    if(!pCorFourMerged) { Error("Merging of 'pCorFourMerged' failed!","ProcessRefs"); return kFALSE; }
+
+    TH1D* hCumFourMerged = CalcRefCumFour(pCorFourMerged, pCorTwoMerged, bCorrelated);
+    if(!hCumFourMerged) { Error(Form("cn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+
+    TH1D* hFlowFourMerged = CalcRefFlowFour(hCumFourMerged);
+    if(!hFlowFourMerged) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+  }
+
+  // desampling
+  Debug("Desampling","ProcessRefs");
+
+  // TH1D* hFlowTwoDesampled = DesampleList(listFlowTwo,task); // NOTE skipping desampling for vn{2} -> nothing to de-correlate
+  TH1D* hFlowTwoDesampled = (TH1D*) hFlowTwoMerged->Clone(Form("%s_desampled",hFlowTwoMerged->GetName()));
+  if(!hFlowTwoDesampled) { Error("Desampling 'hFlowTwoDesampled' unsuccesfull","ProcessRefs"); return kFALSE; }
+  hFlowTwoDesampled->SetName(Form("hCum2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
+  hFlowTwoDesampled->SetTitle(Form("%s c_{%d}{2,|#Delta#eta|>%g}; centrality/multiplicity; c_{%d}{2,|#Delta#eta|>%g}",task->GetSpeciesName().Data(),task->fHarmonics,task->fEtaGap,task->fHarmonics,task->fEtaGap));
+
   ffOutputFile->cd();
-  hDesampled->Write(Form("%s",hDesampled->GetName()));
-  hDesampledFlow->Write(Form("%s",hDesampledFlow->GetName()));
+  hFlowTwoDesampled->Write(Form("%s",hFlowTwoDesampled->GetName()));
+  if(hFlowTwoDesampled) delete hFlowTwoDesampled;
 
-  // merging all samples together (NOTE: good for Refs)
-  TH1D* hMerged = 0x0;
-  if(task->fSampleMerging)
+  if(bDoFour)
   {
-    TProfile* merged = (TProfile*) listProfTwo->At(0)->Clone();
-    merged->Reset();
-    Double_t mergeStatus = merged->Merge(listProfTwo);
-    merged->SetName(Form("hCum2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
-    if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessRefs"); return kFALSE; }
+    TH1D* hFlowFourDesampled = DesampleList(listFlowFour,task);
+    if(!hFlowFourDesampled) { Error("Desampling 'hFlowFourDesampled' unsuccesfull","ProcessRefs"); return kFALSE; }
+    hFlowFourDesampled->SetName(Form("hFlow2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
+    hFlowFourDesampled->SetTitle(Form("%s v_{%d}{2,|#Delta#eta|>%g}; centrality/multiplicity; v_{%d}{2,|#Delta#eta|>%g}",task->GetSpeciesName().Data(),task->fHarmonics,task->fEtaGap,task->fHarmonics,task->fEtaGap));
 
-    hMerged = (TH1D*) merged->ProjectionX();
-    hMerged->SetName(Form("hFlow2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
-
-    // getting vn out of cn
-    for(Short_t iBin(1); iBin < merged->GetNbinsX()+1; iBin++)
-    {
-      Double_t dContent = merged->GetBinContent(iBin);
-      Double_t dError = merged->GetBinError(iBin);
-
-      if(dContent > 0.0 && dError >= 0.0)
-      {
-        hMerged->SetBinContent(iBin, TMath::Sqrt(dContent));
-        hMerged->SetBinError(iBin, TMath::Sqrt( TMath::Power(dError,2) / (4*dContent) ));
-      }
-      else
-      {
-        hMerged->SetBinContent(iBin, 9.);
-        hMerged->SetBinError(iBin, 9.);
-      }
-    }
-    merged->Write(Form("%s",merged->GetName()));
-    hMerged->Write(Form("%s",hMerged->GetName()));
+    ffOutputFile->cd();
+    hFlowFourDesampled->Write(Form("%s",hFlowFourDesampled->GetName()));
+    if(hFlowFourDesampled) delete hFlowFourDesampled;
   }
 
+  // Comment :: Not sure what this is about =====>
+  // if(!task->fRebinning)
+  // {
+  //   // no rebinning
+  //   TH1D* hNoRebin_rebinned = TestRebin(hDesampledFlow,task);
+  //   hNoRebin_rebinned->Write(Form("%s",hNoRebin_rebinned->GetName()));
+  //
+  //   if(task->fSampleMerging)
+  //   {
+  //     TH1D* hMerged_rebinned = TestRebin(hMerged,task);
+  //     hMerged_rebinned->Write(Form("%s",hMerged_rebinned->GetName()));
+  //   }
+  // }
+  // <=====
 
+  Debug("Processing done","ProcessRefs");
 
-  if(!task->fRebinning)
-  {
-    // no rebinning
-    TH1D* hNoRebin_rebinned = TestRebin(hDesampledFlow,task);
-    hNoRebin_rebinned->Write(Form("%s",hNoRebin_rebinned->GetName()));
-
-    if(task->fSampleMerging)
-    {
-      TH1D* hMerged_rebinned = TestRebin(hMerged,task);
-      hMerged_rebinned->Write(Form("%s",hMerged_rebinned->GetName()));
-    }
-  }
-
-  // TCanvas* canTest = new TCanvas("canTest","canTest");
-  // canTest->Divide(2,1);
-  // canTest->cd(1);
-  // hDesampled->Draw();
-  // canTest->cd(2);
-  // hDesampledFlow->Draw();
-
-  if(hDesampled) delete hDesampled;
-  if(hDesampledFlow) delete hDesampledFlow;
-  // if(profRebin) delete profRebin;
-  // if(histProj) delete histProj;
-
-  if(listProfTwo) delete listProfTwo;
+  if(listCorTwo) delete listCorTwo;
   if(listCumTwo) delete listCumTwo;
   if(listFlowTwo) delete listFlowTwo;
-  if(listProfFour) delete listProfFour;
+  if(listCorFour) delete listCorFour;
   if(listCumFour) delete listCumFour;
   if(listFlowFour) delete listFlowFour;
 
@@ -1061,26 +1051,31 @@ TH1D* ProcessUniFlow::CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRef
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 {
-  Info("Processing direct task","ProcesDirect");
+  Info(Form("Processing direct task (mult. bin %d)", iMultBin),"ProcesDirect");
   if(!task) { Error("Task not valid!","ProcessDirect"); return kFALSE; }
+
+  Bool_t bDoFour = task->fDoFour; // check if cn{4} should be processed
+  Bool_t bCorrelated = task->fConsCorr; // check if correlated uncrt. are considered
 
   TList* listInput = 0x0;
   switch (task->fSpecies)
   {
     case FlowTask::kCharged:
       listInput = flFlowCharged;
-      break;
+    break;
 
     case FlowTask::kPion:
     case FlowTask::kKaon:
     case FlowTask::kProton:
       listInput = flFlowPID;
-      break;
+    break;
 
     default:
       Error("Task species not direct!","ProcessDirect");
       return kFALSE;
   }
+
+  if(!listInput) { Error("Input list not loaded!","ProcessDirect"); return kFALSE; }
 
   // preparing vn' samples
   TList* listFlow = new TList();
