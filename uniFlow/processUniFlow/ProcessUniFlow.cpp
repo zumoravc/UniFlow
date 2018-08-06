@@ -301,7 +301,7 @@ class ProcessUniFlow
 
     void        SuggestMultBinning(const Short_t numFractions);
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
-    TProfile*   MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
+    TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
     TH1D*       DesampleList(TList* list = 0x0, FlowTask* task = 0x0, Short_t iMultBin = 0); // Desample list of samples for estimating the uncertanity
     TH1D*       TestRebin(TH1D* hOrig = 0x0, FlowTask* task = 0x0); // testing desample - manual rebin
 
@@ -721,7 +721,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   // merging correlation profiles to get central values
   Debug("Merging correlations for central values", "ProcessRefs");
-  TProfile* pCorTwoMerged = MergeListProfiles(listCorTwo);
+  TProfile* pCorTwoMerged = (TProfile*) MergeListProfiles(listCorTwo);
   if(!pCorTwoMerged) { Error("Merging of 'pCorTwoMerged' failed!","ProcessRefs"); return kFALSE; }
 
   TH1D* hCumTwoMerged = CalcRefCumTwo(pCorTwoMerged);
@@ -732,7 +732,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   if(bDoFour)
   {
-    TProfile* pCorFourMerged = MergeListProfiles(listCorFour);
+    TProfile* pCorFourMerged = (TProfile*) MergeListProfiles(listCorFour);
     if(!pCorFourMerged) { Error("Merging of 'pCorFourMerged' failed!","ProcessRefs"); return kFALSE; }
 
     TH1D* hCumFourMerged = CalcRefCumFour(pCorFourMerged, pCorTwoMerged, bCorrelated);
@@ -1569,12 +1569,12 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   return kTRUE;
 }
 //_____________________________________________________________________________
-TProfile* ProcessUniFlow::MergeListProfiles(TList* list)
+TH1* ProcessUniFlow::MergeListProfiles(TList* list)
 {
   // merge list of TProfiles into single TProfile and return it
   if(!list || list->IsEmpty()) { Error("List not valid or empty","MergeListProfiles"); return 0x0; }
 
-  TProfile* merged = (TProfile*) list->At(0)->Clone();
+  TH1* merged = (TH1*) list->At(0)->Clone();
   merged->Reset();
   Double_t mergeStatus = merged->Merge(list);
   if(mergeStatus == -1) { Error("Merging failed!","MergeListProfiles"); return 0x0; }
