@@ -287,7 +287,7 @@ class ProcessUniFlow
     TH1D*       CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task); // calculate cn{2} out of correlation
     TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
     TH1D*       CalcDifCumTwo(TProfile* hTwoDif, FlowTask* task); // calculate dn{2} out of correlation
-    TH1D*       CalcDifCumFour(TProfile* hFourDif, TProfile* hTwoDif, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate dn{4} out of correlation
+    TH1D*       CalcDifCumFour(TProfile* hFourDif, TProfile* hTwoDif, TProfile* hTwoRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate dn{4} out of correlation
 
     TH1D*       CalcRefFlowTwo(TH1D* hTwoRef, FlowTask* task); // calculate vn{2} out of cn{2}
     TH1D*       CalcRefFlowFour(TH1D* hFourRef, FlowTask* task); // calculate vn{4} out of cn{4}
@@ -674,14 +674,14 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   Debug("Processing samples","ProcessRefs");
   for(Short_t iSample(0); iSample < task->fNumSamples; ++iSample)
   {
-    TProfile* pCorTwo = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+    TProfile* pCorTwo = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
     if(!pCorTwo) { Warning(Form("Profile 'pCorTwo' (sample %d) not valid",iSample),"ProcesRefs"); return kFALSE; }
 
     // Process 4-particle correlations
     TProfile* pCorFour = 0x0;
     if(bDoFour)
     {
-      pCorFour = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<4>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
+      pCorFour = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<4>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
       if(!pCorFour) { Warning(Form("Profile 'pCorFour' (sample %d) not valid!",iSample),"ProcesRefs"); return kFALSE; }
     }
 
@@ -726,8 +726,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   } // end-for {iSample}: samples
 
   ffOutputFile->cd();
-  listFlowTwo->Write("listFlowTwo", TObject::kSingleKey);
-  if(bDoFour) { listFlowFour->Write("listFlowFour", TObject::kSingleKey); }
+  listFlowTwo->Write("listFlowRefsTwo", TObject::kSingleKey);
+  if(bDoFour) { listFlowFour->Write("listFlowRefsFour", TObject::kSingleKey); }
 
   Debug("Samples processing done!","ProcessRefs");
 
@@ -744,6 +744,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   hFlowTwoMerged->SetName(Form("%s_merged", hFlowTwoMerged->GetName()));
 
   ffOutputFile->cd();
+  hCumTwoMerged->Write();
   hFlowTwoMerged->Write();
 
   if(bDoFour)
@@ -754,13 +755,12 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     TH1D* hCumFourMerged = CalcRefCumFour(pCorFourMerged, pCorTwoMerged, task, bCorrelated);
     if(!hCumFourMerged) { Error(Form("cn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
 
-
-
     TH1D* hFlowFourMerged = CalcRefFlowFour(hCumFourMerged, task);
     if(!hFlowFourMerged) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
     hFlowFourMerged->SetName(Form("%s_merged", hFlowFourMerged->GetName()));
 
     ffOutputFile->cd();
+    hCumFourMerged->Write();
     hFlowFourMerged->Write();
   }
 
@@ -885,7 +885,7 @@ TH1D* ProcessUniFlow::CalcDifCumTwo(TProfile* hTwoDif, FlowTask* task)
   return histCum;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::CalcDifCumFour(TProfile* hFourDif, TProfile* hTwoDif, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel)
+TH1D* ProcessUniFlow::CalcDifCumFour(TProfile* hFourDif, TProfile* hTwoDif, TProfile* hTwoRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel)
 {
   // Calculate reference d_n{4} out of correlations
   // NOTE: it is just a fancier Clone(): for consistency
@@ -895,14 +895,17 @@ TH1D* ProcessUniFlow::CalcDifCumFour(TProfile* hFourDif, TProfile* hTwoDif, TPro
   if(!hTwoDif) { Error("Profile 'hTwoDif' not valid!","CalcDifCumFour"); return 0x0; }
   if(!hTwoRef) { Error("Profile 'hTwoRef' not valid!","CalcDifCumFour"); return 0x0; }
   if(!task) { Error("FlowTask not found!","CalcDifCumFour"); return 0x0; }
-  if(hFourDif->GetNbinsX() != hTwoDif->GetNbinsX() || hFourDif->GetNbinsX() != hTwoRef->GetNbinsX())
-  { Error("Different number of bins!","CalcDifFCumFlow"); return 0x0; }
+  if(iRefBin < 1) { Error("Bin 'iRefBin; < 1!'","CalcDifCumFour"); return 0x0; }
+  if(hFourDif->GetNbinsX() != hTwoDif->GetNbinsX()) { Error("Different number of bins!","CalcDifCumFlow"); return 0x0; }
 
   TH1D* histCum = (TH1D*) hFourDif->ProjectionX(Form("hCum4_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
   TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histCum->SetTitle(Form("%s: d_{%d}{4%s}",task->GetSpeciesName().Data(), task->fHarmonics, sGap.Data()));
   histCum->Reset();
+
+  Double_t dContInTwoRef = hTwoRef->GetBinContent(iRefBin);
+  Double_t dErrInTwoRef = hTwoRef->GetBinError(iRefBin);
 
   for(Int_t iBin(0); iBin < histCum->GetNbinsX()+2; ++iBin)
   {
@@ -911,9 +914,6 @@ TH1D* ProcessUniFlow::CalcDifCumFour(TProfile* hFourDif, TProfile* hTwoDif, TPro
 
     Double_t dContInTwoDif = hTwoDif->GetBinContent(iBin);
     Double_t dErrInTwoDif = hTwoDif->GetBinError(iBin);
-
-    Double_t dContInTwoRef = hTwoRef->GetBinContent(iBin);
-    Double_t dErrInTwoRef = hTwoRef->GetBinError(iBin);
 
     Double_t dContOut = dContInFourDif - 2.0 * dContInTwoDif * dContInTwoRef;
     histCum->SetBinContent(iBin, dContOut);
@@ -1010,13 +1010,12 @@ TH1D* ProcessUniFlow::CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin
   if(!hTwoDif) { Error("Histo 'hTwoDif' not valid!","CalcDifFlowTwo"); return 0x0; }
   if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcDifFlowTwo"); return 0x0; }
   if(!task) { Error("FlowTask not found!","CalcDifFlowTwo"); return 0x0; }
-
   if(iRefBin < 1) { Error("Bin 'iRefBin; < 1!'","CalcDifFlowTwo"); return 0x0; }
 
   TH1D* histFlow = (TH1D*) hTwoDif->Clone(Form("hFlow2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
   TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
-  histFlow->SetTitle(Form("%s: v_{%d}{2%s}(#it{p}_{T})",task->GetSpeciesName().Data(), task->fHarmonics, sGap.Data()));
+  histFlow->SetTitle(Form("%s: v_{%d}{2%s}",task->GetSpeciesName().Data(), task->fHarmonics, sGap.Data()));
   histFlow->Reset();
 
   Double_t dContInRef = hTwoRef->GetBinContent(iRefBin);
@@ -1067,7 +1066,7 @@ TH1D* ProcessUniFlow::CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRef
   TH1D* histFlow = (TH1D*) hFourDif->Clone(Form("hFlow4_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
   TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
-  histFlow->SetTitle(Form("%s: v_{%d}{4%s}(#it{p}_{T})",task->GetSpeciesName().Data(), task->fHarmonics, sGap.Data()));
+  histFlow->SetTitle(Form("%s: v_{%d}{4%s}",task->GetSpeciesName().Data(), task->fHarmonics, sGap.Data()));
   histFlow->Reset();
 
   Double_t dContInRef = hFourRef->GetBinContent(iRefBin);
@@ -1133,81 +1132,123 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 
   if(!listInput) { Error("Input list not loaded!","ProcessDirect"); return kFALSE; }
 
-  // preparing vn' samples
-  TList* listFlow = new TList();
-  TList* listCum = new TList();
-  TProfile* prof = 0x0;
-  TProfile* profRebin = 0x0;
-  TProfile* profRef = 0x0;
-  TProfile* profRefRebin = 0x0;
-  TH1D* hFlow = 0x0;
+  // Loading list where reference flow samples are stored
+  TList* listRefTwo = (TList*) ffOutputFile->Get("listFlowRefsTwo");
+  if(!listRefTwo) { Error("List 'listRefTwo' not found!","ProcessDirect"); ffOutputFile->ls(); return kFALSE; }
 
+  TList* listRefFour = 0x0;
+  if(bDoFour)
+  {
+    listRefFour = (TList*) ffOutputFile->Get("listFlowRefsFour");
+    if(!listRefFour) { Error("List 'listRefFour' not found!","ProcessDirect"); ffOutputFile->ls(); return kFALSE; }
+  }
+
+  // List for desampling
   TList* listCorTwo = new TList();
   TList* listCumTwo = new TList();
   TList* listFlowTwo = new TList();
+
+  TList* listCorFour = new TList();
+  TList* listCumFour = new TList();
+  TList* listFlowFour = new TList();
 
   Debug("Processing samples","ProcessDirect");
   for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
   {
     Debug(Form("Processing sample %d",iSample), "ProcessDirect");
-
+    // <<2'>>
     TProfile2D* p2CorTwoDif = 0x0;
     if(task->fMergePosNeg)
     {
       // loading pos & neg if fMergePosNeg is ON
-      TProfile2D* prof2pos = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
-      TProfile2D* prof2neg = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Neg_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
-      if(!prof2pos || !prof2neg) { Error("Pos & Neg profile merging: 'prof2pos' OR 'prof2neg' not found!.","ProcessDirect"); return kFALSE; }
+      TProfile2D* prof2pos = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%s_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+      TProfile2D* prof2neg = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%s_Neg_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+      if(!prof2pos || !prof2neg) { Error("<2>: Pos & Neg profile merging: 'prof2pos' OR 'prof2neg' not found!.","ProcessDirect"); return kFALSE; }
 
       // merging pos & neg
       TList* listMerge = new TList();
       listMerge->Add(prof2pos);
       listMerge->Add(prof2neg);
       p2CorTwoDif = (TProfile2D*) MergeListProfiles(listMerge);
-      delete listMerge;
-      if(!p2CorTwoDif) { Error("Pos & Neg profile merging failed!","ProcessDirect"); return kFALSE; }
+      delete listMerge; // first delete, then check (return)
+      if(!p2CorTwoDif) { Error("<2>: Pos & Neg profile merging failed!","ProcessDirect"); return kFALSE; }
     }
     else
     {
       // loading single (Pos) profile
       if(task->fInputTag.EqualTo("")) // loading default-ly named profile
-      { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample)); }
+      { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%s_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample)); }
       else // loading "non-standardly" named profile
-      { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%02.2g_%s_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,task->fInputTag.Data(),iSample)); }
+      { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%s_%s_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fInputTag.Data(),iSample)); }
     }
-    if(!p2CorTwoDif) { Error(Form("Profile sample %d does not exists.",iSample),"ProcessDirect"); return kFALSE; }
+    if(!p2CorTwoDif) { Error(Form("Profile 'p2CorTwoDif' (sample %d) does not exists.",iSample),"ProcessDirect"); return kFALSE; }
 
+    // <<4'>>
+    TProfile2D* p2CorFourDif = 0x0;
+    if(bDoFour)
+    {
+      if(task->fMergePosNeg)
+      {
+        // loading pos & neg if fMergePosNeg is ON
+        TProfile2D* prof2pos = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<4>_harm%d_gap%s_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+        TProfile2D* prof2neg = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<4>_harm%d_gap%s_Neg_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+        if(!prof2pos || !prof2neg) { Error("<4>: Pos & Neg profile merging: 'prof2pos' OR 'prof2neg' not found!.","ProcessDirect"); return kFALSE; }
 
-    // TODO =======>
+        // merging pos & neg
+        TList* listMerge = new TList();
+        listMerge->Add(prof2pos);
+        listMerge->Add(prof2neg);
+        p2CorFourDif = (TProfile2D*) MergeListProfiles(listMerge);
+        delete listMerge; // first delete, then check (return)
+        if(!p2CorFourDif) { Error("<4>: Pos & Neg profile merging failed!","ProcessDirect"); return kFALSE; }
+      }
+      else
+      {
+        // loading single (Pos) profile
+        if(task->fInputTag.EqualTo("")) // loading default-ly named profile
+        // BUG here -> missing Pos / Neg -> fix in Task needed
+        { p2CorFourDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<4>_harm%d_gap%s_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample)); }
+        else // loading "non-standardly" named profile
+        { p2CorFourDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<4>_harm%d_gap%s_%s_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fInputTag.Data(),iSample)); }
+      }
+      if(!p2CorFourDif) { Error(Form("Profile 'p2CorFourDif' (sample %d) does not exists.",iSample),"ProcessDirect"); return kFALSE; }
+    }
 
-    // preparing Refs
-    profRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
-    if(!profRef) { Error(Form("Profile sample %d does not exists",iSample),"ProcesPID"); return kFALSE; }
-
-    profRefRebin = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",profRef->GetName()),fdMultBins);
-    Double_t dRef = profRefRebin->GetBinContent(iMultBin+1);
-    profRefRebin->Draw();
-    // printf("dRef %g\n",dRef);
-    // NOTE: complains about Sumw2
-
-    // <===========
-
-    TH1D* hFlowRef = 0x0; // NOTE placeholder
-
-
+    Debug("Rebinning profiles","ProcessDirect");
     // rebinning according in mult bin
     Short_t binMultLow = p2CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
     Short_t binMultHigh = p2CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
+
     TProfile* pCorTwoDif = p2CorTwoDif->ProfileY(Form("%s_cent%d",p2CorTwoDif->GetName(),iMultBin),binMultLow,binMultHigh);
+    pCorTwoDif->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
+
+    TProfile* pCorFourDif = 0x0;
+    if(bDoFour)
+    {
+      pCorFourDif = p2CorFourDif->ProfileY(Form("%s_cent%d",p2CorTwoDif->GetName(),iMultBin),binMultLow,binMultHigh);
+      pCorFourDif->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
+    }
 
     // rebinning according to pt bins
     if(task->fNumPtBins > 0)
-    { pCorTwoDif = (TProfile*) pCorTwoDif->Rebin(task->fNumPtBins,Form("%s_rebin",pCorTwoDif->GetName()),task->fPtBinsEdges); }
+    {
+      pCorTwoDif = (TProfile*) pCorTwoDif->Rebin(task->fNumPtBins,Form("%s_rebin",pCorTwoDif->GetName()),task->fPtBinsEdges);
+      if(bDoFour) { pCorFourDif = (TProfile*) pCorFourDif->Rebin(task->fNumPtBins,Form("%s_rebin",pCorFourDif->GetName()),task->fPtBinsEdges); }
+    }
     else
-    { pCorTwoDif = (TProfile*) pCorTwoDif->Clone(Form("%s_rebin",pCorTwoDif->GetName())); }
+    {
+      pCorTwoDif = (TProfile*) pCorTwoDif->Clone(Form("%s_rebin",pCorTwoDif->GetName()));
+      if(bDoFour) { pCorFourDif = (TProfile*) pCorFourDif->Clone(Form("%s_rebin",pCorFourDif->GetName())); }
+    }
 
-    // NOTE: Here the <2'> is ready
+    // NOTE: Here the <X'> is ready & rebinned
     listCorTwo->Add(pCorTwoDif);
+    if(bDoFour) { listCorFour->Add(pCorFourDif); }
+
+    Debug("Calculating flow","ProcessDirect");
+    // loading reference vn{2}
+    TH1D* hFlowRefTwo = (TH1D*) listRefTwo->FindObject(Form("hFlow2_Refs_harm%d_gap%s_sample%d",task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+    if(!hFlowRefTwo) { Error(Form("Histo 'hFlowRefTwo' (sample %d) does not exists",iSample),"ProcessDirect"); listRefTwo->ls(); return kFALSE; }
 
     // dn{2}
     TH1D* hCumTwoDif = CalcDifCumTwo(pCorTwoDif, task);
@@ -1215,40 +1256,78 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     listCumTwo->Add(hCumTwoDif);
 
     // v'n{2}
-    TH1D* hFlowTwoDif = CalcDifFlowTwo(hCumTwoDif, hFlowRef, iMultBin, task, bCorrelated);
-    if(!hFlowTwoDif) { Error(Form("vn{2}(dif) (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+    TH1D* hFlowTwoDif = CalcDifFlowTwo(hCumTwoDif, hFlowRefTwo, iMultBin+1, task, bCorrelated);
+    if(!hFlowTwoDif) { Error(Form("vn{2} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
     listFlowTwo->Add(hFlowTwoDif);
-  }
 
+    if(bDoFour)
+    {
+      // loading reference <<2>>
+      TProfile* pCorTwoRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+      if(!pCorTwoRef) { Error(Form("Profile 'pCorTwoRef' (sample %d) does not exists",iSample),"ProcessDirect"); flFlowRefs->ls(); return kFALSE; }
 
+      // loading reference vn{4}
+      TH1D* hFlowRefFour = (TH1D*) listRefFour->FindObject(Form("hFlow4_Refs_harm%d_gap%s_sample%d",task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+      if(!hFlowRefFour) { Error(Form("Histo 'hFlowRefFour' (sample %d) does not exists",iSample),"ProcessDirect"); listRefFour->ls(); return kFALSE; }
 
+      // dn{4}
+      TH1D* hCumFourDif = CalcDifCumFour(pCorFourDif, pCorTwoDif, pCorTwoRef, iMultBin+1, task, bCorrelated);
+      if(!hCumFourDif) { Error(Form("dn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+      listCumFour->Add(hCumFourDif);
 
-  Debug(Form("Number of samples in list pre merging %d",listFlow->GetEntries()),"ProcessDirect");
+      // v'n{4}
+      TH1D* hFlowFourDif = CalcDifFlowFour(hCumFourDif, hFlowRefFour, iMultBin+1, task, bCorrelated);
+      if(!hFlowFourDif) { Error(Form("vn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+      listFlowFour->Add(hFlowFourDif);
+    }
+  } // end-for {iSample} : loop over samples
 
-  TH1D* hDesampled = DesampleList(listFlow,task,iMultBin);
-  if(!hDesampled) { Error("Desampling unsuccesfull","ProcessDirect"); return kFALSE; }
+  Debug("Desampling","ProcessDirect");
 
-  hDesampled->SetName(Form("hFlow2_%s_harm%d_gap%s_cent%d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
-  hDesampled->SetTitle(Form("%s v_{%d}{2,|#Delta#eta|>%g} (%g - %g); p_{T} (GeV/c); v_{%d}{2,|#Delta#eta|>%g}",task->GetSpeciesName().Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap));
+  Debug(Form("dn{2}: Number of samples in list pre-merging: %d",listCumTwo->GetEntries()),"ProcessDirect");
+  TH1D* hDesampledTwo_Cum = DesampleList(listCumTwo,task,iMultBin);
+  if(!hDesampledTwo_Cum) { Error("Desampling dn{2} unsuccesfull","ProcessDirect"); return kFALSE; }
+  hDesampledTwo_Cum->SetName(Form("%s_cent%d",hDesampledTwo_Cum->GetName(),iMultBin));
 
-  // desampling cumulants
-  TH1D* hDesampled_Cum = DesampleList(listCum,task,iMultBin);
-  if(!hDesampled_Cum) { Error("Desampling unsuccesfull","ProcessDirect"); return kFALSE; }
+  Debug(Form("vn{2}: Number of samples in list pre-merging: %d",listFlowTwo->GetEntries()),"ProcessDirect");
+  TH1D* hDesampledTwo = DesampleList(listFlowTwo,task,iMultBin);
+  if(!hDesampledTwo) { Error("Desampling vn{2} unsuccesfull","ProcessDirect"); return kFALSE; }
+  hDesampledTwo->SetName(Form("%s_cent%d",hDesampledTwo->GetName(),iMultBin));
 
-  hDesampled_Cum->SetName(Form("hCum2_%s_harm%d_gap%s_cent%d",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
-  hDesampled_Cum->SetTitle(Form("%s d_{%d}{2,|#Delta#eta|>%g} (%g - %g); p_{T} (GeV/c); d_{%d}{2,|#Delta#eta|>%g}",task->GetSpeciesName().Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap));
-
-  // saving to output file
+  // saving to output file & cleaning
   ffOutputFile->cd();
-  hDesampled_Cum->Write();
-  hDesampled->Write();
+  hDesampledTwo_Cum->Write();
+  hDesampledTwo->Write();
+  delete hDesampledTwo_Cum;
+  delete hDesampledTwo;
 
-  delete listFlow;
-  delete prof;
-  delete profRebin;
-  delete profRefRebin;
-  delete hFlow;
-  delete hDesampled;
+  if(bDoFour)
+  {
+    Debug(Form("dn{4}: Number of samples in list pre-merging: %d",listCumFour->GetEntries()),"ProcessDirect");
+    TH1D* hDesampledFour_Cum = DesampleList(listCumFour,task,iMultBin);
+    if(!hDesampledFour_Cum) { Error("Desampling dn{4} unsuccesfull","ProcessDirect"); return kFALSE; }
+    hDesampledFour_Cum->SetName(Form("%s_cent%d",hDesampledFour_Cum->GetName(),iMultBin));
+
+    Debug(Form("vn{4}: Number of samples in list pre-merging: %d",listFlowFour->GetEntries()),"ProcessDirect");
+    TH1D* hDesampledFour = DesampleList(listFlowFour,task,iMultBin);
+    if(!hDesampledFour) { Error("Desampling vn{4} unsuccesfull","ProcessDirect"); return kFALSE; }
+    hDesampledFour->SetName(Form("%s_cent%d",hDesampledFour->GetName(),iMultBin));
+
+    // saving to output file & cleaning
+    ffOutputFile->cd();
+    hDesampledFour_Cum->Write();
+    hDesampledFour->Write();
+    delete hDesampledFour_Cum;
+    delete hDesampledFour;
+  };
+
+  delete listCorTwo;
+  delete listCumTwo;
+  delete listFlowTwo;
+
+  delete listCorFour;
+  delete listCumFour;
+  delete listFlowFour;
 
   return kTRUE;
 }
@@ -1257,7 +1336,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 {
   Info("Processing task","ProcessReconstructed");
   if(!task) { Error("Task not valid!","ProcessReconstructed"); return kFALSE; }
-  // if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
   TList* listMerge = 0x0;
   // preparing particle dependent variables for switch
