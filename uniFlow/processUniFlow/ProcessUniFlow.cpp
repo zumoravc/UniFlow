@@ -302,8 +302,8 @@ class ProcessUniFlow
     void        SuggestMultBinning(const Short_t numFractions);
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
-    TH1D*       DesampleList(TList* list = 0x0, FlowTask* task = 0x0, Short_t iMultBin = 0); // Desample list of samples for estimating the uncertanity
-    Bool_t      PlotDesamplingQA(TList* list, TH1D* hDesampled); // produce QA plots for result of desampling procedure
+    TH1D*       DesampleList(TList* list, TH1D* merged, FlowTask* task); // Desample list of samples for estimating the uncertanity
+    Bool_t      PlotDesamplingQA(TList* list, TH1D* hDesampled, FlowTask* task); // produce QA plots for result of desampling procedure
     TH1D*       TestRebin(TH1D* hOrig = 0x0, FlowTask* task = 0x0); // testing desample - manual rebin
 
     void        TestProjections(); // testing projection of reconstructed particles
@@ -736,31 +736,38 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   Debug("Merging correlations for central values", "ProcessRefs");
   TProfile* pCorTwoMerged = (TProfile*) MergeListProfiles(listCorTwo);
   if(!pCorTwoMerged) { Error("Merging of 'pCorTwoMerged' failed!","ProcessRefs"); return kFALSE; }
+  pCorTwoMerged->SetName(Form("pCor2_Refs_harm%d_gap%s_merged",task->fHarmonics, task->GetEtaGapString().Data() ));
 
   TH1D* hCumTwoMerged = CalcRefCumTwo(pCorTwoMerged, task);
   if(!hCumTwoMerged) { Error(Form("cn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+  hCumTwoMerged->SetName(Form("%s_merged", hCumTwoMerged->GetName()));
 
   TH1D* hFlowTwoMerged = CalcRefFlowTwo(hCumTwoMerged, task);
   if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
   hFlowTwoMerged->SetName(Form("%s_merged", hFlowTwoMerged->GetName()));
 
   ffOutputFile->cd();
+  pCorTwoMerged->Write();
   hCumTwoMerged->Write();
   hFlowTwoMerged->Write();
 
+  TH1D* hFlowFourMerged = 0x0;
   if(bDoFour)
   {
     TProfile* pCorFourMerged = (TProfile*) MergeListProfiles(listCorFour);
     if(!pCorFourMerged) { Error("Merging of 'pCorFourMerged' failed!","ProcessRefs"); return kFALSE; }
+    pCorFourMerged->SetName(Form("pCor4_Refs_harm%d_gap%s_merged",task->fHarmonics, task->GetEtaGapString().Data() ));
 
     TH1D* hCumFourMerged = CalcRefCumFour(pCorFourMerged, pCorTwoMerged, task, bCorrelated);
     if(!hCumFourMerged) { Error(Form("cn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+    hCumFourMerged->SetName(Form("%s_merged", hCumFourMerged->GetName()));
 
-    TH1D* hFlowFourMerged = CalcRefFlowFour(hCumFourMerged, task);
+    hFlowFourMerged = CalcRefFlowFour(hCumFourMerged, task);
     if(!hFlowFourMerged) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
     hFlowFourMerged->SetName(Form("%s_merged", hFlowFourMerged->GetName()));
 
     ffOutputFile->cd();
+    pCorFourMerged->Write();
     hCumFourMerged->Write();
     hFlowFourMerged->Write();
   }
@@ -777,9 +784,9 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   if(bDoFour)
   {
-    // TH1D* hFlowFourDesampled = DesampleList(listFlowFour,task);
-    Warning("Desampling not (re)implemented! Skipping","ProcessRefs");
-    TH1D* hFlowFourDesampled = (TH1D*) listFlowFour->At(0);
+    TH1D* hFlowFourDesampled = DesampleList(listFlowFour, hFlowFourMerged, task);
+    // Warning("Desampling not (re)implemented! Skipping","ProcessRefs");
+    // TH1D* hFlowFourDesampled = (TH1D*) listFlowFour->At(0);
     if(!hFlowFourDesampled) { Error("Desampling 'hFlowFourDesampled' unsuccesfull","ProcessRefs"); return kFALSE; }
     hFlowFourDesampled->SetName(Form("%s_desampled",hFlowFourDesampled->GetName()));
 
@@ -1283,15 +1290,74 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     }
   } // end-for {iSample} : loop over samples
 
+  Debug("Merging correlations for central values", "ProcessDirect");
+
+  // loading reference vn{2} merged for vn{2} dif. merged
+  TH1D* hFlowTwoRefMerged = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%s_merged",task->fHarmonics,task->GetEtaGapString().Data()));
+  if(!hFlowTwoRefMerged) { Error(Form("Reference vn{2} (merged) not loaded!"),"ProcessDirect"); return kFALSE; }
+
+  // <<2>>
+  TProfile* pCorTwoMerged = (TProfile*) MergeListProfiles(listCorTwo);
+  if(!pCorTwoMerged) { Error("Merging of 'pCorTwoMerged' failed!","ProcessDirect"); return kFALSE; }
+  pCorTwoMerged->SetName(Form("pCor2_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(), task->fHarmonics, task->GetEtaGapString().Data() ));
+
+  // dn{2}
+  TH1D* hCumTwoMerged = CalcDifCumTwo(pCorTwoMerged, task);
+  if(!hCumTwoMerged) { Error(Form("dn{2} (merged) not processed correctly!"),"ProcessDirect"); return kFALSE; }
+  hCumTwoMerged->SetName(Form("%s_merged", hCumTwoMerged->GetName()));
+
+  // vn{2}
+  TH1D* hFlowTwoMerged = CalcDifFlowTwo(hCumTwoMerged, hFlowTwoRefMerged, iMultBin+1, task);
+  if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessDirect"); return kFALSE; }
+  hFlowTwoMerged->SetName(Form("%s_merged", hFlowTwoMerged->GetName()));
+
+  ffOutputFile->cd();
+  pCorTwoMerged->Write();
+  hCumTwoMerged->Write();
+  hFlowTwoMerged->Write();
+
+  TH1D* hCumFourMerged = 0x0;
+  TH1D* hFlowFourMerged = 0x0;
+  if(bDoFour)
+  {
+    // loading reference <<2>> merged
+    TProfile* pCorTwoRefMerged = (TProfile*) ffOutputFile->Get(Form("pCor2_Refs_harm%d_gap%s_merged", task->fHarmonics, task->GetEtaGapString().Data() ));
+    if(!pCorTwoRefMerged) { Error(Form("Reference <<2>> (merged) not loaded!"),"ProcessDirect"); return kFALSE; }
+
+    // loading reference vn{4} merged
+    TH1D* hFlowFourRefMerged = (TH1D*) ffOutputFile->Get(Form("hFlow4_Refs_harm%d_gap%s_merged",task->fHarmonics,task->GetEtaGapString().Data()));
+    if(!hFlowFourRefMerged) { Error(Form("Reference vn{4} (merged) not loaded!"),"ProcessDirect"); return kFALSE; }
+
+    // <<4>>
+    TProfile* pCorFourMerged = (TProfile*) MergeListProfiles(listCorFour);
+    if(!pCorFourMerged) { Error("Merging of 'pCorFourMerged' failed!","ProcessDirect"); return kFALSE; }
+    pCorFourMerged->SetName(Form("pCor4_%s_harm%d_gap%s_merged",task->GetSpeciesName().Data(), task->fHarmonics, task->GetEtaGapString().Data() ));
+
+    // dn{4}
+    hCumFourMerged = CalcDifCumFour(pCorFourMerged, pCorTwoMerged, pCorTwoRefMerged, iMultBin+1, task, bCorrelated);
+    if(!hCumFourMerged) { Error(Form("cn{4} (merged) not processed correctly!"),"ProcessDirect"); return kFALSE; }
+    hCumFourMerged->SetName(Form("%s_merged", hCumFourMerged->GetName()));
+
+    // vn{4}
+    hFlowFourMerged = CalcDifFlowFour(hCumFourMerged, hFlowFourRefMerged, iMultBin+1, task, bCorrelated);
+    if(!hFlowFourMerged) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessDirect"); return kFALSE; }
+    hFlowFourMerged->SetName(Form("%s_merged", hFlowFourMerged->GetName()));
+
+    ffOutputFile->cd();
+    pCorFourMerged->Write();
+    hCumFourMerged->Write();
+    hFlowFourMerged->Write();
+  }
+
   Debug("Desampling","ProcessDirect");
 
   Debug(Form("dn{2}: Number of samples in list pre-merging: %d",listCumTwo->GetEntries()),"ProcessDirect");
-  TH1D* hDesampledTwo_Cum = DesampleList(listCumTwo,task,iMultBin);
+  TH1D* hDesampledTwo_Cum = DesampleList(listCumTwo,hCumTwoMerged,task);
   if(!hDesampledTwo_Cum) { Error("Desampling dn{2} unsuccesfull","ProcessDirect"); return kFALSE; }
   hDesampledTwo_Cum->SetName(Form("%s_cent%d",hDesampledTwo_Cum->GetName(),iMultBin));
 
   Debug(Form("vn{2}: Number of samples in list pre-merging: %d",listFlowTwo->GetEntries()),"ProcessDirect");
-  TH1D* hDesampledTwo = DesampleList(listFlowTwo,task,iMultBin);
+  TH1D* hDesampledTwo = DesampleList(listFlowTwo,hFlowTwoMerged,task);
   if(!hDesampledTwo) { Error("Desampling vn{2} unsuccesfull","ProcessDirect"); return kFALSE; }
   hDesampledTwo->SetName(Form("%s_cent%d",hDesampledTwo->GetName(),iMultBin));
 
@@ -1305,12 +1371,12 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   if(bDoFour)
   {
     Debug(Form("dn{4}: Number of samples in list pre-merging: %d",listCumFour->GetEntries()),"ProcessDirect");
-    TH1D* hDesampledFour_Cum = DesampleList(listCumFour,task,iMultBin);
+    TH1D* hDesampledFour_Cum = DesampleList(listCumFour,hCumFourMerged,task);
     if(!hDesampledFour_Cum) { Error("Desampling dn{4} unsuccesfull","ProcessDirect"); return kFALSE; }
     hDesampledFour_Cum->SetName(Form("%s_cent%d",hDesampledFour_Cum->GetName(),iMultBin));
 
     Debug(Form("vn{4}: Number of samples in list pre-merging: %d",listFlowFour->GetEntries()),"ProcessDirect");
-    TH1D* hDesampledFour = DesampleList(listFlowFour,task,iMultBin);
+    TH1D* hDesampledFour = DesampleList(listFlowFour,hFlowFourMerged,task);
     if(!hDesampledFour) { Error("Desampling vn{4} unsuccesfull","ProcessDirect"); return kFALSE; }
     hDesampledFour->SetName(Form("%s_cent%d",hDesampledFour->GetName(),iMultBin));
 
@@ -1721,134 +1787,55 @@ TH1* ProcessUniFlow::MergeListProfiles(TList* list)
   return merged;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin)
+TH1D* ProcessUniFlow::DesampleList(TList* list, TH1D* merged, FlowTask* task)
 {
-  if(!task) { Error("FlowTask does not exists","DesampleList"); return 0x0; }
-  if(!list) { Error("List does not exists","DesampleList"); return 0x0; }
+  if(!merged) { Error("Merged histogram not valid","DesampleList"); return 0x0; }
+  if(!list) { Error("List does not valid","DesampleList"); return 0x0; }
   if(list->GetEntries() < 1) { Error("List is empty","DesampleList"); return 0x0; }
   if(list->GetEntries() != task->fNumSamples) { Warning("Number of list entries is different from task number of samples","DesampleList"); }
+  if(!task) { Error("FlowTask does not exists","DesampleList"); return 0x0; }
 
   Debug(Form("Number of samples in list pre-desampling: %d",list->GetEntries()),"DesampleList");
 
-  TH1D* hTempSample = (TH1D*) list->At(0);
-  TH1D* hDesampled = (TH1D*) hTempSample->Clone(Form("%s_Desampled",hTempSample->GetName()));
-  hDesampled->Reset();
+  TH1D* hDesampled = (TH1D*) merged->Clone(Form("%s_desampled",merged->GetName()));
+  if(!hDesampled) { Error("Histo 'hDesampled' cloning failed","DesampleList"); return 0x0; }
 
-  Double_t content = 0;
-  Double_t error = 0;
-
-  std::vector<Double_t> vecContents;
-  std::vector<Double_t> vecErrors;
-  Double_t dMean = 0;
-  Double_t dRMS = 0;
-
-  Double_t dSum = 0;
-  Double_t dW = 0;
-  Double_t dAverage = 0;
-  Double_t dAve_err = 0;
-
-  for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++)
+  for(Int_t iBin(0); iBin < hDesampled->GetNbinsX()+2; ++iBin)
   {
-    dSum = 0;
-    dW = 0;
-    dAverage = 9.;
-    dAve_err = 9.;
+    const Double_t dDesMean = hDesampled->GetBinContent(iBin);
 
-    vecContents.clear();
-    vecErrors.clear();
+    Double_t dSum = 0.0;
+    Int_t iCount = 0;
 
-    for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
+    for(Short_t iSample(0); iSample < list->GetEntries(); ++iSample)
     {
-      hTempSample = (TH1D*) list->At(iSample);
-      if(!hTempSample) { Warning(Form("Sample %d not found! Skipping!",iSample),"DesampleList"); continue; }
+      TH1D* hTemp = (TH1D*) list->At(iSample);
+      if(!hTemp) { Error(Form("Histo 'hTemp' (bin %d, sample %d) not found in list",iBin,iSample),"DesampleList"); return 0x0; }
 
-      content = hTempSample->GetBinContent(bin);
-      error = hTempSample->GetBinError(bin);
+      Double_t dContent = hTemp->GetBinContent(iBin);
+      Double_t dError = hTemp->GetBinError(iBin);
 
-      vecContents.push_back(content);
-      vecErrors.push_back(error);
+      // TODO Check content & error
 
-      if(error <= 0.) continue;
+      dSum += TMath::Power(dDesMean - dContent, 2.0);
+      iCount++;
+    } // end-for {iSample} : loop over samples in list
 
-      dSum += content / TMath::Power(error,2);
-      dW += 1 / TMath::Power(error,2);
-      Debug(Form("Sample: %d | bin %d | %g +- %g",iSample,bin,content,error),"DesampleList");
-    }
+    Double_t dError = TMath::Sqrt(dSum / (iCount*iCount));
+    hDesampled->SetBinError(iBin,dError);
 
-    Debug(Form(" --- bin %d | Sum %g +- %g",bin,dSum,dW),"DesampleList");
+  } // end-for {iBin} : loop over bins in histo
 
-    if(dSum == 0. && dW == 0.) continue; // skipping empty bins
-
-    if(dW > 0.)
-    {
-      dAverage = dSum / dW;
-      dAve_err = TMath::Sqrt(1/dW);
-    }
-
-    Debug(Form("W average | bin %d | %g +- %g",bin,dAverage,dAve_err),"DesampleList");
-
-    // working on weighted mean and RMS
-    if(vecContents.size() != vecErrors.size()) { Warning("Something went wrong: Vector with contents and error have not the same size","DesampleList"); }
-
-    dSum = 0;
-    dW = 0;
-
-    for(ULong_t iSample(0); iSample < vecContents.size(); iSample++)
-    {
-      content = vecContents.at(iSample);
-      error = vecErrors.at(iSample);
-
-      // weighted mean
-      // dW += TMath::Power(error, -2);
-      // dSum += content * TMath::Power(error, -2);
-
-      // non-weighted mean
-      dW++;
-      dSum += content;
-    }
-
-    dMean = dSum/dW;
-
-    dSum = 0;
-    for(ULong_t iSample(0); iSample < vecContents.size(); iSample++)
-    {
-      content = vecContents.at(iSample);
-      // error = vecErrors.at(iSample);
-      error = 1.;
-
-      dSum += TMath::Power( (dMean - content) / error ,2);
-    }
-    dRMS = TMath::Sqrt(dSum / (dW-1));
-    Debug(Form("Mean | bin %d | %g +- %g",bin,dMean,dRMS),"DesampleList");
-
-    //ratio->SetBinContent(bin, dAverage / merged->GetBinContent(bin));
-    //ratioErr->SetBinContent(bin, dAve_err / merged->GetBinError(bin));
-
-    if(task->fDesampleUseRMS)
-    {
-      hDesampled->SetBinContent(bin,dMean);
-      // hDesampled->SetBinError(bin,dRMS);
-      hDesampled->SetBinError(bin,dRMS/TMath::Sqrt(task->fNumSamples));
-    }
-    else
-    {
-      hDesampled->SetBinContent(bin,dAverage);
-      hDesampled->SetBinError(bin,dAve_err);
-    }
-    Debug(Form("Desampled: bin %d | %g +- %g\n",bin,hDesampled->GetBinContent(bin),hDesampled->GetBinError(bin)),"DesampleList");
-  }
-
-  // at this point, hDesampled is ready
-
-  PlotDesamplingQA(list, hDesampled);
+  PlotDesamplingQA(list, hDesampled, task);
 
   return hDesampled;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::PlotDesamplingQA(TList* list, TH1D* hDesampled)
+Bool_t ProcessUniFlow::PlotDesamplingQA(TList* list, TH1D* hDesampled, FlowTask* task)
 {
   if(!list) { Error("Input samples list not found!","PlotDesamplingQA"); return kFALSE; }
   if(!hDesampled) { Error("Desampled result not found!","PlotDesamplingQA"); return kFALSE; }
+  if(!task) { Error("FlowTask not found!","PlotDesamplingQA"); return kFALSE; }
 
   Warning("Not implemented yet!","PlotDesamplingQA");
     //
