@@ -303,6 +303,7 @@ class ProcessUniFlow
     void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
     TH1D*       DesampleList(TList* list = 0x0, FlowTask* task = 0x0, Short_t iMultBin = 0); // Desample list of samples for estimating the uncertanity
+    Bool_t      PlotDesamplingQA(TList* list, TH1D* hDesampled); // produce QA plots for result of desampling procedure
     TH1D*       TestRebin(TH1D* hOrig = 0x0, FlowTask* task = 0x0); // testing desample - manual rebin
 
     void        TestProjections(); // testing projection of reconstructed particles
@@ -1839,101 +1840,116 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, FlowTask* task, Short_t iMultBin
 
   // at this point, hDesampled is ready
 
-  // getting copy which does not affect histo which is returned
-  TH1D* hDesampledClone = (TH1D*) hDesampled->Clone(Form("%sClone",hDesampled->GetName()));
-
-  TList* listOutput = new TList(); // list for collecting all QA histos
-
-  // doing QA plots with spread, etc.
-  TCanvas* canDesample = new TCanvas(Form("canDesample_%s",task->fName.Data()),Form("canDesample_%s",task->fName.Data()),1200,400);
-  canDesample->Divide(3,1);
-
-  TH1D* hTempRatio = 0x0;
-  TH1D* hTempError = 0x0;
-
-  TLine* lineUnity = new TLine();
-  lineUnity->SetLineColor(kRed);
-  lineUnity->SetLineWidth(3);
-
-  canDesample->cd(1);
-  hDesampledClone->SetStats(kFALSE);
-  hDesampledClone->SetFillColor(kBlue);
-  hDesampledClone->SetStats(kFALSE);
-  hDesampledClone->SetMarkerStyle(20);
-  hDesampledClone->SetMarkerSize(0.5);
-  hDesampledClone->SetMarkerColor(kRed);
-  hDesampledClone->DrawCopy("E2");
-
-  for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
-  {
-    hTempSample = (TH1D*) list->At(iSample);
-    if(!hTempSample) { Warning(Form("Sample %d not found during plotting QA! Skipping!",iSample),"DesampleList"); continue; }
-
-    canDesample->cd(1);
-    hTempSample->SetStats(kFALSE);
-    hTempSample->SetLineColor(30+2*iSample);
-    hTempSample->SetMarkerColor(30+2*iSample);
-    hTempSample->SetMarkerStyle(24);
-    hTempSample->SetMarkerSize(0.5);
-    hTempSample->DrawCopy("hist p same");
-
-    hTempRatio = (TH1D*) hTempSample->Clone(Form("%s_ratio",hTempSample->GetName()));
-    hTempRatio->Divide(hDesampled);
-    hTempRatio->SetYTitle("Value: final / sample");
-    hTempRatio->SetTitleOffset(1.2,"Y");
-
-    canDesample->cd(2);
-    hTempRatio->SetMinimum(0.6);
-    hTempRatio->SetMaximum(1.4);
-    hTempRatio->Draw("hist p same");
-
-    hTempError = (TH1D*) hTempSample->Clone(Form("%s_error",hTempSample->GetName()));
-    for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hTempSample->GetBinError(bin)); }
-
-    canDesample->cd(3);
-    hTempError->SetMinimum(0.);
-    hTempError->SetMaximum(1.5*hTempError->GetMaximum());
-    hTempError->SetYTitle("Uncertainty");
-    hTempError->SetTitleOffset(1.2,"Y");
-
-    hTempError->Draw("hist p same");
-
-    listOutput->Add(hTempSample);
-    listOutput->Add(hTempRatio);
-    listOutput->Add(hTempError);
-  }
-
-  canDesample->cd(1);
-  hDesampledClone->DrawCopy("hist p same");
-
-  canDesample->cd(2);
-  lineUnity->DrawLine(hTempRatio->GetXaxis()->GetXmin(),1,hTempRatio->GetXaxis()->GetXmax(),1);
-
-  hTempError = (TH1D*) hDesampledClone->Clone(Form("%s_error",hDesampled->GetName()));
-  for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hDesampledClone->GetBinError(bin)); }
-  listOutput->Add(hTempError);
-
-  canDesample->cd(3);
-  hTempError->Draw("hist p same");
-
-  // saving QA plots
-  canDesample->SaveAs(Form("%s/Desampling_%s_harm%d_gap%g_cent%d_%s.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,task->fName.Data(),fsOutputFileFormat.Data()));
-
-  Info("Saving desampling QA into output file","DesampleList");
-  ffDesampleFile->cd();
-  listOutput->Add(canDesample);
-  listOutput->Write(Form("Desampling_%s_cent%d_%s",task->GetSpeciesName().Data(),iMultBin,task->fName.Data()),TObject::kSingleKey);
-
-  // deleting created stuff
-  delete listOutput;
-  // delete canDesample;
-  delete lineUnity;
-  // if(hTempSample) delete hTempSample;
-  // delete hTempRatio;
-  // delete hTempError;
-  // delete hDesampledClone;
+  PlotDesamplingQA(list, hDesampled);
 
   return hDesampled;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::PlotDesamplingQA(TList* list, TH1D* hDesampled)
+{
+  if(!list) { Error("Input samples list not found!","PlotDesamplingQA"); return kFALSE; }
+  if(!hDesampled) { Error("Desampled result not found!","PlotDesamplingQA"); return kFALSE; }
+
+  Warning("Not implemented yet!","PlotDesamplingQA");
+    //
+    //
+    // // getting copy which does not affect histo which is returned
+    // TH1D* hDesampledClone = (TH1D*) hDesampled->Clone(Form("%sClone",hDesampled->GetName()));
+    //
+    // TList* listOutput = new TList(); // list for collecting all QA histos
+    //
+    // // doing QA plots with spread, etc.
+    // TCanvas* canDesample = new TCanvas(Form("canDesample_%s",task->fName.Data()),Form("canDesample_%s",task->fName.Data()),1200,400);
+    // canDesample->Divide(3,1);
+    //
+    // TH1D* hTempRatio = 0x0;
+    // TH1D* hTempError = 0x0;
+    //
+    // TLine* lineUnity = new TLine();
+    // lineUnity->SetLineColor(kRed);
+    // lineUnity->SetLineWidth(3);
+    //
+    // canDesample->cd(1);
+    // hDesampledClone->SetStats(kFALSE);
+    // hDesampledClone->SetFillColor(kBlue);
+    // hDesampledClone->SetStats(kFALSE);
+    // hDesampledClone->SetMarkerStyle(20);
+    // hDesampledClone->SetMarkerSize(0.5);
+    // hDesampledClone->SetMarkerColor(kRed);
+    // hDesampledClone->DrawCopy("E2");
+    //
+    // for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
+    // {
+    //   hTempSample = (TH1D*) list->At(iSample);
+    //   if(!hTempSample) { Warning(Form("Sample %d not found during plotting QA! Skipping!",iSample),"DesampleList"); continue; }
+    //
+    //   canDesample->cd(1);
+    //   hTempSample->SetStats(kFALSE);
+    //   hTempSample->SetLineColor(30+2*iSample);
+    //   hTempSample->SetMarkerColor(30+2*iSample);
+    //   hTempSample->SetMarkerStyle(24);
+    //   hTempSample->SetMarkerSize(0.5);
+    //   hTempSample->DrawCopy("hist p same");
+    //
+    //   hTempRatio = (TH1D*) hTempSample->Clone(Form("%s_ratio",hTempSample->GetName()));
+    //   hTempRatio->Divide(hDesampled);
+    //   hTempRatio->SetYTitle("Value: final / sample");
+    //   hTempRatio->SetTitleOffset(1.2,"Y");
+    //
+    //   canDesample->cd(2);
+    //   hTempRatio->SetMinimum(0.6);
+    //   hTempRatio->SetMaximum(1.4);
+    //   hTempRatio->Draw("hist p same");
+    //
+    //   hTempError = (TH1D*) hTempSample->Clone(Form("%s_error",hTempSample->GetName()));
+    //   for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hTempSample->GetBinError(bin)); }
+    //
+    //   canDesample->cd(3);
+    //   hTempError->SetMinimum(0.);
+    //   hTempError->SetMaximum(1.5*hTempError->GetMaximum());
+    //   hTempError->SetYTitle("Uncertainty");
+    //   hTempError->SetTitleOffset(1.2,"Y");
+    //
+    //   hTempError->Draw("hist p same");
+    //
+    //   listOutput->Add(hTempSample);
+    //   listOutput->Add(hTempRatio);
+    //   listOutput->Add(hTempError);
+    // }
+    //
+    // canDesample->cd(1);
+    // hDesampledClone->DrawCopy("hist p same");
+    //
+    // canDesample->cd(2);
+    // lineUnity->DrawLine(hTempRatio->GetXaxis()->GetXmin(),1,hTempRatio->GetXaxis()->GetXmax(),1);
+    //
+    // hTempError = (TH1D*) hDesampledClone->Clone(Form("%s_error",hDesampled->GetName()));
+    // for(Short_t bin(1); bin < hTempSample->GetNbinsX()+1; bin++) { hTempError->SetBinContent(bin,hDesampledClone->GetBinError(bin)); }
+    // listOutput->Add(hTempError);
+    //
+    // canDesample->cd(3);
+    // hTempError->Draw("hist p same");
+    //
+    // // saving QA plots
+    // canDesample->SaveAs(Form("%s/Desampling_%s_harm%d_gap%g_cent%d_%s.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,task->fName.Data(),fsOutputFileFormat.Data()));
+    //
+    // Info("Saving desampling QA into output file","DesampleList");
+    // ffDesampleFile->cd();
+    // listOutput->Add(canDesample);
+    // listOutput->Write(Form("Desampling_%s_cent%d_%s",task->GetSpeciesName().Data(),iMultBin,task->fName.Data()),TObject::kSingleKey);
+    //
+    // // deleting created stuff
+    // delete listOutput;
+    // // delete canDesample;
+    // delete lineUnity;
+    // // if(hTempSample) delete hTempSample;
+    // // delete hTempRatio;
+    // // delete hTempError;
+    // // delete hDesampledClone;
+    //
+    //
+
+  return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor, TH3D* h3Entries, TH3D* h3EntriesBG)
