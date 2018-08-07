@@ -721,6 +721,11 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       listFlowFour->Add(hFlowFour);
     }
   } // end-for {iSample}: samples
+
+  ffOutputFile->cd();
+  listFlowTwo->Write("listFlowTwo", TObject::kSingleKey);
+  if(bDoFour) { listFlowFour->Write("listFlowFour", TObject::kSingleKey); }
+
   Debug("Samples processing done!","ProcessRefs");
 
   // merging correlation profiles to get central values
@@ -733,6 +738,10 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   TH1D* hFlowTwoMerged = CalcRefFlowTwo(hCumTwoMerged, task);
   if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+  hFlowTwoMerged->SetName(Form("%s_merged", hFlowTwoMerged->GetName()));
+
+  ffOutputFile->cd();
+  hFlowTwoMerged->Write();
 
   if(bDoFour)
   {
@@ -742,29 +751,35 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     TH1D* hCumFourMerged = CalcRefCumFour(pCorFourMerged, pCorTwoMerged, task, bCorrelated);
     if(!hCumFourMerged) { Error(Form("cn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
 
+
+
     TH1D* hFlowFourMerged = CalcRefFlowFour(hCumFourMerged, task);
     if(!hFlowFourMerged) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+    hFlowFourMerged->SetName(Form("%s_merged", hFlowFourMerged->GetName()));
+
+    ffOutputFile->cd();
+    hFlowFourMerged->Write();
   }
 
   // desampling
   Debug("Desampling","ProcessRefs");
 
   // TH1D* hFlowTwoDesampled = DesampleList(listFlowTwo,task); // NOTE skipping desampling for vn{2} -> nothing to de-correlate
-  TH1D* hFlowTwoDesampled = (TH1D*) hFlowTwoMerged->Clone(Form("%s_desampled",hFlowTwoMerged->GetName()));
+  TH1D* hFlowTwoDesampled = (TH1D*) hFlowTwoMerged;
   if(!hFlowTwoDesampled) { Error("Desampling 'hFlowTwoDesampled' unsuccesfull","ProcessRefs"); return kFALSE; }
 
-  ffOutputFile->cd();
-  listFlowTwo->Write("listFlowTwo", TObject::kSingleKey);
-  hFlowTwoDesampled->Write();
-  if(hFlowTwoDesampled) delete hFlowTwoDesampled;
+  // hFlowTwoDesampled->Write();
+  // if(hFlowTwoDesampled) delete hFlowTwoDesampled;
 
   if(bDoFour)
   {
-    TH1D* hFlowFourDesampled = DesampleList(listFlowFour,task);
+    // TH1D* hFlowFourDesampled = DesampleList(listFlowFour,task);
+    Warning("Desampling not (re)implemented! Skipping","ProcessRefs");
+    TH1D* hFlowFourDesampled = (TH1D*) listFlowFour->At(0);
     if(!hFlowFourDesampled) { Error("Desampling 'hFlowFourDesampled' unsuccesfull","ProcessRefs"); return kFALSE; }
+    hFlowFourDesampled->SetName(Form("%s_desampled",hFlowFourDesampled->GetName()));
 
     ffOutputFile->cd();
-    hFlowFourDesampled->Write(Form("%s",hFlowFourDesampled->GetName()));
     if(hFlowFourDesampled) delete hFlowFourDesampled;
   }
 
