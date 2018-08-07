@@ -924,7 +924,7 @@ TH1D* ProcessUniFlow::CalcRefFlowTwo(TH1D* hTwoRef)
     }
     else
     {
-      histFlow->SetBinContent(iBin, 9.9);
+      histFlow->SetBinContent(iBin, -9.9);
       histFlow->SetBinError(iBin, 99999.9);
     }
   }
@@ -947,7 +947,7 @@ TH1D* ProcessUniFlow::CalcRefFlowFour(TH1D* hFourRef)
     Double_t dContIn = hFourRef->GetBinContent(iBin);
     Double_t dErrIn = hFourRef->GetBinError(iBin);
 
-    if(dContIn > 0.0 && dErrIn >= 0.0)
+    if(dContIn < 0.0 && dErrIn >= 0.0)
     {
       Double_t dContOut = TMath::Power(-1.0 * dContIn, 0.25);
       histFlow->SetBinContent(iBin, dContOut);
@@ -956,7 +956,7 @@ TH1D* ProcessUniFlow::CalcRefFlowFour(TH1D* hFourRef)
     }
     else
     {
-      histFlow->SetBinContent(iBin, 9.9);
+      histFlow->SetBinContent(iBin, -9.9);
       histFlow->SetBinError(iBin, 99999.9);
     }
   }
@@ -980,11 +980,11 @@ TH1D* ProcessUniFlow::CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin
   Double_t dErrInRef = hTwoRef->GetBinError(iRefBin);
 
   // flow not real -> putting 'wrong' numbers in
-  if(dContInRef > 9.5 || (dContInRef <= 0.0 && dErrInRef > 1000))
+  if(dContInRef < -9.0 || (dContInRef <= 0.0 && dErrInRef > 1000))
   {
     for(Short_t iBin(0); iBin < histFlow->GetNbinsX()+2; ++iBin)
     {
-      histFlow->SetBinContent(iBin, 9.9);
+      histFlow->SetBinContent(iBin, -9.9);
       histFlow->SetBinError(iBin, 99999.9);
     }
 
@@ -1027,11 +1027,11 @@ TH1D* ProcessUniFlow::CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRef
   Double_t dErrInRef = hFourRef->GetBinError(iRefBin);
 
   // flow not real -> putting 'wrong' numbers in
-  if(dContInRef <= 0.0 || (dContInRef > 9.5 && dErrInRef > 1000))
+  if(dContInRef <= 0.0 || (dContInRef < -9.0 && dErrInRef > 1000))
   {
     for(Short_t iBin(0); iBin < histFlow->GetNbinsX()+2; ++iBin)
     {
-      histFlow->SetBinContent(iBin, 9.9);
+      histFlow->SetBinContent(iBin, -9.9);
       histFlow->SetBinError(iBin, 99999.9);
     }
 
