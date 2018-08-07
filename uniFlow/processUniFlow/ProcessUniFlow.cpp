@@ -43,7 +43,7 @@ class FlowTask
     void        PrintTask(); // listing values of internal properties
 
     TString     GetSpeciesName();
-    TString     GetEtaGapString() { return TString(Form("%02.2g",10*fEtaGap)); }
+    TString     GetEtaGapString() { return TString(Form("%02.2g",10*fEtaGap)); } // used for "character-safe" names
 
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
@@ -672,14 +672,14 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   for(Short_t iSample(0); iSample < task->fNumSamples; ++iSample)
   {
     TProfile* pCorTwo = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
-    if(!pCorTwo) { Warning(Form("Profile 'pCorTwo' (sample %d) not loaded",iSample),"ProcesRefs"); return kFALSE; }
+    if(!pCorTwo) { Warning(Form("Profile 'pCorTwo' (sample %d) not valid",iSample),"ProcesRefs"); return kFALSE; }
 
     // Process 4-particle correlations
     TProfile* pCorFour = 0x0;
     if(bDoFour)
     {
       pCorFour = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<4>_harm%d_gap%02.2g_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,iSample));
-      if(!pCorFour) { Warning(Form("Profile 'pCorFour' (sample %d) not loaded!",iSample),"ProcesRefs"); return kFALSE; }
+      if(!pCorFour) { Warning(Form("Profile 'pCorFour' (sample %d) not valid!",iSample),"ProcesRefs"); return kFALSE; }
     }
 
     // rebinning the profiles
@@ -752,26 +752,20 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // TH1D* hFlowTwoDesampled = DesampleList(listFlowTwo,task); // NOTE skipping desampling for vn{2} -> nothing to de-correlate
   TH1D* hFlowTwoDesampled = (TH1D*) hFlowTwoMerged->Clone(Form("%s_desampled",hFlowTwoMerged->GetName()));
   if(!hFlowTwoDesampled) { Error("Desampling 'hFlowTwoDesampled' unsuccesfull","ProcessRefs"); return kFALSE; }
-  hFlowTwoDesampled->SetName(Form("hCum2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
-  hFlowTwoDesampled->SetTitle(Form("%s c_{%d}{2,|#Delta#eta|>%g}; centrality/multiplicity; c_{%d}{2,|#Delta#eta|>%g}",task->GetSpeciesName().Data(),task->fHarmonics,task->fEtaGap,task->fHarmonics,task->fEtaGap));
 
   ffOutputFile->cd();
-  hFlowTwoDesampled->Write(Form("%s",hFlowTwoDesampled->GetName()));
-  listFlowTwo->Write("list_RefsFlowTwo_samples",TObject::kSingleKey);
-  // if(hFlowTwoDesampled) delete hFlowTwoDesampled;
+  listFlowTwo->Write("listFlowTwo", TObject::kSingleKey);
+  hFlowTwoDesampled->Write();
+  if(hFlowTwoDesampled) delete hFlowTwoDesampled;
 
   if(bDoFour)
   {
     TH1D* hFlowFourDesampled = DesampleList(listFlowFour,task);
     if(!hFlowFourDesampled) { Error("Desampling 'hFlowFourDesampled' unsuccesfull","ProcessRefs"); return kFALSE; }
-    hFlowFourDesampled->SetName(Form("hFlow2_%s_harm%d_gap%s",task->GetSpeciesName().Data(),task->fHarmonics,task->GetEtaGapString().Data()));
-    hFlowFourDesampled->SetTitle(Form("%s v_{%d}{2,|#Delta#eta|>%g}; centrality/multiplicity; v_{%d}{2,|#Delta#eta|>%g}",task->GetSpeciesName().Data(),task->fHarmonics,task->fEtaGap,task->fHarmonics,task->fEtaGap));
 
     ffOutputFile->cd();
     hFlowFourDesampled->Write(Form("%s",hFlowFourDesampled->GetName()));
-    listFlowFour->Write("list_RefsFlowFour_samples",TObject::kSingleKey);
-
-    // if(hFlowFourDesampled) delete hFlowFourDesampled;
+    if(hFlowFourDesampled) delete hFlowFourDesampled;
   }
 
   // Comment :: Not sure what this is about =====>
@@ -790,8 +784,6 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // <=====
 
   Debug("Processing done","ProcessRefs");
-
-
 
   if(listCorTwo) delete listCorTwo;
   if(listCumTwo) delete listCumTwo;
@@ -814,7 +806,6 @@ TH1D* ProcessUniFlow::CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task)
 
   TH1D* histCum = (TH1D*) hTwoRef->ProjectionX(Form("hCum2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
 
-  Debug(Form("Gap %g", task->fEtaGap),"CalcRefFlowTwo");
   TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histCum->SetTitle(Form("%s: c_{%d}{2%s}",task->GetSpeciesName().Data(), task->fHarmonics, sGap.Data()));
 
@@ -1183,9 +1174,10 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 
     // <===========
 
-    TH1D* hFlowTwoRef = 0x0; // ref. vn{2} i-th sample
+    TH1D* hFlowRef = 0x0; // NOTE placeholder
 
-    // slicing according to mult bin
+
+    // rebinning according in mult bin
     Short_t binMultLow = p2CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
     Short_t binMultHigh = p2CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
     TProfile* pCorTwoDif = p2CorTwoDif->ProfileY(Form("%s_cent%d",p2CorTwoDif->GetName(),iMultBin),binMultLow,binMultHigh);
