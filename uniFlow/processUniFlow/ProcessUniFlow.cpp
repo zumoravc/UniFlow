@@ -54,7 +54,7 @@ class FlowTask
     void        SetConsiderCorrelations(Bool_t cor = kTRUE) { fConsCorr = cor; }
     void        SetDoFourCorrelations(Bool_t four = kTRUE) { fDoFour = four; }
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
-    void        SetMergePosNeg(Bool_t merge = kTRUE) {fMergePosNeg = merge; }
+    void        SetMergePosNeg(Bool_t merge = kTRUE) { fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
     void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
 
@@ -607,6 +607,9 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 
   Info(Form("Processing task: %s",task->fName.Data()),"ProcessTask");
   if(!task) { Error("Task not valid!","ProcessTask"); return kFALSE; }
+
+  // task checks & initialization
+  if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
 
   task->PrintTask();
 
