@@ -1779,10 +1779,17 @@ TH1* ProcessUniFlow::MergeListProfiles(TList* list)
   if(!list || list->IsEmpty()) { Error("List not valid or empty","MergeListProfiles"); return 0x0; }
 
   TH1* merged = (TH1*) list->At(0)->Clone();
+  merged->SetName(Form("%s_merged",merged->GetName()));
+
+  if(list->GetEntries() < 2) // only 1 entry
+  {
+    Warning("Only one entry for merging; returning it directly instead!","MergeListProfiles");
+    return merged;
+  }
+
   merged->Reset();
   Double_t mergeStatus = merged->Merge(list);
   if(mergeStatus == -1) { Error("Merging failed!","MergeListProfiles"); return 0x0; }
-  merged->SetName(Form("%s_merged",list->At(0)->GetName()));
 
   return merged;
 }
@@ -1799,6 +1806,12 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, TH1D* merged, FlowTask* task)
 
   TH1D* hDesampled = (TH1D*) merged->Clone(Form("%s_desampled",merged->GetName()));
   if(!hDesampled) { Error("Histo 'hDesampled' cloning failed","DesampleList"); return 0x0; }
+
+  if(task->fNumSamples < 2 || list->GetEntries() < 2)  // only one sample -> no sampling needed
+  {
+    Warning("Only 1 sample for desampling; returning merged instead!","DesampleList");
+    return hDesampled;
+  }
 
   for(Int_t iBin(0); iBin < hDesampled->GetNbinsX()+2; ++iBin)
   {
