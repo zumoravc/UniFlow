@@ -482,11 +482,11 @@ Bool_t ProcessUniFlow::Initialize()
   }
 
   // creating output file for Desampling
-  ffDesampleFile = TFile::Open(Form("%s/desampling.root",fsOutputFilePath.Data()),"RECREATE");
+  ffDesampleFile = TFile::Open(Form("%s/desampling.root",fsOutputFilePath.Data()),fsOutputFileMode.Data());
   if(!ffDesampleFile) { Fatal(Form("Output desampling file '%s/desampling.root' not open!","Initialize")); return kFALSE; }
 
   // creating output file for fits
-  ffFitsFile = TFile::Open(Form("%s/fits.root",fsOutputFilePath.Data()),"RECREATE");
+  ffFitsFile = TFile::Open(Form("%s/fits.root",fsOutputFilePath.Data()),fsOutputFileMode.Data());
   if(!ffFitsFile) { Fatal(Form("Output desampling file '%s/fits.root' not open!","Initialize")); return kFALSE; }
 
   Info("Files loaded","Initialize");
@@ -725,11 +725,6 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       listFlowFour->Add(hFlowFour);
     }
   } // end-for {iSample}: samples
-
-  // ffOutputFile->cd();
-  // listFlowTwo->Write(0,TObject::kSingleKey);
-  // if(bDoFour) { listFlowFour->Write(0,TObject::kSingleKey); }
-
   Debug("Samples processing done!","ProcessRefs");
 
   // merging correlation profiles to get central values
@@ -745,11 +740,6 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TH1D* hFlowTwoMerged = CalcRefFlowTwo(hCumTwoMerged, task);
   if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
   hFlowTwoMerged->SetName(Form("%s_merged", hFlowTwoMerged->GetName()));
-
-  // ffOutputFile->cd();
-  // pCorTwoMerged->Write();
-  // hCumTwoMerged->Write();
-  // hFlowTwoMerged->Write();
 
   TProfile* pCorFourMerged = 0x0;
   TH1D* hCumFourMerged = 0x0;
@@ -767,11 +757,6 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     hFlowFourMerged = CalcRefFlowFour(hCumFourMerged, task);
     if(!hFlowFourMerged) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
     hFlowFourMerged->SetName(Form("%s_merged", hFlowFourMerged->GetName()));
-
-    // ffOutputFile->cd();
-    // pCorFourMerged->Write();
-    // hCumFourMerged->Write();
-    // hFlowFourMerged->Write();
   }
 
   // desampling
@@ -1331,12 +1316,6 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessDirect"); return kFALSE; }
   hFlowTwoMerged->SetName(Form("%s_merged", hFlowTwoMerged->GetName()));
 
-  // ffOutputFile->cd();
-  // listFlowTwo->Write(Form("listFlow%sTwo", task->GetSpeciesName().Data()), TObject::kSingleKey);
-  // pCorTwoMerged->Write();
-  // hCumTwoMerged->Write();
-  // hFlowTwoMerged->Write();
-
   TH1D* hCumFourMerged = 0x0;
   TH1D* hFlowFourMerged = 0x0;
   if(bDoFour)
@@ -1363,12 +1342,6 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     hFlowFourMerged = CalcDifFlowFour(hCumFourMerged, hFlowFourRefMerged, iMultBin+1, task, bCorrelated);
     if(!hFlowFourMerged) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessDirect"); return kFALSE; }
     hFlowFourMerged->SetName(Form("%s_merged", hFlowFourMerged->GetName()));
-
-    // ffOutputFile->cd();
-    // listFlowFour->Write(Form("listFlow%sFour", task->GetSpeciesName().Data()), TObject::kSingleKey);
-    // pCorFourMerged->Write();
-    // hCumFourMerged->Write();
-    // hFlowFourMerged->Write();
   }
 
   Debug("Desampling","ProcessDirect");
