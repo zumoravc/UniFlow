@@ -1754,6 +1754,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     if(fFlowNumWeightPowersMax < 3) { AliFatal("Low range of flow vector weight dimension! Not enought for <2>!"); return kFALSE; }
     if(fCutFlowDoFourCorrelations && fFlowNumWeightPowersMax < 5) { AliFatal("Low range of flow vector weight dimension! Not enought for <4>!"); return kFALSE; }
     if(fFlowNumHarmonicsMax < fHarmonics[iHarm]+1) { AliFatal("Low range of flow vector harmonics dimension!"); return kFALSE; }
+    if(fCutFlowDoFourCorrelations && fFlowNumHarmonicsMax < (2*fHarmonics[iHarm]+1)) { AliFatal("Low range of flow vector harmonics dimension!"); return kFALSE; }
   }
 
   if(fSampling && fNumSamples == 0)
