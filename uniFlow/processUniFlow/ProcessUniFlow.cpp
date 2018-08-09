@@ -697,7 +697,6 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     if(bDoFour) { listCorFour->Add(pCorFour); }
 
     // Making cumulants out of correlations : <<N>>_n -> c_n{N} -> v_n{N}
-
     // cn{2}
     TH1D* hCumTwo = CalcRefCumTwo(pCorTwo,task);
     if(!hCumTwo) { Error(Form("cn{2} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
@@ -777,14 +776,10 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(bDoFour)
   {
     TH1D* hCumFourDesampled = DesampleList(listCumFour, hCumFourMerged, task, nameCumFour);
-    // Warning("Desampling not (re)implemented! Skipping","ProcessRefs");
-    // TH1D* hFlowFourDesampled = (TH1D*) listFlowFour->At(0);
     if(!hCumFourDesampled) { Error("Desampling 'hCumFourDesampled' failed","ProcessRefs"); return kFALSE; }
     hCumFourDesampled->SetName(nameCumFour.Data());
 
     TH1D* hFlowFourDesampled = DesampleList(listFlowFour, hFlowFourMerged, task, nameFlowFour);
-    // Warning("Desampling not (re)implemented! Skipping","ProcessRefs");
-    // TH1D* hFlowFourDesampled = (TH1D*) listFlowFour->At(0);
     if(!hFlowFourDesampled) { Error("Desampling 'hFlowFourDesampled' failed","ProcessRefs"); return kFALSE; }
     hFlowFourDesampled->SetName(nameFlowFour.Data());
 
