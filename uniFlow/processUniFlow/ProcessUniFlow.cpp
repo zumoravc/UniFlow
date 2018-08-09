@@ -1271,8 +1271,8 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     if(bDoFour)
     {
       // loading reference <<2>>
-      TProfile* pCorTwoRef = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
-      if(!pCorTwoRef) { Error(Form("Profile 'pCorTwoRef' (sample %d) does not exists",iSample),"ProcessDirect"); flFlowRefs->ls(); return kFALSE; }
+      TProfile* pCorTwoRef = (TProfile*) ffOutputFile->Get(Form("pCor2_Refs_harm%d_gap%s_rebin",task->fHarmonics, task->GetEtaGapString().Data()));
+      if(!pCorTwoRef) { Error(Form("Profile 'pCorTwoRef' (sample %d) does not exists",iSample),"ProcessDirect"); ffOutputFile->ls(); return kFALSE; }
 
       // loading reference vn{4}
       TH1D* hFlowRefFour = (TH1D*) listRefFour->FindObject(Form("hFlow4_Refs_harm%d_gap%s_sample%d",task->fHarmonics,task->GetEtaGapString().Data(),iSample));
