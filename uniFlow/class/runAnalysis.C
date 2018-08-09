@@ -8,7 +8,7 @@
 
 void runAnalysis()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -88,7 +88,7 @@ void runAnalysis()
     // task1->SetFlowRFPsPtMin(0.2);
     // task1->SetFlowRFPsPtMax(5.0);
     task1->SetFlowFillWeights(kTRUE);
-    // task1->SetFlowDoFourCorrelations(kFALSE);
+    task1->SetFlowDoFourCorrelations(kTRUE);
     // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights-prel/weights_16l.root",kFALSE);
     // task1->SetUseWeigthsFile("./weights_16l.root",kTRUE);
     task1->SetUseWeights3D(kFALSE);
