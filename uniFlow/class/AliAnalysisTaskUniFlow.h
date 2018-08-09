@@ -123,8 +123,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
       const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
       const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
-      static const Short_t    fFlowNumHarmonicsMax = 3; // maximum harmonics length of flow vector array
-      static const Short_t    fFlowNumWeightPowersMax = 3; // maximum weight power length of flow vector array
+      static const Short_t    fFlowNumHarmonicsMax = 5; // maximum harmonics length of flow vector array
+      static const Short_t    fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
       const Double_t          fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
       const Double_t          fFlowPOIsPtMax; // [15] (GeV/c) max pT treshold for POIs for differential flow
       Int_t                   fFlowCentMin; // [set in InitializeTask()] min range for centrality/multiplicity histos
@@ -398,10 +398,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TProfile3D*     fp3PhiCorrCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta<0 (cent, pT, InvMass)
 
       TProfile*       fpRefsCor4[fNumSamples][fNumHarmonics]; //! <4> correlations for RFPs
-      TProfile2D*     fp2ChargedCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
-      TProfile2D*     fp2PionCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for pion POIs
-      TProfile2D*     fp2KaonCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for kaon POIs
-      TProfile2D*     fp2ProtonCor4[fNumSamples][fNumHarmonics]; //! <4'> correlations for proton POIs
+      TProfile2D*     fp2ChargedCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
+      TProfile2D*     fp2PionCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for pion POIs
+      TProfile2D*     fp2KaonCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for kaon POIs
+      TProfile2D*     fp2ProtonCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for proton POIs
       TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidates (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidates (cent, pT, InvMass)
       TProfile3D*     fp3PhiCorrCor4[fNumHarmonics]; //! <4'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
