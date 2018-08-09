@@ -689,8 +689,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     // rebinning the profiles
     if(task->fRebinning)
     {
-      pCorTwo = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_rebin",pCorTwo->GetName()),fdMultBins);
-      if(bDoFour) { pCorFour = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_rebin",pCorFour->GetName()),fdMultBins); }
+      pCorTwo = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_rebin", nameCorTwo.Data()),fdMultBins);
+      if(bDoFour) { pCorFour = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_rebin", nameCorFour.Data()),fdMultBins); }
     }
 
     listCorTwo->Add(pCorTwo);
@@ -731,15 +731,15 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   Debug("Merging correlations for central values", "ProcessRefs");
   TProfile* pCorTwoMerged = (TProfile*) MergeListProfiles(listCorTwo);
   if(!pCorTwoMerged) { Error("Merging of 'pCorTwoMerged' failed!","ProcessRefs"); return kFALSE; }
-  pCorTwoMerged->SetName(Form("pCor2_Refs_harm%d_gap%s_merged",task->fHarmonics, task->GetEtaGapString().Data() ));
+  pCorTwoMerged->SetName(Form("%s_merged", nameCorTwo.Data()));
 
   TH1D* hCumTwoMerged = CalcRefCumTwo(pCorTwoMerged, task);
   if(!hCumTwoMerged) { Error(Form("cn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
-  hCumTwoMerged->SetName(Form("%s_merged", hCumTwoMerged->GetName()));
+  hCumTwoMerged->SetName(Form("%s_merged", nameCumTwo.Data()));
 
   TH1D* hFlowTwoMerged = CalcRefFlowTwo(hCumTwoMerged, task);
   if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
-  hFlowTwoMerged->SetName(Form("%s_merged", hFlowTwoMerged->GetName()));
+  hFlowTwoMerged->SetName(Form("%s_merged", nameFlowTwo.Data()));
 
   TProfile* pCorFourMerged = 0x0;
   TH1D* hCumFourMerged = 0x0;
@@ -748,15 +748,15 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   {
     pCorFourMerged = (TProfile*) MergeListProfiles(listCorFour);
     if(!pCorFourMerged) { Error("Merging of 'pCorFourMerged' failed!","ProcessRefs"); return kFALSE; }
-    pCorFourMerged->SetName(Form("pCor4_Refs_harm%d_gap%s_merged",task->fHarmonics, task->GetEtaGapString().Data() ));
+    pCorFourMerged->SetName(Form("%s_merged", nameCorFour.Data()));
 
     hCumFourMerged = CalcRefCumFour(pCorFourMerged, pCorTwoMerged, task, bCorrelated);
     if(!hCumFourMerged) { Error(Form("cn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
-    hCumFourMerged->SetName(Form("%s_merged", hCumFourMerged->GetName()));
+    hCumFourMerged->SetName(Form("%s_merged", nameCumFour.Data()));
 
     hFlowFourMerged = CalcRefFlowFour(hCumFourMerged, task);
     if(!hFlowFourMerged) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
-    hFlowFourMerged->SetName(Form("%s_merged", hFlowFourMerged->GetName()));
+    hFlowFourMerged->SetName(Form("%s_merged", nameFlowFour.Data()));
   }
 
   // desampling
@@ -1225,26 +1225,26 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     Short_t binMultLow = p2CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
     Short_t binMultHigh = p2CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
 
-    TProfile* pCorTwoDif = p2CorTwoDif->ProfileY(Form("%s_cent%d", nameCorTwo.Data(), iMultBin),binMultLow,binMultHigh);
+    TProfile* pCorTwoDif = p2CorTwoDif->ProfileY(nameCorTwo.Data(),binMultLow,binMultHigh);
     pCorTwoDif->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
 
     TProfile* pCorFourDif = 0x0;
     if(bDoFour)
     {
-      pCorFourDif = p2CorFourDif->ProfileY(Form("%s_cent%d", nameCorFour.Data(),iMultBin),binMultLow,binMultHigh);
+      pCorFourDif = p2CorFourDif->ProfileY(nameCorFour.Data(),binMultLow,binMultHigh);
       pCorFourDif->GetXaxis()->SetTitle("#it{p}_{T} (GeV/#it{c})");
     }
 
     // rebinning according to pt bins
     if(task->fNumPtBins > 0)
     {
-      pCorTwoDif = (TProfile*) pCorTwoDif->Rebin(task->fNumPtBins,Form("%s_rebin",pCorTwoDif->GetName()),task->fPtBinsEdges);
-      if(bDoFour) { pCorFourDif = (TProfile*) pCorFourDif->Rebin(task->fNumPtBins,Form("%s_rebin",pCorFourDif->GetName()),task->fPtBinsEdges); }
+      pCorTwoDif = (TProfile*) pCorTwoDif->Rebin(task->fNumPtBins,Form("%s_rebin", nameCorTwo.Data()), task->fPtBinsEdges);
+      if(bDoFour) { pCorFourDif = (TProfile*) pCorFourDif->Rebin(task->fNumPtBins,Form("%s_rebin", nameCorFour.Data()), task->fPtBinsEdges); }
     }
     else
     {
-      pCorTwoDif = (TProfile*) pCorTwoDif->Clone(Form("%s_rebin",pCorTwoDif->GetName()));
-      if(bDoFour) { pCorFourDif = (TProfile*) pCorFourDif->Clone(Form("%s_rebin",pCorFourDif->GetName())); }
+      pCorTwoDif = (TProfile*) pCorTwoDif->Clone(Form("%s_rebin", nameCorTwo.Data()));
+      if(bDoFour) { pCorFourDif = (TProfile*) pCorFourDif->Clone(Form("%s_rebin", nameCorFour.Data())); }
     }
 
     // NOTE: Here the <X'> is ready & rebinned
