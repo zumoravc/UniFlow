@@ -3508,27 +3508,27 @@ Bool_t ProcessUniFlow::ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1
 //_____________________________________________________________________________
 void ProcessUniFlow::Fatal(TString sMsg, TString sMethod)
 {
-	printf("Fatal::%s  %s. Terminating!\n", sMethod.Data(), sMsg.Data());
+	printf("\033[91mFatal::%s  %s. Terminating!\033[0m\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Error(TString sMsg, TString sMethod)
 {
-	printf("Error::%s  %s\n", sMethod.Data(), sMsg.Data());
+	printf("\033[91mError::%s  %s\033[0m\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Info(TString sMsg, TString sMethod)
 {
-	printf("Info::%s  %s\n", sMethod.Data(), sMsg.Data());
+	printf("\033[96mInfo::%s  %s\033[0m\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Warning(TString sMsg, TString sMethod)
 {
-	printf("Warning::%s  %s\n", sMethod.Data(), sMsg.Data());
+	printf("\033[93mWarning::%s  %s\033[0m\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Debug(TString sMsg, TString sMethod)
 {
-	if(fbDebug) printf("Debug::%s  %s\n", sMethod.Data(), sMsg.Data());
+	if(fbDebug) printf("\033[95mDebug::%s  %s\033[0m\n", sMethod.Data(), sMsg.Data());
 }
 //_____________________________________________________________________________
 //_____________________________________________________________________________
