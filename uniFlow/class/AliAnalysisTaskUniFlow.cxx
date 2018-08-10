@@ -918,8 +918,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fh2EventCentralityNumRefs = new TH2D("fh2EventCentralityNumRefs",Form("Event centrality (%s) vs. N_{RFP}; %s; N_{RFP}",GetMultiEstimatorName(fMultEstimator), GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, 150,0,150);
     fQAEvents->Add(fh2EventCentralityNumRefs);
 
-    const Short_t iEventCounterBins = 8;
-    TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","EventCuts OK","PV OK","SPD Vtx OK","Pileup MV OK","PV #it{z} OK","Selected"};
+    const Short_t iEventCounterBins = 4;
+    TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","EventCuts OK","Selected"};
     fhEventCounter = new TH1D("fhEventCounter","Event Counter",iEventCounterBins,0,iEventCounterBins);
     for(Short_t i(0); i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fQAEvents->Add(fhEventCounter);
@@ -1843,6 +1843,8 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   AliInfo("Setting collision system dependent variables");
   switch(fColSystem)
   {
+    case kPP :
+    case kPPb :
     case kPbPb :
       fUseAliEventCuts = kTRUE; // Required for event selection
       AliWarning("    'fUseAliEventCuts' switched on!");
@@ -1959,9 +1961,10 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   if(fFillQA) FillEventsQA(0);
 
   Bool_t eventSelected = kFALSE;
-  // event selection for small systems pp, pPb in Run2 (2016)
-  if(fColSystem == kPP || fColSystem == kPPb) { eventSelected = IsEventSelected_small_2016(); }
-  // event selection for Pb-Pb in Run2 (2015o)
+  // event selection for small systems pp, pPb in Run2
+  if(fColSystem == kPP || fColSystem == kPPb) { eventSelected = IsEventSelected_pppPb(); }
+  // if(fColSystem == kPP || fColSystem == kPPb) { eventSelected = IsEventSelected_oldsmall2016(); } // deprecenated
+  // event selection for Pb-Pb in Run2
   if(fColSystem == kPbPb) { eventSelected = IsEventSelected_PbPb(); }
 
   if(!eventSelected) { return kFALSE; }
@@ -1976,12 +1979,14 @@ Bool_t AliAnalysisTaskUniFlow::EventSelection()
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsEventSelected_small_2016()
+Bool_t AliAnalysisTaskUniFlow::IsEventSelected_oldsmall2016()
 {
   // Event selection for small system collision recorder in Run 2 year 2016
   // pp (LHC16kl...), pPb (LHC16rqts)
   // return kTRUE if event passes all criteria, kFALSE otherwise
   // *************************************************************
+
+  AliWarning("Using old / deprecenated event selection for small systems!");
 
   // Physics selection (trigger)
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
@@ -2094,9 +2099,50 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_small_2016()
   return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::IsEventSelected_pppPb()
+{
+  // Event selection for pp & p-Pb collision recorded in Run 2 using AliEventCuts
+  // return kTRUE if event passes all criteria, kFALSE otherwise
+  // *************************************************************
+
+  // Physics selection (trigger)
+  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
+  UInt_t fSelectMask = inputHandler->IsEventSelected();
+
+  Bool_t isTriggerSelected = kFALSE;
+  switch(fTrigger) // check for high multiplicity trigger
+  {
+    case 0:
+      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
+      break;
+
+    case 1:
+      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
+      break;
+
+    case 2:
+      isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
+      break;
+
+    default:
+      isTriggerSelected = kFALSE;
+  }
+
+  // events passing physics selection
+  if(!isTriggerSelected) { return kFALSE; }
+  fhEventCounter->Fill("Physics selection OK",1);
+
+  // events passing AliEventCuts selection
+  if(!fEventCuts.AcceptEvent(fEventAOD)) { return kFALSE; }
+  fhEventCounter->Fill("EventCuts OK",1);
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::IsEventSelected_PbPb()
 {
-  // Event selection for Pb-Pb collision recorded in Run 2 (15o)
+  // Event selection for Pb-Pb collision recorded in Run 2 using AliEventCuts
   // return kTRUE if event passes all criteria, kFALSE otherwise
   // *************************************************************
 
@@ -2131,11 +2177,6 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_PbPb()
   // events passing AliEventCuts selection
   if(!fEventCuts.AcceptEvent(fEventAOD)) { return kFALSE; }
   fhEventCounter->Fill("EventCuts OK",1);
-
-  // primary vertex selection
-  const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertex());
-  if(!vtx || vtx->GetNContributors() < 1) { return kFALSE; }
-  fhEventCounter->Fill("PV OK",1);
 
   return kTRUE;
 }

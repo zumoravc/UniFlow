@@ -146,8 +146,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    ClearVectors(); // properly clear all particle vectors
 
       Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
-      Bool_t                  IsEventSelected_small_2016(); // event selection for LHC2016 pp & pPb data
-      Bool_t                  IsEventSelected_PbPb(); // event selection for Pb-Pb (LHC15o)
+      Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
+      Bool_t                  IsEventSelected_pppPb(); // event selection for Run 2 pp & p-Pb (AliEventCuts)
+      Bool_t                  IsEventSelected_PbPb(); // event selection for Run 2 Pb-Pb (AliEventCuts)
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
