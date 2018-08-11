@@ -1784,15 +1784,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // setting fFlowCentMax according to estimator : 0-100 for %'s and 0-150 for CHARGED
   if(fMultEstimator == kRFP)
   {
-    switch(fColSystem)
-    {
-      case kPbPb:
-        fFlowCentMin = 0; fFlowCentMax = 500;
-      break;
-
-      default:
-        fFlowCentMin = 0; fFlowCentMax = 200;
-    }
+    fFlowCentMin = 0; fFlowCentMax = 200;
   }
   else { fFlowCentMin = 0; fFlowCentMax = 100; }
 
@@ -3662,6 +3654,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
   fIndexCentrality = GetCentralityIndex();
   if(fIndexCentrality < 0) { return kFALSE; }
+  if(fFlowCentMin > 0 && fIndexCentrality < fFlowCentMin) { return kFALSE; }
+  if(fFlowCentMax > 0 && fIndexCentrality > fFlowCentMax) { return kFALSE; }
 
   fhEventCentrality->Fill(fIndexCentrality);
   fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
