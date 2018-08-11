@@ -3238,10 +3238,10 @@ void AliAnalysisTaskUniFlow::FilterPID()
     AliAODTrack* track = static_cast<AliAODTrack*>(*part);
     if(!track) continue;
 
-    // PID tracks are subset of selected charged tracks (same quality requirements)
-    // if(!IsChargedSelected(track)) continue;
-
     if(fFillQA) FillQAPID(0,track,kUnknown);   // filling QA for tracks before selection (but after charged criteria applied)
+
+    // PID tracks are subset of selected charged tracks (same quality requirements)
+    if(!IsChargedSelected(track)) continue;
 
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
