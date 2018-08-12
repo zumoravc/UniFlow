@@ -154,6 +154,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
   fFlowPOIsPtMax(15.0),
+  fCutFlowDoThreeCorrelations(kFALSE),
   fCutFlowDoFourCorrelations(kFALSE),
   fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
@@ -431,6 +432,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
   fFlowPOIsPtMax(15.0),
+  fCutFlowDoThreeCorrelations(kFALSE),
   fCutFlowDoFourCorrelations(kFALSE),
   fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
@@ -1606,6 +1608,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fProcessPhi: (Bool_t) %s\n",    fProcessPhi ? "kTRUE" : "kFALSE");
   printf("      fProcessV0s: (Bool_t) %s\n",    fProcessV0s ? "kTRUE" : "kFALSE");
   printf("   -------- Flow related ----------------------------------------\n");
+  printf("      fCutFlowDoThreeCorrelations: (Bool_t) %s\n",    fCutFlowDoThreeCorrelations ? "kTRUE" : "kFALSE");
   printf("      fCutFlowDoFourCorrelations: (Bool_t) %s\n",    fCutFlowDoFourCorrelations ? "kTRUE" : "kFALSE");
   printf("      fCutFlowRFPsPtMin: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMin);
   printf("      fCutFlowRFPsPtMax: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMax);
@@ -1756,6 +1759,9 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   fPIDCombined->SetDefaultTPCPriors();
   fPIDCombined->SetSelectedSpecies(5); // all particle species
   fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
+
+  // checking if <3> is on: not implemented yet (TODO)
+  if(fCutFlowDoThreeCorrelations) { AliError("Switch for <3> switch on but on fully implemented. Please turn off!"); return kFALSE; }
 
   // checking the fFlowNumHarmonicsMax, fFlowNumWeightPowersMax dimensions of p,Q,S vectors
   for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)

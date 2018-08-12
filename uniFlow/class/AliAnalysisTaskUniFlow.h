@@ -252,7 +252,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
-      Bool_t                  fCutFlowDoThreeCorrelations; // [kFALSE] flag for processing <4>
+      Bool_t                  fCutFlowDoThreeCorrelations; // [kFALSE] flag for processing <3>
       Bool_t                  fCutFlowDoFourCorrelations; // [kFALSE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
