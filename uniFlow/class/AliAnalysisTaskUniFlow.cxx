@@ -664,6 +664,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     {
       fFlowVecQpos[iHarm][iPower] = TComplex(0,0,kFALSE);
       fFlowVecQneg[iHarm][iPower] = TComplex(0,0,kFALSE);
+      fFlowVecQmid[iHarm][iPower] = TComplex(0,0,kFALSE);
       fFlowVecPpos[iHarm][iPower] = TComplex(0,0,kFALSE);
       fFlowVecPneg[iHarm][iPower] = TComplex(0,0,kFALSE);
       fFlowVecS[iHarm][iPower] = TComplex(0,0,kFALSE);
@@ -703,6 +704,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
       {
         fpRefsCor2[iSample][iGap][iHarm] = 0x0;
         fpRefsCor4[iSample][iGap][iHarm] = 0x0;
+        fpRefsCor4_3sub[iSample][iGap][iHarm] = 0x0;
         fp2ChargedCor2Pos[iSample][iGap][iHarm] = 0x0;
         fp2ChargedCor2Neg[iSample][iGap][iHarm] = 0x0;
         fp2PionCor2Pos[iSample][iGap][iHarm] = 0x0;
@@ -1046,6 +1048,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
               fpRefsCor4[iSample][iGap][iHarm] = new TProfile(Form("fpRefs_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Ref: <<4>> | Gap %g | n=%d | sample %d ; %s;",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
               fpRefsCor4[iSample][iGap][iHarm]->Sumw2(kTRUE);
               fFlowRefs->Add(fpRefsCor4[iSample][iGap][iHarm]);
+
+              if(fEtaGap[iGap] > 0.0) // otherwise middle event is empty
+              {
+                fpRefsCor4_3sub[iSample][iGap][iHarm] = new TProfile(Form("fpRefs_<4>_3sub_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Ref: <<4>> | Gap %g | n=%d | sample %d ; %s;",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
+                fpRefsCor4_3sub[iSample][iGap][iHarm]->Sumw2(kTRUE);
+                fFlowRefs->Add(fpRefsCor4_3sub[iSample][iGap][iHarm]);
+              }
             }
 
             fp2ChargedCor2Pos[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g_Pos_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<2'>> | Gap %g | n=%d | sample %d | POIs pos; %s; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
@@ -3759,20 +3768,41 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Int_t iEtaGapIndex)
       }
     }
 
-    // estimating <4>
-    Double_t D04gap = FourGap(0,0,0,0).Re();
-    if(D04gap != 0.0)
-    {
-      for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-      {
-        Int_t iHarmonics = fHarmonics[iHarm];
-        Double_t Nn4gap = FourGap(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
-        Double_t dValue = Nn4gap / D04gap;
-        if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D04gap); }
-      }
-    }
 
-  } // endif {dEtaGap}
+    if(fCutFlowDoFourCorrelations)
+    {
+      // estimating <4>
+      Double_t D04gap = FourGap(0,0,0,0).Re();
+      if(D04gap != 0.0)
+      {
+        for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
+        {
+          Int_t iHarmonics = fHarmonics[iHarm];
+          Double_t Nn4gap = FourGap(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
+          Double_t dValue = Nn4gap / D04gap;
+          if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D04gap); }
+        }
+      }
+
+      // estimating <4> with 3-sub
+      if(dEtaGap > 0.0) // otherwise middle event is empty
+      {
+        Double_t D04_3sub = Four3sub(0,0,0,0).Re();
+        if(D04_3sub != 0.0)
+        {
+          for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
+          {
+            Int_t iHarmonics = fHarmonics[iHarm];
+            Double_t Nn4_3sub = Four3sub(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
+            Double_t dValue = Nn4_3sub / D04_3sub;
+            if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4_3sub[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D04_3sub); }
+          }
+        }
+      }
+
+    } // end-if {fCutFlowDoFourCorrelations}
+
+  } // end-if {dEtaGap}
   return;
 }
 //_____________________________________________________________________________
@@ -3980,7 +4010,9 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   Double_t dEtaGap = fEtaGap[iEtaGapIndex];
   Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE;
-  if(dEtaGap > -1.0) bHasGap = kTRUE;
+  Bool_t bHas3sub = kFALSE;
+  if(dEtaGap > -1.0) { bHasGap = kTRUE; }
+  if(fCutFlowDoFourCorrelations && (dEtaGap > 0.0)) { bHas3sub = kTRUE; }
 
   TH2D* h2Weights = fh2WeightRefs;
   TH3D* h3Weights = fh3WeightRefs;
@@ -3993,6 +4025,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecQpos);
   ResetFlowVector(fFlowVecQneg);
+  ResetFlowVector(fFlowVecQmid);
 
   for (auto part = fVectorRefs->begin(); part != fVectorRefs->end(); part++)
   {
@@ -4021,7 +4054,8 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
     }
     else
     {
-      if(dEta > dEtaLimit)   // RFP in positive eta acceptance
+      // RFP in positive eta acceptance
+      if(dEta > dEtaLimit)
       {
         for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
           for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
@@ -4031,7 +4065,8 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
             fFlowVecQpos[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
           }
       }
-      if(dEta < -dEtaLimit)   // RFP in negative eta acceptance
+      // RFP in negative eta acceptance
+      if(dEta < -dEtaLimit)
       {
         for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
           for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
@@ -4041,6 +4076,19 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
             fFlowVecQneg[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
           }
       }
+
+      // RFP in middle (for 3sub) if gap > 0
+      if(bHas3sub && (TMath::Abs(dEta) < dEtaLimit) )
+      {
+        for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
+          for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
+          {
+            Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
+            Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
+            fFlowVecQmid[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+          }
+      }
+
     } // endif {dEtaGap}
   } // endfor {tracks} particle loop
 
@@ -4374,6 +4422,12 @@ TComplex AliAnalysisTaskUniFlow::QGapNeg(const Short_t n, const Short_t p)
   else return fFlowVecQneg[n][p];
 }
 //____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::QGapMid(const Short_t n, const Short_t p)
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecQmid[-n][p]);
+  else return fFlowVecQmid[n][p];
+}
+//____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::P(const Short_t n, const Short_t p)
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecPpos[-n][p]);
@@ -4446,6 +4500,13 @@ TComplex AliAnalysisTaskUniFlow::FourGap(const Short_t n1, const Short_t n2, con
   TComplex formula = QGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)-QGapPos(n1+n2,2)*QGapNeg(n3,1)*QGapNeg(n4,1)
                     -QGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3+n4,2)+QGapPos(n1+n2,2)*QGapNeg(n3+n4,2);
 	return formula;
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::Four3sub(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
+{
+  // left = neg, middle = mid; rigth = pos
+  TComplex formula = QGapMid(n1,1)*QGapMid(n2,1)*QGapNeg(n3,1)*QGapPos(n4,1)-QGapMid(n1+n2,2)*QGapNeg(n3,1)*QGapPos(n4,1);
+  return formula;
 }
 //____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
