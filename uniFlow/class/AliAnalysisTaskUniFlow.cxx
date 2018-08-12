@@ -104,7 +104,7 @@ class AliAnalysisTaskUniFlow;
 ClassImp(AliAnalysisTaskUniFlow);
 
 Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2};
-Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {0.0,0.4,0.8};
+Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {-1.0,0.0,0.4};
 Double_t AliAnalysisTaskUniFlow::fMultBins[] = {0.,5.,10.,20.,40.,60.,100.};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
@@ -675,7 +675,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   {
     for(Short_t iSample(0); iSample < fNumSamples; iSample++)
     {
-      fpRefsCor4[iSample][iHarm] = 0x0;
       fp2ChargedCor4Pos[iSample][iHarm] = 0x0;
       fp2PionCor4Pos[iSample][iHarm] = 0x0;
       fp2KaonCor4Pos[iSample][iHarm] = 0x0;
@@ -703,6 +702,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
       for(Short_t iSample(0); iSample < fNumSamples; iSample++)
       {
         fpRefsCor2[iSample][iGap][iHarm] = 0x0;
+        fpRefsCor4[iSample][iGap][iHarm] = 0x0;
         fp2ChargedCor2Pos[iSample][iGap][iHarm] = 0x0;
         fp2ChargedCor2Neg[iSample][iGap][iHarm] = 0x0;
         fp2PionCor2Pos[iSample][iGap][iHarm] = 0x0;
@@ -1041,25 +1041,25 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
             fpRefsCor2[iSample][iGap][iHarm]->Sumw2(kTRUE);
             fFlowRefs->Add(fpRefsCor2[iSample][iGap][iHarm]);
 
-            if(fCutFlowDoFourCorrelations && iGap == 0)
+            if(fCutFlowDoFourCorrelations)
             {
-              fpRefsCor4[iSample][iHarm] = new TProfile(Form("fpRefs_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Ref: <<4>> | Gap %g | n=%d | sample %d ; %s;",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
-              fpRefsCor4[iSample][iHarm]->Sumw2(kTRUE);
-              fFlowRefs->Add(fpRefsCor4[iSample][iHarm]);
+              fpRefsCor4[iSample][iGap][iHarm] = new TProfile(Form("fpRefs_<4>_harm%d_gap%02.2g_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Ref: <<4>> | Gap %g | n=%d | sample %d ; %s;",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
+              fpRefsCor4[iSample][iGap][iHarm]->Sumw2(kTRUE);
+              fFlowRefs->Add(fpRefsCor4[iSample][iGap][iHarm]);
             }
 
             fp2ChargedCor2Pos[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g_Pos_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<2'>> | Gap %g | n=%d | sample %d | POIs pos; %s; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
             fp2ChargedCor2Pos[iSample][iGap][iHarm]->Sumw2(kTRUE);
             fFlowCharged->Add(fp2ChargedCor2Pos[iSample][iGap][iHarm]);
 
-            if(fEtaGap[iGap] != -1.)
+            if(fEtaGap[iGap] > -1.0)
             {
               fp2ChargedCor2Neg[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_<2>_harm%d_gap%02.2g_Neg_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<2'>> | Gap %g | n=%d | sample %d | POIs neg; %s; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
               fp2ChargedCor2Neg[iSample][iGap][iHarm]->Sumw2(kTRUE);
               fFlowCharged->Add(fp2ChargedCor2Neg[iSample][iGap][iHarm]);
             }
 
-            if(fCutFlowDoFourCorrelations && iGap == 0)
+            if(fCutFlowDoFourCorrelations && fEtaGap[iGap] < 0.0)
             {
               fp2ChargedCor4Pos[iSample][iHarm] = new TProfile2D(Form("fp2Charged_<4>_harm%d_gap%02.2g_Pos_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("Charged: <<4'>> | Gap %g | n=%d | sample %d | POIs pos; %s; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
               fp2ChargedCor4Pos[iSample][iHarm]->Sumw2(kTRUE);
@@ -1080,7 +1080,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
               fp2ProtonCor2Pos[iSample][iGap][iHarm]->Sumw2(kTRUE);
               fFlowPID->Add(fp2ProtonCor2Pos[iSample][iGap][iHarm]);
 
-              if(fEtaGap[iGap] != -1.)
+              if(fEtaGap[iGap] > -1.0)
               {
                 fp2PionCor2Neg[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Pion_<2>_harm%d_gap%02.2g_Neg_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("PID #pi: <<2'>> | Gap %g | n=%d | sample %d | POIs neg; %s; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
                 fp2PionCor2Neg[iSample][iGap][iHarm]->Sumw2(kTRUE);
@@ -1095,7 +1095,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
                 fFlowPID->Add(fp2ProtonCor2Neg[iSample][iGap][iHarm]);
               }
 
-              if(fCutFlowDoFourCorrelations && iGap == 0)
+              if(fCutFlowDoFourCorrelations && fEtaGap[iGap] < 0.0)
               {
                 fp2PionCor4Pos[iSample][iHarm] = new TProfile2D(Form("fp2Pion_<4>_harm%d_gap%02.2g_Pos_sample%d",fHarmonics[iHarm],10*fEtaGap[iGap],iSample),Form("PID #pi: <<4'>> | Gap %g | n=%d | sample %d | POIs pos; %s; #it{p}_{T} (GeV/c)",fEtaGap[iGap],fHarmonics[iHarm],iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
                 fp2PionCor4Pos[iSample][iHarm]->Sumw2(kTRUE);
@@ -1116,14 +1116,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
             fp3PhiCorrCor2Pos[iGap][iHarm]->Sumw2();
             fFlowPhi->Add(fp3PhiCorrCor2Pos[iGap][iHarm]);
 
-            if(fEtaGap[iGap] != -1.)
+            if(fEtaGap[iGap] > -1.0)
             {
               fp3PhiCorrCor2Neg[iGap][iHarm] = new TProfile3D(Form("fp3PhiCorr_<2>_harm%d_gap%02.2g_Neg",fHarmonics[iHarm],10*fEtaGap[iGap]), Form("#phi: <<2'>> | Gap %g | n=%d  | POIs neg; %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
               fp3PhiCorrCor2Neg[iGap][iHarm]->Sumw2();
               fFlowPhi->Add(fp3PhiCorrCor2Neg[iGap][iHarm]);
             }
 
-            if(fCutFlowDoFourCorrelations && iGap == 0)
+            if(fCutFlowDoFourCorrelations && fEtaGap[iGap] < 0.0)
             {
               fp3PhiCorrCor4[iHarm] = new TProfile3D(Form("fp3PhiCorr_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]), Form("#phi: <<4'>> | Gap %g | n=%d; %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
               fp3PhiCorrCor4[iHarm]->Sumw2();
@@ -1140,7 +1140,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
             fp3V0sCorrLambdaCor2Pos[iGap][iHarm]->Sumw2();
             fFlowLambda->Add(fp3V0sCorrLambdaCor2Pos[iGap][iHarm]);
 
-            if(fEtaGap[iGap] != -1.)
+            if(fEtaGap[iGap] > -1.0)
             {
               fp3V0sCorrK0sCor2Neg[iGap][iHarm] = new TProfile3D(Form("fp3V0sCorrK0s_<2>_harm%d_gap%02.2g_Neg",fHarmonics[iHarm],10*fEtaGap[iGap]), Form("K_{S}^{0}: <<2'>> | Gap %g | n=%d | POIs neg; %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
               fp3V0sCorrK0sCor2Neg[iGap][iHarm]->Sumw2();
@@ -1151,7 +1151,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
               fFlowLambda->Add(fp3V0sCorrLambdaCor2Neg[iGap][iHarm]);
             }
 
-            if(fCutFlowDoFourCorrelations && iGap == 0)
+            if(fCutFlowDoFourCorrelations && fEtaGap[iGap] < 0.0)
             {
               fp3V0sCorrK0sCor4[iHarm] = new TProfile3D(Form("fp3V0sCorrK0s_<4>_harm%d_gap%02.2g",fHarmonics[iHarm],10*fEtaGap[iGap]), Form("K_{S}^{0}: <<4'>> | Gap %g | n=%d; %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap],fHarmonics[iHarm], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
               fp3V0sCorrK0sCor4[iHarm]->Sumw2();
@@ -3738,7 +3738,7 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Int_t iEtaGapIndex)
           Int_t iHarmonics = fHarmonics[iHarm];
           Double_t Nn4 = Four(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
           Double_t dValue = Nn4 / D04;
-          if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4[fIndexSampling][iHarm]->Fill(fIndexCentrality, dValue, D04); }
+          if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D04); }
         }
       }
     }
@@ -3758,6 +3758,20 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Int_t iEtaGapIndex)
         if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D02gap); }
       }
     }
+
+    // estimating <4>
+    Double_t D04gap = FourGap(0,0,0,0).Re();
+    if(D04gap != 0.0)
+    {
+      for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
+      {
+        Int_t iHarmonics = fHarmonics[iHarm];
+        Double_t Nn4gap = FourGap(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
+        Double_t dValue = Nn4gap / D04gap;
+        if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D04gap); }
+      }
+    }
+
   } // endif {dEtaGap}
   return;
 }
@@ -4426,7 +4440,14 @@ TComplex AliAnalysisTaskUniFlow::Four(const Short_t n1, const Short_t n2, const 
                     + 2.0*Q(n2,1)*Q(n1+n3+n4,3)+2.0*Q(n1,1)*Q(n2+n3+n4,3)-6.0*Q(n1+n2+n3+n4,4);
   return formula;
 }
-// //____________________________________________________________________
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::FourGap(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
+{
+  TComplex formula = QGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)-QGapPos(n1+n2,2)*QGapNeg(n3,1)*QGapNeg(n4,1)
+                    -QGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3+n4,2)+QGapPos(n1+n2,2)*QGapNeg(n3+n4,2);
+	return formula;
+}
+//____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
 {
   TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-S(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*S(n1+n3,2)*Q(n4,1)

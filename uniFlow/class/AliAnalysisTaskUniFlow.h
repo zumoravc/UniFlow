@@ -196,10 +196,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       TComplex                Two(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (no eta gap)
       TComplex                TwoGap(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (with eta gap)
+      TComplex                Four(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                FourGap(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
+
       TComplex                TwoDiff(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (no eta gap)
       TComplex                TwoDiffGapPos(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (with eta gap)
       TComplex                TwoDiffGapNeg(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (with eta gap)
-      TComplex                Four(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
       TComplex                FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
 
       // properties
@@ -398,7 +400,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TProfile3D*     fp3PhiCorrCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta>0 (cent, pT, InvMass)
       TProfile3D*     fp3PhiCorrCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta<0 (cent, pT, InvMass)
 
-      TProfile*       fpRefsCor4[fNumSamples][fNumHarmonics]; //! <4> correlations for RFPs
+      TProfile*       fpRefsCor4[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <4> correlations for RFPs
       TProfile2D*     fp2ChargedCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
       TProfile2D*     fp2PionCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for pion POIs
       TProfile2D*     fp2KaonCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for kaon POIs
