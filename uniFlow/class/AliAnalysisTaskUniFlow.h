@@ -189,6 +189,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                Q(const Short_t n, const Short_t p);
       TComplex                QGapPos(const Short_t n, const Short_t p);
       TComplex                QGapNeg(const Short_t n, const Short_t p);
+      TComplex                QGapMid(const Short_t n, const Short_t p);
       TComplex                P(const Short_t n, const Short_t p);
       TComplex                PGapPos(const Short_t n, const Short_t p);
       TComplex                PGapNeg(const Short_t n, const Short_t p);
@@ -196,10 +197,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       TComplex                Two(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (no eta gap)
       TComplex                TwoGap(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (with eta gap)
+      TComplex                Three(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle reference correlation calculations (no eta gap)
+      TComplex                Four(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                FourGap(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                Four3sub(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (with 3 sub-events)
+
       TComplex                TwoDiff(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (no eta gap)
       TComplex                TwoDiffGapPos(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (with eta gap)
       TComplex                TwoDiffGapNeg(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (with eta gap)
-      TComplex                Four(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                ThreeDiff(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle diff. correlation calculations (no eta gap)
       TComplex                FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
 
       // properties
@@ -219,6 +225,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+      TComplex                fFlowVecQmid[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecPpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecPneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
@@ -245,6 +252,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
+      Bool_t                  fCutFlowDoThreeCorrelations; // [kFALSE] flag for processing <3>
       Bool_t                  fCutFlowDoFourCorrelations; // [kFALSE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
@@ -398,7 +406,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TProfile3D*     fp3PhiCorrCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta>0 (cent, pT, InvMass)
       TProfile3D*     fp3PhiCorrCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta<0 (cent, pT, InvMass)
 
-      TProfile*       fpRefsCor4[fNumSamples][fNumHarmonics]; //! <4> correlations for RFPs
+      TProfile*       fpRefsCor4[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <4> correlations for RFPs
+      TProfile*       fpRefsCor4_3sub[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <4> correlations for RFPs
       TProfile2D*     fp2ChargedCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
       TProfile2D*     fp2PionCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for pion POIs
       TProfile2D*     fp2KaonCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for kaon POIs
