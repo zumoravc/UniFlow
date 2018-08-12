@@ -4485,6 +4485,13 @@ TComplex AliAnalysisTaskUniFlow::TwoDiffGapNeg(const Short_t n1, const Short_t n
   return formula;
 }
 //____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::Three(const Short_t n1, const Short_t n2, const Short_t n3)
+{
+  TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)-Q(n1+n2,2)*Q(n3,1)-Q(n2,1)*Q(n1+n3,2)
+ 		                 - Q(n1,1)*Q(n2+n3,2)+2.*Q(n1+n2+n3,3);
+  return formula;
+}
+//____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::Four(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
 {
   TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-Q(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*Q(n1+n3,2)*Q(n4,1)
@@ -4509,6 +4516,13 @@ TComplex AliAnalysisTaskUniFlow::Four3sub(const Short_t n1, const Short_t n2, co
   return formula;
 }
 //____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::ThreeDiff(const Short_t n1, const Short_t n2, const Short_t n3)
+{
+  TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)-S(n1+n2,2)*Q(n3,1)-S(n1+n3,2)*Q(n2,1)
+ 		                 - P(n1,1)*Q(n2+n3,2)+2.0*S(n1+n2+n3,3);
+  return formula;
+}
+//____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
 {
   TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-S(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*S(n1+n3,2)*Q(n4,1)
@@ -4516,7 +4530,7 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, co
                     + Q(n2+n3,2)*S(n1+n4,2)-P(n1,1)*Q(n3,1)*Q(n2+n4,2)+S(n1+n3,2)*Q(n2+n4,2)
                     + 2.0*Q(n3,1)*S(n1+n2+n4,3)-P(n1,1)*Q(n2,1)*Q(n3+n4,2)+S(n1+n2,2)*Q(n3+n4,2)
                     + 2.0*Q(n2,1)*S(n1+n3+n4,3)+2.0*P(n1,1)*Q(n2+n3+n4,3)-6.0*S(n1+n2+n3+n4,4);
-    return formula;
+  return formula;
 }
 //____________________________________________________________________
 // TComplex* AliAnalysisTaskUniFlow::FourGap(int n1, int n2, int n3, int n4)

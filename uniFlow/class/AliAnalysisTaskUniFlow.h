@@ -197,6 +197,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       TComplex                Two(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (no eta gap)
       TComplex                TwoGap(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (with eta gap)
+      TComplex                Three(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle reference correlation calculations (no eta gap)
       TComplex                Four(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
       TComplex                FourGap(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
       TComplex                Four3sub(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (with 3 sub-events)
@@ -204,6 +205,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                TwoDiff(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (no eta gap)
       TComplex                TwoDiffGapPos(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (with eta gap)
       TComplex                TwoDiffGapNeg(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (with eta gap)
+      TComplex                ThreeDiff(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle diff. correlation calculations (no eta gap)
       TComplex                FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
 
       // properties
