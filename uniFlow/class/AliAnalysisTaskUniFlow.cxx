@@ -169,7 +169,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fColSystem(kPPb),
   fMultEstimator(kV0A),
   fTrigger(AliVEvent::kINT7),
-  fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
   fCutChargedEtaMax(0.8),
@@ -447,7 +446,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fColSystem(kPPb),
   fMultEstimator(kV0A),
   fTrigger(AliVEvent::kINT7),
-  fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
   fCutChargedEtaMax(0.8),
@@ -905,7 +903,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fQAV0s = new TList();
   fQAV0s->SetOwner(kTRUE);
 
-  if(fUseAliEventCuts) { fEventCuts.AddQAplotsToList(fQAEvents); }
+  fEventCuts.AddQAplotsToList(fQAEvents);
 
   // setting number of bins based on set range with fixed width
   const Int_t iPOIsPtNumBins = (Int_t) (fFlowPOIsPtMax - fFlowPOIsPtMin) / 0.1 + 0.5; // fixed width 0.1 GeV/c
@@ -1624,7 +1622,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
   printf("      fMultEstimator: (MultiEst) '%s' (%d)\n",    GetMultiEstimatorName(fMultEstimator), fMultEstimator);
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
-  printf("      fUseAliEventCuts: (Bool_t) %s\n",    fUseAliEventCuts ? "kTRUE" : "kFALSE");
   printf("   -------- Charged tracks --------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
   printf("      fCutChargedNumTPCclsMin: (UShort_t) %d\n",    fCutChargedNumTPCclsMin);
@@ -1847,20 +1844,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     }
   }
 
-  AliInfo("Setting collision system dependent variables");
-  switch(fColSystem)
-  {
-    case kPP :
-    case kPPb :
-    case kPbPb :
-      fUseAliEventCuts = kTRUE; // Required for event selection
-      AliWarning("    'fUseAliEventCuts' switched on!");
-    break;
-
-    default: ;
-      AliInfo("   Nothing changed.");
-  }
-
   AliInfo("Preparing particle containers (std::vectors)");
   // creating particle vectors & reserving capacity in order to avoid memory re-allocation
   // when capacity is not enough later during filtering
@@ -2006,13 +1989,9 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_oldsmall2016()
   AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
   UInt_t fSelectMask = inputHandler->IsEventSelected();
   if(!(fSelectMask & fTrigger)) { return kFALSE; }
-  
+
   // events passing physics selection
   fhEventCounter->Fill("Physics selection OK",1);
-
-  // events passing AliEventCuts selection
-  if(fUseAliEventCuts && !fEventCuts.AcceptEvent(fEventAOD)) return kFALSE;
-  fhEventCounter->Fill("EventCuts OK",1);
 
   // primary vertex selection
   const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertex());

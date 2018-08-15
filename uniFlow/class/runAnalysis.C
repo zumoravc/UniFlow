@@ -93,7 +93,6 @@ void runAnalysis()
     // task1->SetUseWeigthsFile("./weights_16l.root",kTRUE);
     task1->SetUseWeights3D(kFALSE);
     // Events selection
-    // task1->SetUseAliEventCuts();
     task1->SetTrigger(AliVEvent::kINT7);
     task1->SetCollisionSystem(AliAnalysisTaskUniFlow::kPbPb);
     task1->SetMultEstimator(AliAnalysisTaskUniFlow::kRFP);
