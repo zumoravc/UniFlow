@@ -920,8 +920,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fh2EventCentralityNumRefs = new TH2D("fh2EventCentralityNumRefs",Form("Event centrality (%s) vs. N_{RFP}; %s; N_{RFP}",GetMultiEstimatorName(fMultEstimator), GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, 150,0,150);
     fQAEvents->Add(fh2EventCentralityNumRefs);
 
-    const Short_t iEventCounterBins = 4;
-    TString sEventCounterLabel[iEventCounterBins] = {"Input","Physics selection OK","EventCuts OK","Selected"};
+    TString sEventCounterLabel[] = {"Input","Physics selection OK","EventCuts OK","Event OK","#RPFs OK","Multiplicity OK","Selected"};
+    const Short_t iEventCounterBins = sizeof(sEventCounterLabel)/sizeof(sEventCounterLabel[0]);
     fhEventCounter = new TH1D("fhEventCounter","Event Counter",iEventCounterBins,0,iEventCounterBins);
     for(Short_t i(0); i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fQAEvents->Add(fhEventCounter);
@@ -1902,23 +1902,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // event selection
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!fEventAOD) { return; }
-  fhEventCounter->Fill("Input",1);
-
-  // Fill event QA BEFORE cuts
-  if(fFillQA) FillEventsQA(0);
-
-  if(!IsEventSelected()) { return; }
-  // deprecenated selected by HHTF
-  // if( (fColSystem == kPP || fColSystem == kPPb) && !IsEventSelected_oldsmall2016() ) { return; }
-
-  // here events are selected
-  fhEventCounter->Fill("Selected",1);
-
-  // Fill event QA AFTER cuts
-  if(fFillQA) { FillEventsQA(1); }
-
-  // extract PV-z for weights
-  fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
 
   // loading array with MC particles
   if(fMC)
@@ -1927,11 +1910,63 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
     if(!fArrayMC) { AliError("TClonesArray with MC particle not found!"); return; }
   }
 
+  // "valid" events before selection
+  fhEventCounter->Fill("Input",1);
+
+  // Fill event QA BEFORE cuts
+  if(fFillQA) { FillEventsQA(0); }
+
+  if(!IsEventSelected()) { return; }
+  fhEventCounter->Fill("Event OK",1);
+  // deprecenated selected by HHTF
+  // if( (fColSystem == kPP || fColSystem == kPPb) && !IsEventSelected_oldsmall2016() ) { return; }
+
+  // Filter charged (& Refs) particles to evaluate event multiplcity / N_RFPs
+  // NB: clear charged vectors because it might keep particles from previous event (not happen for other species)
+  fVectorRefs->clear();
+  fVectorCharged->clear();
+  FilterCharged();
+
+  // checking if there is at least 5 particles: needed to "properly" calculate correlations
+  if(fVectorRefs->empty() || fVectorRefs->size() < 5) { return; }
+  fhEventCounter->Fill("#RPFs OK",1);
+
+  // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
+  fIndexCentrality = GetCentralityIndex();
+  if(fIndexCentrality < 0) { return; }
+  if(fFlowCentMin > 0 && fIndexCentrality < fFlowCentMin) { return; }
+  if(fFlowCentMax > 0 && fIndexCentrality > fFlowCentMax) { return; }
+  fhEventCounter->Fill("Multiplicity OK",1);
+
+  fhEventCentrality->Fill(fIndexCentrality);
+  fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
+  fpRefsMult->Fill(fIndexCentrality,fVectorRefs->size(),1.0);
+
+  // here events are selected
+  fhEventCounter->Fill("Selected",1);
+
+  // extracting run number
+  fRunNumber = fEventAOD->GetRunNumber();
+
+  // extract PV-z for weights
+  fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
+
+  // event sampling
+  fIndexSampling = GetSamplingIndex();
+  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
+
+  // Fill event QA AFTER cuts
+  if(fFillQA) { FillEventsQA(1); }
+
+  if(fProcessPID || fProcessPhi) { FilterPID(); }
+  if(fProcessPhi) { FilterPhi(); }
+  if(fProcessV0s) { FilterV0s(); }
+
   // processing of selected event
   Bool_t bProcessed = ProcessEvent();
 
-  // need to be done no matter if the event was completely processed or not
-  // because processing can return at various steps where tracks can be created/pushed to vectors
+  // should be cleared at the end of processing especially for reconstructed
+  // particles (Phi, V0s) because here new AliPicoTracks are created
   ClearVectors();
 
   if(!bProcessed) return;
@@ -2102,27 +2137,6 @@ void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
   spdVtx->GetCovarianceMatrix(cov);
   Double_t zRes = TMath::Sqrt(cov[5]);
   fhQAEventsSPDresol[iQAindex]->Fill(zRes);
-
-  return;
-}
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::Filtering()
-{
-  // main (envelope) method for filtering of all particles used for flow in selected events
-  // All particles passing given requirements are pushed to correspodning std::vectors
-  //  - in case of Charged & PID particles, only AliAODTrack* is stored (already loaded & stored by AliVEvent)
-  //  - otherwise a new AliPicoTrack is constructed with relevant informations (needed to be deleted at destructor)
-  // *************************************************************
-
-  FilterCharged();
-
-  // // if neither is ON, filtering is skipped
-  // if(!fProcessPID && !fProcessV0s && !fProcessPhi)
-  // return;
-
-  if(fProcessPID || fProcessPhi) { FilterPID(); }
-  if(fProcessPhi) { FilterPhi(); }
-  if(fProcessV0s) { FilterV0s(); }
 
   return;
 }
@@ -3540,28 +3554,6 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
       }
     }
   }
-
-  // Selection of relevant particles (pushing into corresponding vectors)
-  Filtering();
-
-  // checking if there is at least one charged track selected (min requirement or <<2>>)
-  // if not, event is skipped: unable to compute Reference flow (and thus any differential flow)
-  if(fVectorRefs->empty()) { return kFALSE; }
-
-  // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
-  fIndexCentrality = GetCentralityIndex();
-  if(fIndexCentrality < 0) { return kFALSE; }
-  if(fFlowCentMin > 0 && fIndexCentrality < fFlowCentMin) { return kFALSE; }
-  if(fFlowCentMax > 0 && fIndexCentrality > fFlowCentMax) { return kFALSE; }
-
-  fhEventCentrality->Fill(fIndexCentrality);
-  fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
-  fpRefsMult->Fill(fIndexCentrality,fVectorRefs->size(),1.0);
-
-  // event sampling
-  fIndexSampling = GetSamplingIndex();
-  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
-  // at this point, centrality index (percentile) should be properly estimated, if not, skip event
 
   // if running in kSkipFlow mode, skip the remaining part
   if(fRunMode == kSkipFlow) { fEventCounter++; return kTRUE; }

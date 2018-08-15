@@ -153,7 +153,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
 
-      void                    Filtering(); // main (envelope) method for filtering all POIs in event
       void                    FilterCharged(); // charged tracks filtering
       void                    FilterPID(); // pi,K,p filtering
       void                    FilterV0s(); // K0s, Lambda, ALambda filtering
