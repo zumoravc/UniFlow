@@ -1911,14 +1911,31 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // *************************************************************
 
   // check if initialization succesfull (done within UserCreateOutputObjects())
-  if(!fInit) return;
+  if(!fInit) { return; }
 
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
-  if(fRunMode == kTest && fEventCounter >= fNumEventsAnalyse) return;
+  if(fRunMode == kTest && fEventCounter >= fNumEventsAnalyse) { return; }
 
   // event selection
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
-  if(!EventSelection()) return;
+  if(!fEventAOD) { return; }
+  fhEventCounter->Fill("Input",1);
+
+  // Fill event QA BEFORE cuts
+  if(fFillQA) FillEventsQA(0);
+
+  if(!IsEventSelected()) { return; }
+  // deprecenated selected by HHTF
+  // if( (fColSystem == kPP || fColSystem == kPPb) && !IsEventSelected_oldsmall2016() ) { return; }
+
+  // here events are selected
+  fhEventCounter->Fill("Selected",1);
+
+  // Fill event QA AFTER cuts
+  if(fFillQA) { FillEventsQA(1); }
+
+  // extract PV-z for weights
+  fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
 
   // loading array with MC particles
   if(fMC)
@@ -1953,35 +1970,43 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   return;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::EventSelection()
+Bool_t AliAnalysisTaskUniFlow::IsEventSelected()
 {
-  // main (envelope) method for event selection
-  // Specific event selection methods are called from here.
-  // Fill the event QA if event pass selection.
-  // returns kTRUE if event pass all selection criteria kFALSE otherwise
+  // Event selection for pp & p-Pb collision recorded in Run 2 using AliEventCuts
+  // return kTRUE if event passes all criteria, kFALSE otherwise
   // *************************************************************
 
-  if(!fEventAOD) return kFALSE;
-  fhEventCounter->Fill("Input",1);
+  // Physics selection (trigger)
+  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
+  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
+  UInt_t fSelectMask = inputHandler->IsEventSelected();
 
-  // Fill event QA BEFORE cuts
-  if(fFillQA) FillEventsQA(0);
+  Bool_t isTriggerSelected = kFALSE;
+  switch(fTrigger) // check for high multiplicity trigger
+  {
+    case 0:
+      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
+      break;
 
-  Bool_t eventSelected = kFALSE;
-  // event selection for small systems pp, pPb in Run2
-  if(fColSystem == kPP || fColSystem == kPPb) { eventSelected = IsEventSelected_pppPb(); }
-  // if(fColSystem == kPP || fColSystem == kPPb) { eventSelected = IsEventSelected_oldsmall2016(); } // deprecenated
-  // event selection for Pb-Pb in Run2
-  if(fColSystem == kPbPb) { eventSelected = IsEventSelected_PbPb(); }
+    case 1:
+      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
+      break;
 
-  if(!eventSelected) { return kFALSE; }
-  fhEventCounter->Fill("Selected",1);
+    case 2:
+      isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
+      break;
 
-  // Fill event QA AFTER cuts
-  if(fFillQA) { FillEventsQA(1); }
+    default:
+      isTriggerSelected = kFALSE;
+  }
 
-  // extract PV-z for weights
-  fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
+  // events passing physics selection
+  if(!isTriggerSelected) { return kFALSE; }
+  fhEventCounter->Fill("Physics selection OK",1);
+
+  // events passing AliEventCuts selection
+  if(!fEventCuts.AcceptEvent(fEventAOD)) { return kFALSE; }
+  fhEventCounter->Fill("EventCuts OK",1);
 
   return kTRUE;
 }
@@ -2102,88 +2127,6 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_oldsmall2016()
     return kFALSE;
   }
   fhEventCounter->Fill("PV #it{z} OK",1);
-
-  return kTRUE;
-}
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsEventSelected_pppPb()
-{
-  // Event selection for pp & p-Pb collision recorded in Run 2 using AliEventCuts
-  // return kTRUE if event passes all criteria, kFALSE otherwise
-  // *************************************************************
-
-  // Physics selection (trigger)
-  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
-  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
-  UInt_t fSelectMask = inputHandler->IsEventSelected();
-
-  Bool_t isTriggerSelected = kFALSE;
-  switch(fTrigger) // check for high multiplicity trigger
-  {
-    case 0:
-      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
-      break;
-
-    case 1:
-      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
-      break;
-
-    case 2:
-      isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
-      break;
-
-    default:
-      isTriggerSelected = kFALSE;
-  }
-
-  // events passing physics selection
-  if(!isTriggerSelected) { return kFALSE; }
-  fhEventCounter->Fill("Physics selection OK",1);
-
-  // events passing AliEventCuts selection
-  if(!fEventCuts.AcceptEvent(fEventAOD)) { return kFALSE; }
-  fhEventCounter->Fill("EventCuts OK",1);
-
-  return kTRUE;
-}
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsEventSelected_PbPb()
-{
-  // Event selection for Pb-Pb collision recorded in Run 2 using AliEventCuts
-  // return kTRUE if event passes all criteria, kFALSE otherwise
-  // *************************************************************
-
-  // Physics selection (trigger)
-  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
-  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
-  UInt_t fSelectMask = inputHandler->IsEventSelected();
-
-  Bool_t isTriggerSelected = kFALSE;
-  switch(fTrigger) // check for high multiplicity trigger
-  {
-    case 0:
-      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
-      break;
-
-    // case 1:
-    //   isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
-    //   break;
-    //
-    // case 2:
-    //   isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
-    //   break;
-
-    default:
-      isTriggerSelected = kFALSE;
-  }
-
-  // events passing physics selection
-  if(!isTriggerSelected) { return kFALSE; }
-  fhEventCounter->Fill("Physics selection OK",1);
-
-  // events passing AliEventCuts selection
-  if(!fEventCuts.AcceptEvent(fEventAOD)) { return kFALSE; }
-  fhEventCounter->Fill("EventCuts OK",1);
 
   return kTRUE;
 }
