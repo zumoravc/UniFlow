@@ -168,7 +168,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPVtxCutZ(10.0),
   fColSystem(kPPb),
   fMultEstimator(kV0A),
-  fTrigger(0),
+  fTrigger(AliVEvent::kINT7),
   fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
@@ -446,7 +446,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPVtxCutZ(10.0),
   fColSystem(kPPb),
   fMultEstimator(kV0A),
-  fTrigger(0),
+  fTrigger(AliVEvent::kINT7),
   fUseAliEventCuts(kFALSE),
 
   // charged tracks selection
@@ -1980,28 +1980,9 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected()
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
   AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
   UInt_t fSelectMask = inputHandler->IsEventSelected();
+  if(!(fSelectMask & fTrigger)) { return kFALSE; }
 
-  Bool_t isTriggerSelected = kFALSE;
-  switch(fTrigger) // check for high multiplicity trigger
-  {
-    case 0:
-      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
-      break;
-
-    case 1:
-      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
-      break;
-
-    case 2:
-      isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
-      break;
-
-    default:
-      isTriggerSelected = kFALSE;
-  }
-
-  // events passing physics selection
-  if(!isTriggerSelected) { return kFALSE; }
+  // events passing physics && trigger selection
   fhEventCounter->Fill("Physics selection OK",1);
 
   // events passing AliEventCuts selection
@@ -2024,29 +2005,8 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_oldsmall2016()
   AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
   AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
   UInt_t fSelectMask = inputHandler->IsEventSelected();
-
-  Bool_t isTriggerSelected = kFALSE;
-  switch(fTrigger) // check for high multiplicity trigger
-  {
-    case 0:
-      isTriggerSelected = fSelectMask& AliVEvent::kINT7;
-      break;
-
-    case 1:
-      isTriggerSelected = fSelectMask& AliVEvent::kHighMultV0;
-      break;
-
-    case 2:
-      isTriggerSelected = fSelectMask& AliVEvent::kHighMultSPD;
-      break;
-
-    default:
-      isTriggerSelected = kFALSE;
-  }
-
-  if(!isTriggerSelected)
-    return kFALSE;
-
+  if(!(fSelectMask & fTrigger)) { return kFALSE; }
+  
   // events passing physics selection
   fhEventCounter->Fill("Physics selection OK",1);
 

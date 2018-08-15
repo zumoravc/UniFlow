@@ -47,7 +47,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // events setters
       void                    SetCollisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
       void                    SetMultEstimator(MultiEst est) { fMultEstimator = est; }
-      void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
+      void                    SetTrigger(AliVEvent::EOfflineTriggerTypes trigger) { fTrigger = trigger; }
       void                    SetUseAliEventCuts(Bool_t bUseCuts = kTRUE) { fUseAliEventCuts = bUseCuts; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       // track setters
@@ -261,7 +261,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
-      Short_t                 fTrigger; // physics selection trigger
+      AliVEvent::EOfflineTriggerTypes    fTrigger; // physics selection trigger
       MultiEst                fMultEstimator; // multiplicity/centrality estimator as in AliMultSelection
       Bool_t                  fUseAliEventCuts; // use decision of AliEventCuts in event selection
       Double_t                fPVtxCutZ; // (cm) PV z cut
