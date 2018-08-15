@@ -1813,35 +1813,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
       return kFALSE;
     }
 
-    // if only one (run integrated) set of weights is used, load it here
-    if(!fFlowRunByRunWeights)
-    {
-      TList* listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
-      if(!listFlowWeights) { AliError("TList from flow weights not found."); return kFALSE; }
-
-      if(fFlowUse3Dweights)
-      {
-        fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs3D"); if(!fh3WeightRefs) { AliFatal("Refs weights not found"); return kFALSE; }
-        fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged3D"); if(!fh3WeightCharged) { AliFatal("Charged weights not found"); return kFALSE; }
-        fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion3D"); if(!fh3WeightPion) { AliFatal("Pion weights not found"); return kFALSE; }
-        fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon3D"); if(!fh3WeightKaon) { AliFatal("Kaon weights not found"); return kFALSE; }
-        fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton3D"); if(!fh3WeightProton) { AliFatal("Proton weights not found"); return kFALSE; }
-        fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s3D"); if(!fh3WeightK0s) { AliFatal("K0s weights not found"); return kFALSE; }
-        fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda3D"); if(!fh3WeightLambda) { AliFatal("Phi weights not found"); return kFALSE; }
-        fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi3D"); if(!fh3WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
-      }
-      else
-      {
-        fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliFatal("Refs weights not found"); return kFALSE; }
-        fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliFatal("Charged weights not found"); return kFALSE; }
-        fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliFatal("Pion weights not found"); return kFALSE; }
-        fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliFatal("Kaon weights not found"); return kFALSE; }
-        fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliFatal("Proton weights not found"); return kFALSE; }
-        fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliFatal("K0s weights not found"); return kFALSE; }
-        fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliFatal("Phi weights not found"); return kFALSE; }
-        fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliFatal("Phi weights not found"); return kFALSE; }
-      }
-    }
+    LoadWeights();
   }
 
   AliInfo("Preparing particle containers (std::vectors)");
@@ -1945,9 +1917,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // here events are selected
   fhEventCounter->Fill("Selected",1);
 
-  // extracting run number
-  fRunNumber = fEventAOD->GetRunNumber();
-
   // extract PV-z for weights
   fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
 
@@ -1964,6 +1933,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   // processing of selected event
   Bool_t bProcessed = ProcessEvent();
+
+  // extracting run number here to store run number from previous event (for current run number use info in AliAODEvent)
+  fRunNumber = fEventAOD->GetRunNumber();
 
   // should be cleared at the end of processing especially for reconstructed
   // particles (Phi, V0s) because here new AliPicoTracks are created
@@ -2101,6 +2073,69 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected_oldsmall2016()
     return kFALSE;
   }
   fhEventCounter->Fill("PV #it{z} OK",1);
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::LoadWeights()
+{
+  // (Re-) Loading of flow vector weights
+  // ***************************************************************************
+
+  if(!fFlowWeightsFile) { AliError("File with flow weights not found!"); return kFALSE; }
+
+  TList* listFlowWeights = 0x0;
+  if(fFlowRunByRunWeights) { listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber)); }
+  else { listFlowWeights = (TList*) fFlowWeightsFile->Get("weights"); }
+  if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fRunNumber)); return kFALSE; }
+
+  if(fFlowUse3Dweights)
+  {
+    fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs3D"); if(!fh3WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
+    fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged3D"); if(!fh3WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
+
+    if(fProcessPID)
+    {
+      fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion3D"); if(!fh3WeightPion) { AliError("Pion weights not found"); return kFALSE; }
+      fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon3D"); if(!fh3WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
+      fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton3D"); if(!fh3WeightProton) { AliError("Proton weights not found"); return kFALSE; }
+    }
+
+    if(fProcessV0s)
+    {
+      fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s3D"); if(!fh3WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
+      fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda3D"); if(!fh3WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
+    }
+
+    if(fProcessPhi)
+    {
+      fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi3D"); if(!fh3WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
+    }
+
+  }
+  else
+  {
+    fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
+    fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
+
+    if(fProcessPID)
+    {
+      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
+      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
+      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
+    }
+
+    if(fProcessV0s)
+    {
+      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
+      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
+    }
+
+    if(fProcessPhi)
+    {
+      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
+    }
+  }
 
   return kTRUE;
 }
@@ -3522,38 +3557,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
   // *************************************************************
 
   // checking the run number for aplying weights & loading TList with weights
-  if(fFlowUseWeights && fFlowRunByRunWeights && (fRunNumber != fEventAOD->GetRunNumber()))
-  {
-    fRunNumber = fEventAOD->GetRunNumber();
-    if(fFlowWeightsFile)
-    {
-      TList* listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber));
-      if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fRunNumber)); return kFALSE; }
-
-      if(fFlowUse3Dweights)
-      {
-        fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs3D"); if(!fh3WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
-        fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged3D"); if(!fh3WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
-        fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion3D"); if(!fh3WeightPion) { AliError("Pion weights not found"); return kFALSE; }
-        fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon3D"); if(!fh3WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
-        fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton3D"); if(!fh3WeightProton) { AliError("Proton weights not found"); return kFALSE; }
-        fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s3D"); if(!fh3WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
-        fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda3D"); if(!fh3WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
-        fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi3D"); if(!fh3WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
-      }
-      else
-      {
-        fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
-        fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
-        fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
-        fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
-        fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
-        fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
-        fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
-        fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
-      }
-    }
-  }
+  if(fFlowUseWeights && fFlowRunByRunWeights && (fRunNumber != fEventAOD->GetRunNumber()) && !LoadWeights()) { return kFALSE; }
 
   // if running in kSkipFlow mode, skip the remaining part
   if(fRunMode == kSkipFlow) { fEventCounter++; return kTRUE; }

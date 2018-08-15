@@ -146,6 +146,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
       Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
+      Bool_t                  LoadWeights(); // load weights histograms
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
@@ -217,7 +218,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
       Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
       Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
-      Int_t                   fRunNumber; // [-1] run number obtained from AliVHeader
+      Int_t                   fRunNumber; // [-1] run number of previous event (not the current one)
 
       TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
