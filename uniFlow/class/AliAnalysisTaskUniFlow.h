@@ -152,7 +152,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
       const char*             GetMultiEstimatorName(MultiEst est); // returns mult/cent estimator string or 'n/a' if not available
 
-      Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
+      Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
 
       void                    FilterCharged(); // charged tracks filtering
       void                    FilterPID(); // pi,K,p filtering

@@ -1927,14 +1927,14 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(fProcessV0s) { FilterV0s(); }
 
   // processing of selected event
-  Bool_t bProcessed = ProcessEvent();
-
-  // extracting run number here to store run number from previous event (for current run number use info in AliAODEvent)
-  fRunNumber = fEventAOD->GetRunNumber();
+  Bool_t bProcessed = CalculateFlow();
 
   // should be cleared at the end of processing especially for reconstructed
   // particles (Phi, V0s) because here new AliPicoTracks are created
   ClearVectors();
+
+  // extracting run number here to store run number from previous event (for current run number use info in AliAODEvent)
+  fRunNumber = fEventAOD->GetRunNumber();
 
   if(!bProcessed) return;
 
@@ -2106,7 +2106,6 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
     {
       fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi3D"); if(!fh3WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
     }
-
   }
   else
   {
@@ -3550,20 +3549,17 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Short_t iQAindex, const AliAODTrack
   return;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::ProcessEvent()
+Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
 {
-  // main method for processing of selected events:
-  // - Filtering of tracks / particles for flow calculations
-  // - Phi,eta,pt weights for generic framework are calculated if specified
-  // - Flow calculations
-  // returns kTRUE if succesfull
+  // main (envelope) method for flow calculations in selected events
+  // returns kFALSE if something failes (with error), kTRUE otherwise
   // *************************************************************
-
-  // checking the run number for aplying weights & loading TList with weights
-  if(fFlowUseWeights && fFlowRunByRunWeights && (fRunNumber != fEventAOD->GetRunNumber()) && !LoadWeights()) { return kFALSE; }
 
   // if running in kSkipFlow mode, skip the remaining part
   if(fRunMode == kSkipFlow) { fEventCounter++; return kTRUE; }
+
+  // checking the run number for aplying weights & loading TList with weights
+  if(fFlowUseWeights && fFlowRunByRunWeights && (fRunNumber != fEventAOD->GetRunNumber()) && !LoadWeights()) { return kFALSE; }
 
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
