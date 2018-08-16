@@ -1910,19 +1910,14 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(fFlowCentMax > 0 && fIndexCentrality > fFlowCentMax) { return; }
   fhEventCounter->Fill("Multiplicity OK",1);
 
-  fhEventCentrality->Fill(fIndexCentrality);
-  fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
-  fpRefsMult->Fill(fIndexCentrality,fVectorRefs->size(),1.0);
-
   // here events are selected
   fhEventCounter->Fill("Selected",1);
 
-  // extract PV-z for weights
-  fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
-
   // event sampling
   fIndexSampling = GetSamplingIndex();
-  fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
+
+  // extract PV-z for weights
+  fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
 
   // Fill event QA AFTER cuts
   if(fFillQA) { FillEventsQA(1); }
@@ -2144,6 +2139,14 @@ void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
 {
   // Filling various QA plots related with event selection
   // *************************************************************
+
+  if(iQAindex == 1)
+  {
+    fhEventCentrality->Fill(fIndexCentrality);
+    fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
+    fpRefsMult->Fill(fIndexCentrality,fVectorRefs->size(),1.0);
+    fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
+  }
 
   const AliAODVertex* aodVtx = fEventAOD->GetPrimaryVertex();
   const Double_t dVtxZ = aodVtx->GetZ();
