@@ -47,8 +47,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // events setters
       void                    SetCollisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
       void                    SetMultEstimator(MultiEst est) { fMultEstimator = est; }
-      void                    SetTrigger(Short_t trigger = 0) { fTrigger = trigger; }
-      void                    SetUseAliEventCuts(Bool_t bUseCuts = kTRUE) { fUseAliEventCuts = bUseCuts; }
+      void                    SetTrigger(AliVEvent::EOfflineTriggerTypes trigger) { fTrigger = trigger; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       // track setters
       void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
@@ -145,18 +144,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    ListParameters(); // list all task parameters
       void                    ClearVectors(); // properly clear all particle vectors
 
-      Bool_t                  EventSelection(); // main method for event selection (specific event selection is applied within)
+      Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
       Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
-      Bool_t                  IsEventSelected_pppPb(); // event selection for Run 2 pp & p-Pb (AliEventCuts)
-      Bool_t                  IsEventSelected_PbPb(); // event selection for Run 2 Pb-Pb (AliEventCuts)
+      Bool_t                  LoadWeights(); // load weights histograms
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
       const char*             GetMultiEstimatorName(MultiEst est); // returns mult/cent estimator string or 'n/a' if not available
 
-      Bool_t                  ProcessEvent(); // main (envelope) method for processing events passing selection
+      Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
 
-      void                    Filtering(); // main (envelope) method for filtering all POIs in event
       void                    FilterCharged(); // charged tracks filtering
       void                    FilterPID(); // pi,K,p filtering
       void                    FilterV0s(); // K0s, Lambda, ALambda filtering
@@ -221,7 +218,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
       Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
       Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
-      Int_t                   fRunNumber; // [-1] run number obtained from AliVHeader
+      Int_t                   fRunNumber; // [-1] run number of previous event (not the current one)
 
       TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecQneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
@@ -263,9 +260,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
-      Short_t                 fTrigger; // physics selection trigger
+      AliVEvent::EOfflineTriggerTypes    fTrigger; // physics selection trigger
       MultiEst                fMultEstimator; // multiplicity/centrality estimator as in AliMultSelection
-      Bool_t                  fUseAliEventCuts; // use decision of AliEventCuts in event selection
       Double_t                fPVtxCutZ; // (cm) PV z cut
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
