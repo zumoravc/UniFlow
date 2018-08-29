@@ -42,7 +42,8 @@ class FlowTask
 
     void        PrintTask(); // listing values of internal properties
 
-    TString     GetSpeciesName();
+    TString     GetSpeciesName(); // system species name (Charged, K0s, ...)
+    TString     GetSpeciesLabel(); // readable species name (h^{#pm}, K^{0}_{S}, ...)
     TString     GetEtaGapString() { return TString(Form("%02.2g",10*fEtaGap)); } // used for "character-safe" names
 
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
@@ -225,6 +226,24 @@ TString FlowTask::GetSpeciesName()
     default: name.Append("Unknown");
   }
   return name;
+}
+//_____________________________________________________________________________
+TString FlowTask::GetSpeciesLabel()
+{
+  TString label = TString();
+  switch (fSpecies)
+  {
+    case kRefs : label.Append("RFP"); break;
+    case kCharged : label.Append("h^{#pm}"); break;
+    case kPion : label.Append("#pi^{#pm}"); break;
+    case kKaon : label.Append("K^{#pm}"); break;
+    case kProton : label.Append("p/{#bar{p}}"); break;
+    case kPhi : label.Append("#phi"); break;
+    case kK0s : label.Append("K_{S}^{0}"); break;
+    case kLambda : label.Append("#Lambda/#bar{#Lambda}"); break;
+    default: label.Append("Non");
+  }
+  return label;
 }
 //_____________________________________________________________________________
 void FlowTask::PrintTask()
