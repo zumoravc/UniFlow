@@ -73,6 +73,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TH3D.h"
+#include "THnSparse.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
 #include "TProfile3D.h"
@@ -250,6 +251,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowLambda(0x0),
 
   // flow histograms & profiles
+  fhsV0sCandK0s(0x0),
+  fhsV0sCandLambda(0x0),
+  fhsPhiCandSig(0x0),
+  fhsPhiCandBg(0x0),
+
   fh3WeightsRefs(0x0),
   fh3WeightsCharged(0x0),
   fh3WeightsPion(0x0),
@@ -527,6 +533,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowLambda(0x0),
 
   // flow histograms & profiles
+  fhsV0sCandK0s(0x0),
+  fhsV0sCandLambda(0x0),
+  fhsPhiCandSig(0x0),
+  fhsPhiCandBg(0x0),
+
   fh3WeightsRefs(0x0),
   fh3WeightsCharged(0x0),
   fh3WeightsPion(0x0),
@@ -1582,6 +1593,24 @@ Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track)
   return kTRUE;
 }
 //_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track)
+{
+  // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
+  // *************************************************************
+
+  if(!sparse) { Error("THnSparse not valid!","FillSparseCand"); return; }
+  if(!track) { Error("Track not valid!","FillSparseCand"); return; }
+
+  Double_t dValues[SparseCand::kDim] = {0};
+  dValues[SparseCand::kCent] = fIndexCentrality;
+  dValues[SparseCand::kInvMass] = track->M();
+  dValues[SparseCand::kPt] = track->Pt();
+  dValues[SparseCand::kEta] = track->Eta();
+  sparse->Fill(dValues);
+
+  return;
+}
+//_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillQARefs(const Short_t iQAindex, const AliAODTrack* track)
 {
   // Filling various QA plots related to RFPs subset of charged track selection
@@ -1677,7 +1706,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fhV0sCounter->Fill("K^{0}_{S}",1);
         fhV0sInvMassK0s->Fill(v0->MassK0Short(),v0->MassLambda());
 
-        fVectorK0s->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short()) );
+        AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short());
+        fVectorK0s->push_back(pico);
+        FillSparseCand(fhsV0sCandK0s, pico);
 
         if(fFlowFillWeights) { fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
@@ -1696,7 +1727,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
         fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassLambda());
 
-        fVectorLambda->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassLambda()) );
+        AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassLambda());
+        fVectorLambda->push_back(pico);
+        FillSparseCand(fhsV0sCandLambda, pico);
 
         if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
@@ -1714,7 +1747,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
         fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassAntiLambda());
 
-        fVectorLambda->push_back( new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassAntiLambda()) );
+        AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassAntiLambda());
+        fVectorLambda->push_back(pico);
+        FillSparseCand(fhsV0sCandLambda, pico);
 
         if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
@@ -2357,13 +2392,14 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       {
         // opposite-sign combination (signal+background)
         fhPhiCounter->Fill("Unlike-sign",1);
+        FillSparseCand(fhsPhiCandSig, mother);
         fVectorPhi->push_back(mother);
       }
 
       if(TMath::Abs(mother->Charge()) == 2)
       {
         // like-sign combination (background)
-        fhPhiCounter->Fill("BG",1);
+        FillSparseCand(fhsPhiCandBg, mother);
         iNumBG++;
 
         // filing background entries for Phi candidates
@@ -3819,6 +3855,48 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fh3AfterWeightsLambda = new TH3D("fh3AfterWeightsLambda","Weights: #Lambda (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeightsLambda->Sumw2();
       fFlowWeights->Add(fh3AfterWeightsLambda);
+    }
+
+    // Making THnSparse distribution of candidates
+    // species independent
+    TString sLabelCand[SparseCand::kDim];
+    sLabelCand[SparseCand::kInvMass] = "#it{m}_{inv} (GeV/#it{c}^{2})";
+    sLabelCand[SparseCand::kCent] = GetMultiEstimatorName(fMultEstimator);
+    sLabelCand[SparseCand::kPt] = "#it{p}_{T} (GeV/c)";
+    sLabelCand[SparseCand::kEta] = "#eta";
+    TString sAxes = TString(); for(Int_t i(0); i < SparseCand::kDim; ++i) { sAxes += Form("%s; ",sLabelCand[i].Data()); }
+
+    Int_t iNumBinsCand[SparseCand::kDim]; Double_t dMinCand[SparseCand::kDim]; Double_t dMaxCand[SparseCand::kDim];
+    iNumBinsCand[SparseCand::kCent] = iMultNumBins; dMinCand[SparseCand::kCent] = fFlowCentMin; dMaxCand[SparseCand::kCent] = fFlowCentMax;
+    iNumBinsCand[SparseCand::kPt] = iPOIsPtNumBins; dMinCand[SparseCand::kPt] = fFlowPOIsPtMin; dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
+    iNumBinsCand[SparseCand::kEta] = 2*fCutV0sMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutV0sMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutV0sMotherEtaMax;
+
+    // species dependent
+    if(fProcessV0s)
+    {
+      iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMax;
+      fhsV0sCandK0s = new THnSparseD("fhsV0sCandK0s",Form("K_{S}^{0}: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+      fhsV0sCandK0s->Sumw2();
+      fFlowK0s->Add(fhsV0sCandK0s);
+
+      iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMax;
+      fhsV0sCandLambda = new THnSparseD("fhsV0sCandLambda",Form("#Lambda: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+      fhsV0sCandLambda->Sumw2();
+      fFlowLambda->Add(fhsV0sCandLambda);
+    }
+
+    if(fProcessPhi)
+    {
+      iNumBinsCand[SparseCand::kEta] = 2*fCutPhiMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutPhiMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutPhiMotherEtaMax;
+      iNumBinsCand[SparseCand::kInvMass] = fPhiNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutPhiInvMassMin; dMaxCand[SparseCand::kInvMass] = fCutPhiInvMassMax;
+
+      fhsPhiCandSig = new THnSparseD("fhsPhiCandSig",Form("#phi (Sig): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+      fhsPhiCandSig->Sumw2();
+      fFlowPhi->Add(fhsPhiCandSig);
+
+      fhsPhiCandBg = new THnSparseD("fhsPhiCandBg",Form("#phi (Bg): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+      fhsPhiCandBg->Sumw2();
+      fFlowPhi->Add(fhsPhiCandBg);
     }
 
     // candidate distribution for flow-mass method

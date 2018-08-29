@@ -17,6 +17,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    AnalType {kAOD = 0, kESD}; // tag for analysis type
       enum    MultiEst {kRFP = 0, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity estimator as AliMultSelection
       enum    PartSpecies {kUnknown = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+      enum    SparseCand {kInvMass = 0, kCent, kPt, kEta, kDim}; // reconstructed candidates dist. dimensions
 
                               AliAnalysisTaskUniFlow(); // constructor
                               AliAnalysisTaskUniFlow(const char *name); // named (primary) constructor
@@ -169,6 +170,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
       Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
       AliPicoTrack*           MakeMother(const AliAODTrack* part1, const AliAODTrack* part2); // Combine two prongs into a mother particle stored in AliPicoTrack object
+      void                    FillSparseCand(THnSparse* sparse, AliVTrack* track); // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
       void                    FillQARefs(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
       void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
       void                    FillQAPID(const Short_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
@@ -350,6 +352,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH3D*           fh3PhiEntriesSignalNeg[fNumEtaGap]; //! distribution of phi candidates / unlike-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBGPos[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
       TH3D*           fh3PhiEntriesBGNeg[fNumEtaGap]; //! distribution of phi background candidates / like-sign pairs (cent, pT, InvMass)
+
+      THnSparseD*     fhsV0sCandK0s; //! distribution of K0s candidates
+      THnSparseD*     fhsV0sCandLambda; //!  distribution of Lambda candidates
+      THnSparseD*     fhsPhiCandSig; //!  distribution of Phi candidates
+      THnSparseD*     fhsPhiCandBg; //!  distribution of Phi background 
 
       TH3D*           fh3WeightsRefs; //! distribution of Refs particles for estimating weight purpose (phi,eta,pt)
       TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for estimating weight purpose (phi,eta,pt)
