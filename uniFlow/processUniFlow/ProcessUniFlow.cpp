@@ -312,7 +312,6 @@ class ProcessUniFlow
     Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for Lambda candidates
 
-    void        SuggestMultBinning(const Short_t numFractions);
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
     TH1D*       DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling = kFALSE); // Desample list of samples for estimating the uncertanity
     Bool_t      PlotDesamplingQA(TList* list, TH1D* hDesampled, FlowTask* task); // produce QA plots for result of desampling procedure
@@ -522,63 +521,6 @@ void ProcessUniFlow::SetMultiplicityBins(Double_t* array, const Short_t size)
   {
     fdMultBins[i] = array[i];
   }
-  return;
-}
-//_____________________________________________________________________________
-void ProcessUniFlow::SuggestMultBinning(const Short_t numFractions)
-{
-  if(numFractions < 1) { Error("Suggested number of fractions is too low","SuggestMultBinning"); return; }
-  if(!fbInit) Initialize();
-
-  // loading multiplicity dist.
-  ffInputFile->cd(fsTaskName.Data());
-  gDirectory->ls();
-
-  TList* lQACharged = (TList*) gDirectory->Get(Form("QA_Charged_%s",fsTaskName.Data()));
-  if(!lQACharged) return;
-
-  lQACharged->ls();
-  TH1D* hMult = (TH1D*) lQACharged->FindObject("fhQAChargedMult_After");
-
-  TCanvas* canSuggestMult = new TCanvas("canSuggestMult","SuggestMultBinning",400,400);
-  canSuggestMult->cd(1);
-  gPad->SetLogy();
-  hMult->Draw();
-
-  Double_t dCumul = 0;
-  Double_t dContent = 0;
-  Double_t dWeight = 0;
-  Double_t dSum = 0;
-  Double_t dSumWeight = 0;
-
-  for(Short_t bin(1); bin < hMult->GetNbinsX()+1; bin++)
-  {
-    dContent = hMult->GetBinContent(bin);
-    dWeight = 1/(bin - 1);
-    dSum += dContent*(dWeight); // weighed average
-    dSumWeight += dWeight;
-  }
-
-  Double_t dEntries = hMult->GetEntries();
-  // Double_t dSegment = dEntries / numFractions;
-  Double_t dSegment = dSum / dSumWeight / numFractions;
-
-  printf("entries %g | Sum %g | sumweight %g | segmend %g\n",dEntries,dSum,dSumWeight,dSegment);
-
-  for(Short_t bin(1); bin < hMult->GetNbinsX()+1; bin++)
-  {
-    dContent = hMult->GetBinContent(bin);
-    // dWeight = bin - 1;
-    dWeight = 1/(bin-1);
-    dCumul += dContent*(dWeight);
-    // dSumWeight += dWeight;
-    if(dCumul >= dSegment)
-    {
-      printf("bin %d : mult %g (cumul %g)\n",bin,hMult->GetBinLowEdge(bin),dCumul);
-      dCumul = 0;
-    }
-  }
-
   return;
 }
 //_____________________________________________________________________________
