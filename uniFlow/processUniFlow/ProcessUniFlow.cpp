@@ -57,7 +57,6 @@ class FlowTask
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
     void        SetMergePosNeg(Bool_t merge = kTRUE) { fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
-    void        SuggestPtBinning(Bool_t bin = kTRUE, Double_t entries = 20000) { fSuggestPtBins = bin; fSuggestPtBinEntries = entries; } // suggest pt binning based on number of candidates
 
     // fitting
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -89,8 +88,6 @@ class FlowTask
     Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
     Bool_t      fDesampleUseRMS; // [kFALSE] flag for using RMS as uncertainty during desampling
     Bool_t      fMergePosNeg; // [kFALSE] flag for merging results corresponding to positive and negative POIs
-    Bool_t      fSuggestPtBins; // suggest pt binning
-    Double_t    fSuggestPtBinEntries; // suggest pt binning
     // Reconstructed fitting
     Bool_t      fFlowFitPhiSubtLS; // [kFALSE] flag for subtraction of like-sign background from the unlike-sign one
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
@@ -136,8 +133,6 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fSampleMerging = kFALSE;
   fDesampleUseRMS = kFALSE;
   fMergePosNeg = kFALSE;
-  fSuggestPtBins = kFALSE;
-  fSuggestPtBinEntries = 20000;
   fFlowFitPhiSubtLS = kFALSE;
   fRebinFlowMass = 0;
   fRebinInvMass = 0;
@@ -257,7 +252,6 @@ void FlowTask::PrintTask()
   printf("   fEtaGap: %g\n",fEtaGap);
   printf("   fDoFour: %s\n", fDoFour ? "true" : "false");
   printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
-  printf("   fSuggestPtBins: %s\n", fSuggestPtBins ? "true" : "false");
   printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
   printf("   fFlowFitRangeLow: %g\n",fFlowFitRangeLow);
   printf("   fFlowFitRangeHigh: %g\n",fFlowFitRangeHigh);
@@ -319,7 +313,6 @@ class ProcessUniFlow
     Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for Lambda candidates
 
     void        SuggestMultBinning(const Short_t numFractions);
-    void        SuggestPtBinning(TH3D* histEntries = 0x0, TProfile3D* profFlowOrig = 0x0, FlowTask* task = 0x0, Short_t binMult = 0); //
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
     TH1D*       DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling = kFALSE); // Desample list of samples for estimating the uncertanity
     Bool_t      PlotDesamplingQA(TList* list, TH1D* hDesampled, FlowTask* task); // produce QA plots for result of desampling procedure
@@ -1642,12 +1635,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   if(!histEntries) { Error("Entries histos not found!","ProcessReconstructed"); return kFALSE; }
   if(!profFlow) { Error("Cumulant histos not found!","ProcessReconstructed"); return kFALSE; }
 
-  // check if suggest pt binning flag is on if of Pt binning is not specified
-  if(task->fSuggestPtBins || task->fNumPtBins < 1)
-  {
-    SuggestPtBinning(histEntries,profFlow,task,iMultBin);
-  }
-
   if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
   // task->PrintTask();
@@ -2200,90 +2187,6 @@ void ProcessUniFlow::AddTask(FlowTask* task)
   else fvTasks.push_back(task);
 
   return;
-}
-//_____________________________________________________________________________
-void ProcessUniFlow::SuggestPtBinning(TH3D* histEntries, TProfile3D* profFlowOrig, FlowTask* task, Short_t binMult)
-{
-  if(!histEntries) return;
-  if(!profFlowOrig) return;
-  if(!task) return;
-
-  Short_t binMultLow = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult]);
-  Short_t binMultHigh = histEntries->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1; // for rebin both bins are included (so that one needs to lower)
-
-  TH1D* hPtProj = (TH1D*) histEntries->ProjectionY("hPtProj",binMultLow,binMultHigh);
-
-  const Double_t dMinEntries = task->fSuggestPtBinEntries;
-  std::vector<Double_t> vecBins;
-  std::vector<Double_t> vecContents;
-
-  printf("vector pre: %lu\n", vecBins.size());
-  Double_t dCount = 0;
-  const Short_t iNBins = hPtProj->GetNbinsX();
-  Short_t iBin = 1;
-
-  // if some of the pt bins are set, the suggestion started with first bin after the last edge
-  if(task->fNumPtBins > 0 && task->fNumPtBins < iNBins)
-  {
-    iBin = hPtProj->FindFixBin(task->fPtBinsEdges[task->fNumPtBins]) + 1;
-    printf("LastBin %d (%g) | iBin %d (%g)\n",task->fNumPtBins,task->fPtBinsEdges[task->fNumPtBins], iBin, hPtProj->GetBinLowEdge(iBin));
-  }
-  else { vecBins.push_back(hPtProj->GetXaxis()->GetXmin()); } // pushing first edge
-
-  for(Short_t bin(iBin); bin < iNBins+1; bin++)
-  {
-    dCount += hPtProj->GetBinContent(bin);
-    if(dCount > dMinEntries)
-    {
-      vecBins.push_back(hPtProj->GetXaxis()->GetBinUpEdge(bin));
-      vecContents.push_back(dCount);
-      dCount = 0;
-    }
-  }
-  vecContents.push_back(dCount); // pushing last (remaining) bin content
-  vecBins.push_back(hPtProj->GetXaxis()->GetXmax()); // pushing last edge (low edge of underflowbin)
-  const Short_t iNumBinEdges = vecBins.size();
-  printf("vector post: %hd\n", iNumBinEdges);
-
-  // filling internal pt binning with suggestion result
-  for(Short_t index(0); index < iNumBinEdges; index++)
-  {
-    task->fPtBinsEdges[index + task->fNumPtBins] = vecBins.at(index); // NOTE +1 ???
-  }
-  task->fNumPtBins += iNumBinEdges-1;
-
-
-  // TODO hBinsContent reimplmente
-  // TH1D* hBinsContent = new TH1D("hBinsContent","BinContent", task->fNumPtBins, task->fPtBinsEdges);
-  // for(Short_t iBin(0); iBin < task->-1; iBin++)
-  // {
-  //   hBinsContent->SetBinContent(iBin+1,vecContents.at(iBin));
-  // }
-
-  TLine* line = new TLine();
-  line->SetLineColor(kRed);
-
-  TCanvas* cPtBins = new TCanvas("cPtBins","cPtBins",600,600);
-  cPtBins->Divide(1,2);
-  cPtBins->cd(1);
-  hPtProj->Draw();
-  cPtBins->cd(2);
-  // hBinsContent->SetMinimum(0);
-  // hBinsContent->Draw();
-  // line->DrawLine(task->fPtBinsEdges[0],dMinEntries, task->fPtBinsEdges[task->fNumPtBins], dMinEntries);
-  cPtBins->cd(1);
-
-  Double_t dPt = 0;
-  printf("Suggested binning: ");
-  for(Short_t index(0); index < task->fNumPtBins+1; index++)
-  {
-    dPt = task->fPtBinsEdges[index];
-    printf("%hd (%g) | ",index,dPt);
-    line->DrawLine(dPt,0,dPt,1.05*hPtProj->GetMaximum());
-  }
-  printf("\n");
-
-  cPtBins->SaveAs(Form("%s/suggestBins/SuggestPtBins_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,binMult,fsOutputFileFormat.Data()));
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::TestProjections()
