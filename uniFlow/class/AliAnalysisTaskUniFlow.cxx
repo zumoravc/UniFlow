@@ -699,17 +699,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
 
     for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
     {
-      if(iHarm == 0)
-      {
-        fh3V0sEntriesK0sPos[iGap] = 0x0;
-        fh3V0sEntriesK0sNeg[iGap] = 0x0;
-        fh3V0sEntriesLambdaPos[iGap] = 0x0;
-        fh3V0sEntriesLambdaNeg[iGap] = 0x0;
-        fh3PhiEntriesSignalPos[iGap] = 0x0;
-        fh3PhiEntriesSignalNeg[iGap] = 0x0;
-        fh3PhiEntriesBGPos[iGap] = 0x0;
-        fh3PhiEntriesBGNeg[iGap] = 0x0;
-      }
 
       for(Short_t iSample(0); iSample < fNumSamples; iSample++)
       {
@@ -2401,13 +2390,6 @@ void AliAnalysisTaskUniFlow::FilterPhi()
         // like-sign combination (background)
         FillSparseCand(fhsPhiCandBg, mother);
         iNumBG++;
-
-        // filing background entries for Phi candidates
-        for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
-        {
-          if(mother->Eta() > fEtaGap[iGap]/2 ) fh3PhiEntriesBGPos[iGap]->Fill(fIndexCentrality,mother->Pt(),mother->M());
-          if(fEtaGap[iGap] > -1. && mother->Eta() < -fEtaGap[iGap]/2 ) fh3PhiEntriesBGNeg[iGap]->Fill(fIndexCentrality,mother->Pt(),mother->M());
-        }
       }
 
     } // endfor {iKaon2} : second kaon
@@ -3289,8 +3271,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   Bool_t bHasMass = kFALSE;
 
   std::vector<AliVTrack*>* vector = 0x0;
-  TH3D* histPos = 0x0;
-  TH3D* histNeg = 0x0;
   TH2D* h2Weights = 0x0;
   TH3D* h3Weights = 0x0;
 
@@ -3325,8 +3305,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       vector = fVectorK0s;
       h2Weights = fh2WeightK0s;
       h3Weights = fh3WeightK0s;
-      histPos = fh3V0sEntriesK0sPos[iEtaGapIndex];
-      if(bHasGap) { histNeg = fh3V0sEntriesK0sNeg[iEtaGapIndex]; }
       bHasMass = kTRUE;
       break;
 
@@ -3334,17 +3312,13 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
       vector = fVectorLambda;
       h2Weights = fh2WeightLambda;
       h3Weights = fh3WeightLambda;
-      histPos = fh3V0sEntriesLambdaPos[iEtaGapIndex];
-      if(bHasGap) { histNeg = fh3V0sEntriesLambdaNeg[iEtaGapIndex]; }
       bHasMass = kTRUE;
       break;
 
     case kPhi:
       vector = fVectorPhi;
-      histPos = fh3PhiEntriesSignalPos[iEtaGapIndex];
       h2Weights = fh2WeightPhi;
       h3Weights = fh3WeightPhi;
-      if(bHasGap) { histNeg = fh3PhiEntriesSignalNeg[iEtaGapIndex]; }
       bHasMass = kTRUE;
       break;
 
@@ -3354,8 +3328,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   }
 
   if(!vector) { AliError("Vector with selected POIs not found."); return; }
-  if(bHasMass && !histPos) { AliError("Histogram for POIs in positive eta not found."); return; }
-  if(bHasMass && bHasGap && !histNeg) { AliError("Historgam for POIs in negative eta not found."); return; }
   if(fFlowUseWeights)
   {
     if(!fFlowUse3Dweights && !h2Weights) { AliError("Histogram with weights not found."); return; }
@@ -3391,8 +3363,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
 
     if(!bHasGap) // no eta gap
     {
-      if(bHasMass) { histPos->Fill(fIndexCentrality,dPt,dMass,1.0); }
-
       for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
         for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
         {
@@ -3415,8 +3385,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
     {
       if(dEta > dEtaLimit) // particle in positive eta acceptance
       {
-        if(bHasMass) { histPos->Fill(fIndexCentrality,dPt,dMass,1.0); }
-
         for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
           for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
           {
@@ -3427,8 +3395,6 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
        }
        if(dEta < -dEtaLimit) // particle in negative eta acceptance
        {
-         if(bHasMass) { histNeg->Fill(fIndexCentrality,dPt,dMass,1.0); }
-
          for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
            for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
            {
@@ -3897,50 +3863,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fhsPhiCandBg = new THnSparseD("fhsPhiCandBg",Form("#phi (Bg): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
       fhsPhiCandBg->Sumw2();
       fFlowPhi->Add(fhsPhiCandBg);
-    }
-
-    // candidate distribution for flow-mass method
-    for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
-    {
-      if(fProcessPhi)
-      {
-        fh3PhiEntriesSignalPos[iGap] = new TH3D(Form("fh3PhiEntriesSignal_gap%02.2g_Pos",10*fEtaGap[iGap]), Form("#phi: Distribution (Gap %g) | POIs pos); %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
-        fh3PhiEntriesSignalPos[iGap]->Sumw2();
-        fFlowPhi->Add(fh3PhiEntriesSignalPos[iGap]);
-        fh3PhiEntriesBGPos[iGap] = new TH3D(Form("fh3PhiEntriesBG_gap%02.2g_Pos",10*fEtaGap[iGap]), Form("#phi (BG): Distribution (Gap %g | POIs pos); %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
-        fh3PhiEntriesBGPos[iGap]->Sumw2();
-        fFlowPhi->Add(fh3PhiEntriesBGPos[iGap]);
-
-        if(fEtaGap[iGap] != -1.)
-        {
-          fh3PhiEntriesSignalNeg[iGap] = new TH3D(Form("fh3PhiEntriesSignal_gap%02.2g_Neg",10*fEtaGap[iGap]), Form("#phi: Distribution (Gap %g) | POIs neg); %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
-          fh3PhiEntriesSignalNeg[iGap]->Sumw2();
-          fFlowPhi->Add(fh3PhiEntriesSignalNeg[iGap]);
-          fh3PhiEntriesBGNeg[iGap] = new TH3D(Form("fh3PhiEntriesBG_gap%02.2g_Neg",10*fEtaGap[iGap]), Form("#phi (BG): Distribution (Gap %g | POIs neg); %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
-          fh3PhiEntriesBGNeg[iGap]->Sumw2();
-          fFlowPhi->Add(fh3PhiEntriesBGNeg[iGap]);
-        }
-      }
-
-      if(fProcessV0s)
-      {
-        fh3V0sEntriesK0sPos[iGap] = new TH3D(Form("fh3V0sEntriesK0s_gap%02.2g_Pos",10*fEtaGap[iGap]), Form("K_{S}^{0}: Distribution (Gap %g | POIs pos); %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
-        fh3V0sEntriesK0sPos[iGap]->Sumw2();
-        fFlowK0s->Add(fh3V0sEntriesK0sPos[iGap]);
-        fh3V0sEntriesLambdaPos[iGap] = new TH3D(Form("fh3V0sEntriesLambda_gap%02.2g_Pos",10*fEtaGap[iGap]), Form("#Lambda/#bar{#Lambda}: Distribution (Gap %g | POIs pos); %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
-        fh3V0sEntriesLambdaPos[iGap]->Sumw2();
-        fFlowLambda->Add(fh3V0sEntriesLambdaPos[iGap]);
-
-        if(fEtaGap[iGap] != -1.)
-        {
-          fh3V0sEntriesK0sNeg[iGap] = new TH3D(Form("fh3V0sEntriesK0s_gap%02.2g_Neg",10*fEtaGap[iGap]), Form("K_{S}^{0}: Distribution (Gap %g | POIs neg); %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
-          fh3V0sEntriesK0sNeg[iGap]->Sumw2();
-          fFlowK0s->Add(fh3V0sEntriesK0sNeg[iGap]);
-          fh3V0sEntriesLambdaNeg[iGap] = new TH3D(Form("fh3V0sEntriesLambda_gap%02.2g_Neg",10*fEtaGap[iGap]), Form("#Lambda/#bar{#Lambda}: Distribution (Gap %g | POIs neg); %s; #it{p}_{T} (GeV/c); #it{m}_{inv} (GeV/#it{c}^{2})",fEtaGap[iGap], GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
-          fh3V0sEntriesLambdaNeg[iGap]->Sumw2();
-          fFlowLambda->Add(fh3V0sEntriesLambdaNeg[iGap]);
-        }
-      }
     }
 
     // correlations
