@@ -1374,231 +1374,189 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 {
   Info("Processing task","ProcessReconstructed");
   if(!task) { Error("Task not valid!","ProcessReconstructed"); return kFALSE; }
+  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
-  TList* listMerge = 0x0;
-  // preparing particle dependent variables for switch
-  //  -- input histos / profiles with entries and correlations
-  TH3D* histEntries = 0x0;
-  TH3D* histEntriesPos = 0x0;
-  TH3D* histEntriesNeg = 0x0;
-  TH3D* histBG = 0x0; // entries for BG (phi)
-  TH3D* histBGPos = 0x0; // entries for BG (phi)
-  TH3D* histBGNeg = 0x0; // entries for BG (phi)
+  TList* listFlow = 0x0;
   TProfile3D* profFlow = 0x0;
-  TProfile3D* profFlowPos = 0x0;
-  TProfile3D* profFlowNeg = 0x0;
-  //  -- naming variables
-  TString sSpeciesName; // in objects name
-  TString sSpeciesLabel; // LaTeX for titles
+  TH3D* histEntries = 0x0;
+  TH3D* histEntriesBg = 0x0;
+  TString sProfileName = TString();
+  TString sHistoName = TString();
+  TString sHistoNameBg = TString();
+  Bool_t bIsPhi = (task->fSpecies == FlowTask::kPhi);
+  TString sSpeciesName = task->GetSpeciesName().Data();
+  TString sSpeciesLabel = task->GetSpeciesLabel().Data();
 
-  // checking particles species and assigning particle dependent variables
   switch (task->fSpecies)
   {
     case FlowTask::kPhi :
-      sSpeciesName = TString("Phi");
-      sSpeciesLabel = TString("#phi");
-
-      if(task->fMergePosNeg)
-      {
-        // loading Pos & Neg if fMergePosNeg is ON
-        // merging profiles
-        profFlowPos = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_%s<2>_harm%d_gap%02.2g_Pos",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
-        profFlowNeg = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_%s<2>_harm%d_gap%02.2g_Neg",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
-
-        if(!profFlowPos || !profFlowNeg) { Error("Pos OR Neg profile not found for Pos&Neg merging.","ProcessDirect"); return kFALSE; }
-        listMerge = new TList();
-        listMerge->Add(profFlowPos);
-        listMerge->Add(profFlowNeg);
-
-        profFlow = (TProfile3D*) listMerge->At(0)->Clone();
-        profFlow->Reset();
-        Double_t mergeStatus = profFlow->Merge(listMerge);
-        if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        delete listMerge;
-
-        // merging histos
-        histEntriesPos = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesSignal_%sgap%02.2g_Pos",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-        histEntriesNeg = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesSignal_%sgap%02.2g_Neg",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-        if(!histEntriesPos || !histEntriesNeg) { Error("Pos OR Neg histo not found for Pos&Neg merging.","ProcessReconstructed"); return kFALSE; }
-
-        listMerge = new TList();
-        listMerge->Add(histEntriesPos);
-        listMerge->Add(histEntriesNeg);
-
-        histEntries = (TH3D*) listMerge->At(0)->Clone();
-        histEntries->Reset();
-        mergeStatus = histEntries->Merge(listMerge);
-        if(mergeStatus == -1) { Error("Merging histos unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        delete listMerge;
-
-        histBGPos = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesBG_gap%02.2g_Pos",10*task->fEtaGap));
-        histBGNeg = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesBG_gap%02.2g_Neg",10*task->fEtaGap));
-        if(!histBGPos || !histBGNeg) { Error("Pos OR Neg histo not found for Pos&Neg merging.","ProcessReconstructed"); return kFALSE; }
-
-        listMerge = new TList();
-        listMerge->Add(histBGPos);
-        listMerge->Add(histBGNeg);
-
-        histBG = (TH3D*) listMerge->At(0)->Clone();
-        histBG->Reset();
-        mergeStatus = histBG->Merge(listMerge);
-        if(mergeStatus == -1) { Error("Merging histos unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        delete listMerge;
-      }
-      else
-      {
-        // loading single profile
-        if(task->fInputTag.EqualTo(""))
-        {
-          histEntries = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesSignal_%sgap%02.2g_Pos",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-          histBG = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesBG_gap%02.2g_Pos",10*task->fEtaGap));
-          profFlow = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_<2>_%sharm%d_gap%02.2g_Pos",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
-        }
-        else
-        {
-          histEntries = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesSignal_%sgap%02.2g_%s",fsGlobalProfNameLabel.Data(),10*task->fEtaGap,task->fInputTag.Data()));
-          histBG = (TH3D*) flFlowPhi->FindObject(Form("fh3PhiEntriesBG_gap%02.2g_%s",10*task->fEtaGap,task->fInputTag.Data()));
-          profFlow = (TProfile3D*) flFlowPhi->FindObject(Form("fp3PhiCorr_%s<2>_harm%d_gap%02.2g_%s",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,task->fInputTag.Data()));
-        }
-      }
+      listFlow = flFlowPhi;
+      sProfileName = Form("fp3PhiCorr_%s<2>_harm%d_gap%s",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data());
+      sHistoName = Form("fhsPhiCandSig");
+      sHistoNameBg = Form("fhsPhiCandBg");
     break;
 
     case FlowTask::kK0s :
-      sSpeciesName = TString("K0s");
-      sSpeciesLabel = TString("K^{0}_{S}");
-
-      if(task->fMergePosNeg)
-      {
-        // loading Pos & Neg if fMergePosNeg is ON
-        // merging TProfiles
-        profFlowPos = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_%s<2>_harm%d_gap%02.2g_Pos",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
-        profFlowNeg = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_%s<2>_harm%d_gap%02.2g_Neg",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
-        if(!profFlowPos || !profFlowNeg) { Error("Pos OR Neg profile not found for Pos&Neg merging.","ProcessReconstructed"); return kFALSE; }
-
-        listMerge = new TList();
-        listMerge->Add(profFlowPos);
-        listMerge->Add(profFlowNeg);
-
-        profFlow = (TProfile3D*) listMerge->At(0)->Clone();
-        profFlow->Reset();
-        Double_t mergeStatus = profFlow->Merge(listMerge);
-        if(mergeStatus == -1) { Error("Merging profiles unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        delete listMerge;
-
-        // merging histos
-        histEntriesPos = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_%sgap%02.2g_Pos",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-        histEntriesNeg = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_%sgap%02.2g_Neg",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-        if(!histEntriesPos || !histEntriesNeg) { Error("Pos OR Neg histo not found for Pos&Neg merging.","ProcessReconstructed"); return kFALSE; }
-
-        listMerge = new TList();
-        listMerge->Add(histEntriesPos);
-        listMerge->Add(histEntriesNeg);
-
-        histEntries = (TH3D*) listMerge->At(0)->Clone();
-        histEntries->Reset();
-        mergeStatus = histEntries->Merge(listMerge);
-        if(mergeStatus == -1) { Error("Merging histos unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        delete listMerge;
-      }
-      else
-      {
-        // loading single profile
-        if(task->fInputTag.EqualTo(""))
-        {
-          histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_%sgap%02.2g_Pos",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-          profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_%s<2>_harm%d_gap%02.2g_Pos",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
-        }
-        else
-        {
-          histEntries = (TH3D*) flFlowK0s->FindObject(Form("fh3V0sEntriesK0s_%sgap%02.2g_%s",fsGlobalProfNameLabel.Data(),10*task->fEtaGap,task->fInputTag.Data()));
-          profFlow = (TProfile3D*) flFlowK0s->FindObject(Form("fp3V0sCorrK0s_%s<2>_harm%d_gap%02.2g_%s",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,task->fInputTag.Data()));
-        }
-      }
+      listFlow = flFlowK0s;
+      sProfileName = Form("fp3V0sCorr%s_%s<2>_harm%d_gap%s",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data());
+      sHistoName = Form("fhsV0sCandK0s");
     break;
 
     case FlowTask::kLambda :
-      sSpeciesName = TString("Lambda");
-      sSpeciesLabel = TString("#Lambda/#bar{#Lambda}");
+      listFlow = flFlowLambda;
+      sProfileName = Form("fp3V0sCorr%s_%s<2>_harm%d_gap%s",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data());
+      sHistoName = Form("fhsV0sCandLambda");
+    break;
+
+    default:
+      Error(Form("Invalid particle species: %s",task->GetSpeciesName().Data()),"ProcessReconstructed");
+      return kFALSE;
+  }
+
+  // ### Preparing (un-sliced) candidate histo
+  // cutting on eta based on eta gap
+  Double_t dEtaGap = task->fEtaGap;
+  Debug(Form("dEtaGap %f", dEtaGap),"ProcessReconstructed");
+
+  if(dEtaGap < 0.0)
+  {
+    Debug("No eta slicing","ProcessReconstructed");
+
+    THnSparseD* hsEntries = (THnSparseD*) listFlow->FindObject(sHistoName.Data());
+    if(!hsEntries) { Error(Form("Entries histo '%s' not found!",sHistoName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
+    histEntries = (TH3D*) hsEntries->Projection(1,2,0);
+
+    if(bIsPhi)
+    {
+      THnSparseD* hsEntriesBG = (THnSparseD*) listFlow->FindObject(sHistoNameBg.Data());
+      if(!hsEntriesBG) { Error(Form("Entries histo '%s' not found!",sHistoNameBg.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
+      histEntriesBg = (TH3D*) hsEntriesBG->Projection(1,2,0);
+    }
+  }
+  else
+  {
+    Debug("Has etagap","ProcessReconstructed");
+    THnSparseD* hsEntries = (THnSparseD*) listFlow->FindObject(sHistoName.Data());
+    if(!hsEntries) { Error(Form("Entries histo '%s' not found!",sHistoName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
+
+    TAxis* axEta = hsEntries->GetAxis(3);
+    axEta->SetRangeUser(dEtaGap/2.0,axEta->GetXmax());
+    TH3D* histEntriesPos = (TH3D*) hsEntries->Projection(1,2,0);
+
+    // negative
+    axEta->SetRangeUser(axEta->GetXmin(),-dEtaGap/2.0);
+    TH3D* histEntriesNeg = (TH3D*) hsEntries->Projection(1,2,0);
+
+    if(task->fMergePosNeg)
+    {
+      TList* listMerge = new TList();
+      listMerge->Add(histEntriesPos);
+      listMerge->Add(histEntriesNeg);
+
+      histEntries = (TH3D*) listMerge->At(0)->Clone();
+      histEntries->Reset();
+      Double_t mergeStatus = histEntries->Merge(listMerge);
+      if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessReconstructed"); return kFALSE; }
+      delete listMerge;
+    }
+    else
+    {
+      // loading single histo (positive by default)
+      if(task->fInputTag.EqualTo("")) { histEntries = histEntriesPos; }
+      else if (task->fInputTag.EqualTo("Neg")) { histEntries = histEntriesNeg; }
+      else { Error(Form("Invalid InputTag '%s'!",task->fInputTag.Data()),"ProcessReconstructed"); return kFALSE; }
+    }
+
+    // same for phi BG
+    if(bIsPhi)
+    {
+      THnSparseD* hsEntriesBG = (THnSparseD*) listFlow->FindObject(sHistoNameBg.Data());
+      if(!hsEntriesBG) { Error(Form("Entries histo '%s' not found!",sHistoNameBg.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
+      histEntriesBg = (TH3D*) hsEntriesBG->Projection(1,2,0);
+
+      TAxis* axEta = hsEntriesBG->GetAxis(3);
+      axEta->SetRangeUser(dEtaGap/2.0,axEta->GetXmax());
+      TH3D* histEntriesBgPos = (TH3D*) hsEntriesBG->Projection(1,2,0);
+
+      // negative
+      axEta->SetRangeUser(axEta->GetXmin(),-dEtaGap/2.0);
+      TH3D* histEntriesBgNeg = (TH3D*) hsEntries->Projection(1,2,0);
 
       if(task->fMergePosNeg)
       {
-        // loading Pos & Neg if fMergePosNeg is ON
-        // merging profiles
-        profFlowPos = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_%s<2>_harm%d_gap%02.2g_Pos",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
-        profFlowNeg = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_%s<2>_harm%d_gap%02.2g_Neg",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
+        TList* listMerge = new TList();
+        listMerge->Add(histEntriesBgPos);
+        listMerge->Add(histEntriesBgNeg);
 
-        if(!profFlowPos || !profFlowNeg) { Error("Pos OR Neg profile not found for Pos&Neg merging.","ProcessReconstructed"); return kFALSE; }
-        listMerge = new TList();
-        listMerge->Add(profFlowPos);
-        listMerge->Add(profFlowNeg);
-
-        profFlow = (TProfile3D*) listMerge->At(0)->Clone();
-        profFlow->Reset();
-        Double_t mergeStatus = profFlow->Merge(listMerge);
+        histEntriesBg = (TH3D*) listMerge->At(0)->Clone();
+        histEntriesBg->Reset();
+        Double_t mergeStatus = histEntriesBg->Merge(listMerge);
         if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        delete listMerge;
-
-        // merging histos
-        histEntriesPos = (TH3D*) flFlowLambda->FindObject(Form("fh3V0sEntriesLambda_%sgap%02.2g_Pos",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-        histEntriesNeg = (TH3D*) flFlowLambda->FindObject(Form("fh3V0sEntriesLambda_%sgap%02.2g_Neg",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-        if(!histEntriesPos || !histEntriesNeg) { Error("Pos OR Neg histo not found for Pos&Neg merging.","ProcessReconstructed"); return kFALSE; }
-
-        listMerge = new TList();
-        listMerge->Add(histEntriesPos);
-        listMerge->Add(histEntriesNeg);
-
-        histEntries = (TH3D*) listMerge->At(0)->Clone();
-        histEntries->Reset();
-        mergeStatus = histEntries->Merge(listMerge);
-        if(mergeStatus == -1) { Error("Merging histos unsuccesfull","ProcessReconstructed"); return kFALSE; }
         delete listMerge;
       }
       else
       {
-        // loading single profile
-        if(task->fInputTag.EqualTo(""))
-        {
-          histEntries = (TH3D*) flFlowLambda->FindObject(Form("fh3V0sEntriesLambda_%sgap%02.2g_Pos",fsGlobalProfNameLabel.Data(),10*task->fEtaGap));
-          profFlow = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_%s<2>_harm%d_gap%02.2g_Pos",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap));
-        }
-        else
-        {
-          histEntries = (TH3D*) flFlowLambda->FindObject(Form("fh3V0sEntriesLambda_%sgap%02.2g_%s",fsGlobalProfNameLabel.Data(),10*task->fEtaGap,task->fInputTag.Data()));
-          profFlow = (TProfile3D*) flFlowLambda->FindObject(Form("fp3V0sCorrLambda_%s<2>_harm%d_gap%02.2g_%s",fsGlobalProfNameLabel.Data(),task->fHarmonics,10*task->fEtaGap,task->fInputTag.Data()));
-        }
+        // loading single histo (positive by default)
+        if(task->fInputTag.EqualTo("")) { histEntriesBg = histEntriesBgPos; }
+        else if (task->fInputTag.EqualTo("Neg")) { histEntriesBg = histEntriesBgNeg; }
+        else { Error(Form("Invalid InputTag '%s'!",task->fInputTag.Data()),"ProcessReconstructed"); return kFALSE; }
       }
-    break;
-
-    default:
-      Error("Task species not V0s nor Phi!","ProcessReconstructed");
-      return kFALSE;
+    }
   }
 
-  if(!histEntries) { Error("Entries histos not found!","ProcessReconstructed"); return kFALSE; }
-  if(!profFlow) { Error("Cumulant histos not found!","ProcessReconstructed"); return kFALSE; }
+  if(!histEntries) { Error("Entries histo not ready!","ProcessReconstructed"); return kFALSE; }
+  if(bIsPhi && !histEntriesBg) { Error("Entries histo with BG not ready!","ProcessReconstructed"); return kFALSE; }
+  Debug("Entries histos ready!","ProcessReconstructed");
 
-  if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
-
-  // task->PrintTask();
-
-  if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histBG)) return kFALSE;
-
-  TH1D* hFlow = 0x0;
-  if(!fFlowFitCumulants)
+  // ### Preparing (un-sliced) correlation profile
+  if(task->fMergePosNeg)
   {
-    hFlow = new TH1D(Form("hFlow2_%s_harm%d_gap%02.2g_cent%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
+    // loading Pos & Neg if fMergePosNeg is ON
+    // merging profiles
+    TProfile3D* profFlowPos = (TProfile3D*) listFlow->FindObject(Form("%s_Pos",sProfileName.Data()));
+    TProfile3D* profFlowNeg = (TProfile3D*) listFlow->FindObject(Form("%s_Neg",sProfileName.Data()));
+    if(!profFlowPos || !profFlowNeg) { Error(Form("Pos OR Neg profile '%s' not found for Pos&Neg merging.",sProfileName.Data()),"ProcessDirect"); listFlow->ls(); return kFALSE; }
+
+    TList* listMerge = new TList();
+    listMerge->Add(profFlowPos);
+    listMerge->Add(profFlowNeg);
+
+    profFlow = (TProfile3D*) listMerge->At(0)->Clone();
+    profFlow->Reset();
+    Double_t mergeStatus = profFlow->Merge(listMerge);
+    if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessReconstructed"); return kFALSE; }
+    delete listMerge;
   }
   else
   {
-    hFlow = new TH1D(Form("hCum2_%s_harm%d_gap%02.2g_cent%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: d_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
+    // loading single profile
+    if(task->fInputTag.EqualTo("")) { sProfileName.Append("_Pos"); }
+    else { sProfileName.Append("_"); sProfileName.Append(task->fInputTag); }
+    profFlow = (TProfile3D*) listFlow->FindObject(sProfileName.Data());
+  }
+  if(!profFlow) { Error(Form("Correlation profile '%s' not ready!",sProfileName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
+  Debug("Correlations profile ready!","ProcessReconstructed");
+
+  // ### Preparing slices of pt
+  if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histEntriesBg)) { return kFALSE; }
+
+  // ### Estimating flow
+  TH1D* hFlow = 0x0;
+  if(!fFlowFitCumulants)
+  {
+    hFlow = new TH1D(Form("hFlow2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: v_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
+  }
+  else
+  {
+    hFlow = new TH1D(Form("hCum2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: d_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
   }
 
   TH1D* hInvMass = 0x0;
   TH1D* hInvMassBG = 0x0;
   TH1D* hFlowMass = 0x0;
-  Double_t dFlow = 0, dFlowError = 0; // containers for flow extraction results
-  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1600,1200); // canvas for fitting results
+  Double_t dFlow = 0.0, dFlowError = 0.0; // containers for flow extraction results
 
+  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1600,1200); // canvas for fitting results
   TCanvas* canFlowAll = new TCanvas("canFlowAll","canFlowAll",1600,1200);
   TCanvas* canInvMassAll = new TCanvas("canInvMassAll","canInvMassAll",1600,1200);
   canFlowAll->Divide(3,ceil(task->fNumPtBins/3.));
@@ -1633,7 +1591,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       case FlowTask::kPhi :
         hInvMassBG = task->fVecHistInvMassBG->at(binPt);
         if( !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
-        // if( !ExtractFlowPhiOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
       break;
 
       case FlowTask::kK0s :
@@ -1645,7 +1602,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       break;
 
       default :
-        Error("Uknown species","ProcessReconstructed");
+        Error("Invalid species","ProcessReconstructed");
         return kFALSE;
     }
 
@@ -1670,7 +1627,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
     canFitInvMass->cd(2);
     latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
-    canFitInvMass->SaveAs(Form("%s/fits/Fit_%s_n%d2_gap%02.2g_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+    canFitInvMass->SaveAs(Form("%s/fits/Fit_%s_n%d2_gap%s_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
     canFlowAll->cd(binPt+1);
     hFlowMass->SetLabelFont(43,"XY");
@@ -1703,10 +1660,10 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
   if(fFlowFitCumulants)
   {
-    TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+    TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
     if(!hRefFlow) { Error("Something went wrong when running automatic refs flow task:","ProcessReconstructed"); return kFALSE; }
 
-    TH1D* hFlow_vn = new TH1D(Form("hFlow2_%s_harm%d_gap%02.2g_cent%d",sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin),Form("%s: v_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
+    TH1D* hFlow_vn = new TH1D(Form("hFlow2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: v_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
 
     Double_t dRefFlow = hRefFlow->GetBinContent(iMultBin+1);
     Double_t dRefFlowErr = hRefFlow->GetBinError(iMultBin+1);
@@ -1733,7 +1690,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   cFlow->cd();
   hFlow->SetStats(0);
   hFlow->Draw();
-  cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+  cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%s_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
   return kTRUE;
 }
