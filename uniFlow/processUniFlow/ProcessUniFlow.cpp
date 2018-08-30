@@ -354,7 +354,9 @@ class ProcessUniFlow
     TFile*      ffFitsFile; //! output file for fitting procedure
     TList*      flFlowRefs; //! TList from input file with RFPs flow profiles
     TList*      flFlowCharged; //! TList from input file with Charged flow profiles
-    TList*      flFlowPID; //! TList from input file with PID (pi,K,p) flow profiles
+    TList*      flFlowPion; //! TList from input file with pion flow profiles
+    TList*      flFlowKaon; //! TList from input file with kaon flow profiles
+    TList*      flFlowProton; //! TList from input file with proton flow profiles
     TList*      flFlowPhi; //! TList from input file with Phi flow profiles
     TList*      flFlowK0s; //! TList from input file with K0s flow profiles
     TList*      flFlowLambda; //! TList from input file with Lambda flow profiles
@@ -377,7 +379,9 @@ ProcessUniFlow::ProcessUniFlow() :
   ffDesampleFile(0x0),
   flFlowRefs(0x0),
   flFlowCharged(0x0),
-  flFlowPID(0x0),
+  flFlowPion(0x0),
+  flFlowKaon(0x0),
+  flFlowProton(0x0),
   flFlowPhi(0x0),
   flFlowK0s(0x0),
   flFlowLambda(0x0),
@@ -410,7 +414,9 @@ ProcessUniFlow::~ProcessUniFlow()
 
   if(flFlowRefs) delete flFlowRefs;
   if(flFlowCharged) delete flFlowCharged;
-  if(flFlowPID) delete flFlowPID;
+  if(flFlowPion) delete flFlowPion;
+  if(flFlowKaon) delete flFlowKaon;
+  if(flFlowProton) delete flFlowProton;
   if(flFlowPhi) delete flFlowPhi;
   if(flFlowK0s) delete flFlowK0s;
   if(flFlowLambda) delete flFlowLambda;
@@ -431,7 +437,9 @@ void ProcessUniFlow::Clear()
 
   flFlowRefs = 0x0;
   flFlowCharged = 0x0;
-  flFlowPID = 0x0;
+  flFlowPion = 0x0;
+  flFlowKaon = 0x0;
+  flFlowProton = 0x0;
   flFlowPhi = 0x0;
   flFlowK0s = 0x0;
   flFlowLambda = 0x0;
@@ -534,8 +542,12 @@ Bool_t ProcessUniFlow::LoadLists()
   if(!flFlowRefs) { Fatal("flFlow_Refs list does not exists!","LoadLists"); ffInputFile->ls(); return kFALSE; }
   flFlowCharged = (TList*) gDirectory->Get(Form("Flow_Charged_%s",fsTaskName.Data()));
   if(!flFlowCharged) { Fatal("flFlow_Charged list does not exists!","LoadLists"); return kFALSE; }
-  flFlowPID = (TList*) gDirectory->Get(Form("Flow_PID_%s",fsTaskName.Data()));
-  if(!flFlowPID) { Fatal("flFlow_PID list does not exists!","LoadLists"); return kFALSE; }
+  flFlowPion = (TList*) gDirectory->Get(Form("Flow_Pion_%s",fsTaskName.Data()));
+  if(!flFlowPion) { Fatal("'flFlowPion' list does not exists!","LoadLists"); return kFALSE; }
+  flFlowKaon = (TList*) gDirectory->Get(Form("Flow_Kaon_%s",fsTaskName.Data()));
+  if(!flFlowKaon) { Fatal("'flFlowKaon' list does not exists!","LoadLists"); return kFALSE; }
+  flFlowProton = (TList*) gDirectory->Get(Form("Flow_Proton_%s",fsTaskName.Data()));
+  if(!flFlowProton) { Fatal("'flFlowProton' list does not exists!","LoadLists"); return kFALSE; }
   flFlowPhi = (TList*) gDirectory->Get(Form("Flow_Phi_%s",fsTaskName.Data()));
   if(!flFlowPhi) { Fatal("flFlow_Phi list does not exists!","LoadLists"); return kFALSE; }
   flFlowK0s = (TList*) gDirectory->Get(Form("Flow_K0s_%s",fsTaskName.Data()));
@@ -1092,9 +1104,15 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     break;
 
     case FlowTask::kPion:
+      listInput = flFlowPion;
+    break;
+
     case FlowTask::kKaon:
+      listInput = flFlowKaon;
+    break;
+
     case FlowTask::kProton:
-      listInput = flFlowPID;
+      listInput = flFlowProton;
     break;
 
     default:
