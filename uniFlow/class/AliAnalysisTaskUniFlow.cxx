@@ -3683,6 +3683,18 @@ TComplex AliAnalysisTaskUniFlow::ThreeDiff(const Short_t n1, const Short_t n2, c
   return formula;
 }
 //____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::ThreeDiffGapPos(const Short_t n1, const Short_t n2, const Short_t n3)
+{
+  TComplex formula = PGapPos(n1,1)*QGapNeg(n2,1)*QGapNeg(n3,1) - PGapPos(n1,1)*QGapNeg(n2+n3,2);
+  return formula;
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::ThreeDiffGapNeg(const Short_t n1, const Short_t n2, const Short_t n3)
+{
+  TComplex formula = PGapNeg(n1,1)*QGapPos(n2,1)*QGapPos(n3,1) - PGapNeg(n1,1)*QGapPos(n2+n3,2);
+  return formula;
+}
+//____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
 {
   TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-S(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*S(n1+n3,2)*Q(n4,1)
@@ -3692,19 +3704,6 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, co
                     + 2.0*Q(n2,1)*S(n1+n3+n4,3)+2.0*P(n1,1)*Q(n2+n3+n4,3)-6.0*S(n1+n2+n3+n4,4);
   return formula;
 }
-//____________________________________________________________________
-// TComplex* AliAnalysisTaskUniFlow::FourGap(int n1, int n2, int n3, int n4)
-// {
-//
-//   TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-Q(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*Q(n1+n3,2)*Q(n4,1)
-//                     - Q(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.0*Q(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*Q(n1+n4,2)
-//                     + Q(n2+n3,2)*Q(n1+n4,2)-Q(n1,1)*Q(n3,1)*Q(n2+n4,2)+Q(n1+n3,2)*Q(n2+n4,2)
-//                     + 2.0*Q(n3,1)*Q(n1+n2+n4,3)-Q(n1,1)*Q(n2,1)*Q(n3+n4,2)+Q(n1+n2,2)*Q(n3+n4,2)
-//                     + 2.0*Q(n2,1)*Q(n1+n3+n4,3)+2.0*Q(n1,1)*Q(n2+n3+n4,3)-6.0*Q(n1+n2+n3+n4,4);
-//   TComplex *out = (TComplex*) &formula;
-//   return out;
-//
-// }
 //____________________________________________________________________
 void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 {
