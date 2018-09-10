@@ -517,6 +517,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhQAEventsNumSPDContrPV[fiNumIndexQA]; //!
       TH1D*           fhQAEventsDistPVSPD[fiNumIndexQA]; //!
       TH1D*           fhQAEventsSPDresol[fiNumIndexQA]; //!
+      TH2D*           fhQAEventsfMult32vsCentr;
+      TH2D*           fhQAEventsMult128vsCentr;
+      TH2D*           fhQAEventsfMultTPCvsTOF;
+      TH2D*           fhQAEventsfMultTPCvsESD;
       // QA: charged tracks
       TH1D*           fhQAChargedMult[fiNumIndexQA];       //! number of AOD charged tracks distribution
       TH1D*           fhQAChargedPt[fiNumIndexQA];         //! pT dist of charged tracks

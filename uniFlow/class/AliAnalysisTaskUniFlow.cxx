@@ -297,6 +297,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhEventCentrality(0x0),
   fh2EventCentralityNumRefs(0x0),
   fhEventCounter(0x0),
+  fhQAEventsfMult32vsCentr(0x0),
+  fhQAEventsMult128vsCentr(0x0),
+  fhQAEventsfMultTPCvsTOF(0x0),
+  fhQAEventsfMultTPCvsESD(0x0),
 
   // charged histogram
   fhRefsMult(0x0),
@@ -582,6 +586,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhEventCentrality(0x0),
   fh2EventCentralityNumRefs(0x0),
   fhEventCounter(0x0),
+  fhQAEventsfMult32vsCentr(0x0),
+  fhQAEventsMult128vsCentr(0x0),
+  fhQAEventsfMultTPCvsTOF(0x0),
+  fhQAEventsfMultTPCvsESD(0x0),
 
   // charged histogram
   fhRefsMult(0x0),
@@ -1418,6 +1426,19 @@ Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
     fMultCentLowCut->SetParameters(-6.15980e+02, 4.89828e+00, 4.84776e+03, -5.22988e-01, 3.04363e-02, -1.21144e+01, 2.95321e+02, -9.20062e-01, 2.17372e-02);
     if(Double_t(multTrk) < fMultCentLowCut->Eval(v0Centr)) { return kTRUE; }
   }
+
+  // QA Plots
+  fhQAEventsfMult32vsCentr->Fill(v0Centr, multTrk);
+  fhQAEventsMult128vsCentr->Fill(v0Centr, multTPC128);
+  fhQAEventsfMultTPCvsTOF->Fill(multTPC32, multTOF);
+  fhQAEventsfMultTPCvsESD->Fill(multTPC128, multESD);
+
+  // fCentralityDis->Fill(centrV0);
+  // fV0CentralityDis->Fill(cent);
+  //
+  // fCentralityV0MCL1->Fill(v0Centr, cl1Centr);
+  // fCentralityV0MCL0->Fill(v0Centr, cl0Centr);
+  // fCentralityCL0CL1->Fill(cl0Centr, cl1Centr);
 
   return kFALSE;
 }
@@ -3855,6 +3876,18 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fhEventCounter = new TH1D("fhEventCounter","Event Counter",iEventCounterBins,0,iEventCounterBins);
     for(Short_t i(0); i < iEventCounterBins; i++) fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() );
     fQAEvents->Add(fhEventCounter);
+
+    if(fEventRejectAddPileUp)
+    {
+      fhQAEventsfMult32vsCentr = new TH2D("fhQAEventsfMult32vsCentr", "; centrality V0M; TPC multiplicity (FB32)", 100, 0, 100, 1000, 0, 4000);
+      fQAEvents->Add(fhQAEventsfMult32vsCentr);
+      fhQAEventsMult128vsCentr = new TH2D("fhQAEventsfMult128vsCentr", "; centrality V0M; TPC multiplicity (FB128)", 100, 0, 100, 1000, 0, 5000);
+      fQAEvents->Add(fhQAEventsMult128vsCentr);
+      fhQAEventsfMultTPCvsTOF = new TH2D("fhQAEventsfMultTPCvsTOF", "; TPC FB32 multiplicity; TOF multiplicity", 400, 0, 4000, 200, 0, 2000);
+      fQAEvents->Add(fhQAEventsfMultTPCvsTOF);
+      fhQAEventsfMultTPCvsESD = new TH2D("fhQAEventsfMultTPCvsESD", "; TPC FB128 multiplicity; ESD multiplicity", 700, 0, 7000, 1000, -1000, 35000);
+      fQAEvents->Add(fhQAEventsfMultTPCvsESD);
+    }
 
     // flow histograms & profiles
     // weights
