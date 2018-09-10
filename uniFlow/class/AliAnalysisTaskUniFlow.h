@@ -50,6 +50,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetMultEstimator(MultiEst est) { fMultEstimator = est; }
       void                    SetTrigger(AliVEvent::EOfflineTriggerTypes trigger) { fTrigger = trigger; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
+      void                    SetRejectAddPileUp(Bool_t use = kTRUE) { fEventRejectAddPileUp = use; }
       // track setters
       void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
       void                    SetChargedDCAzMax(Double_t dcaz) {  fCutChargedDCAzMax = dcaz; }
@@ -147,6 +148,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
       Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
+      Bool_t                  IsEventRejectedAddPileUp(); // additional pile-up rejection for Run2 Pb-Pb
       Bool_t                  LoadWeights(); // load weights histograms
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
@@ -267,6 +269,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliVEvent::EOfflineTriggerTypes    fTrigger; // physics selection trigger
       MultiEst                fMultEstimator; // multiplicity/centrality estimator as in AliMultSelection
       Double_t                fPVtxCutZ; // (cm) PV z cut
+      Bool_t                  fEventRejectAddPileUp; // additional pile-up rejection for Pb-Pb collisions in Run2 (17n, 15o)
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
       UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
