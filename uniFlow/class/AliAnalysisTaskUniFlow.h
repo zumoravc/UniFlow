@@ -19,6 +19,18 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest; NB: kUknown last as counter
       enum    SparseCand {kInvMass = 0, kCent, kPt, kEta, kDim}; // reconstructed candidates dist. dimensions
 
+      struct  FlowTask
+      {
+        Int_t fiCor; // correlation order <M>
+        Int_t* fiHarm; // harmonics n1,n2,...,nM
+        Int_t fiSubs; // number of subevents
+        Double_t* fdGaps; // gaps between subevents (standard GF notation)
+
+                  FlowTask(Int_t cor, Int_t* harm, Int_t subs = 1, Double_t* gaps = 0x0) :
+                    fiCor(cor), fiHarm(harm), fiSubs(subs), fdGaps(gaps) { };
+        void Dummy() { printf("fiCor: %d, Subs %d \n", fiCor, fiSubs); }
+      };
+
                               AliAnalysisTaskUniFlow(); // constructor
                               AliAnalysisTaskUniFlow(const char *name); // named (primary) constructor
       virtual                 ~AliAnalysisTaskUniFlow(); // destructor
@@ -38,6 +50,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
       void                    SetProcessPhi(Bool_t filter = kTRUE) { fProcessPhi = filter; }
       // flow related setters
+      void                    SetAddTwo(Int_t n1, Int_t n2) { Int_t a[2] = {n1,n2}; fVecFlowTask.push_back(new FlowTask(2,a) ); }
       void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
       void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
@@ -118,6 +131,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliEventCuts fEventCuts; //
 
     private:
+      std::vector<FlowTask*>  fVecFlowTask; //
       // array lenghts & constants
       const Double_t          fPDGMassPion; // [DPGMass] DPG mass of charged pion
       const Double_t          fPDGMassKaon; // [DPGMass] DPG mass of charged kaon

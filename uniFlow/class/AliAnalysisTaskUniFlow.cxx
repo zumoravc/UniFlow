@@ -669,6 +669,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   {
     fVector[iSpec] = 0x0;
   }
+  fVecFlowTask = std::vector<FlowTask*>(); //
 
   // Flow vectors
   for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
@@ -1041,6 +1042,19 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // returns kTRUE if succesfull
   // *************************************************************
   AliInfo("Checking task setting");
+
+  Int_t iNumTasks = fVecFlowTask.size();
+  printf("Flowtasks:%d\n",iNumTasks);
+
+  FlowTask* task = fVecFlowTask.at(0);
+  if(!task) { AliError("task not exists();"); }
+  task->Dummy();
+
+  // for(auto task = fVecFlowTask.begin(); task != fVecFlowTask.end(); ++task )
+  // {
+    // printf("%d\n",task.fiCor);
+  // }
+
 
   if(fAnalType != kAOD)
   {
