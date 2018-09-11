@@ -16,7 +16,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    ColSystem {kPP = 0, kPPb, kPbPb}; // tag for collisional system
       enum    AnalType {kAOD = 0, kESD}; // tag for analysis type
       enum    MultiEst {kRFP = 0, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity estimator as AliMultSelection
-      enum    PartSpecies {kUnknown = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+      enum    PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest; NB: kUknown last as counter
       enum    SparseCand {kInvMass = 0, kCent, kPt, kEta, kDim}; // reconstructed candidates dist. dimensions
 
                               AliAnalysisTaskUniFlow(); // constructor
@@ -234,14 +234,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
 
       // selected POIs containers
-      std::vector<AliVTrack*>*  fVectorRefs; //! container for selected Refs charged particles
-      std::vector<AliVTrack*>*  fVectorCharged; //! container for selected charged particles
-      std::vector<AliVTrack*>*  fVectorPion; //! container for selected pion candidates
-      std::vector<AliVTrack*>*  fVectorKaon; //! container for selected kaon candidates
-      std::vector<AliVTrack*>*  fVectorProton; //! container for selected proton candidates
-      std::vector<AliVTrack*>*  fVectorK0s; //! container for selected K0s candidates
-      std::vector<AliVTrack*>*  fVectorLambda; //! container for selected (Anti)Lambda candidates
-      std::vector<AliVTrack*>*  fVectorPhi; //! container for selected phi candidates (unlike-sign pairs)
+      std::vector<AliVTrack*>*  fVector[kUnknown]; //! container for selected Refs charged particles
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)

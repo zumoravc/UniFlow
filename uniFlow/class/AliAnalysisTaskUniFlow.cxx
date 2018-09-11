@@ -129,16 +129,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPDGMassK0s(TDatabasePDG::Instance()->GetParticle(310)->Mass()),
   fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
 
-  // FlowPart containers
-  fVectorRefs(0x0),
-  fVectorCharged(0x0),
-  fVectorPion(0x0),
-  fVectorKaon(0x0),
-  fVectorProton(0x0),
-  fVectorK0s(0x0),
-  fVectorLambda(0x0),
-  fVectorPhi(0x0),
-
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
@@ -418,16 +408,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPDGMassK0s(TDatabasePDG::Instance()->GetParticle(310)->Mass()),
   fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
 
-  // FlowPart containers
-  fVectorRefs(0x0),
-  fVectorCharged(0x0),
-  fVectorPion(0x0),
-  fVectorKaon(0x0),
-  fVectorProton(0x0),
-  fVectorK0s(0x0),
-  fVectorLambda(0x0),
-  fVectorPhi(0x0),
-
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
@@ -682,6 +662,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhV0sCompetingInvMassK0s(0x0),
   fhV0sCompetingInvMassLambda(0x0)
 {
+  // particle dependent
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
+  {
+    fVector[iSpec] = 0x0;
+  }
+
   // Flow vectors
   for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
   {
@@ -847,14 +833,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   ClearVectors();
 
   // deleting FlowPart vectors (containers)
-  if(fVectorRefs) delete fVectorRefs;
-  if(fVectorCharged) delete fVectorCharged;
-  if(fVectorPion) delete fVectorPion;
-  if(fVectorKaon) delete fVectorKaon;
-  if(fVectorProton) delete fVectorProton;
-  if(fVectorK0s) delete fVectorK0s;
-  if(fVectorLambda) delete fVectorLambda;
-  if(fVectorPhi) delete fVectorPhi;
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { if(fVector[iSpec]) delete fVector[iSpec]; }
 
   // deleting output lists
   if(fFlowWeights) delete fFlowWeights;
@@ -976,30 +955,12 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   // NOTE: should be called at the end of each event & before vectors deleting
   // *************************************************************
 
-  // pointers owned by Ali*Event containers
-  if(fVectorRefs) { fVectorRefs->clear(); }
-  if(fVectorCharged) { fVectorCharged->clear(); }
-  if(fVectorPion) { fVectorPion->clear(); }
-  if(fVectorKaon) { fVectorKaon->clear(); }
-  if(fVectorProton) { fVectorProton->clear(); }
-
-  // pointers owned by task
-  if(fVectorK0s)
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
-    for(auto part = fVectorK0s->begin(); part != fVectorK0s->end(); ++part) { delete *part; }
-    fVectorK0s->clear();
-  }
-
-  if(fVectorLambda)
-  {
-    for(auto part = fVectorLambda->begin(); part != fVectorLambda->end(); ++part) { delete *part; }
-    fVectorLambda->clear();
-  }
-
-  if(fVectorPhi)
-  {
-    for(auto part = fVectorPhi->begin(); part != fVectorPhi->end(); ++part) { delete *part; }
-    fVectorPhi->clear();
+    std::vector<AliVTrack*>* vector = fVector[iSpec];
+    if(!vector) { continue; }
+    if(iSpec == kK0s || iSpec == kLambda || iSpec == kPhi) { for(auto part = vector->begin(); part != vector->end(); ++part) { delete *part; } }
+    vector->clear();
   }
 
   return;
@@ -1103,39 +1064,33 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // when capacity is not enough later during filtering
   // NOTE: system and cuts dependent (should be modified accordingly)
 
-  fVectorRefs = new std::vector<AliVTrack*>;
-  fVectorCharged = new std::vector<AliVTrack*>;
-  fVectorPion = new std::vector<AliVTrack*>;
-  fVectorKaon = new std::vector<AliVTrack*>;
-  fVectorProton = new std::vector<AliVTrack*>;
-  fVectorK0s = new std::vector<AliVTrack*>;
-  fVectorLambda = new std::vector<AliVTrack*>;
-  fVectorPhi = new std::vector<AliVTrack*>;
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { fVector[iSpec] = new std::vector<AliVTrack*>(); }
 
   switch(fColSystem)
   {
     case kPP :
-      fVectorRefs->reserve(150);
-      fVectorCharged->reserve(150);
-      if(fProcessPID) { fVectorPion->reserve(100); fVectorKaon->reserve(20); fVectorProton->reserve(20); }
-      if(fProcessV0s) { fVectorK0s->reserve(30); fVectorLambda->reserve(30); }
-      if(fProcessPhi) { fVectorPhi->reserve(20); }
+      fVector[kRefs]->reserve(150);
+      fVector[kCharged]->reserve(150);
+      if(fProcessPID) { fVector[kPion]->reserve(100); fVector[kKaon]->reserve(20); fVector[kProton]->reserve(20); }
+      if(fProcessV0s) { fVector[kK0s]->reserve(30); fVector[kLambda]->reserve(30); }
+      if(fProcessPhi) { fVector[kPhi]->reserve(20); }
       break;
 
     case kPPb :
-      fVectorRefs->reserve(200);
-      fVectorCharged->reserve(200);
-      if(fProcessPID) { fVectorPion->reserve(100); fVectorKaon->reserve(40); fVectorProton->reserve(30); }
-      if(fProcessV0s) { fVectorK0s->reserve(100); fVectorLambda->reserve(150); }
-      if(fProcessPhi) { fVectorPhi->reserve(20); }
+      fVector[kRefs]->reserve(200);
+      fVector[kCharged]->reserve(200);
+      if(fProcessPID) { fVector[kPion]->reserve(100); fVector[kKaon]->reserve(40); fVector[kProton]->reserve(30); }
+      if(fProcessV0s) { fVector[kK0s]->reserve(100); fVector[kLambda]->reserve(150); }
+      if(fProcessPhi) { fVector[kPhi]->reserve(20); }
       break;
 
     default :
-      fVectorRefs->reserve(300);
-      fVectorCharged->reserve(300);
-      if(fProcessPID) { fVectorPion->reserve(200); fVectorKaon->reserve(100); fVectorProton->reserve(100); }
-      if(fProcessV0s) { fVectorK0s->reserve(100); fVectorLambda->reserve(100); }
-      if(fProcessPhi) { fVectorPhi->reserve(200); }
+      fVector[kRefs]->reserve(300);
+      fVector[kCharged]->reserve(300);
+      if(fProcessPID) { fVector[kPion]->reserve(200); fVector[kKaon]->reserve(100); fVector[kProton]->reserve(100); }
+      if(fProcessV0s) { fVector[kK0s]->reserve(100); fVector[kLambda]->reserve(100); }
+      if(fProcessPhi) { fVector[kPhi]->reserve(200); }
+      break;
   }
 
   AliInfo("Initialization succesfull!");
@@ -1177,12 +1132,12 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   // Filter charged (& Refs) particles to evaluate event multiplcity / N_RFPs
   // NB: clear charged vectors because it might keep particles from previous event (not happen for other species)
-  fVectorRefs->clear();
-  fVectorCharged->clear();
+  fVector[kRefs]->clear();
+  fVector[kCharged]->clear();
   FilterCharged();
 
   // checking if there is at least 5 particles: needed to "properly" calculate correlations
-  if(fVectorRefs->empty() || fVectorRefs->size() < 5) { return; }
+  if(fVector[kRefs]->empty() || fVector[kRefs]->size() < 5) { return; }
   fhEventCounter->Fill("#RPFs OK",1);
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
@@ -1513,8 +1468,8 @@ void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
   if(iQAindex == 1)
   {
     fhEventCentrality->Fill(fIndexCentrality);
-    fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVectorRefs->size());
-    fpRefsMult->Fill(fIndexCentrality,fVectorRefs->size(),1.0);
+    fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVector[kRefs]->size());
+    fpRefsMult->Fill(fIndexCentrality,fVector[kRefs]->size(),1.0);
     fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
   }
 
@@ -1551,7 +1506,7 @@ void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FilterCharged()
 {
-  // Filtering input charged tracks for POIs (stored in fVectorCharged) or RFPs (fVectorRefs)
+  // Filtering input charged tracks for POIs (stored in fVector[kCharged]) or RFPs (fVector[kRefs])
   // If track passes all requirements its pointer is pushed to relevant vector container
   // *************************************************************
 
@@ -1568,7 +1523,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
     if(!IsChargedSelected(track)) continue;
 
-    fVectorCharged->push_back(track);
+    fVector[kCharged]->push_back(track);
     if(fFillQA) FillQACharged(1,track); // QA after selection
 
     if(fFlowFillWeights) { fh3WeightsCharged->Fill(track->Phi(),track->Eta(),fPVz); }
@@ -1598,7 +1553,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     if(!IsWithinRefs(track)) continue;
 
     // track is used for Ref. flow
-    fVectorRefs->push_back(track);
+    fVector[kRefs]->push_back(track);
     iNumRefs++;
     FillQARefs(1,track);
     if(fFlowFillWeights) { fh3WeightsRefs->Fill(track->Phi(),track->Eta(),fPVz); }
@@ -1618,7 +1573,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
   if(fFillQA)
   {
     fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
-    fhQAChargedMult[1]->Fill(fVectorCharged->size());
+    fhQAChargedMult[1]->Fill(fVector[kCharged]->size());
   }
 
   return;
@@ -1803,7 +1758,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fhV0sInvMassK0s->Fill(v0->MassK0Short(),v0->MassLambda());
 
         AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short());
-        fVectorK0s->push_back(pico);
+        fVector[kK0s]->push_back(pico);
         FillSparseCand(fhsV0sCandK0s, pico);
 
         if(fFlowFillWeights) { fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz); }
@@ -1824,7 +1779,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassLambda());
 
         AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassLambda());
-        fVectorLambda->push_back(pico);
+        fVector[kLambda]->push_back(pico);
         FillSparseCand(fhsV0sCandLambda, pico);
 
         if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
@@ -1844,7 +1799,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassAntiLambda());
 
         AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassAntiLambda());
-        fVectorLambda->push_back(pico);
+        fVector[kLambda]->push_back(pico);
         FillSparseCand(fhsV0sCandLambda, pico);
 
         if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
@@ -2437,7 +2392,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   // If track passes all requirements, the relevant properties (pT, eta, phi) are stored
   // in FlowPart struct  and pushed to relevant vector container.
   // *************************************************************
-  Int_t iNumKaons = (Int_t) fVectorKaon->size();
+  Int_t iNumKaons = (Int_t) fVector[kKaon]->size();
   // check if there are at least 2 selected kaons in event (minimum for phi reconstruction)
   if(iNumKaons < 2) return;
 
@@ -2445,12 +2400,12 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   Int_t iNumBG = 0;
   for(Int_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++)
   {
-    AliAODTrack* kaon1 = dynamic_cast<AliAODTrack*>(fVectorKaon->at(iKaon1));
+    AliAODTrack* kaon1 = dynamic_cast<AliAODTrack*>(fVector[kKaon]->at(iKaon1));
     if(!kaon1) continue;
 
     for(Int_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++)
     {
-      AliAODTrack* kaon2 = dynamic_cast<AliAODTrack*>(fVectorKaon->at(iKaon2));
+      AliAODTrack* kaon2 = dynamic_cast<AliAODTrack*>(fVector[kKaon]->at(iKaon2));
       if(!kaon2) continue;
 
       AliPicoTrack* mother = MakeMother(kaon1,kaon2);
@@ -2489,7 +2444,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
         // opposite-sign combination (signal+background)
         fhPhiCounter->Fill("Unlike-sign",1);
         FillSparseCand(fhsPhiCandSig, mother);
-        fVectorPhi->push_back(mother);
+        fVector[kPhi]->push_back(mother);
       }
 
       if(TMath::Abs(mother->Charge()) == 2)
@@ -2503,7 +2458,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   } // endfor {iKaon1} : first Kaon
 
   // filling multiplicity distribution
-  fhPhiMult->Fill(fVectorPhi->size());
+  fhPhiMult->Fill(fVector[kPhi]->size());
   fhPhiBGMult->Fill(iNumBG);
 
   return;
@@ -2570,7 +2525,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
   // return kFALSE if any complications occurs
   // *************************************************************
 
-  for(auto part = fVectorCharged->begin(); part != fVectorCharged->end(); ++part)
+  for(auto part = fVector[kCharged]->begin(); part != fVector[kCharged]->end(); ++part)
   {
     AliAODTrack* track = static_cast<AliAODTrack*>(*part);
     if(!track) continue;
@@ -2589,7 +2544,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
     switch (species)
     {
       case kPion:
-        fVectorPion->push_back(track);
+        fVector[kPion]->push_back(track);
         if(fFlowFillWeights) { fh3WeightsPion->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
@@ -2601,7 +2556,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         break;
 
       case kKaon:
-        fVectorKaon->push_back(track);
+        fVector[kKaon]->push_back(track);
         if(fFlowFillWeights) { fh3WeightsKaon->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
@@ -2613,7 +2568,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
         break;
 
       case kProton:
-        fVectorProton->push_back(track);
+        fVector[kProton]->push_back(track);
         if(fFlowFillWeights) { fh3WeightsProton->Fill(track->Phi(), track->Eta(), fPVz); }
         if(fFlowUseWeights)
         {
@@ -2662,9 +2617,9 @@ void AliAnalysisTaskUniFlow::FilterPID()
 
   }
 
-  fhPIDPionMult->Fill(fVectorPion->size());
-  fhPIDKaonMult->Fill(fVectorKaon->size());
-  fhPIDProtonMult->Fill(fVectorProton->size());
+  fhPIDPionMult->Fill(fVector[kPion]->size());
+  fhPIDKaonMult->Fill(fVector[kKaon]->size());
+  fhPIDProtonMult->Fill(fVector[kProton]->size());
 
   return;
 }
@@ -2958,24 +2913,24 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
     DoFlowRefs(iGap);
 
     // pT differential flow
-    if(!fVectorCharged->empty()) { DoFlowPOIs(iGap, kCharged); }
+    if(!fVector[kCharged]->empty()) { DoFlowPOIs(iGap, kCharged); }
 
     if(fProcessPID)
     {
-      if(!fVectorPion->empty()) { DoFlowPOIs(iGap,kPion); }
-      if(!fVectorKaon->empty()) { DoFlowPOIs(iGap,kKaon); }
-      if(!fVectorProton->empty()) { DoFlowPOIs(iGap,kProton); }
+      if(!fVector[kPion]->empty()) { DoFlowPOIs(iGap,kPion); }
+      if(!fVector[kKaon]->empty()) { DoFlowPOIs(iGap,kKaon); }
+      if(!fVector[kProton]->empty()) { DoFlowPOIs(iGap,kProton); }
     }
 
     if(fProcessPhi)
     {
-      if(!fVectorPhi->empty()) { DoFlowPOIs(iGap,kPhi); }
+      if(!fVector[kPhi]->empty()) { DoFlowPOIs(iGap,kPhi); }
     }
 
     if(fProcessV0s)
     {
-      if(!fVectorK0s->empty()) { DoFlowPOIs(iGap,kK0s); }
-      if(!fVectorLambda->empty()) { DoFlowPOIs(iGap,kLambda); }
+      if(!fVector[kK0s]->empty()) { DoFlowPOIs(iGap,kK0s); }
+      if(!fVector[kLambda]->empty()) { DoFlowPOIs(iGap,kLambda); }
     }
   } // endfor {iGap} eta gaps
 
@@ -3299,7 +3254,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   ResetFlowVector(fFlowVecQneg);
   ResetFlowVector(fFlowVecQmid);
 
-  for (auto part = fVectorRefs->begin(); part != fVectorRefs->end(); part++)
+  for (auto part = fVector[kRefs]->begin(); part != fVector[kRefs]->end(); part++)
   {
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
@@ -3385,45 +3340,45 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
   switch (species)
   {
     case kCharged:
-      vector = fVectorCharged;
+      vector = fVector[kCharged];
       h2Weights = fh2WeightCharged;
       h3Weights = fh3WeightCharged;
       break;
 
     case kPion:
-      vector = fVectorPion;
+      vector = fVector[kPion];
       h2Weights = fh2WeightPion;
       h3Weights = fh3WeightPion;
       break;
 
     case kKaon:
-      vector = fVectorKaon;
+      vector = fVector[kKaon];
       h2Weights = fh2WeightKaon;
       h3Weights = fh3WeightKaon;
       break;
 
     case kProton:
-      vector = fVectorProton;
+      vector = fVector[kProton];
       h2Weights = fh2WeightProton;
       h3Weights = fh3WeightProton;
       break;
 
     case kK0s:
-      vector = fVectorK0s;
+      vector = fVector[kK0s];
       h2Weights = fh2WeightK0s;
       h3Weights = fh3WeightK0s;
       bHasMass = kTRUE;
       break;
 
     case kLambda:
-      vector = fVectorLambda;
+      vector = fVector[kLambda];
       h2Weights = fh2WeightLambda;
       h3Weights = fh3WeightLambda;
       bHasMass = kTRUE;
       break;
 
     case kPhi:
-      vector = fVectorPhi;
+      vector = fVector[kPhi];
       h2Weights = fh2WeightPhi;
       h3Weights = fh3WeightPhi;
       bHasMass = kTRUE;
@@ -3582,7 +3537,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
 
   // assigning centrality based on number of selected charged tracks
   if(fMultEstimator == kRFP)
-  { iCentralityIndex = fVectorRefs->size(); }
+  { iCentralityIndex = fVector[kRefs]->size(); }
   else
   {
     // checking AliMultSelection
