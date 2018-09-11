@@ -853,6 +853,46 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   if(fQAV0s) delete fQAV0s;
 }
 //_____________________________________________________________________________
+const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species)
+{
+  const char* name;
+
+  switch(species)
+  {
+    case kRefs: name = "Refs";
+    case kCharged: name = "Charged";
+    case kPion: name = "Pion";
+    case kKaon: name = "Kaon";
+    case kProton: name = "Proton";
+    case kK0s: name = "K0s";
+    case kLambda: name = "Lambda";
+    case kPhi: name = "Phi";
+    default: name = "Unknown";
+  }
+
+  return name;
+}
+//_____________________________________________________________________________
+const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(PartSpecies species)
+{
+  const char* label;
+
+  switch(species)
+  {
+    case kRefs: label = "RFP";
+    case kCharged: label = "h^{#pm}";
+    case kPion: label = "#pi^{#pm}";
+    case kKaon: label = "K^{#pm}";
+    case kProton: label = "p(#bar{p})";
+    case kK0s: label = "K^{0}_{S}";
+    case kLambda: label = "#Lambda(#bar{Lambda})";
+    case kPhi: label = "#phi";
+    default: label = "NA";
+  }
+
+  return label;
+}
+//_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::ListParameters()
 {
   // lists all task parameters
