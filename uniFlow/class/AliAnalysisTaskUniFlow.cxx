@@ -4149,6 +4149,37 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           }
         }
       }
+
+      // mixed <3> correlations
+      if(fCutFlowDoMixedThreeCorrelations)
+      {
+        for(Short_t iHarm(0); iHarm < fNumMixedHarmonics; iHarm++)
+        {
+          for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
+          {
+            for(Short_t iSample(0); iSample < fNumSamples; iSample++)
+            {
+              if(!fSampling && iSample > 0) break; // define only one sample histogram if sampling is off
+
+              // TODO: Refs
+
+              TString sName = Form("fpCor2p2m2_2subG02Pos_%s_sample%d",iSamp);
+
+
+              // loop over identified species
+              for(Short_t iSpec(1); iSpec < PartSpecies::kUnknown; ++iSpec)
+              {
+
+              } // end-for {iSpec}
+
+            } // end-for {iSample}
+          } // end-for {iGap}
+        } // end-for {iHarm}
+      } // end-if {fCutFlowDoMixedThreeCorrelations}
+
+
+
+
     }
 
     // charged (tracks) histograms
