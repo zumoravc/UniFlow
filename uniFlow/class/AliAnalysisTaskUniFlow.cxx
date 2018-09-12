@@ -3796,6 +3796,22 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Short_t n1, const Short_t n2, co
   return formula;
 }
 //____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::FourDiffGapPos(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
+{
+  TComplex formula = PGapPos(n1,1)*QGapNeg(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)
+                     - PGapPos(n1,1)*QGapNeg(n2+n3,2)*QGapNeg(n4,1) - PGapPos(n1,1)*QGapNeg(n3,1)*QGapNeg(n2+n4,2)
+                     - PGapPos(n1,1)*QGapNeg(n2,1)*QGapNeg(n3+n4,2) + 2.0*PGapPos(n1,1)*QGapNeg(n2+n3+n4,3);
+  return formula;
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4)
+{
+  TComplex formula = PGapNeg(n1,1)*QGapPos(n2,1)*QGapPos(n3,1)*QGapPos(n4,1)
+                     - PGapNeg(n1,1)*QGapPos(n2+n3,2)*QGapPos(n4,1) - PGapNeg(n1,1)*QGapPos(n3,1)*QGapPos(n2+n4,2)
+                     - PGapNeg(n1,1)*QGapPos(n2,1)*QGapPos(n3+n4,2) + 2.0*PGapNeg(n1,1)*QGapPos(n2+n3+n4,3);
+  return formula;
+}
+//____________________________________________________________________
 void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 {
   // create output objects

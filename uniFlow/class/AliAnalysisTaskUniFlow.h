@@ -213,6 +213,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                ThreeDiffGapPos(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle diff. correlation calculations (with eta gap)
       TComplex                ThreeDiffGapNeg(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle diff. correlation calculations (with eta gap)
       TComplex                FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                FourDiffGapPos(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (with eta gap)
+      TComplex                FourDiffGapNeg(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (with eta gap)
 
       // properties
       AliAODEvent*            fEventAOD; //! AOD event countainer
