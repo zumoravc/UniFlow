@@ -864,6 +864,8 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   // deleting FlowPart vectors (containers)
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { if(fVector[iSpec]) delete fVector[iSpec]; }
 
+  for(Int_t i(0); i < fVecFlowTask.size(); ++i) { delete fVecFlowTask.at(i); }
+
   // deleting output lists
   if(fFlowWeights) delete fFlowWeights;
   if(fFlowRefs) delete fFlowRefs;
@@ -1046,15 +1048,13 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   Int_t iNumTasks = fVecFlowTask.size();
   printf("Flowtasks:%d\n",iNumTasks);
 
-  FlowTask* task = fVecFlowTask.at(0);
-  if(!task) { AliError("task not exists();"); }
-  task->Dummy();
-
-  // for(auto task = fVecFlowTask.begin(); task != fVecFlowTask.end(); ++task )
-  // {
-    // printf("%d\n",task.fiCor);
-  // }
-
+  for(Int_t i(0); i < iNumTasks; ++i)
+  {
+    fVecFlowTask.at(i)->Print();
+    // if(!task) { AliError("task not exists();"); }
+    // task.Print();
+    // printf("(%d %d)\n",task.fiHarm[0], task.fiHarm[1]);
+  }
 
   if(fAnalType != kAOD)
   {
@@ -4900,4 +4900,3 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   return;
 }
-//_____________________________________________________________________________
