@@ -42,6 +42,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
+      void                    SetFlowDoOnlyMixedThreeCorrelations(Bool_t use = kTRUE) { fCutFlowDoOnlyMixedThreeCorrelations = use; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
@@ -136,6 +137,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
       const static Int_t      fNumHarmonics = 1; // number of harmonics
+      const static Int_t      fNumMixedHarmonics = 3; // number of mixed harmonics
       static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
       const static Int_t      fNumEtaGap = 3; // number of harmonics
       static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
@@ -256,6 +258,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoThreeCorrelations; // [kFALSE] flag for processing <3>
+      Bool_t                  fCutFlowDoOnlyMixedThreeCorrelations; // [kFALSE] flag for processing mixed <3>
       Bool_t                  fCutFlowDoFourCorrelations; // [kFALSE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
