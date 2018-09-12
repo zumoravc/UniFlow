@@ -144,6 +144,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       const char*             GetSpeciesName(PartSpecies species);
       const char*             GetSpeciesLabel(PartSpecies species);
+      const char*             GetEtaGapName(Double_t dEtaGap) { return Form("%02.2g",10.0*dEtaGap); }
+
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       void                    ListParameters(); // list all task parameters
