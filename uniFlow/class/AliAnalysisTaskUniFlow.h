@@ -420,6 +420,23 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidates (cent, pT, InvMass)
       TProfile3D*     fp3PhiCorrCor4[fNumHarmonics]; //! <4'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
 
+      // mixed harmonics
+      TProfile*       fpRefsCor4Mixed[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2ChargedCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2ChargedCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2PionCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2PionCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2KaonCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2KaonCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2ProtonCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2ProtonCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3V0sCorrK0sCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3V0sCorrK0sCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3V0sCorrLambdaCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3V0sCorrLambdaCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3PhiCorrCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3PhiCorrCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
+
       // Events
       TH2D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
       TH1D*           fhEventCentrality; //! distribution of event centrality
@@ -594,7 +611,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
       AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
 
-      ClassDef(AliAnalysisTaskUniFlow, 6);
+      ClassDef(AliAnalysisTaskUniFlow, 7);
 };
 
 #endif
