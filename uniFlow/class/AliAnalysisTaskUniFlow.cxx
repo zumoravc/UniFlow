@@ -1072,10 +1072,12 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   if(fCutFlowDoThreeCorrelations) { AliError("Switch for <3> switch on but on fully implemented. Please turn off!"); return kFALSE; }
 
   // checking the fFlowNumHarmonicsMax, fFlowNumWeightPowersMax dimensions of p,Q,S vectors
+  if(fFlowNumWeightPowersMax < 3) { AliFatal("Low range of flow vector weight dimension! Not enought for <2>!"); return kFALSE; }
+  if(fCutFlowDoFourCorrelations && fFlowNumWeightPowersMax < 5) { AliFatal("Low range of flow vector weight dimension! Not enought for <4>!"); return kFALSE; }
+  if(fCutFlowDoOnlyMixedThreeCorrelations && fFlowNumHarmonicsMax < 7) { AliFatal("Low range of flow vector harmonics dimension! Not enought for mixed harmonics!"); return kFALSE; }
+
   for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
   {
-    if(fFlowNumWeightPowersMax < 3) { AliFatal("Low range of flow vector weight dimension! Not enought for <2>!"); return kFALSE; }
-    if(fCutFlowDoFourCorrelations && fFlowNumWeightPowersMax < 5) { AliFatal("Low range of flow vector weight dimension! Not enought for <4>!"); return kFALSE; }
     if(fFlowNumHarmonicsMax < fHarmonics[iHarm]+1) { AliFatal("Low range of flow vector harmonics dimension!"); return kFALSE; }
     if(fCutFlowDoFourCorrelations && fFlowNumHarmonicsMax < (2*fHarmonics[iHarm]+1)) { AliFatal("Low range of flow vector harmonics dimension!"); return kFALSE; }
   }
@@ -3022,7 +3024,21 @@ void AliAnalysisTaskUniFlow::DoFlowRefs(const Int_t iEtaGapIndex)
   // calculate only correlations for mixed harmonics (non-flow)
   if(fCutFlowDoOnlyMixedThreeCorrelations)
   {
+    Double_t D04 = Four(0,0,0,0).Re();
+    if(D04 != 0.0)
+    {
+      Double_t NMix2 = Four(2,2,-2,-2).Re();
+      Double_t dValMix2 = NMix2 / D04;
+      if( TMath::Abs(dValMix2) <= 1.0 ) { fpRefsCor4Mixed[fIndexSampling][iEtaGapIndex][0]->Fill(fIndexCentrality, dValMix2, D04); }
 
+      Double_t NMix23 = Four(2,3,-2,-3).Re();
+      Double_t dValMix23 = NMix23 / D04;
+      if( TMath::Abs(dValMix23) <= 1.0 ) { fpRefsCor4Mixed[fIndexSampling][iEtaGapIndex][1]->Fill(fIndexCentrality, dValMix23, D04); }
+
+      Double_t NMix3 = Four(3,3,-3,-3).Re();
+      Double_t dValMix3 = NMix3 / D04;
+      if( TMath::Abs(dValMix3) <= 1.0 ) { fpRefsCor4Mixed[fIndexSampling][iEtaGapIndex][2]->Fill(fIndexCentrality, dValMix3, D04); }
+    }
 
     return;
   }
@@ -3117,17 +3133,12 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
   // Estimate <2> for pT diff flow of POIs particles for all harmonics based on relevant flow vectors
   // *************************************************************
 
+  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
+
   Bool_t bHasMass = kFALSE;
   TAxis* axisPt = 0x0;
   TAxis* axisMass = 0x0;
 
-  // calculate only correlations for mixed harmonics (non-flow)
-  if(fCutFlowDoOnlyMixedThreeCorrelations)
-  {
-
-
-    return;
-  }
 
   TProfile2D** prof2TwoPos = 0x0;
   TProfile2D** prof2TwoNeg = 0x0;
@@ -3137,6 +3148,11 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
   TProfile3D** prof3TwoNeg = 0x0;
   TProfile3D** prof3Four = 0x0;
 
+  TProfile2D** prof2MixedPos = 0x0;
+  TProfile2D** prof2MixedNeg = 0x0;
+  TProfile3D** prof3MixedPos = 0x0;
+  TProfile3D** prof3MixedNeg = 0x0;
+
   // swich based on species
   switch (species)
   {
@@ -3144,30 +3160,40 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
       prof2TwoPos = fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex];
       prof2TwoNeg = fp2ChargedCor2Neg[fIndexSampling][iEtaGapIndex];
       prof2Four = fp2ChargedCor4Pos[fIndexSampling];
+      prof2MixedPos = fp2ChargedCor3MixedPos[fIndexSampling][iEtaGapIndex];
+      prof2MixedNeg = fp2ChargedCor3MixedNeg[fIndexSampling][iEtaGapIndex];
       break;
 
     case kPion:
       prof2TwoPos = fp2PionCor2Pos[fIndexSampling][iEtaGapIndex];
       prof2TwoNeg = fp2PionCor2Neg[fIndexSampling][iEtaGapIndex];
       prof2Four = fp2PionCor4Pos[fIndexSampling];
+      prof2MixedPos = fp2PionCor3MixedPos[fIndexSampling][iEtaGapIndex];
+      prof2MixedNeg = fp2PionCor3MixedNeg[fIndexSampling][iEtaGapIndex];
       break;
 
     case kKaon:
       prof2TwoPos = fp2KaonCor2Pos[fIndexSampling][iEtaGapIndex];
       prof2TwoNeg = fp2KaonCor2Neg[fIndexSampling][iEtaGapIndex];
       prof2Four = fp2KaonCor4Pos[fIndexSampling];
+      prof2MixedPos = fp2KaonCor3MixedPos[fIndexSampling][iEtaGapIndex];
+      prof2MixedNeg = fp2KaonCor3MixedNeg[fIndexSampling][iEtaGapIndex];
       break;
 
     case kProton:
       prof2TwoPos = fp2ProtonCor2Pos[fIndexSampling][iEtaGapIndex];
       prof2TwoNeg = fp2ProtonCor2Neg[fIndexSampling][iEtaGapIndex];
       prof2Four = fp2ProtonCor4Pos[fIndexSampling];
+      prof2MixedPos = fp2ProtonCor3MixedPos[fIndexSampling][iEtaGapIndex];
+      prof2MixedNeg = fp2ProtonCor3MixedNeg[fIndexSampling][iEtaGapIndex];
       break;
 
     case kK0s:
       prof3TwoPos = fp3V0sCorrK0sCor2Pos[iEtaGapIndex];
       prof3TwoNeg = fp3V0sCorrK0sCor2Neg[iEtaGapIndex];
       prof3Four = fp3V0sCorrK0sCor4;
+      prof3MixedPos = fp3V0sCorrK0sCor3MixedPos[iEtaGapIndex];
+      prof3MixedNeg = fp3V0sCorrK0sCor3MixedNeg[iEtaGapIndex];
       bHasMass = kTRUE;
       break;
 
@@ -3175,6 +3201,8 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
       prof3TwoPos = fp3V0sCorrLambdaCor2Pos[iEtaGapIndex];
       prof3TwoNeg = fp3V0sCorrLambdaCor2Neg[iEtaGapIndex];
       prof3Four = fp3V0sCorrLambdaCor4;
+      prof3MixedPos = fp3V0sCorrLambdaCor3MixedPos[iEtaGapIndex];
+      prof3MixedNeg = fp3V0sCorrLambdaCor3MixedNeg[iEtaGapIndex];
       bHasMass = kTRUE;
       break;
 
@@ -3182,6 +3210,8 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
       prof3TwoPos = fp3PhiCorrCor2Pos[iEtaGapIndex];
       prof3TwoNeg = fp3PhiCorrCor2Neg[iEtaGapIndex];
       prof3Four = fp3PhiCorrCor4;
+      prof3MixedPos = fp3PhiCorrCor3MixedPos[iEtaGapIndex];
+      prof3MixedNeg = fp3PhiCorrCor3MixedNeg[iEtaGapIndex];
       bHasMass = kTRUE;
       break;
 
@@ -3190,8 +3220,144 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
       return;
   }
 
-  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
+  // >>>>> calculate only correlations for mixed harmonics (non-flow)
+  if(fCutFlowDoOnlyMixedThreeCorrelations)
+  {
+    if(bHasMass)
+    {
+      if(!prof3MixedPos) { AliError("'prof3MixedPos' not found!"); return; }
+      if(dEtaGap > -1.0 && !prof3MixedNeg) { AliError("'prof3MixedNeg' not found!"); return; }
+      axisPt = prof3MixedPos[0]->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return; }
+      axisMass = prof3MixedPos[0]->GetZaxis(); if(!axisMass) { AliError("Mass axis object not found!"); return; }
+    }
+    else
+    {
+      if(!prof2MixedPos) { AliError("'prof2MixedPos' not found!"); return; }
+      if(dEtaGap > -1.0 && !prof2MixedNeg) { AliError("'prof2MixedNeg' not found!"); return; }
+      axisPt = prof2MixedPos[0]->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return; }
+    }
 
+    // iNumMassBins = 1 to run at least once if bHasMass == kFALSE
+    Int_t iNumMassBins = 1; if(bHasMass) { iNumMassBins = axisMass->GetNbins(); }
+    Int_t iNumPtBins = axisPt->GetNbins();
+
+    for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass)
+    {
+      Double_t dMass = 0.0; Double_t dMassLow = 0.0; Double_t dMassHigh = 0.0;
+      if(bHasMass)
+      {
+        dMass = axisMass->GetBinCenter(iMass);
+        dMassLow = axisMass->GetBinLowEdge(iMass);
+        dMassHigh = axisMass->GetBinUpEdge(iMass);
+      }
+
+      for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt)
+      {
+        Double_t dPt = axisPt->GetBinCenter(iPt);
+        Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
+        Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
+
+        // filling POIs (P,S) flow vectors
+        FillPOIsVectors(iEtaGapIndex,species,dPtLow,dPtHigh,dMassLow,dMassHigh);
+
+        if(dEtaGap == -1.0) // no eta gap
+        {
+          // estimating <3'> :
+          Double_t D03 = ThreeDiff(0,0,0).Re();
+          if(D03 != 0.0)
+          {
+            Double_t NMix422 = ThreeDiff(4,-2,-2).Re();
+            Double_t dValMix422 = NMix422 / D03;
+            if( TMath::Abs(dValMix422) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedPos[0]->Fill(fIndexCentrality, dPt, dMass, dValMix422, D03); }
+              else { prof2MixedPos[0]->Fill(fIndexCentrality, dPt, dValMix422, D03); }
+            }
+
+            Double_t NMix532 = ThreeDiff(5,-3,-2).Re();
+            Double_t dValMix532 = NMix532 / D03;
+            if( TMath::Abs(dValMix532) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedPos[1]->Fill(fIndexCentrality, dPt, dMass, dValMix532, D03); }
+              else { prof2MixedPos[1]->Fill(fIndexCentrality, dPt, dValMix532, D03); }
+            }
+
+            Double_t NMix633 = ThreeDiff(5,-3,-2).Re();
+            Double_t dValMix633 = NMix633 / D03;
+            if( TMath::Abs(dValMix633) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedPos[2]->Fill(fIndexCentrality, dPt, dMass, dValMix633, D03); }
+              else { prof2MixedPos[2]->Fill(fIndexCentrality, dPt, dValMix633, D03); }
+            }
+          }
+        }
+        else // eta gap
+        {
+          // estimating <3'> : POIs in positive eta
+          Double_t D03pos = ThreeDiffGapPos(0,0,0).Re();
+          if(D03pos != 0.0)
+          {
+            Double_t NMix422pos = ThreeDiffGapPos(4,-2,-2).Re();
+            Double_t dValMix422pos = NMix422pos / D03pos;
+            if( TMath::Abs(dValMix422pos) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedPos[0]->Fill(fIndexCentrality, dPt, dMass, dValMix422pos, D03pos); }
+              else { prof2MixedPos[0]->Fill(fIndexCentrality, dPt, dValMix422pos, D03pos); }
+            }
+
+            Double_t NMix532pos = ThreeDiffGapPos(5,-3,-2).Re();
+            Double_t dValMix532pos = NMix532pos / D03pos;
+            if( TMath::Abs(dValMix532pos) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedPos[1]->Fill(fIndexCentrality, dPt, dMass, dValMix532pos, D03pos); }
+              else { prof2MixedPos[1]->Fill(fIndexCentrality, dPt, dValMix532pos, D03pos); }
+            }
+
+            Double_t NMix633pos = ThreeDiffGapPos(6,-3,-3).Re();
+            Double_t dValMix633pos = NMix633pos / D03pos;
+            if( TMath::Abs(dValMix633pos) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedPos[2]->Fill(fIndexCentrality, dPt, dMass, dValMix633pos, D03pos); }
+              else { prof2MixedPos[2]->Fill(fIndexCentrality, dPt, dValMix633pos, D03pos); }
+            }
+          }
+
+          // estimating <3'> : POIs in negative eta
+          Double_t D03neg = ThreeDiffGapNeg(0,0,0).Re();
+          if(D03neg != 0.0)
+          {
+            Double_t NMix422neg = ThreeDiffGapNeg(4,-2,-2).Re();
+            Double_t dValMix422neg = NMix422neg / D03neg;
+            if( TMath::Abs(dValMix422neg) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedNeg[0]->Fill(fIndexCentrality, dPt, dMass, dValMix422neg, D03neg); }
+              else { prof2MixedNeg[0]->Fill(fIndexCentrality, dPt, dValMix422neg, D03neg); }
+            }
+
+            Double_t NMix532neg = ThreeDiffGapNeg(5,-3,-2).Re();
+            Double_t dValMix532neg = NMix532neg / D03neg;
+            if( TMath::Abs(dValMix532neg) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedNeg[1]->Fill(fIndexCentrality, dPt, dMass, dValMix532neg, D03neg); }
+              else { prof2MixedNeg[1]->Fill(fIndexCentrality, dPt, dValMix532neg, D03neg); }
+            }
+
+            Double_t NMix633neg = ThreeDiffGapNeg(6,-3,-3).Re();
+            Double_t dValMix633neg = NMix633neg / D03neg;
+            if( TMath::Abs(dValMix633neg) <= 1.0 )
+            {
+              if(bHasMass) { prof3MixedNeg[2]->Fill(fIndexCentrality, dPt, dMass, dValMix633neg, D03neg); }
+              else { prof2MixedNeg[2]->Fill(fIndexCentrality, dPt, dValMix633neg, D03neg); }
+            }
+          }
+        }
+      }
+    }
+
+    return;
+  }
+
+  // >>>>> Standard vn{M}
   if(bHasMass)
   {
     // particle species with inv. mass (K0s, Lambda, Phi)
@@ -3209,6 +3375,7 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
     if(fCutFlowDoFourCorrelations && !prof2Four) { AliError("'prof2Four' not found!"); return; }
     axisPt = prof2TwoPos[0]->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return; }
   }
+
 
   // iNumMassBins = 1 to run at least once if bHasMass == kFALSE
   Int_t iNumMassBins = 1; if(bHasMass) { iNumMassBins = axisMass->GetNbins(); }
@@ -3232,6 +3399,7 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
 
       // filling POIs (P,S) flow vectors
       FillPOIsVectors(iEtaGapIndex,species,dPtLow,dPtHigh,dMassLow,dMassHigh);
+
 
       if(dEtaGap == -1.0) // no eta gap
       {
@@ -4251,13 +4419,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
               fpRefsCor4Mixed[iSample][iGap][iHarm]->Sumw2(kTRUE);
               fFlowRefs->Add(fpRefsCor4Mixed[iSample][iGap][iHarm]);
 
-              fp2ChargedCor3MixedPos[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_%s_gap%s_Pos_sample%d",sPOIsCor[iHarm].Data(),sEtaGap,iSample),Form("Charged: %s | Gap %s | sample %d | POIs pos; %s; #it{p}_{T} (GeV/c)",sPOIsCor[iHarm].Data(),sEtaGap,iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+              fp2ChargedCor3MixedPos[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Charged_%s_gap%s_Pos_sample%d",sPOIsCor[iHarm].Data(),sEtaGap,iSample),Form("h^{#pm}: %s | Gap %s | sample %d | POIs pos; %s; #it{p}_{T} (GeV/c)",sPOIsCor[iHarm].Data(),sEtaGap,iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
               fp2ChargedCor3MixedPos[iSample][iGap][iHarm]->Sumw2(kTRUE);
               fFlowCharged->Add(fp2ChargedCor3MixedPos[iSample][iGap][iHarm]);
 
               if(fEtaGap[iGap] > -1.0)
               {
-                fp2ChargedCor3MixedNeg[iSample][iGap][iHarm]  = new TProfile2D(Form("fp2Charged_%s_gap%s_Neg_sample%d",sPOIsCor[iHarm].Data(),sEtaGap,iSample),Form("Charged: %s | Gap %s | sample %d | POIs neg; %s; #it{p}_{T} (GeV/c)",sPOIsCor[iHarm].Data(),sEtaGap,iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+                fp2ChargedCor3MixedNeg[iSample][iGap][iHarm]  = new TProfile2D(Form("fp2Charged_%s_gap%s_Neg_sample%d",sPOIsCor[iHarm].Data(),sEtaGap,iSample),Form("h^{#pm}: %s | Gap %s | sample %d | POIs neg; %s; #it{p}_{T} (GeV/c)",sPOIsCor[iHarm].Data(),sEtaGap,iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
                 fp2ChargedCor3MixedNeg[iSample][iGap][iHarm]->Sumw2(kTRUE);
                 fFlowCharged->Add(fp2ChargedCor3MixedNeg[iSample][iGap][iHarm]);
               }
@@ -4286,7 +4454,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
                   fp2KaonCor3MixedNeg[iSample][iGap][iHarm]->Sumw2(kTRUE);
                   fFlowKaon->Add(fp2KaonCor3MixedNeg[iSample][iGap][iHarm]);
 
-                  fp2ProtonCor3MixedNeg[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Proton_%s_gap%s_Neg_sample%d",sPOIsCor[iHarm].Data(),sEtaGap,iSample),Form("p/(#bar{p}): %s | Gap %s | sample %d | POIs neg; %s; #it{p}_{T} (GeV/c)",sPOIsCor[iHarm].Data(),sEtaGap,iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+                  fp2ProtonCor3MixedNeg[iSample][iGap][iHarm] = new TProfile2D(Form("fp2Proton_%s_gap%s_Neg_sample%d",sPOIsCor[iHarm].Data(),sEtaGap,iSample),Form("p/#bar{p}: %s | Gap %s | sample %d | POIs neg; %s; #it{p}_{T} (GeV/c)",sPOIsCor[iHarm].Data(),sEtaGap,iSample, GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
                   fp2ProtonCor3MixedNeg[iSample][iGap][iHarm]->Sumw2(kTRUE);
                   fFlowProton->Add(fp2ProtonCor3MixedNeg[iSample][iGap][iHarm]);
                 }

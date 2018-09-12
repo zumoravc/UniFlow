@@ -125,7 +125,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
       const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
       const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
-      static const Short_t    fFlowNumHarmonicsMax = 5; // maximum harmonics length of flow vector array
+      static const Short_t    fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
       static const Short_t    fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
       const Double_t          fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
       const Double_t          fFlowPOIsPtMax; // [15] (GeV/c) max pT treshold for POIs for differential flow
