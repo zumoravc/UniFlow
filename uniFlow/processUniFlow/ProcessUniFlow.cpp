@@ -299,7 +299,7 @@ class ProcessUniFlow
     Bool_t      Initialize(); // initialization task
     Bool_t      LoadLists(); // loading flow lists from input file
 
-    Bool_t      PrepareForMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
+    Bool_t      ProcessMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
     Bool_t      ProcessTask(FlowTask* task); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
@@ -584,10 +584,13 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   Info(Form("Processing task: %s",task->fName.Data()),"ProcessTask");
   if(!task) { Error("Task not valid!","ProcessTask"); return kFALSE; }
 
+  task->PrintTask();
+
   // task checks & initialization
   if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
 
-  task->PrintTask();
+  if(task->fProcessMixed) { return ProcessMixed(task); }
+
 
   switch (task->fSpecies)
   {
@@ -611,6 +614,14 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     default:
     break;
   }
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
+{
+  Info("Processing mixed","ProcessMixed");
+  if(!task) { Error("Task not valid!","ProcessMixed"); return kFALSE; }
 
   return kTRUE;
 }
