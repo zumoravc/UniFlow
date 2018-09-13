@@ -57,6 +57,7 @@ class FlowTask
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
     void        SetMergePosNeg(Bool_t merge = kTRUE) { fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
+    void        SetProcessMixedHarmonics(TString nameDiff, TString nameRefs) { fProcessMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; }
 
     // fitting
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -88,6 +89,9 @@ class FlowTask
     Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
     Bool_t      fDesampleUseRMS; // [kFALSE] flag for using RMS as uncertainty during desampling
     Bool_t      fMergePosNeg; // [kFALSE] flag for merging results corresponding to positive and negative POIs
+    Bool_t      fProcessMixed; // [kFALSE] flag for processing mixed harmonics (non-linear flow modes)
+    TString     fMixedDiff; // name (tag) for diff. profile for mixed harmonics
+    TString     fMixedRefs; // name (tag) for reference profile for mixed harmonics
     // Reconstructed fitting
     Bool_t      fFlowFitPhiSubtLS; // [kFALSE] flag for subtraction of like-sign background from the unlike-sign one
     Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
@@ -132,6 +136,9 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fRebinning = kTRUE;
   fSampleMerging = kFALSE;
   fDesampleUseRMS = kFALSE;
+  fProcessMixed = kFALSE;
+  fMixedDiff = "";
+  fMixedRefs = "";
   fMergePosNeg = kFALSE;
   fFlowFitPhiSubtLS = kFALSE;
   fRebinFlowMass = 0;
@@ -250,6 +257,7 @@ void FlowTask::PrintTask()
   printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
+  printf("   fProcessMixed: %s\n", fProcessMixed ? "true" : "false");
   printf("   fDoFour: %s\n", fDoFour ? "true" : "false");
   printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
   printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
@@ -291,6 +299,7 @@ class ProcessUniFlow
     Bool_t      Initialize(); // initialization task
     Bool_t      LoadLists(); // loading flow lists from input file
 
+    Bool_t      PrepareForMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
     Bool_t      ProcessTask(FlowTask* task); // process FlowTask according to it setting
     Bool_t      ProcessRefs(FlowTask* task); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
