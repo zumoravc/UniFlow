@@ -75,6 +75,7 @@ void runAnalysis()
 
     // AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
+    task1->SetFlowDoOnlyMixedThreeCorrelations(kTRUE);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(1);

@@ -42,6 +42,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
+      void                    SetFlowDoOnlyMixedThreeCorrelations(Bool_t use = kTRUE) { fCutFlowDoOnlyMixedThreeCorrelations = use; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
@@ -124,7 +125,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
       const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
       const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
-      static const Short_t    fFlowNumHarmonicsMax = 5; // maximum harmonics length of flow vector array
+      static const Short_t    fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
       static const Short_t    fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
       const Double_t          fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
       const Double_t          fFlowPOIsPtMax; // [15] (GeV/c) max pT treshold for POIs for differential flow
@@ -136,6 +137,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
       const static Int_t      fNumHarmonics = 1; // number of harmonics
+      const static Int_t      fNumMixedHarmonics = 3; // number of mixed harmonics
       static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
       const static Int_t      fNumEtaGap = 3; // number of harmonics
       static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
@@ -144,6 +146,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       const char*             GetSpeciesName(PartSpecies species);
       const char*             GetSpeciesLabel(PartSpecies species);
+      const char*             GetEtaGapName(Double_t dEtaGap) { return Form("%02.2g",10.0*dEtaGap); }
+
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       void                    ListParameters(); // list all task parameters
@@ -254,6 +258,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fCutFlowDoThreeCorrelations; // [kFALSE] flag for processing <3>
+      Bool_t                  fCutFlowDoOnlyMixedThreeCorrelations; // [kFALSE] flag for processing mixed <3>
       Bool_t                  fCutFlowDoFourCorrelations; // [kFALSE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
@@ -414,6 +419,23 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidates (cent, pT, InvMass)
       TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidates (cent, pT, InvMass)
       TProfile3D*     fp3PhiCorrCor4[fNumHarmonics]; //! <4'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
+
+      // mixed harmonics
+      TProfile*       fpRefsCor4Mixed[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2ChargedCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2ChargedCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2PionCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2PionCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2KaonCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2KaonCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2ProtonCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile2D*     fp2ProtonCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3V0sCorrK0sCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3V0sCorrK0sCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3V0sCorrLambdaCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3V0sCorrLambdaCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3PhiCorrCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
+      TProfile3D*     fp3PhiCorrCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
 
       // Events
       TH2D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
@@ -589,7 +611,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
       AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
 
-      ClassDef(AliAnalysisTaskUniFlow, 6);
+      ClassDef(AliAnalysisTaskUniFlow, 7);
 };
 
 #endif
