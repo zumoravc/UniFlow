@@ -64,6 +64,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessPhi(Bool_t filter = kTRUE) { fProcessPhi = filter; }
       // flow related setters
       void                    AddTwo(Int_t n1, Int_t n2) { fVecFlowTask.push_back(new FlowTask({n1,n2})); }
+      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap) { fVecFlowTask.push_back(new FlowTask({n1,n2}, {gap})); }
       void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
       void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
