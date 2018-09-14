@@ -1090,13 +1090,8 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   if(fFlowUseWeights && !fFlowWeightsPath.EqualTo(""))
   {
     fFlowWeightsFile = TFile::Open(Form("%s",fFlowWeightsPath.Data()));
-    if(!fFlowWeightsFile)
-    {
-      AliFatal("Flow weights file not found! Terminating!");
-      return kFALSE;
-    }
-
-    LoadWeights();
+    if(!fFlowWeightsFile) { AliFatal("Flow weights file not found! Terminating!"); return kFALSE; }
+    if(!LoadWeights(kTRUE)) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
   }
 
   AliInfo("Preparing particle containers (std::vectors)");
@@ -1438,17 +1433,25 @@ Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
   return kFALSE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::LoadWeights()
+Bool_t AliAnalysisTaskUniFlow::LoadWeights(Bool_t init)
 {
   // (Re-) Loading of flow vector weights
   // ***************************************************************************
-
   if(!fFlowWeightsFile) { AliError("File with flow weights not found!"); return kFALSE; }
 
   TList* listFlowWeights = 0x0;
-  if(fFlowRunByRunWeights) { listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber)); }
-  else { listFlowWeights = (TList*) fFlowWeightsFile->Get("weights"); }
-  if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fRunNumber)); return kFALSE; }
+  if(init || !fFlowRunByRunWeights)
+  {
+    // information about current run is unknown in Initialization(); load only "averaged" weights
+    AliInfo("Loading initial GF weights (run-averaged)");
+    listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
+    if(!listFlowWeights) { AliError("TList with flow weights not found."); return kFALSE; }
+  }
+  else
+  {
+    listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber));
+    if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fRunNumber)); return kFALSE; }
+  }
 
   if(fFlowUse3Dweights)
   {
@@ -2943,7 +2946,7 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
   if(fRunMode == kSkipFlow) { fEventCounter++; return kTRUE; }
 
   // checking the run number for aplying weights & loading TList with weights
-  if(fFlowUseWeights && fFlowRunByRunWeights && (fRunNumber != fEventAOD->GetRunNumber()) && !LoadWeights()) { return kFALSE; }
+  if(fFlowUseWeights && fFlowRunByRunWeights && fRunNumber != fEventAOD->GetRunNumber() && !LoadWeights(kFALSE)) { return kFALSE; }
 
   // >>>> flow starts here <<<<
   // >>>> Flow a la General Framework <<<<
