@@ -11,26 +11,67 @@
 
 struct FlowTask
 {
-  Int_t                 fiCor; // correlation order <M>
-  Int_t                 fiSubs; // number of subevents
+  Int_t                 fiNumHarm; // correlation order <M>
+  Int_t                 fiNumGaps; // number of subevents
   std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
   std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
+  TString               fsName; // automatically generated name: see Init() for format
+  TString               fsLabel; // automatically generated label see Init() for format
 
-              FlowTask() : fiCor(0), fiSubs(0) {}; // default ctor
-              FlowTask(std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) { fiHarm = harm; fdGaps = gaps; fiCor = harm.size(); fiSubs = gaps.size(); } // actual ctor
+              FlowTask() : fiNumHarm(0), fiNumGaps(0), fsName("DummyName"), fsLabel("DummyLabel") {}; // default ctor
+              FlowTask(std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) { fiHarm = harm; fdGaps = gaps; fiNumHarm = harm.size(); fiNumGaps = gaps.size(); Init(); } // actual ctor
               ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
+  void        Init(); // initialization
   void        Print(); // print FlowTask properties
 };
 //_____________________________________________________________________________
-void FlowTask::Print()
+void FlowTask::Init()
 {
-  printf("FlowTask::Print() : fiHarm[%d] = { ",fiCor);
-  for(Int_t i(0); i < fiCor; ++i) { printf("%d ",fiHarm[i]); }
-  printf("} | fgGaps[%d] = { ",fiSubs);
-  for(Int_t i(0); i < fiSubs; ++i) { printf("%0.2f ",fdGaps[i]); }
-  printf("}\n");
+  // Initilization of FlowTask
+
+  if(fiNumHarm < 2)
+  {
+    fsName = "NA";
+    fsLabel = "NA";
+    return;
+  }
+
+  // generating name
+  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
+  sName += ")";
+
+  if(fiNumGaps > 0)
+  {
+    sName += Form("_%dsub(%02.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%02.2g",fdGaps[i]); }
+    sName += ")";
+  }
+
+  // generating label
+  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
+  sLabel += "}";
+
+  if(fiNumGaps > 0)
+  {
+    sLabel += Form(" %dsub(|#Delta#eta| > %02.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %02.2g",fdGaps[i]); }
+    sLabel += ")";
+  }
+
+  fsName = sName;
+  fsLabel = sLabel;
 }
 //_____________________________________________________________________________
+void FlowTask::Print()
+{
+  printf("FlowTask::Print() : '%s' (%s) | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fiNumHarm);
+  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
+  printf("} | fgGaps[%d] = { ",fiNumGaps);
+  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
+  printf("}\n");
+}
 //_____________________________________________________________________________
 
 
