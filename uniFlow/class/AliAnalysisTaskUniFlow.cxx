@@ -104,8 +104,8 @@ class AliAnalysisTaskUniFlow;
 
 ClassImp(AliAnalysisTaskUniFlow);
 
-Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2};
-Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {-1.0,0.0,0.4};
+Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2,3};
+Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {-1.0,0.4};
 Double_t AliAnalysisTaskUniFlow::fMultBins[] = {0.,5.,10.,20.,40.,60.,100.};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
@@ -864,7 +864,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   // deleting FlowPart vectors (containers)
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { if(fVector[iSpec]) delete fVector[iSpec]; }
 
-  for(Int_t i(0); i < fVecFlowTask.size(); ++i) { delete fVecFlowTask.at(i); }
+  for(Size_t i(0); i < fVecFlowTask.size(); ++i) { delete fVecFlowTask.at(i); }
 
   // deleting output lists
   if(fFlowWeights) delete fFlowWeights;
@@ -1044,18 +1044,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // returns kTRUE if succesfull
   // *************************************************************
   AliInfo("Checking task setting");
-
-  Int_t iNumTasks = fVecFlowTask.size();
-  printf("Flowtasks:%d\n",iNumTasks);
-
-  for(Int_t i(0); i < iNumTasks; ++i)
-  {
-    fVecFlowTask.at(i)->Print();
-    // if(!task) { AliError("task not exists();"); }
-    // task.Print();
-    // printf("(%d %d)\n",task.fiHarm[0], task.fiHarm[1]);
-  }
-
   if(fAnalType != kAOD)
   {
     AliFatal("Analysis type: not kAOD (not implemented for ESDs yet)! Terminating!");
@@ -4100,9 +4088,34 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   const Int_t iPOIsPtNumBins = (Int_t) (fFlowPOIsPtMax - fFlowPOIsPtMin) / 0.1 + 0.5; // fixed width 0.1 GeV/c
   const Int_t iMultNumBins = fFlowCentMax - fFlowCentMin; // fixed unit percentile or Nch bin width
 
-
-
   // creating histograms
+
+
+  // histos for FlowTasks
+
+  Int_t iNumTasks = fVecFlowTask.size();
+  for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
+  {
+    FlowTask* task = fVecFlowTask.at(iTask);
+    if(!task) { fInit = kFALSE; AliError(Form("FlowTask %d does not exists\n",iTask)); return; }
+    task->Print();
+
+    const char* name = task->fsName.Data();
+    const char* label = task->fsLabel.Data();
+
+    TList* list = fFlowRefs;
+
+    TProfile* pRef = new TProfile(name,label,iMultNumBins,fFlowCentMin,fFlowCentMax);
+    pRef->Sumw2();
+    list->Add(pRef);
+
+    // TO BE charged
+    TProfile* pRef2 = new TProfile(name,label,1,0,1);
+    pRef2->Sumw2();
+    fFlowCharged->Add(pRef2);
+  }
+
+
     // event histogram
     fhEventSampling = new TH2D("fhEventSampling",Form("Event sampling; %s; sample index", GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fNumSamples,0,fNumSamples);
     fQAEvents->Add(fhEventSampling);
