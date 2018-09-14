@@ -2968,6 +2968,67 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Short_t iQAindex, const AliAODTrack
   return;
 }
 //_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
+{
+  if(!task) { AliError("FlowTask does not exists!"); return kFALSE; }
+
+  // Fill Flow vectors
+
+  // JUST SO I DO NOT HAVE TO REIMPLEMENT FILLVECTORS
+  Int_t iGap = 0;
+  if(task->fiNumGaps == 0) { iGap = 0; }
+  else { iGap = 1; }
+
+  FillRefsVectors(iGap);
+
+  // CalculateFlow
+
+  Int_t iCor = task->fiNumHarm;
+
+  switch(iCor)
+  {
+    case 2 :
+      if(iGap == 0) // no gap
+      {
+        Double_t D02 = Two(0,0).Re();
+        if(D02 != 0.0)
+        {
+          Double_t Nn2 = Two(task->fiHarm[0],task->fiHarm[1]).Re();
+          Double_t dValue = Nn2 / D02;
+
+          TProfile* prof = (TProfile*) fFlowRefs->FindObject(task->fsName.Data());
+          if(!prof) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return kFALSE; }
+
+          if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile::Fill(fIndexCentrality, dValue, D02); }
+        }
+      }
+      else
+      {
+        Double_t D02 = TwoGap(0,0).Re();
+        if(D02 != 0.0)
+        {
+          Double_t Nn2 = TwoGap(task->fiHarm[0],task->fiHarm[1]).Re();
+          Double_t dValue = Nn2 / D02;
+
+          TProfile* prof = (TProfile*) fFlowRefs->FindObject(task->fsName.Data());
+          if(!prof) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return kFALSE; }
+
+          if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile::Fill(fIndexCentrality, dValue, D02); }
+        }
+      }
+    break;
+
+    // default:
+    //   AliWarning("Higher correlations not implemented yet!");
+  }
+
+
+  // save results
+
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
 {
   // main (envelope) method for flow calculations in selected events
@@ -2981,6 +3042,18 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
   if(fFlowUseWeights && fFlowRunByRunWeights && fRunNumber != fEventAOD->GetRunNumber() && !LoadWeights(kFALSE)) { return kFALSE; }
 
   // >>>> flow starts here <<<<
+
+
+  // >>>> Using FlowTask <<<<<
+
+  Int_t iNumTasks = fVecFlowTask.size();
+  for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
+  {
+    Bool_t process = ProcessFlowTask(fVecFlowTask.at(iTask));
+  }
+
+
+
   // >>>> Flow a la General Framework <<<<
   for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
   {
