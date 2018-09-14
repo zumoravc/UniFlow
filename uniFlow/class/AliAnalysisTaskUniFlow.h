@@ -12,16 +12,26 @@
 struct FlowTask
 {
   Int_t                 fiCor; // correlation order <M>
-  std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
   Int_t                 fiSubs; // number of subevents
+  std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
   std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
 
-              FlowTask() : fiCor(0), fiSubs(0) {};
-              FlowTask(std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) { fiHarm = harm; fdGaps = gaps; fiCor = harm.size(); fiSubs = gaps.size(); }
+              FlowTask() : fiCor(0), fiSubs(0) {}; // default ctor
+              FlowTask(std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) { fiHarm = harm; fdGaps = gaps; fiCor = harm.size(); fiSubs = gaps.size(); } // actual ctor
               ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
-  void        Print() { printf("FlowTask: <%d>: ", fiCor); for(Int_t i(0); i < fiCor; ++i) { printf("%d ",fiHarm[i]); } printf("\n"); }
+  void        Print(); // print FlowTask properties
 };
-
+//_____________________________________________________________________________
+void FlowTask::Print()
+{
+  printf("FlowTask::Print() : fiHarm[%d] = { ",fiCor);
+  for(Int_t i(0); i < fiCor; ++i) { printf("%d ",fiHarm[i]); }
+  printf("} | fgGaps[%d] = { ",fiSubs);
+  for(Int_t i(0); i < fiSubs; ++i) { printf("%0.2f ",fdGaps[i]); }
+  printf("}\n");
+}
+//_____________________________________________________________________________
+//_____________________________________________________________________________
 
 
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
