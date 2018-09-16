@@ -239,39 +239,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhsPhiCandSig(0x0),
   fhsPhiCandBg(0x0),
 
-  fh3WeightsRefs(0x0),
-  fh3WeightsCharged(0x0),
-  fh3WeightsPion(0x0),
-  fh3WeightsKaon(0x0),
-  fh3WeightsProton(0x0),
-  fh3WeightsPhi(0x0),
-  fh3WeightsK0s(0x0),
-  fh3WeightsLambda(0x0),
-  fh3AfterWeightsRefs(0x0),
-  fh3AfterWeightsCharged(0x0),
-  fh3AfterWeightsPion(0x0),
-  fh3AfterWeightsKaon(0x0),
-  fh3AfterWeightsProton(0x0),
-  fh3AfterWeightsPhi(0x0),
-  fh3AfterWeightsK0s(0x0),
-  fh3AfterWeightsLambda(0x0),
-  fh2WeightRefs(0x0),
-  fh2WeightCharged(0x0),
-  fh2WeightPion(0x0),
-  fh2WeightKaon(0x0),
-  fh2WeightProton(0x0),
-  fh2WeightK0s(0x0),
-  fh2WeightLambda(0x0),
-  fh2WeightPhi(0x0),
-  fh3WeightRefs(0x0),
-  fh3WeightCharged(0x0),
-  fh3WeightPion(0x0),
-  fh3WeightKaon(0x0),
-  fh3WeightProton(0x0),
-  fh3WeightK0s(0x0),
-  fh3WeightLambda(0x0),
-  fh3WeightPhi(0x0),
-
   // event histograms
   fhEventSampling(0x0),
   fhEventCentrality(0x0),
@@ -508,39 +475,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhsPhiCandSig(0x0),
   fhsPhiCandBg(0x0),
 
-  fh3WeightsRefs(0x0),
-  fh3WeightsCharged(0x0),
-  fh3WeightsPion(0x0),
-  fh3WeightsKaon(0x0),
-  fh3WeightsProton(0x0),
-  fh3WeightsPhi(0x0),
-  fh3WeightsK0s(0x0),
-  fh3WeightsLambda(0x0),
-  fh3AfterWeightsRefs(0x0),
-  fh3AfterWeightsCharged(0x0),
-  fh3AfterWeightsPion(0x0),
-  fh3AfterWeightsKaon(0x0),
-  fh3AfterWeightsProton(0x0),
-  fh3AfterWeightsPhi(0x0),
-  fh3AfterWeightsK0s(0x0),
-  fh3AfterWeightsLambda(0x0),
-  fh2WeightRefs(0x0),
-  fh2WeightCharged(0x0),
-  fh2WeightPion(0x0),
-  fh2WeightKaon(0x0),
-  fh2WeightProton(0x0),
-  fh2WeightK0s(0x0),
-  fh2WeightLambda(0x0),
-  fh2WeightPhi(0x0),
-  fh3WeightRefs(0x0),
-  fh3WeightCharged(0x0),
-  fh3WeightPion(0x0),
-  fh3WeightKaon(0x0),
-  fh3WeightProton(0x0),
-  fh3WeightK0s(0x0),
-  fh3WeightLambda(0x0),
-  fh3WeightPhi(0x0),
-
   // event histograms
   fhEventSampling(0x0),
   fhEventCentrality(0x0),
@@ -648,6 +582,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
     fVector[iSpec] = 0x0;
     fListFlow[iSpec] = 0x0;
     fProcessSpec[iSpec] = kTRUE;
+    fh2Weights[iSpec] = 0x0;
+    fh3Weights[iSpec] = 0x0;
+    fh3AfterWeights[iSpec] = 0x0;
   }
   fVecFlowTask = std::vector<FlowTask*>(); //
 
@@ -662,74 +599,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
       fFlowVecPpos[iHarm][iPower] = TComplex(0,0,kFALSE);
       fFlowVecPneg[iHarm][iPower] = TComplex(0,0,kFALSE);
       fFlowVecS[iHarm][iPower] = TComplex(0,0,kFALSE);
-    }
-  }
-
-  // Flow profiles & histograms
-  for(Short_t iHarm(0); iHarm < fNumHarmonics; iHarm++)
-  {
-    for(Short_t iSample(0); iSample < fNumSamples; iSample++)
-    {
-      fp2ChargedCor4Pos[iSample][iHarm] = 0x0;
-      fp2PionCor4Pos[iSample][iHarm] = 0x0;
-      fp2KaonCor4Pos[iSample][iHarm] = 0x0;
-      fp2ProtonCor4Pos[iSample][iHarm] = 0x0;
-    }
-
-    fp3V0sCorrK0sCor4[iHarm] = 0x0;
-    fp3V0sCorrLambdaCor4[iHarm] = 0x0;
-    fp3PhiCorrCor4[iHarm] = 0x0;
-
-    for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
-    {
-
-      for(Short_t iSample(0); iSample < fNumSamples; iSample++)
-      {
-        fpRefsCor2[iSample][iGap][iHarm] = 0x0;
-        fpRefsCor4[iSample][iGap][iHarm] = 0x0;
-        fpRefsCor4_3sub[iSample][iGap][iHarm] = 0x0;
-        fp2ChargedCor2Pos[iSample][iGap][iHarm] = 0x0;
-        fp2ChargedCor2Neg[iSample][iGap][iHarm] = 0x0;
-        fp2PionCor2Pos[iSample][iGap][iHarm] = 0x0;
-        fp2PionCor2Neg[iSample][iGap][iHarm] = 0x0;
-        fp2KaonCor2Pos[iSample][iGap][iHarm] = 0x0;
-        fp2KaonCor2Neg[iSample][iGap][iHarm] = 0x0;
-        fp2ProtonCor2Pos[iSample][iGap][iHarm] = 0x0;
-        fp2ProtonCor2Neg[iSample][iGap][iHarm] = 0x0;
-      }
-
-      fp3V0sCorrK0sCor2Pos[iGap][iHarm] = 0x0;
-      fp3V0sCorrK0sCor2Neg[iGap][iHarm] = 0x0;
-      fp3V0sCorrLambdaCor2Pos[iGap][iHarm] = 0x0;
-      fp3V0sCorrLambdaCor2Neg[iGap][iHarm] = 0x0;
-      fp3PhiCorrCor2Pos[iGap][iHarm] = 0x0;
-      fp3PhiCorrCor2Neg[iGap][iHarm] = 0x0;
-    }
-  }
-
-  for(Short_t iHarm(0); iHarm < fNumMixedHarmonics; iHarm++)
-  {
-    for(Short_t iGap(0); iGap < fNumEtaGap; iGap++)
-    {
-      fp3V0sCorrK0sCor3MixedPos[iGap][iHarm] = 0x0;
-      fp3V0sCorrK0sCor3MixedNeg[iGap][iHarm] = 0x0;
-      fp3V0sCorrLambdaCor3MixedPos[iGap][iHarm] = 0x0;
-      fp3V0sCorrLambdaCor3MixedNeg[iGap][iHarm] = 0x0;
-      fp3PhiCorrCor3MixedPos[iGap][iHarm] = 0x0;
-      fp3PhiCorrCor3MixedNeg[iGap][iHarm] = 0x0;
-
-      for(Short_t iSample(0); iSample < fNumSamples; iSample++)
-      {
-        fpRefsCor4Mixed[iSample][iGap][iHarm] = 0x0;
-        fp2ChargedCor3MixedPos[iSample][iGap][iHarm] = 0x0;
-        fp2ChargedCor3MixedNeg[iSample][iGap][iHarm] = 0x0;
-        fp2PionCor3MixedPos[iSample][iGap][iHarm] = 0x0;
-        fp2PionCor3MixedNeg[iSample][iGap][iHarm] = 0x0;
-        fp2KaonCor3MixedPos[iSample][iGap][iHarm] = 0x0;
-        fp2KaonCor3MixedNeg[iSample][iGap][iHarm] = 0x0;
-        fp2ProtonCor3MixedPos[iSample][iGap][iHarm] = 0x0;
-        fp2ProtonCor3MixedNeg[iSample][iGap][iHarm] = 0x0;
-      }
     }
   }
 
@@ -1562,13 +1431,13 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     fVector[kCharged]->push_back(track);
     if(fFillQA) FillQACharged(1,track); // QA after selection
 
-    if(fFlowFillWeights) { fh3WeightsCharged->Fill(track->Phi(),track->Eta(),fPVz); }
+    if(fFlowFillWeights) { fh3Weights[kCharged]->Fill(track->Phi(),track->Eta(),fPVz); }
     if(fFlowUseWeights)
     {
       Double_t weight = 1.0;
-      if(fFlowUse3Dweights){ weight = fh3WeightCharged->GetBinContent( fh3WeightCharged->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
-      else { weight = fh2WeightCharged->GetBinContent( fh2WeightCharged->FindFixBin(track->Eta(),track->Phi())); }
-      fh3AfterWeightsCharged->Fill(track->Phi(),track->Eta(),fPVz,weight);
+      if(fFlowUse3Dweights){ weight = fh3Weights[kCharged]->GetBinContent( fh3Weights[kCharged]->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
+      else { weight = fh2Weights[kCharged]->GetBinContent( fh2Weights[kCharged]->FindFixBin(track->Eta(),track->Phi())); }
+      fh3AfterWeights[kCharged]->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
     if(fMC)
@@ -1592,13 +1461,13 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     fVector[kRefs]->push_back(track);
     iNumRefs++;
     FillQARefs(1,track);
-    if(fFlowFillWeights) { fh3WeightsRefs->Fill(track->Phi(),track->Eta(),fPVz); }
+    if(fFlowFillWeights) { fh3Weights[kRefs]->Fill(track->Phi(),track->Eta(),fPVz); }
     if(fFlowUseWeights)
     {
       Double_t weight = 1.0;
-      if(fFlowUse3Dweights) {weight = fh3WeightRefs->GetBinContent( fh3WeightRefs->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
-      else { weight = fh2WeightRefs->GetBinContent( fh2WeightRefs->FindFixBin(track->Eta(),track->Phi()) ); }
-      fh3AfterWeightsRefs->Fill(track->Phi(),track->Eta(),fPVz,weight);
+      if(fFlowUse3Dweights) {weight = fh3Weights[kRefs]->GetBinContent( fh3Weights[kRefs]->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
+      else { weight = fh2Weights[kRefs]->GetBinContent( fh2Weights[kRefs]->FindFixBin(track->Eta(),track->Phi()) ); }
+      fh3AfterWeights[kRefs]->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
   }
@@ -1797,14 +1666,14 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fVector[kK0s]->push_back(pico);
         FillSparseCand(fhsV0sCandK0s, pico);
 
-        if(fFlowFillWeights) { fh3WeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz); }
+        if(fFlowFillWeights) { fh3Weights[kK0s]->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightK0s->GetBinContent( fh3WeightK0s->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
+          if(fFlowUse3Dweights) { weight = fh3Weights[kK0s]->GetBinContent( fh3Weights[kK0s]->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
 
-          else { weight = fh2WeightK0s->GetBinContent( fh2WeightK0s->FindFixBin(v0->Eta(),v0->Phi()) ); }
-          fh3AfterWeightsK0s->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
+          else { weight = fh2Weights[kK0s]->GetBinContent( fh2Weights[kK0s]->FindFixBin(v0->Eta(),v0->Phi()) ); }
+          fh3AfterWeights[kK0s]->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
 
@@ -1818,13 +1687,13 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fVector[kLambda]->push_back(pico);
         FillSparseCand(fhsV0sCandLambda, pico);
 
-        if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
+        if(fFlowFillWeights) { fh3Weights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightLambda->GetBinContent( fh3WeightLambda->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
-          else { weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindFixBin(v0->Eta(),v0->Phi()) ); }
-          fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
+          if(fFlowUse3Dweights) { weight = fh3Weights[kLambda]->GetBinContent( fh3Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
+          else { weight = fh2Weights[kLambda]->GetBinContent( fh2Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi()) ); }
+          fh3AfterWeights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
 
@@ -1838,13 +1707,13 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         fVector[kLambda]->push_back(pico);
         FillSparseCand(fhsV0sCandLambda, pico);
 
-        if(fFlowFillWeights) { fh3WeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz); }
+        if(fFlowFillWeights) { fh3Weights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz); }
         if(fFlowUseWeights)
         {
           Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightLambda->GetBinContent( fh3WeightLambda->FindFixBin(v0->Eta(),v0->Phi(), fPVz) );}
-          else { weight = fh2WeightLambda->GetBinContent( fh2WeightLambda->FindFixBin(v0->Eta(),v0->Phi()) ); }
-          fh3AfterWeightsLambda->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
+          if(fFlowUse3Dweights) { weight = fh3Weights[kLambda]->GetBinContent( fh3Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi(), fPVz) );}
+          else { weight = fh2Weights[kLambda]->GetBinContent( fh2Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi()) ); }
+          fh3AfterWeights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
         }
       }
 
@@ -2466,13 +2335,13 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       if(fFillQA) FillQAPhi(1,mother);
 
       // filling weights
-      if(fFlowFillWeights) { fh3WeightsPhi->Fill(mother->Phi(), mother->Eta(), fPVz); }
+      if(fFlowFillWeights) { fh3Weights[kPhi]->Fill(mother->Phi(), mother->Eta(), fPVz); }
       if(fFlowUseWeights)
       {
         Double_t weight = 1.0;
-        if(fFlowUse3Dweights) { weight = fh3WeightPhi->GetBinContent( fh3WeightPhi->FindFixBin(mother->Eta(),mother->Phi(), fPVz) ); }
-        else { weight = fh2WeightPhi->GetBinContent( fh2WeightPhi->FindFixBin(mother->Eta(),mother->Phi()) ) ; }
-        fh3AfterWeightsPhi->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
+        if(fFlowUse3Dweights) { weight =  fh3Weights[kPhi]->GetBinContent(  fh3Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi(), fPVz) ); }
+        else { weight =  fh2Weights[kPhi]->GetBinContent(  fh2Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi()) ) ; }
+        fh3AfterWeights[kPhi]->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
       }
 
       if(mother->Charge() == 0)
@@ -2573,50 +2442,18 @@ void AliAnalysisTaskUniFlow::FilterPID()
 
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
+    if(species != kPion && species != kKaon && species != kProton) { continue; }
     // check if only protons should be used
     if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) { species = kUnknown; }
 
-    // selection of PID tracks
-    switch (species)
+    fVector[species]->push_back(track);
+    if(fFlowFillWeights) { fh3Weights[species]->Fill(track->Phi(), track->Eta(), fPVz); }
+    if(fFlowUseWeights)
     {
-      case kPion:
-        fVector[kPion]->push_back(track);
-        if(fFlowFillWeights) { fh3WeightsPion->Fill(track->Phi(), track->Eta(), fPVz); }
-        if(fFlowUseWeights)
-        {
-          Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightPion->GetBinContent( fh3WeightPion->FindFixBin(track->Eta(),track->Phi(), fPVz)); }
-          else { weight = fh2WeightPion->GetBinContent( fh2WeightPion->FindFixBin(track->Eta(),track->Phi()) ); }
-          fh3AfterWeightsPion->Fill(track->Phi(),track->Eta(),fPVz,weight);
-        }
-        break;
-
-      case kKaon:
-        fVector[kKaon]->push_back(track);
-        if(fFlowFillWeights) { fh3WeightsKaon->Fill(track->Phi(), track->Eta(), fPVz); }
-        if(fFlowUseWeights)
-        {
-          Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightKaon->GetBinContent( fh3WeightKaon->FindFixBin(track->Eta(),track->Phi(),fPVz) ); }
-          else { weight = fh2WeightKaon->GetBinContent( fh2WeightKaon->FindFixBin(track->Eta(),track->Phi()) ); }
-          fh3AfterWeightsKaon->Fill(track->Phi(),track->Eta(),fPVz,weight);
-        }
-        break;
-
-      case kProton:
-        fVector[kProton]->push_back(track);
-        if(fFlowFillWeights) { fh3WeightsProton->Fill(track->Phi(), track->Eta(), fPVz); }
-        if(fFlowUseWeights)
-        {
-          Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight = fh3WeightProton->GetBinContent( fh3WeightProton->FindFixBin(track->Eta(),track->Phi(),fPVz) );}
-          else { weight = fh2WeightProton->GetBinContent( fh2WeightProton->FindFixBin(track->Eta(),track->Phi()) ); }
-          fh3AfterWeightsProton->Fill(track->Phi(),track->Eta(),fPVz,weight);
-        }
-        break;
-
-      default:
-        continue;
+      Double_t weight = 1.0;
+      if(fFlowUse3Dweights) { weight = fh3Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi(), fPVz)); }
+      else { weight = fh2Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi()) ); }
+      fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
 
     if(fFillQA) FillQAPID(1,track,species); // filling QA for tracks AFTER selection
@@ -3579,12 +3416,12 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
   if(dEtaGap > -1.0) { bHasGap = kTRUE; }
   if(fCutFlowDoFourCorrelations && (dEtaGap > 0.0)) { bHas3sub = kTRUE; }
 
-  TH2D* h2Weights = fh2WeightRefs;
-  TH3D* h3Weights = fh3WeightRefs;
+  TH2D* h2Weights = fh2Weights[kRefs];
+  TH3D* h3Weights = fh3Weights[kRefs];
   if(fFlowUseWeights)
   {
-    if(fFlowUse3Dweights && !fh3WeightRefs) { AliError("Histogram with Refs weights not found."); return; }
-    if(!fFlowUse3Dweights && !fh2WeightRefs) { AliError("Histogram with Refs weights not found."); return; }
+    if(fFlowUse3Dweights && !h3Weights) { AliError("Histogram with Refs weights not found."); return; }
+    if(!fFlowUse3Dweights && !h2Weights) { AliError("Histogram with Refs weights not found."); return; }
   }
 
   // clearing output (global) flow vectors
@@ -3664,68 +3501,14 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const P
 {
   // Filling p,q and s flow vectors with POIs (given by species) for differential flow calculation
   // *************************************************************
-  Bool_t bHasGap = kFALSE;
   Double_t dEtaGap = fEtaGap[iEtaGapIndex];
-  if(dEtaGap > -1.0) { bHasGap = kTRUE; }
   Double_t dEtaLimit = dEtaGap / 2.0;
-  Bool_t bHasMass = kFALSE;
+  Bool_t bHasGap = kFALSE; if(dEtaGap > -1.0) { bHasGap = kTRUE; }
 
-  std::vector<AliVTrack*>* vector = 0x0;
-  TH2D* h2Weights = 0x0;
-  TH3D* h3Weights = 0x0;
-
-  // swich based on species
-  switch (species)
-  {
-    case kCharged:
-      vector = fVector[kCharged];
-      h2Weights = fh2WeightCharged;
-      h3Weights = fh3WeightCharged;
-      break;
-
-    case kPion:
-      vector = fVector[kPion];
-      h2Weights = fh2WeightPion;
-      h3Weights = fh3WeightPion;
-      break;
-
-    case kKaon:
-      vector = fVector[kKaon];
-      h2Weights = fh2WeightKaon;
-      h3Weights = fh3WeightKaon;
-      break;
-
-    case kProton:
-      vector = fVector[kProton];
-      h2Weights = fh2WeightProton;
-      h3Weights = fh3WeightProton;
-      break;
-
-    case kK0s:
-      vector = fVector[kK0s];
-      h2Weights = fh2WeightK0s;
-      h3Weights = fh3WeightK0s;
-      bHasMass = kTRUE;
-      break;
-
-    case kLambda:
-      vector = fVector[kLambda];
-      h2Weights = fh2WeightLambda;
-      h3Weights = fh3WeightLambda;
-      bHasMass = kTRUE;
-      break;
-
-    case kPhi:
-      vector = fVector[kPhi];
-      h2Weights = fh2WeightPhi;
-      h3Weights = fh3WeightPhi;
-      bHasMass = kTRUE;
-      break;
-
-    default:
-      AliError("Selected species unknown.");
-      return;
-  }
+  std::vector<AliVTrack*>* vector = fVector[species];
+  TH2D* h2Weights = fh2Weights[species];
+  TH3D* h3Weights = fh3Weights[species];
+  Bool_t bHasMass = kFALSE; if(species == kK0s || species == kLambda || species == kPhi) { bHasMass = kTRUE; }
 
   if(!vector) { AliError("Vector with selected POIs not found."); return; }
   if(fFlowUseWeights)

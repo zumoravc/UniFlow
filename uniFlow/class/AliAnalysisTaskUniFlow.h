@@ -421,40 +421,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       THnSparseD*     fhsPhiCandSig; //!  distribution of Phi candidates
       THnSparseD*     fhsPhiCandBg; //!  distribution of Phi background
 
-      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for estimating weight purpose (phi,eta,pt)
-
-      TH3D*           fh3AfterWeightsRefs; //! distribution of Refs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsCharged; //! distribution of Charged POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsPion; //! distribution of Pion POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsKaon; //! distribution of Kaon POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsProton; //! distribution of Proton POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsPhi; //! distribution of Phi POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsK0s; //! distribution of K0s POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsLambda; //! distribution of Lambda POIs particles after applying the weights (phi,eta,pt)
-
-      TH2D*           fh2WeightRefs; //! container for loading weights for given run
-      TH2D*           fh2WeightCharged; //! container for loading weights for given run
-      TH2D*           fh2WeightPion; //! container for loading weights for given run
-      TH2D*           fh2WeightKaon; //! container for loading weights for given run
-      TH2D*           fh2WeightProton; //! container for loading weights for given run
-      TH2D*           fh2WeightK0s; //! container for loading weights for given run
-      TH2D*           fh2WeightLambda; //! container for loading weights for given run
-      TH2D*           fh2WeightPhi; //! container for loading weights for given run
-      TH3D*           fh3WeightRefs; //! container for loading weights for given run
-      TH3D*           fh3WeightCharged; //! container for loading weights for given run
-      TH3D*           fh3WeightPion; //! container for loading weights for given run
-      TH3D*           fh3WeightKaon; //! container for loading weights for given run
-      TH3D*           fh3WeightProton; //! container for loading weights for given run
-      TH3D*           fh3WeightK0s; //! container for loading weights for given run
-      TH3D*           fh3WeightLambda; //! container for loading weights for given run
-      TH3D*           fh3WeightPhi; //! container for loading weights for given run
+      TH2D*           fh2Weights[kUnknown]; //! container for GF weights (phi,eta,pt) (2D)
+      TH3D*           fh3Weights[kUnknown]; //! container for GF weights (phi,eta,pt)
+      TH3D*           fh3AfterWeights[kUnknown]; //! distribution after applying GF weights (phi,eta,pt)
 
       TProfile*       fpRefsCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
       TProfile2D*     fp2ChargedCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta>0
