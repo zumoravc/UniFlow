@@ -1315,50 +1315,19 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights(Bool_t init)
     if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fRunNumber)); return kFALSE; }
   }
 
-  if(fFlowUse3Dweights)
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
-    fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs3D"); if(!fh3WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
-    fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged3D"); if(!fh3WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
+    if(!fProcessSpec[iSpec]) { continue; }
 
-    if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton])
+    if(fFlowUse3Dweights)
     {
-      fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion3D"); if(!fh3WeightPion) { AliError("Pion weights not found"); return kFALSE; }
-      fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon3D"); if(!fh3WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
-      fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton3D"); if(!fh3WeightProton) { AliError("Proton weights not found"); return kFALSE; }
+      fh3Weights[iSpec] = (TH3D*) listFlowWeights->FindObject(Form("%s3D",GetSpeciesName(PartSpecies(iSpec))));
+      if(!fh3Weights[iSpec]) { AliError(Form("Weight (%s) not found",GetSpeciesName(PartSpecies(iSpec)))); return kFALSE; }
     }
-
-    if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
+    else
     {
-      fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s3D"); if(!fh3WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
-      fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda3D"); if(!fh3WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
-    }
-
-    if(fProcessSpec[kPhi])
-    {
-      fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi3D"); if(!fh3WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
-    }
-  }
-  else
-  {
-    fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
-    fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
-
-    if(fProcessSpec[kProton] || fProcessSpec[kKaon] || fProcessSpec[kProton])
-    {
-      fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
-      fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
-      fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
-    }
-
-    if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
-    {
-      fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
-      fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
-    }
-
-    if(fProcessSpec[kPhi])
-    {
-      fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
+      fh2Weights[iSpec] = (TH2D*) listFlowWeights->FindObject(GetSpeciesName(PartSpecies(iSpec)));
+      if(!fh2Weights[iSpec]) { AliError(Form("Weight 2D (%s) not found",GetSpeciesName(PartSpecies(iSpec)))); return kFALSE; }
     }
   }
 
@@ -3935,67 +3904,79 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   const Int_t iPOIsPtNumBins = (Int_t) (fFlowPOIsPtMax - fFlowPOIsPtMin) / 0.1 + 0.5; // fixed width 0.1 GeV/c
   const Int_t iMultNumBins = fFlowCentMax - fFlowCentMin; // fixed unit percentile or Nch bin width
 
-  // creating histograms
-
-
-  // histos for FlowTasks
-
+  // creating output correlations profiles based on FlowTasks
   Int_t iNumTasks = fVecFlowTask.size();
   for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
   {
     FlowTask* task = fVecFlowTask.at(iTask);
     if(!task) { fInit = kFALSE; AliError(Form("FlowTask %d does not exists\n",iTask)); return; }
-    task->Print();
 
-    const char* name = task->fsName.Data();
-    const char* label = task->fsLabel.Data();
+    const char* corName = task->fsName.Data();
+    const char* corLabel = task->fsLabel.Data();
 
     for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
     {
       if(!fProcessSpec[iSpec]) { continue; }
 
       TH1* profile = 0x0;
-
       switch(iSpec)
       {
         case kRefs :
-          profile = new TProfile(name,label,iMultNumBins,fFlowCentMin,fFlowCentMax);
+          profile = new TProfile(corName,corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax);
         break;
 
         case kCharged :
         case kPion :
         case kKaon :
         case kProton :
-          profile = new TProfile2D(name,label, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+          profile = new TProfile2D(corName,corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
         break;
 
         case kK0s:
-          profile = new TProfile3D(name,label, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+          profile = new TProfile3D(corName,corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
         break;
         case kLambda:
-          profile = new TProfile3D(name,label, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+          profile = new TProfile3D(corName,corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
         break;
         case kPhi:
-          profile = new TProfile3D(name,label, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
+          profile = new TProfile3D(corName,corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
         break;
       }
 
+      if(!profile) { fInit = kFALSE; AliError("Profile not created!\n"); task->Print(); return; }
       profile->Sumw2();
       fListFlow[iSpec]->Add(profile);
+    } // end-for {iSpec}
+  } // end-for {iTask}
+
+  // creating GF weights
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
+  {
+    if(!fProcessSpec[iSpec]) { continue; }
+
+    if(fFlowFillWeights)
+    {
+      const char* weightName = Form("fh3Weights%s",GetSpeciesName(PartSpecies(iSpec)));
+      const char* weightLabel = Form("Weights: %s; #varphi; #eta; PV-z (cm)", GetSpeciesName(PartSpecies(iSpec)));
+      fh3Weights[iSpec] = new TH3D(weightName, weightLabel, 100,0.0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3Weights[iSpec]->Sumw2();
+      fFlowWeights->Add(fh3Weights[iSpec]);
     }
 
-
-    // TProfile* pRef = new TProfile(name,label,iMultNumBins,fFlowCentMin,fFlowCentMax);
-    // pRef->Sumw2();
-    // list->Add(pRef);
-
-    // TO BE charged
-    // TProfile2D* pCharged = new TProfile2D(name,label, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-  //   pCharged->Sumw2();
-  //   fListFlow[kCharged]->Add(pCharged);
+    if(fFlowUseWeights)
+    {
+      const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
+      const char* weightLabel = Form("Weights (after): %s; #varphi; #eta; PV-z (cm)",GetSpeciesLabel(PartSpecies(iSpec)));
+      fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeights[iSpec]->Sumw2();
+      fFlowWeights->Add(fh3AfterWeights[iSpec]);
     }
+  } // end-for {iSpec}
 
 
+  // NB: bellow NOT re-factorized
+
+  // creating QA histos
     // event histogram
     fhEventSampling = new TH2D("fhEventSampling",Form("Event sampling; %s; sample index", GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fNumSamples,0,fNumSamples);
     fQAEvents->Add(fhEventSampling);
@@ -4020,64 +4001,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAEvents->Add(fhQAEventsfMultTPCvsTOF);
       fhQAEventsfMultTPCvsESD = new TH2D("fhQAEventsfMultTPCvsESD", "; TPC FB128 multiplicity; ESD multiplicity", 700, 0, 7000, 1000, -1000, 35000);
       fQAEvents->Add(fhQAEventsfMultTPCvsESD);
-    }
-
-    // flow histograms & profiles
-    // weights
-    if(fFlowFillWeights)
-    {
-      fh3WeightsRefs = new TH3D("fh3WeightsRefs","Weights: Refs; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3WeightsRefs->Sumw2();
-      fFlowWeights->Add(fh3WeightsRefs);
-      fh3WeightsCharged = new TH3D("fh3WeightsCharged","Weights: Charged; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3WeightsCharged->Sumw2();
-      fFlowWeights->Add(fh3WeightsCharged);
-      fh3WeightsPion = new TH3D("fh3WeightsPion","Weights: #pi; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3WeightsPion->Sumw2();
-      fFlowWeights->Add(fh3WeightsPion);
-      fh3WeightsKaon = new TH3D("fh3WeightsKaon","Weights: K; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3WeightsKaon->Sumw2();
-      fFlowWeights->Add(fh3WeightsKaon);
-      fh3WeightsProton = new TH3D("fh3WeightsProton","Weights: p; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3WeightsProton->Sumw2();
-      fFlowWeights->Add(fh3WeightsProton);
-      fh3WeightsPhi = new TH3D("fh3WeightsPhi","Weights: #phi; #varphi; #eta; PV-z (cm)", 100,-TMath::Pi(),TMath::Pi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3WeightsPhi->Sumw2();
-      fFlowWeights->Add(fh3WeightsPhi);
-      fh3WeightsK0s = new TH3D("fh3WeightsK0s","Weights: K^{0}_{S}; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3WeightsK0s->Sumw2();
-      fFlowWeights->Add(fh3WeightsK0s);
-      fh3WeightsLambda = new TH3D("fh3WeightsLambda","Weights: #Lambda; #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3WeightsLambda->Sumw2();
-      fFlowWeights->Add(fh3WeightsLambda);
-    }
-
-    if(fFlowUseWeights)
-    {
-      fh3AfterWeightsRefs = new TH3D("fh3AfterWeightsRefs","Weights: Refs; #varphi (After); #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3AfterWeightsRefs->Sumw2();
-      fFlowWeights->Add(fh3AfterWeightsRefs);
-      fh3AfterWeightsCharged = new TH3D("fh3AfterWeightsCharged","Weights: Charged (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3AfterWeightsCharged->Sumw2();
-      fFlowWeights->Add(fh3AfterWeightsCharged);
-      fh3AfterWeightsPion = new TH3D("fh3AfterWeightsPion","Weights: #pi (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3AfterWeightsPion->Sumw2();
-      fFlowWeights->Add(fh3AfterWeightsPion);
-      fh3AfterWeightsKaon = new TH3D("fh3AfterWeightsKaon","Weights: K (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3AfterWeightsKaon->Sumw2();
-      fFlowWeights->Add(fh3AfterWeightsKaon);
-      fh3AfterWeightsProton = new TH3D("fh3AfterWeightsProton","Weights: p (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3AfterWeightsProton->Sumw2();
-      fFlowWeights->Add(fh3AfterWeightsProton);
-      fh3AfterWeightsPhi = new TH3D("fh3AfterWeightsPhi","Weights: #phi (After); #varphi; #eta; PV-z (cm)", 100,-TMath::Pi(),TMath::Pi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3AfterWeightsPhi->Sumw2();
-      fFlowWeights->Add(fh3AfterWeightsPhi);
-      fh3AfterWeightsK0s = new TH3D("fh3AfterWeightsK0s","Weights: K^{0}_{S} (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3AfterWeightsK0s->Sumw2();
-      fFlowWeights->Add(fh3AfterWeightsK0s);
-      fh3AfterWeightsLambda = new TH3D("fh3AfterWeightsLambda","Weights: #Lambda (After); #varphi; #eta; PV-z (cm)", 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-      fh3AfterWeightsLambda->Sumw2();
-      fFlowWeights->Add(fh3AfterWeightsLambda);
     }
 
     // Making THnSparse distribution of candidates
@@ -4511,8 +4434,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           fQAV0s->Add(fhQAV0sDaughterNumSigmaPionALambda[iQA]);
           fhQAV0sDaughterNumSigmaProtonALambda[iQA] = new TH2D(Form("fhQAV0sDaughterNumSigmaProtonALambda_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: #bar{#Lambda}: Daughter PID (p); #it{p}_{T}^{proton} (GeV/#it{c}); proton PID (#sigma^{TPC});", 200,0.,20, 100,-10.,10.);
           fQAV0s->Add(fhQAV0sDaughterNumSigmaProtonALambda[iQA]);
-
-
 
           for(Int_t j = 0x0; j < iNBinsPIDstatus; j++)
           {
