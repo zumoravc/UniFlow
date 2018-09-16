@@ -951,10 +951,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   // setting fFlowCentMax according to estimator : 0-100 for %'s and 0-150 for CHARGED
-  if(fMultEstimator == kRFP)
-  {
-    fFlowCentMin = 0; fFlowCentMax = 200;
-  }
+  if(fMultEstimator == kRFP) { fFlowCentMin = 0; fFlowCentMax = 200; }
   else { fFlowCentMin = 0; fFlowCentMax = 100; }
 
   // increasing fFlowCentMax+1 (just to be sure)
@@ -970,9 +967,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   AliInfo("Preparing particle containers (std::vectors)");
   // creating particle vectors & reserving capacity in order to avoid memory re-allocation
-  // when capacity is not enough later during filtering
-  // NOTE: system and cuts dependent (should be modified accordingly)
-
 
   Int_t iReserve = 0;
   switch(fColSystem)
