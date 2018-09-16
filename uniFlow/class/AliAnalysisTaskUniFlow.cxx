@@ -3023,8 +3023,57 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
   }
 
 
-  // save results
+  TProfile2D* prof = (TProfile2D*) fFlowCharged->FindObject(task->fsName.Data());
+  if(!prof) { AliError(Form("Profile '%s' in 'Charged' not found!", task->fsName.Data())); return kFALSE; }
 
+  TAxis* axisPt = prof->GetYaxis();
+  if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
+
+  Int_t iNumPtBins = axisPt->GetNbins();
+
+  for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt)
+  {
+    Double_t dPt = axisPt->GetBinCenter(iPt);
+    Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
+    Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
+
+    // for pois
+    FillPOIsVectors(iGap,kCharged,dPtLow,dPtHigh);
+
+    switch(iCor)
+    {
+      case 2 :
+        if(iGap == 0) // no gap
+        {
+          Double_t D02 = TwoDiff(0,0).Re();
+          if(D02 != 0.0)
+          {
+            Double_t Nn2 = TwoDiff(task->fiHarm[0],task->fiHarm[1]).Re();
+            Double_t dValue = Nn2 / D02;
+            if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile2D::Fill(fIndexCentrality, dPt, dValue, D02); }
+          }
+        }
+        else
+        {
+          Double_t D02pos = TwoDiffGapPos(0,0).Re();
+          if(D02pos != 0.0)
+          {
+            Double_t Nn2 = TwoDiffGapPos(task->fiHarm[0],task->fiHarm[1]).Re();
+            Double_t dValue = Nn2 / D02pos;
+            if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile2D::Fill(fIndexCentrality, dPt, dValue, D02pos); }
+          }
+
+          // Double_t D02neg = TwoDiffGapNeg(0,0).Re();
+          // if(D02neg != 0.0)
+          // {
+          //   Double_t Nn2 = TwoDiffGapNeg(task->fiHarm[0],task->fiHarm[1]).Re();
+          //   Double_t dValue = Nn2 / D02neg;
+          //   if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile2D::Fill(fIndexCentrality, dPt, dValue, D02neg); }
+          // }
+        }
+      break;
+    }
+  }
 
   return kTRUE;
 }
@@ -4183,9 +4232,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     list->Add(pRef);
 
     // TO BE charged
-    TProfile* pRef2 = new TProfile(name,label,1,0,1);
-    pRef2->Sumw2();
-    fFlowCharged->Add(pRef2);
+    TProfile2D* pCharged = new TProfile2D(name,label, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+    pCharged->Sumw2();
+    fFlowCharged->Add(pCharged);
   }
 
 
