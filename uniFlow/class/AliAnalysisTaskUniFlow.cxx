@@ -135,9 +135,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fSampling(kTRUE),
   fFillQA(kTRUE),
   // fNumSamples(10),
-  fProcessPID(kTRUE),
-  fProcessV0s(kTRUE),
-  fProcessPhi(kTRUE),
 
   // flow related
   fUseFixedMultBins(kFALSE),
@@ -407,9 +404,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fSampling(kTRUE),
   fFillQA(kTRUE),
   // fNumSamples(10),
-  fProcessPID(kTRUE),
-  fProcessV0s(kTRUE),
-  fProcessPhi(kTRUE),
 
   // flow related
   fUseFixedMultBins(kFALSE),
@@ -653,6 +647,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   {
     fVector[iSpec] = 0x0;
     fListFlow[iSpec] = 0x0;
+    fProcessSpec[iSpec] = kTRUE;
   }
   fVecFlowTask = std::vector<FlowTask*>(); //
 
@@ -914,9 +909,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fAnalType: (AnalType) %d\n",    fAnalType);
   printf("      fSampling: (Bool_t) %s\n",    fSampling ? "kTRUE" : "kFALSE");
   printf("      fFillQA: (Bool_t) %s\n",    fFillQA ? "kTRUE" : "kFALSE");
-  printf("      fProcessPID: (Bool_t) %s\n",    fProcessPID ? "kTRUE" : "kFALSE");
-  printf("      fProcessPhi: (Bool_t) %s\n",    fProcessPhi ? "kTRUE" : "kFALSE");
-  printf("      fProcessV0s: (Bool_t) %s\n",    fProcessV0s ? "kTRUE" : "kFALSE");
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { printf("      fProcessSpec[k%s]: (Bool_t) %s\n",   GetSpeciesName(PartSpecies(iSpec)), fProcessSpec[iSpec] ? "kTRUE" : "kFALSE"); }
   printf("   -------- Flow related ----------------------------------------\n");
   printf("      fCutFlowDoThreeCorrelations: (Bool_t) %s\n",    fCutFlowDoThreeCorrelations ? "kTRUE" : "kFALSE");
   printf("      fCutFlowDoFourCorrelations: (Bool_t) %s\n",    fCutFlowDoFourCorrelations ? "kTRUE" : "kFALSE");
@@ -1111,33 +1104,28 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // when capacity is not enough later during filtering
   // NOTE: system and cuts dependent (should be modified accordingly)
 
-  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { fVector[iSpec] = new std::vector<AliVTrack*>(); }
 
+  Int_t iReserve = 0;
   switch(fColSystem)
   {
     case kPP :
-      fVector[kRefs]->reserve(150);
-      fVector[kCharged]->reserve(150);
-      if(fProcessPID) { fVector[kPion]->reserve(100); fVector[kKaon]->reserve(20); fVector[kProton]->reserve(20); }
-      if(fProcessV0s) { fVector[kK0s]->reserve(30); fVector[kLambda]->reserve(30); }
-      if(fProcessPhi) { fVector[kPhi]->reserve(20); }
+      iReserve = 150;
       break;
 
     case kPPb :
-      fVector[kRefs]->reserve(200);
-      fVector[kCharged]->reserve(200);
-      if(fProcessPID) { fVector[kPion]->reserve(100); fVector[kKaon]->reserve(40); fVector[kProton]->reserve(30); }
-      if(fProcessV0s) { fVector[kK0s]->reserve(100); fVector[kLambda]->reserve(150); }
-      if(fProcessPhi) { fVector[kPhi]->reserve(20); }
+      iReserve = 200;
       break;
 
     default :
-      fVector[kRefs]->reserve(300);
-      fVector[kCharged]->reserve(300);
-      if(fProcessPID) { fVector[kPion]->reserve(200); fVector[kKaon]->reserve(100); fVector[kProton]->reserve(100); }
-      if(fProcessV0s) { fVector[kK0s]->reserve(100); fVector[kLambda]->reserve(100); }
-      if(fProcessPhi) { fVector[kPhi]->reserve(200); }
+      iReserve = 300;
       break;
+  }
+
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
+  {
+    if(!fProcessSpec[iSpec]) { continue; }
+    fVector[iSpec] = new std::vector<AliVTrack*>();
+    fVector[iSpec]->reserve(iReserve);
   }
 
   AliInfo("Initialization succesfull!");
@@ -1206,9 +1194,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // Fill event QA AFTER cuts
   if(fFillQA) { FillEventsQA(1); }
 
-  if(fProcessPID || fProcessPhi) { FilterPID(); }
-  if(fProcessPhi) { FilterPhi(); }
-  if(fProcessV0s) { FilterV0s(); }
+  if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton] || fProcessSpec[kPhi]) { FilterPID(); }
+  if(fProcessSpec[kK0s] || fProcessSpec[kLambda]) { FilterV0s(); }
+  if(fProcessSpec[kPhi]) { FilterPhi(); }
 
   // processing of selected event
   Bool_t bProcessed = CalculateFlow();
@@ -1463,20 +1451,20 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights(Bool_t init)
     fh3WeightRefs = (TH3D*) listFlowWeights->FindObject("Refs3D"); if(!fh3WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
     fh3WeightCharged = (TH3D*) listFlowWeights->FindObject("Charged3D"); if(!fh3WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
 
-    if(fProcessPID)
+    if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton])
     {
       fh3WeightPion = (TH3D*) listFlowWeights->FindObject("Pion3D"); if(!fh3WeightPion) { AliError("Pion weights not found"); return kFALSE; }
       fh3WeightKaon = (TH3D*) listFlowWeights->FindObject("Kaon3D"); if(!fh3WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
       fh3WeightProton = (TH3D*) listFlowWeights->FindObject("Proton3D"); if(!fh3WeightProton) { AliError("Proton weights not found"); return kFALSE; }
     }
 
-    if(fProcessV0s)
+    if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
     {
       fh3WeightK0s = (TH3D*) listFlowWeights->FindObject("K0s3D"); if(!fh3WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
       fh3WeightLambda = (TH3D*) listFlowWeights->FindObject("Lambda3D"); if(!fh3WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
     }
 
-    if(fProcessPhi)
+    if(fProcessSpec[kPhi])
     {
       fh3WeightPhi = (TH3D*) listFlowWeights->FindObject("Phi3D"); if(!fh3WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
     }
@@ -1486,20 +1474,20 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights(Bool_t init)
     fh2WeightRefs = (TH2D*) listFlowWeights->FindObject("Refs"); if(!fh2WeightRefs) { AliError("Refs weights not found"); return kFALSE; }
     fh2WeightCharged = (TH2D*) listFlowWeights->FindObject("Charged"); if(!fh2WeightCharged) { AliError("Charged weights not found"); return kFALSE; }
 
-    if(fProcessPID)
+    if(fProcessSpec[kProton] || fProcessSpec[kKaon] || fProcessSpec[kProton])
     {
       fh2WeightPion = (TH2D*) listFlowWeights->FindObject("Pion"); if(!fh2WeightPion) { AliError("Pion weights not found"); return kFALSE; }
       fh2WeightKaon = (TH2D*) listFlowWeights->FindObject("Kaon"); if(!fh2WeightKaon) { AliError("Kaon weights not found"); return kFALSE; }
       fh2WeightProton = (TH2D*) listFlowWeights->FindObject("Proton"); if(!fh2WeightProton) { AliError("Proton weights not found"); return kFALSE; }
     }
 
-    if(fProcessV0s)
+    if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
     {
       fh2WeightK0s = (TH2D*) listFlowWeights->FindObject("K0s"); if(!fh2WeightK0s) { AliError("K0s weights not found"); return kFALSE; }
       fh2WeightLambda = (TH2D*) listFlowWeights->FindObject("Lambda"); if(!fh2WeightLambda) { AliError("Phi weights not found"); return kFALSE; }
     }
 
-    if(fProcessPhi)
+    if(fProcessSpec[kPhi])
     {
       fh2WeightPhi = (TH2D*) listFlowWeights->FindObject("Phi"); if(!fh2WeightPhi) { AliError("Phi weights not found"); return kFALSE; }
     }
@@ -3074,35 +3062,33 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
     Bool_t process = ProcessFlowTask(fVecFlowTask.at(iTask));
   }
 
-  return kTRUE;
-
   // >>>> Flow a la General Framework <<<<
-  for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
-  {
-    // Reference (pT integrated) flow
-    DoFlowRefs(iGap);
-
-    // pT differential flow
-    if(!fVector[kCharged]->empty()) { DoFlowPOIs(iGap, kCharged); }
-
-    if(fProcessPID)
-    {
-      if(!fVector[kPion]->empty()) { DoFlowPOIs(iGap,kPion); }
-      if(!fVector[kKaon]->empty()) { DoFlowPOIs(iGap,kKaon); }
-      if(!fVector[kProton]->empty()) { DoFlowPOIs(iGap,kProton); }
-    }
-
-    if(fProcessPhi)
-    {
-      if(!fVector[kPhi]->empty()) { DoFlowPOIs(iGap,kPhi); }
-    }
-
-    if(fProcessV0s)
-    {
-      if(!fVector[kK0s]->empty()) { DoFlowPOIs(iGap,kK0s); }
-      if(!fVector[kLambda]->empty()) { DoFlowPOIs(iGap,kLambda); }
-    }
-  } // endfor {iGap} eta gaps
+  // for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
+  // {
+  //   // Reference (pT integrated) flow
+  //   DoFlowRefs(iGap);
+  //
+  //   // pT differential flow
+  //   if(!fVector[kCharged]->empty()) { DoFlowPOIs(iGap, kCharged); }
+  //
+  //   if(fProcessPID)
+  //   {
+  //     if(!fVector[kPion]->empty()) { DoFlowPOIs(iGap,kPion); }
+  //     if(!fVector[kKaon]->empty()) { DoFlowPOIs(iGap,kKaon); }
+  //     if(!fVector[kProton]->empty()) { DoFlowPOIs(iGap,kProton); }
+  //   }
+  //
+  //   if(fProcessPhi)
+  //   {
+  //     if(!fVector[kPhi]->empty()) { DoFlowPOIs(iGap,kPhi); }
+  //   }
+  //
+  //   if(fProcessV0s)
+  //   {
+  //     if(!fVector[kK0s]->empty()) { DoFlowPOIs(iGap,kK0s); }
+  //     if(!fVector[kLambda]->empty()) { DoFlowPOIs(iGap,kLambda); }
+  //   }
+  // } // endfor {iGap} eta gaps
 
   fEventCounter++; // counter of processed events
 
@@ -4183,7 +4169,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
     {
-      // TODO if(!bDo[iSpec]) { continue; }
+      if(!fProcessSpec[iSpec]) { continue; }
 
       TH1* profile = 0x0;
 
@@ -4326,7 +4312,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     iNumBinsCand[SparseCand::kEta] = 2*fCutV0sMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutV0sMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutV0sMotherEtaMax;
 
     // species dependent
-    if(fProcessV0s)
+    if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
     {
       iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMax;
       fhsV0sCandK0s = new THnSparseD("fhsV0sCandK0s",Form("K_{S}^{0}: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
@@ -4339,7 +4325,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fListFlow[kLambda]->Add(fhsV0sCandLambda);
     }
 
-    if(fProcessPhi)
+    if(fProcessSpec[kPhi])
     {
       iNumBinsCand[SparseCand::kEta] = 2*fCutPhiMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutPhiMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutPhiMotherEtaMax;
       iNumBinsCand[SparseCand::kInvMass] = fPhiNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutPhiInvMassMin; dMaxCand[SparseCand::kInvMass] = fCutPhiInvMassMax;
@@ -4373,7 +4359,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fQACharged->Add(fhChargedCounter);
 
     // PID tracks histograms
-    if(fProcessPID || fProcessPhi)
+    if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton] || fProcessSpec[kPhi])
     {
       fhPIDPionMult = new TH1D("fhPIDPionMult","PID: #pi: Multiplicity; multiplicity", 200,0,200);
       fQAPID->Add(fhPIDPionMult);
@@ -4508,9 +4494,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
       }
 
-    } //endif {fProcessPID}
+    } //endif {fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton]}
 
-    if(fProcessPhi)
+    if(fProcessSpec[kPhi])
     {
       TString sPhiCounterLabel[] = {"Input","InvMass","Pt","Eta","Selected","Unlike-sign","BG"};
       const Short_t iNBinsPhiCounter = sizeof(sPhiCounterLabel)/sizeof(sPhiCounterLabel[0]);
@@ -4539,7 +4525,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     } //endif {fProcessPhi}
 
     // V0 candidates histograms
-    if(fProcessV0s)
+    if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
     {
       TString sV0sCounterLabel[] = {"Input","Daughters OK","Mother acceptance","Daughter acceptance","Charge","Reconstruction method","TPC refit","Kinks","Daughters track quality","DCA to PV","Daughters DCA","Decay radius","Common passed","K^{0}_{S}","#Lambda/#bar{#Lambda}","K^{0}_{S} && #Lambda/#bar{#Lambda}"};
       const Short_t iNBinsV0sCounter = sizeof(sV0sCounterLabel)/sizeof(sV0sCounterLabel[0]);
@@ -4567,7 +4553,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAV0s->Add(fhV0sCompetingInvMassK0s);
       fhV0sCompetingInvMassLambda = new TH2D("fhV0sCompetingInvMassLambda","V^{0}: #Lambda/#bar{#Lambda}: Competing InvMass rejection; K^{0}_{S} #it{m}_{inv} (GeV/#it{c}^{2}); #Lambda/#bar{#Lambda} #it{m}_{inv} (GeV/#it{c}^{2})", 110,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax, 50,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
       fQAV0s->Add(fhV0sCompetingInvMassLambda);
-    } // endif {fProcessV0s}
+    } // endif {fProcessSpec[kK0s] || fProcessSpec[kLambda]}
 
     const Short_t iNBinsPIDstatus = 4;
     TString sPIDstatus[iNBinsPIDstatus] = {"kDetNoSignal","kDetPidOk","kDetMismatch","kDetNoParams"};
@@ -4613,7 +4599,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fQACharged->Add(fhQAChargedDCAz[iQA]);
 
         // PID tracks QA
-        if(fProcessPID || fProcessPhi)
+        if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton] || fProcessSpec[kPhi])
         {
           fhQAPIDTPCstatus[iQA] = new TH1D(Form("fhQAPIDTPCstatus_%s",sQAindex[iQA].Data()),"QA PID: PID status: TPC;", iNBinsPIDstatus,0,iNBinsPIDstatus);
           fQAPID->Add(fhQAPIDTPCstatus[iQA]);
@@ -4647,10 +4633,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
             fhQAPIDTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
             fhQAPIDTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
           }
-        } // endif {fProcessPID}
+        } // endif {fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton]}
 
         // V0s QA
-        if(fProcessV0s)
+        if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
         {
           fhQAV0sMultK0s[iQA] = new TH1D(Form("fhQAV0sMultK0s_%s",sQAindex[iQA].Data()),"QA V^{0}_{S}: Number of K^{0}_{S} candidates", 1000,0,1000);
           fQAV0s->Add(fhQAV0sMultK0s[iQA]);
@@ -4750,7 +4736,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
             fhQAV0sDaughterTOFstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
             fhQAV0sDaughterTPCstatus[iQA]->GetXaxis()->SetBinLabel(j+1, sPIDstatus[j].Data() );
           }
-        } // endif {fProcessV0s}
+        } // endif {fProcessSpec[kK0s] || fProcessSpec[kLambda]}
       }
     }
 

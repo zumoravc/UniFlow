@@ -100,9 +100,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
       void                    SetFillQAhistos(Bool_t fill = kTRUE) { fFillQA = fill; }
       //void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; } // not implemented yet
-      void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
-      void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
-      void                    SetProcessPhi(Bool_t filter = kTRUE) { fProcessPhi = filter; }
+      void                    SetProcessPID(Bool_t use = kTRUE) { fProcessSpec[kPion] = use; fProcessSpec[kKaon] = use; fProcessSpec[kProton] = use; }
+      void                    SetProcessV0s(Bool_t use = kTRUE) { fProcessSpec[kK0s] = use; fProcessSpec[kLambda] = use; }
+      void                    SetProcessPhi(Bool_t use = kTRUE) { fProcessSpec[kPhi] = use; }
       // flow related setters
       void                    AddTwo(Int_t n1, Int_t n2) { fVecFlowTask.push_back(new FlowTask({n1,n2})); }
       void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap) { fVecFlowTask.push_back(new FlowTask({n1,n2}, {gap})); }
@@ -320,9 +320,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AnalType                fAnalType; // analysis type: AOD / ESD
       Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
       Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
-      Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
-      Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
-      Bool_t                  fProcessPhi; // flag for processing Phi meson candidates
+      Bool_t                  fProcessSpec[kUnknown];  // flag for processing species
       // cuts & selection: flow related
       Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
