@@ -2752,8 +2752,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
     }
 
     // loading (generic) profile to acess axes and bins
-    TH1* genProf = (TH1*) fListFlow[iSpec]->FindObject(Form("%s_Pos",task->fsName.Data()));
-    if(!genProf) { AliError(Form("Generic Profile '%s' not found\n", task->fsName.Data())); return kFALSE; }
+    TH1* genProf = (TH1*) fListFlow[iSpec]->FindObject(Form("%s_Pos_sample0",task->fsName.Data()));
+    if(!genProf) { AliError(Form("Generic Profile '%s' not found", task->fsName.Data())); return kFALSE; }
 
     TAxis* axisPt = genProf->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
     Int_t iNumPtBins = axisPt->GetNbins();
@@ -2926,8 +2926,8 @@ void AliAnalysisTaskUniFlow::CalculateCorrelations(FlowTask* task, PartSpecies s
     {
       if(bFillPos)
       {
-        TProfile* prof = (TProfile*) fListFlow[species]->FindObject(Form("%s_Pos",task->fsName.Data()));
-        if(!prof) { AliError(Form("Profile '%s_Pos' not found!", task->fsName.Data())); return; }
+        TProfile* prof = (TProfile*) fListFlow[species]->FindObject(Form("%s_Pos_sample%d",task->fsName.Data(),fIndexSampling));
+        if(!prof) { AliError(Form("Profile '%s_Pos_sample%d' not found!", task->fsName.Data(),fIndexSampling)); return; }
         prof->Fill(fIndexCentrality, dValue, dDenom);
       }
       break;
@@ -2940,15 +2940,15 @@ void AliAnalysisTaskUniFlow::CalculateCorrelations(FlowTask* task, PartSpecies s
     {
       if(bFillPos)
       {
-        TProfile2D* prof = (TProfile2D*) fListFlow[species]->FindObject(Form("%s_Pos",task->fsName.Data()));
-        if(!prof) { AliError(Form("Profile '%s_Pos' not found!", task->fsName.Data())); return; }
+        TProfile2D* prof = (TProfile2D*) fListFlow[species]->FindObject(Form("%s_Pos_sample%d",task->fsName.Data(),fIndexSampling));
+        if(!prof) { AliError(Form("Profile '%s_Pos_sample%d' not found!", task->fsName.Data(),fIndexSampling)); return; }
         prof->Fill(fIndexCentrality, dPt, dValue, dDenom);
       }
 
       if(bFillNeg)
       {
-        TProfile2D* profNeg = (TProfile2D*) fListFlow[species]->FindObject(Form("%s_Neg",task->fsName.Data()));
-        if(!profNeg) { AliError(Form("Profile '%s_Neg' not found!", task->fsName.Data())); return; }
+        TProfile2D* profNeg = (TProfile2D*) fListFlow[species]->FindObject(Form("%s_Neg_sample%d",task->fsName.Data(),fIndexSampling));
+        if(!profNeg) { AliError(Form("Profile '%s_Neg_sample%d' not found!", task->fsName.Data(),fIndexSampling)); return; }
         profNeg->Fill(fIndexCentrality, dPt, dValueNeg, dDenomNeg);
       }
       break;
@@ -2961,15 +2961,15 @@ void AliAnalysisTaskUniFlow::CalculateCorrelations(FlowTask* task, PartSpecies s
     {
       if(bFillPos)
       {
-        TProfile3D* prof = (TProfile3D*) fListFlow[species]->FindObject(Form("%s_Pos",task->fsName.Data()));
-        if(!prof) { AliError(Form("Profile '%s_Pos' not found!", task->fsName.Data())); return; }
+        TProfile3D* prof = (TProfile3D*) fListFlow[species]->FindObject(Form("%s_Pos_sample0",task->fsName.Data()));
+        if(!prof) { AliError(Form("Profile '%s_Pos_sample0' not found!", task->fsName.Data())); return; }
         prof->Fill(fIndexCentrality, dPt, dMass, dValue, dDenom);
       }
 
       if(bFillNeg)
       {
-        TProfile3D* profNeg = (TProfile3D*) fListFlow[species]->FindObject(Form("%s_Neg",task->fsName.Data()));
-        if(!profNeg) { AliError(Form("Profile '%s_Neg' not found!", task->fsName.Data())); return; }
+        TProfile3D* profNeg = (TProfile3D*) fListFlow[species]->FindObject(Form("%s_Neg_sample0",task->fsName.Data()));
+        if(!profNeg) { AliError(Form("Profile '%s_Neg_sample0' not found!", task->fsName.Data())); return; }
         profNeg->Fill(fIndexCentrality, dPt, dMass, dValueNeg, dDenomNeg);
       }
       break;
@@ -4025,46 +4025,64 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     {
       if(!fProcessSpec[iSpec]) { continue; }
 
-      TH1* profile = 0x0;
-      TH1* profileNeg = 0x0;
-
-      switch(iSpec)
+      for(Int_t iSample(0); iSample < fNumSamples; ++iSample)
       {
-        case kRefs :
-          profile = new TProfile(Form("%s_Pos",corName), Form("%s: %s; %s",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
-        break;
+        if(!fSampling && iSample > 0) { break; }
+        if(iSample > 0 && (iSpec == kK0s || iSpec == kLambda || iSpec == kPhi)) { break; } // reconstructed are not sampled
 
-        case kCharged :
-        case kPion :
-        case kKaon :
-        case kProton :
-          profile = new TProfile2D(Form("%s_Pos",corName), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-          if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg",corName), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax); }
-        break;
+        TH1* profile = 0x0;
+        TH1* profileNeg = 0x0;
 
-        case kK0s:
-          profile = new TProfile3D(Form("%s_Pos",corName), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
-          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax); }
-        break;
-        case kLambda:
-          profile = new TProfile3D(Form("%s_Pos",corName), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
-          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax); }
-        break;
-        case kPhi:
-          profile = new TProfile3D(Form("%s_Pos",corName), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
-          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax); }
-        break;
-      }
+        switch(iSpec)
+        {
+          case kRefs :
+          {
+            profile = new TProfile(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s; %s",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
+            break;
+          }
 
-      if(!profile) { fInit = kFALSE; AliError("Profile (Pos) NOT created!"); task->Print(); return; }
-      profile->Sumw2();
-      fListFlow[iSpec]->Add(profile);
-      if(bHasGap && iSpec != kRefs) { // Refs does not distinquish Pos/Neg
-        if(!profileNeg) { fInit = kFALSE; AliError("Profile (Neg) NOT created!"); task->Print(); return; }
-        profileNeg->Sumw2();
-        fListFlow[iSpec]->Add(profileNeg);
-      }
+          case kCharged :
+          case kPion :
+          case kKaon :
+          case kProton :
+          {
+            profile = new TProfile2D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+            if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax); }
+            break;
+          }
 
+          case kK0s:
+          {
+            profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+            if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax); }
+            break;
+          }
+
+          case kLambda:
+          {
+            profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+            if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax); }
+            break;
+          }
+
+          case kPhi:
+          {
+            profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
+            if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax); }
+            break;
+          }
+        }
+
+        if(!profile) { fInit = kFALSE; AliError("Profile (Pos) NOT created!"); task->Print(); return; }
+        profile->Sumw2();
+        fListFlow[iSpec]->Add(profile);
+        if(bHasGap && iSpec != kRefs) { // Refs does not distinquish Pos/Neg
+          if(!profileNeg) { fInit = kFALSE; AliError("Profile (Neg) NOT created!"); task->Print(); return; }
+          profileNeg->Sumw2();
+          fListFlow[iSpec]->Add(profileNeg);
+        }
+
+      } // end-for {iSample}
     } // end-for {iSpec}
   } // end-for {iTask}
 
