@@ -11,6 +11,9 @@
 
 struct FlowTask
 {
+  enum                  FlowPart { kRFP = 0, kPOI, kBoth }; // Flow-related particles
+
+  FlowPart              fPart; // which particles are procesed (RFPs / POIs / both )
   Int_t                 fiNumHarm; // correlation order <M>
   Int_t                 fiNumGaps; // number of subevents
   std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
@@ -18,8 +21,9 @@ struct FlowTask
   TString               fsName; // automatically generated name: see Init() for format
   TString               fsLabel; // automatically generated label see Init() for format
 
-              FlowTask() : fiNumHarm(0), fiNumGaps(0), fsName("DummyName"), fsLabel("DummyLabel") {}; // default ctor
-              FlowTask(std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) { fiHarm = harm; fdGaps = gaps; fiNumHarm = harm.size(); fiNumGaps = gaps.size(); Init(); } // actual ctor
+
+              FlowTask() : fPart(kBoth), fiNumHarm(0), fiNumGaps(0), fsName("DummyName"), fsLabel("DummyLabel") {}; // default ctor
+              FlowTask(FlowPart part = kBoth, std::vector<Int_t> harm = std::vector<Int_t>(), std::vector<Double_t> gaps = std::vector<Double_t>()) { fPart = part; fiHarm = harm; fdGaps = gaps; fiNumHarm = harm.size(); fiNumGaps = gaps.size(); Init(); } // actual ctor
               ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
   void        Init(); // initialization
   void        Print(); // print FlowTask properties
@@ -67,7 +71,7 @@ void FlowTask::Init()
 //_____________________________________________________________________________
 void FlowTask::Print()
 {
-  printf("FlowTask::Print() : '%s' (%s) | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fiNumHarm);
+  printf("FlowTask::Print() : '%s' (%s) | FlowPart %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fPart, fiNumHarm);
   for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
   printf("} | fgGaps[%d] = { ",fiNumGaps);
   for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
@@ -105,12 +109,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessV0s(Bool_t use = kTRUE) { fProcessSpec[kK0s] = use; fProcessSpec[kLambda] = use; }
       void                    SetProcessPhi(Bool_t use = kTRUE) { fProcessSpec[kPhi] = use; }
       // flow related setters
-      void                    AddTwo(Int_t n1, Int_t n2) { fVecFlowTask.push_back(new FlowTask({n1,n2})); }
-      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap) { fVecFlowTask.push_back(new FlowTask({n1,n2}, {gap})); }
-      void                    AddThree(Int_t n1, Int_t n2, Int_t n3) { fVecFlowTask.push_back(new FlowTask({n1,n2,n3})); }
-      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap) { fVecFlowTask.push_back(new FlowTask({n1,n2,n3} ,{gap})); }
-      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4) { fVecFlowTask.push_back(new FlowTask({n1,n2,n3,n4})); }
-      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap) { fVecFlowTask.push_back(new FlowTask({n1,n2,n3,n4}, {gap})); }
+      void                    AddTwo(Int_t n1, Int_t n2, FlowTask::FlowPart part = FlowTask::kBoth) { fVecFlowTask.push_back(new FlowTask(part, {n1,n2})); }
+      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap, FlowTask::FlowPart part = FlowTask::kBoth) { fVecFlowTask.push_back(new FlowTask(part, {n1,n2}, {gap})); }
+      void                    AddThree(Int_t n1, Int_t n2, Int_t n3, FlowTask::FlowPart part = FlowTask::kBoth) { fVecFlowTask.push_back(new FlowTask(part, {n1,n2,n3})); }
+      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap, FlowTask::FlowPart part = FlowTask::kBoth) { fVecFlowTask.push_back(new FlowTask(part, {n1,n2,n3} ,{gap})); }
+      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, FlowTask::FlowPart part = FlowTask::kBoth) { fVecFlowTask.push_back(new FlowTask(part, {n1,n2,n3,n4})); }
+      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, FlowTask::FlowPart part = FlowTask::kBoth) { fVecFlowTask.push_back(new FlowTask(part, {n1,n2,n3,n4}, {gap})); }
+
       void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
       void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }

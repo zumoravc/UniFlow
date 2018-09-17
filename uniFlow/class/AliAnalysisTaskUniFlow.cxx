@@ -2745,6 +2745,10 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
 
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
+    // check if FlowTask should be done for all flow particles (RFP/POI/Both)
+    if(task->fPart == FlowTask::kRFP && iSpec != kRefs) { continue; }
+    if(task->fPart == FlowTask::kPOI && iSpec == kRefs) { continue; }
+
     if(iSpec == kRefs) {
       FillRefsVectors(dGap);
       CalculateCorrelations(task, PartSpecies(iSpec));
@@ -4023,6 +4027,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
     {
+      // check if FlowTask should be done for all flow particles (RFP/POI/Both)
+      if(task->fPart == FlowTask::kRFP && iSpec != kRefs) { continue; }
+      if(task->fPart == FlowTask::kPOI && iSpec == kRefs) { continue; }
+
       if(!fProcessSpec[iSpec]) { continue; }
 
       for(Int_t iSample(0); iSample < fNumSamples; ++iSample)

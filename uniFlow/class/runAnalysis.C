@@ -76,16 +76,16 @@ void runAnalysis()
     // AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
     task1->AddTwo(2,-2);
-    task1->AddTwo(3,-3);
+    task1->AddTwo(3,-3,FlowTask::kPOI);
     task1->AddTwoGap(2,-2, 0.4);
     task1->AddTwoGap(3,-3, 0.4);
-    task1->AddFour(2,2,-2,-2);
-    task1->AddFourGap(2,2,-2,-2,0.0);    
+    task1->AddFour(2,2,-2,-2, FlowTask::kRFP);
+    task1->AddFourGap(2,2,-2,-2,0.0);
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(1);
     task1->SetMC(kFALSE);
-    task1->SetSampling(kFALSE);
+    task1->SetSampling(kTRUE);
     task1->SetFillQAhistos(kTRUE);
     task1->SetProcessPID(kTRUE);
     task1->SetProcessPhi(kTRUE);
