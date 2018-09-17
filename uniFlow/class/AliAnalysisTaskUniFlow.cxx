@@ -734,14 +734,14 @@ const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species)
 
   switch(species)
   {
-    case kRefs: name = "Refs";
-    case kCharged: name = "Charged";
-    case kPion: name = "Pion";
-    case kKaon: name = "Kaon";
-    case kProton: name = "Proton";
-    case kK0s: name = "K0s";
-    case kLambda: name = "Lambda";
-    case kPhi: name = "Phi";
+    case kRefs: name = "Refs"; break;
+    case kCharged: name = "Charged"; break;
+    case kPion: name = "Pion"; break;
+    case kKaon: name = "Kaon"; break;
+    case kProton: name = "Proton"; break;
+    case kK0s: name = "K0s"; break;
+    case kLambda: name = "Lambda"; break;
+    case kPhi: name = "Phi"; break;
     default: name = "Unknown";
   }
 
@@ -754,14 +754,14 @@ const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(PartSpecies species)
 
   switch(species)
   {
-    case kRefs: label = "RFP";
-    case kCharged: label = "h^{#pm}";
-    case kPion: label = "#pi^{#pm}";
-    case kKaon: label = "K^{#pm}";
-    case kProton: label = "p(#bar{p})";
-    case kK0s: label = "K^{0}_{S}";
-    case kLambda: label = "#Lambda(#bar{Lambda})";
-    case kPhi: label = "#phi";
+    case kRefs: label = "RFP"; break;
+    case kCharged: label = "h^{#pm}"; break;
+    case kPion: label = "#pi^{#pm}"; break;
+    case kKaon: label = "K^{#pm}"; break;
+    case kProton: label = "p(#bar{p})"; break;
+    case kK0s: label = "K^{0}_{S}"; break;
+    case kLambda: label = "#Lambda(#bar{#Lambda})"; break;
+    case kPhi: label = "#phi"; break;
     default: label = "NA";
   }
 
