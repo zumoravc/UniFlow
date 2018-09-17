@@ -3367,12 +3367,12 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillRefsVectors(const Short_t iEtaGapIndex)
+void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
 {
   // Filling Q flow vector with RFPs
   // return kTRUE if succesfull (i.e. no error occurs), kFALSE otherwise
   // *************************************************************
-  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
+  Double_t dEtaGap = dGap;
   Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE;
   Bool_t bHas3sub = kFALSE;
