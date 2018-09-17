@@ -4031,28 +4031,28 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       switch(iSpec)
       {
         case kRefs :
-          profile = new TProfile(Form("%s_Pos",corName),corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax);
+          profile = new TProfile(Form("%s_Pos",corName), Form("%s: %s; %s",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
         break;
 
         case kCharged :
         case kPion :
         case kKaon :
         case kProton :
-          profile = new TProfile2D(Form("%s_Pos",corName), corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
-          if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg",corName), corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax); }
+          profile = new TProfile2D(Form("%s_Pos",corName), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
+          if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg",corName), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax); }
         break;
 
         case kK0s:
-          profile = new TProfile3D(Form("%s_Pos",corName),corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
-          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName),corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax); }
+          profile = new TProfile3D(Form("%s_Pos",corName), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax); }
         break;
         case kLambda:
-          profile = new TProfile3D(Form("%s_Pos",corName),corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
-          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName),corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax); }
+          profile = new TProfile3D(Form("%s_Pos",corName), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax); }
         break;
         case kPhi:
-          profile = new TProfile3D(Form("%s_Pos",corName),corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
-          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName),corLabel, iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax); }
+          profile = new TProfile3D(Form("%s_Pos",corName), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
+          if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg",corName), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax); }
         break;
       }
 

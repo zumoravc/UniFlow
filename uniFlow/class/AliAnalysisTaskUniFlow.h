@@ -44,8 +44,8 @@ void FlowTask::Init()
 
   if(fiNumGaps > 0)
   {
-    sName += Form("_%dsub(%02.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%02.2g",fdGaps[i]); }
+    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
     sName += ")";
   }
 
@@ -56,8 +56,8 @@ void FlowTask::Init()
 
   if(fiNumGaps > 0)
   {
-    sLabel += Form(" %dsub(|#Delta#eta| > %02.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %02.2g",fdGaps[i]); }
+    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
     sLabel += ")";
   }
 
