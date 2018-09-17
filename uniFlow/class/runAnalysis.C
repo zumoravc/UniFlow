@@ -79,6 +79,8 @@ void runAnalysis()
     task1->AddTwo(3,-3);
     task1->AddTwoGap(2,-2, 0.4);
     task1->AddTwoGap(3,-3, 0.4);
+    task1->AddFour(2,2,-2,-2);
+    task1->AddFourGap(2,2,-2,-2,0.0);    
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(1);

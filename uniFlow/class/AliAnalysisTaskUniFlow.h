@@ -106,6 +106,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // flow related setters
       void                    AddTwo(Int_t n1, Int_t n2) { fVecFlowTask.push_back(new FlowTask({n1,n2})); }
       void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap) { fVecFlowTask.push_back(new FlowTask({n1,n2}, {gap})); }
+      void                    AddThree(Int_t n1, Int_t n2, Int_t n3) { fVecFlowTask.push_back(new FlowTask({n1,n2,n3})); }
+      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap) { fVecFlowTask.push_back(new FlowTask({n1,n2,n3} ,{gap})); }
+      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4) { fVecFlowTask.push_back(new FlowTask({n1,n2,n3,n4})); }
+      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap) { fVecFlowTask.push_back(new FlowTask({n1,n2,n3,n4}, {gap})); }
       void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
       void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
