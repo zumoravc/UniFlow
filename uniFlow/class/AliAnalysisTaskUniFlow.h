@@ -273,6 +273,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                PGapNeg(const Short_t n, const Short_t p);
       TComplex                S(const Short_t n, const Short_t p);
 
+      void                    CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0); // wrapper for correlations methods
       TComplex                Two(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (no eta gap)
       TComplex                TwoGap(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (with eta gap)
       TComplex                Three(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle reference correlation calculations (no eta gap)

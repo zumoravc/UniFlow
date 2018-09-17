@@ -2732,111 +2732,254 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Short_t iQAindex, const AliAODTrack
 Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
 {
   if(!task) { AliError("FlowTask does not exists!"); return kFALSE; }
+  // task->Print();
 
-  // Fill Flow vectors
+  Int_t iNumHarm = task->fiNumHarm;
+  Int_t iNumGaps = task->fiNumGaps;
 
-  // JUST SO I DO NOT HAVE TO REIMPLEMENT FILLVECTORS
-  Int_t iGap = 0;
-  if(task->fiNumGaps == 0) { iGap = 0; }
-  else { iGap = 1; }
+  if(iNumGaps > 1) { AliError("Too many gaps! Not implemented yet!"); return kFALSE; }
+  if(iNumHarm > 4) { AliError("Too many harmonics! Not implemented yet!"); return kFALSE; }
 
-  FillRefsVectors(iGap);
+  Double_t dGap = -1.0;
+  if(iNumGaps > 0) { dGap = task->fdGaps[0]; }
 
-  // CalculateFlow
-
-  Int_t iCor = task->fiNumHarm;
-
-  switch(iCor)
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
-    case 2 :
-      if(iGap == 0) // no gap
-      {
-        Double_t D02 = Two(0,0).Re();
-        if(D02 != 0.0)
-        {
-          Double_t Nn2 = Two(task->fiHarm[0],task->fiHarm[1]).Re();
-          Double_t dValue = Nn2 / D02;
+    if(iSpec == kRefs) {
+      FillRefsVectors(dGap);
+      CalculateCorrelations(task, PartSpecies(iSpec));
+      continue; // NO need to go further
+    }
 
-          TProfile* prof = (TProfile*) fListFlow[kRefs]->FindObject(task->fsName.Data());
-          if(!prof) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return kFALSE; }
+    // loading (generic) profile to acess axes and bins
+    TH1* genProf = (TH1*) fListFlow[iSpec]->FindObject(task->fsName.Data());
+    if(!genProf) { AliError(Form("Generic Profile '%s' not found\n", task->fsName.Data())); return kFALSE; }
 
-          if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile::Fill(fIndexCentrality, dValue, D02); }
-        }
-      }
-      else
-      {
-        Double_t D02 = TwoGap(0,0).Re();
-        if(D02 != 0.0)
-        {
-          Double_t Nn2 = TwoGap(task->fiHarm[0],task->fiHarm[1]).Re();
-          Double_t dValue = Nn2 / D02;
+    TAxis* axisPt = genProf->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
+    Int_t iNumPtBins = axisPt->GetNbins();
 
-          TProfile* prof = (TProfile*) fListFlow[kRefs]->FindObject(task->fsName.Data());
-          if(!prof) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return kFALSE; }
+    Int_t iNumMassBins = 1;
+    TAxis* axisMass = 0x0;
 
-          if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile::Fill(fIndexCentrality, dValue, D02); }
-        }
-      }
-    break;
+    // check for 'massive' species
+    Bool_t bHasMass = kFALSE;
+    if(iSpec == kK0s || iSpec == kLambda || iSpec == kPhi) {
+      bHasMass = kTRUE;
+      axisMass = genProf->GetZaxis();
+      if(!axisMass) { AliError("Mass axis object not found!"); return kFALSE; }
+      iNumMassBins = axisMass->GetNbins();
+    }
 
-    // default:
-    //   AliWarning("Higher correlations not implemented yet!");
-  }
-
-
-  TProfile2D* prof = (TProfile2D*) fListFlow[kCharged]->FindObject(task->fsName.Data());
-  if(!prof) { AliError(Form("Profile '%s' in 'Charged' not found!", task->fsName.Data())); return kFALSE; }
-
-  TAxis* axisPt = prof->GetYaxis();
-  if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
-
-  Int_t iNumPtBins = axisPt->GetNbins();
-
-  for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt)
-  {
-    Double_t dPt = axisPt->GetBinCenter(iPt);
-    Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
-    Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
-
-    // for pois
-    FillPOIsVectors(iGap,kCharged,dPtLow,dPtHigh);
-
-    switch(iCor)
+    for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass)
     {
-      case 2 :
-        if(iGap == 0) // no gap
-        {
-          Double_t D02 = TwoDiff(0,0).Re();
-          if(D02 != 0.0)
-          {
-            Double_t Nn2 = TwoDiff(task->fiHarm[0],task->fiHarm[1]).Re();
-            Double_t dValue = Nn2 / D02;
-            if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile2D::Fill(fIndexCentrality, dPt, dValue, D02); }
-          }
-        }
-        else
-        {
-          Double_t D02pos = TwoDiffGapPos(0,0).Re();
-          if(D02pos != 0.0)
-          {
-            Double_t Nn2 = TwoDiffGapPos(task->fiHarm[0],task->fiHarm[1]).Re();
-            Double_t dValue = Nn2 / D02pos;
-            if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile2D::Fill(fIndexCentrality, dPt, dValue, D02pos); }
-          }
+      Double_t dMass = 0.0;
+      Double_t dMassLow = 0.0;
+      Double_t dMassHigh = 0.0;
 
-          // Double_t D02neg = TwoDiffGapNeg(0,0).Re();
-          // if(D02neg != 0.0)
-          // {
-          //   Double_t Nn2 = TwoDiffGapNeg(task->fiHarm[0],task->fiHarm[1]).Re();
-          //   Double_t dValue = Nn2 / D02neg;
-          //   if( TMath::Abs(dValue) <= 1.0 ) { prof->TProfile2D::Fill(fIndexCentrality, dPt, dValue, D02neg); }
-          // }
-        }
-      break;
+      if(bHasMass)
+      {
+        dMass = axisMass->GetBinCenter(iMass);
+        dMassLow = axisMass->GetBinLowEdge(iMass);
+        dMassHigh = axisMass->GetBinUpEdge(iMass);
+      }
+
+      for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt)
+      {
+        Double_t dPt = axisPt->GetBinCenter(iPt);
+        Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
+        Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
+
+        // filling POIs (P,S) flow vectors
+        FillPOIsVectors(dGap,PartSpecies(iSpec),dPtLow,dPtHigh,dMassLow,dMassHigh);
+        CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
+      }
     }
   }
 
   return kTRUE;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt, Double_t dMass)
+{
+  if(!task) { AliError("FlowTask does not exists!"); return; }
+  if(species >= kUnknown) { AliError(Form("Invalid species: %s!", GetSpeciesName(species))); return; }
+
+  Bool_t bHasGap = task->fiNumGaps;
+  Int_t iNumHarm = task->fiNumHarm;
+  Bool_t bDiff = kTRUE; if(species == kRefs) { bDiff = kFALSE; }
+
+  TComplex cNom = TComplex(0.0,0.0,kFALSE);
+  TComplex cDenom = TComplex(0.0,0.0,kFALSE);
+  TComplex cNomNeg = TComplex(0.0,0.0,kFALSE);
+  TComplex cDenomNeg = TComplex(0.0,0.0,kFALSE);
+
+  // calculating correlations
+  switch(iNumHarm)
+  {
+    case 2 : {
+      if(!bHasGap) { // no gap
+        if(bDiff) {
+          cDenom = TwoDiff(0,0);
+          cNom = TwoDiff(task->fiHarm[0],task->fiHarm[1]);
+        }
+        else {
+          cDenom = Two(0,0);
+          cNom = Two(task->fiHarm[0],task->fiHarm[1]);
+        }
+      }
+      else { // has gap
+        if(bDiff) {
+          cDenom = TwoDiffGapPos(0,0);
+          cDenomNeg = TwoDiffGapNeg(0,0);
+          cNom = TwoDiffGapPos(task->fiHarm[0],task->fiHarm[1]);
+          cNomNeg = TwoDiffGapNeg(task->fiHarm[0],task->fiHarm[1]);
+        }
+        else {
+          cDenom = TwoGap(0,0);
+          cNom = TwoGap(task->fiHarm[0],task->fiHarm[1]); }
+        }
+        break;
+      }
+
+    case 3 : {
+      if(!bHasGap) { // no gap
+        if(bDiff) {
+          cDenom = ThreeDiff(0,0,0);
+          cNom = ThreeDiff(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2]);
+        }
+        else {
+          cDenom = Three(0,0,0);
+          cNom = Three(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2]);
+        }
+      }
+      else { // has gap
+        if(bDiff) {
+          cDenom = ThreeDiffGapPos(0,0,0);
+          cDenomNeg = ThreeDiffGapNeg(0,0,0);
+          cNom = ThreeDiffGapPos(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2]);
+          cNomNeg = ThreeDiffGapNeg(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2]);
+        }
+        else {
+          AliWarning("ThreeGap() not implemented!");
+          return;
+          // cDenom = ThreeGap(0,0,0);
+          // cNom = ThreeGap(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2]); }
+        }
+      }
+      break;
+    }
+
+    case 4 : {
+      if(!bHasGap) { // no gap
+        if(bDiff) {
+          cDenom = FourDiff(0,0,0,0);
+          cNom = FourDiff(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2],task->fiHarm[3]);
+        }
+        else {
+          cDenom = Four(0,0,0,0);
+          cNom = Four(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2],task->fiHarm[3]);
+        }
+      }
+      else { // has gap
+        if(bDiff) {
+          cDenom = FourDiffGapPos(0,0,0,0);
+          cDenomNeg = FourDiffGapNeg(0,0,0,0);
+          cNom = FourDiffGapPos(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2],task->fiHarm[3]);
+          cNomNeg = FourDiffGapNeg(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2],task->fiHarm[3]);
+        }
+        else {
+          cDenom = FourGap(0,0,0,0);
+          cNom = FourGap(task->fiHarm[0],task->fiHarm[1],task->fiHarm[2],task->fiHarm[3]);
+        }
+      }
+      break;
+    }
+
+    default:
+      return;
+  }
+
+  Double_t dNom = cNom.Re();
+  Double_t dDenom = cDenom.Re();
+  Double_t dNomNeg = cNomNeg.Re();
+  Double_t dDenomNeg = cDenomNeg.Re();
+
+  Double_t dValue = 0.0;
+  Double_t dValueNeg = 0.0;
+
+  Bool_t bFillPos = kFALSE;
+  Bool_t bFillNeg = kFALSE;
+
+  // check which profiles should be filled (POS/NEG)
+  if(dDenom > 0.0) { bFillPos = kTRUE; dValue = dNom / dDenom; }
+  if(bFillPos && TMath::Abs(dValue) > 1.0) { bFillPos = kFALSE; }
+
+  if(bHasGap && dDenomNeg > 0.0) { bFillNeg = kTRUE; dValueNeg = dNomNeg / dDenomNeg; }
+  if(bFillNeg && TMath::Abs(dValueNeg) > 1.0) { bFillNeg = kFALSE; }
+
+  if(!bFillPos && !bFillNeg) { return; } // To save some CPU time
+
+  // Filling corresponding profiles
+  switch(species)
+  {
+    case kRefs:
+    {
+      if(bFillPos)
+      {
+        TProfile* prof = (TProfile*) fListFlow[species]->FindObject(task->fsName.Data());
+        if(!prof) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return; }
+        prof->Fill(fIndexCentrality, dValue, dDenom);
+      }
+      break;
+    }
+
+    case kCharged:
+    case kPion:
+    case kKaon:
+    case kProton:
+    {
+      if(bFillPos)
+      {
+        TProfile2D* prof = (TProfile2D*) fListFlow[species]->FindObject(task->fsName.Data());
+        if(!prof) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return; }
+        prof->Fill(fIndexCentrality, dPt, dValue, dDenom);
+      }
+
+      if(bFillNeg)
+      {
+        // TProfile2D* profNeg = (TProfile2D*) fListFlow[species]->FindObject(task->fsName.Data());
+        // if(!profNeg) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return; }
+        // profNeg->Fill(fIndexCentrality, dPt, dValue, dDenom);
+      }
+      break;
+    }
+
+
+    case kK0s:
+    case kLambda:
+    case kPhi:
+    {
+      if(bFillPos)
+      {
+        TProfile3D* prof = (TProfile3D*) fListFlow[species]->FindObject(task->fsName.Data());
+        if(!prof) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return; }
+        prof->Fill(fIndexCentrality, dPt, dMass, dValue, dDenom);
+      }
+
+      if(bFillNeg)
+      {
+        // TProfile3D* profNeg = (TProfile3D*) fListFlow[species]->FindObject(task->fsName.Data());
+        // if(!profNeg) { AliError(Form("Profile '%s' not found!", task->fsName.Data())); return; }
+        // profNeg->Fill(fIndexCentrality, dPt, dMass, dValue, dDenom);
+      }
+      break;
+    }
+
+    case kUnknown:
+      return;
+  }
+
+  return;
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
@@ -2851,44 +2994,14 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
   // checking the run number for aplying weights & loading TList with weights
   if(fFlowUseWeights && fFlowRunByRunWeights && fRunNumber != fEventAOD->GetRunNumber() && !LoadWeights(kFALSE)) { return kFALSE; }
 
-  // >>>> flow starts here <<<<
-
-
   // >>>> Using FlowTask <<<<<
 
   Int_t iNumTasks = fVecFlowTask.size();
   for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
   {
     Bool_t process = ProcessFlowTask(fVecFlowTask.at(iTask));
+    if(!process) { AliError("FlowTask processing failed!\n"); fVecFlowTask.at(iTask)->Print(); return kFALSE; }
   }
-
-  // >>>> Flow a la General Framework <<<<
-  // for(Int_t iGap(0); iGap < fNumEtaGap; iGap++)
-  // {
-  //   // Reference (pT integrated) flow
-  //   DoFlowRefs(iGap);
-  //
-  //   // pT differential flow
-  //   if(!fVector[kCharged]->empty()) { DoFlowPOIs(iGap, kCharged); }
-  //
-  //   if(fProcessPID)
-  //   {
-  //     if(!fVector[kPion]->empty()) { DoFlowPOIs(iGap,kPion); }
-  //     if(!fVector[kKaon]->empty()) { DoFlowPOIs(iGap,kKaon); }
-  //     if(!fVector[kProton]->empty()) { DoFlowPOIs(iGap,kProton); }
-  //   }
-  //
-  //   if(fProcessPhi)
-  //   {
-  //     if(!fVector[kPhi]->empty()) { DoFlowPOIs(iGap,kPhi); }
-  //   }
-  //
-  //   if(fProcessV0s)
-  //   {
-  //     if(!fVector[kK0s]->empty()) { DoFlowPOIs(iGap,kK0s); }
-  //     if(!fVector[kLambda]->empty()) { DoFlowPOIs(iGap,kLambda); }
-  //   }
-  // } // endfor {iGap} eta gaps
 
   fEventCounter++; // counter of processed events
 
@@ -3081,11 +3194,11 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
       break;
 
     case kLambda:
-      prof3TwoPos = fp3V0sCorrLambdaCor2Pos[iEtaGapIndex];
-      prof3TwoNeg = fp3V0sCorrLambdaCor2Neg[iEtaGapIndex];
-      prof3Four = fp3V0sCorrLambdaCor4;
-      prof3MixedPos = fp3V0sCorrLambdaCor3MixedPos[iEtaGapIndex];
-      prof3MixedNeg = fp3V0sCorrLambdaCor3MixedNeg[iEtaGapIndex];
+        prof3TwoPos = fp3V0sCorrLambdaCor2Pos[iEtaGapIndex];
+        prof3TwoNeg = fp3V0sCorrLambdaCor2Neg[iEtaGapIndex];
+        prof3Four = fp3V0sCorrLambdaCor4;
+        prof3MixedPos = fp3V0sCorrLambdaCor3MixedPos[iEtaGapIndex];
+        prof3MixedNeg = fp3V0sCorrLambdaCor3MixedNeg[iEtaGapIndex];
       bHasMass = kTRUE;
       break;
 
