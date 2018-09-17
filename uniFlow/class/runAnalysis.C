@@ -8,7 +8,7 @@
 
 void runAnalysis()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -79,25 +79,25 @@ void runAnalysis()
     task1->AddTwoGap(2,-2,0.4);
     // task1->AddTwoGap(2,-2, 0.4);
     // task1->AddTwoGap(3,-3, 0.4);
-    task1->AddFour(2,2,-2,-2, FlowTask::kBoth);
-    task1->AddFour(2,3,-2,-3, FlowTask::kRFP);
-    task1->AddFour(3,3,-3,-3, FlowTask::kRFP);
-    task1->AddFourGap(2,2,-2,-2,0.0, FlowTask::kBoth);
+    task1->AddFour(2,2,-2,-2);
+    task1->AddFour(2,3,-2,-3,1,0);
+    task1->AddFour(3,3,-3,-3,1,0);
+    task1->AddFourGap(2,2,-2,-2,0.0);
     // task1->AddFourGap(2,3,-2,-3,0.0, FlowTask::kRFP);
     // task1->AddFourGap(3,3,-3,-3,0.0, FlowTask::kRFP);
-    task1->AddFourGap(2,2,-2,-2,0.4, FlowTask::kBoth);
-    task1->AddFourGap(2,3,-2,-3,0.4, FlowTask::kRFP);
-    task1->AddFourGap(3,3,-3,-3,0.4, FlowTask::kRFP);
+    task1->AddFourGap(2,2,-2,-2,0.4);
+    task1->AddFourGap(2,3,-2,-3,0.4,1,0);
+    task1->AddFourGap(3,3,-3,-3,0.4,1,0);
 
-    task1->AddThree(4,-2,-2, FlowTask::kPOI);
-    task1->AddThree(5,-3,-2, FlowTask::kPOI);
-    task1->AddThree(6,-3,-3, FlowTask::kPOI);
+    task1->AddThree(4,-2,-2, 0,1);
+    task1->AddThree(5,-3,-2, 0,1);
+    task1->AddThree(6,-3,-3, 0,1);
     // task1->AddThreeGap(4,-2,-2,0.0, FlowTask::kPOI);
     // task1->AddThreeGap(5,-3,-2,0.0, FlowTask::kPOI);
     // task1->AddThreeGap(6,-3,-3,0.0, FlowTask::kPOI);
-    task1->AddThreeGap(4,-2,-2,0.4, FlowTask::kPOI);
-    task1->AddThreeGap(5,-3,-2,0.4, FlowTask::kPOI);
-    task1->AddThreeGap(6,-3,-3,0.4, FlowTask::kPOI);
+    task1->AddThreeGap(4,-2,-2,0.4, 0,1);
+    task1->AddThreeGap(5,-3,-2,0.4, 0,1);
+    task1->AddThreeGap(6,-3,-3,0.4, 0,1);
 
     task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
