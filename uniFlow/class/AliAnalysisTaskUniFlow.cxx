@@ -794,7 +794,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("   -------- Events ----------------------------------------------\n");
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
-  printf("      fMultEstimator: (MultiEst) '%s' (%d)\n",    GetMultiEstimatorName(fMultEstimator), fMultEstimator);
+  printf("      fMultEstimator: (MultiEst) '%s' (%d)\n",    GetMultiEstimatorLabel(fMultEstimator), fMultEstimator);
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
   printf("   -------- Charged tracks --------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
@@ -3740,7 +3740,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
     AliMultSelection* multSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
     if(!multSelection) { AliError("AliMultSelection object not found! Returning -1"); return -1; }
 
-    Float_t dPercentile = multSelection->GetMultiplicityPercentile(GetMultiEstimatorName(fMultEstimator));
+    Float_t dPercentile = multSelection->GetMultiplicityPercentile(GetMultiEstimatorLabel(fMultEstimator));
     if(dPercentile > 100 || dPercentile < 0)
     { AliWarning("Centrality percentile estimated not within 0-100 range. Returning -1"); return -1; }
 
@@ -3759,7 +3759,7 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   return iCentralityIndex;
 }
 //_____________________________________________________________________________
-const char* AliAnalysisTaskUniFlow::GetMultiEstimatorName(MultiEst est)
+const char* AliAnalysisTaskUniFlow::GetMultiEstimatorLabel(MultiEst est)
 {
   // Return string with estimator name or 'n/a' if not available
   // *************************************************************
@@ -4084,11 +4084,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   // creating QA histos
     // event histogram
-    fhEventSampling = new TH2D("fhEventSampling",Form("Event sampling; %s; sample index", GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fNumSamples,0,fNumSamples);
+    fhEventSampling = new TH2D("fhEventSampling",Form("Event sampling; %s; sample index", GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fNumSamples,0,fNumSamples);
     fQAEvents->Add(fhEventSampling);
-    fhEventCentrality = new TH1D("fhEventCentrality",Form("Event centrality (%s); %s", GetMultiEstimatorName(fMultEstimator), GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
+    fhEventCentrality = new TH1D("fhEventCentrality",Form("Event centrality (%s); %s", GetMultiEstimatorLabel(fMultEstimator), GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
     fQAEvents->Add(fhEventCentrality);
-    fh2EventCentralityNumRefs = new TH2D("fh2EventCentralityNumRefs",Form("Event centrality (%s) vs. N_{RFP}; %s; N_{RFP}",GetMultiEstimatorName(fMultEstimator), GetMultiEstimatorName(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, 150,0,150);
+    fh2EventCentralityNumRefs = new TH2D("fh2EventCentralityNumRefs",Form("Event centrality (%s) vs. N_{RFP}; %s; N_{RFP}",GetMultiEstimatorLabel(fMultEstimator), GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, 150,0,150);
     fQAEvents->Add(fh2EventCentralityNumRefs);
 
     TString sEventCounterLabel[] = {"Input","Physics selection OK","EventCuts OK","Event OK","#RPFs OK","Multiplicity OK","Selected"};
@@ -4113,7 +4113,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // species independent
     TString sLabelCand[SparseCand::kDim];
     sLabelCand[SparseCand::kInvMass] = "#it{m}_{inv} (GeV/#it{c}^{2})";
-    sLabelCand[SparseCand::kCent] = GetMultiEstimatorName(fMultEstimator);
+    sLabelCand[SparseCand::kCent] = GetMultiEstimatorLabel(fMultEstimator);
     sLabelCand[SparseCand::kPt] = "#it{p}_{T} (GeV/c)";
     sLabelCand[SparseCand::kEta] = "#eta";
     TString sAxes = TString(); for(Int_t i(0); i < SparseCand::kDim; ++i) { sAxes += Form("%s; ",sLabelCand[i].Data()); }

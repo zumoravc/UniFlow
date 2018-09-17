@@ -234,7 +234,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
-      const char*             GetMultiEstimatorName(MultiEst est); // returns mult/cent estimator string or 'n/a' if not available
+      const char*             GetMultiEstimatorLabel(MultiEst est); // returns mult/cent estimator string with label or 'n/a' if not available
 
       Bool_t                  ProcessFlowTask(FlowTask* task); // procesisng of FlowTask
       Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
