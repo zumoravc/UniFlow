@@ -3141,7 +3141,7 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
         Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
 
         // filling POIs (P,S) flow vectors
-        FillPOIsVectors(iEtaGapIndex,species,dPtLow,dPtHigh,dMassLow,dMassHigh);
+        FillPOIsVectors(dEtaGap,species,dPtLow,dPtHigh,dMassLow,dMassHigh);
 
         if(dEtaGap == -1.0) // no eta gap
         {
@@ -3281,7 +3281,7 @@ void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpec
       Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
 
       // filling POIs (P,S) flow vectors
-      FillPOIsVectors(iEtaGapIndex,species,dPtLow,dPtHigh,dMassLow,dMassHigh);
+      FillPOIsVectors(dEtaGap,species,dPtLow,dPtHigh,dMassLow,dMassHigh);
 
 
       if(dEtaGap == -1.0) // no eta gap
@@ -3460,11 +3460,10 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillPOIsVectors(const Short_t iEtaGapIndex, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
+void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
 {
   // Filling p,q and s flow vectors with POIs (given by species) for differential flow calculation
   // *************************************************************
-  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
   Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE; if(dEtaGap > -1.0) { bHasGap = kTRUE; }
 
