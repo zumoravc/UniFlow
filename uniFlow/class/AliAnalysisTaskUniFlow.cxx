@@ -104,8 +104,6 @@ class AliAnalysisTaskUniFlow;
 
 ClassImp(AliAnalysisTaskUniFlow);
 
-Int_t AliAnalysisTaskUniFlow::fHarmonics[] = {2,3};
-Double_t AliAnalysisTaskUniFlow::fEtaGap[] = {-1.0,0.4};
 Double_t AliAnalysisTaskUniFlow::fMultBins[] = {0.,5.,10.,20.,40.,60.,100.};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
@@ -142,9 +140,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
   fFlowPOIsPtMax(15.0),
-  fCutFlowDoThreeCorrelations(kFALSE),
-  fCutFlowDoOnlyMixedThreeCorrelations(kFALSE),
-  fCutFlowDoFourCorrelations(kFALSE),
   fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
   fFlowCentMax(0),
@@ -378,9 +373,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
   fFlowPOIsPtMax(15.0),
-  fCutFlowDoThreeCorrelations(kFALSE),
-  fCutFlowDoOnlyMixedThreeCorrelations(kFALSE),
-  fCutFlowDoFourCorrelations(kFALSE),
   fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
   fFlowCentMax(0),
@@ -780,8 +772,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fFillQA: (Bool_t) %s\n",    fFillQA ? "kTRUE" : "kFALSE");
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { printf("      fProcessSpec[k%s]: (Bool_t) %s\n",   GetSpeciesName(PartSpecies(iSpec)), fProcessSpec[iSpec] ? "kTRUE" : "kFALSE"); }
   printf("   -------- Flow related ----------------------------------------\n");
-  printf("      fCutFlowDoThreeCorrelations: (Bool_t) %s\n",    fCutFlowDoThreeCorrelations ? "kTRUE" : "kFALSE");
-  printf("      fCutFlowDoFourCorrelations: (Bool_t) %s\n",    fCutFlowDoFourCorrelations ? "kTRUE" : "kFALSE");
   printf("      fCutFlowRFPsPtMin: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMin);
   printf("      fCutFlowRFPsPtMax: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMax);
   printf("      fFlowPOIsPtMin: (Double_t) %g (GeV/c)\n",    fFlowPOIsPtMin);
@@ -912,19 +902,9 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   fPIDCombined->SetSelectedSpecies(5); // all particle species
   fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
 
-  // checking if <3> is on: not implemented yet (TODO)
-  if(fCutFlowDoThreeCorrelations) { AliError("Switch for <3> switch on but on fully implemented. Please turn off!"); return kFALSE; }
-
   // checking the fFlowNumHarmonicsMax, fFlowNumWeightPowersMax dimensions of p,Q,S vectors
-  if(fFlowNumWeightPowersMax < 3) { AliFatal("Low range of flow vector weight dimension! Not enought for <2>!"); return kFALSE; }
-  if(fCutFlowDoFourCorrelations && fFlowNumWeightPowersMax < 5) { AliFatal("Low range of flow vector weight dimension! Not enought for <4>!"); return kFALSE; }
-  if(fCutFlowDoOnlyMixedThreeCorrelations && fFlowNumHarmonicsMax < 7) { AliFatal("Low range of flow vector harmonics dimension! Not enought for mixed harmonics!"); return kFALSE; }
-
-  for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-  {
-    if(fFlowNumHarmonicsMax < fHarmonics[iHarm]+1) { AliFatal("Low range of flow vector harmonics dimension!"); return kFALSE; }
-    if(fCutFlowDoFourCorrelations && fFlowNumHarmonicsMax < (2*fHarmonics[iHarm]+1)) { AliFatal("Low range of flow vector harmonics dimension!"); return kFALSE; }
-  }
+  if(fFlowNumWeightPowersMax < 5) { AliFatal("Low range of flow vector weight dimension! Not enought for <4>!"); return kFALSE; }
+  // TODO fFlowNumHarmonicsMax;
 
   if(fSampling && fNumSamples == 0)
   {
@@ -3012,478 +2992,6 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
   return kTRUE;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::DoFlowRefs(const Int_t iEtaGapIndex)
-{
-  // Estimate <2> for reference flow for all harmonics based on relevant flow vectors
-  // *************************************************************
-
-  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
-
-  FillRefsVectors(iEtaGapIndex); // filling RFPs (Q) flow vectors
-
-  // calculate only correlations for mixed harmonics (non-flow)
-  if(fCutFlowDoOnlyMixedThreeCorrelations)
-  {
-    Double_t D04 = Four(0,0,0,0).Re();
-    if(D04 != 0.0)
-    {
-      Double_t NMix2 = Four(2,2,-2,-2).Re();
-      Double_t dValMix2 = NMix2 / D04;
-      if( TMath::Abs(dValMix2) <= 1.0 ) { fpRefsCor4Mixed[fIndexSampling][iEtaGapIndex][0]->Fill(fIndexCentrality, dValMix2, D04); }
-
-      Double_t NMix23 = Four(2,3,-2,-3).Re();
-      Double_t dValMix23 = NMix23 / D04;
-      if( TMath::Abs(dValMix23) <= 1.0 ) { fpRefsCor4Mixed[fIndexSampling][iEtaGapIndex][1]->Fill(fIndexCentrality, dValMix23, D04); }
-
-      Double_t NMix3 = Four(3,3,-3,-3).Re();
-      Double_t dValMix3 = NMix3 / D04;
-      if( TMath::Abs(dValMix3) <= 1.0 ) { fpRefsCor4Mixed[fIndexSampling][iEtaGapIndex][2]->Fill(fIndexCentrality, dValMix3, D04); }
-    }
-
-    return;
-  }
-
-  if(dEtaGap == -1.0) // no gap
-  {
-    // estimating <2>
-    Double_t D02 = Two(0,0).Re();
-    if(D02 != 0.0)
-    {
-      for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-      {
-        Int_t iHarmonics = fHarmonics[iHarm];
-        Double_t Nn2 = Two(iHarmonics,-iHarmonics).Re();
-        Double_t dValue = Nn2 / D02;
-        if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D02); }
-      }
-    }
-
-    // estimating <4>
-    if(fCutFlowDoFourCorrelations)
-    {
-      Double_t D04 = Four(0,0,0,0).Re();
-      if(D04 != 0.0)
-      {
-        for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-        {
-          Int_t iHarmonics = fHarmonics[iHarm];
-          Double_t Nn4 = Four(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
-          Double_t dValue = Nn4 / D04;
-          if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D04); }
-        }
-      }
-    }
-
-  }
-  else // with gap
-  {
-    // estimating <2>
-    Double_t D02gap = TwoGap(0,0).Re();
-    if(D02gap != 0.0)
-    {
-      for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-      {
-        Int_t iHarmonics = fHarmonics[iHarm];
-        Double_t Nn2gap = TwoGap(iHarmonics,-iHarmonics).Re();
-        Double_t dValue = Nn2gap / D02gap;
-        if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor2[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D02gap); }
-      }
-    }
-
-
-    if(fCutFlowDoFourCorrelations)
-    {
-      // estimating <4>
-      Double_t D04gap = FourGap(0,0,0,0).Re();
-      if(D04gap != 0.0)
-      {
-        for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-        {
-          Int_t iHarmonics = fHarmonics[iHarm];
-          Double_t Nn4gap = FourGap(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
-          Double_t dValue = Nn4gap / D04gap;
-          if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D04gap); }
-        }
-      }
-
-      // estimating <4> with 3-sub
-      if(dEtaGap > 0.0) // otherwise middle event is empty
-      {
-        Double_t D04_3sub = Four3sub(0,0,0,0).Re();
-        if(D04_3sub != 0.0)
-        {
-          for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-          {
-            Int_t iHarmonics = fHarmonics[iHarm];
-            Double_t Nn4_3sub = Four3sub(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
-            Double_t dValue = Nn4_3sub / D04_3sub;
-            if( TMath::Abs(dValue) <= 1.0 ) { fpRefsCor4_3sub[fIndexSampling][iEtaGapIndex][iHarm]->Fill(fIndexCentrality, dValue, D04_3sub); }
-          }
-        }
-      }
-
-    } // end-if {fCutFlowDoFourCorrelations}
-
-  } // end-if {dEtaGap}
-  return;
-}
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::DoFlowPOIs(const Int_t iEtaGapIndex, const PartSpecies species)
-{
-  // Estimate <2> for pT diff flow of POIs particles for all harmonics based on relevant flow vectors
-  // *************************************************************
-
-  Double_t dEtaGap = fEtaGap[iEtaGapIndex];
-
-  Bool_t bHasMass = kFALSE;
-  TAxis* axisPt = 0x0;
-  TAxis* axisMass = 0x0;
-
-
-  TProfile2D** prof2TwoPos = 0x0;
-  TProfile2D** prof2TwoNeg = 0x0;
-  TProfile2D** prof2Four = 0x0;
-
-  TProfile3D** prof3TwoPos = 0x0;
-  TProfile3D** prof3TwoNeg = 0x0;
-  TProfile3D** prof3Four = 0x0;
-
-  TProfile2D** prof2MixedPos = 0x0;
-  TProfile2D** prof2MixedNeg = 0x0;
-  TProfile3D** prof3MixedPos = 0x0;
-  TProfile3D** prof3MixedNeg = 0x0;
-
-  // swich based on species
-  switch (species)
-  {
-    case kCharged:
-      prof2TwoPos = fp2ChargedCor2Pos[fIndexSampling][iEtaGapIndex];
-      prof2TwoNeg = fp2ChargedCor2Neg[fIndexSampling][iEtaGapIndex];
-      prof2Four = fp2ChargedCor4Pos[fIndexSampling];
-      prof2MixedPos = fp2ChargedCor3MixedPos[fIndexSampling][iEtaGapIndex];
-      prof2MixedNeg = fp2ChargedCor3MixedNeg[fIndexSampling][iEtaGapIndex];
-      break;
-
-    case kPion:
-      prof2TwoPos = fp2PionCor2Pos[fIndexSampling][iEtaGapIndex];
-      prof2TwoNeg = fp2PionCor2Neg[fIndexSampling][iEtaGapIndex];
-      prof2Four = fp2PionCor4Pos[fIndexSampling];
-      prof2MixedPos = fp2PionCor3MixedPos[fIndexSampling][iEtaGapIndex];
-      prof2MixedNeg = fp2PionCor3MixedNeg[fIndexSampling][iEtaGapIndex];
-      break;
-
-    case kKaon:
-      prof2TwoPos = fp2KaonCor2Pos[fIndexSampling][iEtaGapIndex];
-      prof2TwoNeg = fp2KaonCor2Neg[fIndexSampling][iEtaGapIndex];
-      prof2Four = fp2KaonCor4Pos[fIndexSampling];
-      prof2MixedPos = fp2KaonCor3MixedPos[fIndexSampling][iEtaGapIndex];
-      prof2MixedNeg = fp2KaonCor3MixedNeg[fIndexSampling][iEtaGapIndex];
-      break;
-
-    case kProton:
-      prof2TwoPos = fp2ProtonCor2Pos[fIndexSampling][iEtaGapIndex];
-      prof2TwoNeg = fp2ProtonCor2Neg[fIndexSampling][iEtaGapIndex];
-      prof2Four = fp2ProtonCor4Pos[fIndexSampling];
-      prof2MixedPos = fp2ProtonCor3MixedPos[fIndexSampling][iEtaGapIndex];
-      prof2MixedNeg = fp2ProtonCor3MixedNeg[fIndexSampling][iEtaGapIndex];
-      break;
-
-    case kK0s:
-      prof3TwoPos = fp3V0sCorrK0sCor2Pos[iEtaGapIndex];
-      prof3TwoNeg = fp3V0sCorrK0sCor2Neg[iEtaGapIndex];
-      prof3Four = fp3V0sCorrK0sCor4;
-      prof3MixedPos = fp3V0sCorrK0sCor3MixedPos[iEtaGapIndex];
-      prof3MixedNeg = fp3V0sCorrK0sCor3MixedNeg[iEtaGapIndex];
-      bHasMass = kTRUE;
-      break;
-
-    case kLambda:
-        prof3TwoPos = fp3V0sCorrLambdaCor2Pos[iEtaGapIndex];
-        prof3TwoNeg = fp3V0sCorrLambdaCor2Neg[iEtaGapIndex];
-        prof3Four = fp3V0sCorrLambdaCor4;
-        prof3MixedPos = fp3V0sCorrLambdaCor3MixedPos[iEtaGapIndex];
-        prof3MixedNeg = fp3V0sCorrLambdaCor3MixedNeg[iEtaGapIndex];
-      bHasMass = kTRUE;
-      break;
-
-    case kPhi:
-      prof3TwoPos = fp3PhiCorrCor2Pos[iEtaGapIndex];
-      prof3TwoNeg = fp3PhiCorrCor2Neg[iEtaGapIndex];
-      prof3Four = fp3PhiCorrCor4;
-      prof3MixedPos = fp3PhiCorrCor3MixedPos[iEtaGapIndex];
-      prof3MixedNeg = fp3PhiCorrCor3MixedNeg[iEtaGapIndex];
-      bHasMass = kTRUE;
-      break;
-
-    default:
-      AliError("Selected species unknown or not supported.");
-      return;
-  }
-
-  // >>>>> calculate only correlations for mixed harmonics (non-flow)
-  if(fCutFlowDoOnlyMixedThreeCorrelations)
-  {
-    if(bHasMass)
-    {
-      if(!prof3MixedPos) { AliError("'prof3MixedPos' not found!"); return; }
-      if(dEtaGap > -1.0 && !prof3MixedNeg) { AliError("'prof3MixedNeg' not found!"); return; }
-      axisPt = prof3MixedPos[0]->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return; }
-      axisMass = prof3MixedPos[0]->GetZaxis(); if(!axisMass) { AliError("Mass axis object not found!"); return; }
-    }
-    else
-    {
-      if(!prof2MixedPos) { AliError("'prof2MixedPos' not found!"); return; }
-      if(dEtaGap > -1.0 && !prof2MixedNeg) { AliError("'prof2MixedNeg' not found!"); return; }
-      axisPt = prof2MixedPos[0]->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return; }
-    }
-
-    // iNumMassBins = 1 to run at least once if bHasMass == kFALSE
-    Int_t iNumMassBins = 1; if(bHasMass) { iNumMassBins = axisMass->GetNbins(); }
-    Int_t iNumPtBins = axisPt->GetNbins();
-
-    for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass)
-    {
-      Double_t dMass = 0.0; Double_t dMassLow = 0.0; Double_t dMassHigh = 0.0;
-      if(bHasMass)
-      {
-        dMass = axisMass->GetBinCenter(iMass);
-        dMassLow = axisMass->GetBinLowEdge(iMass);
-        dMassHigh = axisMass->GetBinUpEdge(iMass);
-      }
-
-      for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt)
-      {
-        Double_t dPt = axisPt->GetBinCenter(iPt);
-        Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
-        Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
-
-        // filling POIs (P,S) flow vectors
-        FillPOIsVectors(dEtaGap,species,dPtLow,dPtHigh,dMassLow,dMassHigh);
-
-        if(dEtaGap == -1.0) // no eta gap
-        {
-          // estimating <3'> :
-          Double_t D03 = ThreeDiff(0,0,0).Re();
-          if(D03 != 0.0)
-          {
-            Double_t NMix422 = ThreeDiff(4,-2,-2).Re();
-            Double_t dValMix422 = NMix422 / D03;
-            if( TMath::Abs(dValMix422) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedPos[0]->Fill(fIndexCentrality, dPt, dMass, dValMix422, D03); }
-              else { prof2MixedPos[0]->Fill(fIndexCentrality, dPt, dValMix422, D03); }
-            }
-
-            Double_t NMix532 = ThreeDiff(5,-3,-2).Re();
-            Double_t dValMix532 = NMix532 / D03;
-            if( TMath::Abs(dValMix532) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedPos[1]->Fill(fIndexCentrality, dPt, dMass, dValMix532, D03); }
-              else { prof2MixedPos[1]->Fill(fIndexCentrality, dPt, dValMix532, D03); }
-            }
-
-            Double_t NMix633 = ThreeDiff(5,-3,-2).Re();
-            Double_t dValMix633 = NMix633 / D03;
-            if( TMath::Abs(dValMix633) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedPos[2]->Fill(fIndexCentrality, dPt, dMass, dValMix633, D03); }
-              else { prof2MixedPos[2]->Fill(fIndexCentrality, dPt, dValMix633, D03); }
-            }
-          }
-        }
-        else // eta gap
-        {
-          // estimating <3'> : POIs in positive eta
-          Double_t D03pos = ThreeDiffGapPos(0,0,0).Re();
-          if(D03pos != 0.0)
-          {
-            Double_t NMix422pos = ThreeDiffGapPos(4,-2,-2).Re();
-            Double_t dValMix422pos = NMix422pos / D03pos;
-            if( TMath::Abs(dValMix422pos) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedPos[0]->Fill(fIndexCentrality, dPt, dMass, dValMix422pos, D03pos); }
-              else { prof2MixedPos[0]->Fill(fIndexCentrality, dPt, dValMix422pos, D03pos); }
-            }
-
-            Double_t NMix532pos = ThreeDiffGapPos(5,-3,-2).Re();
-            Double_t dValMix532pos = NMix532pos / D03pos;
-            if( TMath::Abs(dValMix532pos) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedPos[1]->Fill(fIndexCentrality, dPt, dMass, dValMix532pos, D03pos); }
-              else { prof2MixedPos[1]->Fill(fIndexCentrality, dPt, dValMix532pos, D03pos); }
-            }
-
-            Double_t NMix633pos = ThreeDiffGapPos(6,-3,-3).Re();
-            Double_t dValMix633pos = NMix633pos / D03pos;
-            if( TMath::Abs(dValMix633pos) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedPos[2]->Fill(fIndexCentrality, dPt, dMass, dValMix633pos, D03pos); }
-              else { prof2MixedPos[2]->Fill(fIndexCentrality, dPt, dValMix633pos, D03pos); }
-            }
-          }
-
-          // estimating <3'> : POIs in negative eta
-          Double_t D03neg = ThreeDiffGapNeg(0,0,0).Re();
-          if(D03neg != 0.0)
-          {
-            Double_t NMix422neg = ThreeDiffGapNeg(4,-2,-2).Re();
-            Double_t dValMix422neg = NMix422neg / D03neg;
-            if( TMath::Abs(dValMix422neg) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedNeg[0]->Fill(fIndexCentrality, dPt, dMass, dValMix422neg, D03neg); }
-              else { prof2MixedNeg[0]->Fill(fIndexCentrality, dPt, dValMix422neg, D03neg); }
-            }
-
-            Double_t NMix532neg = ThreeDiffGapNeg(5,-3,-2).Re();
-            Double_t dValMix532neg = NMix532neg / D03neg;
-            if( TMath::Abs(dValMix532neg) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedNeg[1]->Fill(fIndexCentrality, dPt, dMass, dValMix532neg, D03neg); }
-              else { prof2MixedNeg[1]->Fill(fIndexCentrality, dPt, dValMix532neg, D03neg); }
-            }
-
-            Double_t NMix633neg = ThreeDiffGapNeg(6,-3,-3).Re();
-            Double_t dValMix633neg = NMix633neg / D03neg;
-            if( TMath::Abs(dValMix633neg) <= 1.0 )
-            {
-              if(bHasMass) { prof3MixedNeg[2]->Fill(fIndexCentrality, dPt, dMass, dValMix633neg, D03neg); }
-              else { prof2MixedNeg[2]->Fill(fIndexCentrality, dPt, dValMix633neg, D03neg); }
-            }
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  // >>>>> Standard vn{M}
-  if(bHasMass)
-  {
-    // particle species with inv. mass (K0s, Lambda, Phi)
-    if(!prof3TwoPos) { AliError("'prof3TwoPos' not found!"); return; }
-    if(dEtaGap > -1.0 && !prof3TwoNeg) { AliError("'prof3TwoNeg' not found!"); return; }
-    if(fCutFlowDoFourCorrelations && !prof3Four) { AliError("'prof3Four' not found!"); return; }
-    axisPt = prof3TwoPos[0]->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return; }
-    axisMass = prof3TwoPos[0]->GetZaxis(); if(!axisMass) { AliError("Mass axis object not found!"); return; }
-  }
-  else
-  {
-    // particle species without inv. mass (charged, pi, K, p)
-    if(!prof2TwoPos) { AliError("'prof2TwoPos' not found!"); return; }
-    if(dEtaGap > -1.0 && !prof2TwoNeg) { AliError("'prof2TwoNeg' not found!"); return; }
-    if(fCutFlowDoFourCorrelations && !prof2Four) { AliError("'prof2Four' not found!"); return; }
-    axisPt = prof2TwoPos[0]->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return; }
-  }
-
-
-  // iNumMassBins = 1 to run at least once if bHasMass == kFALSE
-  Int_t iNumMassBins = 1; if(bHasMass) { iNumMassBins = axisMass->GetNbins(); }
-  Int_t iNumPtBins = axisPt->GetNbins();
-
-  for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass)
-  {
-    Double_t dMass = 0.0; Double_t dMassLow = 0.0; Double_t dMassHigh = 0.0;
-    if(bHasMass)
-    {
-      dMass = axisMass->GetBinCenter(iMass);
-      dMassLow = axisMass->GetBinLowEdge(iMass);
-      dMassHigh = axisMass->GetBinUpEdge(iMass);
-    }
-
-    for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt)
-    {
-      Double_t dPt = axisPt->GetBinCenter(iPt);
-      Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
-      Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
-
-      // filling POIs (P,S) flow vectors
-      FillPOIsVectors(dEtaGap,species,dPtLow,dPtHigh,dMassLow,dMassHigh);
-
-
-      if(dEtaGap == -1.0) // no eta gap
-      {
-        // estimating <2'>
-        Double_t D02 = TwoDiff(0,0).Re();
-        if(D02 != 0.0)
-        {
-          for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-          {
-            Int_t iHarmonics = fHarmonics[iHarm];
-            Double_t Nn2 = TwoDiff(iHarmonics,-iHarmonics).Re();
-            Double_t dValue = Nn2 / D02;
-            if(TMath::Abs(dValue) <= 1.0)
-            {
-              if(bHasMass) { prof3TwoPos[iHarm]->Fill(fIndexCentrality, dPt, dMass, dValue, D02); }
-              else { prof2TwoPos[iHarm]->Fill(fIndexCentrality, dPt, dValue, D02); }
-            }
-          }
-        }
-
-        // estimating <4'>
-        if(fCutFlowDoFourCorrelations)
-        {
-          Double_t D04 = FourDiff(0,0,0,0).Re();
-          if(D04 != 0.0)
-          {
-            for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-            {
-              Int_t iHarmonics = fHarmonics[iHarm];
-              Double_t Nn4 = FourDiff(iHarmonics,iHarmonics,-iHarmonics,-iHarmonics).Re();
-              Double_t dValue = Nn4 / D04;
-              if( TMath::Abs(dValue) <= 1.0 )
-              {
-                if(bHasMass) { prof3Four[iHarm]->Fill(fIndexCentrality, dPt, dMass, dValue, D04); }
-                else { prof2Four[iHarm]->Fill(fIndexCentrality, dPt, dValue, D04); }
-              }
-            }
-          }
-        }
-
-      }
-      else // eta gap
-      {
-        // estimating <2'> : POIs in positive eta
-        Double_t D02pos = TwoDiffGapPos(0,0).Re();
-        if(D02pos != 0.0)
-        {
-          for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-          {
-            Int_t iHarmonics = fHarmonics[iHarm];
-            Double_t Nn2pos = TwoDiffGapPos(iHarmonics,-iHarmonics).Re();
-            Double_t dValue = Nn2pos / D02pos;
-            if( TMath::Abs(dValue) <= 1.0 )
-            {
-              if(bHasMass) { prof3TwoPos[iHarm]->Fill(fIndexCentrality, dPt, dMass, dValue, D02pos); }
-              else { prof2TwoPos[iHarm]->Fill(fIndexCentrality, dPt, dValue, D02pos); }
-            }
-          }
-        }
-
-        // estimating <2'> : POIs in negative eta
-        Double_t D02neg = TwoDiffGapNeg(0,0).Re();
-        if(D02neg != 0.0)
-        {
-          for(Int_t iHarm(0); iHarm < fNumHarmonics; ++iHarm)
-          {
-            Int_t iHarmonics = fHarmonics[iHarm];
-            Double_t Nn2neg = TwoDiffGapNeg(iHarmonics,-iHarmonics).Re();
-            Double_t dValue = Nn2neg / D02neg;
-            if( TMath::Abs(dValue) <= 1.0 )
-            {
-              if(bHasMass) { prof3TwoNeg[iHarm]->Fill(fIndexCentrality, dPt, dMass, dValue, D02neg); }
-              else { prof2TwoNeg[iHarm]->Fill(fIndexCentrality, dPt, dValue, D02neg); }
-            }
-          }
-        }
-      } // endif {dEtaGap}
-
-    } // endfor {iPt}
-  } // endfor {iMass}
-
-  return;
-}
-//_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
 {
   // Filling Q flow vector with RFPs
@@ -3494,7 +3002,6 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
   Bool_t bHasGap = kFALSE;
   Bool_t bHas3sub = kFALSE;
   if(dEtaGap > -1.0) { bHasGap = kTRUE; }
-  if(fCutFlowDoFourCorrelations && (dEtaGap > 0.0)) { bHas3sub = kTRUE; }
 
   TH2D* h2Weights = fh2Weights[kRefs];
   TH3D* h3Weights = fh3Weights[kRefs];
@@ -3507,7 +3014,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecQpos);
   ResetFlowVector(fFlowVecQneg);
-  ResetFlowVector(fFlowVecQmid);
+  if(bHas3sub) { ResetFlowVector(fFlowVecQmid); }
 
   for (auto part = fVector[kRefs]->begin(); part != fVector[kRefs]->end(); part++)
   {
