@@ -1001,7 +1001,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // *************************************************************
 
   // check if initialization succesfull (done within UserCreateOutputObjects())
-  if(!fInit) { return; }
+  if(!fInit) { AliFatal("Something went wrong : task not initialized!"); return; }
 
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
   if(fRunMode == kTest && fEventCounter >= fNumEventsAnalyse) { return; }
@@ -1014,7 +1014,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(fMC)
   {
     fArrayMC = (TClonesArray*) fEventAOD->FindListObject("mcparticles");
-    if(!fArrayMC) { AliError("TClonesArray with MC particle not found!"); return; }
+    if(!fArrayMC) { AliFatal("TClonesArray with MC particle not found!"); return; }
   }
 
   // "valid" events before selection
