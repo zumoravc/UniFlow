@@ -23,6 +23,7 @@ struct FlowTask
               ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
   void        Init(); // initialization
   void        Print(); // print FlowTask properties
+  Bool_t      HasGap() { return (Bool_t) fiNumGaps; }; // check if Gap
 };
 //_____________________________________________________________________________
 void FlowTask::Init()
