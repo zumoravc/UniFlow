@@ -4082,10 +4082,31 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         }
 
         if(!profile) { fInit = kFALSE; AliError("Profile (Pos) NOT created!"); task->Print(); return; }
+
+        // check if same profile does not exists already
+        if(fListFlow[iSpec]->FindObject(profile->GetName())) {
+          AliError(Form("FlowTask %d : Profile '%s' already exists! Please check run macro for FlowTask duplicates!",iTask,profile->GetName()));
+          fInit = kFALSE;
+          task->Print();
+          delete profile;
+          return;
+        }
+
         profile->Sumw2();
         fListFlow[iSpec]->Add(profile);
+
         if(bHasGap && iSpec != kRefs) { // Refs does not distinquish Pos/Neg
           if(!profileNeg) { fInit = kFALSE; AliError("Profile (Neg) NOT created!"); task->Print(); return; }
+
+          // same for Neg
+          if(fListFlow[iSpec]->FindObject(profileNeg->GetName())) {
+            AliError(Form("FlowTask %d : Profile '%s' already exists! Please check run macro for FlowTask duplicates!",iTask,profile->GetName()));
+            fInit = kFALSE;
+            task->Print();
+            delete profileNeg;
+            return;
+          }
+
           profileNeg->Sumw2();
           fListFlow[iSpec]->Add(profileNeg);
         }
