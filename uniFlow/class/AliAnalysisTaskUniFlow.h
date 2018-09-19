@@ -9,6 +9,76 @@
 #include "AliEventCuts.h"
 #include "AliPicoTrack.h"
 
+struct FlowTask
+{
+  Bool_t                fbDoRefs; // which particles are procesed (RFPs / POIs / both )
+  Bool_t                fbDoPOIs; // which particles are procesed (RFPs / POIs / both )
+  Int_t                 fiNumHarm; // correlation order <M>
+  Int_t                 fiNumGaps; // number of subevents
+  std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
+  std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
+  TString               fsName; // automatically generated name: see Init() for format
+  TString               fsLabel; // automatically generated label see Init() for format
+
+
+              FlowTask() : fbDoRefs(kTRUE), fbDoPOIs(kTRUE), fiNumHarm(0), fiNumGaps(0), fsName("DummyName"), fsLabel("DummyLabel") {}; // default ctor
+              FlowTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) { fbDoRefs = refs; fbDoPOIs = pois; fiHarm = harm; fdGaps = gaps; fiNumHarm = harm.size(); fiNumGaps = gaps.size(); Init(); } // actual ctor
+              ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
+  void        Init(); // initialization
+  void        Print(); // print FlowTask properties
+  Bool_t      HasGap() { return (Bool_t) fiNumGaps; }; // check if Gap
+};
+//_____________________________________________________________________________
+void FlowTask::Init()
+{
+  // Initilization of FlowTask
+
+  if(fiNumHarm < 2)
+  {
+    fsName = "NA";
+    fsLabel = "NA";
+    return;
+  }
+
+  // generating name
+  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
+  sName += ")";
+
+  if(fiNumGaps > 0)
+  {
+    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
+    sName += ")";
+  }
+
+  // generating label
+  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
+  sLabel += "}";
+
+  if(fiNumGaps > 0)
+  {
+    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
+    sLabel += ")";
+  }
+
+  fsName = sName;
+  fsLabel = sLabel;
+}
+//_____________________________________________________________________________
+void FlowTask::Print()
+{
+  printf("FlowTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
+  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
+  printf("} | fgGaps[%d] = { ",fiNumGaps);
+  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
+  printf("}\n");
+}
+//_____________________________________________________________________________
+
+
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
     public:
@@ -34,15 +104,20 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
       void                    SetFillQAhistos(Bool_t fill = kTRUE) { fFillQA = fill; }
       //void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; } // not implemented yet
-      void                    SetProcessPID(Bool_t filter = kTRUE) { fProcessPID = filter; }
-      void                    SetProcessV0s(Bool_t filter = kTRUE) { fProcessV0s = filter; }
-      void                    SetProcessPhi(Bool_t filter = kTRUE) { fProcessPhi = filter; }
+      void                    SetProcessPID(Bool_t use = kTRUE) { fProcessSpec[kPion] = use; fProcessSpec[kKaon] = use; fProcessSpec[kProton] = use; }
+      void                    SetProcessV0s(Bool_t use = kTRUE) { fProcessSpec[kK0s] = use; fProcessSpec[kLambda] = use; }
+      void                    SetProcessPhi(Bool_t use = kTRUE) { fProcessSpec[kPhi] = use; }
       // flow related setters
+      void                    AddTwo(Int_t n1, Int_t n2, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2})); }
+      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2}, {gap})); }
+      void                    AddThree(Int_t n1, Int_t n2, Int_t n3, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3})); }
+      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3} ,{gap})); }
+      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4})); }
+      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4}, {gap})); }
+
       void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
       void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
-      void                    SetFlowDoFourCorrelations(Bool_t four = kTRUE) { fCutFlowDoFourCorrelations = four; }
-      void                    SetFlowDoOnlyMixedThreeCorrelations(Bool_t use = kTRUE) { fCutFlowDoOnlyMixedThreeCorrelations = use; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
@@ -118,6 +193,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliEventCuts fEventCuts; //
 
     private:
+      std::vector<FlowTask*>  fVecFlowTask; //
       // array lenghts & constants
       const Double_t          fPDGMassPion; // [DPGMass] DPG mass of charged pion
       const Double_t          fPDGMassKaon; // [DPGMass] DPG mass of charged kaon
@@ -136,18 +212,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
-      const static Int_t      fNumHarmonics = 1; // number of harmonics
-      const static Int_t      fNumMixedHarmonics = 3; // number of mixed harmonics
-      static Int_t            fHarmonics[fNumHarmonics]; // values of used harmonics
-      const static Int_t      fNumEtaGap = 3; // number of harmonics
-      static Double_t         fEtaGap[fNumEtaGap]; // values of used harmonics
       const static Int_t      fNumMultBins = 6; // number of multiplicity bins
       static Double_t         fMultBins[fNumMultBins+1]; // multiplicity bins
 
       const char*             GetSpeciesName(PartSpecies species);
       const char*             GetSpeciesLabel(PartSpecies species);
       const char*             GetEtaGapName(Double_t dEtaGap) { return Form("%02.2g",10.0*dEtaGap); }
-
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       void                    ListParameters(); // list all task parameters
@@ -160,8 +230,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
-      const char*             GetMultiEstimatorName(MultiEst est); // returns mult/cent estimator string or 'n/a' if not available
+      const char*             GetMultiEstimatorLabel(MultiEst est); // returns mult/cent estimator string with label or 'n/a' if not available
 
+      void                    CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0); // wrapper for correlations methods
+      Bool_t                  ProcessFlowTask(FlowTask* task); // procesisng of FlowTask
       Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
 
       void                    FilterCharged(); // charged tracks filtering
@@ -187,12 +259,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FillQAPhi(const Short_t iQAindex, const AliPicoTrack* part = 0x0); // filling QA plots for V0s candidates
 
       // Flow related methods
-      void                    FillRefsVectors(const Short_t iEtaGapIndex); // fill flow vector Q with RFPs for reference flow
-      void                    FillPOIsVectors(const Short_t iEtaGapIndex, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow = 0.0, const Double_t dMassHigh = 0.0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
+      void                    FillRefsVectors(const Double_t dGap); // fill flow vector Q with RFPs for reference flow
+      void                    FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow = 0.0, const Double_t dMassHigh = 0.0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
       void                    ResetFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
       void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
-      void                    DoFlowRefs(const Int_t iEtaGapIndex = 0); // Estimate <2> for reference flow
-      void                    DoFlowPOIs(const Int_t iEtaGapIndex = 0, const PartSpecies species = kUnknown); // Estimate <2'> for pt diff. flow of charged hadrons
 
       TComplex                Q(const Short_t n, const Short_t p);
       TComplex                QGapPos(const Short_t n, const Short_t p);
@@ -250,22 +320,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AnalType                fAnalType; // analysis type: AOD / ESD
       Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
       Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
-      Bool_t                  fProcessPID; // flag for processing PID tracks (pi,K,p)
-      Bool_t                  fProcessV0s; // flag for processing V0 candidates (K0s, Lambda/ALambda)
-      Bool_t                  fProcessPhi; // flag for processing Phi meson candidates
+      Bool_t                  fProcessSpec[kUnknown];  // flag for processing species
       // cuts & selection: flow related
       Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
-      Bool_t                  fCutFlowDoThreeCorrelations; // [kFALSE] flag for processing <3>
-      Bool_t                  fCutFlowDoOnlyMixedThreeCorrelations; // [kFALSE] flag for processing mixed <3>
-      Bool_t                  fCutFlowDoFourCorrelations; // [kFALSE] flag for processing <4>
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
       Bool_t                  fFlowUse3Dweights; // [kFALSE] flag for using 3D GF weights, if kFALSE, 2D weights are expected
       Bool_t                  fFlowRunByRunWeights; // [kTRUE] flag for using rub-by-run weigths from weigths file; if false, only one set of histrograms is provided
       TString                 fFlowWeightsPath; //[] path to source root file with weigthts (if empty unit weights are applied) e.g. "alice/cern.ch/user/k/kgajdoso/EfficienciesWeights/2016/PhiWeight_LHC16kl.root"
-
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
@@ -342,14 +406,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*                  fQAV0s; //! V0s candidates list
       TList*                  fQAPhi; //! Phi candidates list
       TList*                  fFlowWeights; //! list for flow weights
-      TList*                  fFlowRefs; //! list for flow of reference particles
-      TList*                  fFlowCharged; //! list for flow of charged particles
-      TList*                  fFlowPion; //! list for flow of PID (pi,K,p) particles
-      TList*                  fFlowKaon; //! list for flow of PID (pi,K,p) particles
-      TList*                  fFlowProton; //! list for flow of PID (pi,K,p) particles
-      TList*                  fFlowPhi; //! list for flow of Phi particles
-      TList*                  fFlowK0s; //! list for flow of K0s particles
-      TList*                  fFlowLambda; //! list for flow of (anti-)Lambda particles
+      TList*                  fListFlow[kUnknown]; //! flow lists
+
 
       // histograms & profiles
 
@@ -359,83 +417,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       THnSparseD*     fhsPhiCandSig; //!  distribution of Phi candidates
       THnSparseD*     fhsPhiCandBg; //!  distribution of Phi background
 
-      TH3D*           fh3WeightsRefs; //! distribution of Refs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsCharged; //! distribution of Charged POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsPion; //! distribution of Pion POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsKaon; //! distribution of Kaon POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsProton; //! distribution of Proton POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsPhi; //! distribution of Phi POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsK0s; //! distribution of K0s POIs particles for estimating weight purpose (phi,eta,pt)
-      TH3D*           fh3WeightsLambda; //! distribution of Lambda POIs particles for estimating weight purpose (phi,eta,pt)
-
-      TH3D*           fh3AfterWeightsRefs; //! distribution of Refs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsCharged; //! distribution of Charged POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsPion; //! distribution of Pion POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsKaon; //! distribution of Kaon POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsProton; //! distribution of Proton POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsPhi; //! distribution of Phi POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsK0s; //! distribution of K0s POIs particles after applying the weights (phi,eta,pt)
-      TH3D*           fh3AfterWeightsLambda; //! distribution of Lambda POIs particles after applying the weights (phi,eta,pt)
-
-      TH2D*           fh2WeightRefs; //! container for loading weights for given run
-      TH2D*           fh2WeightCharged; //! container for loading weights for given run
-      TH2D*           fh2WeightPion; //! container for loading weights for given run
-      TH2D*           fh2WeightKaon; //! container for loading weights for given run
-      TH2D*           fh2WeightProton; //! container for loading weights for given run
-      TH2D*           fh2WeightK0s; //! container for loading weights for given run
-      TH2D*           fh2WeightLambda; //! container for loading weights for given run
-      TH2D*           fh2WeightPhi; //! container for loading weights for given run
-      TH3D*           fh3WeightRefs; //! container for loading weights for given run
-      TH3D*           fh3WeightCharged; //! container for loading weights for given run
-      TH3D*           fh3WeightPion; //! container for loading weights for given run
-      TH3D*           fh3WeightKaon; //! container for loading weights for given run
-      TH3D*           fh3WeightProton; //! container for loading weights for given run
-      TH3D*           fh3WeightK0s; //! container for loading weights for given run
-      TH3D*           fh3WeightLambda; //! container for loading weights for given run
-      TH3D*           fh3WeightPhi; //! container for loading weights for given run
-
-      TProfile*       fpRefsCor2[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2> correlations for RFPs
-      TProfile2D*     fp2ChargedCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta>0
-      TProfile2D*     fp2ChargedCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for Charged tracks POIs: POIs in Eta<0
-      TProfile2D*     fp2PionCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs: POIs in Eta>0
-      TProfile2D*     fp2PionCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for pion POIs: POIs in Eta>0
-      TProfile2D*     fp2KaonCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs: POIs in Eta>0
-      TProfile2D*     fp2KaonCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for kaon POIs: POIs in Eta>0
-      TProfile2D*     fp2ProtonCor2Pos[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs: POIs in Eta>0
-      TProfile2D*     fp2ProtonCor2Neg[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <2'> correlations for proton POIs: POIs in Eta>0
-      TProfile3D*     fp3V0sCorrK0sCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates: POIs in Eta>0  (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrK0sCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of K0s candidates: POIs in Eta<0  (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrLambdaCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates: POIs in Eta>0  (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrLambdaCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of (Anti-)Lambda candidates: POIs in Eta<0  (cent, pT, InvMass)
-      TProfile3D*     fp3PhiCorrCor2Pos[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta>0 (cent, pT, InvMass)
-      TProfile3D*     fp3PhiCorrCor2Neg[fNumEtaGap][fNumHarmonics]; //! <2'> correlations of phi candidates / unlike-sign pairs: POIs in Eta<0 (cent, pT, InvMass)
-
-      TProfile*       fpRefsCor4[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <4> correlations for RFPs
-      TProfile*       fpRefsCor4_3sub[fNumSamples][fNumEtaGap][fNumHarmonics]; //! <4> correlations for RFPs
-      TProfile2D*     fp2ChargedCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for Charged tracks POIs
-      TProfile2D*     fp2PionCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for pion POIs
-      TProfile2D*     fp2KaonCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for kaon POIs
-      TProfile2D*     fp2ProtonCor4Pos[fNumSamples][fNumHarmonics]; //! <4'> correlations for proton POIs
-      TProfile3D*     fp3V0sCorrK0sCor4[fNumHarmonics]; //! <4'> correlations of K0s candidates (cent, pT, InvMass)
-      TProfile3D*     fp3V0sCorrLambdaCor4[fNumHarmonics]; //! <4'> correlations of (Anti-)Lambda candidates (cent, pT, InvMass)
-      TProfile3D*     fp3PhiCorrCor4[fNumHarmonics]; //! <4'> correlations of phi candidates / unlike-sign pairs (cent, pT, InvMass)
-
-      // mixed harmonics
-      TProfile*       fpRefsCor4Mixed[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile2D*     fp2ChargedCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile2D*     fp2ChargedCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile2D*     fp2PionCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile2D*     fp2PionCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile2D*     fp2KaonCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile2D*     fp2KaonCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile2D*     fp2ProtonCor3MixedPos[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile2D*     fp2ProtonCor3MixedNeg[fNumSamples][fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile3D*     fp3V0sCorrK0sCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile3D*     fp3V0sCorrK0sCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile3D*     fp3V0sCorrLambdaCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile3D*     fp3V0sCorrLambdaCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile3D*     fp3PhiCorrCor3MixedPos[fNumEtaGap][fNumMixedHarmonics]; //!
-      TProfile3D*     fp3PhiCorrCor3MixedNeg[fNumEtaGap][fNumMixedHarmonics]; //!
+      TH2D*           fh2Weights[kUnknown]; //! container for GF weights (phi,eta,pt) (2D)
+      TH3D*           fh3Weights[kUnknown]; //! container for GF weights (phi,eta,pt)
+      TH3D*           fh3AfterWeights[kUnknown]; //! distribution after applying GF weights (phi,eta,pt)
 
       // Events
       TH2D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)

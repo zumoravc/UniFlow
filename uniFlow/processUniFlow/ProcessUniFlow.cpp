@@ -654,9 +654,9 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 
   Int_t iSample = 0;
 
-  TString sNameRefs = Form("fpRefs_%s_gap%s_sample%d", task->fMixedRefs.Data(), task->GetEtaGapString().Data(), iSample);
-  TString sNamePOIs = Form("fp2%s_%s_gap%s_Pos_sample%d", task->GetSpeciesName().Data(), task->fMixedDiff.Data(), task->GetEtaGapString().Data(), iSample);
-  TString sNamePOIsNeg = Form("fp2%s_%s_gap%s_Neg_sample%d", task->GetSpeciesName().Data(), task->fMixedDiff.Data(), task->GetEtaGapString().Data(), iSample);
+  TString sNameRefs = Form("%s_Pos_sample%d", task->fMixedRefs.Data(),iSample);
+  TString sNamePOIs = Form("%s_Pos_sample%d", task->fMixedDiff.Data(), iSample);
+  TString sNamePOIsNeg = Form("%s_Neg_sample%d", task->fMixedDiff.Data(), iSample);
 
   // TString sNameRefs = "fpRefs_Cor4p2p2m2m2_gap00_sample0";
   // TString sNamePOIs = "fp2Charged_Cor3p4m2m2_gap00_Pos_sample0";
@@ -695,7 +695,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
     Int_t binMultLow = profPOIs->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
     Int_t binMultHigh = profPOIs->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
 
-    TProfile* profPOIsSlice = (TProfile*) profPOIs->ProfileY(Form("%s_mult%d",sNamePOIs.Data(),iMultBin),binMultLow,binMultHigh);
+    TProfile* profPOIsSlice = (TProfile*) profPOIs->ProfileY(Form("%s_%s_mult%d",task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin),binMultLow,binMultHigh);
 
     // rebinning according to pt bins
     TProfile* profVn = 0x0;
@@ -766,18 +766,30 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     profMult_rebin->Write(profMult_rebin->GetName());
   }
 
+  // new naming convention for input histos (from FlowTask)
+  TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
+  TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
+  if(task->fEtaGap > -1.0) {
+    sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
+    sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
+  }
+
   Debug("Processing samples","ProcessRefs");
   for(Short_t iSample(0); iSample < task->fNumSamples; ++iSample)
   {
-    TProfile* pCorTwo = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
-    if(!pCorTwo) { Warning(Form("Profile 'pCorTwo' (sample %d) not valid",iSample),"ProcesRefs"); return kFALSE; }
+    TProfile* pCorTwo = (TProfile*) flFlowRefs->FindObject(Form("%s_Pos_sample%d",sProfTwoName.Data(), iSample));
+    if(!pCorTwo) { Warning(Form("Profile '%s' not valid",Form("%s_Pos_sample%d",sProfTwoName.Data(), iSample)),"ProcesRefs"); flFlowRefs->ls(); return kFALSE; }
+    // TProfile* pCorTwo = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<2>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+    // if(!pCorTwo) { Warning(Form("Profile 'pCorTwo' (sample %d) not valid",iSample),"ProcesRefs"); flFlowRefs->ls(); return kFALSE; }
 
     // Process 4-particle correlations
     TProfile* pCorFour = 0x0;
     if(bDoFour)
     {
-      pCorFour = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<4>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
-      if(!pCorFour) { Warning(Form("Profile 'pCorFour' (sample %d) not valid!",iSample),"ProcesRefs"); return kFALSE; }
+      pCorFour = (TProfile*) flFlowRefs->FindObject(Form("%s_Pos_sample%d",sProfFourName.Data(),iSample));
+      if(!pCorFour) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",sProfFourName.Data(),iSample)),"ProcesRefs"); flFlowRefs->ls(); return kFALSE; }
+      // pCorFour = (TProfile*) flFlowRefs->FindObject(Form("fpRefs_%s<4>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+      // if(!pCorFour) { Warning(Form("Profile 'pCorFour' (sample %d) not valid!",iSample),"ProcesRefs"); flFlowRefs->ls(); return kFALSE; }
     }
 
     // rebinning the profiles
@@ -1274,6 +1286,15 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   TList* listFlowFour = new TList(); TString nameFlowFour = Form("hFlow4_%s_harm%d_gap%s_cent%d", task->GetSpeciesName().Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
 
   Debug("Processing samples","ProcessDirect");
+
+  // new naming convention for input histos (from FlowTask)
+  TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
+  TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
+  if(task->fEtaGap > -1.0) {
+    sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
+    sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
+  }
+
   for(Short_t iSample(0); iSample < task->fNumSamples; iSample++)
   {
     Debug(Form("Processing sample %d",iSample), "ProcessDirect");
@@ -1282,8 +1303,8 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     if(task->fMergePosNeg)
     {
       // loading pos & neg if fMergePosNeg is ON
-      TProfile2D* prof2pos = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%s_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
-      TProfile2D* prof2neg = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%s_Neg_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+      TProfile2D* prof2pos = (TProfile2D*) listInput->FindObject(Form("%s_Pos_sample%d",sProfTwoName.Data(),iSample));
+      TProfile2D* prof2neg = (TProfile2D*) listInput->FindObject(Form("%s_Neg_sample%d",sProfTwoName.Data(),iSample));
       if(!prof2pos || !prof2neg) { Error("<2>: Pos & Neg profile merging: 'prof2pos' OR 'prof2neg' not found!.","ProcessDirect"); return kFALSE; }
 
       // merging pos & neg
@@ -1298,11 +1319,11 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     {
       // loading single (Pos) profile
       if(task->fInputTag.EqualTo("")) // loading default-ly named profile
-      { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%s_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample)); }
+      { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("%s_Pos_sample%d",sProfTwoName.Data(),iSample)); }
       else // loading "non-standardly" named profile
       { p2CorTwoDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<2>_harm%d_gap%s_%s_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fInputTag.Data(),iSample)); }
     }
-    if(!p2CorTwoDif) { Error(Form("Profile 'p2CorTwoDif' (sample %d) does not exists.",iSample),"ProcessDirect"); return kFALSE; }
+    if(!p2CorTwoDif) { Error(Form("Profile '%s' (sample %d) does not exists.",sProfTwoName.Data(),iSample),"ProcessDirect"); return kFALSE; }
 
     // <<4'>>
     TProfile2D* p2CorFourDif = 0x0;
@@ -1311,8 +1332,8 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
       if(task->fMergePosNeg)
       {
         // loading pos & neg if fMergePosNeg is ON
-        TProfile2D* prof2pos = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<4>_harm%d_gap%s_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
-        TProfile2D* prof2neg = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<4>_harm%d_gap%s_Neg_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+        TProfile2D* prof2pos = (TProfile2D*) listInput->FindObject(Form("%s_Pos_sample%d",sProfFourName.Data(),iSample));
+        TProfile2D* prof2neg = (TProfile2D*) listInput->FindObject(Form("%s_Neg_sample%d",sProfFourName.Data(),iSample));
         if(!prof2pos || !prof2neg) { Error("<4>: Pos & Neg profile merging: 'prof2pos' OR 'prof2neg' not found!.","ProcessDirect"); return kFALSE; }
 
         // merging pos & neg
@@ -1327,11 +1348,11 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
       {
         // loading single (Pos) profile
         if(task->fInputTag.EqualTo("")) // loading default-ly named profile
-        { p2CorFourDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<4>_harm%d_gap%s_Pos_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample)); }
+        { p2CorFourDif = (TProfile2D*) listInput->FindObject(Form("%s_Pos_sample%d",sProfFourName.Data(),iSample)); }
         else // loading "non-standardly" named profile
         { p2CorFourDif = (TProfile2D*) listInput->FindObject(Form("fp2%s_%s<4>_harm%d_gap%s_%s_sample%d",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),task->fInputTag.Data(),iSample)); }
       }
-      if(!p2CorFourDif) { Error(Form("Profile 'p2CorFourDif' (sample %d) does not exists.",iSample),"ProcessDirect"); listInput->ls(); return kFALSE; }
+      if(!p2CorFourDif) { Error(Form("Profile '%s' (sample %d) does not exists.",sProfFourName.Data(),iSample),"ProcessDirect"); listInput->ls(); return kFALSE; }
     }
 
     Debug("Rebinning profiles","ProcessDirect");
@@ -1559,6 +1580,16 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       return kFALSE;
   }
 
+  // new naming convention for input histos (from FlowTask)
+  TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
+  TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
+  if(task->fEtaGap > -1.0) {
+    sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
+    sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
+  }
+
+  sProfileName = sProfTwoName;
+
   // ### Preparing (un-sliced) candidate histo
   // cutting on eta based on eta gap
   Double_t dEtaGap = task->fEtaGap;
@@ -1659,8 +1690,8 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   {
     // loading Pos & Neg if fMergePosNeg is ON
     // merging profiles
-    TProfile3D* profFlowPos = (TProfile3D*) listFlow->FindObject(Form("%s_Pos",sProfileName.Data()));
-    TProfile3D* profFlowNeg = (TProfile3D*) listFlow->FindObject(Form("%s_Neg",sProfileName.Data()));
+    TProfile3D* profFlowPos = (TProfile3D*) listFlow->FindObject(Form("%s_Pos_sample0",sProfileName.Data()));
+    TProfile3D* profFlowNeg = (TProfile3D*) listFlow->FindObject(Form("%s_Neg_sample0",sProfileName.Data()));
     if(!profFlowPos || !profFlowNeg) { Error(Form("Pos OR Neg profile '%s' not found for Pos&Neg merging.",sProfileName.Data()),"ProcessDirect"); listFlow->ls(); return kFALSE; }
 
     TList* listMerge = new TList();
