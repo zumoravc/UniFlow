@@ -139,7 +139,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutFlowRFPsPtMin(0.2),
   fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
-  fFlowPOIsPtMax(15.0),
+  fFlowPOIsPtMax(10.0),
   fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
   fFlowCentMax(0),
@@ -372,7 +372,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutFlowRFPsPtMin(0.2),
   fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
-  fFlowPOIsPtMax(15.0),
+  fFlowPOIsPtMax(10.0),
   fFlowFillWeights(kTRUE),
   fFlowCentMin(0),
   fFlowCentMax(0),
@@ -3631,7 +3631,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     {
       const char* weightName = Form("fh3Weights%s",GetSpeciesName(PartSpecies(iSpec)));
       const char* weightLabel = Form("Weights: %s; #varphi; #eta; PV-z (cm)", GetSpeciesName(PartSpecies(iSpec)));
-      fh3Weights[iSpec] = new TH3D(weightName, weightLabel, 100,0.0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3Weights[iSpec] = new TH3D(weightName, weightLabel, 100,0.0,TMath::TwoPi(), 80,-0.8,0.8, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3Weights[iSpec]->Sumw2();
       fFlowWeights->Add(fh3Weights[iSpec]);
     }
@@ -3640,7 +3640,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     {
       const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
       const char* weightLabel = Form("Weights (after): %s; #varphi; #eta; PV-z (cm)",GetSpeciesLabel(PartSpecies(iSpec)));
-      fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-1.0,1.0, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+      fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-0.8,0.8, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
       fh3AfterWeights[iSpec]->Sumw2();
       fFlowWeights->Add(fh3AfterWeights[iSpec]);
     }
