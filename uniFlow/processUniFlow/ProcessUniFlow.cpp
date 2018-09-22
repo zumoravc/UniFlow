@@ -113,6 +113,7 @@ class FlowTask
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
     std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
+    std::vector<TH1D*>* fVecHistFlowMassFour; // container for sliced flow-mass projections
     TCanvas*     fCanvas; // temporary canvas for mass plotting
 
   protected:
@@ -154,6 +155,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fVecHistInvMass = new std::vector<TH1D*>;
   fVecHistInvMassBG = new std::vector<TH1D*>;
   fVecHistFlowMass = new std::vector<TH1D*>;
+  fVecHistFlowMassFour = new std::vector<TH1D*>;
 
   fTaskTag = this->GetSpeciesName();
   if(!fName.EqualTo("")) fTaskTag.Append(Form("_%s",fName.Data()));
@@ -162,6 +164,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
 FlowTask::~FlowTask()
 {
   if(fVecHistFlowMass) delete fVecHistFlowMass;
+  if(fVecHistFlowMassFour) delete fVecHistFlowMassFour;
   if(fVecHistInvMass) delete fVecHistInvMass;
   if(fVecHistInvMassBG) delete fVecHistInvMassBG;
   if(fCanvas) delete fCanvas;
@@ -304,7 +307,7 @@ class ProcessUniFlow
     Bool_t      ProcessRefs(FlowTask* task); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
-    Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0); // prepare
+    Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
 
     TH1D*       CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task); // calculate cn{2} out of correlation
     TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
@@ -1869,6 +1872,46 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   hFlow->Draw();
   cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%s_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
+  // Do 4-particle cumulants
+  if(task->fDoFour)
+  {
+    Debug("Processing vn{4}");
+
+    // preparing corelations
+
+    // Loading reference
+    // TList* listRefFour = 0x0;
+    // if(task->fDoFour)
+    // {
+    //   listRefFour = (TList*) ffDesampleFile->Get(Form("hFlow4_Refs_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
+    //   if(!listRefFour) { Error("List 'listRefFour' not found!","ProcessReconstructed"); ffDesampleFile->ls(); return kFALSE; }
+    // }
+    //
+    // // loading reference <<2>>
+    // TProfile* pCorTwoRef = (TProfile*) listRefCorTwo->FindObject(Form("pCor2_Refs_harm%d_gap%s_sample%d_rebin",task->fHarmonics, task->GetEtaGapString().Data(), iSample));
+    // if(!pCorTwoRef) { Error(Form("Profile 'pCorTwoRef' (sample %d) does not exists",iSample),"ProcessDirect"); listRefCorTwo->ls(); return kFALSE; }
+    //
+    // // loading reference vn{4}
+    // TH1D* hFlowRefFour = (TH1D*) listRefFour->FindObject(Form("hFlow4_Refs_harm%d_gap%s_sample%d",task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+    // if(!hFlowRefFour) { Error(Form("Histo 'hFlowRefFour' (sample %d) does not exists",iSample),"ProcessDirect"); listRefFour->ls(); return kFALSE; }
+    //
+    // // dn{4}
+    // TH1D* hCumFourDif = CalcDifCumFour(pCorFourDif, pCorTwoDif, pCorTwoRef, iMultBin+1, task, bCorrelated);
+    // if(!hCumFourDif) { Error(Form("dn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+    // hCumFourDif->SetName(Form("%s_sample%d", nameCumFour.Data(), iSample));
+    // listCumFour->Add(hCumFourDif);
+    //
+    // // v'n{4}
+    // TH1D* hFlowFourDif = CalcDifFlowFour(hCumFourDif, hFlowRefFour, iMultBin+1, task, bCorrelated);
+    // if(!hFlowFourDif) { Error(Form("vn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+    // hFlowFourDif->SetName(Form("%s_sample%d", nameFlowFour.Data(), iSample));
+    // listFlowFour->Add(hFlowFourDif);
+    //
+    //
+
+
+  }
+
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -2064,18 +2107,20 @@ Bool_t ProcessUniFlow::PlotDesamplingQA(TList* list, TH1D* hDesampled, FlowTask*
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor, TH3D* h3Entries, TH3D* h3EntriesBG)
+Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor, TH3D* h3Entries, TH3D* h3EntriesBG, TProfile3D* p3CorFour)
 {
 
   if(!task) { Error("Input task not found!","PrepareSlices"); return kFALSE; }
   if(!h3Entries) { Error("Input hist with entries not found!","PrepareSlices"); return kFALSE; }
   if(!p3Cor) { Error("Input profile with correlations not found!","PrepareSlices"); return kFALSE; }
+  if(task->fDoFour && !p3CorFour) { Error("Input profile with <<4'>> not found!","PrepareSlices"); return kFALSE; }
   if(multBin < 0 || multBin > fiNumMultBins) { Error("Wrong multiplicity bin index (not in range)!","PrepareSlices"); return kFALSE; }
 
   // cleaning the vectros with flow-mass and inv. mass plots
-  if(task->fVecHistInvMass->size() > 0) task->fVecHistInvMass->clear();
-  if(task->fVecHistInvMassBG->size() > 0) task->fVecHistInvMassBG->clear();
-  if(task->fVecHistFlowMass->size() > 0) task->fVecHistFlowMass->clear();
+  if(task->fVecHistInvMass->size() > 0) { task->fVecHistInvMass->clear(); }
+  if(task->fVecHistInvMassBG->size() > 0) { task->fVecHistInvMassBG->clear(); }
+  if(task->fVecHistFlowMass->size() > 0) { task->fVecHistFlowMass->clear(); }
+  if(task->fDoFour && task->fVecHistFlowMassFour->size() > 0) { task->fVecHistFlowMassFour->clear(); }
 
   const Short_t binMultLow = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin]);
   const Short_t binMultHigh = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin+1]) - 1;
@@ -2153,8 +2198,10 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
     // checking if rebinning inv mass hist
     if(task->fRebinInvMass > 1) { hInvMass_temp->Rebin(task->fRebinInvMass); if(h3EntriesBG){ hInvMassBG_temp->Rebin(task->fRebinInvMass); } }
 
+    task->fVecHistInvMass->push_back(hInvMass_temp);
+    if(h3EntriesBG) { task->fVecHistInvMassBG->push_back(hInvMassBG_temp); }
 
-    // projection of flow-mass profile
+    // ### projection of flow-mass profile
     profFlowMass_temp = (TProfile*) prof2FlowMass_temp->ProfileX(Form("profFlowMass_cent%d_pt%d",multBin,binPt),binPtLow,binPtHigh);
 
     // checking for rebinning the flow-mass profile
@@ -2184,8 +2231,6 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
 
     // ready to fitting
     task->fVecHistFlowMass->push_back(hFlowMass_temp);
-    task->fVecHistInvMass->push_back(hInvMass_temp);
-    if(h3EntriesBG) task->fVecHistInvMassBG->push_back(hInvMassBG_temp);
 
     canFlowMass->cd(binPt+1);
     hFlowMass_temp->Draw();
