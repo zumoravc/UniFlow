@@ -860,6 +860,7 @@ void AliAnalysisTaskUniFlow::ClearVectors()
 
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
+    if(!fProcessSpec[iSpec]) { continue; }
     std::vector<AliVTrack*>* vector = fVector[iSpec];
     if(!vector) { continue; }
     if(iSpec == kK0s || iSpec == kLambda || iSpec == kPhi) { for(auto part = vector->begin(); part != vector->end(); ++part) { delete *part; } }
@@ -2729,6 +2730,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
     if(!task->fbDoRefs && iSpec == kRefs) { continue; }
     if(!task->fbDoPOIs && iSpec != kRefs) { continue; }
 
+    if(!fProcessSpec[iSpec]) { continue; }
+
     if(iSpec == kRefs) {
       FillRefsVectors(dGap);
       CalculateCorrelations(task, PartSpecies(iSpec));
@@ -2737,7 +2740,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
 
     // loading (generic) profile to acess axes and bins
     TH1* genProf = (TH1*) fListFlow[iSpec]->FindObject(Form("%s_Pos_sample0",task->fsName.Data()));
-    if(!genProf) { AliError(Form("Generic Profile '%s' not found", task->fsName.Data())); return kFALSE; }
+    if(!genProf) { AliError(Form("Generic Profile '%s' not found", task->fsName.Data())); fListFlow[iSpec]->ls(); return kFALSE; }
 
     TAxis* axisPt = genProf->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
     Int_t iNumPtBins = axisPt->GetNbins();
