@@ -1707,7 +1707,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   else
   {
     // loading single profile
-    if(task->fInputTag.EqualTo("")) { sProfileName.Append("_Pos"); }
+    if(task->fInputTag.EqualTo("")) { sProfileName.Append("_Pos_sample0"); }
     else { sProfileName.Append("_"); sProfileName.Append(task->fInputTag); }
     profFlow = (TProfile3D*) listFlow->FindObject(sProfileName.Data());
   }
@@ -1767,15 +1767,15 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     {
       case FlowTask::kPhi :
         hInvMassBG = task->fVecHistInvMassBG->at(binPt);
-        if( !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); return kFALSE; }
+        if( !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); continue; }
       break;
 
       case FlowTask::kK0s :
-        if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
+        if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); continue; }
       break;
 
       case FlowTask::kLambda :
-        if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); return kFALSE; }
+        if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); continue; }
       break;
 
       default :
@@ -1918,7 +1918,7 @@ TH1D* ProcessUniFlow::DesampleList(TList* list, TH1D* merged, FlowTask* task, TS
 
   if(bSkipDesampling || task->fNumSamples < 2 || list->GetEntries() < 2)  // only one sample -> no sampling needed
   {
-    Warning("Only 1 sample for desampling; returning merged instead!","DesampleList");
+    // Warning("Only 1 sample for desampling; returning merged instead!","DesampleList");
     ffDesampleFile->cd();
     hDesampled->Write();
     return hDesampled;
