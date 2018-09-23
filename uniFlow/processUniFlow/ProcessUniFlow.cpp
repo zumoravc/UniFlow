@@ -1895,27 +1895,20 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
     if(!hRefFlow) { Error("Something went wrong when running automatic refs flow task:","ProcessReconstructed"); return kFALSE; }
 
-    TH1D* hFlow_vn = new TH1D(Form("hFlow2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: v_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
-
-    Double_t dRefFlow = hRefFlow->GetBinContent(iMultBin+1);
-    Double_t dRefFlowErr = hRefFlow->GetBinError(iMultBin+1);
-    Debug(Form("Ref (bin %d): %g +- %g\n",iMultBin,dRefFlow,dRefFlowErr),"ProcessReconstructed");
-
-    for(Int_t bin(1); bin < hFlow_vn->GetNbinsX()+1; ++bin)
-    {
-      if(dRefFlow == 0.0) continue;
-
-      Double_t dContent = hFlow->GetBinContent(bin);
-      Double_t dError = hFlow->GetBinError(bin);
-
-      Double_t dCont = dContent / dRefFlow;
-      Double_t dErrSq = TMath::Power(dError/dRefFlow,2) + TMath::Power(dRefFlowErr*dContent/(dRefFlow*dRefFlow),2) - 2*(dError*dRefFlowErr*dContent*TMath::Power(dRefFlow,-3));
-
-      hFlow_vn->SetBinContent(bin,dCont);
-      hFlow_vn->SetBinError(bin,TMath::Sqrt(dErrSq));
-    }
-
+    TH1D* hFlow_vn = CalcDifFlowTwo(hFlow, hRefFlow, iMultBin+1 ,task, task->fConsCorr);
+    hFlow_vn->SetName(Form("hFlow2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
+    hFlow_vn->SetTitle(Form("%s: v_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap));
     hFlow_vn->Write();
+
+    if(task->fDoFour)
+    {
+      TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow4_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+      if(!hRefFlow) { Error("Something went wrong when running automatic refs flow task:","ProcessReconstructed"); return kFALSE; }
+      TH1D* hFlow_vn = CalcDifFlowFour(hFlowFour, hRefFlow, iMultBin+1, task, task->fConsCorr);
+      hFlow_vn->SetName(Form("hFlow4_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
+      hFlow_vn->SetTitle(Form("%s: v_{%d}{4,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{4,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap));
+      hFlow_vn->Write();
+    }
   }
 
   TCanvas* cFlow = new TCanvas("cFlow","cFlow");
