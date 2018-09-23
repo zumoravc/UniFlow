@@ -1169,7 +1169,7 @@ TH1D* ProcessUniFlow::CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin
     Double_t dContOut = dContInDif / dContInRef;
     histFlow->SetBinContent(iBin, dContOut);
 
-    Double_t dErrOutDif = dErrInDif * dContInRef;
+    Double_t dErrOutDif = dErrInDif / dContInRef;
     Double_t dErrOutRef = -1.0 * dContInDif * TMath::Power(dContInRef, -2.0) * dErrInRef;
 
     Double_t dErrOutSq = TMath::Power(dErrOutDif, 2.0) + TMath::Power(dErrOutRef, 2.0);
