@@ -2135,16 +2135,11 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   const Short_t binMultHigh = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin+1]) - 1;
   // printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[multBin],binMultLow,fdMultBins[multBin+1],binMultHigh);
 
-  Double_t dRefFlow = 1.0;
-  Double_t dRefFlowErr = 1.0;
-
-  Double_t dRefFlowFour = 1.0;
-  Double_t dRefFlowFourErr = 1.0;
-
+  TH1D* hRefFlow = 0x0;
   if(!fFlowFitCumulants)
   {
     // loading reference flow, if not found, it will be prepared
-    TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+    hRefFlow = (TH1D*) ffDesampleFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g_desampled",task->fHarmonics,10*task->fEtaGap));
     if(!hRefFlow)
     {
       Warning("Relevant Reference flow not found within output file.","PrepareSlices");
@@ -2160,25 +2155,25 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
 
       if(ProcessRefs(taskRef))
       {
-        hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
-        if(!hRefFlow) {  Error("Automated Refs task completed, but RefFlow not found!","PrepareSlices"); return kFALSE; }
+        hRefFlow = (TH1D*) ffDesampleFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+        if(!hRefFlow) {  Error("Automated Refs task completed, but RefFlow not found!","PrepareSlices"); ffDesampleFile->ls(); return kFALSE; }
       }
       else { Error("Something went wrong when running automatic refs flow task:","PrepareSlices"); taskRef->PrintTask(); return kFALSE; }
     }
+  }
 
-    dRefFlow = hRefFlow->GetBinContent(multBin+1);
-    dRefFlowErr = hRefFlow->GetBinError(multBin+1);
-    Debug(Form("Ref (bin %d): %g +- %g\n",multBin,dRefFlow,dRefFlowErr),"PrepareSlices");
+  TH1D* hRefCor2 = 0x0;
+  TH1D* hRefFlow4 = 0x0;
+  if(task->fDoFour)
+  {
+    // loading <<2>> refs for dn{4}
+    const char* name = Form("pCor2_Refs_harm%d_gap%02.2g_desampled",task->fHarmonics,10*task->fEtaGap);
+    hRefCor2 = (TH1D*) ffDesampleFile->Get(name);
+    if(!hRefCor2) { Error(Form("Input '%s' (hRefCor2) not found!",name),"PrepareSlices"); ffDesampleFile->ls(); return kFALSE; }
 
-    // loading <<4>>
-    if(task->fDoFour)
-    {
-      TH1D* hRefFlowFour = (TH1D*) ffOutputFile->Get(Form("hFlow4_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
-      if(!hRefFlowFour) { Error("Reference flow vn{4} not found! Something went wrong!","PrepareSlices"); ffOutputFile->ls(); return kFALSE; }
-      dRefFlowFour = hRefFlowFour->GetBinContent(multBin+1);
-      dRefFlowFourErr = hRefFlowFour->GetBinError(multBin+1);
-      Debug(Form("Ref {4} (bin %d): %g +- %g\n",multBin,dRefFlowFour,dRefFlowFourErr),"PrepareSlices");
-    }
+    const char* nameFour = Form("hFlow4_Refs_harm%d_gap%02.2g_desampled",task->fHarmonics,10*task->fEtaGap);
+    hRefFlow4 = (TH1D*) ffDesampleFile->Get(nameFour);
+    if(!hRefFlow4) { Error(Form("Input '%s' (hRefFlow4) not found!",nameFour),"PrepareSlices"); ffDesampleFile->ls(); return kFALSE; }
   }
 
   // loop over pt
@@ -2196,14 +2191,28 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   // prof2FlowMass_temp = (TProfile2D*) prof3Flow_temp->Project3DProfile("yz"); // NOTE: standard ROOT way - working properly in ROOTv6-12 onwards
   prof2FlowMass_temp = Project3DProfile(prof3Flow_temp);
 
+  TProfile3D* prof3FlowFour_temp = 0x0;
+  TProfile2D* prof2FlowMassFour_temp = 0x0;
+  TProfile* profFlowMassFour_temp = 0x0;
+  TH1D* hFlowMassFour_temp = 0x0;
+  if(task->fDoFour)
+  {
+    prof3FlowFour_temp = (TProfile3D*) p3CorFour->Clone(Form("prof3FlowFour_temp_cent%d",multBin));
+    prof3FlowFour_temp->GetXaxis()->SetRange(binMultLow,binMultHigh);
+    // prof2FlowMassFour_temp = (TProfile2D*) prof3FlowFour_temp->Project3DProfile("yz"); // NOTE: standard ROOT way - working properly in ROOTv6-12 onwards
+    prof2FlowMassFour_temp = Project3DProfile(prof3FlowFour_temp);
+  }
+
   Short_t iNumPtBins = task->fNumPtBins;
 
-  TCanvas* canFlowMass = new TCanvas("canFlowMass","FlowMass",1400,600);
   TCanvas* canInvMass = new TCanvas("canInvMass","InvMass",1400,600);
   TCanvas* canInvMassBG = new TCanvas("canInvMassBG","InvMassBG",1400,600);
-  canFlowMass->Divide(5,std::ceil(iNumPtBins/5)+1);
+  TCanvas* canFlowMass = new TCanvas("canFlowMass","FlowMass",1400,600);
+  TCanvas* canFlowMassFour = new TCanvas("canFlowMassFour","FlowMassFour",1400,600);
   canInvMass->Divide(5,std::ceil(iNumPtBins/5)+1);
   canInvMassBG->Divide(5,std::ceil(iNumPtBins/5)+1);
+  canFlowMass->Divide(5,std::ceil(iNumPtBins/5)+1);
+  canFlowMassFour->Divide(5,std::ceil(iNumPtBins/5)+1);
 
   Double_t dContent = 0, dError = 0;
 
@@ -2223,40 +2232,35 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
 
     task->fVecHistInvMass->push_back(hInvMass_temp);
     if(h3EntriesBG) { task->fVecHistInvMassBG->push_back(hInvMassBG_temp); }
+    // done with InvMass
 
     // ### projection of flow-mass profile
     profFlowMass_temp = (TProfile*) prof2FlowMass_temp->ProfileX(Form("profFlowMass_cent%d_pt%d",multBin,binPt),binPtLow,binPtHigh);
+    if(task->fDoFour) { profFlowMassFour_temp = (TProfile*) prof2FlowMassFour_temp->ProfileX(Form("profFlowMassFour_cent%d_pt%d",multBin,binPt),binPtLow,binPtHigh); }
 
     // checking for rebinning the flow-mass profile
-    if(task->fRebinFlowMass > 1) { profFlowMass_temp->Rebin(task->fRebinFlowMass); }
-
-    hFlowMass_temp = (TH1D*) profFlowMass_temp->ProjectionX(Form("hFlowMass_cent%d_pt%d",multBin,binPt));
-    // NOTE: this is the ONLY (for some freaking reason) way how to get proper TH1 wth <<2>> out of TProfile3D
-
-    // scaling flow-mass with reference flow
-    if(!fFlowFitCumulants)
-    {
-      for(Short_t bin(1); bin < hFlowMass_temp->GetNbinsX()+1; bin++)
-      {
-        dContent = hFlowMass_temp->GetBinContent(bin);
-        dError = hFlowMass_temp->GetBinError(bin);
-
-        if(dContent == 0. || dError == 0.) continue;
-
-        hFlowMass_temp->SetBinContent(bin,dContent/dRefFlow);
-        hFlowMass_temp->SetBinError(bin, TMath::Sqrt( TMath::Power(dError/dRefFlow,2) + TMath::Power(dRefFlowErr*dContent/(dRefFlow*dRefFlow),2) - 2*(dError*dRefFlowErr*dContent*TMath::Power(dRefFlow,-3))) );
-        // printf("%g | %g \n", TMath::Sqrt( TMath::Power(dError/dRefFlow,2) + TMath::Power(dRefFlowErr*dContent/(dRefFlow*dRefFlow),2) - 2*(dError*dRefFlowErr*dContent*TMath::Power(dRefFlow,-3))), TMath::Sqrt( TMath::Power(dError/dRefFlow,2) + TMath::Power(dRefFlowErr*dContent/(dRefFlow*dRefFlow),2)) );
-      }
+    if(task->fRebinFlowMass > 1) {
+      profFlowMass_temp->Rebin(task->fRebinFlowMass);
+      if(task->fDoFour) { profFlowMassFour_temp->Rebin(task->fRebinFlowMass); }
     }
 
-    // hInvMass_temp->SetTitle(Form("%s: Inv. Mass (|#Delta#eta| > %g)",sSpeciesLabel.Data(),0.05));
-    // hFlowMass_temp->SetTitle("TEST");
-
-    // ready to fitting
+    // prepare slices for <<2>>
+    hFlowMass_temp = CalcDifCumTwo(profFlowMass_temp,task);
+    if(!hFlowMass_temp) { Error("<<2'>> not ready!","PrepareSlices"); return kFALSE; }
+    hFlowMass_temp->SetName(Form("hFlowMass_cent%d_pt%d",multBin,binPt));
+    if(!fFlowFitCumulants) { hFlowMass_temp = CalcDifFlowTwo(hFlowMass_temp, hRefFlow, multBin+1, task, task->fConsCorr); }
+    if(!hFlowMass_temp) { Error("hFlowMass_temp not ready! Something went wrong!","PrepareSlices"); return kFALSE; }
     task->fVecHistFlowMass->push_back(hFlowMass_temp);
 
-    canFlowMass->cd(binPt+1);
-    hFlowMass_temp->Draw();
+    // prepare slices for <<4>>
+    if(task->fDoFour) {
+      hFlowMassFour_temp = CalcDifCumFour(profFlowMassFour_temp, profFlowMass_temp, hRefCor2, multBin+1, task, task->fConsCorr);
+      if(!hFlowMassFour_temp) { Error("<<4'>> not ready!","PrepareSlices"); return kFALSE; }
+      hFlowMassFour_temp->SetName(Form("hFlowMassFour_cent%d_pt%d",multBin,binPt));
+      if(!fFlowFitCumulants) { hFlowMassFour_temp = CalcDifFlowFour(hFlowMassFour_temp, hRefFlow4, multBin+1, task, task->fConsCorr); }
+      if(!hFlowMassFour_temp) { Error("FlowMassFour_temp not ready! Something went wrong!","PrepareSlices"); return kFALSE; }
+      task->fVecHistFlowMassFour->push_back(hFlowMassFour_temp);
+    }
 
     canInvMass->cd(binPt+1);
     hInvMass_temp->Draw();
@@ -2267,17 +2271,29 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
       hInvMassBG_temp->Draw();
     }
 
+    canFlowMass->cd(binPt+1);
+    hFlowMass_temp->Draw();
+
+    if(task->fDoFour)
+    {
+      canFlowMassFour->cd(binPt+1);
+      hFlowMassFour_temp->Draw();
+    }
+
   } // endfor {binPt}: over Pt bins
 
   printf(" # of slices: InvMass: %lu | InvMassBG %lu | FlowMass %lu\n",task->fVecHistInvMass->size(),task->fVecHistInvMassBG->size(),task->fVecHistFlowMass->size());
 
   gSystem->mkdir(Form("%s/slices/",fsOutputFilePath.Data()));
-  canFlowMass->SaveAs(Form("%s/slices/Slices_FlowMass_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
   canInvMass->SaveAs(Form("%s/slices/Slices_InvMass_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
   if(h3EntriesBG) canInvMassBG->SaveAs(Form("%s/slices/Slices_InvMassBG_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  canFlowMass->SaveAs(Form("%s/slices/Slices_FlowMass_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data()));
+  if(task->fDoFour) { canFlowMassFour->SaveAs(Form("%s/slices/Slices_FlowMassFour_%s_gap%g_cent%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),10*task->fEtaGap,multBin,fsOutputFileFormat.Data())); }
 
   if(task->fVecHistInvMass->size() < 1 || task->fVecHistFlowMass->size() < 1 || task->fVecHistFlowMass->size() != task->fVecHistInvMass->size()) { Error("Output vector empty. Something went wrong","PrepareSlices"); return kFALSE; }
   if(h3EntriesBG && (task->fVecHistInvMassBG->size() < 1 || task->fVecHistInvMassBG->size() != task->fVecHistInvMass->size()) ) { Error("Output vector empty. Something went wrong with BG histograms","PrepareSlices"); return kFALSE; }
+  if(task->fDoFour && (task->fVecHistFlowMassFour->size() < 1 || task->fVecHistFlowMass->size() != task->fVecHistInvMass->size()) ) { Error("Output vector for <<4>> empty. Something went wrong","PrepareSlices"); return kFALSE; }
+
   return kTRUE;
 }
 //_____________________________________________________________________________
