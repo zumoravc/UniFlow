@@ -2135,19 +2135,20 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   const Short_t binMultHigh = h3Entries->GetXaxis()->FindFixBin(fdMultBins[multBin+1]) - 1;
   // printf("Mult: %g(%d) -  %g(%d)\n",fdMultBins[multBin],binMultLow,fdMultBins[multBin+1],binMultHigh);
 
-  Double_t dRefFlow = 1.;
-  Double_t dRefFlowErr = 1.;
+  Double_t dRefFlow = 1.0;
+  Double_t dRefFlowErr = 1.0;
+
+  Double_t dRefFlowFour = 1.0;
+  Double_t dRefFlowFourErr = 1.0;
 
   if(!fFlowFitCumulants)
   {
     // loading reference flow, if not found, it will be prepared
-    TH1D* hRefFlow = 0x0;
-    hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+    TH1D* hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
     if(!hRefFlow)
     {
       Warning("Relevant Reference flow not found within output file.","PrepareSlices");
       ffOutputFile->ls();
-      // return kFALSE;
 
       Info("Creating relevant reference flow task.","PrepareSlices");
       FlowTask* taskRef = new FlowTask(FlowTask::kRefs,"Ref");
@@ -2155,6 +2156,8 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
       taskRef->SetEtaGap(task->fEtaGap);
       taskRef->SetNumSamples(task->fNumSamples);
       taskRef->SetInputTag(task->fInputTag);
+      taskRef->SetDoFourCorrelations(task->fDoFour);
+
       if(ProcessRefs(taskRef))
       {
         hRefFlow = (TH1D*) ffOutputFile->Get(Form("hFlow2_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
@@ -2162,9 +2165,20 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
       }
       else { Error("Something went wrong when running automatic refs flow task:","PrepareSlices"); taskRef->PrintTask(); return kFALSE; }
     }
+
     dRefFlow = hRefFlow->GetBinContent(multBin+1);
     dRefFlowErr = hRefFlow->GetBinError(multBin+1);
     Debug(Form("Ref (bin %d): %g +- %g\n",multBin,dRefFlow,dRefFlowErr),"PrepareSlices");
+
+    // loading <<4>>
+    if(task->fDoFour)
+    {
+      TH1D* hRefFlowFour = (TH1D*) ffOutputFile->Get(Form("hFlow4_Refs_harm%d_gap%02.2g",task->fHarmonics,10*task->fEtaGap));
+      if(!hRefFlowFour) { Error("Reference flow vn{4} not found! Something went wrong!","PrepareSlices"); ffOutputFile->ls(); return kFALSE; }
+      dRefFlowFour = hRefFlowFour->GetBinContent(multBin+1);
+      dRefFlowFourErr = hRefFlowFour->GetBinError(multBin+1);
+      Debug(Form("Ref {4} (bin %d): %g +- %g\n",multBin,dRefFlowFour,dRefFlowFourErr),"PrepareSlices");
+    }
   }
 
   // loop over pt
