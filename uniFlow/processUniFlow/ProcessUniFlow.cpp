@@ -1695,7 +1695,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     // merging profiles
     TProfile3D* profFlowPos = (TProfile3D*) listFlow->FindObject(Form("%s_Pos_sample0",sProfileName.Data()));
     TProfile3D* profFlowNeg = (TProfile3D*) listFlow->FindObject(Form("%s_Neg_sample0",sProfileName.Data()));
-    if(!profFlowPos || !profFlowNeg) { Error(Form("Pos OR Neg profile '%s' not found for Pos&Neg merging.",sProfileName.Data()),"ProcessDirect"); listFlow->ls(); return kFALSE; }
+    if(!profFlowPos || !profFlowNeg) { Error(Form("Pos OR Neg profile '%s' not found for Pos&Neg merging.",sProfileName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
 
     TList* listMerge = new TList();
     listMerge->Add(profFlowPos);
@@ -1717,8 +1717,17 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   if(!profFlow) { Error(Form("Correlation profile '%s' not ready!",sProfileName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
   Debug("Correlations profile ready!","ProcessReconstructed");
 
+  // Loading <<4'>>
+  TProfile3D* profFlowFour = 0x0;
+  if(task->fDoFour)
+  {
+    profFlowFour = (TProfile3D*) listFlow->FindObject(Form("%s_Pos_sample0",sProfFourName.Data()));
+    if(!profFlowFour) { Error(Form("Profile '%s' not found for Pos&Neg merging.",sProfFourName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
+    if(task->fMergePosNeg) { Warning("Implemented for ONLY Pos <<4>>. Skipping Neg!","ProcessReconstructed"); }
+  }
+
   // ### Preparing slices of pt
-  if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histEntriesBg)) { return kFALSE; }
+  if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histEntriesBg,profFlowFour)) { return kFALSE; }
 
   // ### Estimating flow
   TH1D* hFlow = 0x0;
