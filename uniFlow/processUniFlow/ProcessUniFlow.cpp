@@ -1730,25 +1730,10 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histEntriesBg,profFlowFour)) { return kFALSE; }
 
   // ### Estimating flow
-  TH1D* hFlow = 0x0;
-  if(!fFlowFitCumulants)
-  {
-    hFlow = new TH1D(Form("hFlow2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: v_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
-  }
-  else
-  {
-    hFlow = new TH1D(Form("hCum2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: d_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges);
-  }
-
   TH1D* hInvMass = 0x0;
   TH1D* hInvMassBG = 0x0;
-  TH1D* hFlowMass = 0x0;
-  Double_t dFlow = 0.0, dFlowError = 0.0; // containers for flow extraction results
 
-  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1600,1200); // canvas for fitting results
-  TCanvas* canFlowAll = new TCanvas("canFlowAll","canFlowAll",1600,1200);
   TCanvas* canInvMassAll = new TCanvas("canInvMassAll","canInvMassAll",1600,1200);
-  canFlowAll->Divide(3,ceil(task->fNumPtBins/3.));
   canInvMassAll->Divide(3,ceil(task->fNumPtBins/3.));
 
   TLatex* latex = new TLatex();
@@ -1761,33 +1746,63 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   // latex2->SetTextSize(40);
   latex2->SetNDC();
 
+  // preparing flow vn{2}
+  TCanvas* canFlowAll = new TCanvas("canFlowAll","canFlowAll",1600,1200);
+  canFlowAll->Divide(3,ceil(task->fNumPtBins/3.));
+  TCanvas* canFitInvMass = new TCanvas("canFitInvMass","FitInvMass",1600,1200); // canvas for fitting results
+  Double_t dFlow = 0.0, dFlowError = 0.0; // containers for flow extraction results
+  TH1D* hFlowMass = 0x0;
+  TH1D* hFlow = 0x0;
+  if(!fFlowFitCumulants) { hFlow = new TH1D(Form("hFlow2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: v_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges); }
+  else { hFlow = new TH1D(Form("hCum2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: d_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges); }
+
+  // preparing flow vn{4}
+  TCanvas* canFlowFourAll = new TCanvas("canFlowFourAll","canFlowFourAll",1600,1200);
+  canFlowFourAll->Divide(3,ceil(task->fNumPtBins/3.));
+  TCanvas* canFitInvMassFour = new TCanvas("canFitInvMassFour","canFitInvMassFour",1600,1200); // canvas for fitting results
+  Double_t dFlowFour = 0.0, dFlowFourError = 0.0; // containers for flow extraction results
+  TH1D* hFlowMassFour = 0x0;
+  TH1D* hFlowFour = 0x0;
+  if(!fFlowFitCumulants) { hFlowFour = new TH1D(Form("hFlow4_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: v_{%d}{4,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); v_{%d}{4,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges); }
+  else { hFlowFour = new TH1D(Form("hCum4_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: d_{%d}{4,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{4,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges); }
+
   for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
   {
     hInvMass = task->fVecHistInvMass->at(binPt);
-    hFlowMass = task->fVecHistFlowMass->at(binPt);
-
     hInvMass->SetTitle(Form("%s: InvMass dist (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
-    hFlowMass->SetTitle(Form("%s: FlowMass (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
-
     hInvMass->SetMarkerStyle(kFullCircle);
-    hFlowMass->SetMarkerStyle(kFullCircle);
 
+    hFlowMass = task->fVecHistFlowMass->at(binPt);
+    hFlowMass->SetTitle(Form("%s: FlowMass (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
+    hFlowMass->SetMarkerStyle(kFullCircle);
     TList* listFits = new TList();
+
+    TList* listFitsFour = 0x0;
+    if(task->fDoFour)
+    {
+      hFlowMassFour = task->fVecHistFlowMassFour->at(binPt);
+      hFlowMassFour->SetTitle(Form("%s: FlowMassFour (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
+      hFlowMassFour->SetMarkerStyle(kFullCircle);
+      listFitsFour = new TList();
+    }
 
     // extracting flow
     switch (task->fSpecies)
     {
       case FlowTask::kPhi :
         hInvMassBG = task->fVecHistInvMassBG->at(binPt);
-        if( !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull","ProcessReconstructed"); continue; }
+        if( !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow vn{2} extraction unsuccesfull","ProcessReconstructed"); continue; }
+        if(task->fDoFour && !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMassFour,dFlowFour,dFlowFourError,canFitInvMassFour,listFitsFour) ) { Warning("Flow vn{4} extraction unsuccesfull","ProcessReconstructed"); continue; }
       break;
 
       case FlowTask::kK0s :
         if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); continue; }
+        if(task->fDoFour && !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMassFour,dFlowFour,dFlowFourError,canFitInvMassFour,listFitsFour) ) { Warning("Flow vn{4} extraction unsuccesfull","ProcessReconstructed"); continue; }
       break;
 
       case FlowTask::kLambda :
         if( !ExtractFlowOneGo(task,hInvMass,0x0,hFlowMass,dFlow,dFlowError,canFitInvMass,listFits) ) { Warning("Flow extraction unsuccesfull (one go)","ProcessReconstructed"); continue; }
+        if(task->fDoFour && !ExtractFlowOneGo(task,hInvMass,hInvMassBG,hFlowMassFour,dFlowFour,dFlowFourError,canFitInvMassFour,listFitsFour) ) { Warning("Flow vn{4} extraction unsuccesfull","ProcessReconstructed"); continue; }
       break;
 
       default :
@@ -1799,17 +1814,20 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     hFlow->SetBinContent(binPt+1,dFlow);
     hFlow->SetBinError(binPt+1,dFlowError);
 
+    if(task->fDoFour)
+    {
+      hFlowFour->SetBinContent(binPt+1,dFlowFour);
+      hFlowFour->SetBinError(binPt+1,dFlowFourError);
+    }
+
+    // processing / plotting fits
     ffFitsFile->cd();
     listFits->Write(Form("fits_%s_cent%d_pt%d",sSpeciesName.Data(),iMultBin,binPt),TObject::kSingleKey);
-
+    if(task->fDoFour) { listFitsFour->Write(Form("fitsFour_%s_cent%d_pt%d",sSpeciesName.Data(),iMultBin,binPt),TObject::kSingleKey); }
 
     gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
-
-
     TF1* fitInvMass2 = (TF1*) listFits->At(1);
-    // printf("InvMass chi2 %g\n",fitInvMass2->GetChisquare());
     TF1* fitFlowMass2 = (TF1*) listFits->At(5);
-    // printf("FlowMass chi2 %g\n",fitFlowMass2->GetChisquare());
 
     canFitInvMass->cd(1);
     // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
@@ -1817,6 +1835,16 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     canFitInvMass->cd(2);
     latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
     canFitInvMass->SaveAs(Form("%s/fits/Fit_%s_n%d2_gap%s_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+
+    if(task->fDoFour)
+    {
+      canFitInvMassFour->cd(1);
+      // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
+      latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+      canFitInvMassFour->cd(2);
+      latex2->DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+      canFitInvMassFour->SaveAs(Form("%s/fits/FitFour_%s_n%d2_gap%s_cent%d_pt%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,binPt,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+    }
 
     canFlowAll->cd(binPt+1);
     hFlowMass->SetLabelFont(43,"XY");
@@ -1827,6 +1855,19 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     latex->DrawLatex(0.13,0.8,Form("#color[9]{%1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
     latex->DrawLatex(0.13,0.2,Form("#color[9]{#chi2/ndf = %.1f/%d = %.1f (p=%.3f)}",fitFlowMass2->GetChisquare(), fitFlowMass2->GetNDF(),fitFlowMass2->GetChisquare()/fitFlowMass2->GetNDF(),fitFlowMass2->GetProb()));
     latex->DrawLatex(0.13,0.33,Form("#color[9]{d_{2} = %.2g +- %.2g }",dFlow,dFlowError));
+
+    if(task->fDoFour)
+    {
+      canFlowFourAll->cd(binPt+1);
+      hFlowMassFour->SetLabelFont(43,"XY");
+      hFlowMassFour->SetLabelSize(18,"XY");
+      hFlowMassFour->DrawCopy();
+      TF1* fitVn = (TF1*) listFitsFour->FindObject("fitVn");
+      fitVn->DrawCopy("same");
+      latex->DrawLatex(0.13,0.8,Form("#color[9]{%1.1f-%1.1f GeV/c (%g-%g%%)}",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+      latex->DrawLatex(0.13,0.2,Form("#color[9]{#chi2/ndf = %.1f/%d = %.1f (p=%.3f)}",fitFlowMass2->GetChisquare(), fitFlowMass2->GetNDF(),fitFlowMass2->GetChisquare()/fitFlowMass2->GetNDF(),fitFlowMass2->GetProb()));
+      latex->DrawLatex(0.13,0.33,Form("#color[9]{d_{2} = %.2g +- %.2g }",dFlow,dFlowError));
+    }
 
     canInvMassAll->cd(binPt+1);
     // gPad->SetLogy();
@@ -1841,11 +1882,13 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   } // endfor {binPt}
 
   // task->fCanvas->Draw();
-  canFlowAll->SaveAs(Form("%s/FlowMassFits_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
   canInvMassAll->SaveAs(Form("%s/InvMassFits_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+  canFlowAll->SaveAs(Form("%s/FlowMassFits_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+  if(task->fDoFour) { canFlowFourAll->SaveAs(Form("%s/FlowMassFitsFour_%s_n%d2_gap%02.2g_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,10*task->fEtaGap,iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data()); }
 
   ffOutputFile->cd();
   hFlow->Write();
+  if(task->fDoFour) { hFlowFour->Write(); }
 
   if(fFlowFitCumulants)
   {
@@ -1881,44 +1924,13 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   hFlow->Draw();
   cFlow->SaveAs(Form("%s/Flow_%s_n%d2_gap%s_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
 
-  // Do 4-particle cumulants
   if(task->fDoFour)
   {
-    Debug("Processing vn{4}");
-
-    // preparing corelations
-
-    // Loading reference
-    // TList* listRefFour = 0x0;
-    // if(task->fDoFour)
-    // {
-    //   listRefFour = (TList*) ffDesampleFile->Get(Form("hFlow4_Refs_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
-    //   if(!listRefFour) { Error("List 'listRefFour' not found!","ProcessReconstructed"); ffDesampleFile->ls(); return kFALSE; }
-    // }
-    //
-    // // loading reference <<2>>
-    // TProfile* pCorTwoRef = (TProfile*) listRefCorTwo->FindObject(Form("pCor2_Refs_harm%d_gap%s_sample%d_rebin",task->fHarmonics, task->GetEtaGapString().Data(), iSample));
-    // if(!pCorTwoRef) { Error(Form("Profile 'pCorTwoRef' (sample %d) does not exists",iSample),"ProcessDirect"); listRefCorTwo->ls(); return kFALSE; }
-    //
-    // // loading reference vn{4}
-    // TH1D* hFlowRefFour = (TH1D*) listRefFour->FindObject(Form("hFlow4_Refs_harm%d_gap%s_sample%d",task->fHarmonics,task->GetEtaGapString().Data(),iSample));
-    // if(!hFlowRefFour) { Error(Form("Histo 'hFlowRefFour' (sample %d) does not exists",iSample),"ProcessDirect"); listRefFour->ls(); return kFALSE; }
-    //
-    // // dn{4}
-    // TH1D* hCumFourDif = CalcDifCumFour(pCorFourDif, pCorTwoDif, pCorTwoRef, iMultBin+1, task, bCorrelated);
-    // if(!hCumFourDif) { Error(Form("dn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
-    // hCumFourDif->SetName(Form("%s_sample%d", nameCumFour.Data(), iSample));
-    // listCumFour->Add(hCumFourDif);
-    //
-    // // v'n{4}
-    // TH1D* hFlowFourDif = CalcDifFlowFour(hCumFourDif, hFlowRefFour, iMultBin+1, task, bCorrelated);
-    // if(!hFlowFourDif) { Error(Form("vn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
-    // hFlowFourDif->SetName(Form("%s_sample%d", nameFlowFour.Data(), iSample));
-    // listFlowFour->Add(hFlowFourDif);
-    //
-    //
-
-
+    TCanvas* cFlow = new TCanvas("cFlow","cFlow");
+    cFlow->cd();
+    hFlowFour->SetStats(0);
+    hFlowFour->Draw();
+    cFlow->SaveAs(Form("%s/FlowFour_%s_n%d2_gap%s_cent%d.%s",fsOutputFilePath.Data(),sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
   }
 
   return kTRUE;
