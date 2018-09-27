@@ -2336,7 +2336,10 @@ AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const
   Double_t dMassSq = TMath::Power((dE1+dE2),2) - mom.Mag2();
   if(dMassSq >= 0.) dMass = TMath::Sqrt(dMassSq);
 
-  return new AliPicoTrack(mom.Pt(),mom.Eta(),mom.Phi(),iCharge,0,0,0,0,0,0,dMass);
+  // maving phi form [-pi,pi] -> [0,2pi] for consistency with other species
+  Double_t dPhi = mom.Phi() + TMath::Pi();
+
+  return new AliPicoTrack(mom.Pt(),mom.Eta(),dPhi,iCharge,0,0,0,0,0,0,dMass);
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillQAPhi(const Short_t iQAindex, const AliPicoTrack* part)
@@ -3902,7 +3905,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPhi->Add(fhPhiPt);
       fhPhiEta = new TH1D("fhPhiEta","#phi: #eta; #eta", 151,-1.5,1.5);
       fQAPhi->Add(fhPhiEta);
-      fhPhiPhi = new TH1D("fhPhiPhi","#phi: #varphi; #varphi", 100,-TMath::Pi(),TMath::Pi());
+      fhPhiPhi = new TH1D("fhPhiPhi","#phi: #varphi; #varphi", 100,0.,TMath::TwoPi());
       fQAPhi->Add(fhPhiPhi);
     } //endif {fProcessPhi}
 
