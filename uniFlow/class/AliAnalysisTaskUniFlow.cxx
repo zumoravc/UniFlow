@@ -2272,11 +2272,23 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       if(fCutPhiMotherEtaMax > 0 && TMath::Abs(mother->Eta()) > fCutPhiMotherEtaMax) { delete mother; continue; }
       fhPhiCounter->Fill("Eta",1);
 
-      // mother (phi) candidate passing all criteria
-      fhPhiCounter->Fill("Selected",1);
+      // mother (phi) candidate passing all criteria (except for charge)
+      fhPhiCounter->Fill("Before charge",1);
 
-      // filling QA AFTER selection
-      if(fFillQA) FillQAPhi(1,mother);
+      if(TMath::Abs(mother->Charge()) == 2)
+      {
+        // like-sign combination (background)
+        fhPhiCounter->Fill("BG",1);
+        FillSparseCand(fhsPhiCandBg, mother);
+        iNumBG++;
+      }
+
+      if(TMath::Abs(mother->Charge()) > 0) { delete mother; continue; }
+
+      // opposite-sign combination (signal+background)
+      fhPhiCounter->Fill("Unlike-sign",1);
+      FillSparseCand(fhsPhiCandSig, mother);
+      fVector[kPhi]->push_back(mother);
 
       // filling weights
       if(fFlowFillWeights) { fh3Weights[kPhi]->Fill(mother->Phi(), mother->Eta(), fPVz); }
@@ -2288,20 +2300,10 @@ void AliAnalysisTaskUniFlow::FilterPhi()
         fh3AfterWeights[kPhi]->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
       }
 
-      if(mother->Charge() == 0)
-      {
-        // opposite-sign combination (signal+background)
-        fhPhiCounter->Fill("Unlike-sign",1);
-        FillSparseCand(fhsPhiCandSig, mother);
-        fVector[kPhi]->push_back(mother);
-      }
+      // filling QA AFTER selection
+      if(fFillQA) FillQAPhi(1,mother);
 
-      if(TMath::Abs(mother->Charge()) == 2)
-      {
-        // like-sign combination (background)
-        FillSparseCand(fhsPhiCandBg, mother);
-        iNumBG++;
-      }
+
 
     } // endfor {iKaon2} : second kaon
   } // endfor {iKaon1} : first Kaon
@@ -3883,7 +3885,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     if(fProcessSpec[kPhi])
     {
-      TString sPhiCounterLabel[] = {"Input","InvMass","Pt","Eta","Selected","Unlike-sign","BG"};
+      TString sPhiCounterLabel[] = {"Input","InvMass","Pt","Eta","Before charge","Unlike-sign","BG"};
       const Short_t iNBinsPhiCounter = sizeof(sPhiCounterLabel)/sizeof(sPhiCounterLabel[0]);
       fhPhiCounter = new TH1D("fhPhiCounter","#phi: Counter",iNBinsPhiCounter,0,iNBinsPhiCounter);
       for(Short_t i(0); i < iNBinsPhiCounter; i++) fhPhiCounter->GetXaxis()->SetBinLabel(i+1, sPhiCounterLabel[i].Data() );
