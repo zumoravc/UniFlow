@@ -1497,7 +1497,7 @@ void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track)
 {
   // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
   // *************************************************************
-
+  if(fRunMode == kSkipFlow) { return; } // no sparse required
   if(!sparse) { Error("THnSparse not valid!","FillSparseCand"); return; }
   if(!track) { Error("Track not valid!","FillSparseCand"); return; }
 
@@ -3684,46 +3684,49 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAEvents->Add(fhQAEventsfMultTPCvsESD);
     }
 
-    // Making THnSparse distribution of candidates
-    // species independent
-    TString sLabelCand[SparseCand::kDim];
-    sLabelCand[SparseCand::kInvMass] = "#it{m}_{inv} (GeV/#it{c}^{2})";
-    sLabelCand[SparseCand::kCent] = GetMultiEstimatorLabel(fMultEstimator);
-    sLabelCand[SparseCand::kPt] = "#it{p}_{T} (GeV/c)";
-    sLabelCand[SparseCand::kEta] = "#eta";
-    TString sAxes = TString(); for(Int_t i(0); i < SparseCand::kDim; ++i) { sAxes += Form("%s; ",sLabelCand[i].Data()); }
-
-    Int_t iNumBinsCand[SparseCand::kDim]; Double_t dMinCand[SparseCand::kDim]; Double_t dMaxCand[SparseCand::kDim];
-    iNumBinsCand[SparseCand::kCent] = iMultNumBins; dMinCand[SparseCand::kCent] = fFlowCentMin; dMaxCand[SparseCand::kCent] = fFlowCentMax;
-    iNumBinsCand[SparseCand::kPt] = iPOIsPtNumBins; dMinCand[SparseCand::kPt] = fFlowPOIsPtMin; dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
-    iNumBinsCand[SparseCand::kEta] = 2*fCutV0sMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutV0sMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutV0sMotherEtaMax;
-
-    // species dependent
-    if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
+    if(fRunMode != kSkipFlow)
     {
-      iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMax;
-      fhsV0sCandK0s = new THnSparseD("fhsV0sCandK0s",Form("K_{S}^{0}: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
-      fhsV0sCandK0s->Sumw2();
-      fListFlow[kK0s]->Add(fhsV0sCandK0s);
+      // Making THnSparse distribution of candidates
+      // species independent
+      TString sLabelCand[SparseCand::kDim];
+      sLabelCand[SparseCand::kInvMass] = "#it{m}_{inv} (GeV/#it{c}^{2})";
+      sLabelCand[SparseCand::kCent] = GetMultiEstimatorLabel(fMultEstimator);
+      sLabelCand[SparseCand::kPt] = "#it{p}_{T} (GeV/c)";
+      sLabelCand[SparseCand::kEta] = "#eta";
+      TString sAxes = TString(); for(Int_t i(0); i < SparseCand::kDim; ++i) { sAxes += Form("%s; ",sLabelCand[i].Data()); }
 
-      iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMax;
-      fhsV0sCandLambda = new THnSparseD("fhsV0sCandLambda",Form("#Lambda: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
-      fhsV0sCandLambda->Sumw2();
-      fListFlow[kLambda]->Add(fhsV0sCandLambda);
-    }
+      Int_t iNumBinsCand[SparseCand::kDim]; Double_t dMinCand[SparseCand::kDim]; Double_t dMaxCand[SparseCand::kDim];
+      iNumBinsCand[SparseCand::kCent] = iMultNumBins; dMinCand[SparseCand::kCent] = fFlowCentMin; dMaxCand[SparseCand::kCent] = fFlowCentMax;
+      iNumBinsCand[SparseCand::kPt] = iPOIsPtNumBins; dMinCand[SparseCand::kPt] = fFlowPOIsPtMin; dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
+      iNumBinsCand[SparseCand::kEta] = 2*fCutV0sMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutV0sMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutV0sMotherEtaMax;
 
-    if(fProcessSpec[kPhi])
-    {
-      iNumBinsCand[SparseCand::kEta] = 2*fCutPhiMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutPhiMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutPhiMotherEtaMax;
-      iNumBinsCand[SparseCand::kInvMass] = fPhiNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutPhiInvMassMin; dMaxCand[SparseCand::kInvMass] = fCutPhiInvMassMax;
+      // species dependent
+      if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
+      {
+        iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMax;
+        fhsV0sCandK0s = new THnSparseD("fhsV0sCandK0s",Form("K_{S}^{0}: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+        fhsV0sCandK0s->Sumw2();
+        fListFlow[kK0s]->Add(fhsV0sCandK0s);
 
-      fhsPhiCandSig = new THnSparseD("fhsPhiCandSig",Form("#phi (Sig): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
-      fhsPhiCandSig->Sumw2();
-      fListFlow[kPhi]->Add(fhsPhiCandSig);
+        iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMax;
+        fhsV0sCandLambda = new THnSparseD("fhsV0sCandLambda",Form("#Lambda: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+        fhsV0sCandLambda->Sumw2();
+        fListFlow[kLambda]->Add(fhsV0sCandLambda);
+      }
 
-      fhsPhiCandBg = new THnSparseD("fhsPhiCandBg",Form("#phi (Bg): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
-      fhsPhiCandBg->Sumw2();
-      fListFlow[kPhi]->Add(fhsPhiCandBg);
+      if(fProcessSpec[kPhi])
+      {
+        iNumBinsCand[SparseCand::kEta] = 2*fCutPhiMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutPhiMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutPhiMotherEtaMax;
+        iNumBinsCand[SparseCand::kInvMass] = fPhiNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutPhiInvMassMin; dMaxCand[SparseCand::kInvMass] = fCutPhiInvMassMax;
+
+        fhsPhiCandSig = new THnSparseD("fhsPhiCandSig",Form("#phi (Sig): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+        fhsPhiCandSig->Sumw2();
+        fListFlow[kPhi]->Add(fhsPhiCandSig);
+
+        fhsPhiCandBg = new THnSparseD("fhsPhiCandBg",Form("#phi (Bg): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+        fhsPhiCandBg->Sumw2();
+        fListFlow[kPhi]->Add(fhsPhiCandBg);
+      }
     }
 
     // charged (tracks) histograms
