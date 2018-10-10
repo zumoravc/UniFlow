@@ -2386,9 +2386,6 @@ void AliAnalysisTaskUniFlow::FilterPID()
 
     if(fFillQA) FillQAPID(0,track,kUnknown);   // filling QA for tracks before selection (but after charged criteria applied)
 
-    // PID tracks are subset of selected charged tracks (same quality requirements)
-    if(!IsChargedSelected(track)) continue;
-
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
     if(species != kPion && species != kKaon && species != kProton) { continue; }
