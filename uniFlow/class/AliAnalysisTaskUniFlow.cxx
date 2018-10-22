@@ -1416,11 +1416,9 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
   }
 
-  // fill QA charged multiplicity
-  fhRefsMult->Fill(iNumRefs);
-
   if(fFillQA)
   {
+    fhRefsMult->Fill(iNumRefs);
     fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
     fhQAChargedMult[1]->Fill(fVector[kCharged]->size());
   }
@@ -2393,6 +2391,13 @@ void AliAnalysisTaskUniFlow::FilterPID()
     if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) { species = kUnknown; }
 
     fVector[species]->push_back(track);
+    if(fFillQA) {
+      FillQAPID(1,track,species); // filling QA for tracks AFTER selection
+      fhPIDPionMult->Fill(fVector[kPion]->size());
+      fhPIDKaonMult->Fill(fVector[kKaon]->size());
+      fhPIDProtonMult->Fill(fVector[kProton]->size());
+    }
+
     if(fFlowFillWeights) { fh3Weights[species]->Fill(track->Phi(), track->Eta(), fPVz); }
     if(fFlowUseWeights)
     {
@@ -2401,8 +2406,6 @@ void AliAnalysisTaskUniFlow::FilterPID()
       else { weight = fh2Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi()) ); }
       fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight);
     }
-
-    if(fFillQA) FillQAPID(1,track,species); // filling QA for tracks AFTER selection
 
     // process MC data
     if(fMC)
@@ -2435,10 +2438,6 @@ void AliAnalysisTaskUniFlow::FilterPID()
     }
 
   }
-
-  fhPIDPionMult->Fill(fVector[kPion]->size());
-  fhPIDKaonMult->Fill(fVector[kKaon]->size());
-  fhPIDProtonMult->Fill(fVector[kProton]->size());
 
   return;
 }
