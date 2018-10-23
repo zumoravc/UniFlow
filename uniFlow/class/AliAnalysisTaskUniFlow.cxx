@@ -2124,7 +2124,8 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
 
     // proper lifetime
     Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
-    Double_t dPropLifeK0s = ( (dMassPDGK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    // Double_t dPropLifeK0s = ( (dMassPDGK0s / v0->Pt() + 1e-10) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    Double_t dPropLifeK0s = ( (dMassPDGK0s / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]) );
     fhQAV0sNumTauK0s[iQAindex]->Fill(dPropLifeK0s);
   }
   if(bCandLambda || bCandAntiLambda)
@@ -2141,12 +2142,12 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Short_t iQAindex, const AliAODv0* v
     // Armenteros-Podolanski
     if(bCandLambda) { fhQAV0sArmenterosLambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0()); }
 
-    if(bCandAntiLambda)
-      fhQAV0sArmenterosALambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0());
+    if(bCandAntiLambda) { fhQAV0sArmenterosALambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0()); }
 
     // proper lifetime
     Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
-    Double_t dPropLifeLambda = ( (dMassPDGLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    // Double_t dPropLifeLambda = ( (dMassPDGLambda / v0->Pt() + 1e-10) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    Double_t dPropLifeLambda = ( (dMassPDGLambda / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]) );
     fhQAV0sNumTauLambda[iQAindex]->Fill(dPropLifeLambda);
   }
 
@@ -2285,21 +2286,22 @@ void AliAnalysisTaskUniFlow::FilterPhi()
         iNumBG++;
       }
 
-      if(mother->Charge() != 0) { delete mother; continue; }
-
-      // opposite-sign combination (signal+background)
-      fhPhiCounter->Fill("Unlike-sign",1);
-      FillSparseCand(fhsPhiCandSig, mother);
-      fVector[kPhi]->push_back(mother);
-
-      // filling weights
-      if(fFlowFillWeights) { fh3Weights[kPhi]->Fill(mother->Phi(), mother->Eta(), fPVz); }
-      if(fFlowUseWeights)
+      if(mother->Charge() == 0)
       {
-        Double_t weight = 1.0;
-        if(fFlowUse3Dweights) { weight =  fh3Weights[kPhi]->GetBinContent(  fh3Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi(), fPVz) ); }
-        else { weight =  fh2Weights[kPhi]->GetBinContent(  fh2Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi()) ) ; }
-        fh3AfterWeights[kPhi]->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
+        // opposite-sign combination (signal+background)
+        fhPhiCounter->Fill("Unlike-sign",1);
+        FillSparseCand(fhsPhiCandSig, mother);
+        fVector[kPhi]->push_back(mother);
+
+        // filling weights
+        if(fFlowFillWeights) { fh3Weights[kPhi]->Fill(mother->Phi(), mother->Eta(), fPVz); }
+        if(fFlowUseWeights)
+        {
+          Double_t weight = 1.0;
+          if(fFlowUse3Dweights) { weight =  fh3Weights[kPhi]->GetBinContent(  fh3Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi(), fPVz) ); }
+          else { weight =  fh2Weights[kPhi]->GetBinContent(  fh2Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi()) ) ; }
+          fh3AfterWeights[kPhi]->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
+        }
       }
 
       // filling QA AFTER selection
