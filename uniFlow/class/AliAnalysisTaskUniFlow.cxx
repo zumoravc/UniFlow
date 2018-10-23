@@ -2405,24 +2405,22 @@ void AliAnalysisTaskUniFlow::FilterPID()
     // check if only protons should be used
     if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) { species = kUnknown; }
 
+    if(species == kUnknown) { continue; }
     if(!fProcessSpec[species]) { continue; }
 
     fVector[species]->push_back(track);
+    if(fFillQA) { FillQAPID(1,track,species); } // filling QA for tracks AFTER selection }
 
-    if(fFillQA) {
-      FillQAPID(1,track,species); // filling QA for tracks AFTER selection
-      fhPIDPionMult->Fill(fVector[kPion]->size());
-      fhPIDKaonMult->Fill(fVector[kKaon]->size());
-      fhPIDProtonMult->Fill(fVector[kProton]->size());
-    }
-
-    if(fFlowFillWeights) { fh3Weights[species]->Fill(track->Phi(), track->Eta(), fPVz); }
-    if(fFlowUseWeights)
+    if(fProcessSpec[kPion] && fProcessSpec[kKaon] && fProcessSpec[kProton]) // NB: aka process PID (not just Kaons for Phi)
     {
-      Double_t weight = 1.0;
-      if(fFlowUse3Dweights) { weight = fh3Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi(), fPVz)); }
-      else { weight = fh2Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi()) ); }
-      fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight);
+      if(fFlowFillWeights) { fh3Weights[species]->Fill(track->Phi(), track->Eta(), fPVz); }
+      if(fFlowUseWeights)
+      {
+        Double_t weight = 1.0;
+        if(fFlowUse3Dweights) { weight = fh3Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi(), fPVz)); }
+        else { weight = fh2Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi()) ); }
+        fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight);
+      }
     }
 
     // process MC data
@@ -2433,7 +2431,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
       {
         Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
 
-        switch (species)
+        switch(species)
         {
           case kPion:
             fhMCRecoSelectedPionPt->Fill(track->Pt());
@@ -2451,10 +2449,15 @@ void AliAnalysisTaskUniFlow::FilterPID()
           default :
             continue;
         }
-
       }
-    }
+    } // end-if {fMC}
+  } // end-for {part}
 
+  if(fFillQA)
+  {
+    if(fProcessSpec[kPion]) { fhPIDPionMult->Fill(fVector[kPion]->size()); }
+    if(fProcessSpec[kKaon]) { fhPIDKaonMult->Fill(fVector[kKaon]->size()); }
+    if(fProcessSpec[kProton]) { fhPIDProtonMult->Fill(fVector[kProton]->size()); }
   }
 
   return;
@@ -2745,10 +2748,10 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
     // check if FlowTask should be done for all flow particles (RFP/POI/Both)
-    if(!task->fbDoRefs && iSpec == kRefs) { continue; }
-    if(!task->fbDoPOIs && iSpec != kRefs) { continue; }
+    if(iSpec == kRefs && !task->fbDoRefs) { continue; }
+    if(iSpec != kRefs && !task->fbDoPOIs) { continue; }
 
-    if(!fProcessSpec[iSpec]) { continue; }
+    if(!fProcessSpec[kPion] || !fProcessSpec[kKaon] || !fProcessSpec[kProton]) { continue; } // NB: aka process PID (not just Kaons for Phi)
 
     if(iSpec == kRefs) {
       FillRefsVectors(dGap);
@@ -3559,6 +3562,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         if(!task->fbDoPOIs && iSpec != kRefs) { continue; }
 
         if(!fProcessSpec[iSpec]) { continue; }
+        if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
         for(Int_t iSample(0); iSample < fNumSamples; ++iSample)
         {
@@ -3691,6 +3695,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
     {
       if(!fProcessSpec[iSpec]) { continue; }
+      if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
       if(fFlowFillWeights)
       {
@@ -3801,14 +3806,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fQACharged->Add(fpRefsMult);
 
     // PID tracks histograms
-    if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton] || fProcessSpec[kPhi])
+    if(fProcessSpec[kPion])
     {
       fhPIDPionMult = new TH1D("fhPIDPionMult","PID: #pi: Multiplicity; multiplicity", 200,0,200);
       fQAPID->Add(fhPIDPionMult);
-      fhPIDKaonMult = new TH1D("fhPIDKaonMult","PID: K: Multiplicity; multiplicity", 100,0,100);
-      fQAPID->Add(fhPIDKaonMult);
-      fhPIDProtonMult = new TH1D("fhPIDProtonMult","PID: p: Multiplicity; multiplicity", 100,0,100);
-      fQAPID->Add(fhPIDProtonMult);
       fhPIDPionPt = new TH1D("fhPIDPionPt","PID: #pi: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
       fQAPID->Add(fhPIDPionPt);
       fhPIDPionPhi = new TH1D("fhPIDPionPhi","PID: #pi: #varphi; #varphi", 100,0,TMath::TwoPi());
@@ -3817,34 +3818,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fhPIDPionEta);
       fhPIDPionCharge = new TH1D("fhPIDPionCharge","PID: #pi: charge; charge", 3,-1.5,1.5);
       fQAPID->Add(fhPIDPionCharge);
-      fhPIDKaonPt = new TH1D("fhPIDKaonPt","PID: K: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
-      fQAPID->Add(fhPIDKaonPt);
-      fhPIDKaonPhi = new TH1D("fhPIDKaonPhi","PID: K: #varphi; #varphi", 100,0,TMath::TwoPi());
-      fQAPID->Add(fhPIDKaonPhi);
-      fhPIDKaonEta = new TH1D("fhPIDKaonEta","PID: K: #eta; #eta", 151,-1.5,1.5);
-      fQAPID->Add(fhPIDKaonEta);
-      fhPIDKaonCharge = new TH1D("fhPIDKaonCharge","PID: K: charge; charge", 3,-1.5,1.5);
-      fQAPID->Add(fhPIDKaonCharge);
-      fhPIDProtonPt = new TH1D("fhPIDProtonPt","PID: p: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
-      fQAPID->Add(fhPIDProtonPt);
-      fhPIDProtonPhi = new TH1D("fhPIDProtonPhi","PID: p: #varphi; #varphi", 100,0,TMath::TwoPi());
-      fQAPID->Add(fhPIDProtonPhi);
-      fhPIDProtonEta = new TH1D("fhPIDProtonEta","PID: p: #eta; #eta", 151,-1.5,1.5);
-      fQAPID->Add(fhPIDProtonEta);
-      fhPIDProtonCharge = new TH1D("fhPIDProtonCharge","PID: p: charge; charge", 3,-1.5,1.5);
-      fQAPID->Add(fhPIDProtonCharge);
       fh2PIDPionTPCdEdx = new TH2D("fh2PIDPionTPCdEdx","PID: #pi: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
       fQAPID->Add(fh2PIDPionTPCdEdx);
       fh2PIDPionTOFbeta = new TH2D("fh2PIDPionTOFbeta","PID: #pi: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
       fQAPID->Add(fh2PIDPionTOFbeta);
-      fh2PIDKaonTPCdEdx = new TH2D("fh2PIDKaonTPCdEdx","PID: K: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
-      fQAPID->Add(fh2PIDKaonTPCdEdx);
-      fh2PIDKaonTOFbeta = new TH2D("fh2PIDKaonTOFbeta","PID: K: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
-      fQAPID->Add(fh2PIDKaonTOFbeta);
-      fh2PIDProtonTPCdEdx = new TH2D("fh2PIDProtonTPCdEdx","PID: p: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
-      fQAPID->Add(fh2PIDProtonTPCdEdx);
-      fh2PIDProtonTOFbeta = new TH2D("fh2PIDProtonTOFbeta","PID: p: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
-      fQAPID->Add(fh2PIDProtonTOFbeta);
       fh2PIDPionTPCnSigmaPion = new TH2D("fh2PIDPionTPCnSigmaPion","PID: #pi: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
       fQAPID->Add(fh2PIDPionTPCnSigmaPion);
       fh2PIDPionTOFnSigmaPion = new TH2D("fh2PIDPionTOFnSigmaPion","PID: #pi: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
@@ -3863,6 +3840,24 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fh2PIDPionBayesKaon);
       fh2PIDPionBayesProton = new TH2D("fh2PIDPionBayesProton","PID: #pi: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fQAPID->Add(fh2PIDPionBayesProton);
+    } //end-if {fProcessSpec[kPion]}
+
+    if(fProcessSpec[kKaon])
+    {
+      fhPIDKaonMult = new TH1D("fhPIDKaonMult","PID: K: Multiplicity; multiplicity", 100,0,100);
+      fQAPID->Add(fhPIDKaonMult);
+      fhPIDKaonPt = new TH1D("fhPIDKaonPt","PID: K: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
+      fQAPID->Add(fhPIDKaonPt);
+      fhPIDKaonPhi = new TH1D("fhPIDKaonPhi","PID: K: #varphi; #varphi", 100,0,TMath::TwoPi());
+      fQAPID->Add(fhPIDKaonPhi);
+      fhPIDKaonEta = new TH1D("fhPIDKaonEta","PID: K: #eta; #eta", 151,-1.5,1.5);
+      fQAPID->Add(fhPIDKaonEta);
+      fhPIDKaonCharge = new TH1D("fhPIDKaonCharge","PID: K: charge; charge", 3,-1.5,1.5);
+      fQAPID->Add(fhPIDKaonCharge);
+      fh2PIDKaonTPCdEdx = new TH2D("fh2PIDKaonTPCdEdx","PID: K: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
+      fQAPID->Add(fh2PIDKaonTPCdEdx);
+      fh2PIDKaonTOFbeta = new TH2D("fh2PIDKaonTOFbeta","PID: K: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
+      fQAPID->Add(fh2PIDKaonTOFbeta);
       fh2PIDKaonTPCnSigmaPion = new TH2D("fh2PIDKaonTPCnSigmaPion","PID: K: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
       fQAPID->Add(fh2PIDKaonTPCnSigmaPion);
       fh2PIDKaonTOFnSigmaPion = new TH2D("fh2PIDKaonTOFnSigmaPion","PID: K: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
@@ -3881,6 +3876,24 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fh2PIDKaonBayesKaon);
       fh2PIDKaonBayesProton = new TH2D("fh2PIDKaonBayesProton","PID: K: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fQAPID->Add(fh2PIDKaonBayesProton);
+    } //end-if {fProcessSpec[kKaon]}
+
+    if(fProcessSpec[kProton])
+    {
+      fhPIDProtonMult = new TH1D("fhPIDProtonMult","PID: p: Multiplicity; multiplicity", 100,0,100);
+      fQAPID->Add(fhPIDProtonMult);
+      fhPIDProtonPt = new TH1D("fhPIDProtonPt","PID: p: #it{p}_{T}; #it{p}_{T}", 150,0.,30.);
+      fQAPID->Add(fhPIDProtonPt);
+      fhPIDProtonPhi = new TH1D("fhPIDProtonPhi","PID: p: #varphi; #varphi", 100,0,TMath::TwoPi());
+      fQAPID->Add(fhPIDProtonPhi);
+      fhPIDProtonEta = new TH1D("fhPIDProtonEta","PID: p: #eta; #eta", 151,-1.5,1.5);
+      fQAPID->Add(fhPIDProtonEta);
+      fhPIDProtonCharge = new TH1D("fhPIDProtonCharge","PID: p: charge; charge", 3,-1.5,1.5);
+      fQAPID->Add(fhPIDProtonCharge);
+      fh2PIDProtonTPCdEdx = new TH2D("fh2PIDProtonTPCdEdx","PID: p: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx", 200,0,20, 131,-10,1000);
+      fQAPID->Add(fh2PIDProtonTPCdEdx);
+      fh2PIDProtonTOFbeta = new TH2D("fh2PIDProtonTOFbeta","PID: p: TOF #beta; #it{p} (GeV/#it{c});TOF #beta", 200,0,20, 101,-0.1,1.5);
+      fQAPID->Add(fh2PIDProtonTOFbeta);
       fh2PIDProtonTPCnSigmaPion = new TH2D("fh2PIDProtonTPCnSigmaPion","PID: p: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma", 200,0,20, 21,-11,10);
       fQAPID->Add(fh2PIDProtonTPCnSigmaPion);
       fh2PIDProtonTOFnSigmaPion = new TH2D("fh2PIDProtonTOFnSigmaPion","PID: p: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma", 200,0,20, 21,-11,10);
@@ -3899,7 +3912,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fh2PIDProtonBayesKaon);
       fh2PIDProtonBayesProton = new TH2D("fh2PIDProtonBayesProton","PID: p: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.", 200,0,20, 50,0,1);
       fQAPID->Add(fh2PIDProtonBayesProton);
-    } //end-if {fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton]}
+    } //end-if {fProcessSpec[kProton]}
 
     if(fProcessSpec[kPhi])
     {
@@ -4115,7 +4128,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     if(fMC)
     {
-      if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton] || fProcessSpec[kPhi])
+      if(fProcessSpec[kPion])
       {
         fhMCRecoSelectedPionPt = new TH1D("fhMCRecoSelectedPionPt","fhMCRecoSelectedPionPt; p_{T} (GeV/c); Counts", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
         fQAPID->Add(fhMCRecoSelectedPionPt);
@@ -4125,7 +4138,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fQAPID->Add(fhMCRecoAllPionPt);
         fhMCGenAllPionPt = new TH1D("fhMCGenAllPionPt","fhMCGenAllPionPt; p_{T} (GeV/c); Counts", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
         fQAPID->Add(fhMCGenAllPionPt);
+      }
 
+      if(fProcessSpec[kKaon])
+      {
         fhMCRecoSelectedKaonPt = new TH1D("fhMCRecoSelectedKaonPt","fhMCRecoSelectedKaonPt; p_{T} (GeV/c); Counts", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
         fQAPID->Add(fhMCRecoSelectedKaonPt);
         fhMCRecoSelectedTrueKaonPt = new TH1D("fhMCRecoSelectedTrueKaonPt","fhMCRecoSelectedTrueKaonPt; p_{T} (GeV/c); Counts", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
@@ -4134,7 +4150,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fQAPID->Add(fhMCRecoAllKaonPt);
         fhMCGenAllKaonPt = new TH1D("fhMCGenAllKaonPt","fhMCGenAllKaonPt; p_{T} (GeV/c); Counts", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
         fQAPID->Add(fhMCGenAllKaonPt);
+      }
 
+      if(fProcessSpec[kProton])
+      {
         fhMCRecoSelectedProtonPt = new TH1D("fhMCRecoSelectedProtonPt","fhMCRecoSelectedProtonPt; p_{T} (GeV/c); Counts", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
         fQAPID->Add(fhMCRecoSelectedProtonPt);
         fhMCRecoSelectedTrueProtonPt = new TH1D("fhMCRecoSelectedTrueProtonPt","fhMCRecoSelectedTrueProtonPt; p_{T} (GeV/c); Counts", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
@@ -4143,9 +4162,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         fQAPID->Add(fhMCRecoAllProtonPt);
         fhMCGenAllProtonPt = new TH1D("fhMCGenAllProtonPt","fhMCGenAllProtonPt; p_{T} (GeV/c); Counts", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
         fQAPID->Add(fhMCGenAllProtonPt);
-      }  // end-if {fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton] || fProcessSpec[kPhi]}
+      }
     } // end-if{fMC}
-
   } // end-if {fFillQA}
 
   // posting data (mandatory)
