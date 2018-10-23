@@ -946,9 +946,16 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     if(!LoadWeights(kTRUE)) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
   }
 
-  AliInfo("Preparing particle containers (std::vectors)");
-  // creating particle vectors & reserving capacity in order to avoid memory re-allocation
+  // setting processing Kaons if Phi is on
+  if(fProcessSpec[kPhi] && !fProcessSpec[kKaon])
+  {
+    fProcessSpec[kKaon] = kTRUE;
+    AliInfo("Processing of Phi ON but PID OFF: setting processing of Kaons ON");
+  }
 
+  AliInfo("Preparing particle containers (std::vectors)");
+
+  // creating particle vectors & reserving capacity in order to avoid memory re-allocation
   Int_t iReserve = 0;
   switch(fColSystem)
   {
@@ -1041,7 +1048,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(fFillQA) { FillEventsQA(1); }
   printf("UserExec: Event QA filled\n");
 
-  if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton] || fProcessSpec[kPhi]) { FilterPID(); }
+  if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton]) { FilterPID(); }
   if(fProcessSpec[kK0s] || fProcessSpec[kLambda]) { FilterV0s(); }
   if(fProcessSpec[kPhi]) { FilterPhi(); }
 
@@ -2394,10 +2401,14 @@ void AliAnalysisTaskUniFlow::FilterPID()
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
     if(species != kPion && species != kKaon && species != kProton) { continue; }
+
     // check if only protons should be used
     if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) { species = kUnknown; }
 
+    if(!fProcessSpec[species]) { continue; }
+
     fVector[species]->push_back(track);
+
     if(fFillQA) {
       FillQAPID(1,track,species); // filling QA for tracks AFTER selection
       fhPIDPionMult->Fill(fVector[kPion]->size());
