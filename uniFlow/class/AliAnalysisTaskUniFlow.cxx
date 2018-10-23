@@ -1022,8 +1022,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fVector[kCharged]->clear();
   FilterCharged();
 
-  printf("UserExec: Charged filtered\n");
-
   // checking if there is at least 5 particles: needed to "properly" calculate correlations
   if(fVector[kRefs]->empty() || fVector[kRefs]->size() < 5) { return; }
   fhEventCounter->Fill("#RPFs OK",1);
@@ -1046,28 +1044,22 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   // Fill event QA AFTER cuts
   if(fFillQA) { FillEventsQA(1); }
-  printf("UserExec: Event QA filled\n");
 
   if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton]) { FilterPID(); }
   if(fProcessSpec[kK0s] || fProcessSpec[kLambda]) { FilterV0s(); }
   if(fProcessSpec[kPhi]) { FilterPhi(); }
 
-  printf("UserExec: after filtering\n");
-
   // processing of selected event
   Bool_t bProcessed = CalculateFlow();
-  printf("UserExec: after CalculateFlow \n");
 
   // should be cleared at the end of processing especially for reconstructed
   // particles (Phi, V0s) because here new AliPicoTracks are created
   ClearVectors();
-  printf("UserExec: after ClearVectors \n");
 
   // extracting run number here to store run number from previous event (for current run number use info in AliAODEvent)
   fRunNumber = fEventAOD->GetRunNumber();
 
   if(!bProcessed) return;
-  printf("UserExec: Processed \n");
 
   // posting data (mandatory)
   Int_t i = 0;
@@ -4177,7 +4169,4 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   PostData(++i, fFlowWeights);
 
   return;
-
-  printf("UserCreateOutputObjects out\n");
-
 }
