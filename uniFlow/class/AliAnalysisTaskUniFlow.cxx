@@ -265,6 +265,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhMCRecoSelectedTrueProtonPt(0x0),
   fhMCRecoAllProtonPt(0x0),
   fhMCGenAllProtonPt(0x0),
+  fhPIDCounter(0x0),
   fhPIDPionMult(0x0),
   fhPIDPionPt(0x0),
   fhPIDPionPhi(0x0),
@@ -498,6 +499,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhMCRecoSelectedTrueProtonPt(0x0),
   fhMCRecoAllProtonPt(0x0),
   fhMCGenAllProtonPt(0x0),
+  fhPIDCounter(0x0),
   fhPIDPionMult(0x0),
   fhPIDPionPt(0x0),
   fhPIDPionPhi(0x0),
@@ -2388,6 +2390,8 @@ void AliAnalysisTaskUniFlow::FilterPID()
     AliAODTrack* track = static_cast<AliAODTrack*>(*part);
     if(!track) { continue; }
 
+    fhPIDCounter->Fill("Input",1);
+
     if(fFillQA) { FillQAPID(0,track,kUnknown); } // filling QA for tracks before selection (but after charged criteria applied)
 
     // PID track selection (return most favourable species)
@@ -2399,6 +2403,9 @@ void AliAnalysisTaskUniFlow::FilterPID()
 
     if(species == kUnknown) { continue; }
     if(!fProcessSpec[species]) { continue; }
+
+    fhPIDCounter->Fill("Selected",1);
+    fhPIDCounter->Fill(GetSpeciesName(species),1);
 
     fVector[species]->push_back(track);
     if(fFillQA) { FillQAPID(1,track,species); } // filling QA for tracks AFTER selection }
@@ -3724,6 +3731,15 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
     for(Short_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
     fQACharged->Add(fhChargedCounter);
+  }
+
+  if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton])
+  {
+    TString sPIDCounterLabel[] = {"Input","Selected","Pion","Kaon","Proton"};
+    const Short_t iNBinsPIDCounter = sizeof(sPIDCounterLabel)/sizeof(sPIDCounterLabel[0]);
+    fhPIDCounter = new TH1D("fhPIDCounter","PID: Counter",iNBinsPIDCounter,0,iNBinsPIDCounter);
+    for(Short_t i(0); i < iNBinsPIDCounter; i++) fhPIDCounter->GetXaxis()->SetBinLabel(i+1, sPIDCounterLabel[i].Data() );
+    fQAPID->Add(fhPIDCounter);
   }
 
   if(fProcessSpec[kPhi])

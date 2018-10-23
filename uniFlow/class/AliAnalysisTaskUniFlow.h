@@ -434,6 +434,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TProfile*       fpRefsMult; //! <multiplicity>
       TH1D*           fhChargedCounter; //! counter following charged track selection
       // PID
+      TH1D*           fhPIDCounter; //! counter for PID
       TH1D*           fhPIDPionMult; //! multiplicity distribution of selected pions
       TH1D*           fhPIDPionPt; //! pt distribution of selected pions
       TH1D*           fhPIDPionPhi; //! phi distribution of selected pions
