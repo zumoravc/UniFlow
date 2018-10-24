@@ -109,6 +109,9 @@ class FlowTask
     Double_t    fFitParDefaults[fNumParsMax]; // default values for all parameters in all formulas (i.e. master flow-mass formula)
     Double_t    fFitParLimLow[fNumParsMax]; // low limit values for all parameters in all formulas (i.e. master flow-mass formula)
     Double_t    fFitParLimHigh[fNumParsMax]; // high limit values for all parameters in all formulas (i.e. master flow-mass formula)
+    TList*      fListProfiles; // TList with profiles slices
+    TList*      fListHistos; // TList with histos slices
+
 
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
@@ -152,6 +155,10 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fNumParMassSig = 0;
   fNumParMassBG = 0;
   fNumParFlowBG = 0;
+  fListProfiles = new TList();
+  fListProfiles->SetOwner(kTRUE);
+  fListHistos = new TList();
+  fListHistos->SetOwner(kTRUE);
   fVecHistInvMass = new std::vector<TH1D*>;
   fVecHistInvMassBG = new std::vector<TH1D*>;
   fVecHistFlowMass = new std::vector<TH1D*>;
@@ -163,6 +170,8 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
 //_____________________________________________________________________________
 FlowTask::~FlowTask()
 {
+  if(fListProfiles) { fListProfiles->Clear(); delete fListProfiles; }
+  if(fListHistos) { fListHistos->Clear(); delete fListHistos; }
   if(fVecHistFlowMass) delete fVecHistFlowMass;
   if(fVecHistFlowMassFour) delete fVecHistFlowMassFour;
   if(fVecHistInvMass) delete fVecHistInvMass;
@@ -598,13 +607,12 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   {
     Warning("Testing PrepareSlicesNew() on K0s!","ProcessTask");
 
-    TList* listSlices = new TList();
-    listSlices->SetOwner(kTRUE);
+    TList* listSlices = task->fListProfiles;
 
     TProfile3D* prof3D = (TProfile3D*) flFlowK0s->FindObject(Form("%s_Pos_sample%d", task->fMixedDiff.Data(), 0));
-    if(!prof3D) { Error("prof3D failed!","ProcessTask"); delete listSlices; return kFALSE; }
+    if(!prof3D) { Error("prof3D failed!","ProcessTask"); return kFALSE; }
 
-    if(!PrepareSlicesNew(task,prof3D,listSlices)) { delete listSlices; return kFALSE; }
+    if(!PrepareSlicesNew(task,prof3D,listSlices)) { return kFALSE; }
 
     ffOutputFile->cd();
     listSlices->Write("PrepareSlicesNew",TObject::kSingleKey);
