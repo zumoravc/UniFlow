@@ -308,6 +308,7 @@ class ProcessUniFlow
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
+    Bool_t      PrepareSlicesNew(FlowTask* task, TH1* inputHist, TList* outList); // prepare slices out of inputHist
 
     TH1D*       CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task); // calculate cn{2} out of correlation
     TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
@@ -591,6 +592,26 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 
   // task checks & initialization
   if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
+
+  // TODO <<<
+  if(task->fSpecies == FlowTask::kK0s && task->fProcessMixed)
+  {
+    Warning("Testing PrepareSlicesNew() on K0s!","ProcessTask");
+
+    TList* listSlices = new TList();
+    listSlices->SetOwner(kTRUE);
+
+    TProfile3D* prof3D = (TProfile3D*) flFlowK0s->FindObject(Form("%s_Pos_sample%d", task->fMixedDiff.Data(), 0));
+    if(!prof3D) { Error("prof3D failed!","ProcessTask"); delete listSlices; return kFALSE; }
+
+    if(!PrepareSlicesNew(task,prof3D,listSlices)) { delete listSlices; return kFALSE; }
+
+    ffOutputFile->cd();
+    listSlices->Write("PrepareSlicesNew",TObject::kSingleKey);
+
+    return kTRUE;
+  }
+  // TODO >>>
 
   if(task->fProcessMixed) { return ProcessMixed(task); }
 
@@ -2299,6 +2320,62 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   if(h3EntriesBG && (task->fVecHistInvMassBG->size() < 1 || task->fVecHistInvMassBG->size() != task->fVecHistInvMass->size()) ) { Error("Output vector empty. Something went wrong with BG histograms","PrepareSlices"); return kFALSE; }
   if(task->fDoFour && (task->fVecHistFlowMassFour->size() < 1 || task->fVecHistFlowMass->size() != task->fVecHistInvMass->size()) ) { Error("Output vector for <<4>> empty. Something went wrong","PrepareSlices"); return kFALSE; }
 
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TH1* inputProf, TList* outList)
+{
+  // prepare slices out of inputHist
+  if(!task) { Error("FlowTask does not exists!","PrepareSlicesNew"); return kFALSE; }
+  if(!inputProf) { Error("Input profile does not exists!","PrepareSlicesNew"); return kFALSE; }
+  if(!outList) { Error("Output TList does not exists!","PrepareSlicesNew"); return kFALSE; }
+  if(outList->GetEntries() > 0) { Error("Output TList is not empty!","PrepareSlicesNew"); return kFALSE; }
+
+  FlowTask::PartSpecies spec = task->fSpecies;
+  Bool_t bReco = kFALSE;
+  if(spec == FlowTask::kK0s || spec == FlowTask::kLambda || spec == FlowTask::kPhi) { bReco = kTRUE; }
+
+  // lets assume it is done for reconstructed (3D)
+  if(!bReco) { Error("So far implemented for Reco only","PrepareSlicesNew"); return kFALSE; }
+
+  Int_t iNumBinsMult = fiNumMultBins;
+  Int_t iNumBinsPt = task->fNumPtBins;
+
+  TAxis* axisMult = inputProf->GetXaxis();
+  TAxis* axisPt = inputProf->GetYaxis();
+
+  TList trashCol;
+  trashCol.SetOwner(kTRUE);
+
+  for(Int_t iBinMult(0); iBinMult < iNumBinsMult; ++iBinMult) {
+    const Int_t iBinMultLow = axisMult->FindFixBin(fdMultBins[iBinMult]);
+    const Int_t iBinMultHigh = axisMult->FindFixBin(fdMultBins[iBinMult+1]) - 1;
+
+    axisMult->SetRange(iBinMultLow,iBinMultHigh);
+    TProfile3D* prof3D = (TProfile3D*) inputProf;
+    TProfile2D* prof2D = Project3DProfile(prof3D);
+    if(!prof2D) { Error("Mult projection failed!","PrepareSlicesNew"); return kFALSE; }
+    trashCol.Add(prof2D); // NB: to ensure that it will be deleted
+
+    prof2D->Draw("colz");
+
+    for(Int_t iBinPt(0); iBinPt < iNumBinsPt; ++iBinPt) {
+      const Double_t dEdgePtLow = task->fPtBinsEdges[iBinPt];
+      const Double_t dEdgePtHigh = task->fPtBinsEdges[iBinPt+1];
+
+      const Int_t iBinPtLow = axisPt->FindFixBin(dEdgePtLow);
+      const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
+
+      TProfile* prof1D = (TProfile*) prof2D->ProfileX("",iBinPtLow,iBinPtHigh);
+      if(!prof1D) { Error("Profile failed!","PrepareSlicesNew"); return kFALSE; }
+      prof1D->GetXaxis()->SetTitle(prof2D->GetXaxis()->GetTitle());
+      prof1D->SetName(Form("%s_mult%d_pt%d",inputProf->GetName(),iBinMult,iBinPt));
+      outList->Add(prof1D);
+    } // end-for {binPt}
+
+  } // end-for {binMult}
+
+  Info("Successfull!","PrepareSlicesNew");
   return kTRUE;
 }
 //_____________________________________________________________________________
