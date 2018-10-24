@@ -317,6 +317,7 @@ class ProcessUniFlow
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
+    Bool_t      PrepareSlicesNew(FlowTask* task); // wrapper for making/preparing per-task slices
     Bool_t      MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList); // prepare slices out of inputHist
     Bool_t      MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, TList* outList, const char* outName = "hInvMass"); // prepare slices out of 'inputSparse'
 
@@ -611,13 +612,15 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     TList* listSlicesProfiles = task->fListProfiles;
     TList* listSlicesHistos = task->fListHistos;
 
-    TProfile3D* prof3D = (TProfile3D*) flFlowK0s->FindObject(Form("%s_Pos_sample%d", task->fMixedDiff.Data(), 0));
-    if(!prof3D) { Error("prof3D failed!","ProcessTask"); return kFALSE; }
-    if(!MakeProfileSlices(task,prof3D,listSlicesProfiles)) { return kFALSE; }
+    if(!PrepareSlicesNew(task)) { Error("Preparing slices failed!","ProcessTask"); return kFALSE; }
 
-    THnSparseD* histSparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
-    if(!histSparse) { Error("histSparse failed!","ProcessTask"); return kFALSE; }
-    if(!MakeSparseSlices(task,histSparse,listSlicesHistos)) { return kFALSE; }
+    // TProfile3D* prof3D = (TProfile3D*) flFlowK0s->FindObject(Form("%s_Pos_sample%d", task->fMixedDiff.Data(), 0));
+    // if(!prof3D) { Error("prof3D failed!","ProcessTask"); return kFALSE; }
+    // if(!MakeProfileSlices(task,prof3D,listSlicesProfiles)) { return kFALSE; }
+    //
+    // THnSparseD* histSparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
+    // if(!histSparse) { Error("histSparse failed!","ProcessTask"); return kFALSE; }
+    // if(!MakeSparseSlices(task,histSparse,listSlicesHistos)) { return kFALSE; }
 
     ffOutputFile->cd();
     listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
@@ -2336,6 +2339,37 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
 
   return kTRUE;
 }
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
+{
+  // wrapper for making/preparing per-task slices
+  if(!task) { Error("FlowTask does not exists!","PrepareSlicesNew"); return kFALSE; }
+
+  FlowTask::PartSpecies species = task->fSpecies;
+  Bool_t bReco = kFALSE;
+  if(species == FlowTask::kK0s || species == FlowTask::kLambda || species == FlowTask::kPhi) { bReco = kTRUE; }
+
+  if(species != FlowTask::kK0s) { Error("So far implemeted only for K0s","PrepareSlicesNew"); return kFALSE; }
+
+  if(bReco) {
+    // preparing inv. mass slices
+    THnSparseD* sparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
+    if(!MakeSparseSlices(task,sparse,task->fListHistos)) { Error("Histo Slices failed!","PrepareSlicesNew"); return kFALSE; };
+
+    if(species == FlowTask::kPhi) {
+      THnSparseD* sparseBg = (THnSparseD*) flFlowPhi->FindObject("fhsPhiCandBg");
+      if(!MakeSparseSlices(task,sparseBg,task->fListHistos,"hInvMassBg")) { Error("Histo Slices for Phi BG failed!","PrepareSlicesNew"); return kFALSE; };
+    }
+
+    // preparing flow-mass slices
+    TString sName = Form("%s_Pos_sample0",task->fMixedDiff.Data());
+    TProfile3D* prof = (TProfile3D*) flFlowK0s->FindObject(sName.Data());
+    if(!MakeProfileSlices(task,prof,task->fListProfiles)) { Error("Profile Slices failed!","PrepareSlicesNew"); return kFALSE; };
+  }
+
+  return kTRUE;
+}
+
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList)
 {
