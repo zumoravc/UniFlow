@@ -2453,8 +2453,10 @@ void ProcessUniFlow::TestProjections()
 //_____________________________________________________________________________
 TProfile2D* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
 {
-  if(!prof3dorig) return 0x0;
+  if(!prof3dorig) { Error("Input profile does not exists!","Project3DProfile"); return 0x0; }
+
   TProfile3D* prof3d = (TProfile3D*) prof3dorig->Clone();
+  if(!prof3d) { Error("Cloning failed!","Project3DProfile"); return 0x0; }
 
   Int_t iBinFirst = prof3d->GetXaxis()->GetFirst();
   Int_t iBinLast = prof3d->GetXaxis()->GetLast();
@@ -2467,9 +2469,13 @@ TProfile2D* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
   // TH3D* hist3d_entry = prof3d->ProjectionXYZ("hist3d_entry","B");   //NOTE do not care about range !!!
   // TH3D* hist3d_weight = prof3d->ProjectionXYZ("hist3d_weight","W");   //NOTE do not care about range !!!
 
-  TProfile2D* prof2d_test = DoProjectProfile2D(prof3d,"prof2d_test","",prof3d->GetYaxis(),prof3d->GetZaxis(),1,0,0);
-  // prof2d_test->Draw("colz");
+  TProfile2D* prof2d_test = DoProjectProfile2D(prof3d,Form("%s_px",prof3d->GetName()),prof3d->GetTitle(),prof3d->GetYaxis(),prof3d->GetZaxis(),1,0,0);
+  if(!prof2d_test) { Error("DoProjectProfile2D failed!","Project3DProfile"); delete prof3d; return 0x0; }
+  prof2d_test->GetXaxis()->SetTitle(prof3d->GetZaxis()->GetTitle());
+  prof2d_test->GetYaxis()->SetTitle(prof3d->GetYaxis()->GetTitle());
 
+  // prof2d_test->Draw("colz");
+  delete prof3d;
   return prof2d_test;
 
   // resulting profile
