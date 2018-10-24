@@ -318,6 +318,7 @@ class ProcessUniFlow
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
     Bool_t      MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList); // prepare slices out of inputHist
+    Bool_t      MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, TList* outList, const char* outName = "hInvMass"); // prepare slices out of 'inputSparse'
 
     TH1D*       CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task); // calculate cn{2} out of correlation
     TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
@@ -614,9 +615,13 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     if(!prof3D) { Error("prof3D failed!","ProcessTask"); return kFALSE; }
     if(!MakeProfileSlices(task,prof3D,listSlicesProfiles)) { return kFALSE; }
 
+    THnSparseD* histSparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
+    if(!histSparse) { Error("histSparse failed!","ProcessTask"); return kFALSE; }
+    if(!MakeSparseSlices(task,histSparse,listSlicesHistos)) { return kFALSE; }
 
     ffOutputFile->cd();
     listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
+    listSlicesHistos->Write("MakeHistosSlices",TObject::kSingleKey);
 
     return kTRUE;
   }
@@ -2385,6 +2390,101 @@ Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* 
   Info("Successfull!","MakeProfileSlices");
   return kTRUE;
 }
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, TList* outList, const char* outName)
+{
+  // prepare slices out of inputHist
+  if(!task) { Error("FlowTask does not exists!","MakeSparseSlices"); return kFALSE; }
+  if(!inputSparse) { Error("Input THnSparse does not exists!","MakeSparseSlices"); return kFALSE; }
+  if(!outList) { Error("Output TList does not exists!","MakeSparseSlices"); return kFALSE; }
+  if(outList->GetEntries() > 0) { Error("Output TList is not empty!","MakeSparseSlices"); return kFALSE; }
+
+  FlowTask::PartSpecies species = task->fSpecies;
+  if(species != FlowTask::kK0s && species != FlowTask::kLambda && species != FlowTask::kPhi) {
+    Error("Not a reconstructed species!","MakeSparseSlices");
+    return kFALSE;
+  }
+
+  TList trashCol;
+  trashCol.SetOwner(kTRUE);
+
+  Double_t dEtaGap = task->fEtaGap;
+  Bool_t bHasGap = dEtaGap < 0.0 ? kFALSE : kTRUE;
+
+  TH3D* histEntries = 0x0;
+  TH3D* histEntriesPos = 0x0;
+  TH3D* histEntriesNeg = 0x0;
+
+  if(!bHasGap) {
+    histEntries = (TH3D*) inputSparse->Projection(1,2,0);
+    trashCol.Add(histEntries);
+  } // end-if {!bHasGap}
+  else {
+    TAxis* axisEta = inputSparse->GetAxis(3);
+    if(!axisEta) { Error("TAxis 'axisEta' does not exists!","MakeSparseSlices"); return kFALSE; }
+
+    // positive POIs
+    axisEta->SetRangeUser(dEtaGap/2.0,axisEta->GetXmax());
+    TH3D* histEntriesPos = (TH3D*) inputSparse->Projection(1,2,0);
+    if(!histEntriesPos) { Error("Projection 'histEntriesPos' failed!","MakeSparseSlices"); return kFALSE; }
+    trashCol.Add(histEntriesPos);
+
+    // negative POIs
+    axisEta->SetRangeUser(axisEta->GetXmin(),-dEtaGap/2.0);
+    TH3D* histEntriesNeg = (TH3D*) inputSparse->Projection(1,2,0);
+    if(!histEntriesNeg) { Error("Projection 'histEntriesNeg' failed!","MakeSparseSlices"); return kFALSE; }
+    trashCol.Add(histEntriesNeg);
+
+    if(task->fMergePosNeg) {
+      TList* listMerge = new TList();
+      // No need to add ownership since it is collected by trashCol TList
+      listMerge->Add(histEntriesPos);
+      listMerge->Add(histEntriesNeg);
+      histEntries = (TH3D*) MergeListProfiles(listMerge);
+      delete listMerge;
+      trashCol.Add(histEntries);
+    } // end-if {fMergePosNeg}
+    else {
+      // loading single histo (positive by default)
+      if(task->fInputTag.EqualTo("")) {
+        histEntries = histEntriesPos;
+      }
+      else if (task->fInputTag.EqualTo("Neg")) {
+        histEntries = histEntriesNeg;
+      }
+      else {
+        Error(Form("Invalid InputTag '%s'!",task->fInputTag.Data()),"ProcessReconstructed");
+        return kFALSE;
+      }
+    } // end-else {fMergePosNeg}
+  } // end-else {!bHasGap}
+
+  if(!histEntries) { Error("Histo 'histEntries' failed!","MakeSparseSlices"); return kFALSE; }
+  // histEntries (TH3D*) ready for slicing in mult & pt bins (NB should be put in trashCol)
+
+  Int_t iNumBinsMult = fiNumMultBins;
+  Int_t iNumBinsPt = task->fNumPtBins;
+
+  TAxis* axisMult = histEntries->GetXaxis();
+  TAxis* axisPt = histEntries->GetYaxis();
+
+  for(Int_t iBinMult(0); iBinMult < iNumBinsMult; ++iBinMult) {
+    const Int_t iBinMultLow = axisMult->FindFixBin(fdMultBins[iBinMult]);
+    const Int_t iBinMultHigh = axisMult->FindFixBin(fdMultBins[iBinMult+1]) - 1;
+
+    for(Int_t iBinPt(0); iBinPt < iNumBinsPt; ++iBinPt) {
+      const Double_t dEdgePtLow = task->fPtBinsEdges[iBinPt];
+      const Double_t dEdgePtHigh = task->fPtBinsEdges[iBinPt+1];
+      const Int_t iBinPtLow = axisPt->FindFixBin(dEdgePtLow);
+      const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
+
+      TH1D* histInvMass = (TH1D*) histEntries->ProjectionZ(Form("%s_mult%d_pt%d",outName,iBinMult,iBinPt),iBinMultLow,iBinMultHigh,iBinPtLow,iBinPtHigh,"e");
+      if(!histInvMass) { Error("Projection 'histInvMass' failed!","MakeSparseSlices"); return kFALSE; }
+      outList->Add(histInvMass);
+    } // end-for {binPt}
+  } // end-for {binMult}
+
+  Debug("Successfull!","MakeSparseSlices");
   return kTRUE;
 }
 //_____________________________________________________________________________
