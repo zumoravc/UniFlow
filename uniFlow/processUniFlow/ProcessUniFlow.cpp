@@ -317,7 +317,7 @@ class ProcessUniFlow
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
-    Bool_t      PrepareSlicesNew(FlowTask* task, TH1* inputHist, TList* outList); // prepare slices out of inputHist
+    Bool_t      MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList); // prepare slices out of inputHist
 
     TH1D*       CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task); // calculate cn{2} out of correlation
     TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
@@ -605,17 +605,18 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   // TODO <<<
   if(task->fSpecies == FlowTask::kK0s && task->fProcessMixed)
   {
-    Warning("Testing PrepareSlicesNew() on K0s!","ProcessTask");
+    Warning("Testing MakeProfileSlices() on K0s!","ProcessTask");
 
-    TList* listSlices = task->fListProfiles;
+    TList* listSlicesProfiles = task->fListProfiles;
+    TList* listSlicesHistos = task->fListHistos;
 
     TProfile3D* prof3D = (TProfile3D*) flFlowK0s->FindObject(Form("%s_Pos_sample%d", task->fMixedDiff.Data(), 0));
     if(!prof3D) { Error("prof3D failed!","ProcessTask"); return kFALSE; }
+    if(!MakeProfileSlices(task,prof3D,listSlicesProfiles)) { return kFALSE; }
 
-    if(!PrepareSlicesNew(task,prof3D,listSlices)) { return kFALSE; }
 
     ffOutputFile->cd();
-    listSlices->Write("PrepareSlicesNew",TObject::kSingleKey);
+    listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
 
     return kTRUE;
   }
@@ -2331,20 +2332,20 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TH1* inputProf, TList* outList)
+Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList)
 {
   // prepare slices out of inputHist
-  if(!task) { Error("FlowTask does not exists!","PrepareSlicesNew"); return kFALSE; }
-  if(!inputProf) { Error("Input profile does not exists!","PrepareSlicesNew"); return kFALSE; }
-  if(!outList) { Error("Output TList does not exists!","PrepareSlicesNew"); return kFALSE; }
-  if(outList->GetEntries() > 0) { Error("Output TList is not empty!","PrepareSlicesNew"); return kFALSE; }
+  if(!task) { Error("FlowTask does not exists!","MakeProfileSlices"); return kFALSE; }
+  if(!inputProf) { Error("Input profile does not exists!","MakeProfileSlices"); return kFALSE; }
+  if(!outList) { Error("Output TList does not exists!","MakeProfileSlices"); return kFALSE; }
+  if(outList->GetEntries() > 0) { Error("Output TList is not empty!","MakeProfileSlices"); return kFALSE; }
 
   FlowTask::PartSpecies spec = task->fSpecies;
   Bool_t bReco = kFALSE;
   if(spec == FlowTask::kK0s || spec == FlowTask::kLambda || spec == FlowTask::kPhi) { bReco = kTRUE; }
 
   // lets assume it is done for reconstructed (3D)
-  if(!bReco) { Error("So far implemented for Reco only","PrepareSlicesNew"); return kFALSE; }
+  if(!bReco) { Error("So far implemented for Reco only","MakeProfileSlices"); return kFALSE; }
 
   Int_t iNumBinsMult = fiNumMultBins;
   Int_t iNumBinsPt = task->fNumPtBins;
@@ -2362,10 +2363,8 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TH1* inputProf, TList* o
     axisMult->SetRange(iBinMultLow,iBinMultHigh);
     TProfile3D* prof3D = (TProfile3D*) inputProf;
     TProfile2D* prof2D = Project3DProfile(prof3D);
-    if(!prof2D) { Error("Mult projection failed!","PrepareSlicesNew"); return kFALSE; }
+    if(!prof2D) { Error("Mult projection failed!","MakeProfileSlices"); return kFALSE; }
     trashCol.Add(prof2D); // NB: to ensure that it will be deleted
-
-    prof2D->Draw("colz");
 
     for(Int_t iBinPt(0); iBinPt < iNumBinsPt; ++iBinPt) {
       const Double_t dEdgePtLow = task->fPtBinsEdges[iBinPt];
@@ -2375,7 +2374,7 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TH1* inputProf, TList* o
       const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
 
       TProfile* prof1D = (TProfile*) prof2D->ProfileX("",iBinPtLow,iBinPtHigh);
-      if(!prof1D) { Error("Profile failed!","PrepareSlicesNew"); return kFALSE; }
+      if(!prof1D) { Error("Profile failed!","MakeProfileSlices"); return kFALSE; }
       prof1D->GetXaxis()->SetTitle(prof2D->GetXaxis()->GetTitle());
       prof1D->SetName(Form("%s_mult%d_pt%d",inputProf->GetName(),iBinMult,iBinPt));
       outList->Add(prof1D);
@@ -2383,7 +2382,9 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TH1* inputProf, TList* o
 
   } // end-for {binMult}
 
-  Info("Successfull!","PrepareSlicesNew");
+  Info("Successfull!","MakeProfileSlices");
+  return kTRUE;
+}
   return kTRUE;
 }
 //_____________________________________________________________________________
