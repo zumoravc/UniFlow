@@ -717,7 +717,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
 
         histVn->SetBinContent(bin, dNewCont);
-        profVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
+        histVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
       }
 
       ffOutputFile->cd();
@@ -751,7 +751,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
           Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
 
           histVn->SetBinContent(bin, dNewCont);
-          profVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
+          histVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
         }
 
         // Here ready for fitting
