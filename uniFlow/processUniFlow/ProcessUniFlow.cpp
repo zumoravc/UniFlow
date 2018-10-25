@@ -614,14 +614,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 
     if(!PrepareSlicesNew(task)) { Error("Preparing slices failed!","ProcessTask"); return kFALSE; }
 
-    // TProfile3D* prof3D = (TProfile3D*) flFlowK0s->FindObject(Form("%s_Pos_sample%d", task->fMixedDiff.Data(), 0));
-    // if(!prof3D) { Error("prof3D failed!","ProcessTask"); return kFALSE; }
-    // if(!MakeProfileSlices(task,prof3D,listSlicesProfiles)) { return kFALSE; }
-    //
-    // THnSparseD* histSparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
-    // if(!histSparse) { Error("histSparse failed!","ProcessTask"); return kFALSE; }
-    // if(!MakeSparseSlices(task,histSparse,listSlicesHistos)) { return kFALSE; }
-
+    // TODO: to be dumped per-task into special output file
     ffOutputFile->cd();
     listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
     listSlicesHistos->Write("MakeHistosSlices",TObject::kSingleKey);
