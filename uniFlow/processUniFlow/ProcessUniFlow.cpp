@@ -604,33 +604,21 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   // task checks & initialization
   if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
 
-  // TODO <<<
-  if(task->fSpecies == FlowTask::kK0s && task->fProcessMixed)
+  if(task->fProcessMixed)
   {
-    Warning("Testing MakeProfileSlices() on K0s!","ProcessTask");
-
     TList* listSlicesProfiles = task->fListProfiles;
     TList* listSlicesHistos = task->fListHistos;
 
     if(!PrepareSlicesNew(task)) { Error("Preparing slices failed!","ProcessTask"); return kFALSE; }
 
-    // TProfile3D* prof3D = (TProfile3D*) flFlowK0s->FindObject(Form("%s_Pos_sample%d", task->fMixedDiff.Data(), 0));
-    // if(!prof3D) { Error("prof3D failed!","ProcessTask"); return kFALSE; }
-    // if(!MakeProfileSlices(task,prof3D,listSlicesProfiles)) { return kFALSE; }
-    //
-    // THnSparseD* histSparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
-    // if(!histSparse) { Error("histSparse failed!","ProcessTask"); return kFALSE; }
-    // if(!MakeSparseSlices(task,histSparse,listSlicesHistos)) { return kFALSE; }
-
     ffOutputFile->cd();
     listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
     listSlicesHistos->Write("MakeHistosSlices",TObject::kSingleKey);
 
+    if(!ProcessMixed(task)) { Error("ProcessMixed failed!","ProcessTask"); return kFALSE; }
+
     return kTRUE;
   }
-  // TODO >>>
-
-  if(task->fProcessMixed) { return ProcessMixed(task); }
 
 
   switch (task->fSpecies)
