@@ -2400,7 +2400,16 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
 
   // preparing inv. mass slices (NB: merging pos/neg done in MakeSparseSlices() )
   if(bReco) {
-    THnSparseD* sparse = (THnSparseD*) inputList->FindObject("fhsV0sCandK0s");
+
+    TString sNameCand;
+    switch (species) {
+      case FlowTask::kK0s : sNameCand = "fhsV0sCandK0s"; break;
+      case FlowTask::kLambda : sNameCand = "fhsV0sCandLambda"; break;
+      case FlowTask::kPhi : sNameCand = "fhsPhiCandSig"; break;
+      default: break;
+    }
+
+    THnSparseD* sparse = (THnSparseD*) inputList->FindObject(sNameCand.Data());
     if(!MakeSparseSlices(task,sparse,task->fListHistos)) { Error("Histo Slices failed!","PrepareSlicesNew"); return kFALSE; };
 
     if(species == FlowTask::kPhi) {
