@@ -2349,10 +2349,10 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
   Bool_t bReco = kFALSE;
   if(species == FlowTask::kK0s || species == FlowTask::kLambda || species == FlowTask::kPhi) { bReco = kTRUE; }
 
-  if(species != FlowTask::kK0s) { Error("So far implemeted only for K0s","PrepareSlicesNew"); return kFALSE; }
+  if(species != FlowTask::kK0s && species != FlowTask::kCharged) { Error("So far implemeted only for K0s or Charged","PrepareSlicesNew"); return kFALSE; }
 
   if(bReco) {
-    // preparing inv. mass slices
+    // reco : preparing inv. mass slices
     THnSparseD* sparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
     if(!MakeSparseSlices(task,sparse,task->fListHistos)) { Error("Histo Slices failed!","PrepareSlicesNew"); return kFALSE; };
 
