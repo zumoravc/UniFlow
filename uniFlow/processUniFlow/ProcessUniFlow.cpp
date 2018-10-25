@@ -729,9 +729,19 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
       Double_t dRefErr = profRef->GetBinError(iMultBin+1);
 
       for(Int_t iPtBin(0); iPtBin < task->fNumPtBins; ++iPtBin) {
+
+        TH1D* hInvMass = (TH1D*) task->fListHistos->FindObject(Form("hInvMass_mult%d_pt%d",iMultBin,iPtBin));
+        if(!hInvMass) { Error("Loading inv. mass slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
+
+        TH1D* hInvMassBg = 0x0;
+        if(species == FlowTask::kPhi) {
+          hInvMassBg = (TH1D*) task->fListHistos->FindObject(Form("hInvMassBg_mult%d_pt%d",iMultBin,iPtBin));
+          if(!hInvMassBg) { Error("Loading inv. mass (Bg) slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
+        }
+
         TString sName = Form("%s_Pos_sample0_mult%d_pt%d",task->fMixedDiff.Data(),iMultBin,iPtBin);
         TProfile* profVn = (TProfile*) task->fListProfiles->FindObject(sName.Data());
-        if(!profVn) { Error("Loading slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
+        if(!profVn) { Error("Loading correlation slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
 
         // Making vn out of cn,dn
         TH1D* histVn = (TH1D*) profVn->ProjectionX();
@@ -757,12 +767,25 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         // Here ready for fitting
         // TODO - to be fitted
 
+        TList* listFits = new TList();
+        TCanvas* canFitInvMass = new TCanvas("canFitInvMass","canFitInvMass",1600,1200); // canvas for fitting results
+
+        Double_t dFlow = 0.0;
+        Double_t dFlowError = 0.0;
+
+        Bool_t bExtracted = ExtractFlowOneGo(task,hInvMass,hInvMassBg,histVn,dFlow,dFlowError,canFitInvMass,listFits);
+        if(!bExtracted) { Warning("Flow fitting unsuccesfull","ProcessMixed"); return kFALSE; }
+
+
+
         ffOutputFile->cd();
         histVn->Write();
+        break;
 
       } // end-for {iPtBin}
     } // end-else {!bReco}
 
+    break; 
   } // end-for {iMultBin}
 
   return kTRUE;
