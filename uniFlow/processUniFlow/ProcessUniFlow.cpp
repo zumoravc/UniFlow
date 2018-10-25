@@ -2349,22 +2349,48 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
   Bool_t bReco = kFALSE;
   if(species == FlowTask::kK0s || species == FlowTask::kLambda || species == FlowTask::kPhi) { bReco = kTRUE; }
 
-  if(species != FlowTask::kK0s && species != FlowTask::kCharged) { Error("So far implemeted only for K0s or Charged","PrepareSlicesNew"); return kFALSE; }
+  TList* inputList = 0x0;
+  switch (species) {
+    case FlowTask::kCharged : inputList = flFlowCharged; break;
+    case FlowTask::kPion : inputList = flFlowPion; break;
+    case FlowTask::kKaon : inputList = flFlowKaon; break;
+    case FlowTask::kProton : inputList = flFlowProton; break;
+    case FlowTask::kK0s : inputList = flFlowK0s; break;
+    case FlowTask::kLambda : inputList = flFlowLambda; break;
+    case FlowTask::kPhi : inputList = flFlowPhi; break;
+    default: Error("Invalid species!","PrepareSlicesNew"); return kFALSE;
+  }
 
+  // preparing flow slices
+  TH1* prof = 0x0;
+  if(task->fMergePosNeg)
+  {
+    TH1* profPos = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",task->fMixedDiff.Data()));
+    if(!profPos) { Error("Positive profile 'profNeg' not found!","PrepareSlicesNew"); return kFALSE; }
+    TH1* profNeg = (TH1*) inputList->FindObject(Form("%s_Neg_sample0",task->fMixedDiff.Data()));
+    if(!profNeg) { Error("Negative profile 'profNeg' not found!","PrepareSlicesNew"); return kFALSE; }
+
+    TList* listMerge = new TList();
+    listMerge->Add(profPos);
+    listMerge->Add(profNeg);
+    prof = (TH1*) MergeListProfiles(listMerge);
+    delete listMerge;
+  } else {
+    prof = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",task->fMixedDiff.Data()));
+  }
+
+  if(!prof) { Error("Profile 'prof' not found!\n"); return kFALSE; }
+  if(!MakeProfileSlices(task,prof,task->fListProfiles)) { Error("Profile Slices failed!","PrepareSlicesNew"); return kFALSE; };
+
+  // preparing inv. mass slices (NB: merging pos/neg done in MakeSparseSlices() )
   if(bReco) {
-    // reco : preparing inv. mass slices
-    THnSparseD* sparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
+    THnSparseD* sparse = (THnSparseD*) inputList->FindObject("fhsV0sCandK0s");
     if(!MakeSparseSlices(task,sparse,task->fListHistos)) { Error("Histo Slices failed!","PrepareSlicesNew"); return kFALSE; };
 
     if(species == FlowTask::kPhi) {
-      THnSparseD* sparseBg = (THnSparseD*) flFlowPhi->FindObject("fhsPhiCandBg");
+      THnSparseD* sparseBg = (THnSparseD*) inputList->FindObject("fhsPhiCandBg");
       if(!MakeSparseSlices(task,sparseBg,task->fListHistos,"hInvMassBg")) { Error("Histo Slices for Phi BG failed!","PrepareSlicesNew"); return kFALSE; };
     }
-
-    // preparing flow-mass slices
-    TString sName = Form("%s_Pos_sample0",task->fMixedDiff.Data());
-    TProfile3D* prof = (TProfile3D*) flFlowK0s->FindObject(sName.Data());
-    if(!MakeProfileSlices(task,prof,task->fListProfiles)) { Error("Profile Slices failed!","PrepareSlicesNew"); return kFALSE; };
   }
 
   return kTRUE;
