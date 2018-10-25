@@ -2516,7 +2516,11 @@ Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* 
         const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
 
         TProfile* prof1D = prof2D->ProfileX("",iBinPtLow,iBinPtHigh);
-        if(!prof1D) { Error("Profile failed!","MakeProfileSlices"); return kFALSE; }
+        if(!prof1D) { Error("Profile 'prof1D' failed!","MakeProfileSlices"); return kFALSE; }
+
+        if(task->fRebinFlowMass > 1) {
+          prof1D->Rebin(task->fRebinFlowMass);
+        }
 
         prof1D->SetName(Form("%s_mult%d_pt%d",inputProf->GetName(),iBinMult,iBinPt));
         prof1D->GetXaxis()->SetTitle(inputProf->GetZaxis()->GetTitle());
@@ -2535,7 +2539,7 @@ Bool_t ProcessUniFlow::MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, 
   if(!task) { Error("FlowTask does not exists!","MakeSparseSlices"); return kFALSE; }
   if(!inputSparse) { Error("Input THnSparse does not exists!","MakeSparseSlices"); return kFALSE; }
   if(!outList) { Error("Output TList does not exists!","MakeSparseSlices"); return kFALSE; }
-  if(outList->GetEntries() > 0) { Error("Output TList is not empty!","MakeSparseSlices"); return kFALSE; }
+  // if(outList->GetEntries() > 0) { Error("Output TList is not empty!","MakeSparseSlices"); return kFALSE; }
 
   FlowTask::PartSpecies species = task->fSpecies;
   if(species != FlowTask::kK0s && species != FlowTask::kLambda && species != FlowTask::kPhi) {
@@ -2618,6 +2622,11 @@ Bool_t ProcessUniFlow::MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, 
 
       TH1D* histInvMass = (TH1D*) histEntries->ProjectionZ(Form("%s_mult%d_pt%d",outName,iBinMult,iBinPt),iBinMultLow,iBinMultHigh,iBinPtLow,iBinPtHigh,"e");
       if(!histInvMass) { Error("Projection 'histInvMass' failed!","MakeSparseSlices"); return kFALSE; }
+
+      if(task->fRebinInvMass > 1) {
+        histInvMass->Rebin(task->fRebinInvMass);
+      }
+
       outList->Add(histInvMass);
     } // end-for {binPt}
   } // end-for {binMult}
