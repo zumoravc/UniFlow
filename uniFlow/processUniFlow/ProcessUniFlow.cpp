@@ -614,7 +614,14 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 
     if(!PrepareSlicesNew(task)) { Error("Preparing slices failed!","ProcessTask"); return kFALSE; }
 
-    // TODO: to be dumped per-task into special output file
+    // TProfile3D* prof3D = (TProfile3D*) flFlowK0s->FindObject(Form("%s_Pos_sample%d", task->fMixedDiff.Data(), 0));
+    // if(!prof3D) { Error("prof3D failed!","ProcessTask"); return kFALSE; }
+    // if(!MakeProfileSlices(task,prof3D,listSlicesProfiles)) { return kFALSE; }
+    //
+    // THnSparseD* histSparse = (THnSparseD*) flFlowK0s->FindObject("fhsV0sCandK0s");
+    // if(!histSparse) { Error("histSparse failed!","ProcessTask"); return kFALSE; }
+    // if(!MakeSparseSlices(task,histSparse,listSlicesHistos)) { return kFALSE; }
+
     ffOutputFile->cd();
     listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
     listSlicesHistos->Write("MakeHistosSlices",TObject::kSingleKey);
@@ -692,15 +699,14 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
   TString sNamePOIs = Form("%s_Pos_sample%d", task->fMixedDiff.Data(), iSample);
   TString sNamePOIsNeg = Form("%s_Neg_sample%d", task->fMixedDiff.Data(), iSample);
 
-  // TString sNameRefs = "fpRefs_Cor4p2p2m2m2_gap00_sample0";
-  // TString sNamePOIs = "fp2Charged_Cor3p4m2m2_gap00_Pos_sample0";
-  // TString sNamePOIsNeg = "fp2Charged_Cor3p4m2m2_gap00_Neg_sample0";
+  // >>>>>
 
-  // >>>>>>>>>>
-
+  // ### Preparing Refs ###
   TProfile* profRef = (TProfile*) flFlowRefs->FindObject(sNameRefs.Data());
   if(!profRef) { Error(Form("Refs profile '%s' not found!",sNameRefs.Data()),"ProcessMixed"); flFlowRefs->ls(); return kFALSE; }
+  profRef = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins);
 
+   // >>>> NB Slicing of Direct POIs -> to be implemented in prepare-slices
   TProfile2D* profPOIs = (TProfile2D*) listPOIs->FindObject(sNamePOIs.Data());
   if(!profPOIs) { Error(Form("POIs (pos) profile '%s' not found!",sNamePOIs.Data()),"ProcessMixed"); listPOIs->ls(); return kFALSE; }
 
@@ -720,9 +726,6 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
     profPOIs = profPOIsMerged;
   }
 
-  // rebinning refs in multiplicity
-  profRef = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins);
-
   // rebinning according to mult bin
   for(Int_t iMultBin(0); iMultBin < fiNumMultBins; ++iMultBin)
   {
@@ -735,6 +738,10 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
     TProfile* profVn = 0x0;
     if(task->fNumPtBins > 0) { profVn = (TProfile*) profPOIsSlice->Rebin(task->fNumPtBins,Form("%s_rebin", profPOIsSlice->GetName()), task->fPtBinsEdges); }
     else { profVn = (TProfile*) profPOIsSlice->Clone(Form("%s_rebin", profPOIsSlice->GetName())); }
+
+    // <<<< NB: rebinning / slicing done here
+
+    // ### Making vn out of cn,dn
 
     TH1D* histVn = (TH1D*) profVn->ProjectionX();
 
@@ -2370,14 +2377,12 @@ Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* 
   if(!task) { Error("FlowTask does not exists!","MakeProfileSlices"); return kFALSE; }
   if(!inputProf) { Error("Input profile does not exists!","MakeProfileSlices"); return kFALSE; }
   if(!outList) { Error("Output TList does not exists!","MakeProfileSlices"); return kFALSE; }
-  if(outList->GetEntries() > 0) { Error("Output TList is not empty!","MakeProfileSlices"); return kFALSE; }
 
   FlowTask::PartSpecies spec = task->fSpecies;
+  if(spec == FlowTask::kRefs) { Error("Species is 'kRefs': no slicing required!","MakeProfileSlices"); return kFALSE; }
+
   Bool_t bReco = kFALSE;
   if(spec == FlowTask::kK0s || spec == FlowTask::kLambda || spec == FlowTask::kPhi) { bReco = kTRUE; }
-
-  // lets assume it is done for reconstructed (3D)
-  if(!bReco) { Error("So far implemented for Reco only","MakeProfileSlices"); return kFALSE; }
 
   Int_t iNumBinsMult = fiNumMultBins;
   Int_t iNumBinsPt = task->fNumPtBins;
@@ -2392,26 +2397,42 @@ Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* 
     const Int_t iBinMultLow = axisMult->FindFixBin(fdMultBins[iBinMult]);
     const Int_t iBinMultHigh = axisMult->FindFixBin(fdMultBins[iBinMult+1]) - 1;
 
-    axisMult->SetRange(iBinMultLow,iBinMultHigh);
-    TProfile3D* prof3D = (TProfile3D*) inputProf;
-    TProfile2D* prof2D = Project3DProfile(prof3D);
-    if(!prof2D) { Error("Mult projection failed!","MakeProfileSlices"); return kFALSE; }
-    trashCol.Add(prof2D); // NB: to ensure that it will be deleted
+    if(!bReco) {
+      // direct species
+      TProfile* prof1D_preRebin = ((TProfile2D*)inputProf)->ProfileY("",iBinMultLow,iBinMultHigh);
+      if(!prof1D_preRebin) { Error("Profile 'prof1D_preRebin' failed!","MakeProfileSlices"); return kFALSE; }
+      trashCol.Add(prof1D_preRebin); // to ensure to be deleted
 
-    for(Int_t iBinPt(0); iBinPt < iNumBinsPt; ++iBinPt) {
-      const Double_t dEdgePtLow = task->fPtBinsEdges[iBinPt];
-      const Double_t dEdgePtHigh = task->fPtBinsEdges[iBinPt+1];
+      TProfile* prof1D = 0x0;
+      if(iNumBinsPt > 0) { prof1D = (TProfile*) prof1D_preRebin->Rebin(iNumBinsPt,Form("%s_rebin", inputProf->GetName()), task->fPtBinsEdges); }
+      else { prof1D = (TProfile*) prof1D_preRebin->Clone(); }
+      if(!prof1D) { Error("Profile 'prof1D' does not exists!","MakeProfileSlices"); return kFALSE; }
 
-      const Int_t iBinPtLow = axisPt->FindFixBin(dEdgePtLow);
-      const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
-
-      TProfile* prof1D = (TProfile*) prof2D->ProfileX("",iBinPtLow,iBinPtHigh);
-      if(!prof1D) { Error("Profile failed!","MakeProfileSlices"); return kFALSE; }
-      prof1D->GetXaxis()->SetTitle(prof2D->GetXaxis()->GetTitle());
-      prof1D->SetName(Form("%s_mult%d_pt%d",inputProf->GetName(),iBinMult,iBinPt));
+      prof1D->SetName(Form("%s_mult%d",inputProf->GetName(),iBinMult));
+      prof1D->GetXaxis()->SetTitle(inputProf->GetYaxis()->GetTitle());
       outList->Add(prof1D);
-    } // end-for {binPt}
+    } else {
+      // reconstructed species
+      axisMult->SetRange(iBinMultLow,iBinMultHigh);
+      TProfile2D* prof2D = Project3DProfile((TProfile3D*) inputProf);
+      if(!prof2D) { Error("Mult projection failed!","MakeProfileSlices"); return kFALSE; }
+      trashCol.Add(prof2D); // NB: to ensure that it will be deleted
 
+      for(Int_t iBinPt(0); iBinPt < iNumBinsPt; ++iBinPt) {
+        const Double_t dEdgePtLow = task->fPtBinsEdges[iBinPt];
+        const Double_t dEdgePtHigh = task->fPtBinsEdges[iBinPt+1];
+
+        const Int_t iBinPtLow = axisPt->FindFixBin(dEdgePtLow);
+        const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
+
+        TProfile* prof1D = prof2D->ProfileX("",iBinPtLow,iBinPtHigh);
+        if(!prof1D) { Error("Profile failed!","MakeProfileSlices"); return kFALSE; }
+
+        prof1D->SetName(Form("%s_mult%d_pt%d",inputProf->GetName(),iBinMult,iBinPt));
+        prof1D->GetXaxis()->SetTitle(inputProf->GetZaxis()->GetTitle());
+        outList->Add(prof1D);
+      } // end-for {binPt}
+    } // end-else {!bReco}
   } // end-for {binMult}
 
   Info("Successfull!","MakeProfileSlices");
