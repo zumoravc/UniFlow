@@ -109,6 +109,9 @@ class FlowTask
     Double_t    fFitParDefaults[fNumParsMax]; // default values for all parameters in all formulas (i.e. master flow-mass formula)
     Double_t    fFitParLimLow[fNumParsMax]; // low limit values for all parameters in all formulas (i.e. master flow-mass formula)
     Double_t    fFitParLimHigh[fNumParsMax]; // high limit values for all parameters in all formulas (i.e. master flow-mass formula)
+    TList*      fListProfiles; // TList with profiles slices
+    TList*      fListHistos; // TList with histos slices
+
 
     std::vector<TH1D*>* fVecHistInvMass; // container for sliced inv. mass projections
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
@@ -152,6 +155,10 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
   fNumParMassSig = 0;
   fNumParMassBG = 0;
   fNumParFlowBG = 0;
+  fListProfiles = new TList();
+  fListProfiles->SetOwner(kTRUE);
+  fListHistos = new TList();
+  fListHistos->SetOwner(kTRUE);
   fVecHistInvMass = new std::vector<TH1D*>;
   fVecHistInvMassBG = new std::vector<TH1D*>;
   fVecHistFlowMass = new std::vector<TH1D*>;
@@ -163,6 +170,8 @@ FlowTask::FlowTask(PartSpecies species, const char* name)
 //_____________________________________________________________________________
 FlowTask::~FlowTask()
 {
+  if(fListProfiles) { fListProfiles->Clear(); delete fListProfiles; }
+  if(fListHistos) { fListHistos->Clear(); delete fListHistos; }
   if(fVecHistFlowMass) delete fVecHistFlowMass;
   if(fVecHistFlowMassFour) delete fVecHistFlowMassFour;
   if(fVecHistInvMass) delete fVecHistInvMass;
@@ -308,6 +317,9 @@ class ProcessUniFlow
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
+    Bool_t      PrepareSlicesNew(FlowTask* task); // wrapper for making/preparing per-task slices
+    Bool_t      MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList); // prepare slices out of inputHist
+    Bool_t      MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, TList* outList, const char* outName = "hInvMass"); // prepare slices out of 'inputSparse'
 
     TH1D*       CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task); // calculate cn{2} out of correlation
     TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
@@ -592,7 +604,21 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   // task checks & initialization
   if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
 
-  if(task->fProcessMixed) { return ProcessMixed(task); }
+  if(task->fProcessMixed)
+  {
+    TList* listSlicesProfiles = task->fListProfiles;
+    TList* listSlicesHistos = task->fListHistos;
+
+    if(!PrepareSlicesNew(task)) { Error("Preparing slices failed!","ProcessTask"); return kFALSE; }
+
+    ffOutputFile->cd();
+    listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
+    listSlicesHistos->Write("MakeHistosSlices",TObject::kSingleKey);
+
+    if(!ProcessMixed(task)) { Error("ProcessMixed failed!","ProcessTask"); return kFALSE; }
+
+    return kTRUE;
+  }
 
 
   switch (task->fSpecies)
@@ -623,116 +649,183 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 {
-  Info("Processing mixed","ProcessMixed");
   if(!task) { Error("Task not valid!","ProcessMixed"); return kFALSE; }
+  Debug("Processing mixed","ProcessMixed");
 
-  Warning("Currently fully hardcoded for validation purposes","ProcessMixed");
-  if(task->fSpecies != FlowTask::kCharged) { Error("For Charged only now","ProcessMixed"); return kFALSE; }
+  FlowTask::PartSpecies species = task->fSpecies;
+  Bool_t bReco = kFALSE;
+  if(species == FlowTask::kK0s || species == FlowTask::kLambda || species == FlowTask::kPhi) { bReco = kTRUE; }
+  // if(bReco) { Error("Currently fully hardcoded for validation purposes for Direct only","ProcessMixed"); return kFALSE; }
 
   TList* listPOIs = 0x0;
-  switch (task->fSpecies)
+  switch (species)
   {
-    case FlowTask::kCharged:
-      listPOIs = flFlowCharged;
-    break;
-
-    case FlowTask::kPion:
-      listPOIs = flFlowPion;
-    break;
-
-    case FlowTask::kKaon:
-      listPOIs = flFlowKaon;
-    break;
-
-    case FlowTask::kProton:
-      listPOIs = flFlowProton;
-    break;
-
-    default:
-      Error("Task species not direct!","ProcessMixed");
-      return kFALSE;
+    case FlowTask::kCharged: listPOIs = flFlowCharged; break;
+    case FlowTask::kPion: listPOIs = flFlowPion; break;
+    case FlowTask::kKaon: listPOIs = flFlowKaon; break;
+    case FlowTask::kProton: listPOIs = flFlowProton; break;
+    case FlowTask::kK0s: listPOIs = flFlowK0s; break;
+    case FlowTask::kLambda: listPOIs = flFlowLambda; break;
+    case FlowTask::kPhi: listPOIs = flFlowPhi; break;
+    default: Error("Invalid species!","ProcessMixed"); return kFALSE;
   }
 
-  // <<<< TODO: hardcoded now
-
   Int_t iSample = 0;
-
   TString sNameRefs = Form("%s_Pos_sample%d", task->fMixedRefs.Data(),iSample);
   TString sNamePOIs = Form("%s_Pos_sample%d", task->fMixedDiff.Data(), iSample);
   TString sNamePOIsNeg = Form("%s_Neg_sample%d", task->fMixedDiff.Data(), iSample);
 
-  // TString sNameRefs = "fpRefs_Cor4p2p2m2m2_gap00_sample0";
-  // TString sNamePOIs = "fp2Charged_Cor3p4m2m2_gap00_Pos_sample0";
-  // TString sNamePOIsNeg = "fp2Charged_Cor3p4m2m2_gap00_Neg_sample0";
+  TList trashCol;
+  trashCol.SetOwner(kTRUE);
 
-  // >>>>>>>>>>
+  // ### Preparing Refs ###
+  TProfile* profRef_preRebin = (TProfile*) flFlowRefs->FindObject(sNameRefs.Data());
+  if(!profRef_preRebin) { Error(Form("Refs profile '%s' pre-rebin not found!",sNameRefs.Data()),"ProcessMixed"); flFlowRefs->ls(); return kFALSE; }
+  TProfile* profRef = (TProfile*) profRef_preRebin->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins);
+  if(!profRef) { Error("Refs profile rebinning failed!","ProcessMixed"); return kFALSE; }
+  trashCol.Add(profRef);
 
-  TProfile* profRef = (TProfile*) flFlowRefs->FindObject(sNameRefs.Data());
-  if(!profRef) { Error(Form("Refs profile '%s' not found!",sNameRefs.Data()),"ProcessMixed"); flFlowRefs->ls(); return kFALSE; }
+  // ### Preparing POIs ###
+  for(Int_t iMultBin(0); iMultBin < fiNumMultBins; ++iMultBin) {
 
-  TProfile2D* profPOIs = (TProfile2D*) listPOIs->FindObject(sNamePOIs.Data());
-  if(!profPOIs) { Error(Form("POIs (pos) profile '%s' not found!",sNamePOIs.Data()),"ProcessMixed"); listPOIs->ls(); return kFALSE; }
+    TH1D* histFlow = 0x0; // histo with final results
+    TString sHistFlowName = Form("%s_%s_mult%d",task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin);
 
-  if(task->fMergePosNeg)
-  {
-    TProfile2D* profPOIsNeg = (TProfile2D*) listPOIs->FindObject(sNamePOIsNeg.Data());
-    if(!profPOIsNeg) { Error(Form("POIs (neg) profile '%s' not found!",sNamePOIsNeg.Data()),"ProcessMixed"); listPOIs->ls(); return kFALSE; }
+    // direct species
+    if(!bReco) {
+      TString sName = Form("%s_Pos_sample0_mult%d",task->fMixedDiff.Data(),iMultBin);
+      TProfile* profVn = (TProfile*) task->fListProfiles->FindObject(sName.Data());
+      if(!profVn) { Error("Loading slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
 
-    // merging pos & neg
-    TList* listMerge = new TList();
-    listMerge->Add(profPOIs);
-    listMerge->Add(profPOIsNeg);
-    TProfile2D* profPOIsMerged = (TProfile2D*) MergeListProfiles(listMerge);
-    delete listMerge; // first delete, then check (return)
-    if(!profPOIsMerged) { Error(" Pos & Neg profile merging failed!","ProcessMixed"); return kFALSE; }
+      // Making vn out of cn,dn
+      TH1D* histVn = (TH1D*) profVn->ProjectionX();
+      trashCol.Add(histVn);
 
-    profPOIs = profPOIsMerged;
-  }
+      // dividing POIS / sqrt(refs)
+      Double_t dRefCont = profRef->GetBinContent(iMultBin+1);
+      Double_t dRefErr = profRef->GetBinError(iMultBin+1);
 
-  // rebinning refs in multiplicity
-  profRef = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins);
+      for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin) {
+        if(dRefCont < 0.0) {
+          histVn->SetBinContent(bin, 9999.9);
+          histVn->SetBinError(bin, 9999.9);
+          continue;
+        }
 
-  // rebinning according to mult bin
-  for(Int_t iMultBin(0); iMultBin < fiNumMultBins; ++iMultBin)
-  {
-    Int_t binMultLow = profPOIs->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
-    Int_t binMultHigh = profPOIs->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
+        Double_t dOldCont = histVn->GetBinContent(bin);
+        Double_t dOldErr = histVn->GetBinError(bin);
 
-    TProfile* profPOIsSlice = (TProfile*) profPOIs->ProfileY(Form("%s_%s_mult%d",task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin),binMultLow,binMultHigh);
+        Double_t dNewCont = dOldCont / TMath::Sqrt(dRefCont);
+        Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
 
-    // rebinning according to pt bins
-    TProfile* profVn = 0x0;
-    if(task->fNumPtBins > 0) { profVn = (TProfile*) profPOIsSlice->Rebin(task->fNumPtBins,Form("%s_rebin", profPOIsSlice->GetName()), task->fPtBinsEdges); }
-    else { profVn = (TProfile*) profPOIsSlice->Clone(Form("%s_rebin", profPOIsSlice->GetName())); }
-
-    TH1D* histVn = (TH1D*) profVn->ProjectionX();
-
-    // dividing POIS / sqrt(refs)
-    Double_t dRefCont = profRef->GetBinContent(iMultBin+1);
-    Double_t dRefErr = profRef->GetBinError(iMultBin+1);
-
-    for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin)
-    {
-      if(dRefCont < 0.0)
-      {
-        histVn->SetBinContent(bin, 9999.9);
-        histVn->SetBinError(bin, 9999.9);
-        continue;
+        histVn->SetBinContent(bin, dNewCont);
+        histVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
       }
 
-      Double_t dOldCont = histVn->GetBinContent(bin);
-      Double_t dOldErr = histVn->GetBinError(bin);
+      histFlow = histVn;
+    } else { // end-if {!bReco}
+      // recnstructed
+      gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
 
-      Double_t dNewCont = dOldCont / TMath::Sqrt(dRefCont);
-      Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
+      histFlow = new TH1D(sHistFlowName.Data(),Form("%s: %s; #it{p}_{T} (GeV/#it{c});",task->GetSpeciesLabel().Data(),sHistFlowName.Data()), task->fNumPtBins,task->fPtBinsEdges);
+      if(!histFlow) { Error("Creation of 'histFlow' failed!","ProcessMixed"); return kFALSE; }
+      trashCol.Add(histFlow);
 
-      histVn->SetBinContent(bin, dNewCont);
-      profVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
-    }
+      // dividing POIS / sqrt(refs)
+      Double_t dRefCont = profRef->GetBinContent(iMultBin+1);
+      Double_t dRefErr = profRef->GetBinError(iMultBin+1);
+
+      for(Int_t iPtBin(0); iPtBin < task->fNumPtBins; ++iPtBin) {
+
+        TH1D* hInvMass = (TH1D*) task->fListHistos->FindObject(Form("hInvMass_mult%d_pt%d",iMultBin,iPtBin));
+        if(!hInvMass) { Error("Loading inv. mass slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
+
+        TH1D* hInvMassBg = 0x0;
+        if(species == FlowTask::kPhi) {
+          hInvMassBg = (TH1D*) task->fListHistos->FindObject(Form("hInvMassBg_mult%d_pt%d",iMultBin,iPtBin));
+          if(!hInvMassBg) { Error("Loading inv. mass (Bg) slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
+        }
+
+        TString sName = Form("%s_Pos_sample0_mult%d_pt%d",task->fMixedDiff.Data(),iMultBin,iPtBin);
+        TProfile* profVn = (TProfile*) task->fListProfiles->FindObject(sName.Data());
+        if(!profVn) { Error("Loading correlation slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
+
+        // Making vn out of cn,dn
+        TH1D* histVn = (TH1D*) profVn->ProjectionX();
+        trashCol.Add(histVn);
+
+        for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin) {
+          if(dRefCont < 0.0) {
+            histVn->SetBinContent(bin, 9999.9);
+            histVn->SetBinError(bin, 9999.9);
+            continue;
+          }
+
+          Double_t dOldCont = histVn->GetBinContent(bin);
+          Double_t dOldErr = histVn->GetBinError(bin);
+
+          Double_t dNewCont = dOldCont / TMath::Sqrt(dRefCont);
+          Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
+
+          histVn->SetBinContent(bin, dNewCont);
+          histVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
+        }
+
+        // Here ready for fitting
+
+        TCanvas* canFitInvMass = new TCanvas("canFitInvMass","canFitInvMass",1600,1200); // canvas for fitting results
+
+        TList* listFits = new TList();
+        // listFits->SetOwner(kTRUE); // NB: when on, seg fault happen
+
+        Double_t dFlow = 0.0;
+        Double_t dFlowError = 0.0;
+
+        Bool_t bExtracted = ExtractFlowOneGo(task,hInvMass,hInvMassBg,histVn,dFlow,dFlowError,canFitInvMass,listFits);
+        if(!bExtracted) {
+          Warning("Flow fitting unsuccesfull","ProcessMixed");
+          delete canFitInvMass;
+          delete listFits;
+          return kFALSE;
+        }
+
+        histFlow->SetBinContent(iPtBin+1,dFlow);
+        histFlow->SetBinError(iPtBin+1,dFlowError);
+
+        ffFitsFile->cd();
+        listFits->Write(Form("fits_%s_cent%d_pt%d",task->GetSpeciesName().Data(),iMultBin,iPtBin),TObject::kSingleKey);
+
+        // === Plotting fits ===
+        TLatex latex2;
+        // latex2.SetTextFont(43);
+        // latex2.SetTextSize(40);
+        latex2.SetNDC();
+
+        canFitInvMass->cd(1);
+        // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
+        latex2.DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[iPtBin],task->fPtBinsEdges[iPtBin+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+        canFitInvMass->cd(2);
+        latex2.DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[iPtBin],task->fPtBinsEdges[iPtBin+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+        canFitInvMass->SaveAs(Form("%s/fits/%s_%s_mult%d_pt%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin,iPtBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+
+        delete canFitInvMass;
+        delete listFits;
+      } // end-for {iPtBin}
+    } // end-else {!bReco}
+
+    histFlow->SetName(sHistFlowName.Data());
+    histFlow->SetTitle(sHistFlowName.Data());
 
     ffOutputFile->cd();
-    histVn->Write();
-  }
+    histFlow->Write();
+
+    TCanvas* cFlow = new TCanvas("cFlow","cFlow");
+    cFlow->cd();
+    histFlow->SetStats(0);
+    histFlow->DrawCopy();
+    cFlow->SaveAs(Form("%s/Flow_%s_%s_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+    delete cFlow;
+  } // end-for {iMultBin}
 
   return kTRUE;
 }
@@ -1935,7 +2028,7 @@ TH1* ProcessUniFlow::MergeListProfiles(TList* list)
   if(!list || list->IsEmpty()) { Error("List not valid or empty","MergeListProfiles"); return 0x0; }
 
   TH1* merged = (TH1*) list->At(0)->Clone();
-  merged->SetName(Form("%s_merged",merged->GetName()));
+  // merged->SetName(Form("%s_merged",merged->GetName()));
 
   if(list->GetEntries() < 2) // only 1 entry
   {
@@ -2302,6 +2395,246 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
+{
+  // wrapper for making/preparing per-task slices
+  if(!task) { Error("FlowTask does not exists!","PrepareSlicesNew"); return kFALSE; }
+
+  FlowTask::PartSpecies species = task->fSpecies;
+  Bool_t bReco = kFALSE;
+  if(species == FlowTask::kK0s || species == FlowTask::kLambda || species == FlowTask::kPhi) { bReco = kTRUE; }
+
+  TList* inputList = 0x0;
+  switch (species) {
+    case FlowTask::kCharged : inputList = flFlowCharged; break;
+    case FlowTask::kPion : inputList = flFlowPion; break;
+    case FlowTask::kKaon : inputList = flFlowKaon; break;
+    case FlowTask::kProton : inputList = flFlowProton; break;
+    case FlowTask::kK0s : inputList = flFlowK0s; break;
+    case FlowTask::kLambda : inputList = flFlowLambda; break;
+    case FlowTask::kPhi : inputList = flFlowPhi; break;
+    default: Error("Invalid species!","PrepareSlicesNew"); return kFALSE;
+  }
+
+  // preparing flow slices
+  TH1* prof = 0x0;
+  if(task->fMergePosNeg)
+  {
+    TH1* profPos = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",task->fMixedDiff.Data()));
+    if(!profPos) { Error("Positive profile 'profNeg' not found!","PrepareSlicesNew"); return kFALSE; }
+    TH1* profNeg = (TH1*) inputList->FindObject(Form("%s_Neg_sample0",task->fMixedDiff.Data()));
+    if(!profNeg) { Error("Negative profile 'profNeg' not found!","PrepareSlicesNew"); return kFALSE; }
+
+    TList* listMerge = new TList();
+    listMerge->Add(profPos);
+    listMerge->Add(profNeg);
+    prof = (TH1*) MergeListProfiles(listMerge);
+    delete listMerge;
+  } else {
+    prof = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",task->fMixedDiff.Data()));
+  }
+
+  if(!prof) { Error("Profile 'prof' not found!\n"); return kFALSE; }
+  if(!MakeProfileSlices(task,prof,task->fListProfiles)) { Error("Profile Slices failed!","PrepareSlicesNew"); return kFALSE; };
+
+  // preparing inv. mass slices (NB: merging pos/neg done in MakeSparseSlices() )
+  if(bReco) {
+
+    TString sNameCand;
+    switch (species) {
+      case FlowTask::kK0s : sNameCand = "fhsV0sCandK0s"; break;
+      case FlowTask::kLambda : sNameCand = "fhsV0sCandLambda"; break;
+      case FlowTask::kPhi : sNameCand = "fhsPhiCandSig"; break;
+      default: break;
+    }
+
+    THnSparseD* sparse = (THnSparseD*) inputList->FindObject(sNameCand.Data());
+    if(!MakeSparseSlices(task,sparse,task->fListHistos)) { Error("Histo Slices failed!","PrepareSlicesNew"); return kFALSE; };
+
+    if(species == FlowTask::kPhi) {
+      THnSparseD* sparseBg = (THnSparseD*) inputList->FindObject("fhsPhiCandBg");
+      if(!MakeSparseSlices(task,sparseBg,task->fListHistos,"hInvMassBg")) { Error("Histo Slices for Phi BG failed!","PrepareSlicesNew"); return kFALSE; };
+    }
+  }
+
+  return kTRUE;
+}
+
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList)
+{
+  // prepare slices out of inputHist
+  if(!task) { Error("FlowTask does not exists!","MakeProfileSlices"); return kFALSE; }
+  if(!inputProf) { Error("Input profile does not exists!","MakeProfileSlices"); return kFALSE; }
+  if(!outList) { Error("Output TList does not exists!","MakeProfileSlices"); return kFALSE; }
+
+  FlowTask::PartSpecies spec = task->fSpecies;
+  if(spec == FlowTask::kRefs) { Error("Species is 'kRefs': no slicing required!","MakeProfileSlices"); return kFALSE; }
+
+  Bool_t bReco = kFALSE;
+  if(spec == FlowTask::kK0s || spec == FlowTask::kLambda || spec == FlowTask::kPhi) { bReco = kTRUE; }
+
+  Int_t iNumBinsMult = fiNumMultBins;
+  Int_t iNumBinsPt = task->fNumPtBins;
+
+  TAxis* axisMult = inputProf->GetXaxis();
+  TAxis* axisPt = inputProf->GetYaxis();
+
+  TList trashCol;
+  trashCol.SetOwner(kTRUE);
+
+  for(Int_t iBinMult(0); iBinMult < iNumBinsMult; ++iBinMult) {
+    const Int_t iBinMultLow = axisMult->FindFixBin(fdMultBins[iBinMult]);
+    const Int_t iBinMultHigh = axisMult->FindFixBin(fdMultBins[iBinMult+1]) - 1;
+
+    if(!bReco) {
+      // direct species
+      TProfile* prof1D_preRebin = ((TProfile2D*)inputProf)->ProfileY("",iBinMultLow,iBinMultHigh);
+      if(!prof1D_preRebin) { Error("Profile 'prof1D_preRebin' failed!","MakeProfileSlices"); return kFALSE; }
+      trashCol.Add(prof1D_preRebin); // to ensure to be deleted
+
+      TProfile* prof1D = 0x0;
+      if(iNumBinsPt > 0) { prof1D = (TProfile*) prof1D_preRebin->Rebin(iNumBinsPt,Form("%s_rebin", inputProf->GetName()), task->fPtBinsEdges); }
+      else { prof1D = (TProfile*) prof1D_preRebin->Clone(); }
+      if(!prof1D) { Error("Profile 'prof1D' does not exists!","MakeProfileSlices"); return kFALSE; }
+
+      prof1D->SetName(Form("%s_mult%d",inputProf->GetName(),iBinMult));
+      prof1D->GetXaxis()->SetTitle(inputProf->GetYaxis()->GetTitle());
+      outList->Add(prof1D);
+    } else {
+      // reconstructed species
+      axisMult->SetRange(iBinMultLow,iBinMultHigh);
+      TProfile2D* prof2D = Project3DProfile((TProfile3D*) inputProf);
+      if(!prof2D) { Error("Mult projection failed!","MakeProfileSlices"); return kFALSE; }
+      trashCol.Add(prof2D); // NB: to ensure that it will be deleted
+
+      for(Int_t iBinPt(0); iBinPt < iNumBinsPt; ++iBinPt) {
+        const Double_t dEdgePtLow = task->fPtBinsEdges[iBinPt];
+        const Double_t dEdgePtHigh = task->fPtBinsEdges[iBinPt+1];
+
+        const Int_t iBinPtLow = axisPt->FindFixBin(dEdgePtLow);
+        const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
+
+        TProfile* prof1D = prof2D->ProfileX("",iBinPtLow,iBinPtHigh);
+        if(!prof1D) { Error("Profile 'prof1D' failed!","MakeProfileSlices"); return kFALSE; }
+
+        if(task->fRebinFlowMass > 1) {
+          prof1D->Rebin(task->fRebinFlowMass);
+        }
+
+        prof1D->SetName(Form("%s_mult%d_pt%d",inputProf->GetName(),iBinMult,iBinPt));
+        prof1D->GetXaxis()->SetTitle(inputProf->GetZaxis()->GetTitle());
+        outList->Add(prof1D);
+      } // end-for {binPt}
+    } // end-else {!bReco}
+  } // end-for {binMult}
+
+  Info("Successfull!","MakeProfileSlices");
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, TList* outList, const char* outName)
+{
+  // prepare slices out of inputHist
+  if(!task) { Error("FlowTask does not exists!","MakeSparseSlices"); return kFALSE; }
+  if(!inputSparse) { Error("Input THnSparse does not exists!","MakeSparseSlices"); return kFALSE; }
+  if(!outList) { Error("Output TList does not exists!","MakeSparseSlices"); return kFALSE; }
+  // if(outList->GetEntries() > 0) { Error("Output TList is not empty!","MakeSparseSlices"); return kFALSE; }
+
+  FlowTask::PartSpecies species = task->fSpecies;
+  if(species != FlowTask::kK0s && species != FlowTask::kLambda && species != FlowTask::kPhi) {
+    Error("Not a reconstructed species!","MakeSparseSlices");
+    return kFALSE;
+  }
+
+  TList trashCol;
+  trashCol.SetOwner(kTRUE);
+
+  Double_t dEtaGap = task->fEtaGap;
+  Bool_t bHasGap = dEtaGap < 0.0 ? kFALSE : kTRUE;
+
+  TH3D* histEntries = 0x0;
+  TH3D* histEntriesPos = 0x0;
+  TH3D* histEntriesNeg = 0x0;
+
+  if(!bHasGap) {
+    histEntries = (TH3D*) inputSparse->Projection(1,2,0);
+    trashCol.Add(histEntries);
+  } // end-if {!bHasGap}
+  else {
+    TAxis* axisEta = inputSparse->GetAxis(3);
+    if(!axisEta) { Error("TAxis 'axisEta' does not exists!","MakeSparseSlices"); return kFALSE; }
+
+    // positive POIs
+    axisEta->SetRangeUser(dEtaGap/2.0,axisEta->GetXmax());
+    TH3D* histEntriesPos = (TH3D*) inputSparse->Projection(1,2,0);
+    if(!histEntriesPos) { Error("Projection 'histEntriesPos' failed!","MakeSparseSlices"); return kFALSE; }
+    trashCol.Add(histEntriesPos);
+
+    // negative POIs
+    axisEta->SetRangeUser(axisEta->GetXmin(),-dEtaGap/2.0);
+    TH3D* histEntriesNeg = (TH3D*) inputSparse->Projection(1,2,0);
+    if(!histEntriesNeg) { Error("Projection 'histEntriesNeg' failed!","MakeSparseSlices"); return kFALSE; }
+    trashCol.Add(histEntriesNeg);
+
+    if(task->fMergePosNeg) {
+      TList* listMerge = new TList();
+      // No need to add ownership since it is collected by trashCol TList
+      listMerge->Add(histEntriesPos);
+      listMerge->Add(histEntriesNeg);
+      histEntries = (TH3D*) MergeListProfiles(listMerge);
+      delete listMerge;
+      trashCol.Add(histEntries);
+    } // end-if {fMergePosNeg}
+    else {
+      // loading single histo (positive by default)
+      if(task->fInputTag.EqualTo("")) {
+        histEntries = histEntriesPos;
+      }
+      else if (task->fInputTag.EqualTo("Neg")) {
+        histEntries = histEntriesNeg;
+      }
+      else {
+        Error(Form("Invalid InputTag '%s'!",task->fInputTag.Data()),"ProcessReconstructed");
+        return kFALSE;
+      }
+    } // end-else {fMergePosNeg}
+  } // end-else {!bHasGap}
+
+  if(!histEntries) { Error("Histo 'histEntries' failed!","MakeSparseSlices"); return kFALSE; }
+  // histEntries (TH3D*) ready for slicing in mult & pt bins (NB should be put in trashCol)
+
+  Int_t iNumBinsMult = fiNumMultBins;
+  Int_t iNumBinsPt = task->fNumPtBins;
+
+  TAxis* axisMult = histEntries->GetXaxis();
+  TAxis* axisPt = histEntries->GetYaxis();
+
+  for(Int_t iBinMult(0); iBinMult < iNumBinsMult; ++iBinMult) {
+    const Int_t iBinMultLow = axisMult->FindFixBin(fdMultBins[iBinMult]);
+    const Int_t iBinMultHigh = axisMult->FindFixBin(fdMultBins[iBinMult+1]) - 1;
+
+    for(Int_t iBinPt(0); iBinPt < iNumBinsPt; ++iBinPt) {
+      const Double_t dEdgePtLow = task->fPtBinsEdges[iBinPt];
+      const Double_t dEdgePtHigh = task->fPtBinsEdges[iBinPt+1];
+      const Int_t iBinPtLow = axisPt->FindFixBin(dEdgePtLow);
+      const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
+
+      TH1D* histInvMass = (TH1D*) histEntries->ProjectionZ(Form("%s_mult%d_pt%d",outName,iBinMult,iBinPt),iBinMultLow,iBinMultHigh,iBinPtLow,iBinPtHigh,"e");
+      if(!histInvMass) { Error("Projection 'histInvMass' failed!","MakeSparseSlices"); return kFALSE; }
+
+      if(task->fRebinInvMass > 1) {
+        histInvMass->Rebin(task->fRebinInvMass);
+      }
+
+      outList->Add(histInvMass);
+    } // end-for {binPt}
+  } // end-for {binMult}
+
+  Debug("Successfull!","MakeSparseSlices");
+  return kTRUE;
+}
+//_____________________________________________________________________________
 TH1D* ProcessUniFlow::TestRebin(TH1D* hOrig, FlowTask* task)
 {
   if(!hOrig) { Error("Original histogram not found!","TestRebin"); return 0x0; }
@@ -2453,8 +2786,10 @@ void ProcessUniFlow::TestProjections()
 //_____________________________________________________________________________
 TProfile2D* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
 {
-  if(!prof3dorig) return 0x0;
+  if(!prof3dorig) { Error("Input profile does not exists!","Project3DProfile"); return 0x0; }
+
   TProfile3D* prof3d = (TProfile3D*) prof3dorig->Clone();
+  if(!prof3d) { Error("Cloning failed!","Project3DProfile"); return 0x0; }
 
   Int_t iBinFirst = prof3d->GetXaxis()->GetFirst();
   Int_t iBinLast = prof3d->GetXaxis()->GetLast();
@@ -2467,9 +2802,13 @@ TProfile2D* ProcessUniFlow::Project3DProfile(const TProfile3D* prof3dorig)
   // TH3D* hist3d_entry = prof3d->ProjectionXYZ("hist3d_entry","B");   //NOTE do not care about range !!!
   // TH3D* hist3d_weight = prof3d->ProjectionXYZ("hist3d_weight","W");   //NOTE do not care about range !!!
 
-  TProfile2D* prof2d_test = DoProjectProfile2D(prof3d,"prof2d_test","",prof3d->GetYaxis(),prof3d->GetZaxis(),1,0,0);
-  // prof2d_test->Draw("colz");
+  TProfile2D* prof2d_test = DoProjectProfile2D(prof3d,Form("%s_px",prof3d->GetName()),prof3d->GetTitle(),prof3d->GetYaxis(),prof3d->GetZaxis(),1,0,0);
+  if(!prof2d_test) { Error("DoProjectProfile2D failed!","Project3DProfile"); delete prof3d; return 0x0; }
+  prof2d_test->GetXaxis()->SetTitle(prof3d->GetZaxis()->GetTitle());
+  prof2d_test->GetYaxis()->SetTitle(prof3d->GetYaxis()->GetTitle());
 
+  // prof2d_test->Draw("colz");
+  delete prof3d;
   return prof2d_test;
 
   // resulting profile
@@ -2839,6 +3178,9 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
   if(task->fSpecies == FlowTask::kPhi && task->fFlowFitPhiSubtLS && !hInvMassBG) { Error("Inv. Mass (BG) histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
   if(task->fFlowFitPhiSubtLS) { Error("Phi like-sign subtraction not implemented ATM. Please turn the switch off.","ExtractFlowOneGo"); return kFALSE; }
+
+
+  Warning("In testing mode for ProcessMixed()","ExtractFlowOneGo");
 
   // === Fitting parametrisation (species dependent default) ===
 
