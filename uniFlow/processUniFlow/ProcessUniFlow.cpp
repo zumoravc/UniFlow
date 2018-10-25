@@ -649,88 +649,42 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 {
-  Info("Processing mixed","ProcessMixed");
   if(!task) { Error("Task not valid!","ProcessMixed"); return kFALSE; }
+  Debug("Processing mixed","ProcessMixed");
 
-  Warning("Currently fully hardcoded for validation purposes","ProcessMixed");
-  if(task->fSpecies != FlowTask::kCharged) { Error("For Charged only now","ProcessMixed"); return kFALSE; }
+  Warning("Currently fully hardcoded for validation purposes for Direct only","ProcessMixed");
 
   TList* listPOIs = 0x0;
   switch (task->fSpecies)
   {
-    case FlowTask::kCharged:
-      listPOIs = flFlowCharged;
-    break;
-
-    case FlowTask::kPion:
-      listPOIs = flFlowPion;
-    break;
-
-    case FlowTask::kKaon:
-      listPOIs = flFlowKaon;
-    break;
-
-    case FlowTask::kProton:
-      listPOIs = flFlowProton;
-    break;
-
-    default:
-      Error("Task species not direct!","ProcessMixed");
-      return kFALSE;
+    case FlowTask::kCharged: listPOIs = flFlowCharged; break;
+    case FlowTask::kPion: listPOIs = flFlowPion; break;
+    case FlowTask::kKaon: listPOIs = flFlowKaon; break;
+    case FlowTask::kProton: listPOIs = flFlowProton; break;
+    // case FlowTask::kK0s: listPOIs = flFlowK0s; break;
+    // case FlowTask::kLambda: listPOIs = flFlowLambda; break;
+    // case FlowTask::kPhi: listPOIs = flFlowPhi; break;
+    default: Error("Task species not direct!","ProcessMixed"); return kFALSE;
   }
 
-  // <<<< TODO: hardcoded now
-
   Int_t iSample = 0;
-
   TString sNameRefs = Form("%s_Pos_sample%d", task->fMixedRefs.Data(),iSample);
   TString sNamePOIs = Form("%s_Pos_sample%d", task->fMixedDiff.Data(), iSample);
   TString sNamePOIsNeg = Form("%s_Neg_sample%d", task->fMixedDiff.Data(), iSample);
-
-  // >>>>>
 
   // ### Preparing Refs ###
   TProfile* profRef = (TProfile*) flFlowRefs->FindObject(sNameRefs.Data());
   if(!profRef) { Error(Form("Refs profile '%s' not found!",sNameRefs.Data()),"ProcessMixed"); flFlowRefs->ls(); return kFALSE; }
   profRef = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins);
 
-   // >>>> NB Slicing of Direct POIs -> to be implemented in prepare-slices
-  TProfile2D* profPOIs = (TProfile2D*) listPOIs->FindObject(sNamePOIs.Data());
-  if(!profPOIs) { Error(Form("POIs (pos) profile '%s' not found!",sNamePOIs.Data()),"ProcessMixed"); listPOIs->ls(); return kFALSE; }
+  // ### Preparing POIs ###
+  for(Int_t iMultBin(0); iMultBin < fiNumMultBins; ++iMultBin) {
+    // loading slices
+    TString sName = Form("%s_Pos_sample0_mult%d",task->fMixedDiff.Data(),iMultBin);
+    TProfile* profVn = (TProfile*) task->fListProfiles->FindObject(sName.Data());
+    if(!profVn) { Error("Loading slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
 
-  if(task->fMergePosNeg)
-  {
-    TProfile2D* profPOIsNeg = (TProfile2D*) listPOIs->FindObject(sNamePOIsNeg.Data());
-    if(!profPOIsNeg) { Error(Form("POIs (neg) profile '%s' not found!",sNamePOIsNeg.Data()),"ProcessMixed"); listPOIs->ls(); return kFALSE; }
-
-    // merging pos & neg
-    TList* listMerge = new TList();
-    listMerge->Add(profPOIs);
-    listMerge->Add(profPOIsNeg);
-    TProfile2D* profPOIsMerged = (TProfile2D*) MergeListProfiles(listMerge);
-    delete listMerge; // first delete, then check (return)
-    if(!profPOIsMerged) { Error(" Pos & Neg profile merging failed!","ProcessMixed"); return kFALSE; }
-
-    profPOIs = profPOIsMerged;
-  }
-
-  // rebinning according to mult bin
-  for(Int_t iMultBin(0); iMultBin < fiNumMultBins; ++iMultBin)
-  {
-    Int_t binMultLow = profPOIs->GetXaxis()->FindFixBin(fdMultBins[iMultBin]);
-    Int_t binMultHigh = profPOIs->GetXaxis()->FindFixBin(fdMultBins[iMultBin+1]) - 1;
-
-    TProfile* profPOIsSlice = (TProfile*) profPOIs->ProfileY(Form("%s_%s_mult%d",task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin),binMultLow,binMultHigh);
-
-    // rebinning according to pt bins
-    TProfile* profVn = 0x0;
-    if(task->fNumPtBins > 0) { profVn = (TProfile*) profPOIsSlice->Rebin(task->fNumPtBins,Form("%s_rebin", profPOIsSlice->GetName()), task->fPtBinsEdges); }
-    else { profVn = (TProfile*) profPOIsSlice->Clone(Form("%s_rebin", profPOIsSlice->GetName())); }
-
-    // <<<< NB: rebinning / slicing done here
-
-    // ### Making vn out of cn,dn
-
+    // Making vn out of cn,dn
     TH1D* histVn = (TH1D*) profVn->ProjectionX();
 
     // dividing POIS / sqrt(refs)
