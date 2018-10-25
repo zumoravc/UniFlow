@@ -688,9 +688,11 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
   // ### Preparing POIs ###
   for(Int_t iMultBin(0); iMultBin < fiNumMultBins; ++iMultBin) {
 
+    TH1D* histFlow = 0x0; // histo with final results
+    TString sHistFlowName = Form("%s_%s_mult%d",task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin);
+
     // direct species
-    if(!bReco)
-    {
+    if(!bReco) {
       TString sName = Form("%s_Pos_sample0_mult%d",task->fMixedDiff.Data(),iMultBin);
       TProfile* profVn = (TProfile*) task->fListProfiles->FindObject(sName.Data());
       if(!profVn) { Error("Loading slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
@@ -720,9 +722,14 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         histVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
       }
 
-      ffOutputFile->cd();
-      histVn->Write();
-    } else { // end-if {!bReco} // recnstructed
+      histFlow = histVn;
+    } else { // end-if {!bReco}
+      // recnstructed
+      gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
+
+      histFlow = new TH1D(sHistFlowName.Data(),Form("%s: %s; #it{p}_{T} (GeV/#it{c});",task->GetSpeciesLabel().Data(),sHistFlowName.Data()), task->fNumPtBins,task->fPtBinsEdges);
+      if(!histFlow) { Error("Creation of 'histFlow' failed!","ProcessMixed"); return kFALSE; }
+      trashCol.Add(histFlow);
 
       // dividing POIS / sqrt(refs)
       Double_t dRefCont = profRef->GetBinContent(iMultBin+1);
@@ -765,27 +772,59 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         }
 
         // Here ready for fitting
-        // TODO - to be fitted
+
+        TCanvas* canFitInvMass = new TCanvas("canFitInvMass","canFitInvMass",1600,1200); // canvas for fitting results
 
         TList* listFits = new TList();
-        TCanvas* canFitInvMass = new TCanvas("canFitInvMass","canFitInvMass",1600,1200); // canvas for fitting results
+        // listFits->SetOwner(kTRUE); // NB: when on, seg fault happen
 
         Double_t dFlow = 0.0;
         Double_t dFlowError = 0.0;
 
         Bool_t bExtracted = ExtractFlowOneGo(task,hInvMass,hInvMassBg,histVn,dFlow,dFlowError,canFitInvMass,listFits);
-        if(!bExtracted) { Warning("Flow fitting unsuccesfull","ProcessMixed"); return kFALSE; }
+        if(!bExtracted) {
+          Warning("Flow fitting unsuccesfull","ProcessMixed");
+          delete canFitInvMass;
+          delete listFits;
+          return kFALSE;
+        }
 
+        histFlow->SetBinContent(iPtBin+1,dFlow);
+        histFlow->SetBinError(iPtBin+1,dFlowError);
 
+        ffFitsFile->cd();
+        listFits->Write(Form("fits_%s_cent%d_pt%d",task->GetSpeciesName().Data(),iMultBin,iPtBin),TObject::kSingleKey);
 
-        ffOutputFile->cd();
-        histVn->Write();
-        break;
+        // === Plotting fits ===
+        TLatex latex2;
+        // latex2.SetTextFont(43);
+        // latex2.SetTextSize(40);
+        latex2.SetNDC();
 
+        canFitInvMass->cd(1);
+        // if(task->fSpecies == FlowTask::kPhi) canFitInvMass->cd(2);
+        latex2.DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[iPtBin],task->fPtBinsEdges[iPtBin+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+        canFitInvMass->cd(2);
+        latex2.DrawLatex(0.17,0.85,Form("#color[9]{pt %g-%g GeV/c (%g-%g%%)}",task->fPtBinsEdges[iPtBin],task->fPtBinsEdges[iPtBin+1],fdMultBins[iMultBin],fdMultBins[iMultBin+1]));
+        canFitInvMass->SaveAs(Form("%s/fits/%s_%s_mult%d_pt%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin,iPtBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+
+        delete canFitInvMass;
+        delete listFits;
       } // end-for {iPtBin}
     } // end-else {!bReco}
 
-    break; 
+    histFlow->SetName(sHistFlowName.Data());
+    histFlow->SetTitle(sHistFlowName.Data());
+
+    ffOutputFile->cd();
+    histFlow->Write();
+
+    TCanvas* cFlow = new TCanvas("cFlow","cFlow");
+    cFlow->cd();
+    histFlow->SetStats(0);
+    histFlow->DrawCopy();
+    cFlow->SaveAs(Form("%s/Flow_%s_%s_mult%d.%s",fsOutputFilePath.Data(),task->GetSpeciesName().Data(),sNamePOIs.Data(),iMultBin,fsOutputFileFormat.Data()),fsOutputFileFormat.Data());
+    delete cFlow;
   } // end-for {iMultBin}
 
   return kTRUE;
@@ -3130,6 +3169,9 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   if(!hInvMass) { Error("Inv. Mass histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
   if(task->fSpecies == FlowTask::kPhi && task->fFlowFitPhiSubtLS && !hInvMassBG) { Error("Inv. Mass (BG) histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
   if(task->fFlowFitPhiSubtLS) { Error("Phi like-sign subtraction not implemented ATM. Please turn the switch off.","ExtractFlowOneGo"); return kFALSE; }
+
+
+  Warning("In testing mode for ProcessMixed()","ExtractFlowOneGo");
 
   // === Fitting parametrisation (species dependent default) ===
 
