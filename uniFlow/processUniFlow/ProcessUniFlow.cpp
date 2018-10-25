@@ -652,19 +652,22 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
   if(!task) { Error("Task not valid!","ProcessMixed"); return kFALSE; }
   Debug("Processing mixed","ProcessMixed");
 
-  Warning("Currently fully hardcoded for validation purposes for Direct only","ProcessMixed");
+  FlowTask::PartSpecies species = task->fSpecies;
+  Bool_t bReco = kFALSE;
+  if(species == FlowTask::kK0s || species == FlowTask::kLambda || species == FlowTask::kPhi) { bReco = kTRUE; }
+  // if(bReco) { Error("Currently fully hardcoded for validation purposes for Direct only","ProcessMixed"); return kFALSE; }
 
   TList* listPOIs = 0x0;
-  switch (task->fSpecies)
+  switch (species)
   {
     case FlowTask::kCharged: listPOIs = flFlowCharged; break;
     case FlowTask::kPion: listPOIs = flFlowPion; break;
     case FlowTask::kKaon: listPOIs = flFlowKaon; break;
     case FlowTask::kProton: listPOIs = flFlowProton; break;
-    // case FlowTask::kK0s: listPOIs = flFlowK0s; break;
-    // case FlowTask::kLambda: listPOIs = flFlowLambda; break;
-    // case FlowTask::kPhi: listPOIs = flFlowPhi; break;
-    default: Error("Task species not direct!","ProcessMixed"); return kFALSE;
+    case FlowTask::kK0s: listPOIs = flFlowK0s; break;
+    case FlowTask::kLambda: listPOIs = flFlowLambda; break;
+    case FlowTask::kPhi: listPOIs = flFlowPhi; break;
+    default: Error("Invalid species!","ProcessMixed"); return kFALSE;
   }
 
   Int_t iSample = 0;
@@ -672,47 +675,95 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
   TString sNamePOIs = Form("%s_Pos_sample%d", task->fMixedDiff.Data(), iSample);
   TString sNamePOIsNeg = Form("%s_Neg_sample%d", task->fMixedDiff.Data(), iSample);
 
+  TList trashCol;
+  trashCol.SetOwner(kTRUE);
+
   // ### Preparing Refs ###
-  TProfile* profRef = (TProfile*) flFlowRefs->FindObject(sNameRefs.Data());
-  if(!profRef) { Error(Form("Refs profile '%s' not found!",sNameRefs.Data()),"ProcessMixed"); flFlowRefs->ls(); return kFALSE; }
-  profRef = (TProfile*) profRef->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins);
+  TProfile* profRef_preRebin = (TProfile*) flFlowRefs->FindObject(sNameRefs.Data());
+  if(!profRef_preRebin) { Error(Form("Refs profile '%s' pre-rebin not found!",sNameRefs.Data()),"ProcessMixed"); flFlowRefs->ls(); return kFALSE; }
+  TProfile* profRef = (TProfile*) profRef_preRebin->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins);
+  if(!profRef) { Error("Refs profile rebinning failed!","ProcessMixed"); return kFALSE; }
+  trashCol.Add(profRef);
 
   // ### Preparing POIs ###
   for(Int_t iMultBin(0); iMultBin < fiNumMultBins; ++iMultBin) {
-    // loading slices
-    TString sName = Form("%s_Pos_sample0_mult%d",task->fMixedDiff.Data(),iMultBin);
-    TProfile* profVn = (TProfile*) task->fListProfiles->FindObject(sName.Data());
-    if(!profVn) { Error("Loading slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
 
-    // Making vn out of cn,dn
-    TH1D* histVn = (TH1D*) profVn->ProjectionX();
-
-    // dividing POIS / sqrt(refs)
-    Double_t dRefCont = profRef->GetBinContent(iMultBin+1);
-    Double_t dRefErr = profRef->GetBinError(iMultBin+1);
-
-    for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin)
+    // direct species
+    if(!bReco)
     {
-      if(dRefCont < 0.0)
-      {
-        histVn->SetBinContent(bin, 9999.9);
-        histVn->SetBinError(bin, 9999.9);
-        continue;
+      TString sName = Form("%s_Pos_sample0_mult%d",task->fMixedDiff.Data(),iMultBin);
+      TProfile* profVn = (TProfile*) task->fListProfiles->FindObject(sName.Data());
+      if(!profVn) { Error("Loading slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
+
+      // Making vn out of cn,dn
+      TH1D* histVn = (TH1D*) profVn->ProjectionX();
+      trashCol.Add(histVn);
+
+      // dividing POIS / sqrt(refs)
+      Double_t dRefCont = profRef->GetBinContent(iMultBin+1);
+      Double_t dRefErr = profRef->GetBinError(iMultBin+1);
+
+      for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin) {
+        if(dRefCont < 0.0) {
+          histVn->SetBinContent(bin, 9999.9);
+          histVn->SetBinError(bin, 9999.9);
+          continue;
+        }
+
+        Double_t dOldCont = histVn->GetBinContent(bin);
+        Double_t dOldErr = histVn->GetBinError(bin);
+
+        Double_t dNewCont = dOldCont / TMath::Sqrt(dRefCont);
+        Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
+
+        histVn->SetBinContent(bin, dNewCont);
+        profVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
       }
 
-      Double_t dOldCont = histVn->GetBinContent(bin);
-      Double_t dOldErr = histVn->GetBinError(bin);
+      ffOutputFile->cd();
+      histVn->Write();
+    } else { // end-if {!bReco} // recnstructed
 
-      Double_t dNewCont = dOldCont / TMath::Sqrt(dRefCont);
-      Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
+      // dividing POIS / sqrt(refs)
+      Double_t dRefCont = profRef->GetBinContent(iMultBin+1);
+      Double_t dRefErr = profRef->GetBinError(iMultBin+1);
 
-      histVn->SetBinContent(bin, dNewCont);
-      profVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
-    }
+      for(Int_t iPtBin(0); iPtBin < task->fNumPtBins; ++iPtBin) {
+        TString sName = Form("%s_Pos_sample0_mult%d_pt%d",task->fMixedDiff.Data(),iMultBin,iPtBin);
+        TProfile* profVn = (TProfile*) task->fListProfiles->FindObject(sName.Data());
+        if(!profVn) { Error("Loading slice failed!","ProcessMixed"); task->fListProfiles->ls(); return kFALSE; }
 
-    ffOutputFile->cd();
-    histVn->Write();
-  }
+        // Making vn out of cn,dn
+        TH1D* histVn = (TH1D*) profVn->ProjectionX();
+        trashCol.Add(histVn);
+
+        for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin) {
+          if(dRefCont < 0.0) {
+            histVn->SetBinContent(bin, 9999.9);
+            histVn->SetBinError(bin, 9999.9);
+            continue;
+          }
+
+          Double_t dOldCont = histVn->GetBinContent(bin);
+          Double_t dOldErr = histVn->GetBinError(bin);
+
+          Double_t dNewCont = dOldCont / TMath::Sqrt(dRefCont);
+          Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
+
+          histVn->SetBinContent(bin, dNewCont);
+          profVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
+        }
+
+        // Here ready for fitting
+        // TODO - to be fitted
+
+        ffOutputFile->cd();
+        histVn->Write();
+
+      } // end-for {iPtBin}
+    } // end-else {!bReco}
+
+  } // end-for {iMultBin}
 
   return kTRUE;
 }
