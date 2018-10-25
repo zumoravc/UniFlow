@@ -1935,7 +1935,7 @@ TH1* ProcessUniFlow::MergeListProfiles(TList* list)
   if(!list || list->IsEmpty()) { Error("List not valid or empty","MergeListProfiles"); return 0x0; }
 
   TH1* merged = (TH1*) list->At(0)->Clone();
-  merged->SetName(Form("%s_merged",merged->GetName()));
+  // merged->SetName(Form("%s_merged",merged->GetName()));
 
   if(list->GetEntries() < 2) // only 1 entry
   {
