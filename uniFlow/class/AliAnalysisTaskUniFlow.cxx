@@ -3141,9 +3141,11 @@ void AliAnalysisTaskUniFlow::ResetFlowVector(TComplex (&array)[fFlowNumHarmonics
 {
   // Reset RFPs (Q) array values to TComplex(0,0,kFALSE) for given array
   // *************************************************************
-  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
-    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
-      array[iHarm][iPower] = TComplex(0,0,kFALSE);
+  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; ++iHarm) {
+    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; ++iPower) {
+      array[iHarm][iPower](0.0,0.0);
+    }
+  }
   return;
 }
 //_____________________________________________________________________________
