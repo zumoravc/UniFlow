@@ -435,54 +435,23 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhChargedCounter; //! counter following charged track selection
       // PID
       TH1D*           fhPIDCounter; //! counter for PID
-      TH1D*           fhPIDPionMult; //! multiplicity distribution of selected pions
-      TH1D*           fhPIDPionPt; //! pt distribution of selected pions
-      TH1D*           fhPIDPionPhi; //! phi distribution of selected pions
-      TH1D*           fhPIDPionEta; //! eta distribution of selected pions
-      TH1D*           fhPIDPionCharge; //! charge distribution of selected pions
-      TH2D*           fh2PIDPionTPCdEdx; //! TPC dEdx response of selected pions
-      TH2D*           fh2PIDPionTOFbeta; //! TOF beta of selected pions
-      TH2D*           fh2PIDPionTPCnSigmaPion; //! TPC nSigma vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDPionTOFnSigmaPion; //! TOF nSigma vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDPionBayesPion; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDPionTPCnSigmaKaon; //! TPC nSigma vs pT for selected pions (kaon hypothesis)
-      TH2D*           fh2PIDPionTOFnSigmaKaon; //! TOF nSigma vs pT for selected pions (kaon hypothesis)
-      TH2D*           fh2PIDPionBayesKaon; //! Bayesian PID probability vs pT for selected pions (kaon hypothesis)
-      TH2D*           fh2PIDPionTPCnSigmaProton; //! TPC nSigma vs pT for selected pions (proton hypothesis)
-      TH2D*           fh2PIDPionTOFnSigmaProton; //! TOF nSigma vs pT for selected pions (proton hypothesis)
-      TH2D*           fh2PIDPionBayesProton; //! Bayesian PID probability vs pT for selected pions (proton hypothesis)
-      TH1D*           fhPIDKaonMult; //! multiplicity distribution of selected pions
-      TH1D*           fhPIDKaonPt; //! pt distribution of selected kaons
-      TH1D*           fhPIDKaonPhi; //! phi distribution of selected kaons
-      TH1D*           fhPIDKaonEta; //! eta distribution of selected kaons
-      TH1D*           fhPIDKaonCharge; //! charge distribution of selected pions
-      TH2D*           fh2PIDKaonTPCdEdx; //! TPC dEdx response of selected pions
-      TH2D*           fh2PIDKaonTOFbeta; //! TOF beta of selected pions
-      TH2D*           fh2PIDKaonTPCnSigmaPion; //! TPC nSigma vs pT for selected kaons (pion hypothesis)
-      TH2D*           fh2PIDKaonTOFnSigmaPion; //! TOF nSigma vs pT for selected kaons (pion hypothesis)
-      TH2D*           fh2PIDKaonBayesPion; //! Bayesian PID probability vs pT for selected kaons (pion hypothesis)
-      TH2D*           fh2PIDKaonTPCnSigmaKaon; //! TPC nSigma vs pT for selected kaons (kaon hypothesis)
-      TH2D*           fh2PIDKaonTOFnSigmaKaon; //! TOF nSigma vs pT for selected kaons (kaon hypothesis)
-      TH2D*           fh2PIDKaonBayesKaon; //! Bayesian PID probability vs pT for selected kaons (kaon hypothesis)
-      TH2D*           fh2PIDKaonTPCnSigmaProton; //! TPC nSigma vs pT for selected kaons (proton hypothesis)
-      TH2D*           fh2PIDKaonTOFnSigmaProton; //! TOF nSigma vs pT for selected kaons (proton hypothesis)
-      TH2D*           fh2PIDKaonBayesProton; //! Bayesian PID probability vs pT for selected kaons (proton hypothesis)
-      TH1D*           fhPIDProtonMult; //! multiplicity distribution of selected pions
-      TH1D*           fhPIDProtonPt; //! pt distribution of selected protons
-      TH1D*           fhPIDProtonPhi; //! phi distribution of selected protons
-      TH1D*           fhPIDProtonEta; //! eta distribution of selected protons
-      TH1D*           fhPIDProtonCharge; //! charge distribution of selected pions
-      TH2D*           fh2PIDProtonTPCdEdx; //! TPC dEdx response of selected pions
-      TH2D*           fh2PIDProtonTOFbeta; //! TOF beta of selected pions
-      TH2D*           fh2PIDProtonTPCnSigmaPion; //! TPC nSigma vs pT for selected protons (pion hypothesis)
-      TH2D*           fh2PIDProtonTOFnSigmaPion; //! TOF nSigma vs pT for selected protons (pion hypothesis)
-      TH2D*           fh2PIDProtonBayesPion; //! Bayesian PID probability vs pT for selected protons (pion hypothesis)
-      TH2D*           fh2PIDProtonTPCnSigmaKaon; //! TPC nSigma vs pT for selected protons (kaon hypothesis)
-      TH2D*           fh2PIDProtonTOFnSigmaKaon; //! TOF nSigma vs pT for selected protons (kaon hypothesis)
-      TH2D*           fh2PIDProtonBayesKaon; //! Bayesian PID probability vs pT for selected protons (kaon hypothesis)
-      TH2D*           fh2PIDProtonTPCnSigmaProton; //! TPC nSigma vs pT for selected protons (proton hypothesis)
-      TH2D*           fh2PIDProtonTOFnSigmaProton; //! TOF nSigma vs pT for selected protons (proton hypothesis)
-      TH2D*           fh2PIDProtonBayesProton; //! Bayesian PID probability vs pT for selected protons (proton hypothesis)
+      TH1D*           fhPIDMult[3]; //! multiplicity distribution of selected pions
+      TH1D*           fhPIDPt[3]; //! pt distribution of selected pions
+      TH1D*           fhPIDPhi[3]; //! phi distribution of selected pions
+      TH1D*           fhPIDEta[3]; //! eta distribution of selected pions
+      TH1D*           fhPIDCharge[3]; //! charge distribution of selected pions
+      TH2D*           fh2PIDTPCdEdx[3]; //! TPC dEdx response of selected pions
+      TH2D*           fh2PIDTOFbeta[3]; //! TOF beta of selected pions
+      TH2D*           fh2PIDTPCnSigmaPion[3]; //! TPC nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*           fh2PIDTOFnSigmaPion[3]; //! TOF nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*           fh2PIDBayesPion[3]; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
+      TH2D*           fh2PIDTPCnSigmaKaon[3]; //! TPC nSigma vs pT for selected pions (kaon hypothesis)
+      TH2D*           fh2PIDTOFnSigmaKaon[3]; //! TOF nSigma vs pT for selected pions (kaon hypothesis)
+      TH2D*           fh2PIDBayesKaon[3]; //! Bayesian PID probability vs pT for selected pions (kaon hypothesis)
+      TH2D*           fh2PIDTPCnSigmaProton[3]; //! TPC nSigma vs pT for selected pions (proton hypothesis)
+      TH2D*           fh2PIDTOFnSigmaProton[3]; //! TOF nSigma vs pT for selected pions (proton hypothesis)
+      TH2D*           fh2PIDBayesProton[3]; //! Bayesian PID probability vs pT for selected pions (proton hypothesis)
+
       TH1D*           fhMCRecoSelectedPionPt; //! pt dist of selected (MC reco) pions
       TH1D*           fhMCRecoSelectedTruePionPt; //! pt dist of selected (MC reco) true (tagged in MC gen) pions
       TH1D*           fhMCRecoAllPionPt; //! pt dist of all (MC reco) pions (i.e. selected charged tracks that are tagged in MC)
