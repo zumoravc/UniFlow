@@ -320,7 +320,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AnalType                fAnalType; // analysis type: AOD / ESD
       Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
       Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
-      Bool_t                  fProcessSpec[kUnknown];  // flag for processing species
+      Bool_t                  fProcessSpec[kUnknown];  // [false] flag for processing species
       // cuts & selection: flow related
       Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow

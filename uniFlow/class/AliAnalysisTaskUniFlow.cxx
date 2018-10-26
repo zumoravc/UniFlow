@@ -107,14 +107,23 @@ ClassImp(AliAnalysisTaskUniFlow);
 Double_t AliAnalysisTaskUniFlow::fMultBins[] = {0.,5.,10.,20.,40.,60.,100.};
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
-  fEventAOD(0x0),
+  fVector(),
+  fVecFlowTask(),
+  fProcessSpec(),
+  fFlowVecQpos(),
+  fFlowVecQneg(),
+  fFlowVecQmid(),
+  fFlowVecPpos(),
+  fFlowVecPneg(),
+  fFlowVecS(),
+  fEventAOD(),
+  fPIDResponse(),
+  fPIDCombined(),
+  fFlowWeightsFile(),
+  fArrayMC(),
   fPVz(0.0),
-  fPIDResponse(0x0),
-  fPIDCombined(0x0),
-  fFlowWeightsFile(0x0),
   fInit(kFALSE),
   fMC(kFALSE),
-  fArrayMC(0x0),
   fIndexSampling(0),
   fIndexCentrality(-1),
   fEventCounter(0),
@@ -127,12 +136,21 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPDGMassK0s(TDatabasePDG::Instance()->GetParticle(310)->Mass()),
   fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
 
+  // output lists
+  fListFlow(),
+  fQAEvents(),
+  fQACharged(),
+  fQAPID(),
+  fQAV0s(),
+  fQAPhi(),
+  fFlowWeights(),
+
+  // === Cuts & selection ===
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
   fSampling(kTRUE),
   fFillQA(kTRUE),
-  // fNumSamples(10),
 
   // flow related
   fUseFixedMultBins(kFALSE),
@@ -220,52 +238,61 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutPhiInvMassMin(0.99),
   fCutPhiInvMassMax(1.07),
 
-  // output lists
-  fQAEvents(0x0),
-  fQACharged(0x0),
-  fQAPID(0x0),
-  fQAV0s(0x0),
-  fQAPhi(0x0),
-  fFlowWeights(0x0),
-
-  // flow histograms & profiles
-  fhsV0sCandK0s(0x0),
-  fhsV0sCandLambda(0x0),
-  fhsPhiCandSig(0x0),
-  fhsPhiCandBg(0x0),
+  // === Histograms & profiles ===
+  fhsV0sCandK0s(),
+  fhsV0sCandLambda(),
+  fhsPhiCandSig(),
+  fhsPhiCandBg(),
+  fh2Weights(),
+  fh3Weights(),
+  fh3AfterWeights(),
 
   // event histograms
-  fhEventSampling(0x0),
-  fhEventCentrality(0x0),
-  fh2EventCentralityNumRefs(0x0),
-  fhEventCounter(0x0),
-  fhQAEventsfMult32vsCentr(0x0),
-  fhQAEventsMult128vsCentr(0x0),
-  fhQAEventsfMultTPCvsTOF(0x0),
-  fhQAEventsfMultTPCvsESD(0x0),
+  fhEventSampling(),
+  fhEventCentrality(),
+  fh2EventCentralityNumRefs(),
+  fhEventCounter(),
+  fhQAEventsfMult32vsCentr(),
+  fhQAEventsMult128vsCentr(),
+  fhQAEventsfMultTPCvsTOF(),
+  fhQAEventsfMultTPCvsESD(),
+  fhQAEventsPVz(),
+  fhQAEventsNumContrPV(),
+  fhQAEventsNumSPDContrPV(),
+  fhQAEventsDistPVSPD(),
+  fhQAEventsSPDresol(),
 
   // charged histogram
-  fhRefsMult(0x0),
-  fhRefsPt(0x0),
-  fhRefsEta(0x0),
-  fhRefsPhi(0x0),
-  fpRefsMult(0x0),
-  fhChargedCounter(0x0),
+  fhRefsMult(),
+  fhRefsPt(),
+  fhRefsEta(),
+  fhRefsPhi(),
+  fpRefsMult(),
+  fhChargedCounter(),
+  fhQAChargedMult(),
+  fhQAChargedPt(),
+  fhQAChargedEta(),
+  fhQAChargedPhi(),
+  fhQAChargedCharge(),
+  fhQAChargedFilterBit(),
+  fhQAChargedNumTPCcls(),
+  fhQAChargedDCAxy(),
+  fhQAChargedDCAz(),
 
   // PID histogram
-  fhMCRecoSelectedPionPt(0x0),
-  fhMCRecoSelectedTruePionPt(0x0),
-  fhMCRecoAllPionPt(0x0),
-  fhMCGenAllPionPt(0x0),
-  fhMCRecoSelectedKaonPt(0x0),
-  fhMCRecoSelectedTrueKaonPt(0x0),
-  fhMCRecoAllKaonPt(0x0),
-  fhMCGenAllKaonPt(0x0),
-  fhMCRecoSelectedProtonPt(0x0),
-  fhMCRecoSelectedTrueProtonPt(0x0),
-  fhMCRecoAllProtonPt(0x0),
-  fhMCGenAllProtonPt(0x0),
-  fhPIDCounter(0x0),
+  fhMCRecoSelectedPionPt(),
+  fhMCRecoSelectedTruePionPt(),
+  fhMCRecoAllPionPt(),
+  fhMCGenAllPionPt(),
+  fhMCRecoSelectedKaonPt(),
+  fhMCRecoSelectedTrueKaonPt(),
+  fhMCRecoAllKaonPt(),
+  fhMCGenAllKaonPt(),
+  fhMCRecoSelectedProtonPt(),
+  fhMCRecoSelectedTrueProtonPt(),
+  fhMCRecoAllProtonPt(),
+  fhMCGenAllProtonPt(),
+  fhPIDCounter(),
   fhPIDMult(),
   fhPIDPt(),
   fhPIDPhi(),
@@ -282,41 +309,98 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fh2PIDTPCnSigmaProton(),
   fh2PIDTOFnSigmaProton(),
   fh2PIDBayesProton(),
+  fhQAPIDTPCstatus(),
+  fhQAPIDTOFstatus(),
+  fhQAPIDTPCdEdx(),
+  fhQAPIDTOFbeta(),
+  fh3QAPIDnSigmaTPCTOFPtPion(),
+  fh3QAPIDnSigmaTPCTOFPtKaon(),
+  fh3QAPIDnSigmaTPCTOFPtProton(),
 
   // phi histograms
-  fhPhiCounter(0x0),
-  fhPhiMult(0x0),
-  fhPhiBGMult(0x0),
-  fhPhiInvMass(0x0),
-  fhPhiBGInvMass(0x0),
-  fhPhiCharge(0x0),
-  fhPhiBGCharge(0x0),
-  fhPhiPt(0x0),
-  fhPhiEta(0x0),
-  fhPhiPhi(0x0),
+  fhPhiCounter(),
+  fhPhiMult(),
+  fhPhiBGMult(),
+  fhPhiInvMass(),
+  fhPhiBGInvMass(),
+  fhPhiCharge(),
+  fhPhiBGCharge(),
+  fhPhiPt(),
+  fhPhiEta(),
+  fhPhiPhi(),
 
   // V0s histogram
-  fhV0sCounter(0x0),
-  fhV0sCounterK0s(0x0),
-  fhV0sCounterLambda(0x0),
-  fhV0sInvMassK0s(0x0),
-  fhV0sInvMassLambda(0x0),
-  fhV0sCompetingInvMassK0s(0x0),
-  fhV0sCompetingInvMassLambda(0x0)
+  fhV0sCounter(),
+  fhV0sCounterK0s(),
+  fhV0sCounterLambda(),
+  fhV0sInvMassK0s(),
+  fhV0sInvMassLambda(),
+  fhV0sCompetingInvMassK0s(),
+  fhV0sCompetingInvMassLambda(),
+  fhQAV0sMultK0s(),
+  fhQAV0sMultLambda(),
+  fhQAV0sRecoMethod(),
+  fhQAV0sDCAtoPV(),
+  fhQAV0sDCADaughters(),
+  fhQAV0sDecayRadius(),
+  fhQAV0sDaughterTPCRefit(),
+  fhQAV0sDaughterKinks(),
+  fhQAV0sDaughterNumTPCCls(),
+  fhQAV0sDaughterNumTPCFind(),
+  fhQAV0sDaughterNumTPCCrossRows(),
+  fhQAV0sDaughterTPCCrossFindRatio(),
+  fhQAV0sDaughterNumTPCClsPID(),
+  fhQAV0sDaughterPt(),
+  fhQAV0sDaughterPhi(),
+  fhQAV0sDaughterEta(),
+  fhQAV0sDaughterCharge(),
+  fhQAV0sDaughterTPCdEdxK0s(),
+  fhQAV0sDaughterNumSigmaPionK0s(),
+  fhQAV0sDaughterTPCstatus(),
+  fhQAV0sDaughterTOFstatus(),
+  fhQAV0sDaughterTPCdEdxLambda(),
+  fhQAV0sDaughterNumSigmaPionLambda(),
+  fhQAV0sDaughterNumSigmaProtonLambda(),
+  fhQAV0sDaughterNumSigmaPionALambda(),
+  fhQAV0sDaughterNumSigmaProtonALambda(),
+  fhQAV0sMotherPt(),
+  fhQAV0sMotherPhi(),
+  fhQAV0sMotherEta(),
+  fhQAV0sMotherCharge(),
+  fhQAV0sMotherRapK0s(),
+  fhQAV0sMotherRapLambda(),
+  fhQAV0sInvMassK0s(),
+  fhQAV0sInvMassLambda(),
+  fhQAV0sCPAK0s(),
+  fhQAV0sCPALambda(),
+  fhQAV0sNumTauK0s(),
+  fhQAV0sNumTauLambda(),
+  fhQAV0sArmenterosK0s(),
+  fhQAV0sArmenterosLambda(),
+  fhQAV0sArmenterosALambda()
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
 }
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
-  fEventAOD(0x0),
+  fVector(),
+  fVecFlowTask(),
+  fProcessSpec(),
+  fFlowVecQpos(),
+  fFlowVecQneg(),
+  fFlowVecQmid(),
+  fFlowVecPpos(),
+  fFlowVecPneg(),
+  fFlowVecS(),
+  fEventAOD(),
+  fPIDResponse(),
+  fPIDCombined(),
+  fFlowWeightsFile(),
+  fArrayMC(),
   fPVz(0.0),
-  fPIDResponse(0x0),
-  fPIDCombined(0x0),
-  fFlowWeightsFile(0x0),
   fInit(kFALSE),
   fMC(kFALSE),
-  fArrayMC(0x0),
   fIndexSampling(0),
   fIndexCentrality(-1),
   fEventCounter(0),
@@ -329,12 +413,21 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fPDGMassK0s(TDatabasePDG::Instance()->GetParticle(310)->Mass()),
   fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
 
+  // output lists
+  fListFlow(),
+  fQAEvents(),
+  fQACharged(),
+  fQAPID(),
+  fQAV0s(),
+  fQAPhi(),
+  fFlowWeights(),
+
+  // === Cuts & selection ===
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
   fSampling(kTRUE),
   fFillQA(kTRUE),
-  // fNumSamples(10),
 
   // flow related
   fUseFixedMultBins(kFALSE),
@@ -422,52 +515,61 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutPhiInvMassMin(0.99),
   fCutPhiInvMassMax(1.07),
 
-  // output lists
-  fQAEvents(0x0),
-  fQACharged(0x0),
-  fQAPID(0x0),
-  fQAV0s(0x0),
-  fQAPhi(0x0),
-  fFlowWeights(0x0),
-
-  // flow histograms & profiles
-  fhsV0sCandK0s(0x0),
-  fhsV0sCandLambda(0x0),
-  fhsPhiCandSig(0x0),
-  fhsPhiCandBg(0x0),
+  // === Histograms & profiles ===
+  fhsV0sCandK0s(),
+  fhsV0sCandLambda(),
+  fhsPhiCandSig(),
+  fhsPhiCandBg(),
+  fh2Weights(),
+  fh3Weights(),
+  fh3AfterWeights(),
 
   // event histograms
-  fhEventSampling(0x0),
-  fhEventCentrality(0x0),
-  fh2EventCentralityNumRefs(0x0),
-  fhEventCounter(0x0),
-  fhQAEventsfMult32vsCentr(0x0),
-  fhQAEventsMult128vsCentr(0x0),
-  fhQAEventsfMultTPCvsTOF(0x0),
-  fhQAEventsfMultTPCvsESD(0x0),
+  fhEventSampling(),
+  fhEventCentrality(),
+  fh2EventCentralityNumRefs(),
+  fhEventCounter(),
+  fhQAEventsfMult32vsCentr(),
+  fhQAEventsMult128vsCentr(),
+  fhQAEventsfMultTPCvsTOF(),
+  fhQAEventsfMultTPCvsESD(),
+  fhQAEventsPVz(),
+  fhQAEventsNumContrPV(),
+  fhQAEventsNumSPDContrPV(),
+  fhQAEventsDistPVSPD(),
+  fhQAEventsSPDresol(),
 
   // charged histogram
-  fhRefsMult(0x0),
-  fhRefsPt(0x0),
-  fhRefsEta(0x0),
-  fhRefsPhi(0x0),
-  fpRefsMult(0x0),
-  fhChargedCounter(0x0),
+  fhRefsMult(),
+  fhRefsPt(),
+  fhRefsEta(),
+  fhRefsPhi(),
+  fpRefsMult(),
+  fhChargedCounter(),
+  fhQAChargedMult(),
+  fhQAChargedPt(),
+  fhQAChargedEta(),
+  fhQAChargedPhi(),
+  fhQAChargedCharge(),
+  fhQAChargedFilterBit(),
+  fhQAChargedNumTPCcls(),
+  fhQAChargedDCAxy(),
+  fhQAChargedDCAz(),
 
   // PID histogram
-  fhMCRecoSelectedPionPt(0x0),
-  fhMCRecoSelectedTruePionPt(0x0),
-  fhMCRecoAllPionPt(0x0),
-  fhMCGenAllPionPt(0x0),
-  fhMCRecoSelectedKaonPt(0x0),
-  fhMCRecoSelectedTrueKaonPt(0x0),
-  fhMCRecoAllKaonPt(0x0),
-  fhMCGenAllKaonPt(0x0),
-  fhMCRecoSelectedProtonPt(0x0),
-  fhMCRecoSelectedTrueProtonPt(0x0),
-  fhMCRecoAllProtonPt(0x0),
-  fhMCGenAllProtonPt(0x0),
-  fhPIDCounter(0x0),
+  fhMCRecoSelectedPionPt(),
+  fhMCRecoSelectedTruePionPt(),
+  fhMCRecoAllPionPt(),
+  fhMCGenAllPionPt(),
+  fhMCRecoSelectedKaonPt(),
+  fhMCRecoSelectedTrueKaonPt(),
+  fhMCRecoAllKaonPt(),
+  fhMCGenAllKaonPt(),
+  fhMCRecoSelectedProtonPt(),
+  fhMCRecoSelectedTrueProtonPt(),
+  fhMCRecoAllProtonPt(),
+  fhMCGenAllProtonPt(),
+  fhPIDCounter(),
   fhPIDMult(),
   fhPIDPt(),
   fhPIDPhi(),
@@ -484,128 +586,76 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fh2PIDTPCnSigmaProton(),
   fh2PIDTOFnSigmaProton(),
   fh2PIDBayesProton(),
+  fhQAPIDTPCstatus(),
+  fhQAPIDTOFstatus(),
+  fhQAPIDTPCdEdx(),
+  fhQAPIDTOFbeta(),
+  fh3QAPIDnSigmaTPCTOFPtPion(),
+  fh3QAPIDnSigmaTPCTOFPtKaon(),
+  fh3QAPIDnSigmaTPCTOFPtProton(),
 
   // phi histograms
-  fhPhiCounter(0x0),
-  fhPhiMult(0x0),
-  fhPhiBGMult(0x0),
-  fhPhiInvMass(0x0),
-  fhPhiBGInvMass(0x0),
-  fhPhiCharge(0x0),
-  fhPhiBGCharge(0x0),
-  fhPhiPt(0x0),
-  fhPhiEta(0x0),
-  fhPhiPhi(0x0),
+  fhPhiCounter(),
+  fhPhiMult(),
+  fhPhiBGMult(),
+  fhPhiInvMass(),
+  fhPhiBGInvMass(),
+  fhPhiCharge(),
+  fhPhiBGCharge(),
+  fhPhiPt(),
+  fhPhiEta(),
+  fhPhiPhi(),
 
   // V0s histogram
-  fhV0sCounter(0x0),
-  fhV0sCounterK0s(0x0),
-  fhV0sCounterLambda(0x0),
-  fhV0sInvMassK0s(0x0),
-  fhV0sInvMassLambda(0x0),
-  fhV0sCompetingInvMassK0s(0x0),
-  fhV0sCompetingInvMassLambda(0x0)
+  fhV0sCounter(),
+  fhV0sCounterK0s(),
+  fhV0sCounterLambda(),
+  fhV0sInvMassK0s(),
+  fhV0sInvMassLambda(),
+  fhV0sCompetingInvMassK0s(),
+  fhV0sCompetingInvMassLambda(),
+  fhQAV0sMultK0s(),
+  fhQAV0sMultLambda(),
+  fhQAV0sRecoMethod(),
+  fhQAV0sDCAtoPV(),
+  fhQAV0sDCADaughters(),
+  fhQAV0sDecayRadius(),
+  fhQAV0sDaughterTPCRefit(),
+  fhQAV0sDaughterKinks(),
+  fhQAV0sDaughterNumTPCCls(),
+  fhQAV0sDaughterNumTPCFind(),
+  fhQAV0sDaughterNumTPCCrossRows(),
+  fhQAV0sDaughterTPCCrossFindRatio(),
+  fhQAV0sDaughterNumTPCClsPID(),
+  fhQAV0sDaughterPt(),
+  fhQAV0sDaughterPhi(),
+  fhQAV0sDaughterEta(),
+  fhQAV0sDaughterCharge(),
+  fhQAV0sDaughterTPCdEdxK0s(),
+  fhQAV0sDaughterNumSigmaPionK0s(),
+  fhQAV0sDaughterTPCstatus(),
+  fhQAV0sDaughterTOFstatus(),
+  fhQAV0sDaughterTPCdEdxLambda(),
+  fhQAV0sDaughterNumSigmaPionLambda(),
+  fhQAV0sDaughterNumSigmaProtonLambda(),
+  fhQAV0sDaughterNumSigmaPionALambda(),
+  fhQAV0sDaughterNumSigmaProtonALambda(),
+  fhQAV0sMotherPt(),
+  fhQAV0sMotherPhi(),
+  fhQAV0sMotherEta(),
+  fhQAV0sMotherCharge(),
+  fhQAV0sMotherRapK0s(),
+  fhQAV0sMotherRapLambda(),
+  fhQAV0sInvMassK0s(),
+  fhQAV0sInvMassLambda(),
+  fhQAV0sCPAK0s(),
+  fhQAV0sCPALambda(),
+  fhQAV0sNumTauK0s(),
+  fhQAV0sNumTauLambda(),
+  fhQAV0sArmenterosK0s(),
+  fhQAV0sArmenterosLambda(),
+  fhQAV0sArmenterosALambda()
 {
-  // particle dependent
-  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
-  {
-    fVector[iSpec] = 0x0;
-    fListFlow[iSpec] = 0x0;
-    fProcessSpec[iSpec] = kTRUE;
-    fh2Weights[iSpec] = 0x0;
-    fh3Weights[iSpec] = 0x0;
-    fh3AfterWeights[iSpec] = 0x0;
-  }
-  fVecFlowTask = std::vector<FlowTask*>(); //
-
-  // Flow vectors
-  for(Short_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
-  {
-    for(Short_t iPower(0); iPower < fFlowNumWeightPowersMax; iPower++)
-    {
-      fFlowVecQpos[iHarm][iPower] = TComplex(0,0,kFALSE);
-      fFlowVecQneg[iHarm][iPower] = TComplex(0,0,kFALSE);
-      fFlowVecQmid[iHarm][iPower] = TComplex(0,0,kFALSE);
-      fFlowVecPpos[iHarm][iPower] = TComplex(0,0,kFALSE);
-      fFlowVecPneg[iHarm][iPower] = TComplex(0,0,kFALSE);
-      fFlowVecS[iHarm][iPower] = TComplex(0,0,kFALSE);
-    }
-  }
-
-  // QA histograms
-  for(Short_t iQA(0); iQA < fiNumIndexQA; iQA++)
-  {
-    // Event histograms
-    fhQAEventsPVz[iQA] = 0x0;
-    fhQAEventsNumContrPV[iQA] = 0x0;
-    fhQAEventsNumSPDContrPV[iQA] = 0x0;
-    fhQAEventsDistPVSPD[iQA] = 0x0;
-    fhQAEventsSPDresol[iQA] = 0x0;
-
-    // charged
-    fhQAChargedMult[iQA] = 0x0;
-    fhQAChargedPt[iQA] = 0x0;
-    fhQAChargedEta[iQA] = 0x0;
-    fhQAChargedPhi[iQA] = 0x0;
-    fhQAChargedCharge[iQA] = 0x0;
-    fhQAChargedFilterBit[iQA] = 0x0;
-    fhQAChargedNumTPCcls[iQA] = 0x0;
-    fhQAChargedDCAxy[iQA] = 0x0;
-    fhQAChargedDCAz[iQA] = 0x0;
-
-    // PID
-    fhQAPIDTPCstatus[iQA] = 0x0;
-    fhQAPIDTOFstatus[iQA] = 0x0;
-    fhQAPIDTPCdEdx[iQA] = 0x0;
-    fhQAPIDTOFbeta[iQA] = 0x0;
-    fh3QAPIDnSigmaTPCTOFPtPion[iQA] = 0x0;
-    fh3QAPIDnSigmaTPCTOFPtKaon[iQA] = 0x0;
-    fh3QAPIDnSigmaTPCTOFPtProton[iQA] = 0x0;
-
-    // V0s
-    fhQAV0sMultK0s[iQA] = 0x0;
-    fhQAV0sMultLambda[iQA] = 0x0;
-  	fhQAV0sRecoMethod[iQA] = 0x0;
-		fhQAV0sDCAtoPV[iQA] = 0x0;
-		fhQAV0sDCADaughters[iQA] = 0x0;
-		fhQAV0sDecayRadius[iQA] = 0x0;
-    fhQAV0sDaughterTPCRefit[iQA] = 0x0;
-    fhQAV0sDaughterKinks[iQA] = 0x0;
-    fhQAV0sDaughterNumTPCCls[iQA] = 0x0;
-    fhQAV0sDaughterNumTPCFind[iQA] = 0x0;
-    fhQAV0sDaughterNumTPCCrossRows[iQA] = 0x0;
-    fhQAV0sDaughterTPCCrossFindRatio[iQA] = 0x0;
-    fhQAV0sDaughterNumTPCClsPID[iQA] = 0x0;
-    fhQAV0sDaughterPt[iQA] = 0x0;
-		fhQAV0sDaughterPhi[iQA] = 0x0;
-		fhQAV0sDaughterEta[iQA] = 0x0;
-    fhQAV0sDaughterCharge[iQA] = 0x0;
-    fhQAV0sDaughterTPCdEdxK0s[iQA] = 0x0;
-    fhQAV0sDaughterNumSigmaPionK0s[iQA] = 0x0;
-    fhQAV0sDaughterTPCstatus[iQA] = 0x0;
-    fhQAV0sDaughterTOFstatus[iQA] = 0x0;
-    fhQAV0sDaughterTPCdEdxLambda[iQA] = 0x0;
-    fhQAV0sDaughterNumSigmaPionLambda[iQA] = 0x0;
-    fhQAV0sDaughterNumSigmaProtonLambda[iQA] = 0x0;
-    fhQAV0sDaughterNumSigmaPionALambda[iQA] = 0x0;
-    fhQAV0sDaughterNumSigmaProtonALambda[iQA] = 0x0;
-    fhQAV0sMotherPt[iQA] = 0x0;
-		fhQAV0sMotherPhi[iQA] = 0x0;
-		fhQAV0sMotherEta[iQA] = 0x0;
-    fhQAV0sMotherCharge[iQA] = 0x0;
-		fhQAV0sMotherRapK0s[iQA] = 0x0;
-		fhQAV0sMotherRapLambda[iQA] = 0x0;
-    fhQAV0sInvMassK0s[iQA] = 0x0;
-    fhQAV0sInvMassLambda[iQA] = 0x0;
-		fhQAV0sCPAK0s[iQA] = 0x0;
-		fhQAV0sCPALambda[iQA] = 0x0;
-		fhQAV0sNumTauK0s[iQA] = 0x0;
-		fhQAV0sNumTauLambda[iQA] = 0x0;
-		fhQAV0sArmenterosK0s[iQA] = 0x0;
-		fhQAV0sArmenterosLambda[iQA] = 0x0;
-		fhQAV0sArmenterosALambda[iQA] = 0x0;
-  }
-
   // defining input/output
   DefineInput(0, TChain::Class());
   DefineOutput(1, TList::Class());
@@ -878,6 +928,10 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     if(!fFlowWeightsFile) { AliFatal("Flow weights file not found! Terminating!"); return kFALSE; }
     if(!LoadWeights(kTRUE)) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
   }
+
+  // setting procesing Refs & Charged by default
+  fProcessSpec[kRefs] = kTRUE;
+  fProcessSpec[kCharged] = kTRUE;
 
   // setting processing Kaons if Phi is on
   if(fProcessSpec[kPhi] && !fProcessSpec[kKaon])
