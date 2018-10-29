@@ -164,6 +164,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowWeightsPath(),
   fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
+  fFlowUseWeightsFullQA(kFALSE),
   fFlowUse3Dweights(kFALSE),
 
   // events selection
@@ -245,6 +246,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhsPhiCandBg(),
   fh2Weights(),
   fh3Weights(),
+  fhAfterWeights(),
   fh3AfterWeights(),
 
   // event histograms
@@ -441,6 +443,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowWeightsPath(),
   fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
+  fFlowUseWeightsFullQA(kFALSE),
   fFlowUse3Dweights(kFALSE),
 
   // events selection
@@ -522,6 +525,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhsPhiCandBg(),
   fh2Weights(),
   fh3Weights(),
+  fhAfterWeights(),
   fh3AfterWeights(),
 
   // event histograms
@@ -1375,7 +1379,9 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       Double_t weight = 1.0;
       if(fFlowUse3Dweights){ weight = fh3Weights[kCharged]->GetBinContent( fh3Weights[kCharged]->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
       else { weight = fh2Weights[kCharged]->GetBinContent( fh2Weights[kCharged]->FindFixBin(track->Eta(),track->Phi())); }
-      fh3AfterWeights[kCharged]->Fill(track->Phi(),track->Eta(),fPVz,weight);
+
+      if(fFlowUseWeightsFullQA) { fh3AfterWeights[kCharged]->Fill(track->Phi(),track->Eta(),fPVz,weight); }
+      else { fhAfterWeights[kCharged]->Fill(track->Phi(),weight); }
     }
 
     if(fMC)
@@ -1406,7 +1412,9 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       Double_t weight = 1.0;
       if(fFlowUse3Dweights) {weight = fh3Weights[kRefs]->GetBinContent( fh3Weights[kRefs]->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
       else { weight = fh2Weights[kRefs]->GetBinContent( fh2Weights[kRefs]->FindFixBin(track->Eta(),track->Phi()) ); }
-      fh3AfterWeights[kRefs]->Fill(track->Phi(),track->Eta(),fPVz,weight);
+
+      if(fFlowUseWeightsFullQA) { fh3AfterWeights[kRefs]->Fill(track->Phi(),track->Eta(),fPVz,weight); }
+      else { fhAfterWeights[kRefs]->Fill(track->Phi(),weight); }
     }
 
   }
@@ -1609,7 +1617,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         if(fFlowUse3Dweights) { weight = fh3Weights[kK0s]->GetBinContent( fh3Weights[kK0s]->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
 
         else { weight = fh2Weights[kK0s]->GetBinContent( fh2Weights[kK0s]->FindFixBin(v0->Eta(),v0->Phi()) ); }
-        fh3AfterWeights[kK0s]->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
+
+        if(fFlowUseWeightsFullQA) { fh3AfterWeights[kK0s]->Fill(v0->Phi(),v0->Eta(),fPVz,weight); }
+        else { fhAfterWeights[kK0s]->Fill(v0->Phi(),weight); }
       }
     }
 
@@ -1629,7 +1639,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         Double_t weight = 1.0;
         if(fFlowUse3Dweights) { weight = fh3Weights[kLambda]->GetBinContent( fh3Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
         else { weight = fh2Weights[kLambda]->GetBinContent( fh2Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi()) ); }
-        fh3AfterWeights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
+
+        if(fFlowUseWeightsFullQA) { fh3AfterWeights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz,weight); }
+        else { fhAfterWeights[kLambda]->Fill(v0->Phi(),weight); }
       }
     }
 
@@ -1649,7 +1661,9 @@ void AliAnalysisTaskUniFlow::FilterV0s()
         Double_t weight = 1.0;
         if(fFlowUse3Dweights) { weight = fh3Weights[kLambda]->GetBinContent( fh3Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi(), fPVz) );}
         else { weight = fh2Weights[kLambda]->GetBinContent( fh2Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi()) ); }
-        fh3AfterWeights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz,weight);
+
+        if(fFlowUseWeightsFullQA) { fh3AfterWeights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz,weight); }
+        else { fhAfterWeights[kLambda]->Fill(v0->Phi(),weight); }
       }
     }
 
@@ -2286,7 +2300,9 @@ void AliAnalysisTaskUniFlow::FilterPhi()
           Double_t weight = 1.0;
           if(fFlowUse3Dweights) { weight =  fh3Weights[kPhi]->GetBinContent(  fh3Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi(), fPVz) ); }
           else { weight =  fh2Weights[kPhi]->GetBinContent(  fh2Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi()) ) ; }
-          fh3AfterWeights[kPhi]->Fill(mother->Phi(),mother->Eta(),fPVz,weight);
+
+          if(fFlowUseWeightsFullQA) { fh3AfterWeights[kPhi]->Fill(mother->Phi(),mother->Eta(),fPVz,weight); }
+          else { fhAfterWeights[kPhi]->Fill(mother->Phi(),weight); }
         }
       }
 
@@ -2403,7 +2419,9 @@ void AliAnalysisTaskUniFlow::FilterPID()
         Double_t weight = 1.0;
         if(fFlowUse3Dweights) { weight = fh3Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi(), fPVz)); }
         else { weight = fh2Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi()) ); }
-        fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight);
+
+        if(fFlowUseWeightsFullQA) { fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight); }
+        else { fhAfterWeights[species]->Fill(track->Phi(),weight); }
       }
     }
 
@@ -3646,11 +3664,19 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
       if(fFlowUseWeights)
       {
-        const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
-        const char* weightLabel = Form("Weights (after): %s; #varphi; #eta; PV-z (cm)",GetSpeciesLabel(PartSpecies(iSpec)));
-        fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-0.8,0.8, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-        fh3AfterWeights[iSpec]->Sumw2();
-        fFlowWeights->Add(fh3AfterWeights[iSpec]);
+        if(fFlowUseWeightsFullQA) {
+          const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
+          const char* weightLabel = Form("Weights (after): %s; #varphi; #eta; PV-z (cm)",GetSpeciesLabel(PartSpecies(iSpec)));
+          fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-0.8,0.8, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+          fh3AfterWeights[iSpec]->Sumw2();
+          fFlowWeights->Add(fh3AfterWeights[iSpec]);
+        } else {
+          const char* weightName = Form("fhAfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
+          const char* weightLabel = Form("Weights (after): %s; #varphi;",GetSpeciesLabel(PartSpecies(iSpec)));
+          fhAfterWeights[iSpec] = new TH1D(weightName,weightLabel, 100,0,TMath::TwoPi());
+          fhAfterWeights[iSpec]->Sumw2();
+          fFlowWeights->Add(fhAfterWeights[iSpec]);
+        }
       }
     } // end-for {iSpec}
   }
