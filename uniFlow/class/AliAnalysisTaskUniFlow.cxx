@@ -1329,6 +1329,23 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies spec
   return kTRUE;
 }
 //_____________________________________________________________________________
+Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, PartSpecies species)
+{
+  Double_t dWeight = 1.0;
+
+  if(fFlowUse3Dweights) {
+
+    Int_t iBin = fh3Weights[species]->FindFixBin(track->Eta(),track->Phi(),fPVz);
+    dWeight = fh3Weights[species]->GetBinContent(iBin);
+  } else {
+    Int_t iBin = fh2Weights[species]->FindFixBin(track->Eta(),track->Phi());
+    dWeight = fh2Weights[species]->GetBinContent(iBin);
+  }
+
+  if(dWeight <= 0.0) { dWeight = 1.0; }
+  return dWeight;
+}
+//_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
 {
   // Filling various QA plots related with event selection
@@ -2926,14 +2943,6 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
   Bool_t bHas3sub = kFALSE;
   if(dEtaGap > -1.0) { bHasGap = kTRUE; }
 
-  TH2D* h2Weights = fh2Weights[kRefs];
-  TH3D* h3Weights = fh3Weights[kRefs];
-  if(fFlowUseWeights)
-  {
-    if(fFlowUse3Dweights && !h3Weights) { AliError("Histogram with Refs weights not found."); return; }
-    if(!fFlowUse3Dweights && !h2Weights) { AliError("Histogram with Refs weights not found."); return; }
-  }
-
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecQpos);
   ResetFlowVector(fFlowVecQneg);
@@ -2944,15 +2953,9 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
 
-    Double_t dWeight = 1.0;
-
     // loading weights if needed
-    if(fFlowUseWeights)
-    {
-      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindFixBin(dEta,dPhi,fPVz)); }
-      else { dWeight = h2Weights->GetBinContent(h2Weights->FindFixBin(dEta,dPhi)); }
-      if(dWeight <= 0.0) dWeight = 1.0;
-    }
+    Double_t dWeight = 1.0;
+    if(fFlowUseWeights) { dWeight = GetFlowWeight(*part, kRefs); }
 
     if(!bHasGap) // no eta gap
     {
@@ -3011,20 +3014,12 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
 {
   // Filling p,q and s flow vectors with POIs (given by species) for differential flow calculation
   // *************************************************************
+  std::vector<AliVTrack*>* vector = fVector[species];
+  if(!vector) { AliError("Vector with selected POIs not found."); return; }
+
   Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE; if(dEtaGap > -1.0) { bHasGap = kTRUE; }
-
-  std::vector<AliVTrack*>* vector = fVector[species];
-  TH2D* h2Weights = fh2Weights[species];
-  TH3D* h3Weights = fh3Weights[species];
   Bool_t bHasMass = kFALSE; if(species == kK0s || species == kLambda || species == kPhi) { bHasMass = kTRUE; }
-
-  if(!vector) { AliError("Vector with selected POIs not found."); return; }
-  if(fFlowUseWeights)
-  {
-    if(!fFlowUse3Dweights && !h2Weights) { AliError("Histogram with weights not found."); return; }
-    if(fFlowUse3Dweights && !h3Weights) { AliError("Histogram with weights not found."); return; }
-  }
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecPpos);
@@ -3045,13 +3040,9 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
 
     // at this point particles corresponding to this pt (& mass) bin survive
 
+    // loading weights if needed
     Double_t dWeight = 1.0;
-    if(fFlowUseWeights)
-    {
-      if(fFlowUse3Dweights) { dWeight = h3Weights->GetBinContent(h3Weights->FindFixBin(dEta,dPhi,fPVz)); }
-      else { dWeight = h2Weights->GetBinContent(h2Weights->FindFixBin(dEta,dPhi)); }
-      if(dWeight <= 0.0) dWeight = 1.0;
-    }
+    if(fFlowUseWeights) { dWeight = GetFlowWeight(*part, species); }
 
     if(!bHasGap) // no eta gap
     {

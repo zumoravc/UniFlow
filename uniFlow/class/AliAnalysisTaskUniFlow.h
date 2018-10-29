@@ -222,6 +222,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       Bool_t                  LoadWeights(Bool_t init = kFALSE); // load weights histograms
       Bool_t                  FillFlowWeight(AliVTrack* track, PartSpecies species); // fill distribution for per-particle flow weight
+      Double_t                GetFlowWeight(AliVTrack* track, PartSpecies species); // extract per-particle flow weight from input file
       void                    ListParameters(); // list all task parameters
       void                    ClearVectors(); // properly clear all particle vectors
 
