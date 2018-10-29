@@ -220,13 +220,14 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const char*             GetEtaGapName(Double_t dEtaGap) { return Form("%02.2g",10.0*dEtaGap); }
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
+      Bool_t                  LoadWeights(Bool_t init = kFALSE); // load weights histograms
+      Bool_t                  FillFlowWeight(AliVTrack* track, PartSpecies species); // fill distribution for per-particle flow weight
       void                    ListParameters(); // list all task parameters
       void                    ClearVectors(); // properly clear all particle vectors
 
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
       Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
       Bool_t                  IsEventRejectedAddPileUp(); // additional pile-up rejection for Run2 Pb-Pb
-      Bool_t                  LoadWeights(Bool_t init = kFALSE); // load weights histograms
       void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
       Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
@@ -240,6 +241,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    FilterPID(); // pi,K,p filtering
       void                    FilterV0s(); // K0s, Lambda, ALambda filtering
       void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
+
       AliAODMCParticle*       GetMCParticle(Int_t label); // find corresponding MC particle from fArrayMC depending of AOD track label
       Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta); // calculate particle / track rapidity
       Bool_t                  HasTrackPIDTPC(const AliAODTrack* track); // is TPC PID OK for this track ?

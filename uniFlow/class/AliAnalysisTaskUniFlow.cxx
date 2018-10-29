@@ -935,7 +935,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     fProcessSpec[kKaon] = kTRUE;
     AliInfo("Processing of Phi ON but PID OFF: setting processing of Kaons ON");
   }
-  
+
   // checking for weights source file
   if(fFlowUseWeights && !fFlowWeightsPath.EqualTo(""))
   {
@@ -1307,6 +1307,28 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights(Bool_t init)
   return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies species)
+{
+  if(!track) { AliError("Track not exists!"); return kFALSE; }
+  if(species == kUnknown) { AliError("Invalid species 'Unknown'!"); return kFALSE; }
+
+  if(fFlowFillWeights) {
+    fh3Weights[species]->Fill(track->Phi(),track->Eta(),fPVz);
+  }
+
+  if(fFlowUseWeights) {
+    Double_t weight = GetFlowWeight(track, species);
+
+    if(fFlowUseWeightsFullQA) {
+      fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight);
+    } else {
+      fhAfterWeights[species]->Fill(track->Phi(),weight);
+    }
+  }
+
+  return kTRUE;
+}
+//_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::FillEventsQA(const Short_t iQAindex)
 {
   // Filling various QA plots related with event selection
@@ -1372,17 +1394,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
     fVector[kCharged]->push_back(track);
     if(fFillQA) { FillQACharged(1,track); } // QA after selection
-
-    if(fFlowFillWeights) { fh3Weights[kCharged]->Fill(track->Phi(),track->Eta(),fPVz); }
-    if(fFlowUseWeights)
-    {
-      Double_t weight = 1.0;
-      if(fFlowUse3Dweights){ weight = fh3Weights[kCharged]->GetBinContent( fh3Weights[kCharged]->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
-      else { weight = fh2Weights[kCharged]->GetBinContent( fh2Weights[kCharged]->FindFixBin(track->Eta(),track->Phi())); }
-
-      if(fFlowUseWeightsFullQA) { fh3AfterWeights[kCharged]->Fill(track->Phi(),track->Eta(),fPVz,weight); }
-      else { fhAfterWeights[kCharged]->Fill(track->Phi(),weight); }
-    }
+    if(!FillFlowWeight(track, kCharged)) { AliFatal("Flow weight filling failed!"); return; }
 
     if(fMC)
     {
@@ -1405,18 +1417,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
     fVector[kRefs]->push_back(track);
     if(fFillQA) { FillQARefs(1,track); }
     iNumRefs++;
-
-    if(fFlowFillWeights) { fh3Weights[kRefs]->Fill(track->Phi(),track->Eta(),fPVz); }
-    if(fFlowUseWeights)
-    {
-      Double_t weight = 1.0;
-      if(fFlowUse3Dweights) {weight = fh3Weights[kRefs]->GetBinContent( fh3Weights[kRefs]->FindFixBin(track->Eta(),track->Phi(),fPVz)); }
-      else { weight = fh2Weights[kRefs]->GetBinContent( fh2Weights[kRefs]->FindFixBin(track->Eta(),track->Phi()) ); }
-
-      if(fFlowUseWeightsFullQA) { fh3AfterWeights[kRefs]->Fill(track->Phi(),track->Eta(),fPVz,weight); }
-      else { fhAfterWeights[kRefs]->Fill(track->Phi(),weight); }
-    }
-
+    if(!FillFlowWeight(track, kRefs)) { AliFatal("Flow weight filling failed!"); return; }
   }
 
   if(fFillQA)
@@ -1609,18 +1610,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
       AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short());
       fVector[kK0s]->push_back(pico);
       FillSparseCand(fhsV0sCandK0s, pico);
-
-      if(fFlowFillWeights) { fh3Weights[kK0s]->Fill(v0->Phi(),v0->Eta(),fPVz); }
-      if(fFlowUseWeights)
-      {
-        Double_t weight = 1.0;
-        if(fFlowUse3Dweights) { weight = fh3Weights[kK0s]->GetBinContent( fh3Weights[kK0s]->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
-
-        else { weight = fh2Weights[kK0s]->GetBinContent( fh2Weights[kK0s]->FindFixBin(v0->Eta(),v0->Phi()) ); }
-
-        if(fFlowUseWeightsFullQA) { fh3AfterWeights[kK0s]->Fill(v0->Phi(),v0->Eta(),fPVz,weight); }
-        else { fhAfterWeights[kK0s]->Fill(v0->Phi(),weight); }
-      }
+      if(!FillFlowWeight(v0, kK0s)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
     if(iIsLambda == 1) // lambda
@@ -1632,17 +1622,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
       AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassLambda());
       fVector[kLambda]->push_back(pico);
       FillSparseCand(fhsV0sCandLambda, pico);
-
-      if(fFlowFillWeights) { fh3Weights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz); }
-      if(fFlowUseWeights)
-      {
-        Double_t weight = 1.0;
-        if(fFlowUse3Dweights) { weight = fh3Weights[kLambda]->GetBinContent( fh3Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi(),fPVz) ); }
-        else { weight = fh2Weights[kLambda]->GetBinContent( fh2Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi()) ); }
-
-        if(fFlowUseWeightsFullQA) { fh3AfterWeights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz,weight); }
-        else { fhAfterWeights[kLambda]->Fill(v0->Phi(),weight); }
-      }
+      if(!FillFlowWeight(v0, kLambda)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
     if(iIsLambda == -1) // anti-lambda
@@ -1655,16 +1635,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
       fVector[kLambda]->push_back(pico);
       FillSparseCand(fhsV0sCandLambda, pico);
 
-      if(fFlowFillWeights) { fh3Weights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz); }
-      if(fFlowUseWeights)
-      {
-        Double_t weight = 1.0;
-        if(fFlowUse3Dweights) { weight = fh3Weights[kLambda]->GetBinContent( fh3Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi(), fPVz) );}
-        else { weight = fh2Weights[kLambda]->GetBinContent( fh2Weights[kLambda]->FindFixBin(v0->Eta(),v0->Phi()) ); }
-
-        if(fFlowUseWeightsFullQA) { fh3AfterWeights[kLambda]->Fill(v0->Phi(),v0->Eta(),fPVz,weight); }
-        else { fhAfterWeights[kLambda]->Fill(v0->Phi(),weight); }
-      }
+      if(!FillFlowWeight(v0, kLambda)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
     if(bIsK0s && iIsLambda != 0) { fhV0sCounter->Fill("K^{0}_{S} && #Lambda/#bar{#Lambda}",1); }
@@ -2250,13 +2221,11 @@ void AliAnalysisTaskUniFlow::FilterPhi()
 
   // start Phi reconstruction
   Int_t iNumBG = 0;
-  for(Int_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++)
-  {
+  for(Int_t iKaon1(0); iKaon1 < iNumKaons; iKaon1++) {
     AliAODTrack* kaon1 = dynamic_cast<AliAODTrack*>(fVector[kKaon]->at(iKaon1));
     if(!kaon1) { continue; }
 
-    for(Int_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++)
-    {
+    for(Int_t iKaon2(iKaon1+1); iKaon2 < iNumKaons; iKaon2++) {
       AliAODTrack* kaon2 = dynamic_cast<AliAODTrack*>(fVector[kKaon]->at(iKaon2));
       if(!kaon2) { continue; }
 
@@ -2278,32 +2247,19 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       // mother (phi) candidate passing all criteria (except for charge)
       fhPhiCounter->Fill("Before charge",1);
 
-      if(TMath::Abs(mother->Charge()) == 2)
-      {
+      if(TMath::Abs(mother->Charge()) == 2) {
         // like-sign combination (background)
         fhPhiCounter->Fill("BG",1);
         FillSparseCand(fhsPhiCandBg, mother);
         iNumBG++;
       }
 
-      if(mother->Charge() == 0)
-      {
+      if(mother->Charge() == 0) {
         // opposite-sign combination (signal+background)
         fhPhiCounter->Fill("Unlike-sign",1);
         FillSparseCand(fhsPhiCandSig, mother);
         fVector[kPhi]->push_back(mother);
-
-        // filling weights
-        if(fFlowFillWeights) { fh3Weights[kPhi]->Fill(mother->Phi(), mother->Eta(), fPVz); }
-        if(fFlowUseWeights)
-        {
-          Double_t weight = 1.0;
-          if(fFlowUse3Dweights) { weight =  fh3Weights[kPhi]->GetBinContent(  fh3Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi(), fPVz) ); }
-          else { weight =  fh2Weights[kPhi]->GetBinContent(  fh2Weights[kPhi]->FindFixBin(mother->Eta(),mother->Phi()) ) ; }
-
-          if(fFlowUseWeightsFullQA) { fh3AfterWeights[kPhi]->Fill(mother->Phi(),mother->Eta(),fPVz,weight); }
-          else { fhAfterWeights[kPhi]->Fill(mother->Phi(),weight); }
-        }
+        if(!FillFlowWeight(mother, kPhi)) { AliFatal("Flow weight filling failed!"); return; }
       }
 
       // filling QA AFTER selection
@@ -2313,8 +2269,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
   } // endfor {iKaon1} : first Kaon
 
   // filling multiplicity distribution
-  if(fFillQA)
-  {
+  if(fFillQA) {
     fhPhiMult->Fill(fVector[kPhi]->size());
     fhPhiBGMult->Fill(iNumBG);
   }
@@ -2411,18 +2366,8 @@ void AliAnalysisTaskUniFlow::FilterPID()
     fVector[species]->push_back(track);
     if(fFillQA) { FillQAPID(1,track,species); } // filling QA for tracks AFTER selection }
 
-    if(fProcessSpec[kPion] && fProcessSpec[kKaon] && fProcessSpec[kProton]) // NB: aka process PID (not just Kaons for Phi)
-    {
-      if(fFlowFillWeights) { fh3Weights[species]->Fill(track->Phi(), track->Eta(), fPVz); }
-      if(fFlowUseWeights)
-      {
-        Double_t weight = 1.0;
-        if(fFlowUse3Dweights) { weight = fh3Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi(), fPVz)); }
-        else { weight = fh2Weights[species]->GetBinContent( fh2Weights[species]->FindFixBin(track->Eta(),track->Phi()) ); }
-
-        if(fFlowUseWeightsFullQA) { fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight); }
-        else { fhAfterWeights[species]->Fill(track->Phi(),weight); }
-      }
+    if(fProcessSpec[kPion] && fProcessSpec[kKaon] && fProcessSpec[kProton]) { // NB: aka process PID (not just Kaons for Phi)
+      if(!FillFlowWeight(track, species)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
     // process MC data
