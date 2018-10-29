@@ -120,7 +120,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
-      void                    SetUseWeights3D(Bool_t use = kTRUE, Bool_t fullQA = kFALSE) { fFlowUse3Dweights = use; fFlowUseWeightsFullQA = fullQA; }
+      void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
       void                    SetCollisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
       void                    SetMultEstimator(MultiEst est) { fMultEstimator = est; }
@@ -331,7 +331,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
       Bool_t                  fFlowUse3Dweights; // [kFALSE] flag for using 3D GF weights, if kFALSE, 2D weights are expected
-      Bool_t                  fFlowUseWeightsFullQA; // [kFALSE] falg for filling full QA after weights histograms
       Bool_t                  fFlowRunByRunWeights; // [kTRUE] flag for using rub-by-run weigths from weigths file; if false, only one set of histrograms is provided
       TString                 fFlowWeightsPath; //[] path to source root file with weigthts (if empty unit weights are applied) e.g. "alice/cern.ch/user/k/kgajdoso/EfficienciesWeights/2016/PhiWeight_LHC16kl.root"
 
@@ -423,7 +422,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       TH2D*           fh2Weights[kUnknown]; //! container for GF weights (phi,eta,pt) (2D)
       TH3D*           fh3Weights[kUnknown]; //! container for GF weights (phi,eta,pt)
-      TH1D*           fhAfterWeights[kUnknown]; //! distribution after applying GF weights - lightweight QA (phi)
+      TH2D*           fh2AfterWeights[kUnknown]; //! distribution after applying GF weights - lightweight QA (phi)
       TH3D*           fh3AfterWeights[kUnknown]; //! distribution after applying GF weights - full QA (phi,eta,pt)
 
       // Events

@@ -164,7 +164,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowWeightsPath(),
   fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
-  fFlowUseWeightsFullQA(kFALSE),
   fFlowUse3Dweights(kFALSE),
 
   // events selection
@@ -246,7 +245,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhsPhiCandBg(),
   fh2Weights(),
   fh3Weights(),
-  fhAfterWeights(),
+  fh2AfterWeights(),
   fh3AfterWeights(),
 
   // event histograms
@@ -443,7 +442,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowWeightsPath(),
   fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
-  fFlowUseWeightsFullQA(kFALSE),
   fFlowUse3Dweights(kFALSE),
 
   // events selection
@@ -525,7 +523,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fhsPhiCandBg(),
   fh2Weights(),
   fh3Weights(),
-  fhAfterWeights(),
+  fh2AfterWeights(),
   fh3AfterWeights(),
 
   // event histograms
@@ -1319,10 +1317,10 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies spec
   if(fFlowUseWeights) {
     Double_t weight = GetFlowWeight(track, species);
 
-    if(fFlowUseWeightsFullQA) {
+    if(fFlowUse3Dweights) {
       fh3AfterWeights[species]->Fill(track->Phi(),track->Eta(),fPVz,weight);
     } else {
-      fhAfterWeights[species]->Fill(track->Phi(),weight);
+      fh2AfterWeights[species]->Fill(track->Phi(),track->Eta(),weight);
     }
   }
 
@@ -3600,18 +3598,18 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
       if(fFlowUseWeights)
       {
-        if(fFlowUseWeightsFullQA) {
+        if(fFlowUse3Dweights) {
           const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
           const char* weightLabel = Form("Weights (after): %s; #varphi; #eta; PV-z (cm)",GetSpeciesLabel(PartSpecies(iSpec)));
           fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-0.8,0.8, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
           fh3AfterWeights[iSpec]->Sumw2();
           fFlowWeights->Add(fh3AfterWeights[iSpec]);
         } else {
-          const char* weightName = Form("fhAfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
-          const char* weightLabel = Form("Weights (after): %s; #varphi;",GetSpeciesLabel(PartSpecies(iSpec)));
-          fhAfterWeights[iSpec] = new TH1D(weightName,weightLabel, 100,0,TMath::TwoPi());
-          fhAfterWeights[iSpec]->Sumw2();
-          fFlowWeights->Add(fhAfterWeights[iSpec]);
+          const char* weightName = Form("fh2AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
+          const char* weightLabel = Form("Weights (after): %s; #varphi; #eta;",GetSpeciesLabel(PartSpecies(iSpec)));
+          fh2AfterWeights[iSpec] = new TH2D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-0.8,0.8);
+          fh2AfterWeights[iSpec]->Sumw2();
+          fFlowWeights->Add(fh2AfterWeights[iSpec]);
         }
       }
     } // end-for {iSpec}
