@@ -921,14 +921,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // increasing fFlowCentMax+1 (just to be sure)
   fFlowCentMax++;
 
-  // checking for weights source file
-  if(fFlowUseWeights && !fFlowWeightsPath.EqualTo(""))
-  {
-    fFlowWeightsFile = TFile::Open(Form("%s",fFlowWeightsPath.Data()));
-    if(!fFlowWeightsFile) { AliFatal("Flow weights file not found! Terminating!"); return kFALSE; }
-    if(!LoadWeights(kTRUE)) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
-  }
-
   // setting procesing Refs & Charged by default
   fProcessSpec[kRefs] = kTRUE;
   fProcessSpec[kCharged] = kTRUE;
@@ -938,6 +930,14 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   {
     fProcessSpec[kKaon] = kTRUE;
     AliInfo("Processing of Phi ON but PID OFF: setting processing of Kaons ON");
+  }
+  
+  // checking for weights source file
+  if(fFlowUseWeights && !fFlowWeightsPath.EqualTo(""))
+  {
+    fFlowWeightsFile = TFile::Open(Form("%s",fFlowWeightsPath.Data()));
+    if(!fFlowWeightsFile) { AliFatal("Flow weights file not found! Terminating!"); return kFALSE; }
+    if(!LoadWeights(kTRUE)) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
   }
 
   AliInfo("Preparing particle containers (std::vectors)");
