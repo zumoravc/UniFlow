@@ -505,7 +505,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhQAChargedEta[fiNumIndexQA];        //! eta dist of charged tracks
       TH1D*           fhQAChargedPhi[fiNumIndexQA];        //! phi dist of charged tracks
       TH1D*           fhQAChargedCharge[fiNumIndexQA];     //! charge dist of charged tracks
-      TH1D*           fhQAChargedFilterBit[fiNumIndexQA];  //! filter bit distribution of charged tracks
       TH1D*           fhQAChargedNumTPCcls[fiNumIndexQA];  //! dist of track number of TPC clusters
       TH1D*           fhQAChargedDCAxy[fiNumIndexQA];      //! dist of Charged DCA in transverse plane
       TH1D*           fhQAChargedDCAz[fiNumIndexQA];       //! dist of charged DCA in z coordinate
