@@ -115,7 +115,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4})); }
       void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4}, {gap})); }
 
-      void                    SetUseFixedMultBins(Bool_t fixed = kTRUE) { fUseFixedMultBins = fixed; }
       void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
       void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
@@ -210,10 +209,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Short_t    fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
       static const Short_t    fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
-
       const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
-      const static Int_t      fNumMultBins = 6; // number of multiplicity bins
-      static Double_t         fMultBins[fNumMultBins+1]; // multiplicity bins
 
       const char*             GetSpeciesName(PartSpecies species);
       const char*             GetSpeciesLabel(PartSpecies species);
@@ -325,7 +321,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
       Bool_t                  fProcessSpec[kUnknown];  // [false] flag for processing species
       // cuts & selection: flow related
-      Bool_t                  fUseFixedMultBins; // [kFALSE] setting fixed multiplicity bins
       Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
       Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights

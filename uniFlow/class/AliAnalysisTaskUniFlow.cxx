@@ -104,8 +104,6 @@ class AliAnalysisTaskUniFlow;
 
 ClassImp(AliAnalysisTaskUniFlow);
 
-Double_t AliAnalysisTaskUniFlow::fMultBins[] = {0.,5.,10.,20.,40.,60.,100.};
-
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fVector(),
   fVecFlowTask(),
@@ -153,7 +151,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFillQA(kTRUE),
 
   // flow related
-  fUseFixedMultBins(kFALSE),
   fCutFlowRFPsPtMin(0.2),
   fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
@@ -430,7 +427,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFillQA(kTRUE),
 
   // flow related
-  fUseFixedMultBins(kFALSE),
   fCutFlowRFPsPtMin(0.2),
   fCutFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
@@ -3161,15 +3157,6 @@ Short_t AliAnalysisTaskUniFlow::GetCentralityIndex()
     { AliWarning("Centrality percentile estimated not within 0-100 range. Returning -1"); return -1; }
 
     iCentralityIndex = (Short_t) dPercentile;
-  }
-
-  // transfering centrality percentile to multiplicity bin (if fixed size bins are used)
-  if(fUseFixedMultBins)
-  {
-    for(Int_t multIndex(0); multIndex < fNumMultBins; multIndex++)
-    {
-      if(iCentralityIndex >= fMultBins[multIndex] && iCentralityIndex < fMultBins[multIndex+1]) { iCentralityIndex = multIndex; break; }
-    }
   }
 
   return iCentralityIndex;
