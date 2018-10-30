@@ -115,8 +115,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4})); }
       void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4}, {gap})); }
 
-      void                    SetFlowRFPsPtMin(Double_t pt) { fCutFlowRFPsPtMin = pt; }
-      void                    SetFlowRFPsPtMax(Double_t pt) { fCutFlowRFPsPtMax = pt; }
+      void                    SetFlowRFPsPt(Double_t min, Double_t max) { fFlowRFPsPtMin = min; fFlowRFPsPtMax = max; }
+      void                    SetFlowPOIsPt(Double_t min, Double_t max) { fFlowPOIsPtMin = min; fFlowPOIsPtMax = max; }
+      void                    SetFlowEtaMax(Double_t max) { fFlowEtaMax = max; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
@@ -202,10 +203,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
       static const Short_t    fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
       static const Short_t    fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
-      const Double_t          fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
-      const Double_t          fFlowPOIsPtMax; // [15] (GeV/c) max pT treshold for POIs for differential flow
-      Int_t                   fFlowCentMin; // [set in InitializeTask()] min range for centrality/multiplicity histos
-      Int_t                   fFlowCentMax; // [set in InitializeTask()] max range for centrality/multiplicity histos
       static const Short_t    fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
       static const Short_t    fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
       static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
@@ -321,8 +318,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
       Bool_t                  fProcessSpec[kUnknown];  // [false] flag for processing species
       // cuts & selection: flow related
-      Double_t                fCutFlowRFPsPtMin; // [0] (GeV/c) min pT treshold for RFPs particle for reference flow
-      Double_t                fCutFlowRFPsPtMax; // [0] (GeV/c) max pT treshold for RFPs particle for reference flow
+      Double_t                fFlowRFPsPtMin; // [0.2] (GeV/c) min pT treshold for RFPs particle for reference flow
+      Double_t                fFlowRFPsPtMax; // [5.0] (GeV/c) max pT treshold for RFPs particle for reference flow
+      Double_t                fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
+      Double_t                fFlowPOIsPtMax; // [10] (GeV/c) max pT treshold for POIs for differential flow
+      Double_t                fFlowEtaMax; // [0.8] () max eta acceptance for flow particles (RFPs & POIs)
+      Int_t                   fFlowCentMin; // [set in InitializeTask()] min range for centrality/multiplicity histos
+      Int_t                   fFlowCentMax; // [set in InitializeTask()] max range for centrality/multiplicity histos
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
       Bool_t                  fFlowUse3Dweights; // [kFALSE] flag for using 3D GF weights, if kFALSE, 2D weights are expected

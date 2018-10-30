@@ -151,14 +151,15 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFillQA(kTRUE),
 
   // flow related
-  fCutFlowRFPsPtMin(0.2),
-  fCutFlowRFPsPtMax(5.0),
+  fFlowRFPsPtMin(0.2),
+  fFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
   fFlowPOIsPtMax(10.0),
-  fFlowFillWeights(kTRUE),
+  fFlowEtaMax(0.8),
   fFlowCentMin(0),
   fFlowCentMax(0),
   fFlowWeightsPath(),
+  fFlowFillWeights(kTRUE),
   fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
   fFlowUse3Dweights(kFALSE),
@@ -427,14 +428,15 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFillQA(kTRUE),
 
   // flow related
-  fCutFlowRFPsPtMin(0.2),
-  fCutFlowRFPsPtMax(5.0),
+  fFlowRFPsPtMin(0.2),
+  fFlowRFPsPtMax(5.0),
   fFlowPOIsPtMin(0.0),
   fFlowPOIsPtMax(10.0),
-  fFlowFillWeights(kTRUE),
+  fFlowEtaMax(0.8),
   fFlowCentMin(0),
   fFlowCentMax(0),
   fFlowWeightsPath(),
+  fFlowFillWeights(kTRUE),
   fFlowRunByRunWeights(kTRUE),
   fFlowUseWeights(kFALSE),
   fFlowUse3Dweights(kFALSE),
@@ -751,10 +753,11 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fFillQA: (Bool_t) %s\n",    fFillQA ? "kTRUE" : "kFALSE");
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { printf("      fProcessSpec[k%s]: (Bool_t) %s\n",   GetSpeciesName(PartSpecies(iSpec)), fProcessSpec[iSpec] ? "kTRUE" : "kFALSE"); }
   printf("   -------- Flow related ----------------------------------------\n");
-  printf("      fCutFlowRFPsPtMin: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMin);
-  printf("      fCutFlowRFPsPtMax: (Double_t) %g (GeV/c)\n",    fCutFlowRFPsPtMax);
+  printf("      fFlowRFPsPtMin: (Double_t) %g (GeV/c)\n",    fFlowRFPsPtMin);
+  printf("      fFlowRFPsPtMax: (Double_t) %g (GeV/c)\n",    fFlowRFPsPtMax);
   printf("      fFlowPOIsPtMin: (Double_t) %g (GeV/c)\n",    fFlowPOIsPtMin);
   printf("      fFlowPOIsPtMax: (Double_t) %g (GeV/c)\n",    fFlowPOIsPtMax);
+  printf("      fFlowEtaMax: (Double_t) %g (GeV/c)\n",    fFlowEtaMax);
   printf("      fFlowCentMin: (Int_t) %d (GeV/c)\n",    fFlowCentMin);
   printf("      fFlowCentMax: (Int_t) %d (GeV/c)\n",    fFlowCentMax);
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
@@ -894,7 +897,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 
   // checking cut setting
   AliInfo("Checking task parameters setting conflicts (ranges, etc)");
-  if(fCutFlowRFPsPtMin > 0. && fCutFlowRFPsPtMax > 0. && fCutFlowRFPsPtMin > fCutFlowRFPsPtMax)
+  if(fFlowRFPsPtMin > 0. && fFlowRFPsPtMax > 0. && fFlowRFPsPtMin > fFlowRFPsPtMax)
   {
     AliFatal("Cut: RFPs Pt range wrong! Terminating!");
     return kFALSE;
@@ -1210,7 +1213,7 @@ Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
     {
       multTPC32++;
       if(TMath::Abs(track->GetTOFsignalDz()) <= 10.0 && track->GetTOFsignal() >= 12000.0 && track->GetTOFsignal() <= 25000.0) { multTOF++; }
-      if((TMath::Abs(track->Eta())) < fCutChargedEtaMax && (track->GetTPCNcls() >= fCutChargedNumTPCclsMin) && (track->Pt() >= fCutFlowRFPsPtMin) && (track->Pt() < fCutFlowRFPsPtMax)) { multTrk++; }
+      if((TMath::Abs(track->Eta())) < fCutChargedEtaMax && (track->GetTPCNcls() >= fCutChargedNumTPCclsMin) && (track->Pt() >= fFlowRFPsPtMin) && (track->Pt() < fFlowRFPsPtMax)) { multTrk++; }
     }
 
     if(track->TestFilterBit(128)) { multTPC128++; }
@@ -1497,8 +1500,8 @@ Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track)
   // It is used to selecting RFPs out of selected charged tracks
   // OR for estimating autocorrelations for Charged & PID particles
   // *************************************************************
-  if(fCutFlowRFPsPtMin > 0.0 && track->Pt() < fCutFlowRFPsPtMin) return kFALSE;
-  if(fCutFlowRFPsPtMax > 0.0 && track->Pt() > fCutFlowRFPsPtMax) return kFALSE;
+  if(fFlowRFPsPtMin > 0.0 && track->Pt() < fFlowRFPsPtMin) return kFALSE;
+  if(fFlowRFPsPtMax > 0.0 && track->Pt() > fFlowRFPsPtMax) return kFALSE;
 
   return kTRUE;
 }
