@@ -172,7 +172,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventRejectAddPileUp(kTRUE),
 
   // charged tracks selection
-  fCutChargedEtaMax(0.8),
   fCutChargedDCAzMax(0.),
   fCutChargedDCAxyMax(0.),
   fCutChargedTrackFilterBit(96),
@@ -217,7 +216,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sDaughterPtMin(0.),
   fCutV0sDaughterPtMax(0.),
   fCutV0sDaughterEtaMax(0.8),
-  fCutV0sMotherEtaMax(0.8),
   fCutV0sMotherRapMax(0.),
   fCutV0sArmenterosAlphaK0sMin(0.2),
   fCutV0sArmenterosAlphaLambdaMax(0.),
@@ -232,7 +230,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutV0sLambdaProtonNumTPCSigmaMax(5.0),
 
   // phi selection
-  fCutPhiMotherEtaMax(0.8),
   fCutPhiInvMassMin(0.99),
   fCutPhiInvMassMax(1.07),
 
@@ -449,7 +446,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fEventRejectAddPileUp(kTRUE),
 
   // charged tracks selection
-  fCutChargedEtaMax(0.8),
   fCutChargedDCAzMax(0.),
   fCutChargedDCAxyMax(0.),
   fCutChargedTrackFilterBit(96),
@@ -494,7 +490,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sDaughterPtMin(0.),
   fCutV0sDaughterPtMax(0.),
   fCutV0sDaughterEtaMax(0.8),
-  fCutV0sMotherEtaMax(0.8),
   fCutV0sMotherRapMax(0.),
   fCutV0sArmenterosAlphaK0sMin(0.2),
   fCutV0sArmenterosAlphaLambdaMax(0.),
@@ -509,7 +504,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutV0sLambdaProtonNumTPCSigmaMax(5.0),
 
   // phi selection
-  fCutPhiMotherEtaMax(0.8),
   fCutPhiInvMassMin(0.99),
   fCutPhiInvMassMax(1.07),
 
@@ -771,7 +765,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("   -------- Charged tracks --------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
   printf("      fCutChargedNumTPCclsMin: (UShort_t) %d\n",    fCutChargedNumTPCclsMin);
-  printf("      fCutChargedEtaMax: (Double_t) %g\n",    fCutChargedEtaMax);
   printf("      fCutChargedDCAzMax: (Double_t) %g (cm)\n",    fCutChargedDCAzMax);
   printf("      fCutChargedDCAxyMax: (Double_t) %g (cm)\n",    fCutChargedDCAxyMax);
   printf("   -------- PID (pi,K,p) tracks ---------------------------------\n");
@@ -788,7 +781,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      SetPIDBayesRejectElectron: (Double_t) %g\n",    fCutPIDBayesRejectElectron);
   printf("      SetPIDBayesRejectMuon: (Double_t) %g\n",    fCutPIDBayesRejectMuon);
   printf("   -------- Phi candidates --------------------------------------\n");
-  printf("      fCutPhiMotherEtaMax: (Double_t) %g\n",    fCutPhiMotherEtaMax);
   printf("      fCutPhiInvMassMin: (Double_t) %g\n",    fCutPhiInvMassMin);
   printf("      fCutPhiInvMassMax: (Double_t) %g\n",    fCutPhiInvMassMax);
   printf("   -------- V0s candidates --------------------------------------\n");
@@ -814,7 +806,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutV0sDaughterPtMin: (Double_t) %g (GeV/c)\n",    fCutV0sDaughterPtMin);
   printf("      fCutV0sDaughterPtMax: (Double_t) %g (GeV/c)\n",    fCutV0sDaughterPtMax);
   printf("      fCutV0sDaughterEtaMax: (Double_t) %g ()\n",    fCutV0sDaughterEtaMax);
-  printf("      fCutV0sMotherEtaMax: (Double_t) %g ()\n",    fCutV0sMotherEtaMax);
   printf("      fCutV0sMotherRapMax: (Double_t) %g ()\n",    fCutV0sMotherRapMax);
   printf("      fCutV0sCPAK0sMin: (Double_t) %g ()\n",    fCutV0sCPAK0sMin);
   printf("      fCutV0sCPALambdaMin: (Double_t) %g ()\n",    fCutV0sCPALambdaMin);
@@ -1213,7 +1204,7 @@ Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
     {
       multTPC32++;
       if(TMath::Abs(track->GetTOFsignalDz()) <= 10.0 && track->GetTOFsignal() >= 12000.0 && track->GetTOFsignal() <= 25000.0) { multTOF++; }
-      if((TMath::Abs(track->Eta())) < fCutChargedEtaMax && (track->GetTPCNcls() >= fCutChargedNumTPCclsMin) && (track->Pt() >= fFlowRFPsPtMin) && (track->Pt() < fFlowRFPsPtMax)) { multTrk++; }
+      if((TMath::Abs(track->Eta())) < fFlowEtaMax && (track->GetTPCNcls() >= fCutChargedNumTPCclsMin) && (track->Pt() >= fFlowRFPsPtMin) && (track->Pt() < fFlowRFPsPtMax)) { multTrk++; }
     }
 
     if(track->TestFilterBit(128)) { multTPC128++; }
@@ -1404,6 +1395,19 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
     if(!IsChargedSelected(track)) { continue; }
 
+    // Checking if selected track is eligible for Ref. flow
+    if(IsWithinRefs(track)) {
+      fVector[kRefs]->push_back(track);
+      if(fFillQA) { FillQARefs(1,track); }
+      if(!FillFlowWeight(track, kRefs)) { AliFatal("Flow weight filling failed!"); return; }
+      iNumRefs++;
+    }
+
+    // pt-acceptance check for POIs (NB: due to different cuts for Refs & POIs)
+    if(fFlowPOIsPtMin > 0. && track->Pt() < fFlowPOIsPtMin) { continue; }
+    if(fFlowPOIsPtMax > 0. && track->Pt() > fFlowPOIsPtMax) { continue; }
+    fhChargedCounter->Fill("Pt",1);
+
     fVector[kCharged]->push_back(track);
     if(fFillQA) { FillQACharged(1,track); } // QA after selection
     if(!FillFlowWeight(track, kCharged)) { AliFatal("Flow weight filling failed!"); return; }
@@ -1421,16 +1425,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
         if(iPDG == 2212) { fhMCRecoAllProtonPt->Fill(track->Pt()); }
       }
     }
-
-    // Checking if selected track is eligible for Ref. flow
-    if(!IsWithinRefs(track)) { continue; }
-
-    // track is used for Ref. flow
-    fVector[kRefs]->push_back(track);
-    if(fFillQA) { FillQARefs(1,track); }
-    iNumRefs++;
-    if(!FillFlowWeight(track, kRefs)) { AliFatal("Flow weight filling failed!"); return; }
-  }
+  } // end-for {iTrack}
 
   if(fFillQA)
   {
@@ -1450,12 +1445,10 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
   if(!track) { return kFALSE; }
   fhChargedCounter->Fill("Input",1);
 
-  // pt
-  if(track->Pt() >= fFlowPOIsPtMax) { return kFALSE; }
-  fhChargedCounter->Fill("Pt",1);
+  // NB: pt moved out to FilterCharged due to different cuts for potentially overlapping POIs & RFPs
 
   // pseudorapidity (eta)
-  if(fCutChargedEtaMax > 0. && TMath::Abs(track->Eta()) >= fCutChargedEtaMax) { return kFALSE; }
+  if(fFlowEtaMax > 0. && TMath::Abs(track->Eta()) > fFlowEtaMax) { return kFALSE; }
   fhChargedCounter->Fill("Eta",1);
 
   // filter bit
@@ -1500,8 +1493,8 @@ Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track)
   // It is used to selecting RFPs out of selected charged tracks
   // OR for estimating autocorrelations for Charged & PID particles
   // *************************************************************
-  if(fFlowRFPsPtMin > 0.0 && track->Pt() < fFlowRFPsPtMin) return kFALSE;
-  if(fFlowRFPsPtMax > 0.0 && track->Pt() > fFlowRFPsPtMax) return kFALSE;
+  if(fFlowRFPsPtMin > 0.0 && track->Pt() < fFlowRFPsPtMin) { return kFALSE; }
+  if(fFlowRFPsPtMax > 0.0 && track->Pt() > fFlowRFPsPtMax) { return kFALSE; }
 
   return kTRUE;
 }
@@ -1918,8 +1911,9 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   fhV0sCounter->Fill("Daughters OK",1);
 
   // acceptance checks
-  if(fCutV0sMotherEtaMax > 0. && TMath::Abs(v0->Eta()) >= fCutV0sMotherEtaMax ) return kFALSE;
-  if(v0->Pt() >= fFlowPOIsPtMax) return kFALSE;
+  if(fFlowEtaMax > 0. && TMath::Abs(v0->Eta()) > fFlowEtaMax) { return kFALSE; }
+  if(fFlowPOIsPtMin > 0. && v0->Pt() < fFlowPOIsPtMin) { return kFALSE; }
+  if(fFlowPOIsPtMax > 0. && v0->Pt() > fFlowPOIsPtMax) { return kFALSE; }
   fhV0sCounter->Fill("Mother acceptance",1);
 
   if(fCutV0sDaughterPtMin > 0. && (daughterPos->Pt() <= fCutV0sDaughterPtMin  || daughterNeg->Pt() <= fCutV0sDaughterPtMin) ) return kFALSE;
@@ -2240,13 +2234,15 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       // filling QA BEFORE selection
       if(fFillQA) { FillQAPhi(0,mother); }
 
-      if(mother->M() < fCutPhiInvMassMin || mother->M() > fCutPhiInvMassMax) { delete mother; continue; }
+      if(fCutPhiInvMassMin > 0. && mother->M() < fCutPhiInvMassMin) { delete mother; continue; }
+      if(fCutPhiInvMassMax > 0. && mother->M() > fCutPhiInvMassMax) { delete mother; continue; }
       fhPhiCounter->Fill("InvMass",1);
 
-      if(mother->Pt() < fFlowPOIsPtMin || mother->Pt() > fFlowPOIsPtMax) { delete mother; continue; }
+      if(fFlowPOIsPtMin > 0. && mother->Pt() < fFlowPOIsPtMin) { delete mother; continue; }
+      if(fFlowPOIsPtMax > 0. && mother->Pt() > fFlowPOIsPtMax) { delete mother; continue; }
       fhPhiCounter->Fill("Pt",1);
 
-      if(fCutPhiMotherEtaMax > 0 && TMath::Abs(mother->Eta()) > fCutPhiMotherEtaMax) { delete mother; continue; }
+      if(fFlowEtaMax > 0. && TMath::Abs(mother->Eta()) > fFlowEtaMax) { delete mother; continue; }
       fhPhiCounter->Fill("Eta",1);
 
       // mother (phi) candidate passing all criteria (except for charge)
@@ -3411,6 +3407,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   // setting number of bins based on set range with fixed width
   const Int_t iPOIsPtNumBins = (Int_t) (fFlowPOIsPtMax - fFlowPOIsPtMin) / 0.1 + 0.5; // fixed width 0.1 GeV/c
+  const Int_t iFlowEtaNumBins = 2*fFlowEtaMax/0.05;
+  const Int_t iPhiNumBins = 100;
   const Int_t iMultNumBins = fFlowCentMax - fFlowCentMin; // fixed unit percentile or Nch bin width
 
   // creating output correlations profiles based on FlowTasks
@@ -3529,7 +3527,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     Int_t iNumBinsCand[SparseCand::kDim]; Double_t dMinCand[SparseCand::kDim]; Double_t dMaxCand[SparseCand::kDim];
     iNumBinsCand[SparseCand::kCent] = iMultNumBins; dMinCand[SparseCand::kCent] = fFlowCentMin; dMaxCand[SparseCand::kCent] = fFlowCentMax;
     iNumBinsCand[SparseCand::kPt] = iPOIsPtNumBins; dMinCand[SparseCand::kPt] = fFlowPOIsPtMin; dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
-    iNumBinsCand[SparseCand::kEta] = 2*fCutV0sMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutV0sMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutV0sMotherEtaMax;
+    iNumBinsCand[SparseCand::kEta] = iFlowEtaNumBins; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
 
     // species dependent
     if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
@@ -3547,7 +3545,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     if(fProcessSpec[kPhi])
     {
-      iNumBinsCand[SparseCand::kEta] = 2*fCutPhiMotherEtaMax/0.05; dMinCand[SparseCand::kEta] = -fCutPhiMotherEtaMax; dMaxCand[SparseCand::kEta] = fCutPhiMotherEtaMax;
+      iNumBinsCand[SparseCand::kEta] = iFlowEtaNumBins; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
       iNumBinsCand[SparseCand::kInvMass] = fPhiNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutPhiInvMassMin; dMaxCand[SparseCand::kInvMass] = fCutPhiInvMassMax;
 
       fhsPhiCandSig = new THnSparseD("fhsPhiCandSig",Form("#phi (Sig): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
@@ -3572,7 +3570,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       {
         const char* weightName = Form("fh3Weights%s",GetSpeciesName(PartSpecies(iSpec)));
         const char* weightLabel = Form("Weights: %s; #varphi; #eta; PV-z (cm)", GetSpeciesName(PartSpecies(iSpec)));
-        fh3Weights[iSpec] = new TH3D(weightName, weightLabel, 100,0.0,TMath::TwoPi(), 80,-0.8,0.8, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+        fh3Weights[iSpec] = new TH3D(weightName, weightLabel, iPhiNumBins,0.0,TMath::TwoPi(), iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
         fh3Weights[iSpec]->Sumw2();
         fFlowWeights->Add(fh3Weights[iSpec]);
       }
@@ -3582,13 +3580,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         if(fFlowUse3Dweights) {
           const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
           const char* weightLabel = Form("Weights (after): %s; #varphi; #eta; PV-z (cm)",GetSpeciesLabel(PartSpecies(iSpec)));
-          fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-0.8,0.8, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+          fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, iPhiNumBins,0,TMath::TwoPi(), iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
           fh3AfterWeights[iSpec]->Sumw2();
           fFlowWeights->Add(fh3AfterWeights[iSpec]);
         } else {
           const char* weightName = Form("fh2AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
           const char* weightLabel = Form("Weights (after): %s; #varphi; #eta;",GetSpeciesLabel(PartSpecies(iSpec)));
-          fh2AfterWeights[iSpec] = new TH2D(weightName,weightLabel, 100,0,TMath::TwoPi(), 80,-0.8,0.8);
+          fh2AfterWeights[iSpec] = new TH2D(weightName,weightLabel, iPhiNumBins,0,TMath::TwoPi(), iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax);
           fh2AfterWeights[iSpec]->Sumw2();
           fFlowWeights->Add(fh2AfterWeights[iSpec]);
         }
@@ -3683,11 +3681,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // charged (tracks) histograms
     fhRefsMult = new TH1D("fhRefsMult","RFPs: Multiplicity; multiplicity", 200,0,1000);
     fQACharged->Add(fhRefsMult);
-    fhRefsPt = new TH1D("fhRefsPt","RFPs: #it{p}_{T};  #it{p}_{T} (GeV/#it{c})", 300,0,30);
+    fhRefsPt = new TH1D("fhRefsPt","RFPs: #it{p}_{T};  #it{p}_{T} (GeV/#it{c})", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
     fQACharged->Add(fhRefsPt);
-    fhRefsEta = new TH1D("fhRefsEta","RFPs: #eta; #eta", 151,-1.5,1.5);
+    fhRefsEta = new TH1D("fhRefsEta","RFPs: #eta; #eta", iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax);
     fQACharged->Add(fhRefsEta);
-    fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", 100,0,TMath::TwoPi());
+    fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", iPhiNumBins,0,TMath::TwoPi());
     fQACharged->Add(fhRefsPhi);
     fpRefsMult = new TProfile("fpRefsMult","Ref mult; %s", iMultNumBins,fFlowCentMin,fFlowCentMax);
     fpRefsMult->Sumw2();
@@ -3703,35 +3701,35 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
       fhPIDMult[iPID] = new TH1D(Form("fhPID%sMult",sNamePID[iPID].Data()),Form("PID: %s: Multiplicity; multiplicity",sLabelPID[iPID].Data()), 200,0,200);
       fQAPID->Add(fhPIDMult[iPID]);
-      fhPIDPt[iPID] = new TH1D(Form("fhPID%sPt",sNamePID[iPID].Data()),Form("PID: %s: #it{p}_{T}; #it{p}_{T}",sLabelPID[iPID].Data()), 150,0.,30.);
+      fhPIDPt[iPID] = new TH1D(Form("fhPID%sPt",sNamePID[iPID].Data()),Form("PID: %s: #it{p}_{T}; #it{p}_{T}",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fQAPID->Add(fhPIDPt[iPID]);
-      fhPIDPhi[iPID] = new TH1D(Form("fhPID%sPhi",sNamePID[iPID].Data()),Form("PID: %s: #varphi; #varphi",sLabelPID[iPID].Data()), 100,0,TMath::TwoPi());
+      fhPIDPhi[iPID] = new TH1D(Form("fhPID%sPhi",sNamePID[iPID].Data()),Form("PID: %s: #varphi; #varphi",sLabelPID[iPID].Data()), iPhiNumBins,0,TMath::TwoPi());
       fQAPID->Add(fhPIDPhi[iPID]);
-      fhPIDEta[iPID] = new TH1D(Form("fhPID%sEta",sNamePID[iPID].Data()),Form("PID: %s: #eta; #eta",sLabelPID[iPID].Data()), 151,-1.5,1.5);
+      fhPIDEta[iPID] = new TH1D(Form("fhPID%sEta",sNamePID[iPID].Data()),Form("PID: %s: #eta; #eta",sLabelPID[iPID].Data()), iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax);
       fQAPID->Add(fhPIDEta[iPID]);
       fhPIDCharge[iPID] = new TH1D(Form("fhPID%sCharge",sNamePID[iPID].Data()),Form("PID: %s: charge; charge",sLabelPID[iPID].Data()), 3,-1.5,1.5);
       fQAPID->Add(fhPIDCharge[iPID]);
-      fh2PIDTPCdEdx[iPID] = new TH2D(Form("fh2PID%sTPCdEdx",sNamePID[iPID].Data()),Form("PID: %s: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx",sLabelPID[iPID].Data()), 200,0,20, 131,-10,1000);
+      fh2PIDTPCdEdx[iPID] = new TH2D(Form("fh2PID%sTPCdEdx",sNamePID[iPID].Data()),Form("PID: %s: TPC dE/dx; #it{p} (GeV/#it{c}); TPC dE/dx",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 131,-10,1000);
       fQAPID->Add(fh2PIDTPCdEdx[iPID]);
-      fh2PIDTOFbeta[iPID] = new TH2D(Form("fh2PID%sTOFbeta",sNamePID[iPID].Data()),Form("PID: %s: TOF #beta; #it{p} (GeV/#it{c});TOF #beta",sLabelPID[iPID].Data()), 200,0,20, 101,-0.1,1.5);
+      fh2PIDTOFbeta[iPID] = new TH2D(Form("fh2PID%sTOFbeta",sNamePID[iPID].Data()),Form("PID: %s: TOF #beta; #it{p} (GeV/#it{c});TOF #beta",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 101,-0.1,1.5);
       fQAPID->Add(fh2PIDTOFbeta[iPID]);
-      fh2PIDTPCnSigmaPion[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaPion",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), 200,0,20, 21,-11,10);
+      fh2PIDTPCnSigmaPion[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaPion",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
       fQAPID->Add(fh2PIDTPCnSigmaPion[iPID]);
-      fh2PIDTOFnSigmaPion[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaPion",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), 200,0,20, 21,-11,10);
+      fh2PIDTOFnSigmaPion[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaPion",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
       fQAPID->Add(fh2PIDTOFnSigmaPion[iPID]);
-      fh2PIDTPCnSigmaKaon[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaKaon",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), 200,0,20, 21,-11,10);
+      fh2PIDTPCnSigmaKaon[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaKaon",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
       fQAPID->Add(fh2PIDTPCnSigmaKaon[iPID]);
-      fh2PIDTOFnSigmaKaon[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaKaon",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), 200,0,20, 21,-11,10);
+      fh2PIDTOFnSigmaKaon[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaKaon",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (K hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
       fQAPID->Add(fh2PIDTOFnSigmaKaon[iPID]);
-      fh2PIDTPCnSigmaProton[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaProton",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), 200,0,20, 21,-11,10);
+      fh2PIDTPCnSigmaProton[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaProton",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
       fQAPID->Add(fh2PIDTPCnSigmaProton[iPID]);
-      fh2PIDTOFnSigmaProton[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaProton",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), 200,0,20, 21,-11,10);
+      fh2PIDTOFnSigmaProton[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaProton",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
       fQAPID->Add(fh2PIDTOFnSigmaProton[iPID]);
-      fh2PIDBayesPion[iPID] = new TH2D(Form("fh2PID%sBayesPion",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), 200,0,20, 50,0,1);
+      fh2PIDBayesPion[iPID] = new TH2D(Form("fh2PID%sBayesPion",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 50,0,1);
       fQAPID->Add(fh2PIDBayesPion[iPID]);
-      fh2PIDBayesKaon[iPID] = new TH2D(Form("fh2PID%sBayesKaon",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), 200,0,20, 50,0,1);
+      fh2PIDBayesKaon[iPID] = new TH2D(Form("fh2PID%sBayesKaon",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 50,0,1);
       fQAPID->Add(fh2PIDBayesKaon[iPID]);
-      fh2PIDBayesProton[iPID] = new TH2D(Form("fh2PID%sBayesProton",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), 200,0,20, 50,0,1);
+      fh2PIDBayesProton[iPID] = new TH2D(Form("fh2PID%sBayesProton",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (p hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 50,0,1);
       fQAPID->Add(fh2PIDBayesProton[iPID]);
     } //end-if {fProcessSpec[kPion]}
 
@@ -3749,11 +3747,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPhi->Add(fhPhiCharge);
       fhPhiBGCharge = new TH1D("fhPhiBGCharge","#phi (BG): charge; charge", 5,-2.5,2.5);
       fQAPhi->Add(fhPhiBGCharge);
-      fhPhiPt = new TH1D("fhPhiPt","#phi: #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", 150,0.,30.);
+      fhPhiPt = new TH1D("fhPhiPt","#phi: #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fQAPhi->Add(fhPhiPt);
-      fhPhiEta = new TH1D("fhPhiEta","#phi: #eta; #eta", 151,-1.5,1.5);
+      fhPhiEta = new TH1D("fhPhiEta","#phi: #eta; #eta", iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax);
       fQAPhi->Add(fhPhiEta);
-      fhPhiPhi = new TH1D("fhPhiPhi","#phi: #varphi; #varphi", 100,0.,TMath::TwoPi());
+      fhPhiPhi = new TH1D("fhPhiPhi","#phi: #varphi; #varphi", iPhiNumBins,0.,TMath::TwoPi());
       fQAPhi->Add(fhPhiPhi);
     } //end-if {fProcessPhi}
 

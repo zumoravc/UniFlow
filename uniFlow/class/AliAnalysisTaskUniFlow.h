@@ -128,7 +128,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       void                    SetRejectAddPileUp(Bool_t use = kTRUE) { fEventRejectAddPileUp = use; }
       // track setters
-      void                    SetChargedEtaMax(Double_t eta) { fCutChargedEtaMax = eta; }
       void                    SetChargedDCAzMax(Double_t dcaz) {  fCutChargedDCAzMax = dcaz; }
       void                    SetChargedDCAxyMax(Double_t dcaxy) {  fCutChargedDCAxyMax = dcaxy; }
       void                    SetChargedNumTPCclsMin(UShort_t tpcCls) { fCutChargedNumTPCclsMin = tpcCls; }
@@ -169,7 +168,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetV0sDaughterEtaMax(Double_t eta) { fCutV0sDaughterEtaMax = eta; }
       void					          SetV0sDaughterPtMin(Double_t pt) { fCutV0sDaughterPtMin = pt; }
       void					          SetV0sDaughterPtMax(Double_t pt) { fCutV0sDaughterPtMax = pt; }
-      void					          SetV0sMotherEtaMax(Double_t eta) { fCutV0sMotherEtaMax = eta; }
       void                    SetV0sMotherRapMax(Double_t rap) { fCutV0sMotherRapMax = rap; }
       void					          SetV0sK0sInvMassMin(Double_t mass) { fCutV0sInvMassK0sMin = mass; }
       void					          SetV0sK0sInvMassMax(Double_t mass) { fCutV0sInvMassK0sMax = mass; }
@@ -185,7 +183,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetV0sLambdaPionNumTPCSigmaMax(Float_t nSigma) { fCutV0sLambdaPionNumTPCSigmaMax = nSigma; }
       void                    SetV0sLambdaProtonNumTPCSigmaMax(Float_t nSigma) { fCutV0sLambdaProtonNumTPCSigmaMax = nSigma; }
       // phi setters
-      void					          SetPhiMotherEtaMax(Double_t eta) { fCutPhiMotherEtaMax = eta; }
       void					          SetPhiInvMassMin(Double_t mass) { fCutPhiInvMassMin = mass; }
       void					          SetPhiInvMassMax(Double_t mass) { fCutPhiInvMassMax = mass; }
 
@@ -340,7 +337,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
       UShort_t                fCutChargedNumTPCclsMin;  // (-) Minimal number of TPC clusters used for track reconstruction
-      Double_t                fCutChargedEtaMax; // (-) Maximum pseudorapidity range
       Double_t                fCutChargedDCAzMax; // (cm) Maximal DCA-z cuts for tracks (pile-up rejection suggested for LHC16)
       Double_t                fCutChargedDCAxyMax; // (cm) Maximal DCA-xy cuts for tracks (pile-up rejection suggested for LHC16)
       // cuts & selection: PID selection
@@ -379,7 +375,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutV0sDaughterPtMin; // (GeV/c) min pT of V0 daughters
       Double_t                fCutV0sDaughterPtMax; // (GeV/c) max pT of V0 daughters
       Double_t                fCutV0sDaughterEtaMax; // (-) max value of Eta of V0 daughters
-      Double_t                fCutV0sMotherEtaMax; // (-) max eta value of V0 mother
       Double_t                fCutV0sMotherRapMax; // (-) max rapidity value of V0 mother
       Double_t                fCutV0sCPAK0sMin;    // (-) min cosine of pointing angle of K0s candidate to PV
       Double_t                fCutV0sCPALambdaMin; // (-) min cosine of pointing angle of K0s candidate to PV
@@ -395,7 +390,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Float_t                 fCutV0sLambdaPionNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for pion PID (Lambda candidates)
       Float_t                 fCutV0sLambdaProtonNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for proton PID (Lambda candidates)
       // cuts & selection: phi
-      Double_t                fCutPhiMotherEtaMax; // (-) max value of phi candidate pseudorapidity
       Double_t                fCutPhiInvMassMin; // [0.99] (GeV/c2) min inv. mass window for selected phi candidates
       Double_t                fCutPhiInvMassMax; // [1.07] (GeV/c2) min inv. mass window for selected phi candidates
 
