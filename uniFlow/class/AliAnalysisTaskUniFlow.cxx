@@ -2530,11 +2530,7 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   // *************************************************************
   if(!track) { return; }
 
-  if(!fPIDResponse || !fPIDCombined)
-  {
-    AliError("AliPIDResponse or AliPIDCombined object not found!");
-    return;
-  }
+  if(!fPIDResponse || !fPIDCombined) { AliError("AliPIDResponse or AliPIDCombined object not found!"); return; }
 
   // TPC & TOF statuses & measures
   AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
@@ -2546,22 +2542,33 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   Bool_t bIsTPCok = HasTrackPIDTPC(track);
   Bool_t bIsTOFok = HasTrackPIDTOF(track);
 
-  Double_t dNumSigmaTPC[5] = {-11}; // array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
-  Double_t dNumSigmaTOF[5] = {-11}; // array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
-  Double_t dBayesProb[5] = {-0.1}; // Bayesian probability | array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+  Float_t dNumSigmaTPC[5] = {-11.,-11.,-11.,-11.,-11.}; // array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+  Float_t dNumSigmaTOF[5] = {-11.,-11.,-11.,-11.,-11.}; // array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+  Double_t dBayesProb[5] = {-0.1,-0.1,-0.1,-0.1,-0.1}; // Bayesian probability | array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
 
   Double_t dTPCdEdx = -5; // TPC dEdx for selected particle
   Double_t dTOFbeta = -0.05; //TOF beta for selected particle
 
-  // filling Bayesian PID probabilities to dBayesProb array
-  UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dBayesProb);
-
   Double_t dP = track->P();
   Double_t dPt = track->Pt();
 
+  // filling Bayesian PID probabilities to dBayesProb array
+  UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dBayesProb);
+
+  // check which detector were used
+  Bool_t bUsedTPC = kFALSE;
+  Bool_t bUsedTOF = kFALSE;
+
+  if(fCutUseBayesPID) {
+    bUsedTPC = (bIsTPCok && (iDetUsed & AliPIDResponse::kDetTPC));
+    bUsedTOF = iDetUsed & AliPIDResponse::kDetTOF;
+  } else {
+    bUsedTPC = bIsTPCok;
+    bUsedTOF = (bIsTOFok && dPt > 0.4);
+  }
+
   // detector status dependent
-  if(bIsTPCok)
-  {
+  if(bIsTPCok) {
     dNumSigmaTPC[0] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kElectron);
     dNumSigmaTPC[1] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kMuon);
     dNumSigmaTPC[2] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
@@ -2569,21 +2576,9 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
     dNumSigmaTPC[4] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
 
     dTPCdEdx = track->GetTPCsignal();
-    fhQAPIDTPCdEdx[iQAindex]->Fill(track->P(), dTPCdEdx);
-  }
-  else // TPC status not OK
-  {
-    dNumSigmaTPC[0] = -11.;
-    dNumSigmaTPC[1] = -11.;
-    dNumSigmaTPC[2] = -11.;
-    dNumSigmaTPC[3] = -11.;
-    dNumSigmaTPC[4] = -11.;
-
-    fhQAPIDTPCdEdx[iQAindex]->Fill(track->P(), -5.);
   }
 
-  if(bIsTOFok)
-  {
+  if(bIsTOFok) {
     dNumSigmaTOF[0] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kElectron);
     dNumSigmaTOF[1] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kMuon);
     dNumSigmaTOF[2] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion);
@@ -2593,21 +2588,14 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
     Double_t dTOF[5];
     track->GetIntegratedTimes(dTOF);
     dTOFbeta = dTOF[0] / track->GetTOFsignal();
-    fhQAPIDTOFbeta[iQAindex]->Fill(dP,dTOFbeta);
-  }
-  else // TOF status not OK
-  {
-    dNumSigmaTOF[0] = -11.;
-    dNumSigmaTOF[1] = -11.;
-    dNumSigmaTOF[2] = -11.;
-    dNumSigmaTOF[3] = -11.;
-    dNumSigmaTOF[4] = -11.;
-
-    fhQAPIDTOFbeta[iQAindex]->Fill(track->P(),-0.05);
   }
 
+  if(iQAindex == 0 || bUsedTPC) { fhQAPIDTPCdEdx[iQAindex]->Fill(track->P(), dTPCdEdx); }
+  if(iQAindex == 0 || bUsedTOF) { fhQAPIDTOFbeta[iQAindex]->Fill(dP,dTOFbeta); }
 
   if(species == kUnknown) { return; }
+
+  // Here only selected particles (and iQAindex == 1 by construction)
 
   Int_t iPID = species - 2; // NB: translation from PartSpecies to PID QA index
 
@@ -2615,17 +2603,24 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   fhPIDPhi[iPID]->Fill(track->Phi());
   fhPIDEta[iPID]->Fill(track->Eta());
   fhPIDCharge[iPID]->Fill(track->Charge());
-  fh2PIDTPCdEdx[iPID]->Fill(dPt,dTPCdEdx);
-  fh2PIDTOFbeta[iPID]->Fill(dPt,dTOFbeta);
-  fh2PIDTPCnSigmaPion[iPID]->Fill(dPt,dNumSigmaTPC[2]);
-  fh2PIDTOFnSigmaPion[iPID]->Fill(dPt,dNumSigmaTOF[2]);
-  fh2PIDTPCnSigmaKaon[iPID]->Fill(dPt,dNumSigmaTPC[3]);
-  fh2PIDTOFnSigmaKaon[iPID]->Fill(dPt,dNumSigmaTOF[3]);
-  fh2PIDTPCnSigmaProton[iPID]->Fill(dPt,dNumSigmaTPC[4]);
-  fh2PIDTOFnSigmaProton[iPID]->Fill(dPt,dNumSigmaTOF[4]);
+
   fh2PIDBayesPion[iPID]->Fill(dPt,dBayesProb[2]);
   fh2PIDBayesKaon[iPID]->Fill(dPt,dBayesProb[3]);
   fh2PIDBayesProton[iPID]->Fill(dPt,dBayesProb[4]);
+
+  if(bUsedTPC) {
+    fh2PIDTPCdEdx[iPID]->Fill(dPt,dTPCdEdx);
+    fh2PIDTPCnSigmaPion[iPID]->Fill(dPt,dNumSigmaTPC[2]);
+    fh2PIDTPCnSigmaKaon[iPID]->Fill(dPt,dNumSigmaTPC[3]);
+    fh2PIDTPCnSigmaProton[iPID]->Fill(dPt,dNumSigmaTPC[4]);
+  }
+
+  if(bUsedTOF) {
+    fh2PIDTOFbeta[iPID]->Fill(dPt,dTOFbeta);
+    fh2PIDTOFnSigmaPion[iPID]->Fill(dPt,dNumSigmaTOF[2]);
+    fh2PIDTOFnSigmaKaon[iPID]->Fill(dPt,dNumSigmaTOF[3]);
+    fh2PIDTOFnSigmaProton[iPID]->Fill(dPt,dNumSigmaTOF[4]);
+  }
 
   return;
 }
