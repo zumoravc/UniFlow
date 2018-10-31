@@ -435,7 +435,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*           fhPIDEta[3]; //! eta distribution of selected pions
       TH1D*           fhPIDCharge[3]; //! charge distribution of selected pions
       TH2D*           fh2PIDTPCdEdx[3]; //! TPC dEdx response of selected pions
+      TH2D*           fh2PIDTPCdEdxDelta[3]; //! TPC delta dEdx (measured - expected) response of selected pions
       TH2D*           fh2PIDTOFbeta[3]; //! TOF beta of selected pions
+      TH2D*           fh2PIDTOFbetaDelta[3]; //! TOF delta beta (measured - expected) of selected pions
       TH2D*           fh2PIDTPCnSigmaPion[3]; //! TPC nSigma vs pT for selected pions (pion hypothesis)
       TH2D*           fh2PIDTOFnSigmaPion[3]; //! TOF nSigma vs pT for selected pions (pion hypothesis)
       TH2D*           fh2PIDBayesPion[3]; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
