@@ -863,11 +863,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   fPIDCombined = new AliPIDCombined();
-  if(!fPIDCombined)
-  {
-    AliFatal("AliPIDCombined object not found! Terminating!");
-    return kFALSE;
-  }
   fPIDCombined->SetDefaultTPCPriors();
   fPIDCombined->SetSelectedSpecies(5); // all particle species
   fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTPC+AliPIDResponse::kDetTOF); // setting TPC + TOF mask
@@ -2432,25 +2427,30 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   if(!bIsTPCok) { return kUnknown; }
   // TODO: TOF check???
 
-  if(fCutUseBayesPID)
-  {
+  if(fCutUseBayesPID) {
     // use Bayesian PID
-    Double_t dProbPID[5] = {0.}; // array for Bayes PID probabilities:  0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+    Double_t dProbPID[5] = {-999.,-999.,-999.,-999.,-999.}; // array for Bayes PID probabilities:  0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
     UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dProbPID); // filling probabilities to dPropPID array
+
+    // check which detector were used
+    // Bool_t bUsedTPC = iDetUsed & AliPIDResponse::kDetTPC;
+    // Bool_t bUsedTOF = iDetUsed & AliPIDResponse::kDetTOF;
+    // Bool_t bUsedTPCandTOF = (bUsedTPC && bUsedTOF);
+    // printf("   Selected: TPC:%d && TOF:%d) == %d\n",bUsedTPC,bUsedTOF,bUsedTPCandTOF);
+
     Double_t dMaxProb = TMath::MaxElement(5,dProbPID);
     // printf("PID Prob: e %g | mu %g | pi %g | K %g | p %g ||| MAX %g \n",dProbPID[0],dProbPID[1],dProbPID[2],dProbPID[3],dProbPID[4],dMaxProb);
 
     // electron and mion rejection
-    if(dProbPID[0] >= fCutPIDBayesRejectElectron || dProbPID[1] >= fCutPIDBayesRejectMuon) return kUnknown;
+    if(fCutPIDBayesRejectElectron > 0.0 && dProbPID[0] >= fCutPIDBayesRejectElectron) { return kUnknown; }
+    if(fCutPIDBayesRejectMuon > 0.0 && dProbPID[1] >= fCutPIDBayesRejectMuon) { return kUnknown; }
 
     // checking the PID probability
     // TODO: think about: if Pion has maximum probibility < fCutBayesPIDPion, track is rejected -> is it good?
     if(dMaxProb == dProbPID[2] && dProbPID[2] >= fCutPIDBayesPionMin) return kPion;
     if(dMaxProb == dProbPID[3] && dProbPID[3] >= fCutPIDBayesKaonMin) return kKaon;
     if(dMaxProb == dProbPID[4] && dProbPID[4] >= fCutPIDBayesProtonMin) return kProton;
-  }
-  else
-  {
+  } else {
     // use nSigma cuts (based on combination of TPC / TOF nSigma cuts
     const Double_t dPt = track->Pt();
 
@@ -2458,8 +2458,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     Float_t dNumSigmaTOF[5] = {-99.,-99.,-99.,-99.,-99.}; // TOF nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
 
     // filling nSigma arrays
-    if(bIsTPCok) // should be anyway
-    {
+    if(bIsTPCok) {
       dNumSigmaTPC[0] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kElectron));
       dNumSigmaTPC[1] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kMuon));
       dNumSigmaTPC[2] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion));
@@ -2467,8 +2466,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
       dNumSigmaTPC[4] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton));
     }
 
-    if(bIsTOFok) // should be anyway
-    {
+    if(bIsTOFok) {
       dNumSigmaTOF[0] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kElectron));
       dNumSigmaTOF[1] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kMuon));
       dNumSigmaTOF[2] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion));
@@ -2477,8 +2475,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     }
 
     // TPC nSigma cuts
-    if(dPt <= 0.4)
-    {
+    if(dPt <= 0.4) {
       Float_t dMinSigmasTPC = TMath::MinElement(5,dNumSigmaTPC);
 
       // electron rejection
@@ -2491,16 +2488,14 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     // combined TPC + TOF nSigma cuts
     // NB: for testing of efficiency removed the upper limmit for PID
     // if(dPt > 0.4 && dPt < 4.0)
-    if(dPt > 0.4)
-    {
+    if(dPt > 0.4) {
       Float_t dNumSigmaCombined[5] = {-99.,-99.,-99.,-99.,-99.};
 
       // discard candidates if no TOF is available if cut is on
       if(fCutPIDnSigmaCombinedTOFrejection && !bIsTOFok) { return kUnknown; }
 
       // calculating combined nSigmas
-      for(Short_t i(0); i < 5; i++)
-      {
+      for(Short_t i(0); i < 5; i++) {
         if(bIsTOFok) { dNumSigmaCombined[i] = TMath::Sqrt(dNumSigmaTPC[i]*dNumSigmaTPC[i] + dNumSigmaTOF[i]*dNumSigmaTOF[i]); }
         else { dNumSigmaCombined[i] = dNumSigmaTPC[i]; }
       }
