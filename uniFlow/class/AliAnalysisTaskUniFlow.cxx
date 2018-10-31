@@ -2542,9 +2542,11 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   Bool_t bIsTPCok = HasTrackPIDTPC(track);
   Bool_t bIsTOFok = HasTrackPIDTOF(track);
 
+  Double_t dBayesProb[5] = {-0.1,-0.1,-0.1,-0.1,-0.1}; // Bayesian probability | array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
   Float_t dNumSigmaTPC[5] = {-11.,-11.,-11.,-11.,-11.}; // array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
   Float_t dNumSigmaTOF[5] = {-11.,-11.,-11.,-11.,-11.}; // array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
-  Double_t dBayesProb[5] = {-0.1,-0.1,-0.1,-0.1,-0.1}; // Bayesian probability | array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+  Double_t dTPCdEdxDelta[5] = {-999.0,-999.0,-999.0,-999.0,-999.0}; // expected value TPC dEdx for selected particle
+  Double_t dTOFbetaDelta[5] = {-999.0,-999.0,-999.0,-999.0,-999.0}; // expected value TPC dEdx for selected particle
 
   Double_t dTPCdEdx = -5; // TPC dEdx for selected particle
   Double_t dTOFbeta = -0.05; //TOF beta for selected particle
@@ -2575,6 +2577,12 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
     dNumSigmaTPC[3] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
     dNumSigmaTPC[4] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
 
+    dTPCdEdxDelta[0] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kElectron);
+    dTPCdEdxDelta[1] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kMuon);
+    dTPCdEdxDelta[2] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kPion);
+    dTPCdEdxDelta[3] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kKaon);
+    dTPCdEdxDelta[4] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kProton);
+
     dTPCdEdx = track->GetTPCsignal();
   }
 
@@ -2584,6 +2592,13 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
     dNumSigmaTOF[2] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion);
     dNumSigmaTOF[3] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
     dNumSigmaTOF[4] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton);
+
+    dTOFbetaDelta[0] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kElectron);
+    dTOFbetaDelta[1] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kMuon);
+    dTOFbetaDelta[2] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kPion);
+    dTOFbetaDelta[3] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kKaon);
+    dTOFbetaDelta[4] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kProton);
+
 
     Double_t dTOF[5];
     track->GetIntegratedTimes(dTOF);
