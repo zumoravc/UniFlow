@@ -970,6 +970,12 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fEventAOD = dynamic_cast<AliAODEvent*>(InputEvent());
   if(!fEventAOD) { return; }
 
+  // loading AliPIDResponse
+  AliAnalysisManager* man = AliAnalysisManager::GetAnalysisManager();
+  AliInputEventHandler* inputHandler = (AliInputEventHandler*) (man->GetInputEventHandler());
+  fPIDResponse = inputHandler->GetPIDResponse();
+  if(!fPIDResponse) { AliFatal("AliPIDResponse not attached!"); return; }
+
   // loading array with MC particles
   if(fMC)
   {
