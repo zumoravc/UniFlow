@@ -2647,11 +2647,13 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
 
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
+    if(!fProcessSpec[iSpec]) { continue; }
     // check if FlowTask should be done for all flow particles (RFP/POI/Both)
     if(iSpec == kRefs && !task->fbDoRefs) { continue; }
     if(iSpec != kRefs && !task->fbDoPOIs) { continue; }
 
-    if(!fProcessSpec[kPion] || !fProcessSpec[kKaon] || !fProcessSpec[kProton]) { continue; } // NB: aka process PID (not just Kaons for Phi)
+    // NB: skip flow if Kaons are used only for Phi (flow not needed) not as full PID
+    if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
     if(iSpec == kRefs) {
       FillRefsVectors(dGap);
