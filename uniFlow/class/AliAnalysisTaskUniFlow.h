@@ -98,7 +98,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       virtual void            Terminate(Option_t* option); // called after all events are processed
       // analysis setters
       void                    SetRunMode(RunMode mode = kFull) { fRunMode = mode; }
-      void                    SetNumEventsAnalyse(Short_t num) { fNumEventsAnalyse = num; }
+      void                    SetNumEventsAnalyse(Int_t num) { fNumEventsAnalyse = num; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
       void                    SetMC(Bool_t mc = kTRUE) { fMC = mc; }
       void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
@@ -198,12 +198,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
       const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
       const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
-      static const Short_t    fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
-      static const Short_t    fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
-      static const Short_t    fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
-      static const Short_t    fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
-      static const Short_t    fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
-      const static Short_t    fNumSamples = 10; // overall number of samples (from random sampling) used
+      static const Int_t      fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
+      static const Int_t      fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
+      static const Int_t      fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
+      static const Int_t      fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
+      static const Int_t      fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
+      static const Int_t      fNumSamples = 10; // overall number of samples (from random sampling) used
 
       const char*             GetSpeciesName(PartSpecies species);
       const char*             GetSpeciesLabel(PartSpecies species);
@@ -219,9 +219,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
       Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
       Bool_t                  IsEventRejectedAddPileUp(); // additional pile-up rejection for Run2 Pb-Pb
-      void                    FillEventsQA(const Short_t iQAindex); // filling QA plots related to event selection
-      Short_t                 GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
-      Short_t                 GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
+      Int_t                   GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
+      Int_t                   GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
       const char*             GetMultiEstimatorLabel(MultiEst est); // returns mult/cent estimator string with label or 'n/a' if not available
 
       void                    CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0); // wrapper for correlations methods
@@ -242,14 +241,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
       Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
       Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
-      Short_t                 IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
+      Int_t                   IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
       AliPicoTrack*           MakeMother(const AliAODTrack* part1, const AliAODTrack* part2); // Combine two prongs into a mother particle stored in AliPicoTrack object
       void                    FillSparseCand(THnSparse* sparse, AliVTrack* track); // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
-      void                    FillQARefs(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
-      void                    FillQACharged(const Short_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
-      void                    FillQAPID(const Short_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
-      void                    FillQAV0s(const Short_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Short_t bIsLambda = 2); // filling QA plots for V0s candidates
-      void                    FillQAPhi(const Short_t iQAindex, const AliPicoTrack* part = 0x0); // filling QA plots for V0s candidates
+      void                    FillEventsQA(const Int_t iQAindex); // filling QA plots related to event selection
+      void                    FillQARefs(const Int_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
+      void                    FillQACharged(const Int_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
+      void                    FillQAPID(const Int_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
+      void                    FillQAV0s(const Int_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Int_t bIsLambda = 2); // filling QA plots for V0s candidates
+      void                    FillQAPhi(const Int_t iQAindex, const AliPicoTrack* part = 0x0); // filling QA plots for V0s candidates
 
       // Flow related methods
       void                    FillRefsVectors(const Double_t dGap); // fill flow vector Q with RFPs for reference flow
@@ -257,31 +257,31 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    ResetFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
       void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
 
-      TComplex                Q(const Short_t n, const Short_t p);
-      TComplex                QGapPos(const Short_t n, const Short_t p);
-      TComplex                QGapNeg(const Short_t n, const Short_t p);
-      TComplex                QGapMid(const Short_t n, const Short_t p);
-      TComplex                P(const Short_t n, const Short_t p);
-      TComplex                PGapPos(const Short_t n, const Short_t p);
-      TComplex                PGapNeg(const Short_t n, const Short_t p);
-      TComplex                S(const Short_t n, const Short_t p);
+      TComplex                Q(const Int_t n, const Int_t p);
+      TComplex                QGapPos(const Int_t n, const Int_t p);
+      TComplex                QGapNeg(const Int_t n, const Int_t p);
+      TComplex                QGapMid(const Int_t n, const Int_t p);
+      TComplex                P(const Int_t n, const Int_t p);
+      TComplex                PGapPos(const Int_t n, const Int_t p);
+      TComplex                PGapNeg(const Int_t n, const Int_t p);
+      TComplex                S(const Int_t n, const Int_t p);
 
-      TComplex                Two(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (no eta gap)
-      TComplex                TwoGap(const Short_t n1, const Short_t n2); // Two particle reference correlation calculations (with eta gap)
-      TComplex                Three(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle reference correlation calculations (no eta gap)
-      TComplex                Four(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
-      TComplex                FourGap(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
-      TComplex                Four3sub(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (with 3 sub-events)
+      TComplex                Two(const Int_t n1, const Int_t n2); // Two particle reference correlation calculations (no eta gap)
+      TComplex                TwoGap(const Int_t n1, const Int_t n2); // Two particle reference correlation calculations (with eta gap)
+      TComplex                Three(const Int_t n1, const Int_t n2, const Int_t n3); // Three particle reference correlation calculations (no eta gap)
+      TComplex                Four(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                FourGap(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                Four3sub(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (with 3 sub-events)
 
-      TComplex                TwoDiff(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (no eta gap)
-      TComplex                TwoDiffGapPos(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (with eta gap)
-      TComplex                TwoDiffGapNeg(const Short_t n1, const Short_t n2); // Two particle diff. correlation calculations (with eta gap)
-      TComplex                ThreeDiff(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle diff. correlation calculations (no eta gap)
-      TComplex                ThreeDiffGapPos(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle diff. correlation calculations (with eta gap)
-      TComplex                ThreeDiffGapNeg(const Short_t n1, const Short_t n2, const Short_t n3); // Three particle diff. correlation calculations (with eta gap)
-      TComplex                FourDiff(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (no eta gap)
-      TComplex                FourDiffGapPos(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (with eta gap)
-      TComplex                FourDiffGapNeg(const Short_t n1, const Short_t n2, const Short_t n3, const Short_t n4); // Four particle reference correlation calculations (with eta gap)
+      TComplex                TwoDiff(const Int_t n1, const Int_t n2); // Two particle diff. correlation calculations (no eta gap)
+      TComplex                TwoDiffGapPos(const Int_t n1, const Int_t n2); // Two particle diff. correlation calculations (with eta gap)
+      TComplex                TwoDiffGapNeg(const Int_t n1, const Int_t n2); // Two particle diff. correlation calculations (with eta gap)
+      TComplex                ThreeDiff(const Int_t n1, const Int_t n2, const Int_t n3); // Three particle diff. correlation calculations (no eta gap)
+      TComplex                ThreeDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3); // Three particle diff. correlation calculations (with eta gap)
+      TComplex                ThreeDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3); // Three particle diff. correlation calculations (with eta gap)
+      TComplex                FourDiff(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (no eta gap)
+      TComplex                FourDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (with eta gap)
+      TComplex                FourDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (with eta gap)
 
       // properties
       AliAODEvent*            fEventAOD; //! AOD event countainer
@@ -292,10 +292,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TClonesArray*           fArrayMC; //! input list of MC particles
       Bool_t                  fMC; // is running on mc?
       Bool_t                  fInit; // initialization check
-      Short_t                 fIndexSampling; // sampling index (randomly generated)
-      Short_t                 fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
-      Short_t                 fEventCounter; // event counter (used for local test runmode purpose)
-      Short_t                 fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
+      Int_t                   fIndexSampling; // sampling index (randomly generated)
+      Int_t                   fIndexCentrality; // centrality bin index (based on centrality est. or number of selected tracks)
+      Int_t                   fEventCounter; // event counter (used for local test runmode purpose)
+      Int_t                   fNumEventsAnalyse; // [50] number of events to be analysed / after passing selection (only in test mode)
       Int_t                   fRunNumber; // [-1] run number of previous event (not the current one)
 
       TComplex                fFlowVecQpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
