@@ -2650,18 +2650,21 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
     if(!fProcessSpec[iSpec]) { continue; }
-    // check if FlowTask should be done for all flow particles (RFP/POI/Both)
-    if(iSpec == kRefs && !task->fbDoRefs) { continue; }
-    if(iSpec != kRefs && !task->fbDoPOIs) { continue; }
-
-    // NB: skip flow if Kaons are used only for Phi (flow not needed) not as full PID
-    if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
     if(iSpec == kRefs) {
+      // check if FlowTask should be done for all flow particles (RFP/POI/Both)
+      if(!task->fbDoRefs) { continue; }
+
       FillRefsVectors(dGap);
       CalculateCorrelations(task, PartSpecies(iSpec));
       continue; // NO need to go further
     }
+
+    // Onwards only POIs survive
+    if(!task->fbDoPOIs) { continue; }
+
+    // NB: skip flow if Kaons are used only for Phi (flow not needed) not as full PID
+    if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
     // loading (generic) profile to acess axes and bins
     TH1* genProf = (TH1*) fListFlow[iSpec]->FindObject(Form("%s_Pos_sample0",task->fsName.Data()));
