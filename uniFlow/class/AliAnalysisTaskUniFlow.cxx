@@ -147,7 +147,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
-  fSampling(kTRUE),
+  fSampling(kFALSE),
   fFillQA(kTRUE),
 
   // flow related
@@ -158,6 +158,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowEtaMax(0.8),
   fFlowCentMin(0),
   fFlowCentMax(0),
+  fNumSamples(1),
   fFlowWeightsPath(),
   fFlowFillWeights(kTRUE),
   fFlowRunByRunWeights(kTRUE),
@@ -421,7 +422,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
-  fSampling(kTRUE),
+  fSampling(kFALSE),
   fFillQA(kTRUE),
 
   // flow related
@@ -432,6 +433,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowEtaMax(0.8),
   fFlowCentMin(0),
   fFlowCentMax(0),
+  fNumSamples(1),
   fFlowWeightsPath(),
   fFlowFillWeights(kTRUE),
   fFlowRunByRunWeights(kTRUE),
@@ -880,9 +882,9 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   if(fFlowNumWeightPowersMax < 5) { AliFatal("Low range of flow vector weight dimension! Not enought for <4>!"); return kFALSE; }
   // TODO fFlowNumHarmonicsMax;
 
-  if(fSampling && fNumSamples == 0)
+  if(fSampling && fNumSamples < 2)
   {
-    AliFatal("Sampling used, but number of samples is 0! Terminating!");
+    AliFatal("Sampling used, but number of samples < 2! Terminating!");
     return kFALSE;
   }
 
@@ -3111,17 +3113,16 @@ Int_t AliAnalysisTaskUniFlow::GetSamplingIndex()
   // Assessing sampling index based on generated random number
   // returns centrality index
   // *************************************************************
+  if(!fSampling) { return 0; }
+
+  TRandom3 rr(0);
+  Double_t ranNum = rr.Rndm(); // getting random number in (0,1)
+  Double_t generated = ranNum * fNumSamples; // getting random number in range (0, fNumSamples)
+
+  // finding right index for sampling based on generated number and total number of samples
   Int_t index = 0;
-
-  if(fSampling && fNumSamples > 1) {
-    TRandom3 rr(0);
-    Double_t ranNum = rr.Rndm(); // getting random number in (0,1)
-    Double_t generated = ranNum * fNumSamples; // getting random number in range (0, fNumSamples)
-
-    // finding right index for sampling based on generated number and total number of samples
-    for(Int_t i(0); i < fNumSamples; ++i) {
-      if(generated < (i+1)) { index = i; break; }
-    }
+  for(Int_t i(0); i < fNumSamples; ++i) {
+    if(generated < (i+1)) { index = i; break; }
   }
 
   return index;
@@ -3431,7 +3432,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
         for(Int_t iSample(0); iSample < fNumSamples; ++iSample)
         {
-          if(!fSampling && iSample > 0) { break; }
+          if(iSample > 0 && !fSampling) { break; }
           if(iSample > 0 && (iSpec == kK0s || iSpec == kLambda || iSpec == kPhi)) { break; } // reconstructed are not sampled
 
           TH1* profile = 0x0;

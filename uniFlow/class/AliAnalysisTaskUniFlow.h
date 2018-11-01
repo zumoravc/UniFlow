@@ -101,9 +101,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetNumEventsAnalyse(Int_t num) { fNumEventsAnalyse = num; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
       void                    SetMC(Bool_t mc = kTRUE) { fMC = mc; }
-      void                    SetSampling(Bool_t sample = kTRUE) { fSampling = sample; }
+      void                    SetSampling(Bool_t sample = kTRUE, Int_t iNum = 10) { fSampling = sample; fNumSamples = iNum; }
       void                    SetFillQAhistos(Bool_t fill = kTRUE) { fFillQA = fill; }
-      //void                    SetNumberOfSamples(Short_t numSamples = 10) { fNumSamples = numSamples; } // not implemented yet
       void                    SetProcessPID(Bool_t use = kTRUE) { fProcessSpec[kPion] = use; fProcessSpec[kKaon] = use; fProcessSpec[kProton] = use; }
       void                    SetProcessV0s(Bool_t use = kTRUE) { fProcessSpec[kK0s] = use; fProcessSpec[kLambda] = use; }
       void                    SetProcessPhi(Bool_t use = kTRUE) { fProcessSpec[kPhi] = use; }
@@ -203,7 +202,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Int_t      fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
       static const Int_t      fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
       static const Int_t      fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
-      static const Int_t      fNumSamples = 10; // overall number of samples (from random sampling) used
 
       const char*             GetSpeciesName(PartSpecies species);
       const char*             GetSpeciesLabel(PartSpecies species);
@@ -311,7 +309,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
       AnalType                fAnalType; // analysis type: AOD / ESD
-      Bool_t                  fSampling;      // Do random sampling ? (estimation of vn stat. uncertanity)
+      Bool_t                  fSampling; // [kFALSE] Do random sampling ? (estimation of vn stat. uncertanity)
       Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
       Bool_t                  fProcessSpec[kUnknown];  // [false] flag for processing species
       // cuts & selection: flow related
@@ -322,6 +320,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fFlowEtaMax; // [0.8] () max eta acceptance for flow particles (RFPs & POIs)
       Int_t                   fFlowCentMin; // [set in InitializeTask()] min range for centrality/multiplicity histos
       Int_t                   fFlowCentMax; // [set in InitializeTask()] max range for centrality/multiplicity histos
+      Int_t                   fNumSamples; // [1] overall number of samples (from random sampling) used
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
       Bool_t                  fFlowUse3Dweights; // [kFALSE] flag for using 3D GF weights, if kFALSE, 2D weights are expected
