@@ -298,15 +298,21 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fh2PIDTPCdEdxDelta(),
   fh2PIDTOFbeta(),
   fh2PIDTOFbetaDelta(),
+  fh2PIDBayesElectron(),
+  fh2PIDBayesMuon(),
+  fh2PIDBayesPion(),
+  fh2PIDBayesKaon(),
+  fh2PIDBayesProton(),
+  fh2PIDTPCnSigmaElectron(),
+  fh2PIDTOFnSigmaElectron(),
+  fh2PIDTPCnSigmaMuon(),
+  fh2PIDTOFnSigmaMuon(),
   fh2PIDTPCnSigmaPion(),
   fh2PIDTOFnSigmaPion(),
-  fh2PIDBayesPion(),
   fh2PIDTPCnSigmaKaon(),
   fh2PIDTOFnSigmaKaon(),
-  fh2PIDBayesKaon(),
   fh2PIDTPCnSigmaProton(),
   fh2PIDTOFnSigmaProton(),
-  fh2PIDBayesProton(),
   fhQAPIDTPCstatus(),
   fhQAPIDTOFstatus(),
   fhQAPIDTPCdEdx(),
@@ -572,15 +578,21 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fh2PIDTPCdEdxDelta(),
   fh2PIDTOFbeta(),
   fh2PIDTOFbetaDelta(),
+  fh2PIDBayesElectron(),
+  fh2PIDBayesMuon(),
+  fh2PIDBayesPion(),
+  fh2PIDBayesKaon(),
+  fh2PIDBayesProton(),
+  fh2PIDTPCnSigmaElectron(),
+  fh2PIDTOFnSigmaElectron(),
+  fh2PIDTPCnSigmaMuon(),
+  fh2PIDTOFnSigmaMuon(),
   fh2PIDTPCnSigmaPion(),
   fh2PIDTOFnSigmaPion(),
-  fh2PIDBayesPion(),
   fh2PIDTPCnSigmaKaon(),
   fh2PIDTOFnSigmaKaon(),
-  fh2PIDBayesKaon(),
   fh2PIDTPCnSigmaProton(),
   fh2PIDTOFnSigmaProton(),
-  fh2PIDBayesProton(),
   fhQAPIDTPCstatus(),
   fhQAPIDTOFstatus(),
   fhQAPIDTPCdEdx(),
@@ -2540,9 +2552,6 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
   AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
 
-  fhQAPIDTOFstatus[iQAindex]->Fill((Int_t) pidStatusTOF );
-  fhQAPIDTPCstatus[iQAindex]->Fill((Int_t) pidStatusTPC );
-
   Bool_t bIsTPCok = HasTrackPIDTPC(track);
   Bool_t bIsTOFok = HasTrackPIDTOF(track);
 
@@ -2574,31 +2583,31 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   }
 
   // detector status dependent
-  if(bIsTPCok) {
-    // dNumSigmaTPC[0] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kElectron);
-    // dNumSigmaTPC[1] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kMuon);
+  // if(bUsedTPC) {
+    dNumSigmaTPC[0] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kElectron);
+    dNumSigmaTPC[1] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kMuon);
     dNumSigmaTPC[2] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
     dNumSigmaTPC[3] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
     dNumSigmaTPC[4] = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
 
-    // dTPCdEdxDelta[0] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kElectron);
-    // dTPCdEdxDelta[1] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kMuon);
+    dTPCdEdxDelta[0] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kElectron);
+    dTPCdEdxDelta[1] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kMuon);
     dTPCdEdxDelta[2] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kPion);
     dTPCdEdxDelta[3] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kKaon);
     dTPCdEdxDelta[4] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTPC, track, AliPID::kProton);
 
     dTPCdEdx = track->GetTPCsignal();
-  }
+  // }
 
-  if(bIsTOFok) {
-    // dNumSigmaTOF[0] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kElectron);
-    // dNumSigmaTOF[1] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kMuon);
+  // if(bUsedTOF) {
+    dNumSigmaTOF[0] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kElectron);
+    dNumSigmaTOF[1] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kMuon);
     dNumSigmaTOF[2] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion);
     dNumSigmaTOF[3] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
     dNumSigmaTOF[4] = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton);
 
-    // dTOFbetaDelta[0] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kElectron);
-    // dTOFbetaDelta[1] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kMuon);
+    dTOFbetaDelta[0] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kElectron);
+    dTOFbetaDelta[1] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kMuon);
     dTOFbetaDelta[2] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kPion);
     dTOFbetaDelta[3] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kKaon);
     dTOFbetaDelta[4] = fPIDResponse->GetSignalDelta(AliPIDResponse::kTOF, track, AliPID::kProton);
@@ -2607,10 +2616,16 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
     Double_t dTOF[5];
     track->GetIntegratedTimes(dTOF);
     dTOFbeta = dTOF[0] / track->GetTOFsignal();
-  }
+  // }
 
-  if(iQAindex == 0 || bUsedTPC) { fhQAPIDTPCdEdx[iQAindex]->Fill(track->P(), dTPCdEdx); }
-  if(iQAindex == 0 || bUsedTOF) { fhQAPIDTOFbeta[iQAindex]->Fill(dP,dTOFbeta); }
+  if(iQAindex == 0 || bUsedTPC) {
+      fhQAPIDTPCstatus[iQAindex]->Fill((Int_t) pidStatusTPC );
+      fhQAPIDTPCdEdx[iQAindex]->Fill(track->P(), dTPCdEdx);
+  }
+  if(iQAindex == 0 || bUsedTOF) {
+      fhQAPIDTOFstatus[iQAindex]->Fill((Int_t) pidStatusTOF );
+      fhQAPIDTOFbeta[iQAindex]->Fill(dP,dTOFbeta);
+  }
 
   if(species == kUnknown) { return; }
 
@@ -2623,6 +2638,8 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   fhPIDEta[iPID]->Fill(track->Eta());
   fhPIDCharge[iPID]->Fill(track->Charge());
 
+  fh2PIDBayesElectron[iPID]->Fill(dPt,dBayesProb[0]);
+  fh2PIDBayesMuon[iPID]->Fill(dPt,dBayesProb[1]);
   fh2PIDBayesPion[iPID]->Fill(dPt,dBayesProb[2]);
   fh2PIDBayesKaon[iPID]->Fill(dPt,dBayesProb[3]);
   fh2PIDBayesProton[iPID]->Fill(dPt,dBayesProb[4]);
@@ -2630,6 +2647,8 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   if(bUsedTPC) {
     fh2PIDTPCdEdx[iPID]->Fill(dPt,dTPCdEdx);
     fh2PIDTPCdEdxDelta[iPID]->Fill(dPt,dTPCdEdxDelta[species]);
+    fh2PIDTPCnSigmaElectron[iPID]->Fill(dPt,dNumSigmaTPC[0]);
+    fh2PIDTPCnSigmaMuon[iPID]->Fill(dPt,dNumSigmaTPC[1]);
     fh2PIDTPCnSigmaPion[iPID]->Fill(dPt,dNumSigmaTPC[2]);
     fh2PIDTPCnSigmaKaon[iPID]->Fill(dPt,dNumSigmaTPC[3]);
     fh2PIDTPCnSigmaProton[iPID]->Fill(dPt,dNumSigmaTPC[4]);
@@ -2638,6 +2657,8 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   if(bUsedTOF) {
     fh2PIDTOFbeta[iPID]->Fill(dPt,dTOFbeta);
     fh2PIDTOFbetaDelta[iPID]->Fill(dPt,dTOFbetaDelta[species]);
+    fh2PIDTOFnSigmaElectron[iPID]->Fill(dPt,dNumSigmaTOF[0]);
+    fh2PIDTOFnSigmaMuon[iPID]->Fill(dPt,dNumSigmaTOF[1]);
     fh2PIDTOFnSigmaPion[iPID]->Fill(dPt,dNumSigmaTOF[2]);
     fh2PIDTOFnSigmaKaon[iPID]->Fill(dPt,dNumSigmaTOF[3]);
     fh2PIDTOFnSigmaProton[iPID]->Fill(dPt,dNumSigmaTOF[4]);
@@ -3727,6 +3748,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fh2PIDTOFbeta[iPID]);
       fh2PIDTOFbetaDelta[iPID] = new TH2D(Form("fh2PID%sTOFbetaDelta",sNamePID[iPID].Data()),Form("PID: %s: TOF #Delta#beta; #it{p} (GeV/#it{c});TOF #Delta#beta",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 100,-5000,5000);
       fQAPID->Add(fh2PIDTOFbetaDelta[iPID]);
+      fh2PIDTPCnSigmaElectron[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaElectron",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (e hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
+      fQAPID->Add(fh2PIDTPCnSigmaElectron[iPID]);
+      fh2PIDTOFnSigmaElectron[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaElectron",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (e hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
+      fQAPID->Add(fh2PIDTOFnSigmaElectron[iPID]);
+      fh2PIDTPCnSigmaMuon[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaMuon",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (#mu hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
+      fQAPID->Add(fh2PIDTPCnSigmaMuon[iPID]);
+      fh2PIDTOFnSigmaMuon[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaMuon",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (#mu hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
+      fQAPID->Add(fh2PIDTOFnSigmaMuon[iPID]);
       fh2PIDTPCnSigmaPion[iPID] = new TH2D(Form("fh2PID%sTPCnSigmaPion",sNamePID[iPID].Data()),Form("PID: %s: TPC n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TPC n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
       fQAPID->Add(fh2PIDTPCnSigmaPion[iPID]);
       fh2PIDTOFnSigmaPion[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaPion",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (#pi hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
@@ -3739,6 +3768,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fh2PIDTPCnSigmaProton[iPID]);
       fh2PIDTOFnSigmaProton[iPID] = new TH2D(Form("fh2PID%sTOFnSigmaProton",sNamePID[iPID].Data()),Form("PID: %s: TOF n#sigma (p hyp.); #it{p}_{T} (GeV/#it{c}); TOF n#sigma",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 21,-11,10);
       fQAPID->Add(fh2PIDTOFnSigmaProton[iPID]);
+      fh2PIDBayesElectron[iPID] = new TH2D(Form("fh2PID%sBayesElectron",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (e hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 50,0,1);
+      fQAPID->Add(fh2PIDBayesElectron[iPID]);
+      fh2PIDBayesMuon[iPID] = new TH2D(Form("fh2PID%sBayesMuon",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (#mu hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 50,0,1);
+      fQAPID->Add(fh2PIDBayesMuon[iPID]);
       fh2PIDBayesPion[iPID] = new TH2D(Form("fh2PID%sBayesPion",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (#pi hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 50,0,1);
       fQAPID->Add(fh2PIDBayesPion[iPID]);
       fh2PIDBayesKaon[iPID] = new TH2D(Form("fh2PID%sBayesKaon",sNamePID[iPID].Data()),Form("PID: %s: Bayes probability (K hyp.); #it{p}_{T} (GeV/#it{c}); Bayes prob.",sLabelPID[iPID].Data()), iPOIsPtNumBins,fFlowPOIsPtMin,fFlowPOIsPtMax, 50,0,1);
