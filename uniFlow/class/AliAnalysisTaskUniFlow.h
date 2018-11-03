@@ -341,35 +341,35 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // cuts & selection: PID selection
       Bool_t                  fCutPIDUseAntiProtonOnly; // [kFALSE] check proton PID charge to select AntiProtons only
       Bool_t                  fCutPIDnSigmaCombinedTOFrejection; // [kTRUE] flag for rejection candidates in TPC+TOF pt region if TOF is not available (if true and no TOF track is skipped, otherwise only TPC is used)
-      Float_t                 fCutPIDnSigmaPionMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
-      Float_t                 fCutPIDnSigmaKaonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
-      Float_t                 fCutPIDnSigmaProtonMax; // [3] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
-      Float_t                 fCutPIDnSigmaTPCRejectElectron; // [3] number of TPC nSigma for electron rejection
+      Float_t                 fCutPIDnSigmaPionMax; // [0] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
+      Float_t                 fCutPIDnSigmaKaonMax; // [0] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
+      Float_t                 fCutPIDnSigmaProtonMax; // [0] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
+      Float_t                 fCutPIDnSigmaTPCRejectElectron; // [0] number of TPC nSigma for electron rejection
       Bool_t                  fCutUseBayesPID; // [kFALSE] flag for using Bayes PID for pi,K,p instead nsigma cut
-      Double_t                fCutPIDBayesPionMin; // [0.9] minimal value of Bayes PID probability for pion
-      Double_t                fCutPIDBayesKaonMin; // [0.9] minimal value of Bayes PID probability for Kaon
-      Double_t                fCutPIDBayesProtonMin; // [0.9] minimal value of Bayes PID probability for proton
-      Double_t                fCutPIDBayesRejectElectron; // [0.5] maximal value of Bayes PID probability for electron rejection
-      Double_t                fCutPIDBayesRejectMuon; // [0.5] maximal value of Bayes PID probability for muon rejection
+      Double_t                fCutPIDBayesPionMin; // [0.0] minimal value of Bayes PID probability for pion
+      Double_t                fCutPIDBayesKaonMin; // [0.0] minimal value of Bayes PID probability for Kaon
+      Double_t                fCutPIDBayesProtonMin; // [0.0] minimal value of Bayes PID probability for proton
+      Double_t                fCutPIDBayesRejectElectron; // [0.0] maximal value of Bayes PID probability for electron rejection
+      Double_t                fCutPIDBayesRejectMuon; // [0.0] maximal value of Bayes PID probability for muon rejection
       //cuts & selection: V0 reconstruction
-	    Bool_t 					        fCutV0sOnFly;		// V0 reconstruction method: is On-the-fly? (or offline)
-  		Bool_t					        fCutV0srefitTPC; // Check TPC refit of V0 daughters ?
-  		Bool_t					        fCutV0srejectKinks; // Reject Kink V0 daughter tracks ?
+      Bool_t                  fCutV0sOnFly;		// V0 reconstruction method: is On-the-fly? (or offline)
+      Bool_t                  fCutV0srefitTPC; // Check TPC refit of V0 daughters ?
+      Bool_t                  fCutV0srejectKinks; // Reject Kink V0 daughter tracks ?
       UShort_t                fCutV0sDaughterNumTPCClsMin; // min number of TPC clusters
       UShort_t                fCutV0sDaughterNumTPCCrossMin; // min number of crossed TPC rows
       UShort_t                fCutV0sDaughterNumTPCFindMin; // min number of findable TPC clusters
       UShort_t                fCutV0sDaughterNumTPCClsPIDMin; // min number of TPC clusters used for PID
       Double_t                fCutV0sDaughterRatioCrossFindMin; // min ratio of crossed / findable TPC clusters
-  		Bool_t					        fCutV0sCrossMassRejection; // competing V0 rejection based on InvMass
+      Bool_t				  fCutV0sCrossMassRejection; // competing V0 rejection based on InvMass
       Double_t                fCutV0sCrossMassCutK0s; // [0.005] (GeV/c2) restricted vicinity of Lambda/ALambda inv. mass peak for K0s candidates
       Double_t                fCutV0sCrossMassCutLambda; // [0.020] (GeV/c2) restricted vicinity of K0s inv. mass peak for Lambda/ALambda candidates
-  		Double_t                fCutV0sDCAtoPVMin;   // (cm) min DCA of V0 daughter to PV
-      Double_t				        fCutV0sDCAtoPVMax;	// (cm) max DCA of V0 daughter to PV
+      Double_t                fCutV0sDCAtoPVMin;   // (cm) min DCA of V0 daughter to PV
+      Double_t				  fCutV0sDCAtoPVMax;	// (cm) max DCA of V0 daughter to PV
       Double_t                fCutV0sDCAtoPVzMax; // (cm) max DCA-z coordinate of V0 daughters to PV
-		  Double_t				        fCutV0sDCADaughtersMin;	// (cm) min DCA of V0 daughters among themselves
-		  Double_t				        fCutV0sDCADaughtersMax;	// (cm) max DCA of V0 daughters among themselves
+      Double_t				  fCutV0sDCADaughtersMin;	// (cm) min DCA of V0 daughters among themselves
+      Double_t				  fCutV0sDCADaughtersMax;	// (cm) max DCA of V0 daughters among themselves
       Double_t                fCutV0sDecayRadiusMin; // (cm) min distance of secondary vertex from z-axis in transverse plane
-		  Double_t				        fCutV0sDecayRadiusMax; // (cm) max distance of secondary vertex from z-axis in transverse plane
+      Double_t				  fCutV0sDecayRadiusMax; // (cm) max distance of secondary vertex from z-axis in transverse plane
       UInt_t                  fCutV0sDaughterFilterBit; // (-) V0 daughters filter bit
       Double_t                fCutV0sDaughterPtMin; // (GeV/c) min pT of V0 daughters
       Double_t                fCutV0sDaughterPtMax; // (GeV/c) max pT of V0 daughters
@@ -383,7 +383,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutV0sInvMassK0sMax; // [0.6] (GeV/c2) max inv. mass window for selected K0s candidates
       Double_t                fCutV0sInvMassLambdaMin; // [1.08] (GeV/c2) min inv. mass window for selected (Anti)Lambda candidates
       Double_t                fCutV0sInvMassLambdaMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
-      Double_t				        fCutV0sArmenterosAlphaK0sMin; // (alpha) min Armenteros alpha for K0s
+      Double_t				  fCutV0sArmenterosAlphaK0sMin; // (alpha) min Armenteros alpha for K0s
       Double_t                fCutV0sArmenterosAlphaLambdaMax; // (alpha) max Armenteros alpha for (Anti)Lambda
       Float_t                 fCutV0sK0sPionNumTPCSigmaMax; // (sigmaTPC) max number of TPC sigmas for kaon PID (K0s candidates)
       Float_t                 fCutV0sLambdaPionNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for pion PID (Lambda candidates)
