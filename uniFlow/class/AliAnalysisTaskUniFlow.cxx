@@ -929,7 +929,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   {
     fFlowWeightsFile = TFile::Open(Form("%s",fFlowWeightsPath.Data()));
     if(!fFlowWeightsFile) { AliFatal("Flow weights file not found! Terminating!"); return kFALSE; }
-    if(!LoadWeights(kTRUE)) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
+    if(!fFlowRunByRunWeights && !LoadWeights()) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
   }
 
   AliInfo("Preparing particle containers (std::vectors)");
@@ -990,10 +990,12 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(fFillQA) { FillEventsQA(0); }
 
   if(!IsEventSelected()) { return; }
-  fhEventCounter->Fill("Event OK",1);
-
   // deprecenated selected by HHTF
   // if( (fColSystem == kPP || fColSystem == kPPb) && !IsEventSelected_oldsmall2016() ) { return; }
+  fhEventCounter->Fill("Event OK",1);
+
+  // checking the run number for aplying weights & loading TList with weights
+  if(fFlowUseWeights && fFlowRunByRunWeights && fRunNumber != fEventAOD->GetRunNumber() && !LoadWeights()) { AliFatal("Weights not loaded!"); return; }
 
   // Filter charged (& Refs) particles to evaluate event multiplcity / N_RFPs
   // NB: clear charged vectors because it might keep particles from previous event (not happen for other species)
@@ -1258,14 +1260,14 @@ Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
   return kFALSE;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::LoadWeights(Bool_t init)
+Bool_t AliAnalysisTaskUniFlow::LoadWeights()
 {
   // (Re-) Loading of flow vector weights
   // ***************************************************************************
   if(!fFlowWeightsFile) { AliError("File with flow weights not found!"); return kFALSE; }
 
   TList* listFlowWeights = 0x0;
-  if(init || !fFlowRunByRunWeights)
+  if(!fFlowRunByRunWeights)
   {
     // information about current run is unknown in Initialization(); load only "averaged" weights
     AliInfo("Loading initial GF weights (run-averaged)");
@@ -1274,18 +1276,19 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights(Bool_t init)
   }
   else
   {
-    listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fRunNumber));
-    if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fRunNumber)); return kFALSE; }
+    listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fEventAOD->GetRunNumber()));
+    if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fEventAOD->GetRunNumber())); return kFALSE; }
   }
 
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
     if(!fProcessSpec[iSpec]) { continue; }
+    if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
     if(fFlowUse3Dweights)
     {
       fh3Weights[iSpec] = (TH3D*) listFlowWeights->FindObject(Form("%s3D",GetSpeciesName(PartSpecies(iSpec))));
-      if(!fh3Weights[iSpec]) { AliError(Form("Weight (%s) not found",GetSpeciesName(PartSpecies(iSpec)))); return kFALSE; }
+      if(!fh3Weights[iSpec]) { AliError(Form("Weight 3D (%s) not found",GetSpeciesName(PartSpecies(iSpec)))); return kFALSE; }
     }
     else
     {
@@ -2907,9 +2910,6 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
 
   // if running in kSkipFlow mode, skip the remaining part
   if(fRunMode == kSkipFlow) { fEventCounter++; return kTRUE; }
-
-  // checking the run number for aplying weights & loading TList with weights
-  if(fFlowUseWeights && fFlowRunByRunWeights && fRunNumber != fEventAOD->GetRunNumber() && !LoadWeights(kFALSE)) { return kFALSE; }
 
   // >>>> Using FlowTask <<<<<
 
