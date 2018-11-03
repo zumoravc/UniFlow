@@ -2443,14 +2443,22 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   if(!bIsTPCok) { return kUnknown; }
   // TODO: TOF check???
 
+  // filling nSigma arrays
+  Float_t dNumSigmaTPC[5] = {-99.,-99.,-99.,-99.,-99.}; // TPC nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+  Float_t dNumSigmaTOF[5] = {-99.,-99.,-99.,-99.,-99.}; // TOF nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
+
+  for(Int_t iSpec(0); iSpec < 5; ++iSpec) {
+      dNumSigmaTPC[iSpec] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::EParticleType(iSpec)));
+      dNumSigmaTOF[iSpec] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::EParticleType(iSpec)));
+  }
+
   if(fCutUseBayesPID) {
-    // use Bayesian PID
     Double_t dProbPID[5] = {-999.,-999.,-999.,-999.,-999.}; // array for Bayes PID probabilities:  0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
     UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dProbPID); // filling probabilities to dPropPID array
 
     // check which detector were used
-    // Bool_t bUsedTPC = iDetUsed & AliPIDResponse::kDetTPC;
-    // Bool_t bUsedTOF = iDetUsed & AliPIDResponse::kDetTOF;
+    Bool_t bUsedTPC = iDetUsed & AliPIDResponse::kDetTPC;
+    Bool_t bUsedTOF = iDetUsed & AliPIDResponse::kDetTOF;
     // Bool_t bUsedTPCandTOF = (bUsedTPC && bUsedTOF);
     // printf("   Selected: TPC:%d && TOF:%d) == %d\n",bUsedTPC,bUsedTOF,bUsedTPCandTOF);
 
@@ -2461,34 +2469,34 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     if(fCutPIDBayesRejectElectron > 0.0 && dProbPID[0] >= fCutPIDBayesRejectElectron) { return kUnknown; }
     if(fCutPIDBayesRejectMuon > 0.0 && dProbPID[1] >= fCutPIDBayesRejectMuon) { return kUnknown; }
 
-    // checking the PID probability
+    PartSpecies species = kUnknown;
+
     // TODO: think about: if Pion has maximum probibility < fCutBayesPIDPion, track is rejected -> is it good?
-    if(dMaxProb == dProbPID[2] && dProbPID[2] >= fCutPIDBayesPionMin) return kPion;
-    if(dMaxProb == dProbPID[3] && dProbPID[3] >= fCutPIDBayesKaonMin) return kKaon;
-    if(dMaxProb == dProbPID[4] && dProbPID[4] >= fCutPIDBayesProtonMin) return kProton;
+    if(dMaxProb == dProbPID[2] && dProbPID[2] >= fCutPIDBayesPionMin) { species = kPion; }
+    if(dMaxProb == dProbPID[3] && dProbPID[3] >= fCutPIDBayesKaonMin) { species = kKaon; }
+    if(dMaxProb == dProbPID[4] && dProbPID[4] >= fCutPIDBayesProtonMin) { species = kProton; }
+
+    // Additional nSigma TPC and/or TOF cutting to clean outliers
+    if(species == kPion && fCutPIDnSigmaPionMax > 0.0) {
+        if(dNumSigmaTPC[2] > fCutPIDnSigmaPionMax) { return kUnknown; }
+        if(bUsedTOF && dNumSigmaTOF[2] > fCutPIDnSigmaPionMax) { return kUnknown; }
+    }
+
+    if(species == kKaon && fCutPIDnSigmaKaonMax > 0.0) {
+        if(dNumSigmaTPC[3] > fCutPIDnSigmaKaonMax) { return kUnknown; }
+        if(bUsedTOF && dNumSigmaTOF[3] > fCutPIDnSigmaKaonMax) { return kUnknown; }
+    }
+
+    if(species == kProton && fCutPIDnSigmaProtonMax > 0.0) {
+        if(dNumSigmaTPC[4] > fCutPIDnSigmaProtonMax) { return kUnknown; }
+        if(bUsedTOF && dNumSigmaTOF[4] > fCutPIDnSigmaProtonMax) { return kUnknown; }
+    }
+
+    return species;
+
   } else {
     // use nSigma cuts (based on combination of TPC / TOF nSigma cuts
     const Double_t dPt = track->Pt();
-
-    Float_t dNumSigmaTPC[5] = {-99.,-99.,-99.,-99.,-99.}; // TPC nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
-    Float_t dNumSigmaTOF[5] = {-99.,-99.,-99.,-99.,-99.}; // TOF nSigma array: 0: electron / 1: muon / 2: pion / 3: kaon / 4: proton
-
-    // filling nSigma arrays
-    if(bIsTPCok) {
-      dNumSigmaTPC[0] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kElectron));
-      dNumSigmaTPC[1] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kMuon));
-      dNumSigmaTPC[2] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion));
-      dNumSigmaTPC[3] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon));
-      dNumSigmaTPC[4] = TMath::Abs(fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton));
-    }
-
-    if(bIsTOFok) {
-      dNumSigmaTOF[0] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kElectron));
-      dNumSigmaTOF[1] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kMuon));
-      dNumSigmaTOF[2] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion));
-      dNumSigmaTOF[3] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon));
-      dNumSigmaTOF[4] = TMath::Abs(fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton));
-    }
 
     // TPC nSigma cuts
     if(dPt <= 0.4) {
