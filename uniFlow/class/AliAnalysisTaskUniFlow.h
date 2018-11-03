@@ -133,15 +133,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetChargedTrackFilterBit(UInt_t filter) { fCutChargedTrackFilterBit = filter; }
       // PID (pi,K,p) setters
       void                    SetPIDUseAntiProtonOnly(Bool_t use = kTRUE) { fCutPIDUseAntiProtonOnly = use; }
-      void                    SetPIDNumSigmasPionMax(Float_t numSigmas) { fCutPIDnSigmaPionMax = numSigmas; }
-      void                    SetPIDNumSigmasKaonMax(Float_t numSigmas) { fCutPIDnSigmaKaonMax = numSigmas; }
-      void                    SetPIDNumSigmasProtonMax(Float_t numSigmas) { fCutPIDnSigmaProtonMax = numSigmas; }
+      void                    SetPIDNumSigmasPionMax(Float_t numSigmas) { fCutPIDnSigmaMax[kPion] = numSigmas; }
+      void                    SetPIDNumSigmasKaonMax(Float_t numSigmas) { fCutPIDnSigmaMax[kKaon] = numSigmas; }
+      void                    SetPIDNumSigmasProtonMax(Float_t numSigmas) { fCutPIDnSigmaMax[kProton] = numSigmas; }
       void                    SetPIDNumSigmasTPCRejectElectron(Float_t numSigmas) { fCutPIDnSigmaTPCRejectElectron = numSigmas; }
       void                    SetPIDNumSigmasCombinedNoTOFrejection(Bool_t reject = kTRUE) { fCutPIDnSigmaCombinedTOFrejection = reject; }
       void                    SetUseBayesPID(Bool_t bayes = kTRUE) { fCutUseBayesPID = bayes; }
-      void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesPionMin = probPi; }
-      void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutPIDBayesKaonMin = probK; }
-      void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutPIDBayesProtonMin = probP; }
+      void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesMin[kPion] = probPi; }
+      void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutPIDBayesMin[kKaon] = probK; }
+      void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutPIDBayesMin[kProton] = probP; }
       void                    SetPIDBayesRejectElectron(Double_t prob) { fCutPIDBayesRejectElectron = prob; }
       void                    SetPIDBayesRejectMuon(Double_t prob) { fCutPIDBayesRejectMuon = prob; }
       // V0s setters
@@ -197,6 +197,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
       const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
       const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
+      static const Int_t      fPIDNumSpecies = 5; // Number of considered species for PID
       static const Int_t      fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
       static const Int_t      fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
       static const Int_t      fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
@@ -341,16 +342,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // cuts & selection: PID selection
       Bool_t                  fCutPIDUseAntiProtonOnly; // [kFALSE] check proton PID charge to select AntiProtons only
       Bool_t                  fCutPIDnSigmaCombinedTOFrejection; // [kTRUE] flag for rejection candidates in TPC+TOF pt region if TOF is not available (if true and no TOF track is skipped, otherwise only TPC is used)
-      Float_t                 fCutPIDnSigmaPionMax; // [0] maximum of nSigmas (TPC or TPC & TOF combined) for pion candidates
-      Float_t                 fCutPIDnSigmaKaonMax; // [0] maximum of nSigmas (TPC or TPC & TOF combined) for kaon candidates
-      Float_t                 fCutPIDnSigmaProtonMax; // [0] maximum of nSigmas (TPC or TPC & TOF combined) for proton candidates
-      Float_t                 fCutPIDnSigmaTPCRejectElectron; // [0] number of TPC nSigma for electron rejection
       Bool_t                  fCutUseBayesPID; // [kFALSE] flag for using Bayes PID for pi,K,p instead nsigma cut
-      Double_t                fCutPIDBayesPionMin; // [0.0] minimal value of Bayes PID probability for pion
-      Double_t                fCutPIDBayesKaonMin; // [0.0] minimal value of Bayes PID probability for Kaon
-      Double_t                fCutPIDBayesProtonMin; // [0.0] minimal value of Bayes PID probability for proton
+      Float_t                 fCutPIDnSigmaTPCRejectElectron; // [0] number of TPC nSigma for electron rejection
+      Float_t                 fCutPIDnSigmaMax[fPIDNumSpecies]; // [0] maximum of nSigmas (TPC or TPC & TOF combined)
       Double_t                fCutPIDBayesRejectElectron; // [0.0] maximal value of Bayes PID probability for electron rejection
       Double_t                fCutPIDBayesRejectMuon; // [0.0] maximal value of Bayes PID probability for muon rejection
+      Double_t                fCutPIDBayesMin[fPIDNumSpecies]; // [0.0] minimal value of Bayes PID probability for pion
       //cuts & selection: V0 reconstruction
       Bool_t                  fCutV0sOnFly;		// V0 reconstruction method: is On-the-fly? (or offline)
       Bool_t                  fCutV0srefitTPC; // Check TPC refit of V0 daughters ?
