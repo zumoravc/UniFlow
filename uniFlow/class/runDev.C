@@ -133,8 +133,6 @@ void runDev()
     task1->SetPIDBayesProbPionMin(0.95);
     task1->SetPIDBayesProbKaonMin(0.85);
     task1->SetPIDBayesProbProtonMin(0.85);
-    task1->SetPIDBayesRejectElectron(0.8);
-    task1->SetPIDBayesRejectMuon(0.8);
 
     // // V0 selection cuts
     task1->SetV0sOnFly(kFALSE);

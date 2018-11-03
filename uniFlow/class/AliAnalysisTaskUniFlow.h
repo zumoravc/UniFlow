@@ -142,8 +142,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetPIDBayesProbPionMin(Double_t probPi) { fCutPIDBayesMin[kPion] = probPi; }
       void                    SetPIDBayesProbKaonMin(Double_t probK) { fCutPIDBayesMin[kKaon] = probK; }
       void                    SetPIDBayesProbProtonMin(Double_t probP) { fCutPIDBayesMin[kProton] = probP; }
-      void                    SetPIDBayesRejectElectron(Double_t prob) { fCutPIDBayesRejectElectron = prob; }
-      void                    SetPIDBayesRejectMuon(Double_t prob) { fCutPIDBayesRejectMuon = prob; }
       // V0s setters
       void					          SetV0sOnFly(Bool_t onFly) { fCutV0sOnFly = onFly; }
       void					          SetV0sTPCRefit(Bool_t refit) { fCutV0srefitTPC = refit; }
@@ -345,8 +343,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  fCutUseBayesPID; // [kFALSE] flag for using Bayes PID for pi,K,p instead nsigma cut
       Float_t                 fCutPIDnSigmaTPCRejectElectron; // [0] number of TPC nSigma for electron rejection
       Float_t                 fCutPIDnSigmaMax[fPIDNumSpecies]; // [0] maximum of nSigmas (TPC or TPC & TOF combined)
-      Double_t                fCutPIDBayesRejectElectron; // [0.0] maximal value of Bayes PID probability for electron rejection
-      Double_t                fCutPIDBayesRejectMuon; // [0.0] maximal value of Bayes PID probability for muon rejection
       Double_t                fCutPIDBayesMin[fPIDNumSpecies]; // [0.0] minimal value of Bayes PID probability for pion
       //cuts & selection: V0 reconstruction
       Bool_t                  fCutV0sOnFly;		// V0 reconstruction method: is On-the-fly? (or offline)

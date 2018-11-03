@@ -182,10 +182,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCutPIDUseAntiProtonOnly(kFALSE),
   fCutPIDnSigmaTPCRejectElectron(0.0),
   fCutPIDnSigmaCombinedTOFrejection(kTRUE),
-  fCutPIDnSigmaMax(),
   fCutUseBayesPID(kFALSE),
-  fCutPIDBayesRejectElectron(0.0),
-  fCutPIDBayesRejectMuon(0.0),
+  fCutPIDnSigmaMax(),
   fCutPIDBayesMin(),
 
   // V0s selection
@@ -461,10 +459,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCutPIDUseAntiProtonOnly(kFALSE),
   fCutPIDnSigmaTPCRejectElectron(0.0),
   fCutPIDnSigmaCombinedTOFrejection(kTRUE),
-  fCutPIDnSigmaMax(),
   fCutUseBayesPID(kFALSE),
-  fCutPIDBayesRejectElectron(0.0),
-  fCutPIDBayesRejectMuon(0.0),
+  fCutPIDnSigmaMax(),
   fCutPIDBayesMin(),
 
   // V0s selection
@@ -784,8 +780,6 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fCutPIDnSigmaTPCRejectElectron: (Float_t) %g\n",    fCutPIDnSigmaTPCRejectElectron);
   printf("      fCutUseBayesPID: (Bool_t) %s\n",    fCutUseBayesPID ? "kTRUE" : "kFALSE");
   for(Int_t iSpec(2); iSpec < fPIDNumSpecies; ++iSpec) { printf("      fCutPIDBayesMin: (Double_t) %g\n",    fCutPIDBayesMin[iSpec]); }
-  printf("      SetPIDBayesRejectElectron: (Double_t) %g\n",    fCutPIDBayesRejectElectron);
-  printf("      SetPIDBayesRejectMuon: (Double_t) %g\n",    fCutPIDBayesRejectMuon);
   printf("   -------- Phi candidates --------------------------------------\n");
   printf("      fCutPhiInvMassMin: (Double_t) %g\n",    fCutPhiInvMassMin);
   printf("      fCutPhiInvMassMax: (Double_t) %g\n",    fCutPhiInvMassMax);
@@ -2472,10 +2466,8 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
 
     Double_t dMaxProb = TMath::MaxElement(fPIDNumSpecies,dProbPID);
     // printf("PID Prob: e %g | mu %g | pi %g | K %g | p %g ||| MAX %g \n",dProbPID[0],dProbPID[1],dProbPID[2],dProbPID[3],dProbPID[4],dMaxProb);
-
-    // electron and mion rejection
-    if(fCutPIDBayesRejectElectron > 0.0 && dProbPID[0] >= fCutPIDBayesRejectElectron) { return kUnknown; }
-    if(fCutPIDBayesRejectMuon > 0.0 && dProbPID[1] >= fCutPIDBayesRejectMuon) { return kUnknown; }
+    // Double_t dSum = 0.0; for(Int_t i(0); i < fPIDNumSpecies; ++i) { dSum += dProbPID[i]; }
+    // printf("dSum = %g\n",dSum);
 
     // TODO: think about: if Pion has maximum probibility < fCutBayesPIDPion, track is rejected -> is it good?
     for(Int_t iSpec(2); iSpec < fPIDNumSpecies; ++iSpec) {
