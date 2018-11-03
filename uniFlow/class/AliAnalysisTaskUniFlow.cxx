@@ -1241,10 +1241,12 @@ Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
   }
 
   // QA Plots
-  fhQAEventsfMult32vsCentr->Fill(v0Centr, multTrk);
-  fhQAEventsMult128vsCentr->Fill(v0Centr, multTPC128);
-  fhQAEventsfMultTPCvsTOF->Fill(multTPC32, multTOF);
-  fhQAEventsfMultTPCvsESD->Fill(multTPC128, multESD);
+  if(fFillQA) {
+    fhQAEventsfMult32vsCentr->Fill(v0Centr, multTrk);
+    fhQAEventsMult128vsCentr->Fill(v0Centr, multTPC128);
+    fhQAEventsfMultTPCvsTOF->Fill(multTPC32, multTOF);
+    fhQAEventsfMultTPCvsESD->Fill(multTPC128, multESD);
+  }
 
   // fCentralityDis->Fill(centrV0);
   // fV0CentralityDis->Fill(cent);
