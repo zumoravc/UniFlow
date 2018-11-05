@@ -789,6 +789,9 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
           return kFALSE;
         }
 
+        Double_t dFlowRel = -999.9; if(TMath::Abs(dFlow) > 0.0) { dFlowRel = dFlowError / dFlow; }
+        Info(Form("Final v(n,m,k): (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,iPtBin,dFlow,dFlowError,dFlowRel), "ProcessMixed");
+
         histFlow->SetBinContent(iPtBin+1,dFlow);
         histFlow->SetBinError(iPtBin+1,dFlowError);
 
@@ -1907,10 +1910,17 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     hFlow->SetBinContent(binPt+1,dFlow);
     hFlow->SetBinError(binPt+1,dFlowError);
 
+    Double_t dFlowRel = -999.9; if(TMath::Abs(dFlow) > 0.0) { dFlowRel = dFlowError / dFlow; }
+    Info(Form("Final vn{2}: (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,binPt,dFlow,dFlowError,dFlowRel), "ProcessReconstructed");
+
+
     if(task->fDoFour)
     {
       hFlowFour->SetBinContent(binPt+1,dFlowFour);
       hFlowFour->SetBinError(binPt+1,dFlowFourError);
+
+      Double_t dFlowRel = -999.9; if(TMath::Abs(dFlowFour) > 0.0) { dFlowRel = dFlowFourError / dFlowFour; }
+      Info(Form("Final vn{4}: (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,binPt,dFlowFour,dFlowFourError,dFlowRel), "ProcessReconstructed");
     }
 
     // processing / plotting fits
@@ -2434,7 +2444,7 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
     prof = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",task->fMixedDiff.Data()));
   }
 
-  if(!prof) { Error("Profile 'prof' not found!\n"); return kFALSE; }
+  if(!prof) { Error(Form("Profile '%s' not found!",task->fMixedDiff.Data()),"PrepareSlicesNew"); inputList->ls(); return kFALSE; }
   if(!MakeProfileSlices(task,prof,task->fListProfiles)) { Error("Profile Slices failed!","PrepareSlicesNew"); return kFALSE; };
 
   // preparing inv. mass slices (NB: merging pos/neg done in MakeSparseSlices() )
@@ -3179,9 +3189,6 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   if(task->fSpecies == FlowTask::kPhi && task->fFlowFitPhiSubtLS && !hInvMassBG) { Error("Inv. Mass (BG) histogram does not exists!","ExtractFlowOneGo"); return kFALSE; }
   if(task->fFlowFitPhiSubtLS) { Error("Phi like-sign subtraction not implemented ATM. Please turn the switch off.","ExtractFlowOneGo"); return kFALSE; }
 
-
-  Warning("In testing mode for ProcessMixed()","ExtractFlowOneGo");
-
   // === Fitting parametrisation (species dependent default) ===
 
   Double_t dMassRangeLow = hInvMass->GetXaxis()->GetXmin();
@@ -3372,7 +3379,7 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   }
 
   if(!statusA.Contains("CONVERGED")) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); return kFALSE; }
-  Info(Form("\n Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)\n",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "ExtractFlowOneGo");
+  Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "ExtractFlowOneGo");
 
   // fitting invariant mass distribution
   TF1* fitVn = new TF1(Form("fitVn"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
@@ -3390,13 +3397,14 @@ Bool_t ProcessUniFlow::ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInv
   }
   hFlowMass->Fit(fitVn, sFitOptFlow.Data());
 
-  if(!gMinuit->fCstatu.Contains("CONVERGED")) { Error(Form("Flow-mass fit does not converged!"), "ExtractFlowOneGo"); return kFALSE; }
-  Info(Form("\nFlow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)\n",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "ExtractFlowOneGo");
+  if(!gMinuit->fCstatu.Contains("CONVERGED")) { Error(Form("Flow-mass fit does not converged within iterations limit!"), "ExtractFlowOneGo"); return kFALSE; }
+  Info(Form("Flow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "ExtractFlowOneGo");
 
   // saving flow to output
   dFlow = fitVn->GetParameter(iParFlow);
   dFlowError = fitVn->GetParError(iParFlow);
-  Info(Form("Final flow: %g +- %g\n=================================\n", dFlow,dFlowError), "ExtractFlowOneGo");
+  Double_t dFlowRel = 0.0; if(TMath::Abs(dFlow) > 0.0) { dFlowRel = dFlowError / dFlow; }
+  Debug(Form("Final flow: %g +- %g (rel. %.3f)\n==================================================================", dFlow,dFlowError,dFlowRel), "ExtractFlowOneGo");
 
   // === Extracting fitting components to separated TF1's ===
 
