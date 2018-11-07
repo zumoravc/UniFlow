@@ -1010,7 +1010,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   FilterCharged();
 
   // checking if there is at least 5 particles: needed to "properly" calculate correlations
-  if(fVector[kRefs]->empty() || fVector[kRefs]->size() < 5) { return; }
+  if(fVector[kRefs]->size() < 5) { return; }
   fhEventCounter->Fill("#RPFs OK",1);
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
@@ -1029,9 +1029,37 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // extract PV-z for weights
   fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
 
-  // Fill event QA AFTER cuts
+  // Fill QA AFTER cuts (i.e. only in selected events)
   if(fFillQA) { FillEventsQA(1); }
 
+  // filling Charged QA histos
+  // NB: for other species done within Filter*(): expection since # of Refs is part of event selection
+  for (auto part = fVector[kRefs]->begin(); part != fVector[kRefs]->end(); part++) {
+    fhChargedCounter->Fill("Refs",1);
+    if(fFillQA) { FillQARefs(1,static_cast<AliAODTrack*>(*part)); }
+    if(!FillFlowWeight(*part, kRefs)) { AliFatal("Flow weight filling failed!"); return; }
+  }
+
+  for (auto part = fVector[kCharged]->begin(); part != fVector[kCharged]->end(); part++) {
+    fhChargedCounter->Fill("POIs",1);
+    if(fFillQA) { FillQACharged(1,static_cast<AliAODTrack*>(*part)); } // QA after selection
+    if(!FillFlowWeight(*part, kCharged)) { AliFatal("Flow weight filling failed!"); return; }
+  }
+
+  if(fFillQA) {
+    // Charged QA before selection
+    for(Int_t iTrack(0); iTrack < fEventAOD->GetNumberOfTracks(); iTrack++) {
+      AliAODTrack* track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
+      if(!track) { continue; }
+      FillQACharged(0,track);
+    }
+
+    fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
+    fhQAChargedMult[1]->Fill(fVector[kCharged]->size());
+    fhRefsMult->Fill(fVector[kRefs]->size());
+  }
+
+  // Filtering other species
   if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton]) { FilterPID(); }
   if(fProcessSpec[kK0s] || fProcessSpec[kLambda]) { FilterV0s(); }
   if(fProcessSpec[kPhi]) { FilterPhi(); }
@@ -1398,39 +1426,24 @@ void AliAnalysisTaskUniFlow::FilterCharged()
   Int_t iNumTracks = fEventAOD->GetNumberOfTracks();
   if(iNumTracks < 1) { return; }
 
-  Int_t iNumRefs = 0;
-  for(Int_t iTrack(0); iTrack < iNumTracks; iTrack++)
-  {
+  for(Int_t iTrack(0); iTrack < iNumTracks; iTrack++) {
     AliAODTrack* track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
     if(!track) { continue; }
-
-    if(fFillQA) { FillQACharged(0,track); }// QA before selection
 
     if(!IsChargedSelected(track)) { continue; }
 
     // Checking if selected track is eligible for Ref. flow
-    if(IsWithinRefs(track)) {
-      fVector[kRefs]->push_back(track);
-      if(fFillQA) { FillQARefs(1,track); }
-      if(!FillFlowWeight(track, kRefs)) { AliFatal("Flow weight filling failed!"); return; }
-      fhChargedCounter->Fill("Refs",1);
-      iNumRefs++;
-    }
+    if(IsWithinRefs(track)) { fVector[kRefs]->push_back(track); }
 
     // pt-acceptance check for POIs (NB: due to different cuts for Refs & POIs)
     if(fFlowPOIsPtMin > 0. && track->Pt() < fFlowPOIsPtMin) { continue; }
     if(fFlowPOIsPtMax > 0. && track->Pt() > fFlowPOIsPtMax) { continue; }
 
-    fhChargedCounter->Fill("POIs",1);
     fVector[kCharged]->push_back(track);
-    if(fFillQA) { FillQACharged(1,track); } // QA after selection
-    if(!FillFlowWeight(track, kCharged)) { AliFatal("Flow weight filling failed!"); return; }
 
-    if(fMC)
-    {
+    if(fMC) {
       AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
-      if(trackMC)
-      {
+      if(trackMC) {
         Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
 
         // filling info about all (i.e. before selection) reconstructed PID particles
@@ -1440,13 +1453,6 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       }
     }
   } // end-for {iTrack}
-
-  if(fFillQA)
-  {
-    fhRefsMult->Fill(iNumRefs);
-    fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
-    fhQAChargedMult[1]->Fill(fVector[kCharged]->size());
-  }
 
   return;
 }
