@@ -2666,21 +2666,20 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
   Double_t dGap = -1.0;
   if(iNumGaps > 0) { dGap = task->fdGaps[0]; }
 
+  // Fill anyway -> needed for any correlations
+  FillRefsVectors(dGap); // TODO might check if previous task uses different Gap and if so, not fill it
+
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
   {
-    if(!fProcessSpec[iSpec]) { continue; }
-
     if(iSpec == kRefs) {
-      // check if FlowTask should be done for all flow particles (RFP/POI/Both)
       if(!task->fbDoRefs) { continue; }
-
-      FillRefsVectors(dGap);
-      CalculateCorrelations(task, PartSpecies(iSpec));
-      continue; // NO need to go further
+      CalculateCorrelations(task, kRefs);
+      continue;
     }
 
-    // Onwards only POIs survive
+    // here-after only POIs survive (Refs are dealt with already)
     if(!task->fbDoPOIs) { continue; }
+    if(!fProcessSpec[iSpec]) { continue; }
 
     // NB: skip flow if Kaons are used only for Phi (flow not needed) not as full PID
     if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
@@ -2692,8 +2691,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
     TAxis* axisPt = genProf->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
     Int_t iNumPtBins = axisPt->GetNbins();
 
-    Int_t iNumMassBins = 1;
     TAxis* axisMass = 0x0;
+    Int_t iNumMassBins = 1;
 
     // check for 'massive' species
     Bool_t bHasMass = kFALSE;
