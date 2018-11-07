@@ -836,7 +836,7 @@ void AliAnalysisTaskUniFlow::ClearVectors()
     if(!fProcessSpec[iSpec]) { continue; }
     std::vector<AliVTrack*>* vector = fVector[iSpec];
     if(!vector) { continue; }
-    if(iSpec == kK0s || iSpec == kLambda || iSpec == kPhi) { for(auto part = vector->begin(); part != vector->end(); ++part) { delete *part; } }
+    if(HasMass(PartSpecies(iSpec))) { for(auto part = vector->begin(); part != vector->end(); ++part) { delete *part; } }
     vector->clear();
   }
 
@@ -2704,9 +2704,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
     Int_t iNumMassBins = 1;
 
     // check for 'massive' species
-    Bool_t bHasMass = kFALSE;
-    if(iSpec == kK0s || iSpec == kLambda || iSpec == kPhi) {
-      bHasMass = kTRUE;
+    Bool_t bHasMass = HasMass(PartSpecies(iSpec));
+    if(bHasMass) {
       axisMass = genProf->GetZaxis();
       if(!axisMass) { AliError("Mass axis object not found!"); return kFALSE; }
       iNumMassBins = axisMass->GetNbins();
@@ -3032,7 +3031,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
 
   Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE; if(dEtaGap > -1.0) { bHasGap = kTRUE; }
-  Bool_t bHasMass = kFALSE; if(species == kK0s || species == kLambda || species == kPhi) { bHasMass = kTRUE; }
+  Bool_t bHasMass = HasMass(species);
   if(bHasMass && dMassLow == 0.0 && dMassHigh == 0.0) { AliError("Particle mass low && high limits not specified!"); return; }
 
   // clearing output (global) flow vectors
@@ -3462,7 +3461,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         for(Int_t iSample(0); iSample < fNumSamples; ++iSample)
         {
           if(iSample > 0 && !fSampling) { break; }
-          if(iSample > 0 && (iSpec == kK0s || iSpec == kLambda || iSpec == kPhi)) { break; } // reconstructed are not sampled
+          if(iSample > 0 && HasMass(PartSpecies(iSpec))) { break; } // reconstructed are not sampled
 
           TH1* profile = 0x0;
           TH1* profileNeg = 0x0;
