@@ -1413,14 +1413,15 @@ void AliAnalysisTaskUniFlow::FilterCharged()
       fVector[kRefs]->push_back(track);
       if(fFillQA) { FillQARefs(1,track); }
       if(!FillFlowWeight(track, kRefs)) { AliFatal("Flow weight filling failed!"); return; }
+      fhChargedCounter->Fill("Refs",1);
       iNumRefs++;
     }
 
     // pt-acceptance check for POIs (NB: due to different cuts for Refs & POIs)
     if(fFlowPOIsPtMin > 0. && track->Pt() < fFlowPOIsPtMin) { continue; }
     if(fFlowPOIsPtMax > 0. && track->Pt() > fFlowPOIsPtMax) { continue; }
-    fhChargedCounter->Fill("Pt",1);
 
+    fhChargedCounter->Fill("POIs",1);
     fVector[kCharged]->push_back(track);
     if(fFillQA) { FillQACharged(1,track); } // QA after selection
     if(!FillFlowWeight(track, kCharged)) { AliFatal("Flow weight filling failed!"); return; }
@@ -3623,10 +3624,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   }
 
   {
-    TString sChargedCounterLabel[] = {"Input","Pt","Eta","FB","#TPC-Cls","DCA-z","DCA-xy","Selected"};
-    const Short_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
+    TString sChargedCounterLabel[] = {"Input","Eta","FB","#TPC-Cls","DCA-z","DCA-xy","Selected","POIs","Refs"};
+    const Int_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
     fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
-    for(Short_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
+    for(Int_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
     fQACharged->Add(fhChargedCounter);
   }
 
@@ -3635,7 +3636,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     TString sPIDCounterLabel[] = {"Input","Selected","Pion","Kaon","Proton"};
     const Short_t iNBinsPIDCounter = sizeof(sPIDCounterLabel)/sizeof(sPIDCounterLabel[0]);
     fhPIDCounter = new TH1D("fhPIDCounter","PID: Counter",iNBinsPIDCounter,0,iNBinsPIDCounter);
-    for(Short_t i(0); i < iNBinsPIDCounter; i++) fhPIDCounter->GetXaxis()->SetBinLabel(i+1, sPIDCounterLabel[i].Data() );
+    for(Int_t i(0); i < iNBinsPIDCounter; i++) fhPIDCounter->GetXaxis()->SetBinLabel(i+1, sPIDCounterLabel[i].Data() );
     fQAPID->Add(fhPIDCounter);
   }
 
