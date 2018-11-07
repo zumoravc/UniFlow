@@ -2669,8 +2669,9 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
   // Fill anyway -> needed for any correlations
   FillRefsVectors(dGap); // TODO might check if previous task uses different Gap and if so, not fill it
 
-  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
-  {
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
+    AliDebug(2,Form("Processing species '%s'",GetSpeciesName(PartSpecies(iSpec))));
+
     if(iSpec == kRefs) {
       if(!task->fbDoRefs) { continue; }
       CalculateCorrelations(task, kRefs);
@@ -2688,7 +2689,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
     TH1* genProf = (TH1*) fListFlow[iSpec]->FindObject(Form("%s_Pos_sample0",task->fsName.Data()));
     if(!genProf) { AliError(Form("Generic Profile '%s' not found", task->fsName.Data())); fListFlow[iSpec]->ls(); return kFALSE; }
 
-    TAxis* axisPt = genProf->GetYaxis(); if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
+    TAxis* axisPt = genProf->GetYaxis();
+    if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
     Int_t iNumPtBins = axisPt->GetNbins();
 
     TAxis* axisMass = 0x0;
@@ -2703,21 +2705,18 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
       iNumMassBins = axisMass->GetNbins();
     }
 
-    for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass)
-    {
+    for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass) {
       Double_t dMass = 0.0;
       Double_t dMassLow = 0.0;
       Double_t dMassHigh = 0.0;
 
-      if(bHasMass)
-      {
+      if(bHasMass) {
         dMass = axisMass->GetBinCenter(iMass);
         dMassLow = axisMass->GetBinLowEdge(iMass);
         dMassHigh = axisMass->GetBinUpEdge(iMass);
       }
 
-      for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt)
-      {
+      for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt) {
         Double_t dPt = axisPt->GetBinCenter(iPt);
         Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
         Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
@@ -2725,9 +2724,9 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
         // filling POIs (P,S) flow vectors
         FillPOIsVectors(dGap,PartSpecies(iSpec),dPtLow,dPtHigh,dMassLow,dMassHigh);
         CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
-      }
-    }
-  }
+      } // end-for {iPt}
+    }  // end-for {iMass}
+  } // end-for {iSpecies}
 
   return kTRUE;
 }
@@ -2741,6 +2740,7 @@ void AliAnalysisTaskUniFlow::CalculateCorrelations(FlowTask* task, PartSpecies s
   Int_t iNumHarm = task->fiNumHarm;
   Bool_t bDiff = kTRUE; if(species == kRefs) { bDiff = kFALSE; }
 
+  // results of correlations
   TComplex cNom = TComplex(0.0,0.0,kFALSE);
   TComplex cDenom = TComplex(0.0,0.0,kFALSE);
   TComplex cNomNeg = TComplex(0.0,0.0,kFALSE);
@@ -3026,6 +3026,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
   Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE; if(dEtaGap > -1.0) { bHasGap = kTRUE; }
   Bool_t bHasMass = kFALSE; if(species == kK0s || species == kLambda || species == kPhi) { bHasMass = kTRUE; }
+  if(bHasMass && dMassLow == 0.0 && dMassHigh == 0.0) { AliError("Particle mass low && high limits not specified!"); return; }
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecPpos);
@@ -3042,7 +3043,10 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
     if(dPt < dPtLow || dPt >= dPtHigh) { continue; }
 
     // checking if mass is within mass (bin) range
-    if(bHasMass) { dMass = (*part)->M(); if(dMass < dMassLow || dMass >= dMassHigh) { continue; } }
+    if(bHasMass) {
+      dMass = (*part)->M();
+      if(dMass < dMassLow || dMass >= dMassHigh) { continue; }
+    }
 
     // at this point particles corresponding to this pt (& mass) bin survive
 
