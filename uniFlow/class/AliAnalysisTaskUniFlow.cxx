@@ -1523,7 +1523,7 @@ void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track)
 {
   // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
   // *************************************************************
-  if(fRunMode == kSkipFlow) { return; } // no sparse required
+  if(fRunMode == kSkipFlow || fVecFlowTask.size() < 1) { return; } // no sparse required
   if(!sparse) { Error("THnSparse not valid!","FillSparseCand"); return; }
   if(!track) { Error("Track not valid!","FillSparseCand"); return; }
 
@@ -3438,9 +3438,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   const Int_t iMultNumBins = fFlowCentMax - fFlowCentMin; // fixed unit percentile or Nch bin width
 
   // creating output correlations profiles based on FlowTasks
-  if(fRunMode != kSkipFlow)
+  Int_t iNumTasks = fVecFlowTask.size();
+  if(fRunMode != kSkipFlow && iNumTasks > 0)
   {
-    Int_t iNumTasks = fVecFlowTask.size();
     for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
     {
       FlowTask* task = fVecFlowTask.at(iTask);
@@ -3543,6 +3543,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     // Making THnSparse distribution of candidates
     // species independent
+
     TString sLabelCand[SparseCand::kDim];
     sLabelCand[SparseCand::kInvMass] = "#it{m}_{inv} (GeV/#it{c}^{2})";
     sLabelCand[SparseCand::kCent] = GetMultiEstimatorLabel(fMultEstimator);
@@ -3582,7 +3583,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fhsPhiCandBg->Sumw2();
       fListFlow[kPhi]->Add(fhsPhiCandBg);
     }
-  } // end-if {fRunMode != fSkipFlow}
+  } // end-if {fRunMode != fSkipFlow || iNumFlowTask > 0 }
 
   // creating GF weights
   if(fFlowFillWeights || fFlowUseWeights)
