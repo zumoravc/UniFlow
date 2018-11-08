@@ -1301,31 +1301,29 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
   if(!fFlowWeightsFile) { AliError("File with flow weights not found!"); return kFALSE; }
 
   TList* listFlowWeights = 0x0;
-  if(!fFlowRunByRunWeights)
-  {
+  if(!fFlowRunByRunWeights) {
     // information about current run is unknown in Initialization(); load only "averaged" weights
     AliInfo("Loading initial GF weights (run-averaged)");
     listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
     if(!listFlowWeights) { AliError("TList with flow weights not found."); return kFALSE; }
-  }
-  else
-  {
+  } else {
     listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fEventAOD->GetRunNumber()));
-    if(!listFlowWeights) { AliError(Form("TList with flow weights (run %d) not found.",fEventAOD->GetRunNumber())); return kFALSE; }
+
+    if(!listFlowWeights) {
+      AliWarning(Form("TList with flow weights (run %d) not found. Using run-averaged weights instead (as a back-up)", fEventAOD->GetRunNumber()));
+      listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
+      if(!listFlowWeights) { AliError("Loading run-averaged weights failed!"); return kFALSE; }
+    }
   }
 
-  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
-  {
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
     if(!fProcessSpec[iSpec]) { continue; }
     if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
-    if(fFlowUse3Dweights)
-    {
+    if(fFlowUse3Dweights) {
       fh3Weights[iSpec] = (TH3D*) listFlowWeights->FindObject(Form("%s3D",GetSpeciesName(PartSpecies(iSpec))));
       if(!fh3Weights[iSpec]) { AliError(Form("Weight 3D (%s) not found",GetSpeciesName(PartSpecies(iSpec)))); return kFALSE; }
-    }
-    else
-    {
+    } else {
       fh2Weights[iSpec] = (TH2D*) listFlowWeights->FindObject(GetSpeciesName(PartSpecies(iSpec)));
       if(!fh2Weights[iSpec]) { AliError(Form("Weight 2D (%s) not found",GetSpeciesName(PartSpecies(iSpec)))); return kFALSE; }
     }
