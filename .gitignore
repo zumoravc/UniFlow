@@ -35,6 +35,7 @@
 *.gif
 
 ### Directories ###
+uniFlow/class/misc/*
 uniFlow/results/*
 uniFlow/macros_bk
 results/*
