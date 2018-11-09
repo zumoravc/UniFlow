@@ -1646,32 +1646,26 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   TProfile3D* profFlow = 0x0;
   TH3D* histEntries = 0x0;
   TH3D* histEntriesBg = 0x0;
-  TString sProfileName = TString();
-  TString sHistoName = TString();
-  TString sHistoNameBg = TString();
+
   Bool_t bIsPhi = (task->fSpecies == FlowTask::kPhi);
   TString sSpeciesName = task->GetSpeciesName().Data();
   TString sSpeciesLabel = task->GetSpeciesLabel().Data();
+
+  TString sHistoName = TString("fhsCand") + sSpeciesName;
+  TString sHistoNameBg = sHistoName + TString("Bg");
 
   switch (task->fSpecies)
   {
     case FlowTask::kPhi :
       listFlow = flFlowPhi;
-      sProfileName = Form("fp3PhiCorr_%s<2>_harm%d_gap%s",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data());
-      sHistoName = Form("fhsPhiCandSig");
-      sHistoNameBg = Form("fhsPhiCandBg");
     break;
 
     case FlowTask::kK0s :
       listFlow = flFlowK0s;
-      sProfileName = Form("fp3V0sCorr%s_%s<2>_harm%d_gap%s",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data());
-      sHistoName = Form("fhsV0sCandK0s");
     break;
 
     case FlowTask::kLambda :
       listFlow = flFlowLambda;
-      sProfileName = Form("fp3V0sCorr%s_%s<2>_harm%d_gap%s",task->GetSpeciesName().Data(),fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data());
-      sHistoName = Form("fhsV0sCandLambda");
     break;
 
     default:
@@ -1687,7 +1681,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
   }
 
-  sProfileName = sProfTwoName;
+  TString sProfileName = sProfTwoName;
 
   // ### Preparing (un-sliced) candidate histo
   // cutting on eta based on eta gap
@@ -2450,19 +2444,13 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
   // preparing inv. mass slices (NB: merging pos/neg done in MakeSparseSlices() )
   if(bReco) {
 
-    TString sNameCand;
-    switch (species) {
-      case FlowTask::kK0s : sNameCand = "fhsV0sCandK0s"; break;
-      case FlowTask::kLambda : sNameCand = "fhsV0sCandLambda"; break;
-      case FlowTask::kPhi : sNameCand = "fhsPhiCandSig"; break;
-      default: break;
-    }
+    TString sNameCand = Form("fhsCand%s",task->GetSpeciesName().Data());
 
     THnSparseD* sparse = (THnSparseD*) inputList->FindObject(sNameCand.Data());
     if(!MakeSparseSlices(task,sparse,task->fListHistos)) { Error("Histo Slices failed!","PrepareSlicesNew"); return kFALSE; };
 
     if(species == FlowTask::kPhi) {
-      THnSparseD* sparseBg = (THnSparseD*) inputList->FindObject("fhsPhiCandBg");
+      THnSparseD* sparseBg = (THnSparseD*) inputList->FindObject(Form("%sBg",sNameCand.Data()));
       if(!MakeSparseSlices(task,sparseBg,task->fListHistos,"hInvMassBg")) { Error("Histo Slices for Phi BG failed!","PrepareSlicesNew"); return kFALSE; };
     }
   }

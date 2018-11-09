@@ -402,10 +402,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // histograms & profiles
 
       // Flow
-      THnSparseD*     fhsV0sCandK0s; //! distribution of K0s candidates
-      THnSparseD*     fhsV0sCandLambda; //!  distribution of Lambda candidates
-      THnSparseD*     fhsPhiCandSig; //!  distribution of Phi candidates
-      THnSparseD*     fhsPhiCandBg; //!  distribution of Phi background
+      THnSparseD*     fhsCandK0s; //! distribution of K0s candidates
+      THnSparseD*     fhsCandLambda; //!  distribution of Lambda candidates
+      THnSparseD*     fhsCandPhi; //!  distribution of Phi candidates
+      THnSparseD*     fhsCandPhiBg; //!  distribution of Phi background
 
       TH2D*           fh2Weights[kUnknown]; //! container for GF weights (phi,eta,pt) (2D)
       TH3D*           fh3Weights[kUnknown]; //! container for GF weights (phi,eta,pt)
