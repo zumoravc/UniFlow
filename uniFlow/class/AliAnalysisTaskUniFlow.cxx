@@ -113,7 +113,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowVecQmid(),
   fFlowVecPpos(),
   fFlowVecPneg(),
-  fFlowVecS(),
+  fFlowVecSpos(),
+  fFlowVecSneg(),
   fEventAOD(),
   fPIDResponse(),
   fPIDCombined(),
@@ -390,7 +391,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowVecQmid(),
   fFlowVecPpos(),
   fFlowVecPneg(),
-  fFlowVecS(),
+  fFlowVecSpos(),
+  fFlowVecSneg(),
   fEventAOD(),
   fPIDResponse(),
   fPIDCombined(),
@@ -3034,7 +3036,12 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecPpos);
-  if(bHasGap) { ResetFlowVector(fFlowVecPneg); } else { ResetFlowVector(fFlowVecS); }
+  ResetFlowVector(fFlowVecSpos);
+
+  if(bHasGap) {
+    ResetFlowVector(fFlowVecPneg);
+    ResetFlowVector(fFlowVecSneg);
+  }
 
   for(auto part = vector->begin(); part != vector->end(); ++part)
   {
@@ -3058,6 +3065,9 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
     Double_t dWeight = 1.0;
     if(fFlowUseWeights) { dWeight = GetFlowWeight(*part, species); }
 
+    // check if POI overlaps with RFPs (not for reconstructed)
+    Bool_t bIsWithinRefs = (!bHasMass && IsWithinRefs(static_cast<const AliAODTrack*>(*part)));
+
     if(!bHasGap) // no eta gap
     {
       for(Int_t iHarm(0); iHarm < fFlowNumHarmonicsMax; iHarm++)
@@ -3069,11 +3079,11 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
 
           // check if track (passing criteria) is overlapping with RFPs pT region; if so, fill S (q) vector
           // in case of charged, pions, kaons or protons (one witout mass)
-          if(!bHasMass && IsWithinRefs(static_cast<const AliAODTrack*>(*part)))
+          if(bIsWithinRefs)
           {
             Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
             Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
-            fFlowVecS[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+            fFlowVecSpos[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
           }
         }
 
@@ -3088,6 +3098,14 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
             Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
             Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
             fFlowVecPpos[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+
+            // possible overlap for <<4'>> with single gap (within the same subevent)
+            if(bIsWithinRefs)
+            {
+              Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
+              Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
+              fFlowVecSpos[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+            }
           }
        }
        if(dEta < -dEtaLimit) // particle in negative eta acceptance
@@ -3098,6 +3116,14 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
              Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
              Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
              fFlowVecPneg[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+
+             // possible overlap for <<4'>> with single gap (within the same subevent)
+             if(bIsWithinRefs)
+             {
+               Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
+               Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
+               fFlowVecSneg[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+             }
            }
        }
      } // endif {dEtaGap}
@@ -3280,8 +3306,20 @@ TComplex AliAnalysisTaskUniFlow::PGapNeg(const Int_t n, const Int_t p)
 //____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::S(const Int_t n, const Int_t p)
 {
-  if(n < 0) return TComplex::Conjugate(fFlowVecS[-n][p]);
-  else return fFlowVecS[n][p];
+  if(n < 0) return TComplex::Conjugate(fFlowVecSpos[-n][p]);
+  else return fFlowVecSpos[n][p];
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::SGapPos(const Int_t n, const Int_t p)
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecSpos[-n][p]);
+  else return fFlowVecSpos[n][p];
+}
+//____________________________________________________________________
+TComplex AliAnalysisTaskUniFlow::SGapNeg(const Int_t n, const Int_t p)
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecSneg[-n][p]);
+  else return fFlowVecSneg[n][p];
 }
 //____________________________________________________________________
 
@@ -3379,17 +3417,19 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Int_t n1, const Int_t n2, const 
 //____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::FourDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
 {
-  TComplex formula = PGapPos(n1,1)*QGapNeg(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)
-                     - PGapPos(n1,1)*QGapNeg(n2+n3,2)*QGapNeg(n4,1) - PGapPos(n1,1)*QGapNeg(n3,1)*QGapNeg(n2+n4,2)
-                     - PGapPos(n1,1)*QGapNeg(n2,1)*QGapNeg(n3+n4,2) + 2.0*PGapPos(n1,1)*QGapNeg(n2+n3+n4,3);
+  TComplex formula = PGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)
+                      - SGapPos(n1+n2,2)*QGapNeg(n3,1)*QGapNeg(n4,1)
+                      - PGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3+n4,2)
+                      + SGapPos(n1+n2,2)*QGapNeg(n3+n4,2);
   return formula;
 }
 //____________________________________________________________________
 TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
 {
-  TComplex formula = PGapNeg(n1,1)*QGapPos(n2,1)*QGapPos(n3,1)*QGapPos(n4,1)
-                     - PGapNeg(n1,1)*QGapPos(n2+n3,2)*QGapPos(n4,1) - PGapNeg(n1,1)*QGapPos(n3,1)*QGapPos(n2+n4,2)
-                     - PGapNeg(n1,1)*QGapPos(n2,1)*QGapPos(n3+n4,2) + 2.0*PGapNeg(n1,1)*QGapPos(n2+n3+n4,3);
+  TComplex formula = PGapNeg(n1,1)*QGapNeg(n2,1)*QGapPos(n3,1)*QGapPos(n4,1)
+                      - SGapNeg(n1+n2,2)*QGapPos(n3,1)*QGapPos(n4,1)
+                      - PGapNeg(n1,1)*QGapNeg(n2,1)*QGapPos(n3+n4,2)
+                      + SGapNeg(n1+n2,2)*QGapPos(n3+n4,2);
   return formula;
 }
 //____________________________________________________________________

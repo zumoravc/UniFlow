@@ -263,6 +263,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                PGapPos(const Int_t n, const Int_t p);
       TComplex                PGapNeg(const Int_t n, const Int_t p);
       TComplex                S(const Int_t n, const Int_t p);
+      TComplex                SGapPos(const Int_t n, const Int_t p);
+      TComplex                SGapNeg(const Int_t n, const Int_t p);
 
       TComplex                Two(const Int_t n1, const Int_t n2); // Two particle reference correlation calculations (no eta gap)
       TComplex                TwoGap(const Int_t n1, const Int_t n2); // Two particle reference correlation calculations (with eta gap)
@@ -301,7 +303,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecQmid[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecPpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecPneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
-      TComplex                fFlowVecS[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+      TComplex                fFlowVecSpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+      TComplex                fFlowVecSneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
 
       // selected POIs containers
       std::vector<AliVTrack*>*  fVector[kUnknown]; //! container for selected Refs charged particles
