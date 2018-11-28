@@ -2750,7 +2750,12 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
       iNumMassBins = axisMass->GetNbins();
     }
 
+    Int_t iNumPart = fVector[iSpec]->size();
+    Int_t iNumFilled = 0;
+
     for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass) {
+      if(iNumFilled >= iNumPart) { break; }
+
       Double_t dMass = 0.0;
       Double_t dMassLow = 0.0;
       Double_t dMassHigh = 0.0;
@@ -2762,12 +2767,14 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
       }
 
       for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt) {
+        if(iNumFilled >= iNumPart) { break; }
+
         Double_t dPt = axisPt->GetBinCenter(iPt);
         Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
         Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
 
         // filling POIs (P,S) flow vectors
-        FillPOIsVectors(dGap,PartSpecies(iSpec),dPtLow,dPtHigh,dMassLow,dMassHigh);
+        iNumFilled += FillPOIsVectors(dGap,PartSpecies(iSpec),dPtLow,dPtHigh,dMassLow,dMassHigh);
         CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
       } // end-for {iPt}
     }  // end-for {iMass}
@@ -3061,17 +3068,17 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
   return;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
+Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
 {
   // Filling p,q and s flow vectors with POIs (given by species) for differential flow calculation
   // *************************************************************
   std::vector<AliVTrack*>* vector = fVector[species];
-  if(!vector) { AliError("Vector with selected POIs not found."); return; }
+  if(!vector) { AliError("Vector with selected POIs not found."); return 0; }
 
   Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE; if(dEtaGap > -1.0) { bHasGap = kTRUE; }
   Bool_t bHasMass = HasMass(species);
-  if(bHasMass && dMassLow == 0.0 && dMassHigh == 0.0) { AliError("Particle mass low && high limits not specified!"); return; }
+  if(bHasMass && dMassLow == 0.0 && dMassHigh == 0.0) { AliError("Particle mass low && high limits not specified!"); return 0; }
 
   // clearing output (global) flow vectors
   ResetFlowVector(fFlowVecPpos);
@@ -3081,6 +3088,8 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
     ResetFlowVector(fFlowVecPneg);
     ResetFlowVector(fFlowVecSneg);
   }
+
+  Int_t iTracksFilled = 0; // counter of filled tracks
 
   for(auto part = vector->begin(); part != vector->end(); ++part)
   {
@@ -3098,7 +3107,10 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
       if(dMass < dMassLow || dMass >= dMassHigh) { continue; }
     }
 
-    // at this point particles corresponding to this pt (& mass) bin survive
+    if(bHasGap && TMath::Abs(dEta) < dEtaLimit) { continue; }
+
+    // at this point particles corresponding to this pt (& mass) bin and eta acceptance (gap) survives
+    iTracksFilled++;
 
     // loading weights if needed
     Double_t dWeight = 1.0;
@@ -3167,7 +3179,7 @@ void AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartS
        }
      } // endif {dEtaGap}
    } // endfor {tracks}
-   return;
+   return iTracksFilled;
 }
 //_____________________________________________________________________________
 void AliAnalysisTaskUniFlow::ResetFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
