@@ -99,6 +99,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // analysis setters
       void                    SetRunMode(RunMode mode = kFull) { fRunMode = mode; }
       void                    SetNumEventsAnalyse(Int_t num) { fNumEventsAnalyse = num; }
+      void                    SetDumpTObjectTable(Bool_t dump = kTRUE) { fDumpTObjectTable = dump; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
       void                    SetMC(Bool_t mc = kTRUE) { fMC = mc; }
       void                    SetSampling(Bool_t sample = kTRUE, Int_t iNum = 10) { fSampling = sample; fNumSamples = iNum; }
@@ -212,6 +213,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                GetFlowWeight(AliVTrack* track, PartSpecies species); // extract per-particle flow weight from input file
       void                    ListParameters(); // list all task parameters
       void                    ClearVectors(); // properly clear all particle vectors
+      void                    DumpTObjTable(const char* note = 0x0, Option_t* opt = ""); // add a printf statmenet given by note followed by gObjTable->Print() dump
 
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
       Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
@@ -312,6 +314,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
       AnalType                fAnalType; // analysis type: AOD / ESD
+      Bool_t                  fDumpTObjectTable; // [kFALSE] flag for dumping TObjectTable to the output stream
       Bool_t                  fSampling; // [kFALSE] Do random sampling ? (estimation of vn stat. uncertanity)
       Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
       Bool_t                  fProcessSpec[kUnknown];  // [false] flag for processing species

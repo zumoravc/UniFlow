@@ -68,6 +68,7 @@
 #include <TDatabasePDG.h>
 #include <TPDGCode.h>
 
+#include "TObjectTable.h"
 #include "TFile.h"
 #include "TChain.h"
 #include "TH1D.h"
@@ -148,6 +149,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
+  fDumpTObjectTable(kFALSE),
   fSampling(kFALSE),
   fFillQA(kTRUE),
 
@@ -426,6 +428,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // analysis selection
   fRunMode(kFull),
   fAnalType(kAOD),
+  fDumpTObjectTable(kFALSE),
   fSampling(kFALSE),
   fFillQA(kTRUE),
 
@@ -682,6 +685,9 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   //   delete fPIDCombined;
   // }
 
+
+  DumpTObjTable("Destructor: start");
+
   // clearing vectors before deleting
   ClearVectors();
 
@@ -701,6 +707,9 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   if(fQAPID) delete fQAPID;
   if(fQAPhi) delete fQAPhi;
   if(fQAV0s) delete fQAV0s;
+
+  DumpTObjTable("Destructor: end");
+
 }
 //_____________________________________________________________________________
 const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species)
@@ -751,6 +760,7 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("   -------- Analysis task ---------------------------------------\n");
   printf("      fRunMode: (RunMode) %d\n",    fRunMode);
   printf("      fAnalType: (AnalType) %d\n",    fAnalType);
+  printf("      fDumpTObjectTable: (Bool_t) %s\n",    fDumpTObjectTable ? "kTRUE" : "kFALSE");
   printf("      fSampling: (Bool_t) %s\n",    fSampling ? "kTRUE" : "kFALSE");
   printf("      fFillQA: (Bool_t) %s\n",    fFillQA ? "kTRUE" : "kFALSE");
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) { printf("      fProcessSpec[k%s]: (Bool_t) %s\n",   GetSpeciesName(PartSpecies(iSpec)), fProcessSpec[iSpec] ? "kTRUE" : "kFALSE"); }
@@ -843,6 +853,18 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   }
 
   return;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::DumpTObjTable(const char* note, Option_t* opt)
+{
+  // Skipping if flag is off
+  if(!fDumpTObjectTable) { return; }
+
+  if(note) {
+    printf("TObjectTable::%s",note);
+  }
+
+  gObjectTable->Print(opt);
 }
 //_____________________________________________________________________________
 Bool_t AliAnalysisTaskUniFlow::InitializeTask()
@@ -969,6 +991,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // main method called for each event (event loop)
   // *************************************************************
   // check if initialization succesfull (done within UserCreateOutputObjects())
+
+  DumpTObjTable("UserExec: start");
+
   if(!fInit) { AliFatal("Something went wrong : task not initialized!"); return; }
 
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
@@ -997,13 +1022,20 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // Fill event QA BEFORE cuts
   if(fFillQA) { FillEventsQA(0); }
 
-  if(!IsEventSelected()) { return; }
+  Bool_t bEventSelected = IsEventSelected();
+  // if(!IsEventSelected()) { return; }
+
+  DumpTObjTable("UserExec: after event selection");
+  if(!bEventSelected) { return; }
+
   // deprecenated selected by HHTF
   // if( (fColSystem == kPP || fColSystem == kPPb) && !IsEventSelected_oldsmall2016() ) { return; }
   fhEventCounter->Fill("Event OK",1);
 
   // checking the run number for aplying weights & loading TList with weights
   if(fFlowUseWeights && fFlowRunByRunWeights && fRunNumber != fEventAOD->GetRunNumber() && !LoadWeights()) { AliFatal("Weights not loaded!"); return; }
+
+  DumpTObjTable("UserExec: before filtering");
 
   // Filter charged (& Refs) particles to evaluate event multiplcity / N_RFPs
   // NB: clear charged vectors because it might keep particles from previous event (not happen for other species)
@@ -1066,8 +1098,12 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(fProcessSpec[kK0s] || fProcessSpec[kLambda]) { FilterV0s(); }
   if(fProcessSpec[kPhi]) { FilterPhi(); }
 
+  DumpTObjTable("UserExec: after filtering");
+
   // processing of selected event
   Bool_t bProcessed = CalculateFlow();
+
+  DumpTObjTable("UserExec: after CalculateFlow");
 
   // should be cleared at the end of processing especially for reconstructed
   // particles (Phi, V0s) because here new AliPicoTracks are created
@@ -1075,6 +1111,8 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   // extracting run number here to store run number from previous event (for current run number use info in AliAODEvent)
   fRunNumber = fEventAOD->GetRunNumber();
+
+  DumpTObjTable("UserExec: end");
 
   if(!bProcessed) return;
 
@@ -3440,9 +3478,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // this function is called ONCE at the start of your analysis (RUNTIME)
   // *************************************************************
 
+  DumpTObjTable("UserCreateOutputObjects: start");
+
   // task initialization
   fInit = InitializeTask();
   if(!fInit) { return; }
+
+  DumpTObjTable("UserCreateOutputObjects: after Initialization");
+
 
   // list all parameters used in this analysis
   ListParameters();
@@ -4057,6 +4100,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   PostData(++i, fQAV0s);
   PostData(++i, fQAPhi);
   PostData(++i, fFlowWeights);
+
+  DumpTObjTable("UserCreateOutputObjects: end");
+
 
   return;
 }
