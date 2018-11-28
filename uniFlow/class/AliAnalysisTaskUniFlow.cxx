@@ -1311,7 +1311,7 @@ Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
     AliMultSelection* multSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
     if(!multSelection) { AliError("AliMultSelection object not found! Returning -1"); return -1; }
     v0Centr = multSelection->GetMultiplicityPercentile("V0M");
-    
+
     TF1 fMultCentLowCut = TF1("fMultCentLowCut", "[0]+[1]*x+[2]*exp([3]-[4]*x) - 5.*([5]+[6]*exp([7]-[8]*x))", 0, 100);
     fMultCentLowCut.SetParameters(-6.15980e+02, 4.89828e+00, 4.84776e+03, -5.22988e-01, 3.04363e-02, -1.21144e+01, 2.95321e+02, -9.20062e-01, 2.17372e-02);
     if(Double_t(multTrk) < fMultCentLowCut.Eval(v0Centr)) { return kTRUE; }
@@ -2152,7 +2152,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0,
     fhQAV0sArmenterosK0s[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0());
 
     // proper lifetime
-    Double_t dMassPDGK0s = TDatabasePDG::Instance()->GetParticle(kK0Short)->Mass();
+    Double_t dMassPDGK0s = fPDGMassK0s;
     // Double_t dPropLifeK0s = ( (dMassPDGK0s / v0->Pt() + 1e-10) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     Double_t dPropLifeK0s = ( (dMassPDGK0s / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]) );
     fhQAV0sNumTauK0s[iQAindex]->Fill(dPropLifeK0s);
@@ -2174,7 +2174,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0,
     if(bCandAntiLambda) { fhQAV0sArmenterosALambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0()); }
 
     // proper lifetime
-    Double_t dMassPDGLambda = TDatabasePDG::Instance()->GetParticle(kLambda0)->Mass();
+    Double_t dMassPDGLambda = fPDGMassLambda;
     // Double_t dPropLifeLambda = ( (dMassPDGLambda / v0->Pt() + 1e-10) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     Double_t dPropLifeLambda = ( (dMassPDGLambda / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]) );
     fhQAV0sNumTauLambda[iQAindex]->Fill(dPropLifeLambda);
