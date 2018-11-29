@@ -160,6 +160,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowPOIsPtMax(10.0),
   fFlowPOIsPtBinNum(0),
   fFlowEtaMax(0.8),
+  fFlowEtaBinNum(0),
+  fFlowPhiBinNum(100),
   fNumSamples(1),
   fFlowWeightsPath(),
   fFlowFillWeights(kTRUE),
@@ -441,6 +443,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowPOIsPtMax(10.0),
   fFlowPOIsPtBinNum(0),
   fFlowEtaMax(0.8),
+  fFlowEtaBinNum(0),
+  fFlowPhiBinNum(100),
   fNumSamples(1),
   fFlowWeightsPath(),
   fFlowFillWeights(kTRUE),
@@ -774,7 +778,9 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fFlowPOIsPtMin: (Double_t) %g (GeV/c)\n",    fFlowPOIsPtMin);
   printf("      fFlowPOIsPtMax: (Double_t) %g (GeV/c)\n",    fFlowPOIsPtMax);
   printf("      fFlowPOIsPtBinNum: (Int_t) %d\n",    fFlowPOIsPtBinNum);
-  printf("      fFlowEtaMax: (Double_t) %g (GeV/c)\n",    fFlowEtaMax);
+  printf("      fFlowEtaMax: (Double_t) %g\n",    fFlowEtaMax);
+  printf("      fFlowEtaBinNum: (Int_t) %d\n",    fFlowEtaBinNum);
+  printf("      fFlowPhiBinNum: (Int_t) %d\n",    fFlowPhiBinNum);
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowRunByRunWeights: (Bool_t) %s\n",    fFlowRunByRunWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowWeightsPath: (TString) '%s' \n",    fFlowWeightsPath.Data());
@@ -953,6 +959,25 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   if(fCutPhiInvMassMin > fCutPhiInvMassMax || fCutPhiInvMassMin < 0. || fCutPhiInvMassMax < 0.)
   {
     AliFatal("Cut: InvMass (Phi) range wrong! Terminating!");
+    return kFALSE;
+  }
+
+  // eta
+  if(fFlowEtaMax < 0.)
+  {
+    AliFatal("Cut: Eta max. wrong! Terminating!");
+    return kFALSE;
+  }
+  if(fFlowEtaBinNum < 1)
+  {
+    AliWarning("Cut: fFlowEtaBinNum not set. Setting automatically with 0.05 bin width!");
+    fFlowEtaBinNum = 2.0*fFlowEtaMax / 0.05;
+  }
+
+  // phi
+  if(fFlowPhiBinNum < 1)
+  {
+    AliFatal("Cut: PhiBinNum wrong! Terminating!");
     return kFALSE;
   }
 
@@ -3571,8 +3596,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   // setting number of bins based on set range with fixed width
   const Int_t iFlowRFPsPtBinNum = (Int_t) ((fFlowRFPsPtMax - fFlowRFPsPtMin) / 0.1 + 0.5);
-  const Int_t iFlowEtaNumBins = 2*fFlowEtaMax/0.05;
-  const Int_t iPhiNumBins = 100;
 
   // creating output correlations profiles based on FlowTasks
   Int_t iNumTasks = fVecFlowTask.size();
@@ -3691,7 +3714,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     Int_t iNumBinsCand[SparseCand::kDim]; Double_t dMinCand[SparseCand::kDim]; Double_t dMaxCand[SparseCand::kDim];
     iNumBinsCand[SparseCand::kCent] = fCentBinNum; dMinCand[SparseCand::kCent] = fCentMin; dMaxCand[SparseCand::kCent] = fCentMax;
     iNumBinsCand[SparseCand::kPt] = fFlowPOIsPtBinNum; dMinCand[SparseCand::kPt] = fFlowPOIsPtMin; dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
-    iNumBinsCand[SparseCand::kEta] = iFlowEtaNumBins; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
+    iNumBinsCand[SparseCand::kEta] = fFlowEtaBinNum; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
 
     // species dependent
     if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
@@ -3709,7 +3732,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     if(fProcessSpec[kPhi])
     {
-      iNumBinsCand[SparseCand::kEta] = iFlowEtaNumBins; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
+      iNumBinsCand[SparseCand::kEta] = fFlowEtaBinNum; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
       iNumBinsCand[SparseCand::kInvMass] = fPhiNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutPhiInvMassMin; dMaxCand[SparseCand::kInvMass] = fCutPhiInvMassMax;
 
       fhsCandPhi = new THnSparseD("fhsCandPhi",Form("#phi (Sig): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
@@ -3734,7 +3757,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       {
         const char* weightName = Form("fh3Weights%s",GetSpeciesName(PartSpecies(iSpec)));
         const char* weightLabel = Form("Weights: %s; #varphi; #eta; PV-z (cm)", GetSpeciesName(PartSpecies(iSpec)));
-        fh3Weights[iSpec] = new TH3D(weightName, weightLabel, iPhiNumBins,0.0,TMath::TwoPi(), iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+        fh3Weights[iSpec] = new TH3D(weightName, weightLabel, fFlowPhiBinNum,0.0,TMath::TwoPi(), fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
         fh3Weights[iSpec]->Sumw2();
         fFlowWeights->Add(fh3Weights[iSpec]);
       }
@@ -3744,13 +3767,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         if(fFlowUse3Dweights) {
           const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
           const char* weightLabel = Form("Weights (after): %s; #varphi; #eta; PV-z (cm)",GetSpeciesLabel(PartSpecies(iSpec)));
-          fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, iPhiNumBins,0,TMath::TwoPi(), iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+          fh3AfterWeights[iSpec] = new TH3D(weightName,weightLabel, fFlowPhiBinNum,0.0,TMath::TwoPi(), fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
           fh3AfterWeights[iSpec]->Sumw2();
           fFlowWeights->Add(fh3AfterWeights[iSpec]);
         } else {
           const char* weightName = Form("fh2AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
           const char* weightLabel = Form("Weights (after): %s; #varphi; #eta;",GetSpeciesLabel(PartSpecies(iSpec)));
-          fh2AfterWeights[iSpec] = new TH2D(weightName,weightLabel, iPhiNumBins,0,TMath::TwoPi(), iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax);
+          fh2AfterWeights[iSpec] = new TH2D(weightName,weightLabel, fFlowPhiBinNum,0.0,TMath::TwoPi(), fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
           fh2AfterWeights[iSpec]->Sumw2();
           fFlowWeights->Add(fh2AfterWeights[iSpec]);
         }
@@ -3847,9 +3870,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fQACharged->Add(fhRefsMult);
     fhRefsPt = new TH1D("fhRefsPt","RFPs: #it{p}_{T};  #it{p}_{T} (GeV/#it{c})", iFlowRFPsPtBinNum,fFlowRFPsPtMin,fFlowRFPsPtMax);
     fQACharged->Add(fhRefsPt);
-    fhRefsEta = new TH1D("fhRefsEta","RFPs: #eta; #eta", iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax);
+    fhRefsEta = new TH1D("fhRefsEta","RFPs: #eta; #eta", fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
     fQACharged->Add(fhRefsEta);
-    fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", iPhiNumBins,0,TMath::TwoPi());
+    fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", fFlowPhiBinNum,0.0,TMath::TwoPi());
     fQACharged->Add(fhRefsPhi);
     fpRefsMult = new TProfile("fpRefsMult","Ref mult; %s", fCentBinNum,fCentMin,fCentMax);
     fpRefsMult->Sumw2();
@@ -3867,9 +3890,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPID->Add(fhPIDMult[iPID]);
       fhPIDPt[iPID] = new TH1D(Form("fhPID%sPt",sNamePID[iPID].Data()),Form("PID: %s: #it{p}_{T}; #it{p}_{T}",sLabelPID[iPID].Data()), fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fQAPID->Add(fhPIDPt[iPID]);
-      fhPIDPhi[iPID] = new TH1D(Form("fhPID%sPhi",sNamePID[iPID].Data()),Form("PID: %s: #varphi; #varphi",sLabelPID[iPID].Data()), iPhiNumBins,0,TMath::TwoPi());
+      fhPIDPhi[iPID] = new TH1D(Form("fhPID%sPhi",sNamePID[iPID].Data()),Form("PID: %s: #varphi; #varphi",sLabelPID[iPID].Data()), fFlowPhiBinNum,0,TMath::TwoPi());
       fQAPID->Add(fhPIDPhi[iPID]);
-      fhPIDEta[iPID] = new TH1D(Form("fhPID%sEta",sNamePID[iPID].Data()),Form("PID: %s: #eta; #eta",sLabelPID[iPID].Data()), iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax);
+      fhPIDEta[iPID] = new TH1D(Form("fhPID%sEta",sNamePID[iPID].Data()),Form("PID: %s: #eta; #eta",sLabelPID[iPID].Data()), fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
       fQAPID->Add(fhPIDEta[iPID]);
       fhPIDCharge[iPID] = new TH1D(Form("fhPID%sCharge",sNamePID[iPID].Data()),Form("PID: %s: charge; charge",sLabelPID[iPID].Data()), 3,-1.5,1.5);
       fQAPID->Add(fhPIDCharge[iPID]);
@@ -3929,9 +3952,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fQAPhi->Add(fhPhiBGCharge);
       fhPhiPt = new TH1D("fhPhiPt","#phi: #it{p}_{T}; #it{p}_{T} (GeV/#it{c})", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
       fQAPhi->Add(fhPhiPt);
-      fhPhiEta = new TH1D("fhPhiEta","#phi: #eta; #eta", iFlowEtaNumBins,-fFlowEtaMax,fFlowEtaMax);
+      fhPhiEta = new TH1D("fhPhiEta","#phi: #eta; #eta", fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
       fQAPhi->Add(fhPhiEta);
-      fhPhiPhi = new TH1D("fhPhiPhi","#phi: #varphi; #varphi", iPhiNumBins,0.,TMath::TwoPi());
+      fhPhiPhi = new TH1D("fhPhiPhi","#phi: #varphi; #varphi", fFlowPhiBinNum,0.,TMath::TwoPi());
       fQAPhi->Add(fhPhiPhi);
     } //end-if {fProcessPhi}
 

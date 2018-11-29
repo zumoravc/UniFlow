@@ -117,7 +117,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       void                    SetFlowRFPsPt(Double_t min, Double_t max) { fFlowRFPsPtMin = min; fFlowRFPsPtMax = max; }
       void                    SetFlowPOIsPt(Double_t min, Double_t max, Int_t bins = 0) { fFlowPOIsPtMin = min; fFlowPOIsPtMax = max; fFlowPOIsPtBinNum = bins; }
-      void                    SetFlowEtaMax(Double_t max) { fFlowEtaMax = max; }
+      void                    SetFlowEta(Double_t max, Int_t bins = 0) { fFlowEtaMax = max; fFlowEtaBinNum = bins; }
+      void                    SetFlowPhiBins(Int_t bins) { fFlowPhiBinNum = bins; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
@@ -324,7 +325,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
       Double_t                fFlowPOIsPtMax; // [10] (GeV/c) max pT treshold for POIs for differential flow
       Int_t                   fFlowPOIsPtBinNum; // [0] number of pt bins
-      Double_t                fFlowEtaMax; // [0.8] () max eta acceptance for flow particles (RFPs & POIs)
+      Double_t                fFlowEtaMax; // [0.8] max eta acceptance for flow particles (RFPs & POIs)
+      Int_t                   fFlowEtaBinNum; // [0] number of eta bins
+      Int_t                   fFlowPhiBinNum; // [100] number of phi bins
       Int_t                   fNumSamples; // [1] overall number of samples (from random sampling) used
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
