@@ -160,8 +160,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowPOIsPtMax(10.0),
   fFlowPOIsPtBinNum(0),
   fFlowEtaMax(0.8),
-  fFlowCentMin(0),
-  fFlowCentMax(0),
   fNumSamples(1),
   fFlowWeightsPath(),
   fFlowFillWeights(kTRUE),
@@ -172,7 +170,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // events selection
   fPVtxCutZ(10.0),
   fColSystem(kPPb),
-  fMultEstimator(kV0A),
+  fCentEstimator(kV0A),
+  fCentMin(0),
+  fCentMax(0),
+  fCentBinNum(0),
   fTrigger(AliVEvent::kINT7),
   fEventRejectAddPileUp(kTRUE),
 
@@ -440,8 +441,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowPOIsPtMax(10.0),
   fFlowPOIsPtBinNum(0),
   fFlowEtaMax(0.8),
-  fFlowCentMin(0),
-  fFlowCentMax(0),
   fNumSamples(1),
   fFlowWeightsPath(),
   fFlowFillWeights(kTRUE),
@@ -452,7 +451,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   // events selection
   fPVtxCutZ(10.0),
   fColSystem(kPPb),
-  fMultEstimator(kV0A),
+  fCentEstimator(kV0A),
+  fCentMin(0),
+  fCentMax(0),
+  fCentBinNum(0),
   fTrigger(AliVEvent::kINT7),
   fEventRejectAddPileUp(kTRUE),
 
@@ -773,15 +775,16 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fFlowPOIsPtMax: (Double_t) %g (GeV/c)\n",    fFlowPOIsPtMax);
   printf("      fFlowPOIsPtBinNum: (Int_t) %d\n",    fFlowPOIsPtBinNum);
   printf("      fFlowEtaMax: (Double_t) %g (GeV/c)\n",    fFlowEtaMax);
-  printf("      fFlowCentMin: (Int_t) %d (GeV/c)\n",    fFlowCentMin);
-  printf("      fFlowCentMax: (Int_t) %d (GeV/c)\n",    fFlowCentMax);
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowRunByRunWeights: (Bool_t) %s\n",    fFlowRunByRunWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowWeightsPath: (TString) '%s' \n",    fFlowWeightsPath.Data());
   printf("   -------- Events ----------------------------------------------\n");
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
-  printf("      fMultEstimator: (MultiEst) '%s' (%d)\n",    GetMultiEstimatorLabel(fMultEstimator), fMultEstimator);
+  printf("      fCentEstimator: (CentEst) '%s' (%d)\n",    GetCentEstimatorLabel(fCentEstimator), fCentEstimator);
+  printf("      fCentMin: (Int_t) %d\n",    fCentMin);
+  printf("      fCentMax: (Int_t) %d\n",    fCentMax);
+  printf("      fCentBinNum: (Int_t) %d\n",    fCentBinNum);
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
   printf("   -------- Charged tracks --------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
@@ -953,12 +956,29 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
     return kFALSE;
   }
 
-  // setting fFlowCentMax according to estimator : 0-100 for %'s and 0-150 for CHARGED
-  if(fMultEstimator == kRFP) { fFlowCentMin = 0; fFlowCentMax = 200; }
-  else { fFlowCentMin = 0; fFlowCentMax = 100; }
+  // Centraltity // setting default values for centrality estimators
+  if(fCentEstimator == kRFP)
+  {
+    if(fCentMax == 0) { fCentMax = 200; }
+    if(fCentBinNum == 0) { fCentBinNum = 200; }
+  }
+  else
+  {
+    if(fCentMax == 0) { fCentMax = 100; }
+    if(fCentBinNum == 0) { fCentBinNum = 100; }
+  }
 
-  // increasing fFlowCentMax+1 (just to be sure)
-  fFlowCentMax++;
+  if(fCentMin < 0 || fCentMax < 1 || fCentMin > fCentMax)
+  {
+    AliFatal("Centrality: range wrong! Terminating!");
+    return kFALSE;
+  }
+
+  if(fCentBinNum < 1)
+  {
+    AliFatal("Centrality: Number of bins wrong! Terminating!");
+    return kFALSE;
+  }
 
   // setting procesing Refs & Charged by default
   fProcessSpec[kRefs] = kTRUE;
@@ -1073,9 +1093,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
   fIndexCentrality = GetCentralityIndex();
   if(fIndexCentrality < 0) { return; }
-  if(fFlowCentMin > 0 && fIndexCentrality < fFlowCentMin) { return; }
-  if(fFlowCentMax > 0 && fIndexCentrality > fFlowCentMax) { return; }
-  fhEventCounter->Fill("Multiplicity OK",1);
+  if(fCentMin > 0 && fIndexCentrality < fCentMin) { return; }
+  if(fCentMax > 0 && fIndexCentrality > fCentMax) { return; }
+  fhEventCounter->Fill("Cent/Mult OK",1);
 
   // here events are selected
   fhEventCounter->Fill("Selected",1);
@@ -3266,7 +3286,7 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   Int_t iCentralityIndex = -1;
 
   // assigning centrality based on number of selected charged tracks
-  if(fMultEstimator == kRFP) { iCentralityIndex = fVector[kRefs]->size(); }
+  if(fCentEstimator == kRFP) { iCentralityIndex = fVector[kRefs]->size(); }
   else {
     AliMultSelection* multSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
     if(!multSelection) {
@@ -3274,7 +3294,7 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex()
       return -1;
     }
 
-    Float_t dPercentile = multSelection->GetMultiplicityPercentile(GetMultiEstimatorLabel(fMultEstimator));
+    Float_t dPercentile = multSelection->GetMultiplicityPercentile(GetCentEstimatorLabel(fCentEstimator));
     if(dPercentile > 100 || dPercentile < 0) {
       AliWarning("Centrality percentile estimated not within 0-100 range. Returning -1");
       return -1;
@@ -3286,7 +3306,7 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   return iCentralityIndex;
 }
 //_____________________________________________________________________________
-const char* AliAnalysisTaskUniFlow::GetMultiEstimatorLabel(MultiEst est)
+const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(CentEst est)
 {
   // Return string with estimator name or 'n/a' if not available
   // *************************************************************
@@ -3553,7 +3573,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   const Int_t iFlowRFPsPtBinNum = (Int_t) ((fFlowRFPsPtMax - fFlowRFPsPtMin) / 0.1 + 0.5);
   const Int_t iFlowEtaNumBins = 2*fFlowEtaMax/0.05;
   const Int_t iPhiNumBins = 100;
-  const Int_t iMultNumBins = fFlowCentMax - fFlowCentMin; // fixed unit percentile or Nch bin width
 
   // creating output correlations profiles based on FlowTasks
   Int_t iNumTasks = fVecFlowTask.size();
@@ -3589,7 +3608,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           {
             case kRefs :
             {
-              profile = new TProfile(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s; %s",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
+              profile = new TProfile(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s; %s",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax);
               break;
             }
 
@@ -3598,29 +3617,29 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
             case kKaon :
             case kProton :
             {
-              profile = new TProfile2D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-              if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax); }
+              profile = new TProfile2D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
+              if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax); }
               break;
             }
 
             case kK0s:
             {
-              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
-              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax); }
+              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax); }
               break;
             }
 
             case kLambda:
             {
-              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
-              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax); }
+              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax); }
               break;
             }
 
             case kPhi:
             {
-              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
-              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax); }
+              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
+              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax); }
               break;
             }
           }
@@ -3664,13 +3683,13 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     TString sLabelCand[SparseCand::kDim];
     sLabelCand[SparseCand::kInvMass] = "#it{m}_{inv} (GeV/#it{c}^{2})";
-    sLabelCand[SparseCand::kCent] = GetMultiEstimatorLabel(fMultEstimator);
+    sLabelCand[SparseCand::kCent] = GetCentEstimatorLabel(fCentEstimator);
     sLabelCand[SparseCand::kPt] = "#it{p}_{T} (GeV/c)";
     sLabelCand[SparseCand::kEta] = "#eta";
     TString sAxes = TString(); for(Int_t i(0); i < SparseCand::kDim; ++i) { sAxes += Form("%s; ",sLabelCand[i].Data()); }
 
     Int_t iNumBinsCand[SparseCand::kDim]; Double_t dMinCand[SparseCand::kDim]; Double_t dMaxCand[SparseCand::kDim];
-    iNumBinsCand[SparseCand::kCent] = iMultNumBins; dMinCand[SparseCand::kCent] = fFlowCentMin; dMaxCand[SparseCand::kCent] = fFlowCentMax;
+    iNumBinsCand[SparseCand::kCent] = fCentBinNum; dMinCand[SparseCand::kCent] = fCentMin; dMaxCand[SparseCand::kCent] = fCentMax;
     iNumBinsCand[SparseCand::kPt] = fFlowPOIsPtBinNum; dMinCand[SparseCand::kPt] = fFlowPOIsPtMin; dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
     iNumBinsCand[SparseCand::kEta] = iFlowEtaNumBins; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
 
@@ -3804,11 +3823,11 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     // event histogram
     fEventCuts.AddQAplotsToList(fQAEvents);
 
-    fhEventSampling = new TH2D("fhEventSampling",Form("Event sampling; %s; sample index", GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, fNumSamples,0,fNumSamples);
+    fhEventSampling = new TH2D("fhEventSampling",Form("Event sampling; %s; sample index", GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fNumSamples,0,fNumSamples);
     fQAEvents->Add(fhEventSampling);
-    fhEventCentrality = new TH1D("fhEventCentrality",Form("Event centrality (%s); %s", GetMultiEstimatorLabel(fMultEstimator), GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax);
+    fhEventCentrality = new TH1D("fhEventCentrality",Form("Event centrality (%s); %s", GetCentEstimatorLabel(fCentEstimator), GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax);
     fQAEvents->Add(fhEventCentrality);
-    fh2EventCentralityNumRefs = new TH2D("fh2EventCentralityNumRefs",Form("Event centrality (%s) vs. N_{RFP}; %s; N_{RFP}",GetMultiEstimatorLabel(fMultEstimator), GetMultiEstimatorLabel(fMultEstimator)), iMultNumBins,fFlowCentMin,fFlowCentMax, 150,0,150);
+    fh2EventCentralityNumRefs = new TH2D("fh2EventCentralityNumRefs",Form("Event centrality (%s) vs. N_{RFP}; %s; N_{RFP}",GetCentEstimatorLabel(fCentEstimator), GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, 150,0,150);
     fQAEvents->Add(fh2EventCentralityNumRefs);
 
     if(fEventRejectAddPileUp)
@@ -3832,7 +3851,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fQACharged->Add(fhRefsEta);
     fhRefsPhi = new TH1D("fhRefsPhi","RFPs: #varphi; #varphi", iPhiNumBins,0,TMath::TwoPi());
     fQACharged->Add(fhRefsPhi);
-    fpRefsMult = new TProfile("fpRefsMult","Ref mult; %s", iMultNumBins,fFlowCentMin,fFlowCentMax);
+    fpRefsMult = new TProfile("fpRefsMult","Ref mult; %s", fCentBinNum,fCentMin,fCentMax);
     fpRefsMult->Sumw2();
     fQACharged->Add(fpRefsMult);
 

@@ -85,7 +85,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    RunMode {kFull = 0, kTest, kSkipFlow}; // task running mode (NOT GRID MODE)
       enum    ColSystem {kPP = 0, kPPb, kPbPb}; // tag for collisional system
       enum    AnalType {kAOD = 0, kESD}; // tag for analysis type
-      enum    MultiEst {kRFP = 0, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity estimator as AliMultSelection
+      enum    CentEst {kRFP = 0, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity/centrality estimator as AliMultSelection
       enum    PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest; NB: kUknown last as counter
       enum    SparseCand {kInvMass = 0, kCent, kPt, kEta, kDim}; // reconstructed candidates dist. dimensions
 
@@ -123,7 +123,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
       void                    SetCollisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
-      void                    SetMultEstimator(MultiEst est) { fMultEstimator = est; }
+      void                    SetCentrality(CentEst est, Int_t min = 0, Int_t max = 0, Int_t bins = 0) { fCentEstimator = est; fCentMin = min; fCentMax = max; fCentBinNum = bins; }
       void                    SetTrigger(AliVEvent::EOfflineTriggerTypes trigger) { fTrigger = trigger; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
       void                    SetRejectAddPileUp(Bool_t use = kTRUE) { fEventRejectAddPileUp = use; }
@@ -220,7 +220,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  IsEventRejectedAddPileUp(); // additional pile-up rejection for Run2 Pb-Pb
       Int_t                   GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Int_t                   GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
-      const char*             GetMultiEstimatorLabel(MultiEst est); // returns mult/cent estimator string with label or 'n/a' if not available
+      const char*             GetCentEstimatorLabel(CentEst est); // returns mult/cent estimator string with label or 'n/a' if not available
 
       void                    CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0); // wrapper for correlations methods
       Bool_t                  ProcessFlowTask(FlowTask* task); // procesisng of FlowTask
@@ -325,8 +325,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fFlowPOIsPtMax; // [10] (GeV/c) max pT treshold for POIs for differential flow
       Int_t                   fFlowPOIsPtBinNum; // [0] number of pt bins
       Double_t                fFlowEtaMax; // [0.8] () max eta acceptance for flow particles (RFPs & POIs)
-      Int_t                   fFlowCentMin; // [set in InitializeTask()] min range for centrality/multiplicity histos
-      Int_t                   fFlowCentMax; // [set in InitializeTask()] max range for centrality/multiplicity histos
       Int_t                   fNumSamples; // [1] overall number of samples (from random sampling) used
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
@@ -337,7 +335,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
       AliVEvent::EOfflineTriggerTypes    fTrigger; // physics selection trigger
-      MultiEst                fMultEstimator; // multiplicity/centrality estimator as in AliMultSelection
+      CentEst                 fCentEstimator; // [kV0A] multiplicity/centrality estimator as in AliMultSelection
+      Int_t                   fCentMin; // [0] min range for centrality/multiplicity histos
+      Int_t                   fCentMax; // [0] max range for centrality/multiplicity histos
+      Int_t                   fCentBinNum; // [0] number of centrality bins
       Double_t                fPVtxCutZ; // (cm) PV z cut
       Bool_t                  fEventRejectAddPileUp; // additional pile-up rejection for Pb-Pb collisions in Run2 (17n, 15o)
       //cuts & selection: tracks
