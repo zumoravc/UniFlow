@@ -934,6 +934,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // setting POIs Pt binning
   if(fFlowPOIsPtBinNum < 1) { fFlowPOIsPtBinNum = (Int_t) ((fFlowPOIsPtMax - fFlowPOIsPtMin) / 0.1 + 0.5); }
 
+  // Inv. Mass
   if(fCutV0sInvMassK0sMin > fCutV0sInvMassK0sMax || fCutV0sInvMassK0sMin < 0. || fCutV0sInvMassK0sMax < 0.)
   {
     AliFatal("Cut: InvMass (K0s) range wrong! Terminating! ");
@@ -943,6 +944,12 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   if(fCutV0sInvMassLambdaMin > fCutV0sInvMassLambdaMax || fCutV0sInvMassLambdaMin < 0. || fCutV0sInvMassLambdaMax < 0.)
   {
     AliFatal("Cut: InvMass (Lambda) range wrong! Terminating!");
+    return kFALSE;
+  }
+
+  if(fCutPhiInvMassMin > fCutPhiInvMassMax || fCutPhiInvMassMin < 0. || fCutPhiInvMassMax < 0.)
+  {
+    AliFatal("Cut: InvMass (Phi) range wrong! Terminating!");
     return kFALSE;
   }
 
