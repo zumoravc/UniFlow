@@ -3011,6 +3011,8 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
     Double_t dPhi = (*part)->Phi();
     Double_t dEta = (*part)->Eta();
 
+    if(bHasGap && TMath::Abs(dEta) < dEtaLimit) { continue; }
+
     // loading weights if needed
     Double_t dWeight = 1.0;
     if(fFlowUseWeights) { dWeight = GetFlowWeight(*part, kRefs); }
