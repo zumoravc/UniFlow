@@ -67,7 +67,7 @@ void RunDev()
 	taskCharged->SetEtaGap(0.0);
 	taskCharged->SetDoFourCorrelations(1);
 	// taskCharged->SetProcessMixedHarmonics("<<3>>(4,-2,-2)","<<4>>(2,2,-2,-2)");
-	process->AddTask(taskCharged);
+	// process->AddTask(taskCharged);
 
 
 	// FlowTask* taskPion = new FlowTask(FlowTask::kPion);
@@ -79,7 +79,7 @@ void RunDev()
 	// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
 	// process->AddTask(taskPion);
 	//
-	FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
+	FlowTask* taskK0s = new FlowTask(FlowTask::kPhi);
 	taskK0s->SetNumSamples(1);
 	taskK0s->SetEtaGap(0.0);
 	taskK0s->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));

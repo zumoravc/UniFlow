@@ -332,7 +332,7 @@ class ProcessUniFlow
     TH1D*       CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate vn'{4} out of dn{4} and vn{4}
 
 
-    Bool_t      FitInvMass();
+    Bool_t      FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg);
     Bool_t      FitCorrelations();
 
     Bool_t 	    ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
@@ -1823,9 +1823,38 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   // ### Preparing slices of pt
   if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histEntriesBg,profFlowFour)) { return kFALSE; }
 
-  // ### Estimating flow
+
+  // ### Fitting
+
   TH1D* hInvMass = 0x0;
   TH1D* hInvMassBG = 0x0;
+
+  hInvMass = task->fVecHistInvMass->at(0);
+
+  TF1 fitOutSig;
+  TF1 fitOutBg;
+  printf("Sig %d (pre)\n",fitOutSig.GetNpar());
+  printf("BG: %d (pre)\n",fitOutBg.GetNpar());
+  Bool_t fit = FitInvMass(hInvMass, task, fitOutSig, fitOutBg);
+  printf("Sig : %d\n",fitOutSig.GetNpar());
+  printf("BG : %d\n",fitOutBg.GetNpar());
+
+
+
+
+
+  // storing fits
+  TList listFits;
+  listFits.SetOwner(1);
+  listFits.Add(hInvMass);
+  listFits.Add(&fitOutSig);
+  listFits.Add(&fitOutBg);
+
+
+  Warning("Prematurely exiting; fitting dev: slices ready","ProcessReconstructed");
+  return kTRUE;
+
+
 
   TCanvas* canInvMassAll = new TCanvas("canInvMassAll","canInvMassAll",1600,1200);
   canInvMassAll->Divide(3,ceil(task->fNumPtBins/3.));
@@ -3170,13 +3199,225 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
      return h2;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::FitInvMass()
+Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg)
 {
+  if(!hist) { Error("Input histo not found!","FitInvMass"); return kFALSE; }
+  if(!task) { Error("FlowTask not found!","FitInvMass"); return kFALSE; }
+
+  FlowTask::PartSpecies species = task->fSpecies;
+  if(species != FlowTask::kPhi && species != FlowTask::kK0s && species != FlowTask::kLambda) { Error("Invalid species!","FitInvMass"); return kFALSE; }
+
+  Double_t dMassRangeLow = hist->GetXaxis()->GetXmin();
+  Double_t dMassRangeHigh = hist->GetXaxis()->GetXmax();
+  Double_t dMaximum = hist->GetMaximum();
+
+  Int_t iNpx = 10000;
+  TString sFitOptMass = "RNL";
+
+  TString sMassBG = TString(); Int_t iNumParsMassBG = 0; // function for inv. mass dist. (BG component)
+  TString sMassSig = TString();  Int_t iNumParsMassSig = 0; // function for inv. mass dist. (sig component)
+
+  Int_t iParMass = 0;
+  Int_t iParWidth = 0;
+  Int_t iParWidth_2 = 0;
+
+  std::vector<Double_t> dParDef;
+  std::vector<Double_t> dParLimLow;
+  std::vector<Double_t> dParLimHigh;
+
+  if(species == FlowTask::kPhi) {
+    Debug("Setting paramters for Phi","FitInvMass");
+
+    dMassRangeLow = 0.994;
+    // dMassRangeHigh = 1.134;
+
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::BreitWigner(x,[5],[6])"; iNumParsMassSig = 3;
+
+    iParMass = 5;
+    iParWidth = 6;
+
+    dParDef = {1.0,1.0,1.0,1.0,   dMaximum,1.019445,0.0046};
+    dParLimLow = {-1,-1,-1,-1,    0.0,1.018,0.001};
+    dParLimHigh = {-1,-1,-1,-1,  2.0*dMaximum,1.022,0.006};
+
+    // assignment to external arrays
+  }
+
+  if(species == FlowTask::kK0s)
+  {
+    Debug("Setting paramters for K0s","FitInvMass");
+
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+
+    iParMass = 5;
+    iParWidth = 6;
+    iParWidth_2 = 8;
+
+    dParDef =       {1.0,1.0,1.0,1.0,   dMaximum,0.4976,0.003,dMaximum,0.01};
+    dParLimLow =    {-1,-1,-1,-1,    0.0,0.48,0.003,0.0,0.003};
+    dParLimHigh =   {-1,-1,-1,-1,  2.0*dMaximum,0.52,0.006,2.0*dMaximum,0.01};
+  }
+
+  if(species == FlowTask::kLambda)
+  {
+    Debug("Setting paramters for Lambda","FitInvMass");
+
+    dMassRangeLow = 1.096;
+    dMassRangeHigh = 1.150;
+
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+
+    iParMass = 5;
+    iParWidth = 6;
+    iParWidth_2 = 8;
+
+    dParDef = {1.0,1.0,1.0,1.0,   dMaximum,1.115, 0.001,dMaximum,0.01};
+    dParLimLow = {-1,-1,-1,-1,    0.0,1.10,0.001,0.0,0.001};
+    dParLimHigh = {-1,-1,-1,-1,  2.0*dMaximum,1.13,0.008,2.0*dMaximum,0.01};
+  }
+
+  // check if parametrisation is setup manually
+  if(task->fFlowFitRangeLow > 0.0) { dMassRangeLow = task->fFlowFitRangeLow; }
+  if(task->fFlowFitRangeHigh > 0.0) { dMassRangeHigh = task->fFlowFitRangeHigh; }
+  if(task->fFlowFitRangeLow > 0.0 && task->fFlowFitRangeLow > 0.0 && task->fFlowFitRangeLow >= task->fFlowFitRangeHigh) { Error("Wrong fitting ranges set!","FitInvMass"); return kFALSE; }
+
+  Bool_t bUserPars = kFALSE;
+  if(task->fNumParMassSig > 0) { bUserPars = kTRUE; sMassSig = task->fFlowFitMassSig; iNumParsMassSig = task->fNumParMassSig; Debug(" Task massSig set","FitInvMass"); }
+  if(task->fNumParMassBG > 0) { bUserPars = kTRUE; sMassBG = task->fFlowFitMassBG; iNumParsMassBG = task->fNumParMassBG; Debug(" Task massBG set","FitInvMass"); }
+  if(bUserPars && (task->fNumParMassSig == 0 || task->fNumParMassBG == 0)) { Error("Only a subset of functions has been changed. Provide all, or non.","FitInvMass"); return kFALSE; }
+
+
+  if(bUserPars) {
+    Info("Setting UserParameters","FitInvMass");
+    dParDef.clear();
+    dParLimLow.clear();
+    dParLimHigh.clear();
+
+    Int_t iNumParTot = task->fNumParMassSig + task->fNumParMassBG;
+    for(Int_t par(0); par < iNumParTot; ++par)
+    {
+      dParDef.push_back(task->fFitParDefaults[par]);
+      dParLimLow.push_back(task->fFitParLimLow[par]);
+      dParLimHigh.push_back(task->fFitParLimHigh[par]);
+    }
+  }
+
+  Int_t iNumParTot = iNumParsMassSig+iNumParsMassBG;
+  Int_t iNumParDefs = dParDef.size();
+  Int_t iNumParLimLow = dParLimLow.size();
+  Int_t iNumParLimHigh = dParLimHigh.size();
+
+  if(iNumParDefs != iNumParTot) { Error(Form("Length of dParDef array does not match number of parameters (%d != %d)",iNumParDefs,iNumParTot),"FitInvMass"); return kFALSE; }
+  if(iNumParDefs != iNumParLimLow) { Error(Form("Different length of arrays with parameter defauls and low limit values (%d != %d).",iNumParDefs,iNumParLimLow),"FitInvMass"); return kFALSE; }
+  if(iNumParDefs != iNumParLimHigh) { Error(Form("Different length of arrays with parameter defauls and high limit values (%d != %d).",iNumParDefs,iNumParLimHigh),"FitInvMass"); return kFALSE; }
+
+  // check the output of the vector assigment
+  if(fbDebug) {
+    Debug("Fittin setting done","FitInvMass");
+    printf("Form: (%s) + (%s)\n",sMassBG.Data(), sMassSig.Data());
+    for(Int_t par(0); par < iNumParDefs; ++par) { printf("  par %d: %g (%g<%g)\n",par, dParDef.at(par), dParLimLow.at(par), dParLimHigh.at(par)); }
+  }
+
+  // === Initialision ===
+  Int_t iNumParMass = iNumParTot;
+
+  // master formula used in the fitting procedure
+  if(!fbDebug) { sFitOptMass += "Q"; } // quite fitting option if NOT in debug
+
+  TString sFuncMass = Form("%s + %s",sMassBG.Data(),sMassSig.Data());
+
+  Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh), "FitInvMass");
+  Debug(Form("Fit :\n    %s",sFuncMass.Data()), "FitInvMass");
+
+  // changes the axis
+  hist->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+
+  // === Fitting procedure ===
+
+  //  fitting invariant mass distribution
+  TF1* fitMass = new TF1(Form("fitMass"), sFuncMass.Data(), dMassRangeLow,dMassRangeHigh);
+  fitMass->SetNpx(iNpx);
+
+  for(Int_t par(0); par < iNumParMass; ++par) {
+    fitMass->SetParameter(par, dParDef.at(par));
+
+    Double_t dLimLow = dParLimLow.at(par);
+    Double_t dLimHigh = dParLimHigh.at(par);
+
+    if(dLimLow > -1.0 && dLimHigh > -1.0) { fitMass->SetParLimits(par, dLimLow, dLimHigh); }
+    else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"FitInvMass"); return kFALSE; }
+  }
+
+  // fitting
+  Int_t nfitsA = 1;
+  Bool_t bFitOK = kFALSE;
+
+  while(!bFitOK && (nfitsA < 15))
+  {
+    if(nfitsA > 1)
+    {
+      fitMass->SetParameter(0, fitMass->GetParameter(0)/nfitsA);
+
+      for(Int_t par(1); par < iNumParMass; ++par)
+      {
+        fitMass->SetParameter(par, fitMass->GetParameter(par));
+
+        Double_t dLimLow = dParLimLow.at(par);
+        Double_t dLimHigh = dParLimHigh.at(par);
+
+        if(dLimLow > -1.0 && dLimHigh > -1.0) { fitMass->SetParLimits(par, dLimLow, dLimHigh); }
+        else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"FitInvMass"); return kFALSE; }
+      }
+    }
+
+    hist->Fit(fitMass, sFitOptMass.Data());
+
+    TString statusA = gMinuit->fCstatu.Data();
+    if(statusA.Contains("CONVERGED")) { bFitOK = kTRUE; }
+    nfitsA++;
+  }
+
+  if(!bFitOK) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); return kFALSE; }
+  Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
+
+  // === Extracting fitting components to separated TF1's ===
+
+  TF1 fitBg = TF1("fitMassBG",sMassBG.Data(),dMassRangeLow,dMassRangeHigh);
+  fitBg.SetLineColor(kBlue);
+  fitBg.SetLineStyle(2);
+
+  TF1 fitSig = TF1("fitMassSig", sMassSig.Data(), dMassRangeLow,dMassRangeHigh);
+  fitSig.SetLineColor(kGreen+2);
+  fitSig.SetLineStyle(2);
+
+  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar)
+  {
+    fitBg.SetParameter(iPar, fitMass->GetParameter(iPar));
+    fitBg.SetParError(iPar, fitMass->GetParError(iPar));
+
+    fitSig.SetParameter(iPar, 0.0);
+    fitSig.SetParError(iPar, 0.0);
+  }
+
+  for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar)
+  {
+    fitSig.SetParameter(iPar, fitMass->GetParameter(iPar));
+    fitSig.SetParError(iPar, fitMass->GetParError(iPar));
+  }
+
+  fitOutSig = fitSig;
+  fitOutBg = fitBg;
+
   return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::FitCorrelations()
 {
+
+  Warning("Implementation not yet done!","FitInvMass");
   return kTRUE;
 }
 //_____________________________________________________________________________
