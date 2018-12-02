@@ -31,76 +31,86 @@ void RunDev()
 
 	// Double_t dMultBinning[] = {0,5,10,20,30,40,50,60,70};
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
-	Double_t dMultBinning[] = {10,20};
+	Double_t dMultBinning[] = {10,20,30};
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
-	Double_t dPtBins[] = {1.0,2.0};
+	Double_t dPtBins[] = {1.0,2.0,3.0,4.0};
+	// Double_t dPtBins[] = {2.0,3.0,4.0};
 	// ##### END Parameters setting ######
 
 	#if defined (__CINT__)
 		gROOT->LoadMacro("~vpacik/Codes/ALICE/Flow/uniFlow/processUniFlow/ProcessUniFlow.cpp++g");
 	#endif
 
-	ProcessUniFlow* process = new ProcessUniFlow();
-	process->SetInputFilePath(sInputPath.Data());
-	process->SetInputFileName("AnalysisResults.root");
-	process->SetTaskName("UniFlow");
-	process->SetOutputFilePath(sOutputFilePath.Data());
-	process->SetOutputFileName("Processed.root");
-	process->SetMultiplicityBins(dMultBinning,sizeof(dMultBinning)/sizeof(dMultBinning[0]));
-	process->SetDebug(1);
+		ProcessUniFlow* process = new ProcessUniFlow();
+		process->SetInputFilePath(sInputPath.Data());
+		process->SetInputFileName("AnalysisResults.root");
+		process->SetTaskName("UniFlow");
+		process->SetOutputFilePath(sOutputFilePath.Data());
+		process->SetOutputFileName("Processed.root");
+		process->SetMultiplicityBins(dMultBinning,sizeof(dMultBinning)/sizeof(dMultBinning[0]));
+		process->SetDebug(1);
 
-	FlowTask* taskRefs = new FlowTask(FlowTask::kRefs);
-	taskRefs->SetNumSamples(1);
-	taskRefs->SetEtaGap(0.0);
-	taskRefs->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
-	taskRefs->SetMergePosNeg(1);
-	taskRefs->SetHarmonics(2);
-	taskRefs->SetDoFourCorrelations(1);
-	// taskRefs->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
-	process->AddTask(taskRefs);
+		FlowTask* taskRefs = new FlowTask(FlowTask::kRefs);
+		taskRefs->SetNumSamples(1);
+		taskRefs->SetEtaGap(0.0);
+		taskRefs->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
+		taskRefs->SetMergePosNeg(1);
+		taskRefs->SetHarmonics(2);
+		taskRefs->SetDoFourCorrelations(1);
+		// taskRefs->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
+		process->AddTask(taskRefs);
 
-	FlowTask* taskCharged = new FlowTask(FlowTask::kCharged);
-	taskCharged->SetNumSamples(1);
-	taskCharged->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
-	taskCharged->SetMergePosNeg(1);
-	taskCharged->SetHarmonics(2);
-	taskCharged->SetEtaGap(0.0);
-	taskCharged->SetDoFourCorrelations(1);
-	// taskCharged->SetProcessMixedHarmonics("<<3>>(4,-2,-2)","<<4>>(2,2,-2,-2)");
-	// process->AddTask(taskCharged);
+		FlowTask* taskCharged = new FlowTask(FlowTask::kCharged);
+		taskCharged->SetNumSamples(1);
+		taskCharged->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
+		taskCharged->SetMergePosNeg(1);
+		taskCharged->SetHarmonics(2);
+		taskCharged->SetEtaGap(0.0);
+		taskCharged->SetDoFourCorrelations(1);
+		// taskCharged->SetProcessMixedHarmonics("<<3>>(4,-2,-2)","<<4>>(2,2,-2,-2)");
+		// process->AddTask(taskCharged);
 
 
-	// FlowTask* taskPion = new FlowTask(FlowTask::kPion);
-	// taskPion->SetNumSamples(1);
-	// taskPion->SetEtaGap(0.0);
-	// taskPion->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
-	// taskPion->SetMergePosNeg(1);
-	// taskPion->SetHarmonics(2);
-	// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
-	// process->AddTask(taskPion);
-	//
-	FlowTask* taskK0s = new FlowTask(FlowTask::kPhi);
-	taskK0s->SetNumSamples(1);
-	taskK0s->SetEtaGap(0.0);
-	taskK0s->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
-	taskK0s->SetMergePosNeg(1);
-	taskK0s->SetHarmonics(2);
-	taskK0s->SetDoFourCorrelations(1);
-	// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
-	process->AddTask(taskK0s);
-	//
-	// FlowTask* taskLambda = new FlowTask(FlowTask::kLambda);
-	// taskLambda->SetNumSamples(1);
-	// taskLambda->SetEtaGap(0.8);
-	// taskLambda->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
-	// taskLambda->SetMergePosNeg(1);
-	// taskLambda->SetHarmonics(2);
-	// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
-	// // process->AddTask(taskLambda);
-	//
-	//
-	//
-	process->Run();
+		// FlowTask* taskPion = new FlowTask(FlowTask::kPion);
+		// taskPion->SetNumSamples(1);
+		// taskPion->SetEtaGap(0.0);
+		// taskPion->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
+		// taskPion->SetMergePosNeg(1);
+		// taskPion->SetHarmonics(2);
+		// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
+		// process->AddTask(taskPion);
+		//
+		FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
+		taskK0s->SetNumSamples(1);
+		taskK0s->SetEtaGap(0.0);
+		taskK0s->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
+		taskK0s->SetMergePosNeg(1);
+		taskK0s->SetHarmonics(2);
+		taskK0s->SetDoFourCorrelations(1);
+		// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
+		process->AddTask(taskK0s);
+
+		FlowTask* taskLambda = new FlowTask(FlowTask::kLambda);
+		taskLambda->SetNumSamples(1);
+		taskLambda->SetEtaGap(0.0);
+		taskLambda->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
+		taskLambda->SetMergePosNeg(1);
+		taskLambda->SetHarmonics(2);
+		taskLambda->SetDoFourCorrelations(1);
+		// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
+		process->AddTask(taskLambda);
+
+		FlowTask* taskPhi = new FlowTask(FlowTask::kPhi);
+		taskPhi->SetNumSamples(1);
+		taskPhi->SetEtaGap(0.0);
+		taskPhi->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
+		taskPhi->SetMergePosNeg(1);
+		taskPhi->SetHarmonics(2);
+		taskPhi->SetDoFourCorrelations(1);
+		// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
+		process->AddTask(taskPhi);
+
+		process->Run();
 
 
 	return;
