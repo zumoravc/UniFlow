@@ -333,7 +333,7 @@ class ProcessUniFlow
 
 
     Bool_t      FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg);
-    Bool_t      FitCorrelations();
+    Bool_t      FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg);
 
     Bool_t 	    ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
@@ -1831,27 +1831,38 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
   hInvMass = task->fVecHistInvMass->at(0);
 
+
+
+
   TF1 fitOutSig;
   TF1 fitOutBg;
-  printf("Sig %d (pre)\n",fitOutSig.GetNpar());
-  printf("BG: %d (pre)\n",fitOutBg.GetNpar());
   Bool_t fit = FitInvMass(hInvMass, task, fitOutSig, fitOutBg);
-  printf("Sig : %d\n",fitOutSig.GetNpar());
-  printf("BG : %d\n",fitOutBg.GetNpar());
+
+  TH1D* hCorMass = 0x0;
+
+  hCorMass = task->fVecHistFlowMass->at(0);
 
 
+  TF1 fitCorSig;
+  TF1 fitCorBg;
+
+  Bool_t bFitCor = FitCorrelations(hCorMass, task, fitCorSig, fitCorBg, fitOutSig, fitOutBg);
 
 
 
   // storing fits
-  TList listFits;
-  listFits.SetOwner(1);
-  listFits.Add(hInvMass);
-  listFits.Add(&fitOutSig);
-  listFits.Add(&fitOutBg);
+  TList* listFits = new TList();
+  listFits->SetOwner(1);
+  listFits->Add(hInvMass);
+  listFits->Add(&fitOutSig);
+  listFits->Add(&fitOutBg);
+  listFits->Add(hCorMass);
+  listFits->Add(&fitCorSig);
+  listFits->Add(&fitCorBg);
 
 
   Warning("Prematurely exiting; fitting dev: slices ready","ProcessReconstructed");
+  delete listFits;
   return kTRUE;
 
 
@@ -3380,7 +3391,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
     nfitsA++;
   }
 
-  if(!bFitOK) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); return kFALSE; }
+  if(!bFitOK) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); delete fitMass; return kFALSE; }
   Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
 
   // === Extracting fitting components to separated TF1's ===
@@ -3411,13 +3422,250 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
   fitOutSig = fitSig;
   fitOutBg = fitBg;
 
+  delete fitMass;
+
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::FitCorrelations()
+Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg)
 {
+  if(!hist) { Error("Input histo not found!","FitCorrelations"); return kFALSE; }
+  if(!task) { Error("FlowTask not found!","FitCorrelations"); return kFALSE; }
 
-  Warning("Implementation not yet done!","FitInvMass");
+  FlowTask::PartSpecies species = task->fSpecies;
+  if(species != FlowTask::kPhi && species != FlowTask::kK0s && species != FlowTask::kLambda) { Error("Invalid species!","FitCorrelations"); return kFALSE; }
+
+  // === Fitting parametrisation (species dependent default) ===
+
+  Double_t dMassRangeLow = hist->GetXaxis()->GetXmin();
+  Double_t dMassRangeHigh = hist->GetXaxis()->GetXmax();
+  Double_t dMaximum = hist->GetMaximum();
+
+  Int_t iNpx = 10000;
+  TString sFitOptFlow = "RN";
+
+  TString sMassBG = TString(); Int_t iNumParsMassBG = 0; // function for inv. mass dist. (BG component)
+  TString sMassSig = TString();  Int_t iNumParsMassSig = 0; // function for inv. mass dist. (sig component)
+  TString sFlowBG = TString();  Int_t iNumParsFlowBG = 0; // function for flow-mass (BG component)
+
+  Int_t iParMass = 0;
+  Int_t iParWidth = 0;
+  Int_t iParWidth_2 = 0;
+
+  std::vector<Double_t> dParDef;
+  std::vector<Double_t> dParLimLow;
+  std::vector<Double_t> dParLimHigh;
+
+  // Species (independent) flow shape
+  sFlowBG = "[7]*x+[8]"; iNumParsFlowBG = 2;
+
+  dParDef = {1.0,1.0};
+  dParLimLow = {-1,-1};
+  dParLimHigh = {-1,-1};
+
+  if(species == FlowTask::kPhi)
+  {
+    Debug("Setting paramters for Phi","FitCorrelations");
+
+    dMassRangeLow = 0.994;
+    // dMassRangeHigh = 1.134;
+
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::BreitWigner(x,[5],[6])"; iNumParsMassSig = 3;
+
+    iParMass = 5;
+    iParWidth = 6;
+  }
+
+  if(species == FlowTask::kK0s)
+  {
+    Debug("Setting paramters for K0s","FitCorrelations");
+
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+
+    iParMass = 5;
+    iParWidth = 6;
+    iParWidth_2 = 8;
+  }
+
+  if(species == FlowTask::kLambda)
+  {
+    Debug("Setting paramters for Lambda","FitCorrelations");
+
+    dMassRangeLow = 1.096;
+    dMassRangeHigh = 1.150;
+
+    sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
+    sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+
+    iParMass = 5;
+    iParWidth = 6;
+    iParWidth_2 = 8;
+  }
+
+  // NB: Because fitInSig includes by construction BG terms
+  if(fitInSig.GetNpar() != (iNumParsMassSig + iNumParsMassBG)) { Error(Form("Wrong number of mass signal parameters: %d (%d expected)", iNumParsMassSig+iNumParsMassBG,fitInSig.GetNpar()),"FitCorrelations"); return kFALSE; }
+
+  // check if parametrisation is setup manually
+  // TODO: can be extracted from fitIn ???
+  if(task->fFlowFitRangeLow > 0.0) { dMassRangeLow = task->fFlowFitRangeLow; }
+  if(task->fFlowFitRangeHigh > 0.0) { dMassRangeHigh = task->fFlowFitRangeHigh; }
+  if(task->fFlowFitRangeLow > 0.0 && task->fFlowFitRangeLow > 0.0 && task->fFlowFitRangeLow >= task->fFlowFitRangeHigh) { Error("Wrong fitting ranges set!","FitCorrelations"); return kFALSE; }
+
+  Bool_t bUserPars = kFALSE;
+  if(task->fNumParFlowBG > 0) { bUserPars = kTRUE; sFlowBG = task->fFlowFitFlowBG; iNumParsFlowBG = task->fNumParFlowBG; Debug(" Task flowBG set","FitCorrelations"); }
+
+  if(bUserPars)
+  {
+    Warning("Setting User parameters for correlations not implemented yet","FitCorrelations");
+    // TODO: Due to way how default parameters are passed -> need reimplementation
+    // using std::vector<> a = {} syntax: Setparames({2,1,2}) ...
+
+    // dParDef.clear();
+    // dParLimLow.clear();
+    // dParLimHigh.clear();
+    //
+    // Int_t iNumParTot = task->fNumParFlowBG;
+    // for(Int_t par(0); par < iNumParTot; ++par)
+    // {
+    //   dParDef.push_back(task->fFitParDefaults[par]);
+    //   dParLimLow.push_back(task->fFitParLimLow[par]);
+    //   dParLimHigh.push_back(task->fFitParLimHigh[par]);
+    // }
+  }
+
+  Int_t iNumParDefs = dParDef.size();
+  Int_t iNumParLimLow = dParLimLow.size();
+  Int_t iNumParLimHigh = dParLimHigh.size();
+
+  // check the output of the vector assigment
+  if(fbDebug) {
+    Debug("Fittin setting done","FitCorrelations");
+    printf("Form: %s\n",sFlowBG.Data());
+    for(Int_t par(0); par < iNumParDefs; ++par) { printf("  par %d: %g (%g<%g)\n",par, dParDef.at(par), dParLimLow.at(par), dParLimHigh.at(par)); }
+  }
+
+  // === Initialision ===
+  Int_t iNumParMass = iNumParsMassSig+iNumParsMassBG;
+  Int_t iParFlow = iNumParsMassBG+iNumParsMassSig+iNumParsFlowBG; // index of Flow (vn/dn) parameter
+
+  // master formula used in the fitting procedure
+  if(!fbDebug) { sFitOptFlow += "Q"; } // quite fitting option if NOT in debug
+
+  TString sFuncMass = Form("(%s) + (%s)",sMassBG.Data(),sMassSig.Data());
+  TString sFuncVn = Form("[%d]*(%s)/(%s + %s) + (%s)*(%s)/(%s + %s)", iParFlow, sMassSig.Data(), sMassSig.Data(), sMassBG.Data(), sFlowBG.Data(),sMassBG.Data(),sMassSig.Data(),sMassBG.Data());
+
+  Debug(Form("Mass range %g-%g",dMassRangeLow,dMassRangeHigh), "FitCorrelations");
+  Debug(Form("Fit Dist :\n    %s",sFuncMass.Data()), "FitCorrelations");
+  Debug(Form("Fit Flow :\n    %s\n",sFuncVn.Data()), "FitCorrelations");
+
+  // changes the axis
+  // hInvMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+  // hFlowMass->GetXaxis()->SetRangeUser(dMassRangeLow,dMassRangeHigh);
+
+  // === Fitting procedure ===
+
+  TF1* fitVn = new TF1(Form("fitVn"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
+
+  // fixing fraction from input fits
+
+  for(Int_t par(0); par < iNumParsMassBG; ++par) { fitVn->FixParameter(par, fitInBg.GetParameter(par)); }
+  for(Int_t par(iNumParsMassBG); par < iNumParMass; ++par) { fitVn->FixParameter(par, fitInSig.GetParameter(par)); }
+  for(Int_t par(iNumParMass); par < iParFlow; ++par)
+  {
+    // Here par-iNumParMass is to account for a fact that dParDef takes only flow part (vector index != parameter index)
+    fitVn->SetParameter(par, dParDef.at(par-iNumParMass));
+
+    Double_t dLimLow = dParLimLow.at(par-iNumParMass);
+    Double_t dLimHigh = dParLimHigh.at(par-iNumParMass);
+
+    if(dLimLow > -1.0 && dLimHigh > -1.0) { fitVn->SetParLimits(par, dLimLow,dLimHigh); }
+    else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Flow-mass: Only one of the parameter limits is set (par %d). Fix this!",par),"FitCorrelations"); return kFALSE; }
+  }
+
+  // NB: Currently only one iteration
+  // // fitting
+  // Int_t nfitsA = 1;
+  // Bool_t bFitOK = kFALSE;
+  //
+  // while(!bFitOK && (nfitsA < 15))
+  // {
+  //   if(nfitsA > 1)
+  //   {
+  //     fitMass->SetParameter(0, fitMass->GetParameter()/nfitsA);
+  //
+  //     for(Int_t par(1); par < iNumParMass; ++par)
+  //     {
+  //       fitMass->SetParameter(par, fitMass->GetParameter(par));
+  //
+  //       Double_t dLimLow = dParLimLow.at(par);
+  //       Double_t dLimHigh = dParLimHigh.at(par);
+  //
+  //       if(dLimLow > -1.0 && dLimHigh > -1.0) { fitMass->SetParLimits(par, dLimLow, dLimHigh); }
+  //       else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"FitInvMass"); return kFALSE; }
+  //     }
+  //   }
+
+  //   hist->Fit(fitVn, sFitOptFlow.Data());
+  //
+  //   TString statusA = gMinuit->fCstatu.Data();
+  //   if(statusA.Contains("CONVERGED")) { bFitOK = kTRUE; }
+  //   nfitsA++;
+  // }
+
+  hist->Fit(fitVn, sFitOptFlow.Data());
+
+  if(!gMinuit->fCstatu.Contains("CONVERGED")) { Error(Form("Flow-mass fit does not converged within iterations limit (1)!"), "FitCorrelations"); delete fitVn; return kFALSE; }
+  Info(Form("Flow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "FitCorrelations");
+
+  // saving flow to output
+  Double_t dFlow = fitVn->GetParameter(iParFlow);
+  Double_t dFlowError = fitVn->GetParError(iParFlow);
+  Double_t dFlowRel = 0.0; if(TMath::Abs(dFlow) > 0.0) { dFlowRel = dFlowError / dFlow; }
+  Debug(Form("Final flow: %g +- %g (rel. %.3f)", dFlow,dFlowError,dFlowRel), "FitCorrelations");
+
+  // === Extracting fitting components to separated TF1's ===
+
+  TF1 fitFlowBg = TF1("fitFlowBg", Form("(%s)*(%s)/(%s + %s)", sFlowBG.Data(), sMassBG.Data(), sMassSig.Data(), sMassBG.Data()), dMassRangeLow,dMassRangeHigh);
+  fitFlowBg.SetLineColor(kBlue);
+  fitFlowBg.SetLineStyle(2);
+  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar)
+  {
+    fitFlowBg.SetParameter(iPar, fitInBg.GetParameter(iPar));
+    fitFlowBg.SetParError(iPar, fitInBg.GetParError(iPar));
+  }
+  for(Int_t iPar(iNumParsMassBG); iPar < iNumParMass; ++iPar)
+  {
+    fitFlowBg.SetParameter(iPar, fitInSig.GetParameter(iPar));
+    fitFlowBg.SetParError(iPar, fitInSig.GetParError(iPar));
+  }
+  for(Int_t iPar(iNumParMass); iPar < iParFlow; ++iPar)
+  {
+    fitFlowBg.SetParameter(iPar, fitVn->GetParameter(iPar));
+    fitFlowBg.SetParError(iPar, fitVn->GetParError(iPar));
+  }
+
+  TF1 fitFlowSig = TF1("fitFlowSig", Form("[%d]*(%s)/(%s + %s)", iParFlow, sMassSig.Data(), sMassSig.Data(), sMassBG.Data()), dMassRangeLow,dMassRangeHigh);
+  fitFlowSig.SetLineColor(kGreen+2);
+  fitFlowSig.SetLineStyle(2);
+  for(Int_t iPar(0); iPar < iNumParMass; ++iPar)
+  {
+    fitFlowSig.SetParameter(iPar, fitFlowBg.GetParameter(iPar));
+    fitFlowSig.SetParError(iPar, fitFlowBg.GetParError(iPar));
+  }
+  for(Int_t iPar(iNumParMass); iPar < iParFlow; ++iPar)
+  {
+    fitFlowSig.SetParameter(iPar, 0.0);
+    fitFlowSig.SetParError(iPar, 0.0);
+  }
+  fitFlowSig.SetParameter(iParFlow, fitVn->GetParameter(iParFlow));
+
+  fitOutSig = fitFlowSig;
+  fitOutBg = fitFlowBg;
+
+  delete fitVn;
+
   return kTRUE;
 }
 //_____________________________________________________________________________
