@@ -317,7 +317,7 @@ class ProcessUniFlow
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
-    Bool_t      PrepareSlicesNew(FlowTask* task); // wrapper for making/preparing per-task slices
+    Bool_t      PrepareSlicesNew(FlowTask* task, TString histName); // wrapper for making/preparing per-task slices
     Bool_t      MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList); // prepare slices out of inputHist
     Bool_t      MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, TList* outList, const char* outName = "hInvMass"); // prepare slices out of 'inputSparse'
 
@@ -613,7 +613,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     TList* listSlicesProfiles = task->fListProfiles;
     TList* listSlicesHistos = task->fListHistos;
 
-    if(!PrepareSlicesNew(task)) { Error("Preparing slices failed!","ProcessTask"); return kFALSE; }
+    if(!PrepareSlicesNew(task,task->fMixedDiff)) { Error("Preparing slices failed!","ProcessTask"); return kFALSE; }
 
     ffOutputFile->cd();
     listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
@@ -2512,7 +2512,7 @@ Bool_t ProcessUniFlow::PrepareSlices(const Short_t multBin, FlowTask* task, TPro
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
+Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TString histName)
 {
   // wrapper for making/preparing per-task slices
   if(!task) { Error("FlowTask does not exists!","PrepareSlicesNew"); return kFALSE; }
@@ -2537,9 +2537,9 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
   TH1* prof = 0x0;
   if(task->fMergePosNeg)
   {
-    TH1* profPos = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",task->fMixedDiff.Data()));
+    TH1* profPos = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",histName.Data()));
     if(!profPos) { Error("Positive profile 'profNeg' not found!","PrepareSlicesNew"); inputList->ls(); return kFALSE; }
-    TH1* profNeg = (TH1*) inputList->FindObject(Form("%s_Neg_sample0",task->fMixedDiff.Data()));
+    TH1* profNeg = (TH1*) inputList->FindObject(Form("%s_Neg_sample0",histName.Data()));
     if(!profNeg) { Error("Negative profile 'profNeg' not found!","PrepareSlicesNew"); inputList->ls(); return kFALSE; }
 
     TList* listMerge = new TList();
@@ -2548,10 +2548,10 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
     prof = (TH1*) MergeListProfiles(listMerge);
     delete listMerge;
   } else {
-    prof = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",task->fMixedDiff.Data()));
+    prof = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",histName.Data()));
   }
 
-  if(!prof) { Error(Form("Profile '%s' not found!",task->fMixedDiff.Data()),"PrepareSlicesNew"); inputList->ls(); return kFALSE; }
+  if(!prof) { Error(Form("Profile '%s' not found!",histName.Data()),"PrepareSlicesNew"); inputList->ls(); return kFALSE; }
   if(!MakeProfileSlices(task,prof,task->fListProfiles)) { Error("Profile Slices failed!","PrepareSlicesNew"); return kFALSE; };
 
   // preparing inv. mass slices (NB: merging pos/neg done in MakeSparseSlices() )
