@@ -1842,10 +1842,36 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   TProfile3D* profFlowFour = 0x0;
   if(task->fDoFour)
   {
-    profFlowFour = (TProfile3D*) listFlow->FindObject(Form("%s_Pos_sample0",sProfFourName.Data()));
-    if(!profFlowFour) { Error(Form("Profile '%s' not found for Pos&Neg merging.",sProfFourName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
-    if(task->fMergePosNeg) { Warning("Implemented for ONLY Pos <<4>>. Skipping Neg!","ProcessReconstructed"); }
+    if(task->fMergePosNeg)
+    {
+      // merging profiles
+      TProfile3D* profFlowPos = (TProfile3D*) listFlow->FindObject(Form("%s_Pos_sample0",sProfFourName.Data()));
+      TProfile3D* profFlowNeg = (TProfile3D*) listFlow->FindObject(Form("%s_Neg_sample0",sProfFourName.Data()));
+      if(!profFlowPos || !profFlowNeg) { Error(Form("Pos OR Neg profile '%s' not found for Pos&Neg merging.",sProfFourName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
+
+      TList* listMerge = new TList();
+      listMerge->Add(profFlowPos);
+      listMerge->Add(profFlowNeg);
+
+      profFlowFour = (TProfile3D*) listMerge->At(0)->Clone();
+      profFlowFour->Reset();
+      Double_t mergeStatus = profFlowFour->Merge(listMerge);
+      if(mergeStatus == -1) { Error("Merging unsuccesfull","ProcessReconstructed"); return kFALSE; }
+      delete listMerge;
+    }
+    else
+    {
+      // loading single profile
+      if(task->fInputTag.EqualTo("")) { sProfFourName.Append("_Pos_sample0"); }
+      else { sProfFourName.Append("_"); sProfFourName.Append(task->fInputTag); }
+      profFlowFour = (TProfile3D*) listFlow->FindObject(sProfFourName.Data());
+    }
+
+    if(!profFlowFour) { Error(Form("Correlation profile '%s' not ready!",sProfileName.Data()),"ProcessReconstructed"); listFlow->ls(); return kFALSE; }
+    Debug("Correlations <<4>> profile ready!","ProcessReconstructed");
   }
+
+
 
   // ### Preparing slices of pt
   if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histEntriesBg,profFlowFour)) { return kFALSE; }
