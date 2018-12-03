@@ -785,13 +785,40 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         Double_t dFlow = 0.0;
         Double_t dFlowError = 0.0;
 
-        Bool_t bExtracted = ExtractFlowOneGo(task,hInvMass,hInvMassBg,histVn,dFlow,dFlowError,canFitInvMass,listFits);
-        if(!bExtracted) {
-          Warning("Flow fitting unsuccesfull","ProcessMixed");
+        // Bool_t bExtracted = ExtractFlowOneGo(task,hInvMass,hInvMassBg,histVn,dFlow,dFlowError,canFitInvMass,listFits);
+
+        TF1 fitMassSig, fitMassBg, fitFlowSig, fitFlowBg;
+
+        Bool_t bFitMass = FitInvMass(hInvMass, task, fitMassSig, fitMassBg);
+
+        if(!bFitMass) {
+          Warning("Fitting inv.mass unsuccesfull","ProcessMixed");
           delete canFitInvMass;
           delete listFits;
           return kFALSE;
         }
+
+        listFits->Add(hInvMass);
+        listFits->Add(&fitMassSig);
+        listFits->Add(&fitMassBg);
+
+        Bool_t bFitFlow = FitCorrelations(histVn, task, fitFlowSig, fitFlowBg, fitMassSig, fitMassBg);
+
+
+        if(!bFitFlow) {
+          Warning("Fitting flow unsuccesfull","ProcessMixed");
+          delete canFitInvMass;
+          delete listFits;
+          return kFALSE;
+        }
+
+        listFits->Add(histVn);
+        listFits->Add(&fitFlowSig);
+        listFits->Add(&fitFlowBg);
+
+        Int_t iParFlow = fitFlowSig.GetNpar() - 1;
+        dFlow = fitFlowSig.GetParameter(iParFlow);
+        dFlowError = fitFlowSig.GetParError(iParFlow);
 
         Double_t dFlowRel = -999.9; if(TMath::Abs(dFlow) > 0.0) { dFlowRel = dFlowError / dFlow; }
         Info(Form("Final v(n,m,k): (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,iPtBin,dFlow,dFlowError,dFlowRel), "ProcessMixed");
@@ -2485,9 +2512,9 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task)
   if(task->fMergePosNeg)
   {
     TH1* profPos = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",task->fMixedDiff.Data()));
-    if(!profPos) { Error("Positive profile 'profNeg' not found!","PrepareSlicesNew"); return kFALSE; }
+    if(!profPos) { Error("Positive profile 'profNeg' not found!","PrepareSlicesNew"); inputList->ls(); return kFALSE; }
     TH1* profNeg = (TH1*) inputList->FindObject(Form("%s_Neg_sample0",task->fMixedDiff.Data()));
-    if(!profNeg) { Error("Negative profile 'profNeg' not found!","PrepareSlicesNew"); return kFALSE; }
+    if(!profNeg) { Error("Negative profile 'profNeg' not found!","PrepareSlicesNew"); inputList->ls(); return kFALSE; }
 
     TList* listMerge = new TList();
     listMerge->Add(profPos);
@@ -3522,7 +3549,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
   dParDef = {0.0,0.15};
   dParLimLow = {-1,-1};
   dParLimHigh = {-1,-1};
-  
+
   // check if parametrisation is setup manually
   // TODO: can be extracted from fitIn ???
   if(task->fFlowFitRangeLow > 0.0) { dMassRangeLow = task->fFlowFitRangeLow; }

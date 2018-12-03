@@ -110,6 +110,18 @@ void RunDev()
 		// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
 		process->AddTask(taskPhi);
 
+		FlowTask* taskK0sMix = new FlowTask(FlowTask::kK0s);
+		taskK0sMix->SetNumSamples(1);
+		taskK0sMix->SetEtaGap(0.0);
+		taskK0sMix->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
+		taskK0sMix->SetMergePosNeg(1);
+		taskK0sMix->SetHarmonics(2);
+		// taskK0sMix->SetDoFourCorrelations(1);
+		taskK0sMix->SetProcessMixedHarmonics("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)");
+		// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
+		process->AddTask(taskK0sMix);
+
+
 		process->Run();
 
 
