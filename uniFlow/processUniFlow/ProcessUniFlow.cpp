@@ -284,7 +284,7 @@ class ProcessUniFlow
     void        SetTaskName(const char* name) { fsTaskName = name; }
     void        SetGlobalProfNameLabel(const char* label = "") { fsGlobalProfNameLabel = label; } // add global profile label for all tasks NOTE: for the purpose of Flow sub
     void        SetSaveMult(Bool_t bSave = kTRUE) { fbSaveMult = bSave; } // save reference multiplicity
-    void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
+    void        SetMultiplicityBins(std::vector<Double_t> array) { fdMultBins = array; fiNumMultBins = (Int_t) array.size() - 1; } // setup the global multiplicity binning, where size is number of elements in array
     void        SetFitCumulants(Bool_t cum = kTRUE) { fFlowFitCumulants = cum; } // use cn{2} vs m_inv instead of vn{2} vs. m_inv
     void        SetSaveInterSteps(Bool_t save = kTRUE) { fSaveInterSteps = save; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
@@ -346,9 +346,8 @@ class ProcessUniFlow
     void        Info(TString sMsg, TString sMethod = ""); // printf the msg as info
     void        Debug(TString sMsg, TString sMethod = ""); // printf the msg as info
 
-    static const Short_t fiNumMultBinsGlobal = 200; // global initialization number of bins
-    Double_t    fdMultBins[fiNumMultBinsGlobal]; // global multiplicity/centrality binning
-    Short_t     fiNumMultBins; // number of multiplicity bins (not size of array)
+    std::vector<Double_t>    fdMultBins; // global multiplicity/centrality binning
+    Int_t     fiNumMultBins; // number of multiplicity bins (not size of array)
 
     TString     fsInputFilePath; // path to the input folder with input file
     TString     fsInputFileName; // name of input file
@@ -391,6 +390,8 @@ ProcessUniFlow::ProcessUniFlow() :
   fbSaveMult(kFALSE),
   fFlowFitCumulants(kFALSE),
   fSaveInterSteps(kFALSE),
+  fdMultBins(),
+  fiNumMultBins(0),
   ffInputFile(0x0),
   ffOutputFile(0x0),
   ffFitsFile(0x0),
@@ -419,8 +420,6 @@ ProcessUniFlow::ProcessUniFlow() :
   fsOutputFileFormat = TString("pdf");
   fsGlobalProfNameLabel = TString("");
   fvTasks = std::vector<FlowTask*>();
-
-  for(Short_t i(0); i < fiNumMultBinsGlobal; i++) fdMultBins[i] = 0;
 }
 //_____________________________________________________________________________
 ProcessUniFlow::~ProcessUniFlow()
@@ -494,6 +493,8 @@ void ProcessUniFlow::Run()
 Bool_t ProcessUniFlow::Initialize()
 {
   // initialization of all necessery prerequisits
+  if(fiNumMultBins < 1) { Error(Form("Not enough mult. bins: %d (at least 1 needed)!",fiNumMultBins),"Initialize"); return kFALSE; }
+
   Info("Initializating task","Initialize");
 
   // opening input file
@@ -534,20 +535,6 @@ Bool_t ProcessUniFlow::Initialize()
   // initialization succesfull
   Info("Initialization succesfull","Initialize");
   return kTRUE;
-}
-//_____________________________________________________________________________
-void ProcessUniFlow::SetMultiplicityBins(Double_t* array, const Short_t size)
-{
-  if(size < 0 || size > fiNumMultBinsGlobal) { Fatal("Wrong number of bins selected","SetMultiplicityBins"); return; }
-  if(!array) { Fatal("Multiplicity array not valid","SetMultiplicityBins"); return; }
-
-  fiNumMultBins = size-1;
-
-  for(Short_t i(0); i < size; i++)
-  {
-    fdMultBins[i] = array[i];
-  }
-  return;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::LoadLists()
@@ -679,7 +666,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
   // ### Preparing Refs ###
   TProfile* profRef_preRebin = (TProfile*) flFlowRefs->FindObject(sNameRefs.Data());
   if(!profRef_preRebin) { Error(Form("Refs profile '%s' pre-rebin not found!",sNameRefs.Data()),"ProcessMixed"); flFlowRefs->ls(); return kFALSE; }
-  TProfile* profRef = (TProfile*) profRef_preRebin->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins);
+  TProfile* profRef = (TProfile*) profRef_preRebin->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins.data());
   if(!profRef) { Error("Refs profile rebinning failed!","ProcessMixed"); return kFALSE; }
   trashCol.Add(profRef);
 
@@ -885,7 +872,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   {
     TProfile* profMult = (TProfile*) flQACharged->FindObject(Form("fpRefsMult"));
     if(!profMult) { Error("MeanMult profile not found!"); flFlowRefs->ls(); return kFALSE; }
-    TProfile* profMult_rebin = (TProfile*) profMult->Rebin(fiNumMultBins,Form("%s_rebin",profMult->GetName()),fdMultBins);
+    TProfile* profMult_rebin = (TProfile*) profMult->Rebin(fiNumMultBins,Form("%s_rebin",profMult->GetName()),fdMultBins.data());
 
     ffOutputFile->cd();
     profMult_rebin->Write(profMult_rebin->GetName());
@@ -920,8 +907,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     // rebinning the profiles
     if(task->fRebinning)
     {
-      pCorTwo = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo.Data(), iSample),fdMultBins);
-      if(bDoFour) { pCorFour = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorFour.Data(), iSample),fdMultBins); }
+      pCorTwo = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo.Data(), iSample),fdMultBins.data());
+      if(bDoFour) { pCorFour = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorFour.Data(), iSample),fdMultBins.data()); }
     }
 
     // naming <<X>>
@@ -2578,11 +2565,11 @@ TH1D* ProcessUniFlow::TestRebin(TH1D* hOrig, FlowTask* task)
 {
   if(!hOrig) { Error("Original histogram not found!","TestRebin"); return 0x0; }
   if(!task) { Error("Task not found!","TestRebin"); return 0x0; }
-  TH1D* hRebin = (TH1D*) hOrig->Rebin(fiNumMultBins,Form("%s_testRebin",hOrig->GetName()),fdMultBins);
+  TH1D* hRebin = (TH1D*) hOrig->Rebin(fiNumMultBins,Form("%s_testRebin",hOrig->GetName()),fdMultBins.data());
 
   // rebinning
   Short_t numBins = fiNumMultBins;
-  Double_t* multBins = fdMultBins;
+  Double_t* multBins = fdMultBins.data();
   Short_t binIndex = 0;
 
 

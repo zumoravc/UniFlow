@@ -31,7 +31,7 @@ void RunDev()
 
 	// Double_t dMultBinning[] = {0,5,10,20,30,40,50,60,70};
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
-	Double_t dMultBinning[] = {10,20,30};
+	std::vector<Double_t> dMultBinning = {10,20};
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
 	Double_t dPtBins[] = {1.0,2.0,3.0,4.0};
 	std::vector<Double_t> vecPtBins = {1.0,2.0,3.0,4.0};
@@ -47,7 +47,7 @@ void RunDev()
 		process->SetTaskName("UniFlow");
 		process->SetOutputFilePath(sOutputFilePath.Data());
 		process->SetOutputFileName("Processed.root");
-		process->SetMultiplicityBins(dMultBinning,sizeof(dMultBinning)/sizeof(dMultBinning[0]));
+		process->SetMultiplicityBins(dMultBinning);
 		process->SetDebug(1);
 
 		FlowTask* taskRefs = new FlowTask(FlowTask::kRefs);
