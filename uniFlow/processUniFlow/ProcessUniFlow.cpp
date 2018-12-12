@@ -50,7 +50,7 @@ class FlowTask
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetInputTag(const char* name) { fInputTag = name; }
-    void        SetPtBins(Double_t* array, const Short_t size); // setup the pt binning for this task, where size is number of elements in array
+    void        SetPtBins(std::vector<Double_t> array) { fPtBinsEdges = array; fNumPtBins = (Int_t) array.size() - 1; } // setup the pt binning for this task using std::vectors. NB: possible with {}
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
     void        SetConsiderCorrelations(Bool_t cor = kTRUE) { fConsCorr = cor; }
     void        SetDoFourCorrelations(Bool_t four = kTRUE) { fDoFour = four; }
@@ -80,10 +80,9 @@ class FlowTask
     Double_t    fEtaGap; // eta gap
     Bool_t      fDoFour; // process 4-particle correlations
     Bool_t      fConsCorr; // consider correlations in cumulant / flow calculations
-    Short_t     fNumSamples; // [10] number of samples
-    static const Short_t fNumPtBinsMax = 100; // initialization (maximum) number of pt bins
-    Double_t    fPtBinsEdges[fNumPtBinsMax]; // pt binning
-    Short_t     fNumPtBins; // actual number of pT bins (not size of array) for rebinning
+    Int_t       fNumSamples; // [10] number of samples
+    Int_t       fNumPtBins; // actual number of pT bins (not size of array) for rebinning
+    std::vector<Double_t>   fPtBinsEdges; // pt binning
     Bool_t      fShowMult; // show multiplicity distribution
     Bool_t      fSampleMerging; // [kFALSE] flag for merging TProfiles (good for refs)
     Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
@@ -125,15 +124,16 @@ class FlowTask
 };
 
 //_____________________________________________________________________________
-FlowTask::FlowTask(PartSpecies species, const char* name)
+FlowTask::FlowTask(PartSpecies species, const char* name) :
+  fHarmonics(0),
+  fEtaGap(0),
+  fNumPtBins(-1),
+  fPtBinsEdges()
 {
   fName = name;
   fSpecies = species;
-  fHarmonics = 0;
-  fEtaGap = 0;
   fInputTag = "";
   fNumSamples = 10;
-  fNumPtBins = -1;
   fDoFour = kFALSE;
   fConsCorr = kFALSE;
   fShowMult = kFALSE;
@@ -177,21 +177,6 @@ FlowTask::~FlowTask()
   if(fVecHistInvMass) delete fVecHistInvMass;
   if(fVecHistInvMassBG) delete fVecHistInvMassBG;
   if(fCanvas) delete fCanvas;
-}
-//_____________________________________________________________________________
-void FlowTask::SetPtBins(Double_t* array, const Short_t size)
-{
-  if(size < 0 || size > fNumPtBinsMax) { Error("Wrong size of pt binning array.","SetPtBins"); return; }
-  if(!array) { Error("Wrong array.","SetPtBins"); return; }
-
-  fNumPtBins = size - 1;
-
-  for(Short_t i(0); i < size; i++)
-  {
-    fPtBinsEdges[i] = array[i];
-  }
-
-  return;
 }
 //_____________________________________________________________________________
 void FlowTask::SetFitParDefaults(Double_t* array, Int_t size)
@@ -275,8 +260,8 @@ void FlowTask::PrintTask()
   printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
   printf("   fFlowFitRangeLow: %g\n",fFlowFitRangeLow);
   printf("   fFlowFitRangeHigh: %g\n",fFlowFitRangeHigh);
-  printf("   fNumPtBins: %d (limit %d)\n",fNumPtBins,fNumPtBinsMax);
-  if(fNumPtBins > -1) { printf("   fPtBinsEdges: "); for(Short_t i(0); i < fNumPtBins+1; i++) printf("%g ",fPtBinsEdges[i]); printf("\n"); }
+  printf("   fNumPtBins: %d\n",fNumPtBins);
+  if(fNumPtBins > 1) { printf("   fPtBinsEdges: "); for(Int_t i(0); i < (Int_t) fPtBinsEdges.size() ; ++i) printf("%g ",fPtBinsEdges[i]); printf("\n"); }
   printf("------------------------------\n");
   return;
 }
@@ -611,6 +596,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   task->PrintTask();
 
   // task checks & initialization
+  if(task->fNumPtBins < 1) { Error(Form("Too small number of bins: %d (at least 1 needed)!",task->fNumPtBins),"ProcesTask"); return kFALSE; }
   if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
 
   // processing mixed
@@ -740,7 +726,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
       // recnstructed
       gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
 
-      histFlow = new TH1D(sHistFlowName.Data(),Form("%s: %s; #it{p}_{T} (GeV/#it{c});",task->GetSpeciesLabel().Data(),sHistFlowName.Data()), task->fNumPtBins,task->fPtBinsEdges);
+      histFlow = new TH1D(sHistFlowName.Data(),Form("%s: %s; #it{p}_{T} (GeV/#it{c});",task->GetSpeciesLabel().Data(),sHistFlowName.Data()), task->fNumPtBins,task->fPtBinsEdges.data());
       if(!histFlow) { Error("Creation of 'histFlow' failed!","ProcessMixed"); return kFALSE; }
       trashCol.Add(histFlow);
 
@@ -1527,8 +1513,8 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     // rebinning according to pt bins
     if(task->fNumPtBins > 0)
     {
-      pCorTwoDif = (TProfile*) pCorTwoDif->Rebin(task->fNumPtBins,Form("%s_sample%d_rebin", nameCorTwo.Data(), iSample), task->fPtBinsEdges);
-      if(bDoFour) { pCorFourDif = (TProfile*) pCorFourDif->Rebin(task->fNumPtBins,Form("%s_sample%d_rebin", nameCorFour.Data(), iSample), task->fPtBinsEdges); }
+      pCorTwoDif = (TProfile*) pCorTwoDif->Rebin(task->fNumPtBins,Form("%s_sample%d_rebin", nameCorTwo.Data(), iSample), task->fPtBinsEdges.data());
+      if(bDoFour) { pCorFourDif = (TProfile*) pCorFourDif->Rebin(task->fNumPtBins,Form("%s_sample%d_rebin", nameCorFour.Data(), iSample), task->fPtBinsEdges.data()); }
     }
     else
     {
@@ -1773,15 +1759,15 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     Double_t dFlow = 0.0, dFlowError = 0.0; // containers for flow extraction results
     TH1D* hFlowMass = 0x0;
     TH1D* pCorTwoDif = 0x0;
-    if(!fFlowFitCumulants) { pCorTwoDif = new TH1D(Form("pCor2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: <<2>>_{%d}{|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); <<2>>_{%d}{|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges); }
-    else { pCorTwoDif = new TH1D(Form("hCum2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: d_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges); }
+    if(!fFlowFitCumulants) { pCorTwoDif = new TH1D(Form("pCor2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: <<2>>_{%d}{|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); <<2>>_{%d}{|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges.data()); }
+    else { pCorTwoDif = new TH1D(Form("hCum2_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: d_{%d}{2,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{2,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges.data()); }
 
 
     Double_t dFlowFour = 0.0, dFlowFourError = 0.0; // containers for flow extraction results
     TH1D* hFlowMassFour = 0x0;
     TH1D* pCorFourDif = 0x0;
-    if(!fFlowFitCumulants) { pCorFourDif = new TH1D(Form("pCor4_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: <<4>>_{%d}{|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); <<4>>_{%d}{|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges); }
-    else { pCorFourDif = new TH1D(Form("hCum4_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: d_{%d}{4,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{4,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges); }
+    if(!fFlowFitCumulants) { pCorFourDif = new TH1D(Form("pCor4_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: <<4>>_{%d}{|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); <<4>>_{%d}{|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges.data()); }
+    else { pCorFourDif = new TH1D(Form("hCum4_%s_harm%d_gap%s_cent%d",sSpeciesName.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin),Form("%s: d_{%d}{4,|#Delta#eta|>%g} (%g - %g); #it{p}_{T} (GeV/#it{c}); d_{%d}{4,|#Delta#eta|>%g}",sSpeciesLabel.Data(),task->fHarmonics,task->fEtaGap,fdMultBins[iMultBin],fdMultBins[iMultBin+1],task->fHarmonics,task->fEtaGap), task->fNumPtBins,task->fPtBinsEdges.data()); }
 
 
     for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
@@ -2447,7 +2433,7 @@ Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* 
       trashCol.Add(prof1D_preRebin); // to ensure to be deleted
 
       TProfile* prof1D = 0x0;
-      if(iNumBinsPt > 0) { prof1D = (TProfile*) prof1D_preRebin->Rebin(iNumBinsPt,Form("%s_rebin", inputProf->GetName()), task->fPtBinsEdges); }
+      if(iNumBinsPt > 0) { prof1D = (TProfile*) prof1D_preRebin->Rebin(iNumBinsPt,Form("%s_rebin", inputProf->GetName()), task->fPtBinsEdges.data()); }
       else { prof1D = (TProfile*) prof1D_preRebin->Clone(); }
       if(!prof1D) { Error("Profile 'prof1D' does not exists!","MakeProfileSlices"); return kFALSE; }
 

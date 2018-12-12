@@ -22,11 +22,11 @@ void RunProcess()
 	// v2{4}
 	TString sOutputFilePath = sInputPath+"/output/";
 	Double_t dMultBinning[] = {10,20,30,40,50};
-	Double_t dPtBinningPID[] = {0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.0,4.4,4.8,5.2,5.6,6.0};
-	Double_t dPtBinningProton[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,6.0,7.0};
-	Double_t dPtBinningK0s[] = {0.4,0.8,1.2,1.6,2.0,2.4,3.2,4.0,5.0,6.0};
-	Double_t dPtBinningLambda[] = {0.8,1.2,1.6,2.0,2.4,2.8,3.2,4.0,5.0,6.0};
-	Double_t dPtBinningPhi[] = {1.0,1.5,2.0,2.5,3.0,4.0,5.0};
+	std::vector<Double_t> dPtBinningPID = {0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.0,4.4,4.8,5.2,5.6,6.0};
+	std::vector<Double_t> dPtBinningProton = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,6.0,7.0};
+	std::vector<Double_t> dPtBinningK0s = {0.4,0.8,1.2,1.6,2.0,2.4,3.2,4.0,5.0,6.0};
+	std::vector<Double_t> dPtBinningLambda = {0.8,1.2,1.6,2.0,2.4,2.8,3.2,4.0,5.0,6.0};
+	std::vector<Double_t> dPtBinningPhi = {1.0,1.5,2.0,2.5,3.0,4.0,5.0};
 
 	// v3{4}
 	// TString sOutputFilePath = sInputPath+"/output_v3/";
@@ -84,7 +84,7 @@ void RunProcess()
 	taskCharged->SetHarmonics(iHarmonics);
 	taskCharged->SetDoFourCorrelations(1);
 	taskCharged->SetEtaGap(-1.0);
-	taskCharged->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskCharged->SetPtBins(dPtBinningPID);
 	taskCharged->SetMergePosNeg();
 	process->AddTask(taskCharged);
 
@@ -93,7 +93,7 @@ void RunProcess()
 	taskCharged2->SetHarmonics(iHarmonics);
 	taskCharged2->SetDoFourCorrelations(1);
 	taskCharged2->SetEtaGap(0.0);
-	taskCharged2->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskCharged2->SetPtBins(dPtBinningPID);
 	taskCharged2->SetMergePosNeg();
 	process->AddTask(taskCharged2);
 
@@ -102,7 +102,7 @@ void RunProcess()
 	taskCharged3->SetHarmonics(iHarmonics);
 	taskCharged3->SetDoFourCorrelations(1);
 	taskCharged3->SetEtaGap(0.4);
-	taskCharged3->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskCharged3->SetPtBins(dPtBinningPID);
 	taskCharged3->SetMergePosNeg();
 	process->AddTask(taskCharged3);
 
@@ -111,7 +111,7 @@ void RunProcess()
 	taskPion->SetHarmonics(iHarmonics);
 	taskPion->SetDoFourCorrelations(1);
 	taskPion->SetEtaGap(-1.0);
-	taskPion->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskPion->SetPtBins(dPtBinningPID);
 	taskPion->SetMergePosNeg();
 	process->AddTask(taskPion);
 
@@ -120,7 +120,7 @@ void RunProcess()
 	taskPion2->SetHarmonics(iHarmonics);
 	taskPion2->SetDoFourCorrelations(1);
 	taskPion2->SetEtaGap(0.0);
-	taskPion2->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskPion2->SetPtBins(dPtBinningPID);
 	taskPion2->SetMergePosNeg();
 	process->AddTask(taskPion2);
 
@@ -129,7 +129,7 @@ void RunProcess()
 	taskPion3->SetHarmonics(iHarmonics);
 	taskPion3->SetDoFourCorrelations(1);
 	taskPion3->SetEtaGap(0.4);
-	taskPion3->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskPion3->SetPtBins(dPtBinningPID);
 	taskPion3->SetMergePosNeg();
 	process->AddTask(taskPion3);
 
@@ -138,7 +138,7 @@ void RunProcess()
 	taskKch->SetHarmonics(iHarmonics);
 	taskKch->SetDoFourCorrelations(1);
 	taskKch->SetEtaGap(-1.0);
-	taskKch->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskKch->SetPtBins(dPtBinningPID);
 	taskKch->SetMergePosNeg();
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskKch);
@@ -148,7 +148,7 @@ void RunProcess()
 	taskKch2->SetHarmonics(iHarmonics);
 	taskKch2->SetDoFourCorrelations(1);
 	taskKch2->SetEtaGap(0.0);
-	taskKch2->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskKch2->SetPtBins(dPtBinningPID);
 	taskKch2->SetMergePosNeg();
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskKch2);
@@ -158,7 +158,7 @@ void RunProcess()
 	taskKch3->SetHarmonics(iHarmonics);
 	taskKch3->SetDoFourCorrelations(1);
 	taskKch3->SetEtaGap(0.4);
-	taskKch3->SetPtBins(dPtBinningPID,sizeof(dPtBinningPID)/sizeof(dPtBinningPID[0]));
+	taskKch3->SetPtBins(dPtBinningPID);
 	taskKch3->SetMergePosNeg();
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskKch3);
@@ -168,7 +168,7 @@ void RunProcess()
 	taskProton->SetHarmonics(iHarmonics);
 	taskProton->SetDoFourCorrelations(1);
 	taskProton->SetEtaGap(-1.0);
-	taskProton->SetPtBins(dPtBinningProton,sizeof(dPtBinningProton)/sizeof(dPtBinningProton[0]));
+	taskProton->SetPtBins(dPtBinningProton);
 	taskProton->SetMergePosNeg();
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskProton);
@@ -178,7 +178,7 @@ void RunProcess()
 	taskProton2->SetHarmonics(iHarmonics);
 	taskProton2->SetDoFourCorrelations(1);
 	taskProton2->SetEtaGap(0.0);
-	taskProton2->SetPtBins(dPtBinningProton,sizeof(dPtBinningProton)/sizeof(dPtBinningProton[0]));
+	taskProton2->SetPtBins(dPtBinningProton);
 	taskProton2->SetMergePosNeg();
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskProton2);
@@ -188,7 +188,7 @@ void RunProcess()
 	taskProton3->SetHarmonics(iHarmonics);
 	taskProton3->SetDoFourCorrelations(1);
 	taskProton3->SetEtaGap(0.4);
-	taskProton3->SetPtBins(dPtBinningProton,sizeof(dPtBinningProton)/sizeof(dPtBinningProton[0]));
+	taskProton3->SetPtBins(dPtBinningProton);
 	taskProton3->SetMergePosNeg();
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskProton3);
@@ -201,7 +201,7 @@ void RunProcess()
 	taskK0s->SetEtaGap(-1.0);
 	// taskK0s->SetInvMassRebin(2);
 	// taskK0s->SetFlowMassRebin(2);
-	taskK0s->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
+	taskK0s->SetPtBins(dPtBinningK0s);
 	taskK0s->SetMergePosNeg();
 	// taskK0s->SetFittingRange(0.45,0.55);
 	// taskK0s->SetFittingRejectNumSigmas(3);
@@ -215,7 +215,7 @@ void RunProcess()
 	taskK0s2->SetEtaGap(0.0);
 	// taskK0s2->SetInvMassRebin(2);
 	// taskK0s2->SetFlowMassRebin(2);
-	taskK0s2->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
+	taskK0s2->SetPtBins(dPtBinningK0s);
 	taskK0s2->SetMergePosNeg();
 	// taskK0s2->SetFittingRange(0.45,0.55);
 	// taskK0s2->SetFittingRejectNumSigmas(3);
@@ -229,7 +229,7 @@ void RunProcess()
 	taskK0s3->SetEtaGap(0.4);
 	// taskK0s2->SetInvMassRebin(2);
 	// taskK0s2->SetFlowMassRebin(2);
-	taskK0s3->SetPtBins(dPtBinningK0s,sizeof(dPtBinningK0s)/sizeof(dPtBinningK0s[0]));
+	taskK0s3->SetPtBins(dPtBinningK0s);
 	taskK0s3->SetMergePosNeg();
 	// taskK0s2->SetFittingRange(0.45,0.55);
 	// taskK0s2->SetFittingRejectNumSigmas(3);
@@ -243,7 +243,7 @@ void RunProcess()
 	taskLambda->SetDoFourCorrelations(1);
 	// taskLambda->SetInvMassRebin(2);
 	// taskLambda->SetFlowMassRebin(2);
-	taskLambda->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
+	taskLambda->SetPtBins(dPtBinningLambda);
 	taskLambda->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
 	// taskLambda->SetFittingRejectNumSigmas(3);
@@ -257,7 +257,7 @@ void RunProcess()
 	taskLambda2->SetDoFourCorrelations(1);
 	// taskLambda->SetInvMassRebin(2);
 	// taskLambda->SetFlowMassRebin(2);
-	taskLambda2->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
+	taskLambda2->SetPtBins(dPtBinningLambda);
 	taskLambda2->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
 	// taskLambda->SetFittingRejectNumSigmas(3);
@@ -271,7 +271,7 @@ void RunProcess()
 	taskLambda3->SetDoFourCorrelations(1);
 	// taskLambda->SetInvMassRebin(2);
 	// taskLambda->SetFlowMassRebin(2);
-	taskLambda3->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
+	taskLambda3->SetPtBins(dPtBinningLambda);
 	taskLambda3->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
 	// taskLambda->SetFittingRejectNumSigmas(3);
@@ -285,7 +285,7 @@ void RunProcess()
 	taskPhi->SetEtaGap(-1.0);
 	// taskPhi->SetInvMassRebin(2);
 	taskPhi->SetFlowMassRebin(2);
-	taskPhi->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
+	taskPhi->SetPtBins(dPtBinningPhi);
 	taskPhi->SetMergePosNeg();
 	// taskPhi->SetFittingRange(0.45,0.55);
 	// taskPhi->SetFittingRejectNumSigmas(3);
@@ -299,7 +299,7 @@ void RunProcess()
 	taskPhi2->SetEtaGap(0.0);
 	// taskPhi->SetInvMassRebin(2);
 	taskPhi2->SetFlowMassRebin(2);
-	taskPhi2->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
+	taskPhi2->SetPtBins(dPtBinningPhi);
 	taskPhi2->SetMergePosNeg();
 	// taskPhi->SetFittingRange(0.45,0.55);
 	// taskPhi->SetFittingRejectNumSigmas(3);
@@ -313,7 +313,7 @@ void RunProcess()
 	taskPhi3->SetEtaGap(0.4);
 	// taskPhi->SetInvMassRebin(2);
 	taskPhi3->SetFlowMassRebin(2);
-	taskPhi3->SetPtBins(dPtBinningPhi,sizeof(dPtBinningPhi)/sizeof(dPtBinningPhi[0]));
+	taskPhi3->SetPtBins(dPtBinningPhi);
 	taskPhi3->SetMergePosNeg();
 	// taskPhi->SetFittingRange(0.45,0.55);
 	// taskPhi->SetFittingRejectNumSigmas(3);
