@@ -301,6 +301,7 @@ class ProcessUniFlow
     void        SetSaveMult(Bool_t bSave = kTRUE) { fbSaveMult = bSave; } // save reference multiplicity
     void        SetMultiplicityBins(Double_t* array, const Short_t size); // setup the global multiplicity binning, where size is number of elements in array
     void        SetFitCumulants(Bool_t cum = kTRUE) { fFlowFitCumulants = cum; } // use cn{2} vs m_inv instead of vn{2} vs. m_inv
+    void        SetSaveInterSteps(Bool_t save = kTRUE) { fSaveInterSteps = save; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
@@ -378,6 +379,7 @@ class ProcessUniFlow
 
     Bool_t      fbInit; // flag for initialization status
     Bool_t      fbDebug; // flag for debugging : if kTRUE Debug() messages are displayed
+    Bool_t      fSaveInterSteps; // flag for saving intermediate steps (correlations, cumulants) into a main output file
     TFile*      ffInputFile; //! input file container
     TFile*      ffOutputFile; //! output file container
     TFile*      ffDesampleFile; //! output file for results of desampling
@@ -403,6 +405,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fbInit(kFALSE),
   fbSaveMult(kFALSE),
   fFlowFitCumulants(kFALSE),
+  fSaveInterSteps(kFALSE),
   ffInputFile(0x0),
   ffOutputFile(0x0),
   ffFitsFile(0x0),
@@ -619,8 +622,10 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     if(!PrepareSlicesNew(task,task->fMixedDiff)) { Error("Preparing slices failed!","ProcessTask"); return kFALSE; }
 
     ffOutputFile->cd();
-    listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
-    listSlicesHistos->Write("MakeHistosSlices",TObject::kSingleKey);
+    if(fSaveInterSteps) {
+      listSlicesProfiles->Write("MakeProfileSlices",TObject::kSingleKey);
+      listSlicesHistos->Write("MakeHistosSlices",TObject::kSingleKey);
+    }
 
     if(!ProcessMixed(task)) { Error("ProcessMixed failed!","ProcessTask"); return kFALSE; }
 
@@ -1649,9 +1654,12 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 
   // saving to output file & cleaning
   ffOutputFile->cd();
-  hDesampledTwo_Cor->Write();
-  hDesampledTwo_Cum->Write();
+  if(fSaveInterSteps) {
+    hDesampledTwo_Cor->Write();
+    hDesampledTwo_Cum->Write();
+  }
   hDesampledTwo->Write();
+
   delete hDesampledTwo_Cum;
   delete hDesampledTwo;
 
@@ -1674,8 +1682,10 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 
     // saving to output file & cleaning
     ffOutputFile->cd();
-    hDesampledFour_Cor->Write();
-    hDesampledFour_Cum->Write();
+    if(fSaveInterSteps) {
+      hDesampledFour_Cor->Write();
+      hDesampledFour_Cum->Write();
+    }
     hDesampledFour->Write();
     delete hDesampledFour_Cum;
     delete hDesampledFour;
@@ -1911,13 +1921,19 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
 
     ffOutputFile->cd();
-    pCorTwoDif->Write();
-    hCumTwoDif->Write();
+
+    if(fSaveInterSteps) {
+      pCorTwoDif->Write();
+      hCumTwoDif->Write();
+    }
+
     hFlowTwoDif->Write();
 
     if(task->fDoFour) {
-      pCorFourDif->Write();
-      hCumFourDif->Write();
+      if(fSaveInterSteps) {
+        pCorFourDif->Write();
+        hCumFourDif->Write();
+      }
       hFlowFourDif->Write();
     }
 
