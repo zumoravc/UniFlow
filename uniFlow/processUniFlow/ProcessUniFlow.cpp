@@ -3140,9 +3140,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
     iParMass = 5;
     iParWidth = 6;
 
-    dParDef = {1.0,1.0,1.0,1.0,   dMaximum,1.019445,0.0046};
-    dParLimLow = {-1,-1,-1,-1,    0.0,1.018,0.001};
-    dParLimHigh = {-1,-1,-1,-1,  2.0*dMaximum,1.022,0.006};
+    dParDef =     {dMaximum,1000,1.0,0.0,   dMaximum,1.019445,0.0046};
+    dParLimLow =  {-1,-1,-1,-1,    0.0,1.018,0.001};
+    dParLimHigh = {-1,-1,-1,-1,  1.2*dMaximum,1.022,0.008};
 
     // assignment to external arrays
   }
@@ -3160,7 +3160,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
 
     dParDef =       {1.0,1.0,1.0,1.0,   dMaximum,0.4976,0.003,dMaximum,0.01};
     dParLimLow =    {-1,-1,-1,-1,    0.0,0.48,0.003,0.0,0.003};
-    dParLimHigh =   {-1,-1,-1,-1,  2.0*dMaximum,0.52,0.006,2.0*dMaximum,0.01};
+    dParLimHigh =   {-1,-1,-1,-1,  1.2*dMaximum,0.52,0.006,2.0*dMaximum,0.015};
   }
 
   if(species == FlowTask::kLambda)
@@ -3179,7 +3179,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
 
     dParDef = {1.0,1.0,1.0,1.0,   dMaximum,1.115, 0.001,dMaximum,0.01};
     dParLimLow = {-1,-1,-1,-1,    0.0,1.10,0.001,0.0,0.001};
-    dParLimHigh = {-1,-1,-1,-1,  2.0*dMaximum,1.13,0.008,2.0*dMaximum,0.01};
+    dParLimHigh = {-1,-1,-1,-1,  1.2*dMaximum,1.13,0.008,2.0*dMaximum,0.01};
   }
 
   // check if parametrisation is setup manually
@@ -3258,7 +3258,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
   Int_t nfitsA = 1;
   Bool_t bFitOK = kFALSE;
 
-  while(!bFitOK && (nfitsA < 15))
+  TVirtualFitter::SetMaxIterations(10000);
+
+  while(!bFitOK && (nfitsA < 30))
   {
     if(nfitsA > 1)
     {
@@ -3279,12 +3281,10 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
     hist->Fit(fitMass, sFitOptMass.Data());
 
     TString statusA = gMinuit->fCstatu.Data();
+
     if(statusA.Contains("CONVERGED")) { bFitOK = kTRUE; }
     nfitsA++;
   }
-
-  if(!bFitOK) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); delete fitMass; return kFALSE; }
-  Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
 
   // === Extracting fitting components to separated TF1's ===
 
@@ -3313,6 +3313,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
 
   fitOutSig = fitSig;
   fitOutBg = fitBg;
+
+  if(!bFitOK) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); delete fitMass; return kFALSE; }
+  Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
 
   delete fitMass;
 
@@ -3395,7 +3398,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
   // Species (independent) flow shape
   sFlowBG = Form("[%d]*x+[%d]", iNumParsMassSig+iNumParsMassBG,iNumParsMassSig+iNumParsMassBG+1); iNumParsFlowBG = 2;
 
-  dParDef = {0.0,0.15};
+  dParDef = {0.0,1.0};
   dParLimLow = {-1,-1};
   dParLimHigh = {-1,-1};
 
@@ -3468,7 +3471,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
   {
     // Here par-iNumParMass is to account for a fact that dParDef takes only flow part (vector index != parameter index)
     fitVn->SetParameter(par, dParDef.at(par-iNumParMass));
-    Debug(Form("Parameterd %d : %f",par,dParDef.at(par-iNumParMass) ),"FitCorrelations");
+    Debug(Form("Parameter %d : %f",par,dParDef.at(par-iNumParMass) ),"FitCorrelations");
     Double_t dLimLow = dParLimLow.at(par-iNumParMass);
     Double_t dLimHigh = dParLimHigh.at(par-iNumParMass);
 
@@ -3476,7 +3479,8 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
     else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Flow-mass: Only one of the parameter limits is set (par %d). Fix this!",par),"FitCorrelations"); return kFALSE; }
   }
 
-  fitVn->SetParameter(iParFlow, 0.1);
+  fitVn->SetParameter(iParFlow, 0.5);
+  fitVn->SetParLimits(iParFlow, 0.0,1.0);
 
   // NB: Currently only one iteration
   // // fitting
@@ -3510,7 +3514,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
 
   hist->Fit(fitVn, sFitOptFlow.Data());
 
-  if(!gMinuit->fCstatu.Contains("CONVERGED")) { Error(Form("Flow-mass fit does not converged within iterations limit (1)!"), "FitCorrelations"); delete fitVn; return kFALSE; }
+  if(!gMinuit->fCstatu.Contains("CONVERGED") ) { Error(Form("Flow-mass fit does not converged within iterations limit (1)!"), "FitCorrelations"); delete fitVn; return kFALSE; }
   Info(Form("Flow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "FitCorrelations");
 
   // saving flow to output
