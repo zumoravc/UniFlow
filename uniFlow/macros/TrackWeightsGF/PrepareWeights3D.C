@@ -17,14 +17,18 @@
  #include "TSystem.h"
  #include "TPad.h"
 
-TString sTag = "_bayes90";
+TString sTag = "";
 TString sTaskTag = "UniFlow" + sTag;
-TString sPath = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/pid/pPb-16q-FAST";
+TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/15o-pass1/runQA";
 TString sOutputPath = sPath+"/weights"+sTag+"/";
-TString sOutFileName = "weights"+sTag+"_16q_FAST.root";
+TString sOutFileName = "weights"+sTag+".root";
 
 const Short_t iNumPart = 8;
 const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+
+// const Short_t iNumPart = 5;
+// const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda","Phi"};
+// const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton"};
 // const Short_t iNumPart = 1;
 // const TString species[iNumPart] = {"Refs"};
 
@@ -33,9 +37,28 @@ const Bool_t bRunByRun = kTRUE;
 
 // pPb 5.02 TeV
 // RunList_LHC16q_pass1_CentralBarrelTracking_hadronPID_20171129_v2.txt [31 runs]
-Int_t iNumRuns = 31; Int_t iRunList[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387, 265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
+// Int_t iNumRuns = 31; Int_t iRunList[] = {265525, 265521, 265501, 265500, 265499, 265435, 265427, 265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387, 265385, 265384, 265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334, 265332, 265309};
 // RunList_LHC16t_pass1_CentralBarrelTracking_hadronPID_20170202_v0.txt [4 runs]
 // Int_t iNumRuns = 4; Int_t iRunList[] = {267166, 267165, 267164, 267163};
+// Int_t iNumRuns = 49; Int_t iRunList[] = {246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
+// 246846, 246845, 246844, 246810, 246809, 246808, 246805, 246804, 246766,
+// 246765 ,246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
+// 246488, 246487, 246434, 246431,
+//
+// 246424, 246276, 246275, 246272, 246271, 246225,
+// 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151};
+
+Int_t iNumRuns = 77; Int_t iRunList[] = {
+  246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
+  246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804, 246766,
+  246765 ,246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
+  246488, 246487, 246434, 246431, 246424, 246276, 246275, 246272, 246271, 246225,
+  246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151,
+  246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049, 246048, 246042,
+  246037, 246036, 246012, 246003, 246001, 245963, 245954, 245952, 245949, 245923,
+  245833, 245831, 245829, 245705, 245702, 245692, 245683
+};
+
 
 // pp 13 TeV
 // RunList_LHC16l_pass1_CentralBarrelTracking_hadronPID_20170509_v2.txt [70]
@@ -50,85 +73,93 @@ TH2D* ProcessWeights2D(const TH3D* dist);
 TH3D* ProcessWeights3D(const TH3D* dist);
 TH1D* CalculateWeight(TH1D* proj);
 TH2D* SliceWeights(const TH3D* weights, Int_t iBinLow, Int_t iBinHigh);
+TH1* MergeListProfiles(TList* list);
 
 void PrepareWeights3D()
 {
   gSystem->mkdir(sOutputPath.Data(),kTRUE);
   TFile* fOutput = new TFile(Form("%s/%s",sPath.Data(),sOutFileName.Data()),"RECREATE");
 
-  TFile* fInput = TFile::Open(Form("%s/AnalysisResults.root",sPath.Data()),"READ");
-  if(!fInput) return;
+  if(!bRunByRun) {
 
-  fInput->cd(sTaskTag.Data());
-  TList* list =  (TList*) gDirectory->Get(Form("Flow_Weights_%s",sTaskTag.Data()));
-  if(!list) return;
+    TFile* fInput = TFile::Open(Form("%s/AnalysisResults.root",sPath.Data()),"READ");
+    if(!fInput) return;
 
-  TList* listRun = new TList();
-  listRun->SetOwner(kTRUE);
+    fInput->cd(sTaskTag.Data());
+    TList* list =  (TList*) gDirectory->Get(Form("Flow_Weights_%s",sTaskTag.Data()));
+    if(!list) return;
 
-  for(Short_t part = 0; part < iNumPart; part++)
-  {
-    printf(" -part %d (out of %d)\n",part+1,iNumPart);
+    TList* listRun = new TList();
+    listRun->SetOwner(kTRUE);
 
-    TH3D* h3Weights = (TH3D*) list->FindObject(Form("fh3Weights%s",species[part].Data()));
-    if(!h3Weights) { printf("Hist 'fh3Weights%s' not found\n",species[part].Data()); return; }
-
-    // Plotting overview plots with dist slices in z
-    // TCanvas* canDist = new TCanvas("canDist","canDist",1600,2000);
-    // canDist->Divide(5,4);
-    // for(Int_t iBinZ(1); iBinZ < h3Weights->GetNbinsZ()+1; ++iBinZ)
-    // {
-    //   TH2D* slice = SliceWeights(h3Weights,iBinZ,iBinZ);
-    //   slice->SetStats(0);
-    //   // if(!slice) continue;
-    //
-    //   canDist->cd(iBinZ);
-    //   // gPad->SetLogz();
-    //   slice->DrawCopy("colz");
-    // }
-    // canDist->SaveAs(Form("%s/dist_%s_all.pdf",sOutputPath.Data(), species[part].Data()), "pdf");
-
-    TH2D* weights = ProcessWeights2D(h3Weights);
-    if(!weights) { printf("Hist with 2D weights not processed!\n"); return; }
-
-    // CheckWeights(h3Weights, iRunList[iRun]);
-    weights->SetName(Form("%s",species[part].Data()));
-    weights->SetTitle(Form("%s",species[part].Data()));
-    listRun->Add(weights);
-
-    TH3D* weights3D = ProcessWeights3D(h3Weights);
-    if(!weights3D) { printf("Hist with 3D weights not processed!\n"); return; }
-
-    // CheckWeights(h3Weights, iRunList[iRun]);
-    weights3D->SetName(Form("%s3D",species[part].Data()));
-    weights3D->SetTitle(Form("%s3D",species[part].Data()));
-    listRun->Add(weights3D);
-
-    // Plotting overview plots with dist slices in z
-    // TCanvas* canSlices = new TCanvas("canSlices","canSlices",1600,2000);
-    // canSlices->Divide(5,4);
-    // for(Int_t iBinZ(1); iBinZ < weights->GetNbinsZ()+1; ++iBinZ)
-    // {
-    //   TH2D* slice = SliceWeights(weights3D,iBinZ,iBinZ);
-    //   slice->SetStats(0);
-    //   // if(!slice) continue;
-    //
-    //   canSlices->cd(iBinZ);
-    //   // gPad->SetLogz();
-    //   slice->DrawCopy("colz");
-    // }
-    // canSlices->SaveAs(Form("%s/weights_%s_all.pdf",sOutputPath.Data(), species[part].Data()), "pdf");
-
-  } // end-for{species}
-
-  fOutput->cd();
-  listRun->Write("weights",TObject::kSingleKey);
-  delete listRun;
-
-  if(bRunByRun)
-  {
-    for(Short_t iRun = 0; iRun < iNumRuns; iRun++)
+    for(Int_t part = 0; part < iNumPart; part++)
     {
+      printf(" -part %d (out of %d)\n",part+1,iNumPart);
+
+      TH3D* h3Weights = (TH3D*) list->FindObject(Form("fh3Weights%s",species[part].Data()));
+      if(!h3Weights) { printf("Hist 'fh3Weights%s' not found\n",species[part].Data()); return; }
+
+      // Plotting overview plots with dist slices in z
+      // TCanvas* canDist = new TCanvas("canDist","canDist",1600,2000);
+      // canDist->Divide(5,4);
+      // for(Int_t iBinZ(1); iBinZ < h3Weights->GetNbinsZ()+1; ++iBinZ)
+      // {
+      //   TH2D* slice = SliceWeights(h3Weights,iBinZ,iBinZ);
+      //   slice->SetStats(0);
+      //   // if(!slice) continue;
+      //
+      //   canDist->cd(iBinZ);
+      //   // gPad->SetLogz();
+      //   slice->DrawCopy("colz");
+      // }
+      // canDist->SaveAs(Form("%s/dist_%s_all.pdf",sOutputPath.Data(), species[part].Data()), "pdf");
+
+      TH2D* weights = ProcessWeights2D(h3Weights);
+      if(!weights) { printf("Hist with 2D weights not processed!\n"); return; }
+
+      // CheckWeights(h3Weights, iRunList[iRun]);
+      weights->SetName(Form("%s",species[part].Data()));
+      weights->SetTitle(Form("%s",species[part].Data()));
+      listRun->Add(weights);
+
+      // TH3D* weights3D = ProcessWeights3D(h3Weights);
+      // if(!weights3D) { printf("Hist with 3D weights not processed!\n"); return; }
+      //
+      // // CheckWeights(h3Weights, iRunList[iRun]);
+      // weights3D->SetName(Form("%s3D",species[part].Data()));
+      // weights3D->SetTitle(Form("%s3D",species[part].Data()));
+      // listRun->Add(weights3D);
+
+      // Plotting overview plots with dist slices in z
+      // TCanvas* canSlices = new TCanvas("canSlices","canSlices",1600,2000);
+      // canSlices->Divide(5,4);
+      // for(Int_t iBinZ(1); iBinZ < weights->GetNbinsZ()+1; ++iBinZ)
+      // {
+      //   TH2D* slice = SliceWeights(weights3D,iBinZ,iBinZ);
+      //   slice->SetStats(0);
+      //   // if(!slice) continue;
+      //
+      //   canSlices->cd(iBinZ);
+      //   // gPad->SetLogz();
+      //   slice->DrawCopy("colz");
+      // }
+      // canSlices->SaveAs(Form("%s/weights_%s_all.pdf",sOutputPath.Data(), species[part].Data()), "pdf");
+
+    } // end-for{species}
+
+    fOutput->cd();
+    listRun->Write("weights",TObject::kSingleKey);
+    delete listRun;
+
+  } else {
+
+    TList* listGlob[iNumPart] = {};
+
+    for(Int_t part(0); part < iNumPart; ++part) {
+      listGlob[part] = new TList();
+    }
+
+    for(Int_t iRun = 0; iRun < iNumRuns; ++iRun) {
       printf(" ### Run %d (out of %d)\n",iRun+1,iNumRuns);
       TFile* fileTemp = new TFile(Form("%s/merge/merge_%d/AnalysisResults.root",sPath.Data(),iRunList[iRun]),"READ");
       if(!fileTemp) { printf("Run %d | Input file with weights not found\n",iRunList[iRun]); return; }
@@ -141,23 +172,46 @@ void PrepareWeights3D()
       TList* listRun = new TList();
       listRun->SetOwner(kTRUE);
 
-      for(Short_t part = 0; part < iNumPart; part++)
-      {
+      for(Int_t part = 0; part < iNumPart; ++part) {
         printf(" -part %d (out of %d)\n",part+1,iNumPart);
         TH3D* h3Weights = (TH3D*) listTemp->FindObject(Form("fh3Weights%s",species[part].Data()));
         if(!h3Weights) { printf("Run %d | Hist 'fh3Weights%s' not found\n",iRunList[iRun],species[part].Data()); listTemp->ls(); return; }
 
         TH2D* h2Weights = ProcessWeights2D(h3Weights);
-
         h2Weights->SetName(Form("%s",species[part].Data()));
         h2Weights->SetTitle(Form("%s | Run %d",species[part].Data(),iRunList[iRun]));
         listRun->Add(h2Weights);
+
+        listGlob[part]->Add(h3Weights);
       }
 
       fOutput->cd();
       listRun->Write(Form("%d",iRunList[iRun]),TObject::kSingleKey);
       delete listRun;
     }
+
+    // making run-averaged weights per-species out of global lists
+    TList* listRunAver = new TList();
+
+    printf("=== Making run-averaged weights by merging individual runs. ===\n");
+    for(Int_t part(0); part < iNumPart; ++part) {
+      printf(" -part %d (out of %d)\n",part+1,iNumPart);
+
+      TH3D* merged = (TH3D*) MergeListProfiles(listGlob[part]);
+      if(!merged) { printf("Merge failed!"); return; }
+
+      TH2D* h2Weights = ProcessWeights2D(merged);
+      h2Weights->SetName(Form("%s",species[part].Data()));
+      h2Weights->SetTitle(Form("%s | Run-averaged",species[part].Data()));
+      listRunAver->Add(h2Weights);
+
+      delete merged;
+      delete listGlob[part];
+    }
+
+    fOutput->cd();
+    listRunAver->Write("weights",TObject::kSingleKey);
+    delete listRunAver;
   }
 
   return;
@@ -170,6 +224,8 @@ TH2D* ProcessWeights2D(const TH3D* dist)
   TH2D* dist_2d = (TH2D*) dist->Project3D("xy");
   TH2D* weights_2d = (TH2D*) dist_2d->Clone();
   weights_2d->Reset();
+
+  weights_2d->Draw("colz");
 
   for(Short_t binEta(1); binEta < dist_2d->GetNbinsX()+1; ++binEta)
   {
@@ -261,3 +317,23 @@ TH2D* SliceWeights(const TH3D* weights, Int_t iBinLow, Int_t iBinHigh)
   return weights_2d;
 }
 //_____________________________________________________________________________
+TH1* MergeListProfiles(TList* list)
+{
+  // merge list of TProfiles into single TProfile and return it
+  if(!list || list->IsEmpty()) { Error("List not valid or empty","MergeListProfiles"); return 0x0; }
+
+  TH1* merged = (TH1*) list->At(0)->Clone();
+  // merged->SetName(Form("%s_merged",merged->GetName()));
+
+  if(list->GetEntries() < 2) // only 1 entry
+  {
+    Warning("Only one entry for merging; returning it directly instead!","MergeListProfiles");
+    return merged;
+  }
+
+  merged->Reset();
+  Double_t mergeStatus = merged->Merge(list);
+  if(mergeStatus == -1) { Error("Merging failed!","MergeListProfiles"); return 0x0; }
+
+  return merged;
+}

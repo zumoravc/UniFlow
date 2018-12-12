@@ -10,7 +10,7 @@
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2018
  */
 
-void RunProcess()
+void RunCumulants()
 {
 
 	Int_t iNumSamples = 1;
@@ -20,8 +20,8 @@ void RunProcess()
 
 	// // ====== Starting points
 	// v2{4}
-	TString sOutputFilePath = sInputPath+"/output/";
-	Double_t dMultBinning[] = {10,20,30,40,50};
+	TString sOutputFilePath = sInputPath+"/output_cum/";
+	Double_t dMultBinning[] = {0,5,10,20,30,40,50};
 	Double_t dPtBinningPID[] = {0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.0,4.4,4.8,5.2,5.6,6.0};
 	Double_t dPtBinningProton[] = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,6.0,7.0};
 	Double_t dPtBinningK0s[] = {0.4,0.8,1.2,1.6,2.0,2.4,3.2,4.0,5.0,6.0};
@@ -53,7 +53,7 @@ void RunProcess()
 	process->SetMultiplicityBins(dMultBinning,sizeof(dMultBinning)/sizeof(dMultBinning[0]));
 	process->SetSaveMult(0);
 	process->SetFitCumulants(kFALSE);
-	process->SetDebug(0);
+	process->SetDebug(1);
 
 	FlowTask* taskRefs = new FlowTask(FlowTask::kRefs);
 	taskRefs->SetNumSamples(iNumSamples);
@@ -241,8 +241,8 @@ void RunProcess()
 	taskLambda->SetHarmonics(iHarmonics);
 	taskLambda->SetEtaGap(-1.0);
 	taskLambda->SetDoFourCorrelations(1);
-	// taskLambda->SetInvMassRebin(2);
-	// taskLambda->SetFlowMassRebin(2);
+	taskLambda->SetInvMassRebin(2);
+	taskLambda->SetFlowMassRebin(2);
 	taskLambda->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
 	taskLambda->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
@@ -255,8 +255,8 @@ void RunProcess()
 	taskLambda2->SetHarmonics(iHarmonics);
 	taskLambda2->SetEtaGap(0.0);
 	taskLambda2->SetDoFourCorrelations(1);
-	// taskLambda->SetInvMassRebin(2);
-	// taskLambda->SetFlowMassRebin(2);
+	taskLambda2->SetInvMassRebin(2);
+	taskLambda2->SetFlowMassRebin(2);
 	taskLambda2->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
 	taskLambda2->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
@@ -269,8 +269,8 @@ void RunProcess()
 	taskLambda3->SetHarmonics(iHarmonics);
 	taskLambda3->SetEtaGap(0.4);
 	taskLambda3->SetDoFourCorrelations(1);
-	// taskLambda->SetInvMassRebin(2);
-	// taskLambda->SetFlowMassRebin(2);
+	taskLambda3->SetInvMassRebin(2);
+	taskLambda3->SetFlowMassRebin(2);
 	taskLambda3->SetPtBins(dPtBinningLambda,sizeof(dPtBinningLambda)/sizeof(dPtBinningLambda[0]));
 	taskLambda3->SetMergePosNeg();
 	// taskLambda->SetFittingRange(0.45,0.55);
