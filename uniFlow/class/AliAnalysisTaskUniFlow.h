@@ -7,7 +7,27 @@
 
 #include "AliAnalysisTaskSE.h"
 #include "AliEventCuts.h"
-#include "AliPicoTrack.h"
+#include "THnSparse.h"
+
+class TString;
+class TComplex;
+class TFile;
+class TList;
+class TClonesArray;
+class TProfile;
+class TH1D;
+class TH2D;
+class TH3D;
+
+class AliPIDResponse;
+class AliPIDCombined;
+class AliVEvent;
+class AliAODEvent;
+class AliVTrack;
+class AliAODTrack;
+class AliPicoTrack;
+class AliAODv0;
+class AliAODMCParticle;
 
 struct FlowTask
 {
