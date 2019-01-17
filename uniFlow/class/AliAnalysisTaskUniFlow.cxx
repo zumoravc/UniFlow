@@ -161,7 +161,7 @@ AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t refs, Bool_t pois, std::vector
   fsLabel = sLabel;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::CorrTask::Print()
+void AliAnalysisTaskUniFlow::CorrTask::Print() const
 {
   printf("CorrTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
   for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
@@ -739,12 +739,11 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
 
 }
 // ============================================================================
-const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species)
+const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species) const
 {
   const char* name;
 
-  switch(species)
-  {
+  switch(species) {
     case kRefs: name = "Refs"; break;
     case kCharged: name = "Charged"; break;
     case kPion: name = "Pion"; break;
@@ -759,12 +758,11 @@ const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species)
   return name;
 }
 // ============================================================================
-const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(PartSpecies species)
+const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(PartSpecies species) const
 {
   const char* label;
 
-  switch(species)
-  {
+  switch(species) {
     case kRefs: label = "RFP"; break;
     case kCharged: label = "h^{#pm}"; break;
     case kPion: label = "#pi^{#pm}"; break;
@@ -779,7 +777,7 @@ const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(PartSpecies species)
   return label;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::ListParameters()
+void AliAnalysisTaskUniFlow::ListParameters() const
 {
   // lists all task parameters
   // *************************************************************
@@ -874,8 +872,7 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   // NOTE: should be called at the end of each event & before vectors deleting
   // *************************************************************
 
-  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
-  {
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
     if(!fProcessSpec[iSpec]) { continue; }
     std::vector<AliVTrack*>* vector = fVector[iSpec];
     if(!vector) { continue; }
@@ -886,7 +883,7 @@ void AliAnalysisTaskUniFlow::ClearVectors()
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::DumpTObjTable(const char* note, Option_t* opt)
+void AliAnalysisTaskUniFlow::DumpTObjTable(const char* note, Option_t* opt) const
 {
   // Skipping if flag is off
   if(!fDumpTObjectTable) { return; }
@@ -1239,7 +1236,7 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected()
   return kTRUE;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
+Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp() const
 {
   // Check for additional pile-up rejection in Run 2 Pb-Pb collisions (15o, 17n)
   // based on multiplicity correlations
@@ -1363,7 +1360,7 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
   return kTRUE;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies species)
+Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies species) const
 {
   if(!track) { AliError("Track not exists!"); return kFALSE; }
   if(species == kUnknown) { AliError("Invalid species 'Unknown'!"); return kFALSE; }
@@ -1385,7 +1382,7 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies spec
   return kTRUE;
 }
 // ============================================================================
-Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, PartSpecies species)
+Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, PartSpecies species) const
 {
   Double_t dWeight = 1.0;
 
@@ -1402,7 +1399,7 @@ Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, PartSpecies spe
   return dWeight;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillEventsQA(const Int_t iQAindex)
+void AliAnalysisTaskUniFlow::FillEventsQA(const Int_t iQAindex) const
 {
   // Filling various QA plots related with event selection
   // *************************************************************
@@ -1446,7 +1443,7 @@ void AliAnalysisTaskUniFlow::FillEventsQA(const Int_t iQAindex)
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FilterCharged()
+void AliAnalysisTaskUniFlow::FilterCharged() const
 {
   // Filtering input charged tracks for POIs (stored in fVector[kCharged]) or RFPs (fVector[kRefs])
   // If track passes all requirements its pointer is pushed to relevant vector container
@@ -1486,7 +1483,7 @@ void AliAnalysisTaskUniFlow::FilterCharged()
   return;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
+Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track) const
 {
   // Selection of charged track
   // returns kTRUE if track pass all requirements, kFALSE otherwise
@@ -1535,7 +1532,7 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
   return kTRUE;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track)
+Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track) const
 {
   // Checking if (preselected) track fulfills criteria for RFPs
   // NOTE: This is not a standalone selection, but complementary check for IsChargedSelected()
@@ -1548,7 +1545,7 @@ Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track)
   return kTRUE;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track)
+void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track) const
 {
   // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
   // *************************************************************
@@ -1566,7 +1563,7 @@ void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track)
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQARefs(const Int_t iQAindex, const AliAODTrack* track)
+void AliAnalysisTaskUniFlow::FillQARefs(const Int_t iQAindex, const AliAODTrack* track) const
 {
   // Filling various QA plots related to RFPs subset of charged track selection
   // *************************************************************
@@ -1581,7 +1578,7 @@ void AliAnalysisTaskUniFlow::FillQARefs(const Int_t iQAindex, const AliAODTrack*
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQACharged(const Int_t iQAindex, const AliAODTrack* track)
+void AliAnalysisTaskUniFlow::FillQACharged(const Int_t iQAindex, const AliAODTrack* track) const
 {
   // Filling various QA plots related to charged track selection
   // *************************************************************
@@ -1618,7 +1615,7 @@ void AliAnalysisTaskUniFlow::FillQACharged(const Int_t iQAindex, const AliAODTra
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FilterV0s()
+void AliAnalysisTaskUniFlow::FilterV0s() const
 {
   // Filtering input V0s candidates (K0s, (Anti)Lambda)
   // If track passes all requirements as defined in IsV0sSelected() (and species dependent one)
@@ -1702,7 +1699,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
   return;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
+Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0) const
 {
   // Topological reconstruction and selection of V0 candidates
   // specific for K0s candidates
@@ -1799,7 +1796,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   return kTRUE;
 }
 // ============================================================================
-Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
+Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0) const
 {
   // Topological reconstruction and selection of V0 candidates
   // specific for Lambda candidates
@@ -1927,13 +1924,13 @@ Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   return 0;
 }
 // ============================================================================
-Double_t AliAnalysisTaskUniFlow::GetRapidity(Double_t mass, Double_t Pt, Double_t Eta)
+Double_t AliAnalysisTaskUniFlow::GetRapidity(Double_t mass, Double_t Pt, Double_t Eta) const
 {
     Double_t rapid = TMath::Log( (TMath::Sqrt(mass*mass + Pt*Pt*TMath::CosH(Eta)*TMath::CosH(Eta)) + Pt*TMath::SinH(Eta)) / TMath::Sqrt(mass*mass + Pt*Pt) );
     return rapid;
 }
 // ============================================================================
-AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(Int_t label)
+AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(Int_t label) const
 {
   if(!fArrayMC) { AliError("fArrayMC not found!"); return 0x0; }
   if(label < 0) { /*AliWarning("MC label negative");*/ return 0x0; }
@@ -1943,7 +1940,7 @@ AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(Int_t label)
   return mcTrack;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
+Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0) const
 {
   // Topological reconstruction and selection of V0 candidates
   // common for both K0s and (Anti)-Lambdas
@@ -2056,7 +2053,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   return kTRUE;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0, const Bool_t bIsK0s, const Int_t bIsLambda)
+void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0, const Bool_t bIsK0s, const Int_t bIsLambda) const
 {
   // Filling various QA plots related to V0 candidate selection
   // *************************************************************
@@ -2257,7 +2254,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0,
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FilterPhi()
+void AliAnalysisTaskUniFlow::FilterPhi() const
 {
   // Reconstruction and filtering of Phi meson candidates out of selected Kaon sample
   // If track passes all requirements, the relevant properties (pT, eta, phi) are stored
@@ -2326,14 +2323,14 @@ void AliAnalysisTaskUniFlow::FilterPhi()
 
   return;
 }
-//____________________________________________________________________
-AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const AliAODTrack* part2)
+// ============================================================================
+AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const AliAODTrack* part2) const
 {
   // Reconstructing mother particle from two prongs and fill its properties.
   // return ptr to created mother particle
   // *************************************************************
 
-  if(!part1 || !part2) return 0x0;
+  if(!part1 || !part2) { return 0x0; }
 
   // combining momenta
   TVector3 mom1 = TVector3( part1->Px(), part1->Py(), part1->Pz() );
@@ -2356,7 +2353,7 @@ AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const
   return new AliPicoTrack(mom.Pt(),mom.Eta(),dPhi,iCharge,0,0,0,0,0,0,dMass);
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQAPhi(const Int_t iQAindex, const AliPicoTrack* part)
+void AliAnalysisTaskUniFlow::FillQAPhi(const Int_t iQAindex, const AliPicoTrack* part) const
 {
   if(!part) return;
 
@@ -2382,7 +2379,7 @@ void AliAnalysisTaskUniFlow::FillQAPhi(const Int_t iQAindex, const AliPicoTrack*
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FilterPID()
+void AliAnalysisTaskUniFlow::FilterPID() const
 {
   // Filtering input PID tracks (pi,K,p)
   // If track passes all requirements as defined in IsPIDSelected() (and species dependent),
@@ -2460,7 +2457,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
   return;
 }
 // ============================================================================
-AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const AliAODTrack* track)
+AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const AliAODTrack* track) const
 {
   // Selection of PID tracks (pi,K,p) - track identification
   // Based on fCutUseBayesPID flag, either Bayes PID or nSigma cutting is used
@@ -2567,7 +2564,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   return kUnknown;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* track, const PartSpecies species)
+void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* track, const PartSpecies species) const
 {
   // Filling various QA plots related to PID (pi,K,p) track selection
   // *************************************************************
@@ -2773,7 +2770,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(CorrTask* task)
   return kTRUE;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::CalculateCorrelations(CorrTask* task, PartSpecies species, Double_t dPt, Double_t dMass)
+void AliAnalysisTaskUniFlow::CalculateCorrelations(CorrTask* task, PartSpecies species, Double_t dPt, Double_t dMass) const
 {
   if(!task) { AliError("CorrTask does not exists!"); return; }
   if(species >= kUnknown) { AliError(Form("Invalid species: %s!", GetSpeciesName(species))); return; }
@@ -3186,7 +3183,7 @@ void AliAnalysisTaskUniFlow::ResetFlowVector(TComplex (&array)[fFlowNumHarmonics
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
+void AliAnalysisTaskUniFlow::ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]) const
 {
   // List all values of given flow vector TComplex array
   // *************************************************************
@@ -3203,7 +3200,7 @@ void AliAnalysisTaskUniFlow::ListFlowVector(TComplex (&array)[fFlowNumHarmonicsM
   return;
 }
 // ============================================================================
-Int_t AliAnalysisTaskUniFlow::GetSamplingIndex()
+Int_t AliAnalysisTaskUniFlow::GetSamplingIndex() const
 {
   // Assessing sampling index based on generated random number
   // returns centrality index
@@ -3223,7 +3220,7 @@ Int_t AliAnalysisTaskUniFlow::GetSamplingIndex()
   return index;
 }
 // ============================================================================
-Int_t AliAnalysisTaskUniFlow::GetCentralityIndex()
+Int_t AliAnalysisTaskUniFlow::GetCentralityIndex() const
 {
   // Estimating centrality percentile based on selected estimator.
   // (Default) If no multiplicity estimator is specified, percentile is estimated as number of selected / filtered charged tracks (NRFP).
@@ -3253,13 +3250,11 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex()
   return iCentralityIndex;
 }
 // ============================================================================
-const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(CentEst est)
+const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(CentEst est) const
 {
   // Return string with estimator name or 'n/a' if not available
   // *************************************************************
-
-  switch (est)
-  {
+  switch (est) {
     case kRFP: return "N_{RFP}";
     case kV0A: return "V0A";
     case kV0C: return "V0C";
@@ -3273,7 +3268,7 @@ const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(CentEst est)
   return "n/a";
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTPC(const AliAODTrack* track)
+Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTPC(const AliAODTrack* track) const
 {
   // Checks if the track has ok PID information from TPC
   // *************************************************************
@@ -3282,7 +3277,7 @@ Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTPC(const AliAODTrack* track)
   return (pidStatusTPC == AliPIDResponse::kDetPidOk);
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTOF(const AliAODTrack* track)
+Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTOF(const AliAODTrack* track) const
 {
   // Checks if the track has ok PID information from TOF
   // *************************************************************
@@ -3305,107 +3300,108 @@ void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
 // P: flow vector of POIs (with/out eta gap) (in usual notation p)
 // S: flow vector of overlaping RFPs and POIs (in usual notation q)
 
-TComplex AliAnalysisTaskUniFlow::Q(const Int_t n, const Int_t p)
+TComplex AliAnalysisTaskUniFlow::Q(const Int_t n, const Int_t p) const
 {
   if (n < 0) return TComplex::Conjugate(fFlowVecQpos[-n][p]);
   else return fFlowVecQpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::QGapPos(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::QGapPos(const Int_t n, const Int_t p) const
 {
   if (n < 0) return TComplex::Conjugate(fFlowVecQpos[-n][p]);
   else return fFlowVecQpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::QGapNeg(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::QGapNeg(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecQneg[-n][p]);
   else return fFlowVecQneg[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::QGapMid(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::QGapMid(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecQmid[-n][p]);
   else return fFlowVecQmid[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::P(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::P(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecPpos[-n][p]);
   else return fFlowVecPpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::PGapPos(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::PGapPos(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecPpos[-n][p]);
   else return fFlowVecPpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::PGapNeg(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::PGapNeg(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecPneg[-n][p]);
   else return fFlowVecPneg[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::S(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::S(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecSpos[-n][p]);
   else return fFlowVecSpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::SGapPos(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::SGapPos(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecSpos[-n][p]);
   else return fFlowVecSpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::SGapNeg(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::SGapNeg(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecSneg[-n][p]);
   else return fFlowVecSneg[n][p];
 }
-//____________________________________________________________________
+// ============================================================================
 
 // Set of flow calculation methods for cumulants of different orders with/out eta gap
 
-TComplex AliAnalysisTaskUniFlow::Two(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::Two(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = Q(n1,1)*Q(n2,1) - Q(n1+n2,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::TwoGap(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoGap(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = QGapPos(n1,1)*QGapNeg(n2,1);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::TwoDiff(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoDiff(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = P(n1,1)*Q(n2,1) - S(n1+n2,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::TwoDiffGapPos(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoDiffGapPos(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = PGapPos(n1,1)*QGapNeg(n2,1);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::TwoDiffGapNeg(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoDiffGapNeg(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = PGapNeg(n1,1)*QGapPos(n2,1);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::Three(const Int_t n1, const Int_t n2, const Int_t n3)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::Three(const Int_t n1, const Int_t n2, const Int_t n3) const
 {
   TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)-Q(n1+n2,2)*Q(n3,1)-Q(n2,1)*Q(n1+n3,2)
  		                 - Q(n1,1)*Q(n2+n3,2)+2.*Q(n1+n2+n3,3);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::Four(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::Four(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-Q(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*Q(n1+n3,2)*Q(n4,1)
                     - Q(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.0*Q(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*Q(n1+n4,2)
@@ -3414,41 +3410,41 @@ TComplex AliAnalysisTaskUniFlow::Four(const Int_t n1, const Int_t n2, const Int_
                     + 2.0*Q(n2,1)*Q(n1+n3+n4,3)+2.0*Q(n1,1)*Q(n2+n3+n4,3)-6.0*Q(n1+n2+n3+n4,4);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::FourGap(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::FourGap(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = QGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)-QGapPos(n1+n2,2)*QGapNeg(n3,1)*QGapNeg(n4,1)
                     -QGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3+n4,2)+QGapPos(n1+n2,2)*QGapNeg(n3+n4,2);
 	return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::Four3sub(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::Four3sub(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   // left = neg, middle = mid; rigth = pos
   TComplex formula = QGapMid(n1,1)*QGapMid(n2,1)*QGapNeg(n3,1)*QGapPos(n4,1)-QGapMid(n1+n2,2)*QGapNeg(n3,1)*QGapPos(n4,1);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::ThreeDiff(const Int_t n1, const Int_t n2, const Int_t n3)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::ThreeDiff(const Int_t n1, const Int_t n2, const Int_t n3) const
 {
   TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)-S(n1+n2,2)*Q(n3,1)-S(n1+n3,2)*Q(n2,1)
  		                 - P(n1,1)*Q(n2+n3,2)+2.0*S(n1+n2+n3,3);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::ThreeDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::ThreeDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3) const
 {
   TComplex formula = PGapPos(n1,1)*QGapNeg(n2,1)*QGapNeg(n3,1) - PGapPos(n1,1)*QGapNeg(n2+n3,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::ThreeDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::ThreeDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3) const
 {
   TComplex formula = PGapNeg(n1,1)*QGapPos(n2,1)*QGapPos(n3,1) - PGapNeg(n1,1)*QGapPos(n2+n3,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::FourDiff(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::FourDiff(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-S(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*S(n1+n3,2)*Q(n4,1)
                     - P(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.0*S(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*S(n1+n4,2)
@@ -3457,8 +3453,8 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Int_t n1, const Int_t n2, const 
                     + 2.0*Q(n2,1)*S(n1+n3+n4,3)+2.0*P(n1,1)*Q(n2+n3+n4,3)-6.0*S(n1+n2+n3+n4,4);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::FourDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::FourDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = PGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)
                       - SGapPos(n1+n2,2)*QGapNeg(n3,1)*QGapNeg(n4,1)
@@ -3466,8 +3462,8 @@ TComplex AliAnalysisTaskUniFlow::FourDiffGapPos(const Int_t n1, const Int_t n2, 
                       + SGapPos(n1+n2,2)*QGapNeg(n3+n4,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = PGapNeg(n1,1)*QGapNeg(n2,1)*QGapPos(n3,1)*QGapPos(n4,1)
                       - SGapNeg(n1+n2,2)*QGapPos(n3,1)*QGapPos(n4,1)
@@ -3475,7 +3471,7 @@ TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Int_t n1, const Int_t n2, 
                       + SGapNeg(n1+n2,2)*QGapPos(n3+n4,2);
   return formula;
 }
-//____________________________________________________________________
+// ============================================================================
 void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 {
   // create output objects
