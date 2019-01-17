@@ -41,24 +41,26 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest; NB: kUknown last as counter
       enum    SparseCand {kInvMass = 0, kCent, kPt, kEta, kDim}; // reconstructed candidates dist. dimensions
 
-      struct FlowTask
+      class CorrTask
       {
-        Bool_t                fbDoRefs; // which particles are procesed (RFPs / POIs / both )
-        Bool_t                fbDoPOIs; // which particles are procesed (RFPs / POIs / both )
-        Int_t                 fiNumHarm; // correlation order <M>
-        Int_t                 fiNumGaps; // number of subevents
-        std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
-        std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
-        TString               fsName; // automatically generated name: see Init() for format
-        TString               fsLabel; // automatically generated label see Init() for format
+        public:
+                      CorrTask(); // default ctor
+                      CorrTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()); // actual ctor
+                      ~CorrTask() { fiHarm.clear(); fdGaps.clear(); }
 
-                    FlowTask() : fbDoRefs(0), fbDoPOIs(0), fiNumHarm(0), fiNumGaps(0), fiHarm(std::vector<Int_t>()), fdGaps(std::vector<Double_t>()), fsName(TString()), fsLabel(TString()) {}; // default ctor
-                    FlowTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) : fbDoRefs(refs), fbDoPOIs(pois), fiNumHarm(0), fiNumGaps(0), fiHarm(harm), fdGaps(gaps), fsLabel(TString()), fsName(TString()) { fiNumHarm = harm.size(); fiNumGaps = gaps.size(); Init(); } // actual ctor
-                    ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
+          Bool_t      HasGap() { return (Bool_t) fiNumGaps; }; // check if Gap
+          void        Print(); // print CorrTask properties
 
-        void        Init(); // initialization
-        void        Print(); // print FlowTask properties
-        Bool_t      HasGap() { return (Bool_t) fiNumGaps; }; // check if Gap
+          Bool_t                fbDoRefs; // which particles are procesed (RFPs / POIs / both )
+          Bool_t                fbDoPOIs; // which particles are procesed (RFPs / POIs / both )
+          Int_t                 fiNumHarm; // correlation order <M>
+          Int_t                 fiNumGaps; // number of subevents
+          std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
+          std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
+          TString               fsName; // automatically generated name: see Init() for format
+          TString               fsLabel; // automatically generated label see Init() for format
+        protected:
+        private:
       };
 
                               AliAnalysisTaskUniFlow(); // constructor
@@ -80,12 +82,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessV0s(Bool_t use = kTRUE) { fProcessSpec[kK0s] = use; fProcessSpec[kLambda] = use; }
       void                    SetProcessPhi(Bool_t use = kTRUE) { fProcessSpec[kPhi] = use; }
       // flow related setters
-      void                    AddTwo(Int_t n1, Int_t n2, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2})); }
-      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2}, {gap})); }
-      void                    AddThree(Int_t n1, Int_t n2, Int_t n3, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3})); }
-      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3} ,{gap})); }
-      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4})); }
-      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4}, {gap})); }
+      void                    AddTwo(Int_t n1, Int_t n2, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2})); }
+      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2}, {gap})); }
+      void                    AddThree(Int_t n1, Int_t n2, Int_t n3, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2,n3})); }
+      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2,n3} ,{gap})); }
+      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2,n3,n4})); }
+      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2,n3,n4}, {gap})); }
 
       void                    SetFlowRFPsPt(Double_t min, Double_t max) { fFlowRFPsPtMin = min; fFlowRFPsPtMax = max; }
       void                    SetFlowPOIsPt(Double_t min, Double_t max, Int_t bins = 0) { fFlowPOIsPtMin = min; fFlowPOIsPtMax = max; fFlowPOIsPtBinNum = bins; }
@@ -161,7 +163,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliEventCuts fEventCuts; //
 
     private:
-      std::vector<FlowTask*>  fVecFlowTask; //
+      std::vector<CorrTask*>  fVecCorrTask; //
       // array lenghts & constants
       const Double_t          fPDGMassPion; // [DPGMass] DPG mass of charged pion
       const Double_t          fPDGMassKaon; // [DPGMass] DPG mass of charged kaon
@@ -194,8 +196,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Int_t                   GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
       const char*             GetCentEstimatorLabel(CentEst est); // returns mult/cent estimator string with label or 'n/a' if not available
 
-      void                    CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0); // wrapper for correlations methods
-      Bool_t                  ProcessFlowTask(FlowTask* task); // procesisng of FlowTask
+      void                    CalculateCorrelations(CorrTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0); // wrapper for correlations methods
+      Bool_t                  ProcessCorrTask(CorrTask* task); // procesisng of CorrTask
       Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
 
       void                    FilterCharged(); // charged tracks filtering
@@ -540,24 +542,40 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       ClassDef(AliAnalysisTaskUniFlow, 7);
 };
 
-void AliAnalysisTaskUniFlow::FlowTask::Init()
+AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
+  fbDoRefs(0),
+  fbDoPOIs(0),
+  fiNumHarm(0),
+  fiNumGaps(0),
+  fiHarm(std::vector<Int_t>()),
+  fdGaps(std::vector<Double_t>()),
+  fsName(TString()),
+  fsLabel(TString())
+{};
+//_____________________________________________________________________________
+AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps) :
+  fbDoRefs(refs),
+  fbDoPOIs(pois),
+  fiNumHarm(0),
+  fiNumGaps(0),
+  fiHarm(harm),
+  fdGaps(gaps),
+  fsLabel(TString()),
+  fsName(TString())
 {
-  // Initilization of FlowTask
+  // constructor of CorrTask
 
-  if(fiNumHarm < 2)
-  {
-    fsName = "NA";
-    fsLabel = "NA";
-    return;
-  }
+  fiNumHarm = harm.size();
+  fiNumGaps = gaps.size();
+
+  if(fiNumHarm < 2) { return; }
 
   // generating name
   TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
   for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
   sName += ")";
 
-  if(fiNumGaps > 0)
-  {
+  if(fiNumGaps > 0) {
     sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
     for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
     sName += ")";
@@ -568,8 +586,7 @@ void AliAnalysisTaskUniFlow::FlowTask::Init()
   for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
   sLabel += "}";
 
-  if(fiNumGaps > 0)
-  {
+  if(fiNumGaps > 0) {
     sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
     for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
     sLabel += ")";
@@ -579,15 +596,14 @@ void AliAnalysisTaskUniFlow::FlowTask::Init()
   fsLabel = sLabel;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FlowTask::Print()
+void AliAnalysisTaskUniFlow::CorrTask::Print()
 {
-  printf("FlowTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
+  printf("CorrTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
   for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
   printf("} | fgGaps[%d] = { ",fiNumGaps);
   for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
   printf("}\n");
 }
 //_____________________________________________________________________________
-
 
 #endif

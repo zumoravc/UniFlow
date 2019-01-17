@@ -105,7 +105,7 @@ ClassImp(AliAnalysisTaskUniFlow);
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fVector(),
-  fVecFlowTask(),
+  fVecCorrTask(),
   fProcessSpec(),
   fFlowVecQpos(),
   fFlowVecQneg(),
@@ -389,7 +389,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 //_____________________________________________________________________________
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
   fVector(),
-  fVecFlowTask(),
+  fVecCorrTask(),
   fProcessSpec(),
   fFlowVecQpos(),
   fFlowVecQneg(),
@@ -706,7 +706,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
     if(fListFlow[iSpec]) delete fListFlow[iSpec];
   }
 
-  for(Size_t i(0); i < fVecFlowTask.size(); ++i) { delete fVecFlowTask.at(i); }
+  for(Size_t i(0); i < fVecCorrTask.size(); ++i) { delete fVecCorrTask.at(i); }
 
   // deleting output lists
   if(fFlowWeights) delete fFlowWeights;
@@ -1533,7 +1533,7 @@ void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track)
 {
   // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
   // *************************************************************
-  if(fRunMode == kSkipFlow || fVecFlowTask.size() < 1) { return; } // no sparse required
+  if(fRunMode == kSkipFlow || fVecCorrTask.size() < 1) { return; } // no sparse required
   if(!sparse) { Error("THnSparse not valid!","FillSparseCand"); return; }
   if(!track) { Error("Track not valid!","FillSparseCand"); return; }
 
@@ -2669,9 +2669,9 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   return;
 }
 //_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
+Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(CorrTask* task)
 {
-  if(!task) { AliError("FlowTask does not exists!"); return kFALSE; }
+  if(!task) { AliError("CorrTask does not exists!"); return kFALSE; }
   // task->Print();
 
   Int_t iNumHarm = task->fiNumHarm;
@@ -2754,9 +2754,9 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
   return kTRUE;
 }
 //_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt, Double_t dMass)
+void AliAnalysisTaskUniFlow::CalculateCorrelations(CorrTask* task, PartSpecies species, Double_t dPt, Double_t dMass)
 {
-  if(!task) { AliError("FlowTask does not exists!"); return; }
+  if(!task) { AliError("CorrTask does not exists!"); return; }
   if(species >= kUnknown) { AliError(Form("Invalid species: %s!", GetSpeciesName(species))); return; }
 
   Bool_t bHasGap = task->HasGap();
@@ -2947,13 +2947,13 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
   // if running in kSkipFlow mode, skip the remaining part
   if(fRunMode == kSkipFlow) { fEventCounter++; return kTRUE; }
 
-  // >>>> Using FlowTask <<<<<
+  // >>>> Using CorrTask <<<<<
 
-  Int_t iNumTasks = fVecFlowTask.size();
+  Int_t iNumTasks = fVecCorrTask.size();
   for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
   {
-    Bool_t process = ProcessFlowTask(fVecFlowTask.at(iTask));
-    if(!process) { AliError("FlowTask processing failed!\n"); fVecFlowTask.at(iTask)->Print(); return kFALSE; }
+    Bool_t process = ProcessCorrTask(fVecCorrTask.at(iTask));
+    if(!process) { AliError("CorrTask processing failed!\n"); fVecCorrTask.at(iTask)->Print(); return kFALSE; }
   }
 
   fEventCounter++; // counter of processed events
@@ -3500,14 +3500,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // setting number of bins based on set range with fixed width
   const Int_t iFlowRFPsPtBinNum = (Int_t) ((fFlowRFPsPtMax - fFlowRFPsPtMin) / 0.1 + 0.5);
 
-  // creating output correlations profiles based on FlowTasks
-  Int_t iNumTasks = fVecFlowTask.size();
+  // creating output correlations profiles based on CorrTasks
+  Int_t iNumTasks = fVecCorrTask.size();
   if(fRunMode != kSkipFlow && iNumTasks > 0)
   {
     for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
     {
-      FlowTask* task = fVecFlowTask.at(iTask);
-      if(!task) { fInit = kFALSE; AliError(Form("FlowTask %d does not exists\n",iTask)); return; }
+      CorrTask* task = fVecCorrTask.at(iTask);
+      if(!task) { fInit = kFALSE; AliError(Form("CorrTask %d does not exists\n",iTask)); return; }
 
       Bool_t bHasGap = task->HasGap();
       const char* corName = task->fsName.Data();
@@ -3515,7 +3515,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
       for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
       {
-        // check if FlowTask should be done for all flow particles (RFP/POI/Both)
+        // check if CorrTask should be done for all flow particles (RFP/POI/Both)
         if(!task->fbDoRefs && iSpec == kRefs) { continue; }
         if(!task->fbDoPOIs && iSpec != kRefs) { continue; }
 
@@ -3574,7 +3574,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
           // check if same profile does not exists already
           if(fListFlow[iSpec]->FindObject(profile->GetName())) {
-            AliError(Form("FlowTask %d : Profile '%s' already exists! Please check run macro for FlowTask duplicates!",iTask,profile->GetName()));
+            AliError(Form("CorrTask %d : Profile '%s' already exists! Please check run macro for CorrTask duplicates!",iTask,profile->GetName()));
             fInit = kFALSE;
             task->Print();
             delete profile;
@@ -3590,7 +3590,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
             // same for Neg
             if(fListFlow[iSpec]->FindObject(profileNeg->GetName())) {
-              AliError(Form("FlowTask %d : Profile '%s' already exists! Please check run macro for FlowTask duplicates!",iTask,profile->GetName()));
+              AliError(Form("CorrTask %d : Profile '%s' already exists! Please check run macro for CorrTask duplicates!",iTask,profile->GetName()));
               fInit = kFALSE;
               task->Print();
               delete profileNeg;
@@ -3646,7 +3646,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fhsCandPhiBg->Sumw2();
       fListFlow[kPhi]->Add(fhsCandPhiBg);
     }
-  } // end-if {fRunMode != fSkipFlow || iNumFlowTask > 0 }
+  } // end-if {fRunMode != fSkipFlow || iNumCorrTask > 0 }
 
   // creating GF weights
   if(fFlowFillWeights || fFlowUseWeights)
