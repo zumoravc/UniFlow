@@ -2,8 +2,8 @@
 /* See cxx source for full Copyright notice */
 /* $Id$ */
 
-#ifndef AliAnalysisTaskUniFlow_H
-#define AliAnalysisTaskUniFlow_H
+#ifndef ALIANALYSISTASKUNIFLOW_H
+#define ALIANALYSISTASKUNIFLOW_H
 
 #include "AliAnalysisTaskSE.h"
 #include "AliEventCuts.h"
@@ -29,75 +29,7 @@ class AliPicoTrack;
 class AliAODv0;
 class AliAODMCParticle;
 
-struct FlowTask
-{
-  Bool_t                fbDoRefs; // which particles are procesed (RFPs / POIs / both )
-  Bool_t                fbDoPOIs; // which particles are procesed (RFPs / POIs / both )
-  Int_t                 fiNumHarm; // correlation order <M>
-  Int_t                 fiNumGaps; // number of subevents
-  std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
-  std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
-  TString               fsName; // automatically generated name: see Init() for format
-  TString               fsLabel; // automatically generated label see Init() for format
-
-
-              FlowTask() : fbDoRefs(kTRUE), fbDoPOIs(kTRUE), fiNumHarm(0), fiNumGaps(0), fsName("DummyName"), fsLabel("DummyLabel") {}; // default ctor
-              FlowTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) { fbDoRefs = refs; fbDoPOIs = pois; fiHarm = harm; fdGaps = gaps; fiNumHarm = harm.size(); fiNumGaps = gaps.size(); Init(); } // actual ctor
-              ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
-  void        Init(); // initialization
-  void        Print(); // print FlowTask properties
-  Bool_t      HasGap() { return (Bool_t) fiNumGaps; }; // check if Gap
-};
 //_____________________________________________________________________________
-void FlowTask::Init()
-{
-  // Initilization of FlowTask
-
-  if(fiNumHarm < 2)
-  {
-    fsName = "NA";
-    fsLabel = "NA";
-    return;
-  }
-
-  // generating name
-  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
-  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
-  sName += ")";
-
-  if(fiNumGaps > 0)
-  {
-    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
-    sName += ")";
-  }
-
-  // generating label
-  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
-  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
-  sLabel += "}";
-
-  if(fiNumGaps > 0)
-  {
-    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
-    sLabel += ")";
-  }
-
-  fsName = sName;
-  fsLabel = sLabel;
-}
-//_____________________________________________________________________________
-void FlowTask::Print()
-{
-  printf("FlowTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
-  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
-  printf("} | fgGaps[%d] = { ",fiNumGaps);
-  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
-  printf("}\n");
-}
-//_____________________________________________________________________________
-
 
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
@@ -108,6 +40,26 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    CentEst {kRFP = 0, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity/centrality estimator as AliMultSelection
       enum    PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest; NB: kUknown last as counter
       enum    SparseCand {kInvMass = 0, kCent, kPt, kEta, kDim}; // reconstructed candidates dist. dimensions
+
+      struct FlowTask
+      {
+        Bool_t                fbDoRefs; // which particles are procesed (RFPs / POIs / both )
+        Bool_t                fbDoPOIs; // which particles are procesed (RFPs / POIs / both )
+        Int_t                 fiNumHarm; // correlation order <M>
+        Int_t                 fiNumGaps; // number of subevents
+        std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
+        std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
+        TString               fsName; // automatically generated name: see Init() for format
+        TString               fsLabel; // automatically generated label see Init() for format
+
+                    FlowTask() : fbDoRefs(0), fbDoPOIs(0), fiNumHarm(0), fiNumGaps(0), fiHarm(std::vector<Int_t>()), fdGaps(std::vector<Double_t>()), fsName(TString()), fsLabel(TString()) {}; // default ctor
+                    FlowTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) : fbDoRefs(refs), fbDoPOIs(pois), fiNumHarm(0), fiNumGaps(0), fiHarm(harm), fdGaps(gaps), fsLabel(TString()), fsName(TString()) { fiNumHarm = harm.size(); fiNumGaps = gaps.size(); Init(); } // actual ctor
+                    ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
+
+        void        Init(); // initialization
+        void        Print(); // print FlowTask properties
+        Bool_t      HasGap() { return (Bool_t) fiNumGaps; }; // check if Gap
+      };
 
                               AliAnalysisTaskUniFlow(); // constructor
                               AliAnalysisTaskUniFlow(const char *name); // named (primary) constructor
@@ -587,5 +539,55 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       ClassDef(AliAnalysisTaskUniFlow, 7);
 };
+
+void AliAnalysisTaskUniFlow::FlowTask::Init()
+{
+  // Initilization of FlowTask
+
+  if(fiNumHarm < 2)
+  {
+    fsName = "NA";
+    fsLabel = "NA";
+    return;
+  }
+
+  // generating name
+  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
+  sName += ")";
+
+  if(fiNumGaps > 0)
+  {
+    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
+    sName += ")";
+  }
+
+  // generating label
+  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
+  sLabel += "}";
+
+  if(fiNumGaps > 0)
+  {
+    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
+    sLabel += ")";
+  }
+
+  fsName = sName;
+  fsLabel = sLabel;
+}
+//_____________________________________________________________________________
+void AliAnalysisTaskUniFlow::FlowTask::Print()
+{
+  printf("FlowTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
+  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
+  printf("} | fgGaps[%d] = { ",fiNumGaps);
+  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
+  printf("}\n");
+}
+//_____________________________________________________________________________
+
 
 #endif

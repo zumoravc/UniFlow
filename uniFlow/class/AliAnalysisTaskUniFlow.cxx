@@ -101,7 +101,6 @@
 #include "AliAnalysisTaskUniFlow.h"
 
 class AliAnalysisTaskUniFlow;
-
 ClassImp(AliAnalysisTaskUniFlow);
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
@@ -177,6 +176,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCentBinNum(0),
   fTrigger(AliVEvent::kINT7),
   fEventRejectAddPileUp(kTRUE),
+  fEventCuts(),
 
   // charged tracks selection
   fCutChargedDCAzMax(0.),
@@ -460,6 +460,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fCentBinNum(0),
   fTrigger(AliVEvent::kINT7),
   fEventRejectAddPileUp(kTRUE),
+  fEventCuts(),
 
   // charged tracks selection
   fCutChargedDCAzMax(0.),
