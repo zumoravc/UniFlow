@@ -217,7 +217,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    DumpTObjTable(const char* note = 0x0, Option_t* opt = ""); // add a printf statmenet given by note followed by gObjTable->Print() dump
 
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
-      Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
       Bool_t                  IsEventRejectedAddPileUp(); // additional pile-up rejection for Run2 Pb-Pb
       Int_t                   GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
       Int_t                   GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks

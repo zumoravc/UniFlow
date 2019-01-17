@@ -86,7 +86,6 @@
 #include "AliAnalysisTask.h"
 #include "AliAnalysisManager.h"
 #include "AliAODInputHandler.h"
-#include "AliAnalysisUtils.h"
 #include "AliMultSelection.h"
 #include "AliPIDResponse.h"
 #include "AliPIDCombined.h"
@@ -1096,8 +1095,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   DumpTObjTable("UserExec: after event selection");
   if(!bEventSelected) { return; }
 
-  // deprecenated selected by HHTF
-  // if( (fColSystem == kPP || fColSystem == kPPb) && !IsEventSelected_oldsmall2016() ) { return; }
   fhEventCounter->Fill("Event OK",1);
 
   // checking the run number for aplying weights & loading TList with weights
@@ -1218,101 +1215,6 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected()
 
   // Additional pile-up rejection cuts for LHC15o dataset
   if(fColSystem == kPbPb && fEventRejectAddPileUp && IsEventRejectedAddPileUp()) { return kFALSE; }
-
-  return kTRUE;
-}
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsEventSelected_oldsmall2016()
-{
-  // Event selection for small system collision recorder in Run 2 year 2016
-  // pp (LHC16kl...), pPb (LHC16rqts)
-  // return kTRUE if event passes all criteria, kFALSE otherwise
-  // *************************************************************
-
-  AliWarning("Using old / deprecenated event selection for small systems!");
-
-  // Physics selection (trigger)
-  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
-  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
-  UInt_t fSelectMask = inputHandler->IsEventSelected();
-  if(!(fSelectMask & fTrigger)) { return kFALSE; }
-
-  // events passing physics selection
-  fhEventCounter->Fill("Physics selection OK",1);
-
-  // primary vertex selection
-  const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertex());
-  if(!vtx || vtx->GetNContributors() < 1)
-    return kFALSE;
-  fhEventCounter->Fill("PV OK",1);
-
-  // SPD vertex selection
-  const AliAODVertex* vtxSPD = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertexSPD());
-
-  Double_t dMaxResol = 0.25; // suggested from DPG
-  Double_t cov[6] = {0};
-  vtxSPD->GetCovarianceMatrix(cov);
-  Double_t zRes = TMath::Sqrt(cov[5]);
-  if ( vtxSPD->IsFromVertexerZ() && (zRes > dMaxResol)) return kFALSE;
-  fhEventCounter->Fill("SPD Vtx OK",1);
-
-  // PileUp rejection included in Physics selection
-  // but with values for high mult pp (> 5 contrib) => for low ones: do manually (> 3 contrib)
-
-  /*
-  if(fTrigger == 0 && fAOD->IsPileupFromSPD(3,0.8) )
-  {
-    return kFALSE;
-  }
-  */
-
-  //fhEventCounter->Fill("Pileup SPD OK",1);
-
-  // pileup rejection from multivertexer
-  AliAnalysisUtils utils;
-  utils.SetMinPlpContribMV(5);
-  utils.SetMaxPlpChi2MV(5);
-  utils.SetMinWDistMV(15);
-  utils.SetCheckPlpFromDifferentBCMV(kFALSE);
-  Bool_t isPileupFromMV = utils.IsPileUpMV(fEventAOD);
-
-  if(isPileupFromMV) return kFALSE;
-  fhEventCounter->Fill("Pileup MV OK",1);
-
-  // if(fRejectOutOfBunchPU) // out-of-bunch rejection (provided by Christian)
-  // {
-  //   //out-of-bunch 11 BC
-  //   if (utils.IsOutOfBunchPileUp(fEventAOD))
-  //   {
-  //     return kFALSE;
-  //   }
-  //   fhEventCounter->Fill("OOBPU OK",1);
-  //
-  //   if (utils.IsSPDClusterVsTrackletBG(fEventAOD))
-  //   {
-  //     return kFALSE;
-  //   }
-  //
-  //   fhEventCounter->Fill("SPDClTrBG OK",1);
-  //
-  //   // SPD pileup
-  //   if (utils.IsPileUpSPD(fEventAOD))
-  //   {
-  //     return kFALSE;
-  //   }
-  //
-  //   fhEventCounter->Fill("SPDPU OK",1);
-  // }
-
-  //fhEventCounter->Fill("Utils OK",1);
-
-  // cutting on PV z-distance
-  const Double_t aodVtxZ = vtx->GetZ();
-  if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
-  {
-    return kFALSE;
-  }
-  fhEventCounter->Fill("PV #it{z} OK",1);
 
   return kTRUE;
 }
