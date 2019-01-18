@@ -15,7 +15,7 @@
 
 // =================================================================================================
 // AliAnalysisTaskUniFlow - ALICE Unified Flow framework
-// Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016-2018
+// Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016-2019
 // =================================================================================================
 //
 // ALICE analysis task for universal study of flow via 2-(or multi-)particle correlations
@@ -739,7 +739,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
 
 }
 // ============================================================================
-const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species) const
+const char* AliAnalysisTaskUniFlow::GetSpeciesName(const PartSpecies species) const
 {
   const char* name;
 
@@ -758,7 +758,7 @@ const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species) const
   return name;
 }
 // ============================================================================
-const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(PartSpecies species) const
+const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(const PartSpecies species) const
 {
   const char* label;
 
@@ -1360,7 +1360,7 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
   return kTRUE;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies species) const
+Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, const PartSpecies species) const
 {
   if(!track) { AliError("Track not exists!"); return kFALSE; }
   if(species == kUnknown) { AliError("Invalid species 'Unknown'!"); return kFALSE; }
@@ -1382,7 +1382,7 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies spec
   return kTRUE;
 }
 // ============================================================================
-Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, PartSpecies species) const
+Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, const PartSpecies species) const
 {
   Double_t dWeight = 1.0;
 
@@ -1924,13 +1924,13 @@ Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0) const
   return 0;
 }
 // ============================================================================
-Double_t AliAnalysisTaskUniFlow::GetRapidity(Double_t mass, Double_t Pt, Double_t Eta) const
+Double_t AliAnalysisTaskUniFlow::GetRapidity(const Double_t mass, const Double_t Pt, const Double_t Eta) const
 {
     Double_t rapid = TMath::Log( (TMath::Sqrt(mass*mass + Pt*Pt*TMath::CosH(Eta)*TMath::CosH(Eta)) + Pt*TMath::SinH(Eta)) / TMath::Sqrt(mass*mass + Pt*Pt) );
     return rapid;
 }
 // ============================================================================
-AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(Int_t label) const
+AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
 {
   if(!fArrayMC) { AliError("fArrayMC not found!"); return 0x0; }
   if(label < 0) { /*AliWarning("MC label negative");*/ return 0x0; }
@@ -2770,7 +2770,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(CorrTask* task)
   return kTRUE;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::CalculateCorrelations(CorrTask* task, PartSpecies species, Double_t dPt, Double_t dMass) const
+void AliAnalysisTaskUniFlow::CalculateCorrelations(CorrTask* task, const PartSpecies species, const Double_t dPt, const Double_t dMass) const
 {
   if(!task) { AliError("CorrTask does not exists!"); return; }
   if(species >= kUnknown) { AliError(Form("Invalid species: %s!", GetSpeciesName(species))); return; }
@@ -3250,7 +3250,7 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex() const
   return iCentralityIndex;
 }
 // ============================================================================
-const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(CentEst est) const
+const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(const CentEst est) const
 {
   // Return string with estimator name or 'n/a' if not available
   // *************************************************************
