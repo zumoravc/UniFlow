@@ -1360,7 +1360,7 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
   return kTRUE;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, const PartSpecies species) const
+Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(const AliVTrack* track, const PartSpecies species) const
 {
   if(!track) { AliError("Track not exists!"); return kFALSE; }
   if(species == kUnknown) { AliError("Invalid species 'Unknown'!"); return kFALSE; }
@@ -1382,12 +1382,11 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, const PartSpecie
   return kTRUE;
 }
 // ============================================================================
-Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, const PartSpecies species) const
+Double_t AliAnalysisTaskUniFlow::GetFlowWeight(const AliVTrack* track, const PartSpecies species) const
 {
   Double_t dWeight = 1.0;
 
   if(fFlowUse3Dweights) {
-
     Int_t iBin = fh3Weights[species]->FindFixBin(track->Eta(),track->Phi(),fPVz);
     dWeight = fh3Weights[species]->GetBinContent(iBin);
   } else {
@@ -1545,7 +1544,7 @@ Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track) const
   return kTRUE;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track) const
+void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, const AliVTrack* track) const
 {
   // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
   // *************************************************************
@@ -2685,7 +2684,7 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
   return;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(CorrTask* task)
+Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
 {
   if(!task) { AliError("CorrTask does not exists!"); return kFALSE; }
   // task->Print();
@@ -2770,7 +2769,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(CorrTask* task)
   return kTRUE;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::CalculateCorrelations(CorrTask* task, const PartSpecies species, const Double_t dPt, const Double_t dMass) const
+void AliAnalysisTaskUniFlow::CalculateCorrelations(const CorrTask* const task, const PartSpecies species, const Double_t dPt, const Double_t dMass) const
 {
   if(!task) { AliError("CorrTask does not exists!"); return; }
   if(species >= kUnknown) { AliError(Form("Invalid species: %s!", GetSpeciesName(species))); return; }

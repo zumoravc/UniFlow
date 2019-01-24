@@ -178,11 +178,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       Bool_t                  LoadWeights(); // load weights histograms
-      Bool_t                  FillFlowWeight(AliVTrack* track, PartSpecies species) const; // fill distribution for per-particle flow weight
-      Double_t                GetFlowWeight(AliVTrack* track, PartSpecies species) const; // extract per-particle flow weight from input file
+      Bool_t                  FillFlowWeight(const AliVTrack* track, PartSpecies species) const; // fill distribution for per-particle flow weight
+      Double_t                GetFlowWeight(const AliVTrack* track, PartSpecies species) const; // extract per-particle flow weight from input file
       void                    ListParameters() const; // list all task parameters
       void                    ClearVectors(); // properly clear all particle vectors
-      void                    DumpTObjTable(const char* note = 0x0, Option_t* opt = "") const; // add a printf statmenet given by note followed by gObjTable->Print() dump
+      void                    DumpTObjTable(const char* note, Option_t* opt = "") const; // add a printf statmenet given by note followed by gObjTable->Print() dump
 
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
       Bool_t                  IsEventRejectedAddPileUp() const; // additional pile-up rejection for Run2 Pb-Pb
@@ -190,8 +190,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Int_t                   GetCentralityIndex() const; // returns centrality index based centrality estimator or number of selected tracks
       const char*             GetCentEstimatorLabel(CentEst est) const; // returns mult/cent estimator string with label or 'n/a' if not available
 
-      void                    CalculateCorrelations(CorrTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0) const; // wrapper for correlations methods
-      Bool_t                  ProcessCorrTask(CorrTask* task); // procesisng of CorrTask
+      void                    CalculateCorrelations(const CorrTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0) const; // wrapper for correlations methods
+      Bool_t                  ProcessCorrTask(const CorrTask* task); // procesisng of CorrTask
       Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
 
       void                    FilterCharged() const; // charged tracks filtering
@@ -205,19 +205,19 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  HasTrackPIDTPC(const AliAODTrack* track) const; // is TPC PID OK for this track ?
       Bool_t                  HasTrackPIDTOF(const AliAODTrack* track) const; // is TOF PID OK for this track ?
       Bool_t                  IsWithinRefs(const AliAODTrack* track) const; // check if track fulfill requirements for Refs (used for refs selection & autocorelations)
-      Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0) const; // charged track selection
+      Bool_t                  IsChargedSelected(const AliAODTrack* track) const; // charged track selection
       PartSpecies             IsPIDSelected(const AliAODTrack* track) const; // PID tracks selections
-      Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0) const; // general (common) V0 selection
-      Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0) const; // V0 selection: K0s specific
-      Int_t                   IsV0aLambda(const AliAODv0* v0 = 0x0) const; // V0 selection: (A)Lambda specific
+      Bool_t                  IsV0Selected(const AliAODv0* v0) const; // general (common) V0 selection
+      Bool_t                  IsV0aK0s(const AliAODv0* v0) const; // V0 selection: K0s specific
+      Int_t                   IsV0aLambda(const AliAODv0* v0) const; // V0 selection: (A)Lambda specific
       AliPicoTrack*           MakeMother(const AliAODTrack* part1, const AliAODTrack* part2) const; // Combine two prongs into a mother particle stored in AliPicoTrack object
-      void                    FillSparseCand(THnSparse* sparse, AliVTrack* track) const; // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
+      void                    FillSparseCand(THnSparse* sparse, const AliVTrack* track) const; // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
       void                    FillEventsQA(Int_t iQAindex) const; // filling QA plots related to event selection
-      void                    FillQARefs(Int_t iQAindex, const AliAODTrack* track = 0x0) const; // filling QA plots for RFPs selection
-      void                    FillQACharged(Int_t iQAindex, const AliAODTrack* track = 0x0) const; // filling QA plots for charged track selection
-      void                    FillQAPID(Int_t iQAindex, const AliAODTrack* track = 0x0, PartSpecies species = kUnknown) const; // filling pi,K,p QA histograms
-      void                    FillQAV0s(Int_t iQAindex, const AliAODv0* v0 = 0x0, Bool_t bIsK0s = kTRUE, Int_t bIsLambda = 2) const; // filling QA plots for V0s candidates
-      void                    FillQAPhi(Int_t iQAindex, const AliPicoTrack* part = 0x0) const; // filling QA plots for V0s candidates
+      void                    FillQARefs(Int_t iQAindex, const AliAODTrack* track) const; // filling QA plots for RFPs selection
+      void                    FillQACharged(Int_t iQAindex, const AliAODTrack* track) const; // filling QA plots for charged track selection
+      void                    FillQAPID(Int_t iQAindex, const AliAODTrack* track, PartSpecies species) const; // filling pi,K,p QA histograms
+      void                    FillQAV0s(Int_t iQAindex, const AliAODv0* v0, Bool_t bIsK0s = kTRUE, Int_t bIsLambda = 2) const; // filling QA plots for V0s candidates
+      void                    FillQAPhi(Int_t iQAindex, const AliPicoTrack* part) const; // filling QA plots for V0s candidates
 
       // Flow related methods
       void                    FillRefsVectors(Double_t dGap); // fill flow vector Q with RFPs for reference flow
