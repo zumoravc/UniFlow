@@ -1328,7 +1328,7 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
   // ***************************************************************************
   if(!fFlowWeightsFile) { AliError("File with flow weights not found!"); return kFALSE; }
 
-  TList* listFlowWeights = 0x0;
+  TList* listFlowWeights = nullptr;
   if(!fFlowRunByRunWeights) {
     // information about current run is unknown in Initialization(); load only "averaged" weights
     AliInfo("Loading initial GF weights (run-averaged)");
@@ -1931,11 +1931,11 @@ Double_t AliAnalysisTaskUniFlow::GetRapidity(const Double_t mass, const Double_t
 // ============================================================================
 AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
 {
-  if(!fArrayMC) { AliError("fArrayMC not found!"); return 0x0; }
-  if(label < 0) { /*AliWarning("MC label negative");*/ return 0x0; }
+  if(!fArrayMC) { AliError("fArrayMC not found!"); return nullptr; }
+  if(label < 0) { /*AliWarning("MC label negative");*/ return nullptr; }
 
   AliAODMCParticle* mcTrack = (AliAODMCParticle*) fArrayMC->At(label);
-  if(!mcTrack) { AliError("Corresponding MC track not found!"); return 0x0; }
+  if(!mcTrack) { AliError("Corresponding MC track not found!"); return nullptr; }
   return mcTrack;
 }
 // ============================================================================
@@ -2172,7 +2172,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0,
   Float_t numTPCcrossed = 0.0;
 
   // daughters properties
-  AliAODVertex* prodVtxDaughter = 0x0;
+  AliAODVertex* prodVtxDaughter = nullptr;
   for(Short_t i(0); i < 2; i++)
   {
     // TPC refit
@@ -2329,7 +2329,7 @@ AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const
   // return ptr to created mother particle
   // *************************************************************
 
-  if(!part1 || !part2) { return 0x0; }
+  if(!part1 || !part2) { return nullptr; }
 
   // combining momenta
   TVector3 mom1 = TVector3( part1->Px(), part1->Py(), part1->Pz() );
@@ -2725,7 +2725,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
     if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
     Int_t iNumPtBins = axisPt->GetNbins();
 
-    TAxis* axisMass = 0x0;
+    TAxis* axisMass = nullptr;
     Int_t iNumMassBins = 1;
 
     // check for 'massive' species
@@ -3541,8 +3541,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           if(iSample > 0 && !fSampling) { break; }
           if(iSample > 0 && HasMass(PartSpecies(iSpec))) { break; } // reconstructed are not sampled
 
-          TH1* profile = 0x0;
-          TH1* profileNeg = 0x0;
+          TH1* profile = nullptr;
+          TH1* profileNeg = nullptr;
 
           switch(iSpec)
           {
