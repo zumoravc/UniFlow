@@ -46,7 +46,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       {
         public:
                       CorrTask(); // default ctor
-                      CorrTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()); // actual ctor
+                      CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::vector<Int_t> harms, std::vector<Double_t> gaps = std::vector<Double_t>()); // actual ctor
                       ~CorrTask() { fiHarm.clear(); fdGaps.clear(); }
 
           Bool_t      HasGap() const { return (Bool_t) fiNumGaps; }; // check if Gap
@@ -86,12 +86,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessV0s(Bool_t use = kTRUE) { fProcessSpec[kK0s] = use; fProcessSpec[kLambda] = use; }
       void                    SetProcessPhi(Bool_t use = kTRUE) { fProcessSpec[kPhi] = use; }
       // flow related setters
-      void                    AddTwo(Int_t n1, Int_t n2, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2})); }
-      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2}, {gap})); }
-      void                    AddThree(Int_t n1, Int_t n2, Int_t n3, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2,n3})); }
-      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2,n3} ,{gap})); }
-      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2,n3,n4})); }
-      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecCorrTask.push_back(new CorrTask(refs, pois, {n1,n2,n3,n4}, {gap})); }
+      void                    AddCorr(std::vector<Int_t> harms, std::vector<Double_t> gaps = std::vector<Double_t>(), Bool_t doRFPs = kTRUE, Bool_t doPOIs = kTRUE) { fVecCorrTask.push_back(new CorrTask(doRFPs, doPOIs, harms, gaps)); }
+      void                    AddTwo(Int_t n1, Int_t n2, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2},{},refs,pois); }
+      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2},{gap},refs,pois); }
+      void                    AddThree(Int_t n1, Int_t n2, Int_t n3, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2,n3},{},refs,pois); }
+      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2,n3},{gap},refs,pois); }
+      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2,n3,n4},{},refs,pois); }
+      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2,n3,n4},{gap},refs,pois); }
 
       void                    SetFlowRFPsPt(Double_t min, Double_t max) { fFlowRFPsPtMin = min; fFlowRFPsPtMax = max; }
       void                    SetFlowPOIsPt(Double_t min, Double_t max, Int_t bins = 0) { fFlowPOIsPtMin = min; fFlowPOIsPtMax = max; fFlowPOIsPtBinNum = bins; }
@@ -553,19 +554,19 @@ AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
   fsLabel{}
 {};
 // ============================================================================
-AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps) :
-  fbDoRefs{refs},
-  fbDoPOIs{pois},
+AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::vector<Int_t> harms, std::vector<Double_t> gaps) :
+  fbDoRefs{doRFPs},
+  fbDoPOIs{doPOIs},
   fiNumHarm{0},
   fiNumGaps{0},
-  fiHarm{harm},
+  fiHarm{harms},
   fdGaps{gaps},
   fsName{},
   fsLabel{}
 {
   // constructor of CorrTask
 
-  fiNumHarm = harm.size();
+  fiNumHarm = harms.size();
   fiNumGaps = gaps.size();
 
   if(fiNumHarm < 2) { return; }
@@ -604,7 +605,5 @@ void AliAnalysisTaskUniFlow::CorrTask::Print() const
   for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
   printf("}\n");
 }
-
-
 
 #endif
