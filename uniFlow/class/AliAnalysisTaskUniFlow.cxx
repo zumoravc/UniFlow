@@ -104,12 +104,12 @@ ClassImp(AliAnalysisTaskUniFlow);
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventCuts{},
-  fPDGMassPion{TDatabasePDG::Instance()->GetParticle(211)->Mass()},
-  fPDGMassKaon{TDatabasePDG::Instance()->GetParticle(321)->Mass()},
-  fPDGMassProton{TDatabasePDG::Instance()->GetParticle(2212)->Mass()},
-  fPDGMassPhi{TDatabasePDG::Instance()->GetParticle(333)->Mass()},
-  fPDGMassK0s{TDatabasePDG::Instance()->GetParticle(310)->Mass()},
-  fPDGMassLambda{TDatabasePDG::Instance()->GetParticle(3122)->Mass()},
+  fPDGMassPion{0.13957},
+  fPDGMassKaon{0.493677},
+  fPDGMassProton{0.938272},
+  fPDGMassPhi{1.019455},
+  fPDGMassK0s{0.497614},
+  fPDGMassLambda{1.11568},
   fEventAOD{},
   fPVz{},
   fPIDResponse{},
@@ -362,12 +362,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 // ============================================================================
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
   fEventCuts{},
-  fPDGMassPion{TDatabasePDG::Instance()->GetParticle(211)->Mass()},
-  fPDGMassKaon{TDatabasePDG::Instance()->GetParticle(321)->Mass()},
-  fPDGMassProton{TDatabasePDG::Instance()->GetParticle(2212)->Mass()},
-  fPDGMassPhi{TDatabasePDG::Instance()->GetParticle(333)->Mass()},
-  fPDGMassK0s{TDatabasePDG::Instance()->GetParticle(310)->Mass()},
-  fPDGMassLambda{TDatabasePDG::Instance()->GetParticle(3122)->Mass()},
+  fPDGMassPion{0.13957},
+  fPDGMassKaon{0.493677},
+  fPDGMassProton{0.938272},
+  fPDGMassPhi{1.019455},
+  fPDGMassK0s{0.497614},
+  fPDGMassLambda{1.11568},
   fEventAOD{},
   fPVz{},
   fPIDResponse{},
@@ -969,7 +969,6 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   AliInfo("Preparing particle containers (std::vectors)");
-
   // creating particle vectors & reserving capacity in order to avoid memory re-allocation
   Int_t iReserve = 0;
   switch(fColSystem)
