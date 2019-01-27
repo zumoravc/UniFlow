@@ -146,6 +146,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowEtaMax{0.8},
   fFlowEtaBinNum{0},
   fFlowPhiBinNum{0},
+  fPhiNumBinsMass{60},
+  fV0sNumBinsMass{60},
   fNumSamples{1},
   fFlowFillWeights{kTRUE},
   fFlowUseWeights{kFALSE},
@@ -404,6 +406,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   fFlowEtaMax{0.8},
   fFlowEtaBinNum{0},
   fFlowPhiBinNum{0},
+  fPhiNumBinsMass{60},
+  fV0sNumBinsMass{60},
   fNumSamples{1},
   fFlowFillWeights{kTRUE},
   fFlowUseWeights{kFALSE},
@@ -726,6 +730,8 @@ void AliAnalysisTaskUniFlow::ListParameters() const
   printf("      fFlowEtaMax: (Double_t) %g\n",    fFlowEtaMax);
   printf("      fFlowEtaBinNum: (Int_t) %d\n",    fFlowEtaBinNum);
   printf("      fFlowPhiBinNum: (Int_t) %d\n",    fFlowPhiBinNum);
+  printf("      fV0sNumBinsMass: (Int_t) %d\n",    fV0sNumBinsMass);
+  printf("      fPhiNumBinsMass: (Int_t) %d\n",    fPhiNumBinsMass);
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowRunByRunWeights: (Bool_t) %s\n",    fFlowRunByRunWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowWeightsPath: (TString) '%s' \n",    fFlowWeightsPath.Data());

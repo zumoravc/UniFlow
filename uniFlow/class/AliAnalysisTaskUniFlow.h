@@ -96,6 +96,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowPOIsPt(Double_t min, Double_t max, Int_t bins = 0) { fFlowPOIsPtMin = min; fFlowPOIsPtMax = max; fFlowPOIsPtBinNum = bins; }
       void                    SetFlowEta(Double_t max, Int_t bins = 0) { fFlowEtaMax = max; fFlowEtaBinNum = bins; }
       void                    SetFlowPhiBins(Int_t bins) { fFlowPhiBinNum = bins; }
+      void                    SetV0sMassBins(Int_t bins) { fV0sNumBinsMass = bins; }
+      void                    SetPhiMassBins(Int_t bins) { fPhiNumBinsMass = bins; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
@@ -168,8 +170,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Int_t      fPIDNumSpecies = 5; // Number of considered species for PID
       static const Int_t      fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
       static const Int_t      fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
-      static const Int_t      fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
-      static const Int_t      fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
       static const Int_t      fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
       const char*             GetSpeciesName(PartSpecies species) const;
@@ -302,6 +302,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fFlowEtaMax; // [0.8] max eta acceptance for flow particles (RFPs & POIs)
       Int_t                   fFlowEtaBinNum; // [0] number of eta bins
       Int_t                   fFlowPhiBinNum; // [100] number of phi bins
+      Int_t                   fPhiNumBinsMass; // number of InvMass bins for phi distribution
+      Int_t                   fV0sNumBinsMass; // number of InvMass bins for V0s distribution
       Int_t                   fNumSamples; // [1] overall number of samples (from random sampling) used
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
