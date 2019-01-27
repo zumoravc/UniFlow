@@ -539,4 +539,70 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       ClassDef(AliAnalysisTaskUniFlow, 7);
 };
+
+AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
+  fbDoRefs{0},
+  fbDoPOIs{0},
+  fiNumHarm{0},
+  fiNumGaps{0},
+  fiHarm{std::vector<Int_t>()},
+  fdGaps{std::vector<Double_t>()},
+  fsName{},
+  fsLabel{}
+{};
+// ============================================================================
+AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps) :
+  fbDoRefs{refs},
+  fbDoPOIs{pois},
+  fiNumHarm{0},
+  fiNumGaps{0},
+  fiHarm{harm},
+  fdGaps{gaps},
+  fsName{},
+  fsLabel{}
+{
+  // constructor of CorrTask
+
+  fiNumHarm = harm.size();
+  fiNumGaps = gaps.size();
+
+  if(fiNumHarm < 2) { return; }
+
+  // generating name
+  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
+  sName += ")";
+
+  if(fiNumGaps > 0) {
+    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
+    sName += ")";
+  }
+
+  // generating label
+  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
+  sLabel += "}";
+
+  if(fiNumGaps > 0) {
+    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
+    sLabel += ")";
+  }
+
+  fsName = sName;
+  fsLabel = sLabel;
+}
+// ============================================================================
+void AliAnalysisTaskUniFlow::CorrTask::Print() const
+{
+  printf("CorrTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
+  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
+  printf("} | fgGaps[%d] = { ",fiNumGaps);
+  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
+  printf("}\n");
+}
+
+
+
 #endif
