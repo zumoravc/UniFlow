@@ -1037,7 +1037,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fhEventCounter->Fill("Input",1);
 
   // Fill event QA BEFORE cuts
-  if(fFillQA) { FillEventsQA(0); }
+  if(fFillQA) { FillQAEvents(kBefore); }
 
   Bool_t bEventSelected = IsEventSelected();
   // if(!IsEventSelected()) { return; }
@@ -1079,19 +1079,19 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
 
   // Fill QA AFTER cuts (i.e. only in selected events)
-  if(fFillQA) { FillEventsQA(1); }
+  if(fFillQA) { FillQAEvents(kAfter); }
 
   // filling Charged QA histos
   // NB: for other species done within Filter*(): expection since # of Refs is part of event selection
   for (auto part = fVector[kRefs]->begin(); part != fVector[kRefs]->end(); part++) {
     fhChargedCounter->Fill("Refs",1);
-    if(fFillQA) { FillQARefs(1,static_cast<AliAODTrack*>(*part)); }
+    if(fFillQA) { FillQARefs(kAfter,static_cast<AliAODTrack*>(*part)); }
     if(!FillFlowWeight(*part, kRefs)) { AliFatal("Flow weight filling failed!"); return; }
   }
 
   for (auto part = fVector[kCharged]->begin(); part != fVector[kCharged]->end(); part++) {
     fhChargedCounter->Fill("POIs",1);
-    if(fFillQA) { FillQACharged(1,static_cast<AliAODTrack*>(*part)); } // QA after selection
+    if(fFillQA) { FillQACharged(kAfter,static_cast<AliAODTrack*>(*part)); } // QA after selection
     if(!FillFlowWeight(*part, kCharged)) { AliFatal("Flow weight filling failed!"); return; }
   }
 
@@ -1100,7 +1100,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
     for(Int_t iTrack(0); iTrack < fEventAOD->GetNumberOfTracks(); iTrack++) {
       AliAODTrack* track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
       if(!track) { continue; }
-      FillQACharged(0,track);
+      FillQACharged(kBefore,track);
     }
 
     fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
@@ -1331,7 +1331,7 @@ Double_t AliAnalysisTaskUniFlow::GetFlowWeight(const AliVTrack* track, const Par
   return dWeight;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillEventsQA(const Int_t iQAindex) const
+void AliAnalysisTaskUniFlow::FillQAEvents(const QAindex iQAindex) const
 {
   // Filling various QA plots related with event selection
   // *************************************************************
@@ -1495,7 +1495,7 @@ void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, const AliVTrack* 
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQARefs(const Int_t iQAindex, const AliAODTrack* track) const
+void AliAnalysisTaskUniFlow::FillQARefs(const QAindex iQAindex, const AliAODTrack* track) const
 {
   // Filling various QA plots related to RFPs subset of charged track selection
   // *************************************************************
@@ -1510,7 +1510,7 @@ void AliAnalysisTaskUniFlow::FillQARefs(const Int_t iQAindex, const AliAODTrack*
   return;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQACharged(const Int_t iQAindex, const AliAODTrack* track) const
+void AliAnalysisTaskUniFlow::FillQACharged(const QAindex iQAindex, const AliAODTrack* track) const
 {
   // Filling various QA plots related to charged track selection
   // *************************************************************
@@ -1567,7 +1567,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
     AliAODv0* v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
     if(!v0) { continue; }
 
-    if(fFillQA) { FillQAV0s(0,v0); } // QA BEFORE selection
+    if(fFillQA) { FillQAV0s(kBefore,v0); } // QA BEFORE selection
 
     if(!IsV0Selected(v0)) { continue; }
 
@@ -1575,7 +1575,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
     Short_t iIsLambda = IsV0aLambda(v0);
     if(!bIsK0s && iIsLambda == 0) { continue; }
 
-    if(fFillQA) { FillQAV0s(1,v0,bIsK0s,iIsLambda); } // QA AFTER selection
+    if(fFillQA) { FillQAV0s(kAfter,v0,bIsK0s,iIsLambda); } // QA AFTER selection
 
     if(bIsK0s)
     {
@@ -1985,7 +1985,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0) const
   return kTRUE;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0, const Bool_t bIsK0s, const Int_t bIsLambda) const
+void AliAnalysisTaskUniFlow::FillQAV0s(const QAindex iQAindex, const AliAODv0* v0, const Bool_t bIsK0s, const Int_t bIsLambda) const
 {
   // Filling various QA plots related to V0 candidate selection
   // *************************************************************
@@ -2210,7 +2210,7 @@ void AliAnalysisTaskUniFlow::FilterPhi() const
       fhPhiCounter->Fill("Input",1);
 
       // filling QA BEFORE selection
-      if(fFillQA) { FillQAPhi(0,mother); }
+      if(fFillQA) { FillQAPhi(kBefore,mother); }
 
       if(fCutPhiInvMassMin > 0. && mother->M() < fCutPhiInvMassMin) { delete mother; continue; }
       if(fCutPhiInvMassMax > 0. && mother->M() > fCutPhiInvMassMax) { delete mother; continue; }
@@ -2242,7 +2242,7 @@ void AliAnalysisTaskUniFlow::FilterPhi() const
       }
 
       // filling QA AFTER selection
-      if(fFillQA) { FillQAPhi(1,mother); }
+      if(fFillQA) { FillQAPhi(kAfter,mother); }
 
     } // endfor {iKaon2} : second kaon
   } // endfor {iKaon1} : first Kaon
@@ -2285,7 +2285,7 @@ AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const
   return new AliPicoTrack(mom.Pt(),mom.Eta(),dPhi,iCharge,0,0,0,0,0,0,dMass);
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQAPhi(const Int_t iQAindex, const AliPicoTrack* part) const
+void AliAnalysisTaskUniFlow::FillQAPhi(const QAindex iQAindex, const AliPicoTrack* part) const
 {
   if(!part) return;
 
@@ -2327,7 +2327,7 @@ void AliAnalysisTaskUniFlow::FilterPID() const
 
     fhPIDCounter->Fill("Input",1);
 
-    if(fFillQA) { FillQAPID(0,track,kUnknown); } // filling QA for tracks before selection (but after charged criteria applied)
+    if(fFillQA) { FillQAPID(kBefore,track,kUnknown); } // filling QA for tracks before selection (but after charged criteria applied)
 
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
@@ -2343,7 +2343,7 @@ void AliAnalysisTaskUniFlow::FilterPID() const
     fhPIDCounter->Fill(GetSpeciesName(species),1);
 
     fVector[species]->push_back(track);
-    if(fFillQA) { FillQAPID(1,track,species); } // filling QA for tracks AFTER selection }
+    if(fFillQA) { FillQAPID(kAfter,track,species); } // filling QA for tracks AFTER selection }
 
     if(fProcessSpec[kPion] && fProcessSpec[kKaon] && fProcessSpec[kProton]) { // NB: aka process PID (not just Kaons for Phi)
       if(!FillFlowWeight(track, species)) { AliFatal("Flow weight filling failed!"); return; }
@@ -2496,7 +2496,7 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   return kUnknown;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* track, const PartSpecies species) const
+void AliAnalysisTaskUniFlow::FillQAPID(const QAindex iQAindex, const AliAODTrack* track, const PartSpecies species) const
 {
   // Filling various QA plots related to PID (pi,K,p) track selection
   // *************************************************************
@@ -3821,8 +3821,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     } // end-if {fProcessSpec[kK0s] || fProcessSpec[kLambda]}
 
     // ####  Selection QA (2-step)
-    TString sQAindex[fiNumIndexQA] = {"Before", "After"};
-    for(Int_t iQA(0); iQA < fiNumIndexQA; ++iQA)
+    TString sQAindex[QAindex::kNumQA] = {"Before", "After"};
+    for(Int_t iQA(0); iQA < Int_t(QAindex::kNumQA); ++iQA)
     {
       // EVENTs QA histograms
       fhQAEventsPVz[iQA] = new TH1D(Form("fhQAEventsPVz_%s",sQAindex[iQA].Data()), "QA Events: PV-#it{z}", 101,-50,50);
