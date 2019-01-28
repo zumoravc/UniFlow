@@ -934,13 +934,13 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // Centraltity // setting default values for centrality estimators
   if(fCentEstimator == kRFP)
   {
-    if(fCentMax == 0) { fCentMax = 200; }
-    if(fCentBinNum == 0) { fCentBinNum = 200; }
+    if(fCentMax < 1) { fCentMax = 200; }
+    if(fCentBinNum < 1) { fCentBinNum = 200; }
   }
   else
   {
-    if(fCentMax == 0) { fCentMax = 100; }
-    if(fCentBinNum == 0) { fCentBinNum = 100; }
+    if(fCentMax < 1) { fCentMax = 100; }
+    if(fCentBinNum < 1) { fCentBinNum = 100; }
   }
 
   if(fCentMin < 0 || fCentMax < 1 || fCentMin > fCentMax)
