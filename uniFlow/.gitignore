@@ -1,16 +1,8 @@
 ### C++ ###
 *.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Compiled Dynamic libraries
 *.so
-*.dylib
-*.dll
+stderr
+stdout
 
 ### ROOT specific ###
 *.root
@@ -19,6 +11,7 @@
 *_merge.sh
 *_validation.sh
 *.pcm
+*_ACLiC_dict.cxx*
 
 ### OTHERS ###
 *.xml
@@ -26,7 +19,7 @@
 *.zip
 .DS_Store 			# Mac specific
 
-# Images/Pictures #
+### Images/Pictures ###
 *.pdf
 *.png
 *.jpg
@@ -34,7 +27,8 @@
 *.gif
 
 ### Directories ###
+class/misc/*
+class/misc/*
+class/tempChecksum_*
 results/*
-data/
-AnalNote/
-others/
+macros_bk
