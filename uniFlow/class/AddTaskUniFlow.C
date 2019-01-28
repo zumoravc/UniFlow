@@ -1,22 +1,25 @@
 ///////////////////////////////////////////////////////////////////
-//                                                               //
-// AddUniFlow                                                     //
-// Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016       //
-//                                                               //
+//
+// AddTaskUniFlow.C macro
+// Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016
+//
+//  See AliAnalysisTaskUniFlow(.cxx) for details & documentation
 ///////////////////////////////////////////////////////////////////
 class AliAnalysisDataContainer;
+class AliAnalysisTaskUniFlow;
 
 AliAnalysisTaskUniFlow* AddTaskUniFlow(TString name, AliAnalysisTaskUniFlow::ColSystem colSys)
 {
   AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
-  if (!mgr) return 0x0;
-  if (!mgr->GetInputEventHandler())	return 0x0;
+  if (!mgr) { return NULL; }
+  if (!mgr->GetInputEventHandler())	{ return NULL; }
 
   TString fileName = AliAnalysisManager::GetCommonFileName();   // by default, a file is open for writing. here, we get the filename
   fileName += Form(":%s",name.Data());      // create a subfolder in the file
 
   AliAnalysisTaskUniFlow* task = new AliAnalysisTaskUniFlow(name.Data(), colSys); // now we create an instance of your task
-  if(!task) return 0x0;
+  if(!task) { return NULL; }
+
   // task default settings (ColSystem independent)
   task->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
   task->SetRunMode(AliAnalysisTaskUniFlow::kFull);
