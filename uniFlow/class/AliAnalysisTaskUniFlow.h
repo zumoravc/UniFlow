@@ -65,7 +65,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       };
 
                               AliAnalysisTaskUniFlow(); // constructor
-                              AliAnalysisTaskUniFlow(const char *name); // named (primary) constructor
+                              AliAnalysisTaskUniFlow(const char *name, ColSystem colSys); // named (primary) constructor
                               AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
                               AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
       virtual                 ~AliAnalysisTaskUniFlow(); // destructor
@@ -104,7 +104,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
-      void                    SetCollisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
       void                    SetCentrality(CentEst est, Int_t min = 0, Int_t max = 0, Int_t bins = 0) { fCentEstimator = est; fCentMin = min; fCentMax = max; fCentBinNum = bins; }
       void                    SetTrigger(AliVEvent::EOfflineTriggerTypes trigger) { fTrigger = trigger; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
