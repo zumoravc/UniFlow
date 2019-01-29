@@ -8,16 +8,16 @@
 class AliAnalysisDataContainer;
 class AliAnalysisTaskUniFlow;
 
-AliAnalysisTaskUniFlow* AddTaskUniFlow(TString name, AliAnalysisTaskUniFlow::ColSystem colSys)
+AliAnalysisTaskUniFlow* AddTaskUniFlow(AliAnalysisTaskUniFlow::ColSystem colSys, const char* suffix = "")
 {
   AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
   if (!mgr) { return NULL; }
   if (!mgr->GetInputEventHandler())	{ return NULL; }
 
-  TString fileName = AliAnalysisManager::GetCommonFileName();   // by default, a file is open for writing. here, we get the filename
-  fileName += Form(":%s",name.Data());      // create a subfolder in the file
+  // crate a combined name for the task (required for LEGO trains)
+  TString taskName = Form("UniFlow%s",suffix);
 
-  AliAnalysisTaskUniFlow* task = new AliAnalysisTaskUniFlow(name.Data(), colSys); // now we create an instance of your task
+  AliAnalysisTaskUniFlow* task = new AliAnalysisTaskUniFlow(taskName.Data(), colSys); // now we create an instance of your task
   if(!task) { return NULL; }
 
   // task default settings (ColSystem independent)
@@ -157,22 +157,25 @@ AliAnalysisTaskUniFlow* AddTaskUniFlow(TString name, AliAnalysisTaskUniFlow::Col
 
   mgr->AddTask(task); // add your task to the manager
 
+  // Create a common outpit file name with subfolder based on task name
+  TString fileName = Form("%s:%s",AliAnalysisManager::GetCommonFileName(),taskName.Data());
+
   // Creating containers
   AliAnalysisDataContainer* cInput0 = mgr->GetCommonInputContainer();
-  AliAnalysisDataContainer* cOutput1 = mgr->CreateContainer(Form("Flow_Refs_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput2 = mgr->CreateContainer(Form("Flow_Charged_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput3 = mgr->CreateContainer(Form("Flow_Pion_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput4 = mgr->CreateContainer(Form("Flow_Kaon_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput5 = mgr->CreateContainer(Form("Flow_Proton_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput6 = mgr->CreateContainer(Form("Flow_K0s_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput7 = mgr->CreateContainer(Form("Flow_Lambda_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput8 = mgr->CreateContainer(Form("Flow_Phi_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput9 = mgr->CreateContainer(Form("QA_Events_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput10 = mgr->CreateContainer(Form("QA_Charged_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput11 = mgr->CreateContainer(Form("QA_PID_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput12 = mgr->CreateContainer(Form("QA_V0s_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput13 = mgr->CreateContainer(Form("QA_Phi_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
-  AliAnalysisDataContainer* cOutput14 = mgr->CreateContainer(Form("Flow_Weights_%s",name.Data()), TList::Class(), AliAnalysisManager::kOutputContainer, Form("%s",fileName.Data()));
+  AliAnalysisDataContainer* cOutput1 = mgr->CreateContainer(TString("Flow_Refs_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput2 = mgr->CreateContainer(TString("Flow_Charged_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput3 = mgr->CreateContainer(TString("Flow_Pion_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput4 = mgr->CreateContainer(TString("Flow_Kaon_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput5 = mgr->CreateContainer(TString("Flow_Proton_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput6 = mgr->CreateContainer(TString("Flow_K0s_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput7 = mgr->CreateContainer(TString("Flow_Lambda_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput8 = mgr->CreateContainer(TString("Flow_Phi_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput9 = mgr->CreateContainer(TString("QA_Events_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput10 = mgr->CreateContainer(TString("QA_Charged_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput11 = mgr->CreateContainer(TString("QA_PID_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput12 = mgr->CreateContainer(TString("QA_V0s_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput13 = mgr->CreateContainer(TString("QA_Phi_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
+  AliAnalysisDataContainer* cOutput14 = mgr->CreateContainer(TString("Weights_")+taskName, TList::Class(), AliAnalysisManager::kOutputContainer, fileName);
 
   // Connecting containers to task
   mgr->ConnectInput(task,0,cInput0); // your task needs input: here we connect the manager to your task
