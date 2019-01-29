@@ -8,7 +8,7 @@
 
 void runPbPb()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -65,25 +65,30 @@ void runPbPb()
 
     #if !defined (__CINT__) || defined (__CLING__)
       gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
-      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(\"UniFlow\")"));
+      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights.root\")"));
+      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
+      // AliAnalysisTaskUniFlow *task2 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"21\")"));
     #else
       gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
       gROOT->LoadMacro("AddTaskUniFlow.C");
-      AliAnalysisTaskUniFlow *task1 = AddTaskUniFlow("UniFlow");
+      AliAnalysisTaskUniFlow *task1 = AddTaskUniFlow(AliAnalysisTaskUniFlow::kPbPb);
+      // AliAnalysisTaskUniFlow *task2 = AddTaskUniFlow(AliAnalysisTaskUniFlow::kPbPb,"21");
     #endif
+
+    if(!task1) { printf("E-runPbPb: Task not initialised!\n"); return; }
 
     // AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(1);
     task1->SetMC(kFALSE);
     task1->SetSampling(kFALSE);
-    task1->SetFillQAhistos(kTRUE);
-    task1->SetProcessPID(kTRUE);
-    task1->SetProcessPhi(kTRUE);
-    task1->SetProcessV0s(kTRUE);
+    task1->SetFillQAhistos(0);
+    task1->SetProcessPID(0);
+    task1->SetProcessPhi(0);
+    task1->SetProcessV0s(0);
     // Flow
+    task1->AddCorr({2,-2},{0.});
     task1->AddTwo(2,-2);
     // task1->AddTwo(3,-3);
     task1->AddFour(2,2,-2,-2);
@@ -104,67 +109,9 @@ void runPbPb()
     // // task1->AddThreeGap(4,-2,-2, 1.0, kFALSE,kTRUE);
     // // task1->AddThreeGap(5,-3,-2, 1.0, kFALSE,kTRUE);
     // // task1->AddThreeGap(6,-3,-3, 1.0, kFALSE,kTRUE);
-    // // task1->SetFlowRFPsPtMin(0.2);
-    // task1->SetFlowRFPsPtMax(5.0);
     task1->SetFlowFillWeights(1);
-    task1->SetFlowPhiBins(100);
-    // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights-prel/weights_16l.root",kFALSE);
-    // task1->SetUseWeigthsFile("./weights_16l.root",kTRUE);
+    task1->SetUseWeigthsRunByRun(1);
     task1->SetUseWeights3D(kFALSE);
-    // Events selection
-    task1->SetTrigger(AliVEvent::kINT7);
-    task1->SetCollisionSystem(AliAnalysisTaskUniFlow::kPbPb);
-    task1->SetCentrality(AliAnalysisTaskUniFlow::kV0M);
-    // task1->SetPVtxZMax(10);
-    // Charged selection
-    // task1->SetChargedEtaMax(0.8);
-    // // task1->SetChargedPtMin(0.2);
-    // // task1->SetChargedPtMax(5.);
-    // // task1->SetChargedDCAzMax(0.1);
-    // // task1->SetChargedDCAxyMax(0.2);
-    // task1->SetChargedNumTPCclsMin(70);
-    // task1->SetChargedTrackFilterBit(96);
-    // // PID selection
-    // task1->SetPIDUseAntiProtonOnly(kFALSE);
-    // task1->SetPIDNumSigmasPionMax(3);
-    // task1->SetPIDNumSigmasKaonMax(3);
-    // task1->SetPIDNumSigmasProtonMax(3);
-    task1->SetUseBayesPID(kTRUE);
-    task1->SetPIDBayesProbPionMin(0.95);
-    task1->SetPIDBayesProbKaonMin(0.85);
-    task1->SetPIDBayesProbProtonMin(0.85);
-    // Phi selection
-    // task1->SetPhiMotherEtaMax(0.8);
-
-    // // V0 selection cuts
-    task1->SetV0sOnFly(kFALSE);
-    task1->SetV0sTPCRefit(kTRUE);
-    // task1->SetV0sRejectKinks(kTRUE);
-    // task1->SetV0sUseCrossMassRejection(kTRUE);
-    // task1->SetV0sCrossMassCutK0s(0.005);
-    // task1->SetV0sCrossMassCutLambda(0.020);
-    task1->SetV0sDCAPVMin(0.1);
-    task1->SetV0sDCAPVMax(0.0);
-    task1->SetV0sDCAPVzMax(0.0);
-    // // task1->SetV0sDaughtersFilterBit(211);
-    task1->SetV0sDCADaughtersMax(0.5);
-    task1->SetV0sDecayRadiusMin(5.0);
-    task1->SetV0sDecayRadiusMax(100.0);
-    task1->SetV0sDaughterPtMin(0.0);
-    task1->SetV0sDaughterEtaMax(0.8);
-    // task1->SetV0sMotherRapMax(0.);
-    task1->SetV0sDaughterNumTPCClsMin(70);
-    task1->SetV0sDaughterRatioCrossFindMin(0.8);
-    task1->SetV0sDaughterNumTPCClsPIDMin(70);
-    task1->SetV0sK0sCPAMin(0.998);
-    task1->SetV0sLambdaCPAMin(0.998);
-    task1->SetV0sK0sNumTauMax(0.0);
-    task1->SetV0sK0sArmenterosAlphaMin(0.2);
-    task1->SetV0sLambdaNumTauMax(0.0);
-    task1->SetV0sK0sPionNumTPCSigmaMax(3.0);
-    task1->SetV0sLambdaPionNumTPCSigmaMax(3.0);
-    task1->SetV0sLambdaProtonNumTPCSigmaMax(3.0);
-
 
     if (!mgr->InitAnalysis()) return;
     //mgr->SetDebugLevel(2);

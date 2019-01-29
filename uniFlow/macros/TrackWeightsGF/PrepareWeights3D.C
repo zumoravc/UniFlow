@@ -19,8 +19,9 @@
 
 TString sTag = "";
 TString sTaskTag = "UniFlow" + sTag;
-TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/15o-pass1/runQA";
-TString sOutputPath = sPath+"/weights"+sTag+"/";
+TString sPath = "~/Codes/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/qa";
+TString sOutputPath = "./";
+// TString sOutputPath = sPath+"/weights"+sTag+"/";
 TString sOutFileName = "weights"+sTag+".root";
 
 const Short_t iNumPart = 8;
@@ -78,7 +79,9 @@ TH1* MergeListProfiles(TList* list);
 void PrepareWeights3D()
 {
   gSystem->mkdir(sOutputPath.Data(),kTRUE);
-  TFile* fOutput = new TFile(Form("%s/%s",sPath.Data(),sOutFileName.Data()),"RECREATE");
+  TFile* fOutput = new TFile(Form("%s/%s",sOutputPath.Data(),sOutFileName.Data()),"RECREATE");
+  TList* outList = new TList();
+  outList->SetOwner(kTRUE);
 
   if(!bRunByRun) {
 
@@ -91,6 +94,7 @@ void PrepareWeights3D()
 
     TList* listRun = new TList();
     listRun->SetOwner(kTRUE);
+    listRun->SetName("averaged");
 
     for(Int_t part = 0; part < iNumPart; part++)
     {
@@ -147,9 +151,7 @@ void PrepareWeights3D()
 
     } // end-for{species}
 
-    fOutput->cd();
-    listRun->Write("weights",TObject::kSingleKey);
-    delete listRun;
+    outList->Add(listRun);
 
   } else {
 
@@ -171,6 +173,7 @@ void PrepareWeights3D()
 
       TList* listRun = new TList();
       listRun->SetOwner(kTRUE);
+      listRun->SetName(Form("%d",iRunList[iRun]));
 
       for(Int_t part = 0; part < iNumPart; ++part) {
         printf(" -part %d (out of %d)\n",part+1,iNumPart);
@@ -185,13 +188,16 @@ void PrepareWeights3D()
         listGlob[part]->Add(h3Weights);
       }
 
-      fOutput->cd();
-      listRun->Write(Form("%d",iRunList[iRun]),TObject::kSingleKey);
-      delete listRun;
+      outList->Add(listRun);
+
+      // fOutput->cd();
+      // listRun->Write(Form("%d",iRunList[iRun]),TObject::kSingleKey);
+      // delete listRun;
     }
 
     // making run-averaged weights per-species out of global lists
     TList* listRunAver = new TList();
+    listRunAver->SetName("averaged");
 
     printf("=== Making run-averaged weights by merging individual runs. ===\n");
     for(Int_t part(0); part < iNumPart; ++part) {
@@ -209,10 +215,17 @@ void PrepareWeights3D()
       delete listGlob[part];
     }
 
-    fOutput->cd();
-    listRunAver->Write("weights",TObject::kSingleKey);
-    delete listRunAver;
+    outList->Add(listRunAver);
+
+    // fOutput->cd();
+    // listRunAver->Write("weights",TObject::kSingleKey);
+    // outList->Write("weights",TObject::kSingleKey);
+    // delete listRunAver;
   }
+
+  fOutput->cd();
+  outList->Write("weights",TObject::kSingleKey);
+  delete outList;
 
   return;
 }

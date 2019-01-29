@@ -65,7 +65,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       };
 
                               AliAnalysisTaskUniFlow(); // constructor
-                              AliAnalysisTaskUniFlow(const char *name, ColSystem colSys); // named (primary) constructor
+                              AliAnalysisTaskUniFlow(const char *name, ColSystem colSys, Bool_t bUseWeights = kFALSE); // named (primary) constructor
                               AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
                               AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
       virtual                 ~AliAnalysisTaskUniFlow(); // destructor
@@ -101,7 +101,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetV0sMassBins(Int_t bins) { fV0sNumBinsMass = bins; }
       void                    SetPhiMassBins(Int_t bins) { fPhiNumBinsMass = bins; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
-      void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
+      void                    SetUseWeigthsRunByRun(Bool_t bRunByRun = kTRUE) { fFlowRunByRunWeights = bRunByRun; }
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
       void                    SetCentrality(CentEst est, Int_t min = 0, Int_t max = 0, Int_t bins = 0) { fCentEstimator = est; fCentMin = min; fCentMax = max; fCentBinNum = bins; }
@@ -265,7 +265,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fPVz; // PV z-coordinate used for weights
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
-      TFile*                  fFlowWeightsFile; //! source file containing weights
+      TList*                  fFlowWeightsList; //! list of weights from input file
       TClonesArray*           fArrayMC; //! input list of MC particles
       Bool_t                  fMC; // is running on mc?
       Bool_t                  fInit; // initialization check
@@ -306,10 +306,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Int_t                   fV0sNumBinsMass; // number of InvMass bins for V0s distribution
       Int_t                   fNumSamples; // [1] overall number of samples (from random sampling) used
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
-      Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
+      Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights
       Bool_t                  fFlowUse3Dweights; // [kFALSE] flag for using 3D GF weights, if kFALSE, 2D weights are expected
       Bool_t                  fFlowRunByRunWeights; // [kTRUE] flag for using rub-by-run weigths from weigths file; if false, only one set of histrograms is provided
-      TString                 fFlowWeightsPath; //[] path to source root file with weigthts (if empty unit weights are applied) e.g. "alice/cern.ch/user/k/kgajdoso/EfficienciesWeights/2016/PhiWeight_LHC16kl.root"
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system

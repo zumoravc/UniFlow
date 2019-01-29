@@ -114,7 +114,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPVz{},
   fPIDResponse{},
   fPIDCombined{},
-  fFlowWeightsFile{},
+  fFlowWeightsList{nullptr},
   fArrayMC{},
   fMC{kFALSE},
   fInit{kFALSE},
@@ -153,7 +153,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowUseWeights{kFALSE},
   fFlowUse3Dweights{kFALSE},
   fFlowRunByRunWeights{kTRUE},
-  fFlowWeightsPath{},
   fColSystem{kPPb},
   fTrigger{AliVEvent::kINT7},
   fCentEstimator{kV0A},
@@ -362,7 +361,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   // this is used by root for IO purposes, it needs to remain empty
 }
 // ============================================================================
-AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSys) : AliAnalysisTaskSE(name),
+AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSys, Bool_t bUseWeights) : AliAnalysisTaskSE(name),
   fEventCuts{},
   fPDGMassPion{0.13957},
   fPDGMassKaon{0.493677},
@@ -374,7 +373,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fPVz{},
   fPIDResponse{},
   fPIDCombined{},
-  fFlowWeightsFile{},
+  fFlowWeightsList{nullptr},
   fArrayMC{},
   fMC{kFALSE},
   fInit{kFALSE},
@@ -410,10 +409,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fV0sNumBinsMass{60},
   fNumSamples{1},
   fFlowFillWeights{kTRUE},
-  fFlowUseWeights{kFALSE},
+  fFlowUseWeights{bUseWeights},
   fFlowUse3Dweights{kFALSE},
   fFlowRunByRunWeights{kTRUE},
-  fFlowWeightsPath{},
   fColSystem{colSys},
   fTrigger{AliVEvent::kINT7},
   fCentEstimator{kV0A},
@@ -620,6 +618,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
 {
   // defining input/output
   DefineInput(0, TChain::Class());
+  if(fFlowUseWeights) { DefineInput(1, TList::Class()); }
   DefineOutput(1, TList::Class());
   DefineOutput(2, TList::Class());
   DefineOutput(3, TList::Class());
@@ -734,7 +733,7 @@ void AliAnalysisTaskUniFlow::ListParameters() const
   printf("      fPhiNumBinsMass: (Int_t) %d\n",    fPhiNumBinsMass);
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowRunByRunWeights: (Bool_t) %s\n",    fFlowRunByRunWeights ? "kTRUE" : "kFALSE");
-  printf("      fFlowWeightsPath: (TString) '%s' \n",    fFlowWeightsPath.Data());
+  printf("      fFlowUse3Dweights: (Bool_t) %s\n",    fFlowUse3Dweights ? "kTRUE" : "kFALSE");
   printf("   -------- Events ----------------------------------------------\n");
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
@@ -967,10 +966,12 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   // checking for weights source file
-  if(fFlowUseWeights && !fFlowWeightsPath.EqualTo(""))
+  if(fFlowUseWeights)
   {
-    fFlowWeightsFile = TFile::Open(Form("%s",fFlowWeightsPath.Data()));
-    if(!fFlowWeightsFile) { AliFatal("Flow weights file not found! Terminating!"); return kFALSE; }
+    if(fFlowUse3Dweights && fFlowFillWeights) { AliFatal("Cannot fill and run with 3D weights at the same time"); return kFALSE; }
+    // BUG currently two pointer arrays overlay with each other, to-be-fixed
+
+    fFlowWeightsList = (TList*) GetInputData(1);
     if(!fFlowRunByRunWeights && !LoadWeights()) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
   }
 
@@ -1007,10 +1008,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 {
   // main method called for each event (event loop)
   // *************************************************************
-  // check if initialization succesfull (done within UserCreateOutputObjects())
-
   DumpTObjTable("UserExec: start");
 
+  // check if initialization succesfull (done within UserCreateOutputObjects())
   if(!fInit) { AliFatal("Something went wrong : task not initialized!"); return; }
 
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
@@ -1259,21 +1259,23 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
 {
   // (Re-) Loading of flow vector weights
   // ***************************************************************************
-  if(!fFlowWeightsFile) { AliError("File with flow weights not found!"); return kFALSE; }
+  if(!fFlowWeightsList) { AliError("Flow weights list not found! Terminating!"); return kFALSE; }
 
   TList* listFlowWeights = nullptr;
+
   if(!fFlowRunByRunWeights) {
-    // information about current run is unknown in Initialization(); load only "averaged" weights
-    AliInfo("Loading initial GF weights (run-averaged)");
-    listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
-    if(!listFlowWeights) { AliError("TList with flow weights not found."); return kFALSE; }
+    // loading run-averaged weights
+    listFlowWeights = (TList*) fFlowWeightsList->FindObject("averaged");
+    if(!listFlowWeights) { AliError("TList with flow run-averaged weights not found."); fFlowWeightsList->ls(); return kFALSE; }
   } else {
-    listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fEventAOD->GetRunNumber()));
+    // loading run-specific weights
+    listFlowWeights = (TList*) fFlowWeightsList->FindObject(Form("%d",fEventAOD->GetRunNumber()));
 
     if(!listFlowWeights) {
+      // run-specific weights not found for this run; loading run-averaged instead
       AliWarning(Form("TList with flow weights (run %d) not found. Using run-averaged weights instead (as a back-up)", fEventAOD->GetRunNumber()));
-      listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
-      if(!listFlowWeights) { AliError("Loading run-averaged weights failed!"); return kFALSE; }
+      listFlowWeights = (TList*) fFlowWeightsList->FindObject("averaged");
+      if(!listFlowWeights) { AliError("Loading run-averaged weights failed!"); fFlowWeightsList->ls(); return kFALSE; }
     }
   }
 
