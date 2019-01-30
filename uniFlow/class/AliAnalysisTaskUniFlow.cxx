@@ -38,15 +38,10 @@
 //
 //  -- AnalysisTaskUniFlow::kSkipFlow : usable for QA and(or) weights estimation before full scale running
 //      - events are processed whilst skipping correlation calculations, i.e. event loop ends after particles are filtered
-//
-//  NOTE: by default, all modes includes :
-//  - filling QA plots : can be turned-off by AliAnalysisTaskUniFlow::SetFillQAhistos(kFALSE)
-//    (might be heavy while running several tasks at once)
-//  - filling GF weights : can be turned-off by AliAnalysisTaskUniFlow::SetFlowFillWeights(kFALSE)
-//
 // =================================================================================================
 // Overview of analysis flow (see implementation of corresonding method for details)
-// 1) Event selection : EventSelection()
+// 1) Event selection : IsEventSelected()
+//        - based on AliEventCuts
 //
 // 2) Particle selection & reconstruction : Filtering()
 //        - whether or not are particles processed is driven by 'fProcess?' flag setup by AliAnalysisTaskUniFlow::SetProcess?(kTRUE)
@@ -56,12 +51,11 @@
 //
 //    !!! here the event loop ends in case of running in 'kSkipFlow' mode
 //
-// 3) Flow / correlation calculations : DoFlowPOIs(), DoFlowRefs()
-//        - to setup harmonics to be calculated, modify 'AliAnalysisTaskUniFlow::fHarmonics[]' (in .cxx) AND 'fNumHarmonics' (in .h)
-//        - to setup eta gaps (2part) to be calculated, modify 'AliAnalysisTaskUniFlow::fEtaGap[]' (in .cxx) AND 'fNumEtaGap' (in .h)
-//              - for NO gap case, fill in value '-1.0'
-//        - 2-particle cumulants are run by ©default (in 'kFull' mode)
-//        - 4-particle cumulants has to be setup by invoking AliAnalysisTaskUniFlow::SetFlowDoFourCorrelations(kTRUE)
+// 3) Flow / correlation calculations : CalculateFlow()
+//        - Desired correlations are setup via general AddCorr() method, which acceps arbitrary correlation order, combination of harmonics, and value of eta gaps according to Generic Framework notation
+//        - These are stored in std::vector and processed in ProcessCorrTask()
+//        - As a "pre-defined" options, see AddTwo(), AddTwoGap(), AddFour(), ..., etc.
+//        - Also note, that the desired output profiles are generated "automatically" based on registered CorrTasks
 //
 // =================================================================================================
 
