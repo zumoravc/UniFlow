@@ -15,7 +15,7 @@
 
 // =================================================================================================
 // AliAnalysisTaskUniFlow - ALICE Unified Flow framework
-// Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016-2018
+// Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2016-2019
 // =================================================================================================
 //
 // ALICE analysis task for universal study of flow via 2-(or multi-)particle correlations
@@ -38,15 +38,10 @@
 //
 //  -- AnalysisTaskUniFlow::kSkipFlow : usable for QA and(or) weights estimation before full scale running
 //      - events are processed whilst skipping correlation calculations, i.e. event loop ends after particles are filtered
-//
-//  NOTE: by default, all modes includes :
-//  - filling QA plots : can be turned-off by AliAnalysisTaskUniFlow::SetFillQAhistos(kFALSE)
-//    (might be heavy while running several tasks at once)
-//  - filling GF weights : can be turned-off by AliAnalysisTaskUniFlow::SetFlowFillWeights(kFALSE)
-//
 // =================================================================================================
 // Overview of analysis flow (see implementation of corresonding method for details)
-// 1) Event selection : EventSelection()
+// 1) Event selection : IsEventSelected()
+//        - based on AliEventCuts
 //
 // 2) Particle selection & reconstruction : Filtering()
 //        - whether or not are particles processed is driven by 'fProcess?' flag setup by AliAnalysisTaskUniFlow::SetProcess?(kTRUE)
@@ -56,12 +51,11 @@
 //
 //    !!! here the event loop ends in case of running in 'kSkipFlow' mode
 //
-// 3) Flow / correlation calculations : DoFlowPOIs(), DoFlowRefs()
-//        - to setup harmonics to be calculated, modify 'AliAnalysisTaskUniFlow::fHarmonics[]' (in .cxx) AND 'fNumHarmonics' (in .h)
-//        - to setup eta gaps (2part) to be calculated, modify 'AliAnalysisTaskUniFlow::fEtaGap[]' (in .cxx) AND 'fNumEtaGap' (in .h)
-//              - for NO gap case, fill in value '-1.0'
-//        - 2-particle cumulants are run by ©default (in 'kFull' mode)
-//        - 4-particle cumulants has to be setup by invoking AliAnalysisTaskUniFlow::SetFlowDoFourCorrelations(kTRUE)
+// 3) Flow / correlation calculations : CalculateFlow()
+//        - Desired correlations are setup via general AddCorr() method, which acceps arbitrary correlation order, combination of harmonics, and value of eta gaps according to Generic Framework notation
+//        - These are stored in std::vector and processed in ProcessCorrTask()
+//        - As a "pre-defined" options, see AddTwo(), AddTwoGap(), AddFour(), ..., etc.
+//        - Also note, that the desired output profiles are generated "automatically" based on registered CorrTasks
 //
 // =================================================================================================
 
@@ -86,7 +80,6 @@
 #include "AliAnalysisTask.h"
 #include "AliAnalysisManager.h"
 #include "AliAODInputHandler.h"
-#include "AliAnalysisUtils.h"
 #include "AliMultSelection.h"
 #include "AliPIDResponse.h"
 #include "AliPIDCombined.h"
@@ -101,574 +94,525 @@
 
 #include "AliAnalysisTaskUniFlow.h"
 
-class AliAnalysisTaskUniFlow;
-
 ClassImp(AliAnalysisTaskUniFlow);
 
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
-  fVector(),
-  fVecFlowTask(),
-  fProcessSpec(),
-  fFlowVecQpos(),
-  fFlowVecQneg(),
-  fFlowVecQmid(),
-  fFlowVecPpos(),
-  fFlowVecPneg(),
-  fFlowVecSpos(),
-  fFlowVecSneg(),
-  fEventAOD(),
-  fPIDResponse(),
-  fPIDCombined(),
-  fFlowWeightsFile(),
-  fArrayMC(),
-  fPVz(0.0),
-  fInit(kFALSE),
-  fMC(kFALSE),
-  fIndexSampling(0),
-  fIndexCentrality(-1),
-  fEventCounter(0),
-  fNumEventsAnalyse(50),
-  fRunNumber(-1),
-  fPDGMassPion(TDatabasePDG::Instance()->GetParticle(211)->Mass()),
-  fPDGMassKaon(TDatabasePDG::Instance()->GetParticle(321)->Mass()),
-  fPDGMassProton(TDatabasePDG::Instance()->GetParticle(2212)->Mass()),
-  fPDGMassPhi(TDatabasePDG::Instance()->GetParticle(333)->Mass()),
-  fPDGMassK0s(TDatabasePDG::Instance()->GetParticle(310)->Mass()),
-  fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
+  fEventCuts{},
+  fPDGMassPion{0.13957},
+  fPDGMassKaon{0.493677},
+  fPDGMassProton{0.938272},
+  fPDGMassPhi{1.019455},
+  fPDGMassK0s{0.497614},
+  fPDGMassLambda{1.11568},
+  fEventAOD{},
+  fPVz{},
+  fPIDResponse{},
+  fPIDCombined{},
+  fFlowWeightsList{nullptr},
+  fArrayMC{},
+  fMC{kFALSE},
+  fInit{kFALSE},
+  fIndexSampling{0},
+  fIndexCentrality{-1},
+  fEventCounter{0},
+  fNumEventsAnalyse{50},
+  fRunNumber{-1},
+  fFlowVecQpos{},
+  fFlowVecQneg{},
+  fFlowVecQmid{},
+  fFlowVecPpos{},
+  fFlowVecPneg{},
+  fFlowVecSpos{},
+  fFlowVecSneg{},
+  fVecCorrTask{},
+  fVector{},
+  fRunMode{kFull},
+  fAnalType{kAOD},
+  fDumpTObjectTable{kFALSE},
+  fSampling{kFALSE},
+  fFillQA{kTRUE},
+  fProcessSpec{},
+  fFlowRFPsPtMin{0.2},
+  fFlowRFPsPtMax{5.0},
+  fFlowPOIsPtMin{0.0},
+  fFlowPOIsPtMax{10.0},
+  fFlowPOIsPtBinNum{0},
+  fFlowEtaMax{0.8},
+  fFlowEtaBinNum{0},
+  fFlowPhiBinNum{100},
+  fPhiNumBinsMass{60},
+  fV0sNumBinsMass{60},
+  fNumSamples{1},
+  fFlowFillWeights{kTRUE},
+  fFlowUseWeights{kFALSE},
+  fFlowUse3Dweights{kFALSE},
+  fFlowRunByRunWeights{kTRUE},
+  fColSystem{kPPb},
+  fTrigger{AliVEvent::kINT7},
+  fCentEstimator{kV0A},
+  fCentMin{0},
+  fCentMax{0},
+  fCentBinNum{0},
+  fPVtxCutZ{10.0},
+  fEventRejectAddPileUp{kFALSE},
+  fCutChargedTrackFilterBit{96},
+  fCutChargedNumTPCclsMin{70},
+  fCutChargedDCAzMax{0.0},
+  fCutChargedDCAxyMax{0.0},
+  fCutPIDUseAntiProtonOnly{kFALSE},
+  fCutPIDnSigmaCombinedTOFrejection{kTRUE},
+  fCutUseBayesPID{kFALSE},
+  fCutPIDnSigmaTPCRejectElectron{0.0},
+  fCutPIDnSigmaMax{},
+  fCutPIDBayesMin{},
+  fCutV0sOnFly{kFALSE},
+  fCutV0srefitTPC{kTRUE},
+  fCutV0srejectKinks{kTRUE},
+  fCutV0sDaughterNumTPCClsMin{0},
+  fCutV0sDaughterNumTPCCrossMin{70},
+  fCutV0sDaughterNumTPCFindMin{1},
+  fCutV0sDaughterNumTPCClsPIDMin{0},
+  fCutV0sDaughterRatioCrossFindMin{0.8},
+  fCutV0sCrossMassRejection{kTRUE},
+  fCutV0sCrossMassCutK0s{0.005},
+  fCutV0sCrossMassCutLambda{0.010},
+  fCutV0sDCAtoPVMin{0.06},
+  fCutV0sDCAtoPVMax{0.0},
+  fCutV0sDCAtoPVzMax{0.0},
+  fCutV0sDCADaughtersMin{0.},
+  fCutV0sDCADaughtersMax{1.0},
+  fCutV0sDecayRadiusMin{0.5},
+  fCutV0sDecayRadiusMax{200.0},
+  fCutV0sDaughterFilterBit{0},
+  fCutV0sDaughterPtMin{0.0},
+  fCutV0sDaughterPtMax{0.0},
+  fCutV0sDaughterEtaMax{0.8},
+  fCutV0sMotherRapMax{0.0},
+  fCutV0sCPAK0sMin{0.97},
+  fCutV0sCPALambdaMin{0.995},
+  fCutV0sNumTauK0sMax{7.46},
+  fCutV0sNumTauLambdaMax{3.8},
+  fCutV0sInvMassK0sMin{0.4},
+  fCutV0sInvMassK0sMax{0.6},
+  fCutV0sInvMassLambdaMin{1.08},
+  fCutV0sInvMassLambdaMax{1.16},
+  fCutV0sArmenterosAlphaK0sMin{0.2},
+  fCutV0sArmenterosAlphaLambdaMax{0.0},
+  fCutV0sK0sPionNumTPCSigmaMax{5.0},
+  fCutV0sLambdaPionNumTPCSigmaMax{5.0},
+  fCutV0sLambdaProtonNumTPCSigmaMax{5.0},
+  fCutPhiInvMassMin{0.99},
+  fCutPhiInvMassMax{1.07},
 
-  // output lists
-  fListFlow(),
-  fQAEvents(),
-  fQACharged(),
-  fQAPID(),
-  fQAV0s(),
-  fQAPhi(),
-  fFlowWeights(),
+  fQAEvents{nullptr},
+  fQACharged{nullptr},
+  fQAPID{nullptr},
+  fQAV0s{nullptr},
+  fQAPhi{nullptr},
+  fFlowWeights{nullptr},
+  fListFlow{nullptr},
 
-  // === Cuts & selection ===
-  // analysis selection
-  fRunMode(kFull),
-  fAnalType(kAOD),
-  fDumpTObjectTable(kFALSE),
-  fSampling(kFALSE),
-  fFillQA(kTRUE),
-
-  // flow related
-  fFlowRFPsPtMin(0.2),
-  fFlowRFPsPtMax(5.0),
-  fFlowPOIsPtMin(0.0),
-  fFlowPOIsPtMax(10.0),
-  fFlowPOIsPtBinNum(0),
-  fFlowEtaMax(0.8),
-  fFlowEtaBinNum(0),
-  fFlowPhiBinNum(100),
-  fNumSamples(1),
-  fFlowWeightsPath(),
-  fFlowFillWeights(kTRUE),
-  fFlowRunByRunWeights(kTRUE),
-  fFlowUseWeights(kFALSE),
-  fFlowUse3Dweights(kFALSE),
-
-  // events selection
-  fPVtxCutZ(10.0),
-  fColSystem(kPPb),
-  fCentEstimator(kV0A),
-  fCentMin(0),
-  fCentMax(0),
-  fCentBinNum(0),
-  fTrigger(AliVEvent::kINT7),
-  fEventRejectAddPileUp(kTRUE),
-
-  // charged tracks selection
-  fCutChargedDCAzMax(0.),
-  fCutChargedDCAxyMax(0.),
-  fCutChargedTrackFilterBit(96),
-  fCutChargedNumTPCclsMin(70),
-
-  // PID tracks selection
-  fCutPIDUseAntiProtonOnly(kFALSE),
-  fCutPIDnSigmaTPCRejectElectron(0.0),
-  fCutPIDnSigmaCombinedTOFrejection(kTRUE),
-  fCutUseBayesPID(kFALSE),
-  fCutPIDnSigmaMax(),
-  fCutPIDBayesMin(),
-
-  // V0s selection
-  fCutV0sOnFly(kFALSE),
-  fCutV0srejectKinks(kTRUE),
-  fCutV0sDaughterNumTPCClsMin(0),
-  fCutV0sDaughterNumTPCCrossMin(70),
-  fCutV0sDaughterNumTPCFindMin(1),
-  fCutV0sDaughterNumTPCClsPIDMin(0),
-  fCutV0sDaughterRatioCrossFindMin(0.8),
-  fCutV0srefitTPC(kTRUE),
-  fCutV0sCrossMassRejection(kTRUE),
-  fCutV0sCrossMassCutK0s(0.005),
-  fCutV0sCrossMassCutLambda(0.010),
-  fCutV0sCPAK0sMin(0.97),
-  fCutV0sCPALambdaMin(0.995),
-  fCutV0sDCAtoPVMin(0.06),
-  fCutV0sDCAtoPVMax(0.),
-  fCutV0sDCAtoPVzMax(0.),
-  fCutV0sDCADaughtersMin(0.),
-  fCutV0sDCADaughtersMax(1.0),
-  fCutV0sDecayRadiusMin(0.5),
-  fCutV0sDecayRadiusMax(200.0),
-  fCutV0sDaughterFilterBit(0),
-  fCutV0sDaughterPtMin(0.),
-  fCutV0sDaughterPtMax(0.),
-  fCutV0sDaughterEtaMax(0.8),
-  fCutV0sMotherRapMax(0.),
-  fCutV0sArmenterosAlphaK0sMin(0.2),
-  fCutV0sArmenterosAlphaLambdaMax(0.),
-  fCutV0sInvMassK0sMin(0.4),
-  fCutV0sInvMassK0sMax(0.6),
-  fCutV0sInvMassLambdaMin(1.08),
-  fCutV0sInvMassLambdaMax(1.16),
-  fCutV0sNumTauK0sMax(7.46),
-  fCutV0sNumTauLambdaMax(3.8),
-  fCutV0sK0sPionNumTPCSigmaMax(5.0),
-  fCutV0sLambdaPionNumTPCSigmaMax(5.0),
-  fCutV0sLambdaProtonNumTPCSigmaMax(5.0),
-
-  // phi selection
-  fCutPhiInvMassMin(0.99),
-  fCutPhiInvMassMax(1.07),
-
-  // === Histograms & profiles ===
-  fhsCandK0s(),
-  fhsCandLambda(),
-  fhsCandPhi(),
-  fhsCandPhiBg(),
-  fh2Weights(),
-  fh3Weights(),
-  fh2AfterWeights(),
-  fh3AfterWeights(),
-
-  // event histograms
-  fhEventSampling(),
-  fhEventCentrality(),
-  fh2EventCentralityNumRefs(),
-  fhEventCounter(),
-  fhQAEventsfMult32vsCentr(),
-  fhQAEventsMult128vsCentr(),
-  fhQAEventsfMultTPCvsTOF(),
-  fhQAEventsfMultTPCvsESD(),
-  fhQAEventsPVz(),
-  fhQAEventsNumContrPV(),
-  fhQAEventsNumSPDContrPV(),
-  fhQAEventsDistPVSPD(),
-  fhQAEventsSPDresol(),
-
-  // charged histogram
-  fhRefsMult(),
-  fhRefsPt(),
-  fhRefsEta(),
-  fhRefsPhi(),
-  fpRefsMult(),
-  fhChargedCounter(),
-  fhQAChargedMult(),
-  fhQAChargedPt(),
-  fhQAChargedEta(),
-  fhQAChargedPhi(),
-  fhQAChargedCharge(),
-  fhQAChargedNumTPCcls(),
-  fhQAChargedDCAxy(),
-  fhQAChargedDCAz(),
-
-  // PID histogram
-  fhMCRecoSelectedPionPt(),
-  fhMCRecoSelectedTruePionPt(),
-  fhMCRecoAllPionPt(),
-  fhMCGenAllPionPt(),
-  fhMCRecoSelectedKaonPt(),
-  fhMCRecoSelectedTrueKaonPt(),
-  fhMCRecoAllKaonPt(),
-  fhMCGenAllKaonPt(),
-  fhMCRecoSelectedProtonPt(),
-  fhMCRecoSelectedTrueProtonPt(),
-  fhMCRecoAllProtonPt(),
-  fhMCGenAllProtonPt(),
-  fhPIDCounter(),
-  fhPIDMult(),
-  fhPIDPt(),
-  fhPIDPhi(),
-  fhPIDEta(),
-  fhPIDCharge(),
-  fh2PIDTPCdEdx(),
-  fh2PIDTPCdEdxDelta(),
-  fh2PIDTOFbeta(),
-  fh2PIDTOFbetaDelta(),
-  fh2PIDBayesElectron(),
-  fh2PIDBayesMuon(),
-  fh2PIDBayesPion(),
-  fh2PIDBayesKaon(),
-  fh2PIDBayesProton(),
-  fh2PIDTPCnSigmaElectron(),
-  fh2PIDTOFnSigmaElectron(),
-  fh2PIDTPCnSigmaMuon(),
-  fh2PIDTOFnSigmaMuon(),
-  fh2PIDTPCnSigmaPion(),
-  fh2PIDTOFnSigmaPion(),
-  fh2PIDTPCnSigmaKaon(),
-  fh2PIDTOFnSigmaKaon(),
-  fh2PIDTPCnSigmaProton(),
-  fh2PIDTOFnSigmaProton(),
-  fhQAPIDTPCstatus(),
-  fhQAPIDTOFstatus(),
-  fhQAPIDTPCdEdx(),
-  fhQAPIDTOFbeta(),
-  fh3QAPIDnSigmaTPCTOFPtPion(),
-  fh3QAPIDnSigmaTPCTOFPtKaon(),
-  fh3QAPIDnSigmaTPCTOFPtProton(),
-
-  // phi histograms
-  fhPhiCounter(),
-  fhPhiMult(),
-  fhPhiBGMult(),
-  fhPhiInvMass(),
-  fhPhiBGInvMass(),
-  fhPhiCharge(),
-  fhPhiBGCharge(),
-  fhPhiPt(),
-  fhPhiEta(),
-  fhPhiPhi(),
-
-  // V0s histogram
-  fhV0sCounter(),
-  fhV0sCounterK0s(),
-  fhV0sCounterLambda(),
-  fhV0sInvMassK0s(),
-  fhV0sInvMassLambda(),
-  fhV0sCompetingInvMassK0s(),
-  fhV0sCompetingInvMassLambda(),
-  fhQAV0sMultK0s(),
-  fhQAV0sMultLambda(),
-  fhQAV0sRecoMethod(),
-  fhQAV0sDCAtoPV(),
-  fhQAV0sDCADaughters(),
-  fhQAV0sDecayRadius(),
-  fhQAV0sDaughterTPCRefit(),
-  fhQAV0sDaughterKinks(),
-  fhQAV0sDaughterNumTPCCls(),
-  fhQAV0sDaughterNumTPCFind(),
-  fhQAV0sDaughterNumTPCCrossRows(),
-  fhQAV0sDaughterTPCCrossFindRatio(),
-  fhQAV0sDaughterNumTPCClsPID(),
-  fhQAV0sDaughterPt(),
-  fhQAV0sDaughterPhi(),
-  fhQAV0sDaughterEta(),
-  fhQAV0sDaughterCharge(),
-  fhQAV0sDaughterTPCdEdxK0s(),
-  fhQAV0sDaughterNumSigmaPionK0s(),
-  fhQAV0sDaughterTPCstatus(),
-  fhQAV0sDaughterTOFstatus(),
-  fhQAV0sDaughterTPCdEdxLambda(),
-  fhQAV0sDaughterNumSigmaPionLambda(),
-  fhQAV0sDaughterNumSigmaProtonLambda(),
-  fhQAV0sDaughterNumSigmaPionALambda(),
-  fhQAV0sDaughterNumSigmaProtonALambda(),
-  fhQAV0sMotherPt(),
-  fhQAV0sMotherPhi(),
-  fhQAV0sMotherEta(),
-  fhQAV0sMotherCharge(),
-  fhQAV0sMotherRapK0s(),
-  fhQAV0sMotherRapLambda(),
-  fhQAV0sInvMassK0s(),
-  fhQAV0sInvMassLambda(),
-  fhQAV0sCPAK0s(),
-  fhQAV0sCPALambda(),
-  fhQAV0sNumTauK0s(),
-  fhQAV0sNumTauLambda(),
-  fhQAV0sArmenterosK0s(),
-  fhQAV0sArmenterosLambda(),
-  fhQAV0sArmenterosALambda()
+  fhsCandK0s{nullptr},
+  fhsCandLambda{nullptr},
+  fhsCandPhi{nullptr},
+  fhsCandPhiBg{nullptr},
+  fh2Weights{nullptr},
+  fh3Weights{nullptr},
+  fh2AfterWeights{nullptr},
+  fh3AfterWeights{nullptr},
+  fhEventSampling{nullptr},
+  fhEventCentrality{nullptr},
+  fh2EventCentralityNumRefs{nullptr},
+  fhEventCounter{nullptr},
+  fhRefsMult{nullptr},
+  fhRefsPt{nullptr},
+  fhRefsEta{nullptr},
+  fhRefsPhi{nullptr},
+  fpRefsMult{nullptr},
+  fhChargedCounter{nullptr},
+  fhPIDCounter{nullptr},
+  fhPIDMult{nullptr},
+  fhPIDPt{nullptr},
+  fhPIDPhi{nullptr},
+  fhPIDEta{nullptr},
+  fhPIDCharge{nullptr},
+  fh2PIDTPCdEdx{nullptr},
+  fh2PIDTPCdEdxDelta{nullptr},
+  fh2PIDTOFbeta{nullptr},
+  fh2PIDTOFbetaDelta{nullptr},
+  fh2PIDBayesElectron{nullptr},
+  fh2PIDBayesMuon{nullptr},
+  fh2PIDBayesPion{nullptr},
+  fh2PIDBayesKaon{nullptr},
+  fh2PIDBayesProton{nullptr},
+  fh2PIDTPCnSigmaElectron{nullptr},
+  fh2PIDTOFnSigmaElectron{nullptr},
+  fh2PIDTPCnSigmaMuon{nullptr},
+  fh2PIDTOFnSigmaMuon{nullptr},
+  fh2PIDTPCnSigmaPion{nullptr},
+  fh2PIDTOFnSigmaPion{nullptr},
+  fh2PIDTPCnSigmaKaon{nullptr},
+  fh2PIDTOFnSigmaKaon{nullptr},
+  fh2PIDTPCnSigmaProton{nullptr},
+  fh2PIDTOFnSigmaProton{nullptr},
+  fhMCRecoSelectedPionPt{nullptr},
+  fhMCRecoSelectedTruePionPt{nullptr},
+  fhMCRecoAllPionPt{nullptr},
+  fhMCGenAllPionPt{nullptr},
+  fhMCRecoSelectedKaonPt{nullptr},
+  fhMCRecoSelectedTrueKaonPt{nullptr},
+  fhMCRecoAllKaonPt{nullptr},
+  fhMCGenAllKaonPt{nullptr},
+  fhMCRecoSelectedProtonPt{nullptr},
+  fhMCRecoSelectedTrueProtonPt{nullptr},
+  fhMCRecoAllProtonPt{nullptr},
+  fhMCGenAllProtonPt{nullptr},
+  fhPhiCounter{nullptr},
+  fhPhiMult{nullptr},
+  fhPhiBGMult{nullptr},
+  fhPhiInvMass{nullptr},
+  fhPhiBGInvMass{nullptr},
+  fhPhiCharge{nullptr},
+  fhPhiBGCharge{nullptr},
+  fhPhiPt{nullptr},
+  fhPhiEta{nullptr},
+  fhPhiPhi{nullptr},
+  fhV0sCounter{nullptr},
+  fhV0sCounterK0s{nullptr},
+  fhV0sCounterLambda{nullptr},
+  fhV0sInvMassK0s{nullptr},
+  fhV0sInvMassLambda{nullptr},
+  fhV0sCompetingInvMassK0s{nullptr},
+  fhV0sCompetingInvMassLambda{nullptr},
+  fhQAEventsPVz{nullptr},
+  fhQAEventsNumContrPV{nullptr},
+  fhQAEventsNumSPDContrPV{nullptr},
+  fhQAEventsDistPVSPD{nullptr},
+  fhQAEventsSPDresol{nullptr},
+  fhQAEventsfMult32vsCentr{nullptr},
+  fhQAEventsMult128vsCentr{nullptr},
+  fhQAEventsfMultTPCvsTOF{nullptr},
+  fhQAEventsfMultTPCvsESD{nullptr},
+  fhQAChargedMult{nullptr},
+  fhQAChargedPt{nullptr},
+  fhQAChargedEta{nullptr},
+  fhQAChargedPhi{nullptr},
+  fhQAChargedCharge{nullptr},
+  fhQAChargedNumTPCcls{nullptr},
+  fhQAChargedDCAxy{nullptr},
+  fhQAChargedDCAz{nullptr},
+  fhQAPIDTPCstatus{nullptr},
+  fhQAPIDTOFstatus{nullptr},
+  fhQAPIDTPCdEdx{nullptr},
+  fhQAPIDTOFbeta{nullptr},
+  fh3QAPIDnSigmaTPCTOFPtPion{nullptr},
+  fh3QAPIDnSigmaTPCTOFPtKaon{nullptr},
+  fh3QAPIDnSigmaTPCTOFPtProton{nullptr},
+  fhQAV0sMultK0s{nullptr},
+  fhQAV0sMultLambda{nullptr},
+  fhQAV0sMultALambda{nullptr},
+  fhQAV0sRecoMethod{nullptr},
+  fhQAV0sDaughterTPCRefit{nullptr},
+  fhQAV0sDaughterKinks{nullptr},
+  fhQAV0sDaughterNumTPCCls{nullptr},
+  fhQAV0sDaughterNumTPCFind{nullptr},
+  fhQAV0sDaughterNumTPCCrossRows{nullptr},
+  fhQAV0sDaughterTPCCrossFindRatio{nullptr},
+  fhQAV0sDaughterNumTPCClsPID{nullptr},
+  fhQAV0sDCAtoPV{nullptr},
+  fhQAV0sDCADaughters{nullptr},
+  fhQAV0sDecayRadius{nullptr},
+  fhQAV0sInvMassK0s{nullptr},
+  fhQAV0sInvMassLambda{nullptr},
+  fhQAV0sMotherPt{nullptr},
+  fhQAV0sMotherPhi{nullptr},
+  fhQAV0sMotherEta{nullptr},
+  fhQAV0sMotherCharge{nullptr},
+  fhQAV0sMotherRapK0s{nullptr},
+  fhQAV0sMotherRapLambda{nullptr},
+  fhQAV0sDaughterPt{nullptr},
+  fhQAV0sDaughterPhi{nullptr},
+  fhQAV0sDaughterEta{nullptr},
+  fhQAV0sDaughterCharge{nullptr},
+  fhQAV0sDaughterTPCstatus{nullptr},
+  fhQAV0sDaughterTOFstatus{nullptr},
+  fhQAV0sDaughterTPCdEdxK0s{nullptr},
+  fhQAV0sDaughterNumSigmaPionK0s{nullptr},
+  fhQAV0sDaughterTPCdEdxLambda{nullptr},
+  fhQAV0sDaughterNumSigmaPionLambda{nullptr},
+  fhQAV0sDaughterNumSigmaProtonLambda{nullptr},
+  fhQAV0sDaughterNumSigmaPionALambda{nullptr},
+  fhQAV0sDaughterNumSigmaProtonALambda{nullptr},
+  fhQAV0sCPAK0s{nullptr},
+  fhQAV0sCPALambda{nullptr},
+  fhQAV0sNumTauK0s{nullptr},
+  fhQAV0sNumTauLambda{nullptr},
+  fhQAV0sArmenterosK0s{nullptr},
+  fhQAV0sArmenterosLambda{nullptr},
+  fhQAV0sArmenterosALambda{nullptr}
 {
   // default constructor, don't allocate memory here!
   // this is used by root for IO purposes, it needs to remain empty
 }
-//_____________________________________________________________________________
-AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTaskSE(name),
-  fVector(),
-  fVecFlowTask(),
-  fProcessSpec(),
-  fFlowVecQpos(),
-  fFlowVecQneg(),
-  fFlowVecQmid(),
-  fFlowVecPpos(),
-  fFlowVecPneg(),
-  fFlowVecSpos(),
-  fFlowVecSneg(),
-  fEventAOD(),
-  fPIDResponse(),
-  fPIDCombined(),
-  fFlowWeightsFile(),
-  fArrayMC(),
-  fPVz(0.0),
-  fInit(kFALSE),
-  fMC(kFALSE),
-  fIndexSampling(0),
-  fIndexCentrality(-1),
-  fEventCounter(0),
-  fNumEventsAnalyse(50),
-  fRunNumber(-1),
-  fPDGMassPion(TDatabasePDG::Instance()->GetParticle(211)->Mass()),
-  fPDGMassKaon(TDatabasePDG::Instance()->GetParticle(321)->Mass()),
-  fPDGMassProton(TDatabasePDG::Instance()->GetParticle(2212)->Mass()),
-  fPDGMassPhi(TDatabasePDG::Instance()->GetParticle(333)->Mass()),
-  fPDGMassK0s(TDatabasePDG::Instance()->GetParticle(310)->Mass()),
-  fPDGMassLambda(TDatabasePDG::Instance()->GetParticle(3122)->Mass()),
+// ============================================================================
+AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSys, Bool_t bUseWeights) : AliAnalysisTaskSE(name),
+  fEventCuts{},
+  fPDGMassPion{0.13957},
+  fPDGMassKaon{0.493677},
+  fPDGMassProton{0.938272},
+  fPDGMassPhi{1.019455},
+  fPDGMassK0s{0.497614},
+  fPDGMassLambda{1.11568},
+  fEventAOD{},
+  fPVz{},
+  fPIDResponse{},
+  fPIDCombined{},
+  fFlowWeightsList{nullptr},
+  fArrayMC{},
+  fMC{kFALSE},
+  fInit{kFALSE},
+  fIndexSampling{0},
+  fIndexCentrality{-1},
+  fEventCounter{0},
+  fNumEventsAnalyse{50},
+  fRunNumber{-1},
+  fFlowVecQpos{},
+  fFlowVecQneg{},
+  fFlowVecQmid{},
+  fFlowVecPpos{},
+  fFlowVecPneg{},
+  fFlowVecSpos{},
+  fFlowVecSneg{},
+  fVecCorrTask{},
+  fVector{},
+  fRunMode{kFull},
+  fAnalType{kAOD},
+  fDumpTObjectTable{kFALSE},
+  fSampling{kFALSE},
+  fFillQA{kTRUE},
+  fProcessSpec{},
+  fFlowRFPsPtMin{0.2},
+  fFlowRFPsPtMax{5.0},
+  fFlowPOIsPtMin{0.0},
+  fFlowPOIsPtMax{10.0},
+  fFlowPOIsPtBinNum{0},
+  fFlowEtaMax{0.8},
+  fFlowEtaBinNum{0},
+  fFlowPhiBinNum{100},
+  fPhiNumBinsMass{60},
+  fV0sNumBinsMass{60},
+  fNumSamples{1},
+  fFlowFillWeights{kTRUE},
+  fFlowUseWeights{bUseWeights},
+  fFlowUse3Dweights{kFALSE},
+  fFlowRunByRunWeights{kTRUE},
+  fColSystem{colSys},
+  fTrigger{AliVEvent::kINT7},
+  fCentEstimator{kV0A},
+  fCentMin{0},
+  fCentMax{0},
+  fCentBinNum{0},
+  fPVtxCutZ{10.0},
+  fEventRejectAddPileUp{kFALSE},
+  fCutChargedTrackFilterBit{96},
+  fCutChargedNumTPCclsMin{70},
+  fCutChargedDCAzMax{0.0},
+  fCutChargedDCAxyMax{0.0},
+  fCutPIDUseAntiProtonOnly{kFALSE},
+  fCutPIDnSigmaCombinedTOFrejection{kTRUE},
+  fCutUseBayesPID{kFALSE},
+  fCutPIDnSigmaTPCRejectElectron{0.0},
+  fCutPIDnSigmaMax{},
+  fCutPIDBayesMin{},
+  fCutV0sOnFly{kFALSE},
+  fCutV0srefitTPC{kTRUE},
+  fCutV0srejectKinks{kTRUE},
+  fCutV0sDaughterNumTPCClsMin{0},
+  fCutV0sDaughterNumTPCCrossMin{70},
+  fCutV0sDaughterNumTPCFindMin{1},
+  fCutV0sDaughterNumTPCClsPIDMin{0},
+  fCutV0sDaughterRatioCrossFindMin{0.8},
+  fCutV0sCrossMassRejection{kTRUE},
+  fCutV0sCrossMassCutK0s{0.005},
+  fCutV0sCrossMassCutLambda{0.010},
+  fCutV0sDCAtoPVMin{0.06},
+  fCutV0sDCAtoPVMax{0.0},
+  fCutV0sDCAtoPVzMax{0.0},
+  fCutV0sDCADaughtersMin{0.},
+  fCutV0sDCADaughtersMax{1.0},
+  fCutV0sDecayRadiusMin{0.5},
+  fCutV0sDecayRadiusMax{200.0},
+  fCutV0sDaughterFilterBit{0},
+  fCutV0sDaughterPtMin{0.0},
+  fCutV0sDaughterPtMax{0.0},
+  fCutV0sDaughterEtaMax{0.8},
+  fCutV0sMotherRapMax{0.0},
+  fCutV0sCPAK0sMin{0.97},
+  fCutV0sCPALambdaMin{0.995},
+  fCutV0sNumTauK0sMax{7.46},
+  fCutV0sNumTauLambdaMax{3.8},
+  fCutV0sInvMassK0sMin{0.4},
+  fCutV0sInvMassK0sMax{0.6},
+  fCutV0sInvMassLambdaMin{1.08},
+  fCutV0sInvMassLambdaMax{1.16},
+  fCutV0sArmenterosAlphaK0sMin{0.2},
+  fCutV0sArmenterosAlphaLambdaMax{0.0},
+  fCutV0sK0sPionNumTPCSigmaMax{5.0},
+  fCutV0sLambdaPionNumTPCSigmaMax{5.0},
+  fCutV0sLambdaProtonNumTPCSigmaMax{5.0},
+  fCutPhiInvMassMin{0.99},
+  fCutPhiInvMassMax{1.07},
 
-  // output lists
-  fListFlow(),
-  fQAEvents(),
-  fQACharged(),
-  fQAPID(),
-  fQAV0s(),
-  fQAPhi(),
-  fFlowWeights(),
+  fQAEvents{nullptr},
+  fQACharged{nullptr},
+  fQAPID{nullptr},
+  fQAV0s{nullptr},
+  fQAPhi{nullptr},
+  fFlowWeights{nullptr},
+  fListFlow{nullptr},
 
-  // === Cuts & selection ===
-  // analysis selection
-  fRunMode(kFull),
-  fAnalType(kAOD),
-  fDumpTObjectTable(kFALSE),
-  fSampling(kFALSE),
-  fFillQA(kTRUE),
-
-  // flow related
-  fFlowRFPsPtMin(0.2),
-  fFlowRFPsPtMax(5.0),
-  fFlowPOIsPtMin(0.0),
-  fFlowPOIsPtMax(10.0),
-  fFlowPOIsPtBinNum(0),
-  fFlowEtaMax(0.8),
-  fFlowEtaBinNum(0),
-  fFlowPhiBinNum(100),
-  fNumSamples(1),
-  fFlowWeightsPath(),
-  fFlowFillWeights(kTRUE),
-  fFlowRunByRunWeights(kTRUE),
-  fFlowUseWeights(kFALSE),
-  fFlowUse3Dweights(kFALSE),
-
-  // events selection
-  fPVtxCutZ(10.0),
-  fColSystem(kPPb),
-  fCentEstimator(kV0A),
-  fCentMin(0),
-  fCentMax(0),
-  fCentBinNum(0),
-  fTrigger(AliVEvent::kINT7),
-  fEventRejectAddPileUp(kTRUE),
-
-  // charged tracks selection
-  fCutChargedDCAzMax(0.),
-  fCutChargedDCAxyMax(0.),
-  fCutChargedTrackFilterBit(96),
-  fCutChargedNumTPCclsMin(70),
-
-  // PID tracks selection
-  fCutPIDUseAntiProtonOnly(kFALSE),
-  fCutPIDnSigmaTPCRejectElectron(0.0),
-  fCutPIDnSigmaCombinedTOFrejection(kTRUE),
-  fCutUseBayesPID(kFALSE),
-  fCutPIDnSigmaMax(),
-  fCutPIDBayesMin(),
-
-  // V0s selection
-  fCutV0sOnFly(kFALSE),
-  fCutV0srejectKinks(kTRUE),
-  fCutV0sDaughterNumTPCClsMin(0),
-  fCutV0sDaughterNumTPCCrossMin(70),
-  fCutV0sDaughterNumTPCFindMin(1),
-  fCutV0sDaughterNumTPCClsPIDMin(0),
-  fCutV0sDaughterRatioCrossFindMin(0.8),
-  fCutV0srefitTPC(kTRUE),
-  fCutV0sCrossMassRejection(kTRUE),
-  fCutV0sCrossMassCutK0s(0.005),
-  fCutV0sCrossMassCutLambda(0.010),
-  fCutV0sCPAK0sMin(0.97),
-  fCutV0sCPALambdaMin(0.995),
-  fCutV0sDCAtoPVMin(0.06),
-  fCutV0sDCAtoPVMax(0.),
-  fCutV0sDCAtoPVzMax(0.),
-  fCutV0sDCADaughtersMin(0.),
-  fCutV0sDCADaughtersMax(1.0),
-  fCutV0sDecayRadiusMin(0.5),
-  fCutV0sDecayRadiusMax(200.0),
-  fCutV0sDaughterFilterBit(0),
-  fCutV0sDaughterPtMin(0.),
-  fCutV0sDaughterPtMax(0.),
-  fCutV0sDaughterEtaMax(0.8),
-  fCutV0sMotherRapMax(0.),
-  fCutV0sArmenterosAlphaK0sMin(0.2),
-  fCutV0sArmenterosAlphaLambdaMax(0.),
-  fCutV0sInvMassK0sMin(0.4),
-  fCutV0sInvMassK0sMax(0.6),
-  fCutV0sInvMassLambdaMin(1.08),
-  fCutV0sInvMassLambdaMax(1.16),
-  fCutV0sNumTauK0sMax(7.46),
-  fCutV0sNumTauLambdaMax(3.8),
-  fCutV0sK0sPionNumTPCSigmaMax(5.0),
-  fCutV0sLambdaPionNumTPCSigmaMax(5.0),
-  fCutV0sLambdaProtonNumTPCSigmaMax(5.0),
-
-  // phi selection
-  fCutPhiInvMassMin(0.99),
-  fCutPhiInvMassMax(1.07),
-
-  // === Histograms & profiles ===
-  fhsCandK0s(),
-  fhsCandLambda(),
-  fhsCandPhi(),
-  fhsCandPhiBg(),
-  fh2Weights(),
-  fh3Weights(),
-  fh2AfterWeights(),
-  fh3AfterWeights(),
-
-  // event histograms
-  fhEventSampling(),
-  fhEventCentrality(),
-  fh2EventCentralityNumRefs(),
-  fhEventCounter(),
-  fhQAEventsfMult32vsCentr(),
-  fhQAEventsMult128vsCentr(),
-  fhQAEventsfMultTPCvsTOF(),
-  fhQAEventsfMultTPCvsESD(),
-  fhQAEventsPVz(),
-  fhQAEventsNumContrPV(),
-  fhQAEventsNumSPDContrPV(),
-  fhQAEventsDistPVSPD(),
-  fhQAEventsSPDresol(),
-
-  // charged histogram
-  fhRefsMult(),
-  fhRefsPt(),
-  fhRefsEta(),
-  fhRefsPhi(),
-  fpRefsMult(),
-  fhChargedCounter(),
-  fhQAChargedMult(),
-  fhQAChargedPt(),
-  fhQAChargedEta(),
-  fhQAChargedPhi(),
-  fhQAChargedCharge(),
-  fhQAChargedNumTPCcls(),
-  fhQAChargedDCAxy(),
-  fhQAChargedDCAz(),
-
-  // PID histogram
-  fhMCRecoSelectedPionPt(),
-  fhMCRecoSelectedTruePionPt(),
-  fhMCRecoAllPionPt(),
-  fhMCGenAllPionPt(),
-  fhMCRecoSelectedKaonPt(),
-  fhMCRecoSelectedTrueKaonPt(),
-  fhMCRecoAllKaonPt(),
-  fhMCGenAllKaonPt(),
-  fhMCRecoSelectedProtonPt(),
-  fhMCRecoSelectedTrueProtonPt(),
-  fhMCRecoAllProtonPt(),
-  fhMCGenAllProtonPt(),
-  fhPIDCounter(),
-  fhPIDMult(),
-  fhPIDPt(),
-  fhPIDPhi(),
-  fhPIDEta(),
-  fhPIDCharge(),
-  fh2PIDTPCdEdx(),
-  fh2PIDTPCdEdxDelta(),
-  fh2PIDTOFbeta(),
-  fh2PIDTOFbetaDelta(),
-  fh2PIDBayesElectron(),
-  fh2PIDBayesMuon(),
-  fh2PIDBayesPion(),
-  fh2PIDBayesKaon(),
-  fh2PIDBayesProton(),
-  fh2PIDTPCnSigmaElectron(),
-  fh2PIDTOFnSigmaElectron(),
-  fh2PIDTPCnSigmaMuon(),
-  fh2PIDTOFnSigmaMuon(),
-  fh2PIDTPCnSigmaPion(),
-  fh2PIDTOFnSigmaPion(),
-  fh2PIDTPCnSigmaKaon(),
-  fh2PIDTOFnSigmaKaon(),
-  fh2PIDTPCnSigmaProton(),
-  fh2PIDTOFnSigmaProton(),
-  fhQAPIDTPCstatus(),
-  fhQAPIDTOFstatus(),
-  fhQAPIDTPCdEdx(),
-  fhQAPIDTOFbeta(),
-  fh3QAPIDnSigmaTPCTOFPtPion(),
-  fh3QAPIDnSigmaTPCTOFPtKaon(),
-  fh3QAPIDnSigmaTPCTOFPtProton(),
-
-  // phi histograms
-  fhPhiCounter(),
-  fhPhiMult(),
-  fhPhiBGMult(),
-  fhPhiInvMass(),
-  fhPhiBGInvMass(),
-  fhPhiCharge(),
-  fhPhiBGCharge(),
-  fhPhiPt(),
-  fhPhiEta(),
-  fhPhiPhi(),
-
-  // V0s histogram
-  fhV0sCounter(),
-  fhV0sCounterK0s(),
-  fhV0sCounterLambda(),
-  fhV0sInvMassK0s(),
-  fhV0sInvMassLambda(),
-  fhV0sCompetingInvMassK0s(),
-  fhV0sCompetingInvMassLambda(),
-  fhQAV0sMultK0s(),
-  fhQAV0sMultLambda(),
-  fhQAV0sRecoMethod(),
-  fhQAV0sDCAtoPV(),
-  fhQAV0sDCADaughters(),
-  fhQAV0sDecayRadius(),
-  fhQAV0sDaughterTPCRefit(),
-  fhQAV0sDaughterKinks(),
-  fhQAV0sDaughterNumTPCCls(),
-  fhQAV0sDaughterNumTPCFind(),
-  fhQAV0sDaughterNumTPCCrossRows(),
-  fhQAV0sDaughterTPCCrossFindRatio(),
-  fhQAV0sDaughterNumTPCClsPID(),
-  fhQAV0sDaughterPt(),
-  fhQAV0sDaughterPhi(),
-  fhQAV0sDaughterEta(),
-  fhQAV0sDaughterCharge(),
-  fhQAV0sDaughterTPCdEdxK0s(),
-  fhQAV0sDaughterNumSigmaPionK0s(),
-  fhQAV0sDaughterTPCstatus(),
-  fhQAV0sDaughterTOFstatus(),
-  fhQAV0sDaughterTPCdEdxLambda(),
-  fhQAV0sDaughterNumSigmaPionLambda(),
-  fhQAV0sDaughterNumSigmaProtonLambda(),
-  fhQAV0sDaughterNumSigmaPionALambda(),
-  fhQAV0sDaughterNumSigmaProtonALambda(),
-  fhQAV0sMotherPt(),
-  fhQAV0sMotherPhi(),
-  fhQAV0sMotherEta(),
-  fhQAV0sMotherCharge(),
-  fhQAV0sMotherRapK0s(),
-  fhQAV0sMotherRapLambda(),
-  fhQAV0sInvMassK0s(),
-  fhQAV0sInvMassLambda(),
-  fhQAV0sCPAK0s(),
-  fhQAV0sCPALambda(),
-  fhQAV0sNumTauK0s(),
-  fhQAV0sNumTauLambda(),
-  fhQAV0sArmenterosK0s(),
-  fhQAV0sArmenterosLambda(),
-  fhQAV0sArmenterosALambda()
+  fhsCandK0s{nullptr},
+  fhsCandLambda{nullptr},
+  fhsCandPhi{nullptr},
+  fhsCandPhiBg{nullptr},
+  fh2Weights{nullptr},
+  fh3Weights{nullptr},
+  fh2AfterWeights{nullptr},
+  fh3AfterWeights{nullptr},
+  fhEventSampling{nullptr},
+  fhEventCentrality{nullptr},
+  fh2EventCentralityNumRefs{nullptr},
+  fhEventCounter{nullptr},
+  fhRefsMult{nullptr},
+  fhRefsPt{nullptr},
+  fhRefsEta{nullptr},
+  fhRefsPhi{nullptr},
+  fpRefsMult{nullptr},
+  fhChargedCounter{nullptr},
+  fhPIDCounter{nullptr},
+  fhPIDMult{nullptr},
+  fhPIDPt{nullptr},
+  fhPIDPhi{nullptr},
+  fhPIDEta{nullptr},
+  fhPIDCharge{nullptr},
+  fh2PIDTPCdEdx{nullptr},
+  fh2PIDTPCdEdxDelta{nullptr},
+  fh2PIDTOFbeta{nullptr},
+  fh2PIDTOFbetaDelta{nullptr},
+  fh2PIDBayesElectron{nullptr},
+  fh2PIDBayesMuon{nullptr},
+  fh2PIDBayesPion{nullptr},
+  fh2PIDBayesKaon{nullptr},
+  fh2PIDBayesProton{nullptr},
+  fh2PIDTPCnSigmaElectron{nullptr},
+  fh2PIDTOFnSigmaElectron{nullptr},
+  fh2PIDTPCnSigmaMuon{nullptr},
+  fh2PIDTOFnSigmaMuon{nullptr},
+  fh2PIDTPCnSigmaPion{nullptr},
+  fh2PIDTOFnSigmaPion{nullptr},
+  fh2PIDTPCnSigmaKaon{nullptr},
+  fh2PIDTOFnSigmaKaon{nullptr},
+  fh2PIDTPCnSigmaProton{nullptr},
+  fh2PIDTOFnSigmaProton{nullptr},
+  fhMCRecoSelectedPionPt{nullptr},
+  fhMCRecoSelectedTruePionPt{nullptr},
+  fhMCRecoAllPionPt{nullptr},
+  fhMCGenAllPionPt{nullptr},
+  fhMCRecoSelectedKaonPt{nullptr},
+  fhMCRecoSelectedTrueKaonPt{nullptr},
+  fhMCRecoAllKaonPt{nullptr},
+  fhMCGenAllKaonPt{nullptr},
+  fhMCRecoSelectedProtonPt{nullptr},
+  fhMCRecoSelectedTrueProtonPt{nullptr},
+  fhMCRecoAllProtonPt{nullptr},
+  fhMCGenAllProtonPt{nullptr},
+  fhPhiCounter{nullptr},
+  fhPhiMult{nullptr},
+  fhPhiBGMult{nullptr},
+  fhPhiInvMass{nullptr},
+  fhPhiBGInvMass{nullptr},
+  fhPhiCharge{nullptr},
+  fhPhiBGCharge{nullptr},
+  fhPhiPt{nullptr},
+  fhPhiEta{nullptr},
+  fhPhiPhi{nullptr},
+  fhV0sCounter{nullptr},
+  fhV0sCounterK0s{nullptr},
+  fhV0sCounterLambda{nullptr},
+  fhV0sInvMassK0s{nullptr},
+  fhV0sInvMassLambda{nullptr},
+  fhV0sCompetingInvMassK0s{nullptr},
+  fhV0sCompetingInvMassLambda{nullptr},
+  fhQAEventsPVz{nullptr},
+  fhQAEventsNumContrPV{nullptr},
+  fhQAEventsNumSPDContrPV{nullptr},
+  fhQAEventsDistPVSPD{nullptr},
+  fhQAEventsSPDresol{nullptr},
+  fhQAEventsfMult32vsCentr{nullptr},
+  fhQAEventsMult128vsCentr{nullptr},
+  fhQAEventsfMultTPCvsTOF{nullptr},
+  fhQAEventsfMultTPCvsESD{nullptr},
+  fhQAChargedMult{nullptr},
+  fhQAChargedPt{nullptr},
+  fhQAChargedEta{nullptr},
+  fhQAChargedPhi{nullptr},
+  fhQAChargedCharge{nullptr},
+  fhQAChargedNumTPCcls{nullptr},
+  fhQAChargedDCAxy{nullptr},
+  fhQAChargedDCAz{nullptr},
+  fhQAPIDTPCstatus{nullptr},
+  fhQAPIDTOFstatus{nullptr},
+  fhQAPIDTPCdEdx{nullptr},
+  fhQAPIDTOFbeta{nullptr},
+  fh3QAPIDnSigmaTPCTOFPtPion{nullptr},
+  fh3QAPIDnSigmaTPCTOFPtKaon{nullptr},
+  fh3QAPIDnSigmaTPCTOFPtProton{nullptr},
+  fhQAV0sMultK0s{nullptr},
+  fhQAV0sMultLambda{nullptr},
+  fhQAV0sMultALambda{nullptr},
+  fhQAV0sRecoMethod{nullptr},
+  fhQAV0sDaughterTPCRefit{nullptr},
+  fhQAV0sDaughterKinks{nullptr},
+  fhQAV0sDaughterNumTPCCls{nullptr},
+  fhQAV0sDaughterNumTPCFind{nullptr},
+  fhQAV0sDaughterNumTPCCrossRows{nullptr},
+  fhQAV0sDaughterTPCCrossFindRatio{nullptr},
+  fhQAV0sDaughterNumTPCClsPID{nullptr},
+  fhQAV0sDCAtoPV{nullptr},
+  fhQAV0sDCADaughters{nullptr},
+  fhQAV0sDecayRadius{nullptr},
+  fhQAV0sInvMassK0s{nullptr},
+  fhQAV0sInvMassLambda{nullptr},
+  fhQAV0sMotherPt{nullptr},
+  fhQAV0sMotherPhi{nullptr},
+  fhQAV0sMotherEta{nullptr},
+  fhQAV0sMotherCharge{nullptr},
+  fhQAV0sMotherRapK0s{nullptr},
+  fhQAV0sMotherRapLambda{nullptr},
+  fhQAV0sDaughterPt{nullptr},
+  fhQAV0sDaughterPhi{nullptr},
+  fhQAV0sDaughterEta{nullptr},
+  fhQAV0sDaughterCharge{nullptr},
+  fhQAV0sDaughterTPCstatus{nullptr},
+  fhQAV0sDaughterTOFstatus{nullptr},
+  fhQAV0sDaughterTPCdEdxK0s{nullptr},
+  fhQAV0sDaughterNumSigmaPionK0s{nullptr},
+  fhQAV0sDaughterTPCdEdxLambda{nullptr},
+  fhQAV0sDaughterNumSigmaPionLambda{nullptr},
+  fhQAV0sDaughterNumSigmaProtonLambda{nullptr},
+  fhQAV0sDaughterNumSigmaPionALambda{nullptr},
+  fhQAV0sDaughterNumSigmaProtonALambda{nullptr},
+  fhQAV0sCPAK0s{nullptr},
+  fhQAV0sCPALambda{nullptr},
+  fhQAV0sNumTauK0s{nullptr},
+  fhQAV0sNumTauLambda{nullptr},
+  fhQAV0sArmenterosK0s{nullptr},
+  fhQAV0sArmenterosLambda{nullptr},
+  fhQAV0sArmenterosALambda{nullptr}
 {
   // defining input/output
   DefineInput(0, TChain::Class());
+  if(fFlowUseWeights) { DefineInput(1, TList::Class()); }
   DefineOutput(1, TList::Class());
   DefineOutput(2, TList::Class());
   DefineOutput(3, TList::Class());
@@ -684,7 +628,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name) : AliAnalysisTa
   DefineOutput(13, TList::Class());
   DefineOutput(14, TList::Class());
 }
-//_____________________________________________________________________________
+// ============================================================================
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
 {
   // destructor
@@ -706,7 +650,7 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
     if(fListFlow[iSpec]) delete fListFlow[iSpec];
   }
 
-  for(Size_t i(0); i < fVecFlowTask.size(); ++i) { delete fVecFlowTask.at(i); }
+  for(Size_t i(0); i < fVecCorrTask.size(); ++i) { delete fVecCorrTask.at(i); }
 
   // deleting output lists
   if(fFlowWeights) delete fFlowWeights;
@@ -719,13 +663,12 @@ AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
   DumpTObjTable("Destructor: end");
 
 }
-//_____________________________________________________________________________
-const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species)
+// ============================================================================
+const char* AliAnalysisTaskUniFlow::GetSpeciesName(const PartSpecies species) const
 {
   const char* name;
 
-  switch(species)
-  {
+  switch(species) {
     case kRefs: name = "Refs"; break;
     case kCharged: name = "Charged"; break;
     case kPion: name = "Pion"; break;
@@ -739,13 +682,12 @@ const char* AliAnalysisTaskUniFlow::GetSpeciesName(PartSpecies species)
 
   return name;
 }
-//_____________________________________________________________________________
-const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(PartSpecies species)
+// ============================================================================
+const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(const PartSpecies species) const
 {
   const char* label;
 
-  switch(species)
-  {
+  switch(species) {
     case kRefs: label = "RFP"; break;
     case kCharged: label = "h^{#pm}"; break;
     case kPion: label = "#pi^{#pm}"; break;
@@ -759,8 +701,8 @@ const char* AliAnalysisTaskUniFlow::GetSpeciesLabel(PartSpecies species)
 
   return label;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::ListParameters()
+// ============================================================================
+void AliAnalysisTaskUniFlow::ListParameters() const
 {
   // lists all task parameters
   // *************************************************************
@@ -781,9 +723,11 @@ void AliAnalysisTaskUniFlow::ListParameters()
   printf("      fFlowEtaMax: (Double_t) %g\n",    fFlowEtaMax);
   printf("      fFlowEtaBinNum: (Int_t) %d\n",    fFlowEtaBinNum);
   printf("      fFlowPhiBinNum: (Int_t) %d\n",    fFlowPhiBinNum);
+  printf("      fV0sNumBinsMass: (Int_t) %d\n",    fV0sNumBinsMass);
+  printf("      fPhiNumBinsMass: (Int_t) %d\n",    fPhiNumBinsMass);
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowRunByRunWeights: (Bool_t) %s\n",    fFlowRunByRunWeights ? "kTRUE" : "kFALSE");
-  printf("      fFlowWeightsPath: (TString) '%s' \n",    fFlowWeightsPath.Data());
+  printf("      fFlowUse3Dweights: (Bool_t) %s\n",    fFlowUse3Dweights ? "kTRUE" : "kFALSE");
   printf("   -------- Events ----------------------------------------------\n");
   printf("      fColSystem: (ColSystem) %d\n",    fColSystem);
   printf("      fTrigger: (Short_t) %d\n",    fTrigger);
@@ -848,15 +792,14 @@ void AliAnalysisTaskUniFlow::ListParameters()
 
   return;
 }
-//_____________________________________________________________________________
+// ============================================================================
 void AliAnalysisTaskUniFlow::ClearVectors()
 {
   // Properly clear all particle vectors (if exists)
   // NOTE: should be called at the end of each event & before vectors deleting
   // *************************************************************
 
-  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
-  {
+  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
     if(!fProcessSpec[iSpec]) { continue; }
     std::vector<AliVTrack*>* vector = fVector[iSpec];
     if(!vector) { continue; }
@@ -866,8 +809,8 @@ void AliAnalysisTaskUniFlow::ClearVectors()
 
   return;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::DumpTObjTable(const char* note, Option_t* opt)
+// ============================================================================
+void AliAnalysisTaskUniFlow::DumpTObjTable(const char* note, Option_t* opt) const
 {
   // Skipping if flag is off
   if(!fDumpTObjectTable) { return; }
@@ -878,7 +821,7 @@ void AliAnalysisTaskUniFlow::DumpTObjTable(const char* note, Option_t* opt)
 
   gObjectTable->Print(opt);
 }
-//_____________________________________________________________________________
+// ============================================================================
 Bool_t AliAnalysisTaskUniFlow::InitializeTask()
 {
   // called once on beginning of task (within UserCreateOutputObjects method)
@@ -984,13 +927,13 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // Centraltity // setting default values for centrality estimators
   if(fCentEstimator == kRFP)
   {
-    if(fCentMax == 0) { fCentMax = 200; }
-    if(fCentBinNum == 0) { fCentBinNum = 200; }
+    if(fCentMax < 1) { fCentMax = 200; }
+    if(fCentBinNum < 1) { fCentBinNum = 200; }
   }
   else
   {
-    if(fCentMax == 0) { fCentMax = 100; }
-    if(fCentBinNum == 0) { fCentBinNum = 100; }
+    if(fCentMax < 1) { fCentMax = 100; }
+    if(fCentBinNum < 1) { fCentBinNum = 100; }
   }
 
   if(fCentMin < 0 || fCentMax < 1 || fCentMin > fCentMax)
@@ -1017,15 +960,16 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   }
 
   // checking for weights source file
-  if(fFlowUseWeights && !fFlowWeightsPath.EqualTo(""))
+  if(fFlowUseWeights)
   {
-    fFlowWeightsFile = TFile::Open(Form("%s",fFlowWeightsPath.Data()));
-    if(!fFlowWeightsFile) { AliFatal("Flow weights file not found! Terminating!"); return kFALSE; }
+    if(fFlowUse3Dweights && fFlowFillWeights) { AliFatal("Cannot fill and run with 3D weights at the same time"); return kFALSE; }
+    // BUG currently two pointer arrays overlay with each other, to-be-fixed
+
+    fFlowWeightsList = (TList*) GetInputData(1);
     if(!fFlowRunByRunWeights && !LoadWeights()) { AliFatal("Initial flow weights not loaded! Terminating!"); return kFALSE; }
   }
 
   AliInfo("Preparing particle containers (std::vectors)");
-
   // creating particle vectors & reserving capacity in order to avoid memory re-allocation
   Int_t iReserve = 0;
   switch(fColSystem)
@@ -1053,15 +997,14 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   AliInfo("Initialization succesfull!");
   return kTRUE;
 }
-//_____________________________________________________________________________
+// ============================================================================
 void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 {
   // main method called for each event (event loop)
   // *************************************************************
-  // check if initialization succesfull (done within UserCreateOutputObjects())
-
   DumpTObjTable("UserExec: start");
 
+  // check if initialization succesfull (done within UserCreateOutputObjects())
   if(!fInit) { AliFatal("Something went wrong : task not initialized!"); return; }
 
   // local event counter check: if running in test mode, it runs until the 50 events are succesfully processed
@@ -1088,7 +1031,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fhEventCounter->Fill("Input",1);
 
   // Fill event QA BEFORE cuts
-  if(fFillQA) { FillEventsQA(0); }
+  if(fFillQA) { FillQAEvents(kBefore); }
 
   Bool_t bEventSelected = IsEventSelected();
   // if(!IsEventSelected()) { return; }
@@ -1096,8 +1039,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   DumpTObjTable("UserExec: after event selection");
   if(!bEventSelected) { return; }
 
-  // deprecenated selected by HHTF
-  // if( (fColSystem == kPP || fColSystem == kPPb) && !IsEventSelected_oldsmall2016() ) { return; }
   fhEventCounter->Fill("Event OK",1);
 
   // checking the run number for aplying weights & loading TList with weights
@@ -1132,19 +1073,19 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
 
   // Fill QA AFTER cuts (i.e. only in selected events)
-  if(fFillQA) { FillEventsQA(1); }
+  if(fFillQA) { FillQAEvents(kAfter); }
 
   // filling Charged QA histos
   // NB: for other species done within Filter*(): expection since # of Refs is part of event selection
   for (auto part = fVector[kRefs]->begin(); part != fVector[kRefs]->end(); part++) {
     fhChargedCounter->Fill("Refs",1);
-    if(fFillQA) { FillQARefs(1,static_cast<AliAODTrack*>(*part)); }
+    if(fFillQA) { FillQARefs(kAfter,static_cast<AliAODTrack*>(*part)); }
     if(!FillFlowWeight(*part, kRefs)) { AliFatal("Flow weight filling failed!"); return; }
   }
 
   for (auto part = fVector[kCharged]->begin(); part != fVector[kCharged]->end(); part++) {
     fhChargedCounter->Fill("POIs",1);
-    if(fFillQA) { FillQACharged(1,static_cast<AliAODTrack*>(*part)); } // QA after selection
+    if(fFillQA) { FillQACharged(kAfter,static_cast<AliAODTrack*>(*part)); } // QA after selection
     if(!FillFlowWeight(*part, kCharged)) { AliFatal("Flow weight filling failed!"); return; }
   }
 
@@ -1153,7 +1094,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
     for(Int_t iTrack(0); iTrack < fEventAOD->GetNumberOfTracks(); iTrack++) {
       AliAODTrack* track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
       if(!track) { continue; }
-      FillQACharged(0,track);
+      FillQACharged(kBefore,track);
     }
 
     fhQAChargedMult[0]->Fill(fEventAOD->GetNumberOfTracks());
@@ -1196,7 +1137,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   return;
 }
-//_____________________________________________________________________________
+// ============================================================================
 Bool_t AliAnalysisTaskUniFlow::IsEventSelected()
 {
   // Event selection for pp & p-Pb collision recorded in Run 2 using AliEventCuts
@@ -1221,103 +1162,8 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected()
 
   return kTRUE;
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsEventSelected_oldsmall2016()
-{
-  // Event selection for small system collision recorder in Run 2 year 2016
-  // pp (LHC16kl...), pPb (LHC16rqts)
-  // return kTRUE if event passes all criteria, kFALSE otherwise
-  // *************************************************************
-
-  AliWarning("Using old / deprecenated event selection for small systems!");
-
-  // Physics selection (trigger)
-  AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
-  AliInputEventHandler* inputHandler = (AliInputEventHandler*) mgr->GetInputEventHandler();
-  UInt_t fSelectMask = inputHandler->IsEventSelected();
-  if(!(fSelectMask & fTrigger)) { return kFALSE; }
-
-  // events passing physics selection
-  fhEventCounter->Fill("Physics selection OK",1);
-
-  // primary vertex selection
-  const AliAODVertex* vtx = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertex());
-  if(!vtx || vtx->GetNContributors() < 1)
-    return kFALSE;
-  fhEventCounter->Fill("PV OK",1);
-
-  // SPD vertex selection
-  const AliAODVertex* vtxSPD = dynamic_cast<const AliAODVertex*>(fEventAOD->GetPrimaryVertexSPD());
-
-  Double_t dMaxResol = 0.25; // suggested from DPG
-  Double_t cov[6] = {0};
-  vtxSPD->GetCovarianceMatrix(cov);
-  Double_t zRes = TMath::Sqrt(cov[5]);
-  if ( vtxSPD->IsFromVertexerZ() && (zRes > dMaxResol)) return kFALSE;
-  fhEventCounter->Fill("SPD Vtx OK",1);
-
-  // PileUp rejection included in Physics selection
-  // but with values for high mult pp (> 5 contrib) => for low ones: do manually (> 3 contrib)
-
-  /*
-  if(fTrigger == 0 && fAOD->IsPileupFromSPD(3,0.8) )
-  {
-    return kFALSE;
-  }
-  */
-
-  //fhEventCounter->Fill("Pileup SPD OK",1);
-
-  // pileup rejection from multivertexer
-  AliAnalysisUtils utils;
-  utils.SetMinPlpContribMV(5);
-  utils.SetMaxPlpChi2MV(5);
-  utils.SetMinWDistMV(15);
-  utils.SetCheckPlpFromDifferentBCMV(kFALSE);
-  Bool_t isPileupFromMV = utils.IsPileUpMV(fEventAOD);
-
-  if(isPileupFromMV) return kFALSE;
-  fhEventCounter->Fill("Pileup MV OK",1);
-
-  // if(fRejectOutOfBunchPU) // out-of-bunch rejection (provided by Christian)
-  // {
-  //   //out-of-bunch 11 BC
-  //   if (utils.IsOutOfBunchPileUp(fEventAOD))
-  //   {
-  //     return kFALSE;
-  //   }
-  //   fhEventCounter->Fill("OOBPU OK",1);
-  //
-  //   if (utils.IsSPDClusterVsTrackletBG(fEventAOD))
-  //   {
-  //     return kFALSE;
-  //   }
-  //
-  //   fhEventCounter->Fill("SPDClTrBG OK",1);
-  //
-  //   // SPD pileup
-  //   if (utils.IsPileUpSPD(fEventAOD))
-  //   {
-  //     return kFALSE;
-  //   }
-  //
-  //   fhEventCounter->Fill("SPDPU OK",1);
-  // }
-
-  //fhEventCounter->Fill("Utils OK",1);
-
-  // cutting on PV z-distance
-  const Double_t aodVtxZ = vtx->GetZ();
-  if( TMath::Abs(aodVtxZ) > fPVtxCutZ )
-  {
-    return kFALSE;
-  }
-  fhEventCounter->Fill("PV #it{z} OK",1);
-
-  return kTRUE;
-}
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp() const
 {
   // Check for additional pile-up rejection in Run 2 Pb-Pb collisions (15o, 17n)
   // based on multiplicity correlations
@@ -1402,26 +1248,28 @@ Bool_t AliAnalysisTaskUniFlow::IsEventRejectedAddPileUp()
 
   return kFALSE;
 }
-//_____________________________________________________________________________
+// ============================================================================
 Bool_t AliAnalysisTaskUniFlow::LoadWeights()
 {
   // (Re-) Loading of flow vector weights
   // ***************************************************************************
-  if(!fFlowWeightsFile) { AliError("File with flow weights not found!"); return kFALSE; }
+  if(!fFlowWeightsList) { AliError("Flow weights list not found! Terminating!"); return kFALSE; }
 
-  TList* listFlowWeights = 0x0;
+  TList* listFlowWeights = nullptr;
+
   if(!fFlowRunByRunWeights) {
-    // information about current run is unknown in Initialization(); load only "averaged" weights
-    AliInfo("Loading initial GF weights (run-averaged)");
-    listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
-    if(!listFlowWeights) { AliError("TList with flow weights not found."); return kFALSE; }
+    // loading run-averaged weights
+    listFlowWeights = (TList*) fFlowWeightsList->FindObject("averaged");
+    if(!listFlowWeights) { AliError("TList with flow run-averaged weights not found."); fFlowWeightsList->ls(); return kFALSE; }
   } else {
-    listFlowWeights = (TList*) fFlowWeightsFile->Get(Form("%d",fEventAOD->GetRunNumber()));
+    // loading run-specific weights
+    listFlowWeights = (TList*) fFlowWeightsList->FindObject(Form("%d",fEventAOD->GetRunNumber()));
 
     if(!listFlowWeights) {
+      // run-specific weights not found for this run; loading run-averaged instead
       AliWarning(Form("TList with flow weights (run %d) not found. Using run-averaged weights instead (as a back-up)", fEventAOD->GetRunNumber()));
-      listFlowWeights = (TList*) fFlowWeightsFile->Get("weights");
-      if(!listFlowWeights) { AliError("Loading run-averaged weights failed!"); return kFALSE; }
+      listFlowWeights = (TList*) fFlowWeightsList->FindObject("averaged");
+      if(!listFlowWeights) { AliError("Loading run-averaged weights failed!"); fFlowWeightsList->ls(); return kFALSE; }
     }
   }
 
@@ -1440,8 +1288,8 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
 
   return kTRUE;
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies species)
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(const AliVTrack* track, const PartSpecies species) const
 {
   if(!track) { AliError("Track not exists!"); return kFALSE; }
   if(species == kUnknown) { AliError("Invalid species 'Unknown'!"); return kFALSE; }
@@ -1462,13 +1310,12 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(AliVTrack* track, PartSpecies spec
 
   return kTRUE;
 }
-//_____________________________________________________________________________
-Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, PartSpecies species)
+// ============================================================================
+Double_t AliAnalysisTaskUniFlow::GetFlowWeight(const AliVTrack* track, const PartSpecies species) const
 {
   Double_t dWeight = 1.0;
 
   if(fFlowUse3Dweights) {
-
     Int_t iBin = fh3Weights[species]->FindFixBin(track->Eta(),track->Phi(),fPVz);
     dWeight = fh3Weights[species]->GetBinContent(iBin);
   } else {
@@ -1479,8 +1326,8 @@ Double_t AliAnalysisTaskUniFlow::GetFlowWeight(AliVTrack* track, PartSpecies spe
   if(dWeight <= 0.0) { dWeight = 1.0; }
   return dWeight;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillEventsQA(const Int_t iQAindex)
+// ============================================================================
+void AliAnalysisTaskUniFlow::FillQAEvents(const QAindex iQAindex) const
 {
   // Filling various QA plots related with event selection
   // *************************************************************
@@ -1523,8 +1370,8 @@ void AliAnalysisTaskUniFlow::FillEventsQA(const Int_t iQAindex)
 
   return;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FilterCharged()
+// ============================================================================
+void AliAnalysisTaskUniFlow::FilterCharged() const
 {
   // Filtering input charged tracks for POIs (stored in fVector[kCharged]) or RFPs (fVector[kRefs])
   // If track passes all requirements its pointer is pushed to relevant vector container
@@ -1563,8 +1410,8 @@ void AliAnalysisTaskUniFlow::FilterCharged()
 
   return;
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track) const
 {
   // Selection of charged track
   // returns kTRUE if track pass all requirements, kFALSE otherwise
@@ -1612,8 +1459,8 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track)
   fhChargedCounter->Fill("Selected",1);
   return kTRUE;
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track)
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track) const
 {
   // Checking if (preselected) track fulfills criteria for RFPs
   // NOTE: This is not a standalone selection, but complementary check for IsChargedSelected()
@@ -1625,12 +1472,12 @@ Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track)
 
   return kTRUE;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track)
+// ============================================================================
+void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, const AliVTrack* track) const
 {
   // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
   // *************************************************************
-  if(fRunMode == kSkipFlow || fVecFlowTask.size() < 1) { return; } // no sparse required
+  if(fRunMode == kSkipFlow || fVecCorrTask.size() < 1) { return; } // no sparse required
   if(!sparse) { Error("THnSparse not valid!","FillSparseCand"); return; }
   if(!track) { Error("Track not valid!","FillSparseCand"); return; }
 
@@ -1643,8 +1490,8 @@ void AliAnalysisTaskUniFlow::FillSparseCand(THnSparse* sparse, AliVTrack* track)
 
   return;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillQARefs(const Int_t iQAindex, const AliAODTrack* track)
+// ============================================================================
+void AliAnalysisTaskUniFlow::FillQARefs(const QAindex iQAindex, const AliAODTrack* track) const
 {
   // Filling various QA plots related to RFPs subset of charged track selection
   // *************************************************************
@@ -1658,8 +1505,8 @@ void AliAnalysisTaskUniFlow::FillQARefs(const Int_t iQAindex, const AliAODTrack*
 
   return;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillQACharged(const Int_t iQAindex, const AliAODTrack* track)
+// ============================================================================
+void AliAnalysisTaskUniFlow::FillQACharged(const QAindex iQAindex, const AliAODTrack* track) const
 {
   // Filling various QA plots related to charged track selection
   // *************************************************************
@@ -1695,8 +1542,8 @@ void AliAnalysisTaskUniFlow::FillQACharged(const Int_t iQAindex, const AliAODTra
 
   return;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FilterV0s()
+// ============================================================================
+void AliAnalysisTaskUniFlow::FilterV0s() const
 {
   // Filtering input V0s candidates (K0s, (Anti)Lambda)
   // If track passes all requirements as defined in IsV0sSelected() (and species dependent one)
@@ -1716,7 +1563,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
     AliAODv0* v0 = static_cast<AliAODv0*>(fEventAOD->GetV0(iV0));
     if(!v0) { continue; }
 
-    if(fFillQA) { FillQAV0s(0,v0); } // QA BEFORE selection
+    if(fFillQA) { FillQAV0s(kBefore,v0); } // QA BEFORE selection
 
     if(!IsV0Selected(v0)) { continue; }
 
@@ -1724,7 +1571,7 @@ void AliAnalysisTaskUniFlow::FilterV0s()
     Short_t iIsLambda = IsV0aLambda(v0);
     if(!bIsK0s && iIsLambda == 0) { continue; }
 
-    if(fFillQA) { FillQAV0s(1,v0,bIsK0s,iIsLambda); } // QA AFTER selection
+    if(fFillQA) { FillQAV0s(kAfter,v0,bIsK0s,iIsLambda); } // QA AFTER selection
 
     if(bIsK0s)
     {
@@ -1779,8 +1626,8 @@ void AliAnalysisTaskUniFlow::FilterV0s()
 
   return;
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0) const
 {
   // Topological reconstruction and selection of V0 candidates
   // specific for K0s candidates
@@ -1876,8 +1723,8 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0)
   fhV0sCounterK0s->Fill("Selected",1);
   return kTRUE;
 }
-//_____________________________________________________________________________
-Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
+// ============================================================================
+Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0) const
 {
   // Topological reconstruction and selection of V0 candidates
   // specific for Lambda candidates
@@ -2004,24 +1851,24 @@ Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0)
   if(bIsALambda) { fhV0sCounterLambda->Fill("only #bar{#Lambda}",1); return -1; } // only Anti-Lambda
   return 0;
 }
-//_____________________________________________________________________________
-Double_t AliAnalysisTaskUniFlow::GetRapidity(Double_t mass, Double_t Pt, Double_t Eta)
+// ============================================================================
+Double_t AliAnalysisTaskUniFlow::GetRapidity(const Double_t mass, const Double_t Pt, const Double_t Eta) const
 {
     Double_t rapid = TMath::Log( (TMath::Sqrt(mass*mass + Pt*Pt*TMath::CosH(Eta)*TMath::CosH(Eta)) + Pt*TMath::SinH(Eta)) / TMath::Sqrt(mass*mass + Pt*Pt) );
     return rapid;
 }
-//_____________________________________________________________________________
-AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(Int_t label)
+// ============================================================================
+AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
 {
-  if(!fArrayMC) { AliError("fArrayMC not found!"); return 0x0; }
-  if(label < 0) { /*AliWarning("MC label negative");*/ return 0x0; }
+  if(!fArrayMC) { AliError("fArrayMC not found!"); return nullptr; }
+  if(label < 0) { /*AliWarning("MC label negative");*/ return nullptr; }
 
   AliAODMCParticle* mcTrack = (AliAODMCParticle*) fArrayMC->At(label);
-  if(!mcTrack) { AliError("Corresponding MC track not found!"); return 0x0; }
+  if(!mcTrack) { AliError("Corresponding MC track not found!"); return nullptr; }
   return mcTrack;
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0) const
 {
   // Topological reconstruction and selection of V0 candidates
   // common for both K0s and (Anti)-Lambdas
@@ -2133,8 +1980,8 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0)
   fhV0sCounter->Fill("Common passed",1);
   return kTRUE;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0, const Bool_t bIsK0s, const Int_t bIsLambda)
+// ============================================================================
+void AliAnalysisTaskUniFlow::FillQAV0s(const QAindex iQAindex, const AliAODv0* v0, const Bool_t bIsK0s, const Int_t bIsLambda) const
 {
   // Filling various QA plots related to V0 candidate selection
   // *************************************************************
@@ -2254,7 +2101,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0,
   Float_t numTPCcrossed = 0.0;
 
   // daughters properties
-  AliAODVertex* prodVtxDaughter = 0x0;
+  AliAODVertex* prodVtxDaughter = nullptr;
   for(Short_t i(0); i < 2; i++)
   {
     // TPC refit
@@ -2334,8 +2181,8 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const Int_t iQAindex, const AliAODv0* v0,
 
   return;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FilterPhi()
+// ============================================================================
+void AliAnalysisTaskUniFlow::FilterPhi() const
 {
   // Reconstruction and filtering of Phi meson candidates out of selected Kaon sample
   // If track passes all requirements, the relevant properties (pT, eta, phi) are stored
@@ -2359,7 +2206,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       fhPhiCounter->Fill("Input",1);
 
       // filling QA BEFORE selection
-      if(fFillQA) { FillQAPhi(0,mother); }
+      if(fFillQA) { FillQAPhi(kBefore,mother); }
 
       if(fCutPhiInvMassMin > 0. && mother->M() < fCutPhiInvMassMin) { delete mother; continue; }
       if(fCutPhiInvMassMax > 0. && mother->M() > fCutPhiInvMassMax) { delete mother; continue; }
@@ -2391,7 +2238,7 @@ void AliAnalysisTaskUniFlow::FilterPhi()
       }
 
       // filling QA AFTER selection
-      if(fFillQA) { FillQAPhi(1,mother); }
+      if(fFillQA) { FillQAPhi(kAfter,mother); }
 
     } // endfor {iKaon2} : second kaon
   } // endfor {iKaon1} : first Kaon
@@ -2404,14 +2251,14 @@ void AliAnalysisTaskUniFlow::FilterPhi()
 
   return;
 }
-//____________________________________________________________________
-AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const AliAODTrack* part2)
+// ============================================================================
+AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const AliAODTrack* part2) const
 {
   // Reconstructing mother particle from two prongs and fill its properties.
   // return ptr to created mother particle
   // *************************************************************
 
-  if(!part1 || !part2) return 0x0;
+  if(!part1 || !part2) { return nullptr; }
 
   // combining momenta
   TVector3 mom1 = TVector3( part1->Px(), part1->Py(), part1->Pz() );
@@ -2433,8 +2280,8 @@ AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const
 
   return new AliPicoTrack(mom.Pt(),mom.Eta(),dPhi,iCharge,0,0,0,0,0,0,dMass);
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillQAPhi(const Int_t iQAindex, const AliPicoTrack* part)
+// ============================================================================
+void AliAnalysisTaskUniFlow::FillQAPhi(const QAindex iQAindex, const AliPicoTrack* part) const
 {
   if(!part) return;
 
@@ -2459,8 +2306,8 @@ void AliAnalysisTaskUniFlow::FillQAPhi(const Int_t iQAindex, const AliPicoTrack*
 
   return;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FilterPID()
+// ============================================================================
+void AliAnalysisTaskUniFlow::FilterPID() const
 {
   // Filtering input PID tracks (pi,K,p)
   // If track passes all requirements as defined in IsPIDSelected() (and species dependent),
@@ -2476,7 +2323,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
 
     fhPIDCounter->Fill("Input",1);
 
-    if(fFillQA) { FillQAPID(0,track,kUnknown); } // filling QA for tracks before selection (but after charged criteria applied)
+    if(fFillQA) { FillQAPID(kBefore,track,kUnknown); } // filling QA for tracks before selection (but after charged criteria applied)
 
     // PID track selection (return most favourable species)
     PartSpecies species = IsPIDSelected(track);
@@ -2492,7 +2339,7 @@ void AliAnalysisTaskUniFlow::FilterPID()
     fhPIDCounter->Fill(GetSpeciesName(species),1);
 
     fVector[species]->push_back(track);
-    if(fFillQA) { FillQAPID(1,track,species); } // filling QA for tracks AFTER selection }
+    if(fFillQA) { FillQAPID(kAfter,track,species); } // filling QA for tracks AFTER selection }
 
     if(fProcessSpec[kPion] && fProcessSpec[kKaon] && fProcessSpec[kProton]) { // NB: aka process PID (not just Kaons for Phi)
       if(!FillFlowWeight(track, species)) { AliFatal("Flow weight filling failed!"); return; }
@@ -2537,8 +2384,8 @@ void AliAnalysisTaskUniFlow::FilterPID()
 
   return;
 }
-//_____________________________________________________________________________
-AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const AliAODTrack* track)
+// ============================================================================
+AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const AliAODTrack* track) const
 {
   // Selection of PID tracks (pi,K,p) - track identification
   // Based on fCutUseBayesPID flag, either Bayes PID or nSigma cutting is used
@@ -2574,8 +2421,8 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
     UInt_t iDetUsed = fPIDCombined->ComputeProbabilities(track, fPIDResponse, dProbPID); // filling probabilities to dPropPID array
 
     // check which detector were used
-    Bool_t bUsedTPC = iDetUsed & AliPIDResponse::kDetTPC;
     Bool_t bUsedTOF = iDetUsed & AliPIDResponse::kDetTOF;
+    // Bool_t bUsedTPC = iDetUsed & AliPIDResponse::kDetTPC; // Not checked
     // printf("   Selected: TPC:%d && TOF:%d)\n",bUsedTPC,bUsedTOF);
 
     Double_t dMaxProb = TMath::MaxElement(fPIDNumSpecies,dProbPID);
@@ -2644,8 +2491,8 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
 
   return kUnknown;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* track, const PartSpecies species)
+// ============================================================================
+void AliAnalysisTaskUniFlow::FillQAPID(const QAindex iQAindex, const AliAODTrack* track, const PartSpecies species) const
 {
   // Filling various QA plots related to PID (pi,K,p) track selection
   // *************************************************************
@@ -2765,10 +2612,10 @@ void AliAnalysisTaskUniFlow::FillQAPID(const Int_t iQAindex, const AliAODTrack* 
 
   return;
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
 {
-  if(!task) { AliError("FlowTask does not exists!"); return kFALSE; }
+  if(!task) { AliError("CorrTask does not exists!"); return kFALSE; }
   // task->Print();
 
   Int_t iNumHarm = task->fiNumHarm;
@@ -2807,7 +2654,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
     if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
     Int_t iNumPtBins = axisPt->GetNbins();
 
-    TAxis* axisMass = 0x0;
+    TAxis* axisMass = nullptr;
     Int_t iNumMassBins = 1;
 
     // check for 'massive' species
@@ -2850,10 +2697,10 @@ Bool_t AliAnalysisTaskUniFlow::ProcessFlowTask(FlowTask* task)
 
   return kTRUE;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt, Double_t dMass)
+// ============================================================================
+void AliAnalysisTaskUniFlow::CalculateCorrelations(const CorrTask* const task, const PartSpecies species, const Double_t dPt, const Double_t dMass) const
 {
-  if(!task) { AliError("FlowTask does not exists!"); return; }
+  if(!task) { AliError("CorrTask does not exists!"); return; }
   if(species >= kUnknown) { AliError(Form("Invalid species: %s!", GetSpeciesName(species))); return; }
 
   Bool_t bHasGap = task->HasGap();
@@ -3034,7 +2881,7 @@ void AliAnalysisTaskUniFlow::CalculateCorrelations(FlowTask* task, PartSpecies s
 
   return;
 }
-//_____________________________________________________________________________
+// ============================================================================
 Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
 {
   // main (envelope) method for flow calculations in selected events
@@ -3044,20 +2891,20 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
   // if running in kSkipFlow mode, skip the remaining part
   if(fRunMode == kSkipFlow) { fEventCounter++; return kTRUE; }
 
-  // >>>> Using FlowTask <<<<<
+  // >>>> Using CorrTask <<<<<
 
-  Int_t iNumTasks = fVecFlowTask.size();
+  Int_t iNumTasks = fVecCorrTask.size();
   for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
   {
-    Bool_t process = ProcessFlowTask(fVecFlowTask.at(iTask));
-    if(!process) { AliError("FlowTask processing failed!\n"); fVecFlowTask.at(iTask)->Print(); return kFALSE; }
+    Bool_t process = ProcessCorrTask(fVecCorrTask.at(iTask));
+    if(!process) { AliError("CorrTask processing failed!\n"); fVecCorrTask.at(iTask)->Print(); return kFALSE; }
   }
 
   fEventCounter++; // counter of processed events
 
   return kTRUE;
 }
-//_____________________________________________________________________________
+// ============================================================================
 void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
 {
   // Filling Q flow vector with RFPs
@@ -3137,7 +2984,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
 
   return;
 }
-//_____________________________________________________________________________
+// ============================================================================
 Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
 {
   // Filling p,q and s flow vectors with POIs (given by species) for differential flow calculation
@@ -3251,7 +3098,7 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
    } // endfor {tracks}
    return iTracksFilled;
 }
-//_____________________________________________________________________________
+// ============================================================================
 void AliAnalysisTaskUniFlow::ResetFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
 {
   // Reset RFPs (Q) array values to TComplex(0,0,kFALSE) for given array
@@ -3263,8 +3110,8 @@ void AliAnalysisTaskUniFlow::ResetFlowVector(TComplex (&array)[fFlowNumHarmonics
   }
   return;
 }
-//_____________________________________________________________________________
-void AliAnalysisTaskUniFlow::ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax])
+// ============================================================================
+void AliAnalysisTaskUniFlow::ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]) const
 {
   // List all values of given flow vector TComplex array
   // *************************************************************
@@ -3280,8 +3127,8 @@ void AliAnalysisTaskUniFlow::ListFlowVector(TComplex (&array)[fFlowNumHarmonicsM
   }
   return;
 }
-//_____________________________________________________________________________
-Int_t AliAnalysisTaskUniFlow::GetSamplingIndex()
+// ============================================================================
+Int_t AliAnalysisTaskUniFlow::GetSamplingIndex() const
 {
   // Assessing sampling index based on generated random number
   // returns centrality index
@@ -3300,8 +3147,8 @@ Int_t AliAnalysisTaskUniFlow::GetSamplingIndex()
 
   return index;
 }
-//_____________________________________________________________________________
-Int_t AliAnalysisTaskUniFlow::GetCentralityIndex()
+// ============================================================================
+Int_t AliAnalysisTaskUniFlow::GetCentralityIndex() const
 {
   // Estimating centrality percentile based on selected estimator.
   // (Default) If no multiplicity estimator is specified, percentile is estimated as number of selected / filtered charged tracks (NRFP).
@@ -3330,14 +3177,12 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex()
 
   return iCentralityIndex;
 }
-//_____________________________________________________________________________
-const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(CentEst est)
+// ============================================================================
+const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(const CentEst est) const
 {
   // Return string with estimator name or 'n/a' if not available
   // *************************************************************
-
-  switch (est)
-  {
+  switch (est) {
     case kRFP: return "N_{RFP}";
     case kV0A: return "V0A";
     case kV0C: return "V0C";
@@ -3350,8 +3195,8 @@ const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(CentEst est)
   }
   return "n/a";
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTPC(const AliAODTrack* track)
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTPC(const AliAODTrack* track) const
 {
   // Checks if the track has ok PID information from TPC
   // *************************************************************
@@ -3359,8 +3204,8 @@ Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTPC(const AliAODTrack* track)
   AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, track);
   return (pidStatusTPC == AliPIDResponse::kDetPidOk);
 }
-//_____________________________________________________________________________
-Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTOF(const AliAODTrack* track)
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTOF(const AliAODTrack* track) const
 {
   // Checks if the track has ok PID information from TOF
   // *************************************************************
@@ -3368,7 +3213,7 @@ Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTOF(const AliAODTrack* track)
   AliPIDResponse::EDetPidStatus pidStatusTOF = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTOF, track);
   return ((pidStatusTOF == AliPIDResponse::kDetPidOk) && (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME));
 }
-//_____________________________________________________________________________
+// ============================================================================
 void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
 {
   // called on end of task, after all events are processed
@@ -3376,114 +3221,115 @@ void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
   AliAnalysisTaskSE::Terminate(option);
   return;
 }
-//_____________________________________________________________________________
+// ============================================================================
 // Set of methods returning given complex flow vector based on flow harmonics (n) and weight power indexes (p)
 // a la General Framework implementation.
 // Q: flow vector of RFPs (with/out eta gap)
 // P: flow vector of POIs (with/out eta gap) (in usual notation p)
 // S: flow vector of overlaping RFPs and POIs (in usual notation q)
 
-TComplex AliAnalysisTaskUniFlow::Q(const Int_t n, const Int_t p)
+TComplex AliAnalysisTaskUniFlow::Q(const Int_t n, const Int_t p) const
 {
   if (n < 0) return TComplex::Conjugate(fFlowVecQpos[-n][p]);
   else return fFlowVecQpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::QGapPos(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::QGapPos(const Int_t n, const Int_t p) const
 {
   if (n < 0) return TComplex::Conjugate(fFlowVecQpos[-n][p]);
   else return fFlowVecQpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::QGapNeg(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::QGapNeg(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecQneg[-n][p]);
   else return fFlowVecQneg[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::QGapMid(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::QGapMid(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecQmid[-n][p]);
   else return fFlowVecQmid[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::P(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::P(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecPpos[-n][p]);
   else return fFlowVecPpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::PGapPos(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::PGapPos(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecPpos[-n][p]);
   else return fFlowVecPpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::PGapNeg(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::PGapNeg(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecPneg[-n][p]);
   else return fFlowVecPneg[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::S(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::S(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecSpos[-n][p]);
   else return fFlowVecSpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::SGapPos(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::SGapPos(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecSpos[-n][p]);
   else return fFlowVecSpos[n][p];
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::SGapNeg(const Int_t n, const Int_t p)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::SGapNeg(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecSneg[-n][p]);
   else return fFlowVecSneg[n][p];
 }
-//____________________________________________________________________
+// ============================================================================
 
 // Set of flow calculation methods for cumulants of different orders with/out eta gap
 
-TComplex AliAnalysisTaskUniFlow::Two(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::Two(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = Q(n1,1)*Q(n2,1) - Q(n1+n2,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::TwoGap(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoGap(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = QGapPos(n1,1)*QGapNeg(n2,1);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::TwoDiff(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoDiff(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = P(n1,1)*Q(n2,1) - S(n1+n2,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::TwoDiffGapPos(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoDiffGapPos(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = PGapPos(n1,1)*QGapNeg(n2,1);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::TwoDiffGapNeg(const Int_t n1, const Int_t n2)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoDiffGapNeg(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = PGapNeg(n1,1)*QGapPos(n2,1);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::Three(const Int_t n1, const Int_t n2, const Int_t n3)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::Three(const Int_t n1, const Int_t n2, const Int_t n3) const
 {
   TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)-Q(n1+n2,2)*Q(n3,1)-Q(n2,1)*Q(n1+n3,2)
  		                 - Q(n1,1)*Q(n2+n3,2)+2.*Q(n1+n2+n3,3);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::Four(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::Four(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = Q(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-Q(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*Q(n1+n3,2)*Q(n4,1)
                     - Q(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.0*Q(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*Q(n1+n4,2)
@@ -3492,41 +3338,41 @@ TComplex AliAnalysisTaskUniFlow::Four(const Int_t n1, const Int_t n2, const Int_
                     + 2.0*Q(n2,1)*Q(n1+n3+n4,3)+2.0*Q(n1,1)*Q(n2+n3+n4,3)-6.0*Q(n1+n2+n3+n4,4);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::FourGap(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::FourGap(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = QGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)-QGapPos(n1+n2,2)*QGapNeg(n3,1)*QGapNeg(n4,1)
                     -QGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3+n4,2)+QGapPos(n1+n2,2)*QGapNeg(n3+n4,2);
 	return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::Four3sub(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::Four3sub(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   // left = neg, middle = mid; rigth = pos
   TComplex formula = QGapMid(n1,1)*QGapMid(n2,1)*QGapNeg(n3,1)*QGapPos(n4,1)-QGapMid(n1+n2,2)*QGapNeg(n3,1)*QGapPos(n4,1);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::ThreeDiff(const Int_t n1, const Int_t n2, const Int_t n3)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::ThreeDiff(const Int_t n1, const Int_t n2, const Int_t n3) const
 {
   TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)-S(n1+n2,2)*Q(n3,1)-S(n1+n3,2)*Q(n2,1)
  		                 - P(n1,1)*Q(n2+n3,2)+2.0*S(n1+n2+n3,3);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::ThreeDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::ThreeDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3) const
 {
   TComplex formula = PGapPos(n1,1)*QGapNeg(n2,1)*QGapNeg(n3,1) - PGapPos(n1,1)*QGapNeg(n2+n3,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::ThreeDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::ThreeDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3) const
 {
   TComplex formula = PGapNeg(n1,1)*QGapPos(n2,1)*QGapPos(n3,1) - PGapNeg(n1,1)*QGapPos(n2+n3,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::FourDiff(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::FourDiff(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = P(n1,1)*Q(n2,1)*Q(n3,1)*Q(n4,1)-S(n1+n2,2)*Q(n3,1)*Q(n4,1)-Q(n2,1)*S(n1+n3,2)*Q(n4,1)
                     - P(n1,1)*Q(n2+n3,2)*Q(n4,1)+2.0*S(n1+n2+n3,3)*Q(n4,1)-Q(n2,1)*Q(n3,1)*S(n1+n4,2)
@@ -3535,8 +3381,8 @@ TComplex AliAnalysisTaskUniFlow::FourDiff(const Int_t n1, const Int_t n2, const 
                     + 2.0*Q(n2,1)*S(n1+n3+n4,3)+2.0*P(n1,1)*Q(n2+n3+n4,3)-6.0*S(n1+n2+n3+n4,4);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::FourDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::FourDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = PGapPos(n1,1)*QGapPos(n2,1)*QGapNeg(n3,1)*QGapNeg(n4,1)
                       - SGapPos(n1+n2,2)*QGapNeg(n3,1)*QGapNeg(n4,1)
@@ -3544,8 +3390,8 @@ TComplex AliAnalysisTaskUniFlow::FourDiffGapPos(const Int_t n1, const Int_t n2, 
                       + SGapPos(n1+n2,2)*QGapNeg(n3+n4,2);
   return formula;
 }
-//____________________________________________________________________
-TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4)
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4) const
 {
   TComplex formula = PGapNeg(n1,1)*QGapNeg(n2,1)*QGapPos(n3,1)*QGapPos(n4,1)
                       - SGapNeg(n1+n2,2)*QGapPos(n3,1)*QGapPos(n4,1)
@@ -3553,7 +3399,7 @@ TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Int_t n1, const Int_t n2, 
                       + SGapNeg(n1+n2,2)*QGapPos(n3+n4,2);
   return formula;
 }
-//____________________________________________________________________
+// ============================================================================
 void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 {
   // create output objects
@@ -3597,14 +3443,14 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   // setting number of bins based on set range with fixed width
   const Int_t iFlowRFPsPtBinNum = (Int_t) ((fFlowRFPsPtMax - fFlowRFPsPtMin) / 0.1 + 0.5);
 
-  // creating output correlations profiles based on FlowTasks
-  Int_t iNumTasks = fVecFlowTask.size();
+  // creating output correlations profiles based on CorrTasks
+  Int_t iNumTasks = fVecCorrTask.size();
   if(fRunMode != kSkipFlow && iNumTasks > 0)
   {
     for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
     {
-      FlowTask* task = fVecFlowTask.at(iTask);
-      if(!task) { fInit = kFALSE; AliError(Form("FlowTask %d does not exists\n",iTask)); return; }
+      CorrTask* task = fVecCorrTask.at(iTask);
+      if(!task) { fInit = kFALSE; AliError(Form("CorrTask %d does not exists\n",iTask)); return; }
 
       Bool_t bHasGap = task->HasGap();
       const char* corName = task->fsName.Data();
@@ -3612,7 +3458,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
       for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
       {
-        // check if FlowTask should be done for all flow particles (RFP/POI/Both)
+        // check if CorrTask should be done for all flow particles (RFP/POI/Both)
         if(!task->fbDoRefs && iSpec == kRefs) { continue; }
         if(!task->fbDoPOIs && iSpec != kRefs) { continue; }
 
@@ -3624,8 +3470,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
           if(iSample > 0 && !fSampling) { break; }
           if(iSample > 0 && HasMass(PartSpecies(iSpec))) { break; } // reconstructed are not sampled
 
-          TH1* profile = 0x0;
-          TH1* profileNeg = 0x0;
+          TH1* profile = nullptr;
+          TH1* profileNeg = nullptr;
 
           switch(iSpec)
           {
@@ -3671,7 +3517,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
           // check if same profile does not exists already
           if(fListFlow[iSpec]->FindObject(profile->GetName())) {
-            AliError(Form("FlowTask %d : Profile '%s' already exists! Please check run macro for FlowTask duplicates!",iTask,profile->GetName()));
+            AliError(Form("CorrTask %d : Profile '%s' already exists! Please check run macro for CorrTask duplicates!",iTask,profile->GetName()));
             fInit = kFALSE;
             task->Print();
             delete profile;
@@ -3687,7 +3533,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
             // same for Neg
             if(fListFlow[iSpec]->FindObject(profileNeg->GetName())) {
-              AliError(Form("FlowTask %d : Profile '%s' already exists! Please check run macro for FlowTask duplicates!",iTask,profile->GetName()));
+              AliError(Form("CorrTask %d : Profile '%s' already exists! Please check run macro for CorrTask duplicates!",iTask,profile->GetName()));
               fInit = kFALSE;
               task->Print();
               delete profileNeg;
@@ -3743,7 +3589,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       fhsCandPhiBg->Sumw2();
       fListFlow[kPhi]->Add(fhsCandPhiBg);
     }
-  } // end-if {fRunMode != fSkipFlow || iNumFlowTask > 0 }
+  } // end-if {fRunMode != fSkipFlow || iNumCorrTask > 0 }
 
   // creating GF weights
   if(fFlowFillWeights || fFlowUseWeights)
@@ -3971,8 +3817,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     } // end-if {fProcessSpec[kK0s] || fProcessSpec[kLambda]}
 
     // ####  Selection QA (2-step)
-    TString sQAindex[fiNumIndexQA] = {"Before", "After"};
-    for(Int_t iQA(0); iQA < fiNumIndexQA; ++iQA)
+    TString sQAindex[QAindex::kNumQA] = {"Before", "After"};
+    for(Int_t iQA(0); iQA < Int_t(QAindex::kNumQA); ++iQA)
     {
       // EVENTs QA histograms
       fhQAEventsPVz[iQA] = new TH1D(Form("fhQAEventsPVz_%s",sQAindex[iQA].Data()), "QA Events: PV-#it{z}", 101,-50,50);

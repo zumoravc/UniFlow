@@ -2,82 +2,34 @@
 /* See cxx source for full Copyright notice */
 /* $Id$ */
 
-#ifndef AliAnalysisTaskUniFlow_H
-#define AliAnalysisTaskUniFlow_H
+#ifndef ALIANALYSISTASKUNIFLOW_H
+#define ALIANALYSISTASKUNIFLOW_H
 
 #include "AliAnalysisTaskSE.h"
 #include "AliEventCuts.h"
-#include "AliPicoTrack.h"
+#include "THnSparse.h"
 
-struct FlowTask
-{
-  Bool_t                fbDoRefs; // which particles are procesed (RFPs / POIs / both )
-  Bool_t                fbDoPOIs; // which particles are procesed (RFPs / POIs / both )
-  Int_t                 fiNumHarm; // correlation order <M>
-  Int_t                 fiNumGaps; // number of subevents
-  std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
-  std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
-  TString               fsName; // automatically generated name: see Init() for format
-  TString               fsLabel; // automatically generated label see Init() for format
+class TString;
+class TComplex;
+class TFile;
+class TList;
+class TClonesArray;
+class TProfile;
+class TH1D;
+class TH2D;
+class TH3D;
 
+class AliPIDResponse;
+class AliPIDCombined;
+class AliVEvent;
+class AliAODEvent;
+class AliVTrack;
+class AliAODTrack;
+class AliPicoTrack;
+class AliAODv0;
+class AliAODMCParticle;
 
-              FlowTask() : fbDoRefs(kTRUE), fbDoPOIs(kTRUE), fiNumHarm(0), fiNumGaps(0), fsName("DummyName"), fsLabel("DummyLabel") {}; // default ctor
-              FlowTask(Bool_t refs, Bool_t pois, std::vector<Int_t> harm, std::vector<Double_t> gaps = std::vector<Double_t>()) { fbDoRefs = refs; fbDoPOIs = pois; fiHarm = harm; fdGaps = gaps; fiNumHarm = harm.size(); fiNumGaps = gaps.size(); Init(); } // actual ctor
-              ~FlowTask() { fiHarm.clear(); fdGaps.clear(); }
-  void        Init(); // initialization
-  void        Print(); // print FlowTask properties
-  Bool_t      HasGap() { return (Bool_t) fiNumGaps; }; // check if Gap
-};
 //_____________________________________________________________________________
-void FlowTask::Init()
-{
-  // Initilization of FlowTask
-
-  if(fiNumHarm < 2)
-  {
-    fsName = "NA";
-    fsLabel = "NA";
-    return;
-  }
-
-  // generating name
-  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
-  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
-  sName += ")";
-
-  if(fiNumGaps > 0)
-  {
-    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
-    sName += ")";
-  }
-
-  // generating label
-  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
-  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
-  sLabel += "}";
-
-  if(fiNumGaps > 0)
-  {
-    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
-    sLabel += ")";
-  }
-
-  fsName = sName;
-  fsLabel = sLabel;
-}
-//_____________________________________________________________________________
-void FlowTask::Print()
-{
-  printf("FlowTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
-  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
-  printf("} | fgGaps[%d] = { ",fiNumGaps);
-  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
-  printf("}\n");
-}
-//_____________________________________________________________________________
-
 
 class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 {
@@ -88,10 +40,36 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       enum    CentEst {kRFP = 0, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity/centrality estimator as AliMultSelection
       enum    PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest; NB: kUknown last as counter
       enum    SparseCand {kInvMass = 0, kCent, kPt, kEta, kDim}; // reconstructed candidates dist. dimensions
+      enum    QAindex { kBefore = 0, kAfter, kNumQA}; // index for filling QA status
+
+      class CorrTask
+      {
+        public:
+                      CorrTask(); // default ctor
+                      CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::vector<Int_t> harms, std::vector<Double_t> gaps = std::vector<Double_t>()); // actual ctor
+                      ~CorrTask() { fiHarm.clear(); fdGaps.clear(); }
+
+          Bool_t      HasGap() const { return (Bool_t) fiNumGaps; }; // check if Gap
+          void        Print() const; // print CorrTask properties
+
+          Bool_t                fbDoRefs; // which particles are procesed (RFPs / POIs / both )
+          Bool_t                fbDoPOIs; // which particles are procesed (RFPs / POIs / both )
+          Int_t                 fiNumHarm; // correlation order <M>
+          Int_t                 fiNumGaps; // number of subevents
+          std::vector<Int_t>    fiHarm; // harmonics n1,n2,...,nM
+          std::vector<Double_t> fdGaps; // gaps between subevents (standard GF notation)
+          TString               fsName; // automatically generated name: see Init() for format
+          TString               fsLabel; // automatically generated label see Init() for format
+        protected:
+        private:
+      };
 
                               AliAnalysisTaskUniFlow(); // constructor
-                              AliAnalysisTaskUniFlow(const char *name); // named (primary) constructor
+                              AliAnalysisTaskUniFlow(const char *name, ColSystem colSys, Bool_t bUseWeights = kFALSE); // named (primary) constructor
+                              AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
+                              AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
       virtual                 ~AliAnalysisTaskUniFlow(); // destructor
+
 
       virtual void            UserCreateOutputObjects(); //
       virtual void            UserExec(Option_t* option); // main methond - called for each event
@@ -108,22 +86,24 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetProcessV0s(Bool_t use = kTRUE) { fProcessSpec[kK0s] = use; fProcessSpec[kLambda] = use; }
       void                    SetProcessPhi(Bool_t use = kTRUE) { fProcessSpec[kPhi] = use; }
       // flow related setters
-      void                    AddTwo(Int_t n1, Int_t n2, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2})); }
-      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2}, {gap})); }
-      void                    AddThree(Int_t n1, Int_t n2, Int_t n3, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3})); }
-      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3} ,{gap})); }
-      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4})); }
-      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { fVecFlowTask.push_back(new FlowTask(refs, pois, {n1,n2,n3,n4}, {gap})); }
+      void                    AddCorr(std::vector<Int_t> harms, std::vector<Double_t> gaps = std::vector<Double_t>(), Bool_t doRFPs = kTRUE, Bool_t doPOIs = kTRUE) { fVecCorrTask.push_back(new CorrTask(doRFPs, doPOIs, harms, gaps)); }
+      void                    AddTwo(Int_t n1, Int_t n2, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2},{},refs,pois); }
+      void                    AddTwoGap(Int_t n1, Int_t n2, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2},{gap},refs,pois); }
+      void                    AddThree(Int_t n1, Int_t n2, Int_t n3, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2,n3},{},refs,pois); }
+      void                    AddThreeGap(Int_t n1, Int_t n2, Int_t n3, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2,n3},{gap},refs,pois); }
+      void                    AddFour(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2,n3,n4},{},refs,pois); }
+      void                    AddFourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4, Double_t gap, Bool_t refs = kTRUE, Bool_t pois = kTRUE) { AddCorr({n1,n2,n3,n4},{gap},refs,pois); }
 
       void                    SetFlowRFPsPt(Double_t min, Double_t max) { fFlowRFPsPtMin = min; fFlowRFPsPtMax = max; }
       void                    SetFlowPOIsPt(Double_t min, Double_t max, Int_t bins = 0) { fFlowPOIsPtMin = min; fFlowPOIsPtMax = max; fFlowPOIsPtBinNum = bins; }
       void                    SetFlowEta(Double_t max, Int_t bins = 0) { fFlowEtaMax = max; fFlowEtaBinNum = bins; }
       void                    SetFlowPhiBins(Int_t bins) { fFlowPhiBinNum = bins; }
+      void                    SetV0sMassBins(Int_t bins) { fV0sNumBinsMass = bins; }
+      void                    SetPhiMassBins(Int_t bins) { fPhiNumBinsMass = bins; }
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
-      void                    SetUseWeigthsFile(const char* file, Bool_t bRunByRun) { fFlowWeightsPath = file; fFlowRunByRunWeights = bRunByRun; fFlowUseWeights = kTRUE; } //! NOTE file has to include "alien:///" if the file is on grid
+      void                    SetUseWeigthsRunByRun(Bool_t bRunByRun = kTRUE) { fFlowRunByRunWeights = bRunByRun; }
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
-      void                    SetCollisionSystem(ColSystem colSystem = kPP) { fColSystem = colSystem; }
       void                    SetCentrality(CentEst est, Int_t min = 0, Int_t max = 0, Int_t bins = 0) { fCentEstimator = est; fCentMin = min; fCentMax = max; fCentBinNum = bins; }
       void                    SetTrigger(AliVEvent::EOfflineTriggerTypes trigger) { fTrigger = trigger; }
       void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
@@ -185,11 +165,94 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void					          SetPhiInvMassMin(Double_t mass) { fCutPhiInvMassMin = mass; }
       void					          SetPhiInvMassMax(Double_t mass) { fCutPhiInvMassMax = mass; }
 
-
-      AliEventCuts fEventCuts; //
+      AliEventCuts            fEventCuts; //
 
     private:
-      std::vector<FlowTask*>  fVecFlowTask; //
+      static const Int_t      fPIDNumSpecies = 5; // Number of considered species for PID
+      static const Int_t      fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
+      static const Int_t      fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
+
+      const char*             GetSpeciesName(PartSpecies species) const;
+      const char*             GetSpeciesLabel(PartSpecies species) const;
+      const char*             GetEtaGapName(Double_t dEtaGap) const { return Form("%02.2g",10.0*dEtaGap); }
+
+      Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
+      Bool_t                  LoadWeights(); // load weights histograms
+      Bool_t                  FillFlowWeight(const AliVTrack* track, PartSpecies species) const; // fill distribution for per-particle flow weight
+      Double_t                GetFlowWeight(const AliVTrack* track, PartSpecies species) const; // extract per-particle flow weight from input file
+      void                    ListParameters() const; // list all task parameters
+      void                    ClearVectors(); // properly clear all particle vectors
+      void                    DumpTObjTable(const char* note, Option_t* opt = "") const; // add a printf statmenet given by note followed by gObjTable->Print() dump
+
+      Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
+      Bool_t                  IsEventRejectedAddPileUp() const; // additional pile-up rejection for Run2 Pb-Pb
+      Int_t                   GetSamplingIndex() const; // returns sampling index based on sampling selection (number of samples)
+      Int_t                   GetCentralityIndex() const; // returns centrality index based centrality estimator or number of selected tracks
+      const char*             GetCentEstimatorLabel(CentEst est) const; // returns mult/cent estimator string with label or 'n/a' if not available
+
+      void                    CalculateCorrelations(const CorrTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0) const; // wrapper for correlations methods
+      Bool_t                  ProcessCorrTask(const CorrTask* task); // procesisng of CorrTask
+      Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
+
+      void                    FilterCharged() const; // charged tracks filtering
+      void                    FilterPID() const; // pi,K,p filtering
+      void                    FilterV0s() const; // K0s, Lambda, ALambda filtering
+      void                    FilterPhi() const; // reconstruction and filtering of Phi meson candidates
+
+      AliAODMCParticle*       GetMCParticle(Int_t label) const; // find corresponding MC particle from fArrayMC depending of AOD track label
+      Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta) const; // calculate particle / track rapidity
+      Bool_t                  HasMass(PartSpecies spec) const { return (spec == kK0s || spec == kLambda || spec == kPhi); }
+      Bool_t                  HasTrackPIDTPC(const AliAODTrack* track) const; // is TPC PID OK for this track ?
+      Bool_t                  HasTrackPIDTOF(const AliAODTrack* track) const; // is TOF PID OK for this track ?
+      Bool_t                  IsWithinRefs(const AliAODTrack* track) const; // check if track fulfill requirements for Refs (used for refs selection & autocorelations)
+      Bool_t                  IsChargedSelected(const AliAODTrack* track) const; // charged track selection
+      PartSpecies             IsPIDSelected(const AliAODTrack* track) const; // PID tracks selections
+      Bool_t                  IsV0Selected(const AliAODv0* v0) const; // general (common) V0 selection
+      Bool_t                  IsV0aK0s(const AliAODv0* v0) const; // V0 selection: K0s specific
+      Int_t                   IsV0aLambda(const AliAODv0* v0) const; // V0 selection: (A)Lambda specific
+      AliPicoTrack*           MakeMother(const AliAODTrack* part1, const AliAODTrack* part2) const; // Combine two prongs into a mother particle stored in AliPicoTrack object
+      void                    FillSparseCand(THnSparse* sparse, const AliVTrack* track) const; // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
+      void                    FillQAEvents(QAindex iQAindex) const; // filling QA plots related to event selection
+      void                    FillQARefs(QAindex iQAindex, const AliAODTrack* track) const; // filling QA plots for RFPs selection
+      void                    FillQACharged(QAindex iQAindex, const AliAODTrack* track) const; // filling QA plots for charged track selection
+      void                    FillQAPID(QAindex iQAindex, const AliAODTrack* track, PartSpecies species) const; // filling pi,K,p QA histograms
+      void                    FillQAV0s(QAindex iQAindex, const AliAODv0* v0, Bool_t bIsK0s = kTRUE, Int_t bIsLambda = 2) const; // filling QA plots for V0s candidates
+      void                    FillQAPhi(QAindex iQAindex, const AliPicoTrack* part) const; // filling QA plots for V0s candidates
+
+      // Flow related methods
+      void                    FillRefsVectors(Double_t dGap); // fill flow vector Q with RFPs for reference flow
+      Int_t                   FillPOIsVectors(Double_t dEtaGap, PartSpecies species, Double_t dPtLow, Double_t dPtHigh, Double_t dMassLow = 0.0, Double_t dMassHigh = 0.0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
+      void                    ResetFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
+      void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]) const; // printf all values of given Flow vector array
+
+      TComplex                Q(Int_t n, Int_t p) const;
+      TComplex                QGapPos(Int_t n, Int_t p) const;
+      TComplex                QGapNeg(Int_t n, Int_t p) const;
+      TComplex                QGapMid(Int_t n, Int_t p) const;
+      TComplex                P(Int_t n, Int_t p) const;
+      TComplex                PGapPos(Int_t n, Int_t p) const;
+      TComplex                PGapNeg(Int_t n, Int_t p) const;
+      TComplex                S(Int_t n, Int_t p) const;
+      TComplex                SGapPos(Int_t n, Int_t p) const;
+      TComplex                SGapNeg(Int_t n, Int_t p) const;
+
+      TComplex                Two(Int_t n1, Int_t n2) const; // Two particle reference correlation calculations (no eta gap)
+      TComplex                TwoGap(Int_t n1, Int_t n2) const; // Two particle reference correlation calculations (with eta gap)
+      TComplex                Three(Int_t n1, Int_t n2, Int_t n3) const; // Three particle reference correlation calculations (no eta gap)
+      TComplex                Four(Int_t n1, Int_t n2, Int_t n3, Int_t n4) const; // Four particle reference correlation calculations (no eta gap)
+      TComplex                FourGap(Int_t n1, Int_t n2, Int_t n3, Int_t n4) const; // Four particle reference correlation calculations (no eta gap)
+      TComplex                Four3sub(Int_t n1, Int_t n2, Int_t n3, Int_t n4) const; // Four particle reference correlation calculations (with 3 sub-events)
+
+      TComplex                TwoDiff(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (no eta gap)
+      TComplex                TwoDiffGapPos(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (with eta gap)
+      TComplex                TwoDiffGapNeg(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (with eta gap)
+      TComplex                ThreeDiff(Int_t n1, Int_t n2, Int_t n3) const; // Three particle diff. correlation calculations (no eta gap)
+      TComplex                ThreeDiffGapPos(Int_t n1, Int_t n2, Int_t n3) const; // Three particle diff. correlation calculations (with eta gap)
+      TComplex                ThreeDiffGapNeg(Int_t n1, Int_t n2, Int_t n3) const; // Three particle diff. correlation calculations (with eta gap)
+      TComplex                FourDiff(Int_t n1, Int_t n2, Int_t n3, Int_t n4) const; // Four particle reference correlation calculations (no eta gap)
+      TComplex                FourDiffGapPos(Int_t n1, Int_t n2, Int_t n3, Int_t n4) const; // Four particle reference correlation calculations (with eta gap)
+      TComplex                FourDiffGapNeg(Int_t n1, Int_t n2, Int_t n3, Int_t n4) const; // Four particle reference correlation calculations (with eta gap)
+
       // array lenghts & constants
       const Double_t          fPDGMassPion; // [DPGMass] DPG mass of charged pion
       const Double_t          fPDGMassKaon; // [DPGMass] DPG mass of charged kaon
@@ -197,101 +260,12 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
       const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
       const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
-      static const Int_t      fPIDNumSpecies = 5; // Number of considered species for PID
-      static const Int_t      fFlowNumHarmonicsMax = 7; // maximum harmonics length of flow vector array
-      static const Int_t      fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
-      static const Int_t      fV0sNumBinsMass = 60; // number of InvMass bins for V0s distribution
-      static const Int_t      fPhiNumBinsMass = 60; // number of InvMass bins for phi distribution
-      static const Int_t      fiNumIndexQA = 2; // QA indexes: 0: before cuts // 1: after cuts
 
-      const char*             GetSpeciesName(PartSpecies species);
-      const char*             GetSpeciesLabel(PartSpecies species);
-      const char*             GetEtaGapName(Double_t dEtaGap) { return Form("%02.2g",10.0*dEtaGap); }
-
-      Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
-      Bool_t                  LoadWeights(); // load weights histograms
-      Bool_t                  FillFlowWeight(AliVTrack* track, PartSpecies species); // fill distribution for per-particle flow weight
-      Double_t                GetFlowWeight(AliVTrack* track, PartSpecies species); // extract per-particle flow weight from input file
-      void                    ListParameters(); // list all task parameters
-      void                    ClearVectors(); // properly clear all particle vectors
-      void                    DumpTObjTable(const char* note = 0x0, Option_t* opt = ""); // add a printf statmenet given by note followed by gObjTable->Print() dump
-
-      Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
-      Bool_t                  IsEventSelected_oldsmall2016(); // (old/manual) event selection for LHC2016 pp & pPb data
-      Bool_t                  IsEventRejectedAddPileUp(); // additional pile-up rejection for Run2 Pb-Pb
-      Int_t                   GetSamplingIndex(); // returns sampling index based on sampling selection (number of samples)
-      Int_t                   GetCentralityIndex(); // returns centrality index based centrality estimator or number of selected tracks
-      const char*             GetCentEstimatorLabel(CentEst est); // returns mult/cent estimator string with label or 'n/a' if not available
-
-      void                    CalculateCorrelations(FlowTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0); // wrapper for correlations methods
-      Bool_t                  ProcessFlowTask(FlowTask* task); // procesisng of FlowTask
-      Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
-
-      void                    FilterCharged(); // charged tracks filtering
-      void                    FilterPID(); // pi,K,p filtering
-      void                    FilterV0s(); // K0s, Lambda, ALambda filtering
-      void                    FilterPhi(); // reconstruction and filtering of Phi meson candidates
-
-      AliAODMCParticle*       GetMCParticle(Int_t label); // find corresponding MC particle from fArrayMC depending of AOD track label
-      Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta); // calculate particle / track rapidity
-      Bool_t                  HasMass(PartSpecies spec) { return (spec == kK0s || spec == kLambda || spec == kPhi); }
-      Bool_t                  HasTrackPIDTPC(const AliAODTrack* track); // is TPC PID OK for this track ?
-      Bool_t                  HasTrackPIDTOF(const AliAODTrack* track); // is TOF PID OK for this track ?
-      Bool_t                  IsWithinRefs(const AliAODTrack* track); // check if track fulfill requirements for Refs (used for refs selection & autocorelations)
-      Bool_t                  IsChargedSelected(const AliAODTrack* track = 0x0); // charged track selection
-      PartSpecies             IsPIDSelected(const AliAODTrack* track); // PID tracks selections
-      Bool_t                  IsV0Selected(const AliAODv0* v0 = 0x0); // general (common) V0 selection
-      Bool_t                  IsV0aK0s(const AliAODv0* v0 = 0x0); // V0 selection: K0s specific
-      Int_t                   IsV0aLambda(const AliAODv0* v0 = 0x0); // V0 selection: (A)Lambda specific
-      AliPicoTrack*           MakeMother(const AliAODTrack* part1, const AliAODTrack* part2); // Combine two prongs into a mother particle stored in AliPicoTrack object
-      void                    FillSparseCand(THnSparse* sparse, AliVTrack* track); // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
-      void                    FillEventsQA(const Int_t iQAindex); // filling QA plots related to event selection
-      void                    FillQARefs(const Int_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for RFPs selection
-      void                    FillQACharged(const Int_t iQAindex, const AliAODTrack* track = 0x0); // filling QA plots for charged track selection
-      void                    FillQAPID(const Int_t iQAindex, const AliAODTrack* track = 0x0, const PartSpecies species = kUnknown); // filling pi,K,p QA histograms
-      void                    FillQAV0s(const Int_t iQAindex, const AliAODv0* v0 = 0x0, const Bool_t bIsK0s = kTRUE, const Int_t bIsLambda = 2); // filling QA plots for V0s candidates
-      void                    FillQAPhi(const Int_t iQAindex, const AliPicoTrack* part = 0x0); // filling QA plots for V0s candidates
-
-      // Flow related methods
-      void                    FillRefsVectors(const Double_t dGap); // fill flow vector Q with RFPs for reference flow
-      Int_t                   FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow = 0.0, const Double_t dMassHigh = 0.0); // fill flow vectors p,q and s with POIs (for given species) for differential flow calculations
-      void                    ResetFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // set values to TComplex(0,0,0) for given array
-      void                    ListFlowVector(TComplex (&array)[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]); // printf all values of given Flow vector array
-
-      TComplex                Q(const Int_t n, const Int_t p);
-      TComplex                QGapPos(const Int_t n, const Int_t p);
-      TComplex                QGapNeg(const Int_t n, const Int_t p);
-      TComplex                QGapMid(const Int_t n, const Int_t p);
-      TComplex                P(const Int_t n, const Int_t p);
-      TComplex                PGapPos(const Int_t n, const Int_t p);
-      TComplex                PGapNeg(const Int_t n, const Int_t p);
-      TComplex                S(const Int_t n, const Int_t p);
-      TComplex                SGapPos(const Int_t n, const Int_t p);
-      TComplex                SGapNeg(const Int_t n, const Int_t p);
-
-      TComplex                Two(const Int_t n1, const Int_t n2); // Two particle reference correlation calculations (no eta gap)
-      TComplex                TwoGap(const Int_t n1, const Int_t n2); // Two particle reference correlation calculations (with eta gap)
-      TComplex                Three(const Int_t n1, const Int_t n2, const Int_t n3); // Three particle reference correlation calculations (no eta gap)
-      TComplex                Four(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (no eta gap)
-      TComplex                FourGap(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (no eta gap)
-      TComplex                Four3sub(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (with 3 sub-events)
-
-      TComplex                TwoDiff(const Int_t n1, const Int_t n2); // Two particle diff. correlation calculations (no eta gap)
-      TComplex                TwoDiffGapPos(const Int_t n1, const Int_t n2); // Two particle diff. correlation calculations (with eta gap)
-      TComplex                TwoDiffGapNeg(const Int_t n1, const Int_t n2); // Two particle diff. correlation calculations (with eta gap)
-      TComplex                ThreeDiff(const Int_t n1, const Int_t n2, const Int_t n3); // Three particle diff. correlation calculations (no eta gap)
-      TComplex                ThreeDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3); // Three particle diff. correlation calculations (with eta gap)
-      TComplex                ThreeDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3); // Three particle diff. correlation calculations (with eta gap)
-      TComplex                FourDiff(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (no eta gap)
-      TComplex                FourDiffGapPos(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (with eta gap)
-      TComplex                FourDiffGapNeg(const Int_t n1, const Int_t n2, const Int_t n3, const Int_t n4); // Four particle reference correlation calculations (with eta gap)
-
-      // properties
       AliAODEvent*            fEventAOD; //! AOD event countainer
       Double_t                fPVz; // PV z-coordinate used for weights
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
-      TFile*                  fFlowWeightsFile; //! source file containing weights
+      TList*                  fFlowWeightsList; //! list of weights from input file
       TClonesArray*           fArrayMC; //! input list of MC particles
       Bool_t                  fMC; // is running on mc?
       Bool_t                  fInit; // initialization check
@@ -309,8 +283,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecSpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecSneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
 
-      // selected POIs containers
-      std::vector<AliVTrack*>*  fVector[kUnknown]; //! container for selected Refs charged particles
+      std::vector<CorrTask*>  fVecCorrTask; //
+      std::vector<AliVTrack*>* fVector[kUnknown]; //! container for selected Refs charged particles
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
@@ -328,12 +302,13 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fFlowEtaMax; // [0.8] max eta acceptance for flow particles (RFPs & POIs)
       Int_t                   fFlowEtaBinNum; // [0] number of eta bins
       Int_t                   fFlowPhiBinNum; // [100] number of phi bins
+      Int_t                   fPhiNumBinsMass; // number of InvMass bins for phi distribution
+      Int_t                   fV0sNumBinsMass; // number of InvMass bins for V0s distribution
       Int_t                   fNumSamples; // [1] overall number of samples (from random sampling) used
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
-      Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights (NOTE: this is turned on only when path to file is applied via fFlowWeightsPath)
+      Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights
       Bool_t                  fFlowUse3Dweights; // [kFALSE] flag for using 3D GF weights, if kFALSE, 2D weights are expected
       Bool_t                  fFlowRunByRunWeights; // [kTRUE] flag for using rub-by-run weigths from weigths file; if false, only one set of histrograms is provided
-      TString                 fFlowWeightsPath; //[] path to source root file with weigthts (if empty unit weights are applied) e.g. "alice/cern.ch/user/k/kgajdoso/EfficienciesWeights/2016/PhiWeight_LHC16kl.root"
 
       //cuts & selection: events
       ColSystem               fColSystem; // collisional system
@@ -365,16 +340,16 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       UShort_t                fCutV0sDaughterNumTPCFindMin; // min number of findable TPC clusters
       UShort_t                fCutV0sDaughterNumTPCClsPIDMin; // min number of TPC clusters used for PID
       Double_t                fCutV0sDaughterRatioCrossFindMin; // min ratio of crossed / findable TPC clusters
-      Bool_t				  fCutV0sCrossMassRejection; // competing V0 rejection based on InvMass
+      Bool_t				          fCutV0sCrossMassRejection; // competing V0 rejection based on InvMass
       Double_t                fCutV0sCrossMassCutK0s; // [0.005] (GeV/c2) restricted vicinity of Lambda/ALambda inv. mass peak for K0s candidates
       Double_t                fCutV0sCrossMassCutLambda; // [0.020] (GeV/c2) restricted vicinity of K0s inv. mass peak for Lambda/ALambda candidates
       Double_t                fCutV0sDCAtoPVMin;   // (cm) min DCA of V0 daughter to PV
-      Double_t				  fCutV0sDCAtoPVMax;	// (cm) max DCA of V0 daughter to PV
+      Double_t				        fCutV0sDCAtoPVMax;	// (cm) max DCA of V0 daughter to PV
       Double_t                fCutV0sDCAtoPVzMax; // (cm) max DCA-z coordinate of V0 daughters to PV
-      Double_t				  fCutV0sDCADaughtersMin;	// (cm) min DCA of V0 daughters among themselves
-      Double_t				  fCutV0sDCADaughtersMax;	// (cm) max DCA of V0 daughters among themselves
+      Double_t				        fCutV0sDCADaughtersMin;	// (cm) min DCA of V0 daughters among themselves
+      Double_t				        fCutV0sDCADaughtersMax;	// (cm) max DCA of V0 daughters among themselves
       Double_t                fCutV0sDecayRadiusMin; // (cm) min distance of secondary vertex from z-axis in transverse plane
-      Double_t				  fCutV0sDecayRadiusMax; // (cm) max distance of secondary vertex from z-axis in transverse plane
+      Double_t				        fCutV0sDecayRadiusMax; // (cm) max distance of secondary vertex from z-axis in transverse plane
       UInt_t                  fCutV0sDaughterFilterBit; // (-) V0 daughters filter bit
       Double_t                fCutV0sDaughterPtMin; // (GeV/c) min pT of V0 daughters
       Double_t                fCutV0sDaughterPtMax; // (GeV/c) max pT of V0 daughters
@@ -388,7 +363,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fCutV0sInvMassK0sMax; // [0.6] (GeV/c2) max inv. mass window for selected K0s candidates
       Double_t                fCutV0sInvMassLambdaMin; // [1.08] (GeV/c2) min inv. mass window for selected (Anti)Lambda candidates
       Double_t                fCutV0sInvMassLambdaMax; // [1.16] (GeV/c2) max inv. mass window for selected (Anti)Lambda candidates
-      Double_t				  fCutV0sArmenterosAlphaK0sMin; // (alpha) min Armenteros alpha for K0s
+      Double_t				        fCutV0sArmenterosAlphaK0sMin; // (alpha) min Armenteros alpha for K0s
       Double_t                fCutV0sArmenterosAlphaLambdaMax; // (alpha) max Armenteros alpha for (Anti)Lambda
       Float_t                 fCutV0sK0sPionNumTPCSigmaMax; // (sigmaTPC) max number of TPC sigmas for kaon PID (K0s candidates)
       Float_t                 fCutV0sLambdaPionNumTPCSigmaMax;    // (sigmaTPC) max number of TPC sigma for pion PID (Lambda candidates)
@@ -410,163 +385,223 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       // histograms & profiles
 
       // Flow
-      THnSparseD*     fhsCandK0s; //! distribution of K0s candidates
-      THnSparseD*     fhsCandLambda; //!  distribution of Lambda candidates
-      THnSparseD*     fhsCandPhi; //!  distribution of Phi candidates
-      THnSparseD*     fhsCandPhiBg; //!  distribution of Phi background
+      THnSparseD*             fhsCandK0s; //! distribution of K0s candidates
+      THnSparseD*             fhsCandLambda; //!  distribution of Lambda candidates
+      THnSparseD*             fhsCandPhi; //!  distribution of Phi candidates
+      THnSparseD*             fhsCandPhiBg; //!  distribution of Phi background
 
-      TH2D*           fh2Weights[kUnknown]; //! container for GF weights (phi,eta,pt) (2D)
-      TH3D*           fh3Weights[kUnknown]; //! container for GF weights (phi,eta,pt)
-      TH2D*           fh2AfterWeights[kUnknown]; //! distribution after applying GF weights - lightweight QA (phi)
-      TH3D*           fh3AfterWeights[kUnknown]; //! distribution after applying GF weights - full QA (phi,eta,pt)
+      TH2D*                   fh2Weights[kUnknown]; //! container for GF weights (phi,eta,pt) (2D)
+      TH3D*                   fh3Weights[kUnknown]; //! container for GF weights (phi,eta,pt)
+      TH2D*                   fh2AfterWeights[kUnknown]; //! distribution after applying GF weights - lightweight QA (phi)
+      TH3D*                   fh3AfterWeights[kUnknown]; //! distribution after applying GF weights - full QA (phi,eta,pt)
 
       // Events
-      TH2D*           fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
-      TH1D*           fhEventCentrality; //! distribution of event centrality
-      TH2D*           fh2EventCentralityNumRefs; //! distribution of event centrality vs number of selected charged tracks
-      TH1D*           fhEventCounter; //! counter following event selection
+      TH2D*                   fhEventSampling; //! distribution of sampled events (based on randomly generated numbers)
+      TH1D*                   fhEventCentrality; //! distribution of event centrality
+      TH2D*                   fh2EventCentralityNumRefs; //! distribution of event centrality vs number of selected charged tracks
+      TH1D*                   fhEventCounter; //! counter following event selection
       // Charged
-      TH1D*           fhRefsMult; //!multiplicity distribution of selected RFPs
-      TH1D*           fhRefsPt; //! pt distribution of selected RFPs
-      TH1D*           fhRefsEta; //! pt distribution of selected RFPs
-      TH1D*           fhRefsPhi; //! pt distribution of selected RFPs
-      TProfile*       fpRefsMult; //! <multiplicity>
-      TH1D*           fhChargedCounter; //! counter following charged track selection
+      TH1D*                   fhRefsMult; //!multiplicity distribution of selected RFPs
+      TH1D*                   fhRefsPt; //! pt distribution of selected RFPs
+      TH1D*                   fhRefsEta; //! pt distribution of selected RFPs
+      TH1D*                   fhRefsPhi; //! pt distribution of selected RFPs
+      TProfile*               fpRefsMult; //! <multiplicity>
+      TH1D*                   fhChargedCounter; //! counter following charged track selection
       // PID
-      TH1D*           fhPIDCounter; //! counter for PID
-      TH1D*           fhPIDMult[3]; //! multiplicity distribution of selected pions
-      TH1D*           fhPIDPt[3]; //! pt distribution of selected pions
-      TH1D*           fhPIDPhi[3]; //! phi distribution of selected pions
-      TH1D*           fhPIDEta[3]; //! eta distribution of selected pions
-      TH1D*           fhPIDCharge[3]; //! charge distribution of selected pions
-      TH2D*           fh2PIDTPCdEdx[3]; //! TPC dEdx response of selected pions
-      TH2D*           fh2PIDTPCdEdxDelta[3]; //! TPC delta dEdx (measured - expected) response of selected pions
-      TH2D*           fh2PIDTOFbeta[3]; //! TOF beta of selected pions
-      TH2D*           fh2PIDTOFbetaDelta[3]; //! TOF delta beta (measured - expected) of selected pions
-      TH2D*           fh2PIDBayesElectron[3]; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDBayesMuon[3]; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDBayesPion[3]; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDBayesKaon[3]; //! Bayesian PID probability vs pT for selected pions (kaon hypothesis)
-      TH2D*           fh2PIDBayesProton[3]; //! Bayesian PID probability vs pT for selected pions (proton hypothesis)
-      TH2D*           fh2PIDTPCnSigmaElectron[3]; //! TPC nSigma vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDTOFnSigmaElectron[3]; //! TOF nSigma vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDTPCnSigmaMuon[3]; //! TPC nSigma vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDTOFnSigmaMuon[3]; //! TOF nSigma vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDTPCnSigmaPion[3]; //! TPC nSigma vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDTOFnSigmaPion[3]; //! TOF nSigma vs pT for selected pions (pion hypothesis)
-      TH2D*           fh2PIDTPCnSigmaKaon[3]; //! TPC nSigma vs pT for selected pions (kaon hypothesis)
-      TH2D*           fh2PIDTOFnSigmaKaon[3]; //! TOF nSigma vs pT for selected pions (kaon hypothesis)
-      TH2D*           fh2PIDTPCnSigmaProton[3]; //! TPC nSigma vs pT for selected pions (proton hypothesis)
-      TH2D*           fh2PIDTOFnSigmaProton[3]; //! TOF nSigma vs pT for selected pions (proton hypothesis)
+      TH1D*                   fhPIDCounter; //! counter for PID
+      TH1D*                   fhPIDMult[3]; //! multiplicity distribution of selected pions
+      TH1D*                   fhPIDPt[3]; //! pt distribution of selected pions
+      TH1D*                   fhPIDPhi[3]; //! phi distribution of selected pions
+      TH1D*                   fhPIDEta[3]; //! eta distribution of selected pions
+      TH1D*                   fhPIDCharge[3]; //! charge distribution of selected pions
+      TH2D*                   fh2PIDTPCdEdx[3]; //! TPC dEdx response of selected pions
+      TH2D*                   fh2PIDTPCdEdxDelta[3]; //! TPC delta dEdx (measured - expected) response of selected pions
+      TH2D*                   fh2PIDTOFbeta[3]; //! TOF beta of selected pions
+      TH2D*                   fh2PIDTOFbetaDelta[3]; //! TOF delta beta (measured - expected) of selected pions
+      TH2D*                   fh2PIDBayesElectron[3]; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDBayesMuon[3]; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDBayesPion[3]; //! Bayesian PID probability vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDBayesKaon[3]; //! Bayesian PID probability vs pT for selected pions (kaon hypothesis)
+      TH2D*                   fh2PIDBayesProton[3]; //! Bayesian PID probability vs pT for selected pions (proton hypothesis)
+      TH2D*                   fh2PIDTPCnSigmaElectron[3]; //! TPC nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDTOFnSigmaElectron[3]; //! TOF nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDTPCnSigmaMuon[3]; //! TPC nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDTOFnSigmaMuon[3]; //! TOF nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDTPCnSigmaPion[3]; //! TPC nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDTOFnSigmaPion[3]; //! TOF nSigma vs pT for selected pions (pion hypothesis)
+      TH2D*                   fh2PIDTPCnSigmaKaon[3]; //! TPC nSigma vs pT for selected pions (kaon hypothesis)
+      TH2D*                   fh2PIDTOFnSigmaKaon[3]; //! TOF nSigma vs pT for selected pions (kaon hypothesis)
+      TH2D*                   fh2PIDTPCnSigmaProton[3]; //! TPC nSigma vs pT for selected pions (proton hypothesis)
+      TH2D*                   fh2PIDTOFnSigmaProton[3]; //! TOF nSigma vs pT for selected pions (proton hypothesis)
 
-      TH1D*           fhMCRecoSelectedPionPt; //! pt dist of selected (MC reco) pions
-      TH1D*           fhMCRecoSelectedTruePionPt; //! pt dist of selected (MC reco) true (tagged in MC gen) pions
-      TH1D*           fhMCRecoAllPionPt; //! pt dist of all (MC reco) pions (i.e. selected charged tracks that are tagged in MC)
-      TH1D*           fhMCGenAllPionPt; //! pt dist of all (MC) generated pions
-      TH1D*           fhMCRecoSelectedKaonPt; //! pt dist of selected (MC reco) Kaons
-      TH1D*           fhMCRecoSelectedTrueKaonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Kaons
-      TH1D*           fhMCRecoAllKaonPt; //! pt dist of all (MC reco) Kaons (i.e. selected charged tracks that are tagged in MC)
-      TH1D*           fhMCGenAllKaonPt; //! pt dist of all (MC) generated Kaons
-      TH1D*           fhMCRecoSelectedProtonPt; //! pt dist of selected (MC reco) Protons
-      TH1D*           fhMCRecoSelectedTrueProtonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Protons
-      TH1D*           fhMCRecoAllProtonPt; //! pt dist of all (MC reco) Protons (i.e. selected charged tracks that are tagged in MC)
-      TH1D*           fhMCGenAllProtonPt; //! pt dist of all (MC) generated Protons
+      TH1D*                   fhMCRecoSelectedPionPt; //! pt dist of selected (MC reco) pions
+      TH1D*                   fhMCRecoSelectedTruePionPt; //! pt dist of selected (MC reco) true (tagged in MC gen) pions
+      TH1D*                   fhMCRecoAllPionPt; //! pt dist of all (MC reco) pions (i.e. selected charged tracks that are tagged in MC)
+      TH1D*                   fhMCGenAllPionPt; //! pt dist of all (MC) generated pions
+      TH1D*                   fhMCRecoSelectedKaonPt; //! pt dist of selected (MC reco) Kaons
+      TH1D*                   fhMCRecoSelectedTrueKaonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Kaons
+      TH1D*                   fhMCRecoAllKaonPt; //! pt dist of all (MC reco) Kaons (i.e. selected charged tracks that are tagged in MC)
+      TH1D*                   fhMCGenAllKaonPt; //! pt dist of all (MC) generated Kaons
+      TH1D*                   fhMCRecoSelectedProtonPt; //! pt dist of selected (MC reco) Protons
+      TH1D*                   fhMCRecoSelectedTrueProtonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Protons
+      TH1D*                   fhMCRecoAllProtonPt; //! pt dist of all (MC reco) Protons (i.e. selected charged tracks that are tagged in MC)
+      TH1D*                   fhMCGenAllProtonPt; //! pt dist of all (MC) generated Protons
       // Phi
-      TH1D*           fhPhiCounter; //! counter following phi candidate selection
-      TH1D*           fhPhiMult; //! multiplicity distribution of selected phi candidates
-      TH1D*           fhPhiBGMult; //! multiplicity distribution of BG candidates
-      TH1D*           fhPhiInvMass; //! invariant mass distribution of phi candidates
-      TH1D*           fhPhiBGInvMass; //! invariant mass distribution of phi background candidates
-      TH1D*           fhPhiCharge; //! charge distribution of selected phi candidates
-      TH1D*           fhPhiBGCharge; //! charge distribution of phi BG candidates
-      TH1D*           fhPhiPt; //! pt distribution of selected phi candidates
-      TH1D*           fhPhiEta; //! eta distribution of selected phi candidates
-      TH1D*           fhPhiPhi; //! phi distribution of selected phi candidates
+      TH1D*                   fhPhiCounter; //! counter following phi candidate selection
+      TH1D*                   fhPhiMult; //! multiplicity distribution of selected phi candidates
+      TH1D*                   fhPhiBGMult; //! multiplicity distribution of BG candidates
+      TH1D*                   fhPhiInvMass; //! invariant mass distribution of phi candidates
+      TH1D*                   fhPhiBGInvMass; //! invariant mass distribution of phi background candidates
+      TH1D*                   fhPhiCharge; //! charge distribution of selected phi candidates
+      TH1D*                   fhPhiBGCharge; //! charge distribution of phi BG candidates
+      TH1D*                   fhPhiPt; //! pt distribution of selected phi candidates
+      TH1D*                   fhPhiEta; //! eta distribution of selected phi candidates
+      TH1D*                   fhPhiPhi; //! phi distribution of selected phi candidates
       // V0s
-      TH1D*           fhV0sCounter; //! counter following V0s selection
-      TH1D*           fhV0sCounterK0s; //! counter following K0s selection
-      TH1D*           fhV0sCounterLambda; //! counter following (Anti-)Lambda selection
-      TH2D*           fhV0sInvMassK0s; //! 2D inv. mass distiburion (K0s mass vs. Lambda/AntiLambda mass)
-      TH2D*           fhV0sInvMassLambda; //! 2D inv. mass distiburion (K0s mass vs. Lambda/AntiLambda mass)
-      TH2D*           fhV0sCompetingInvMassK0s; //! dist of InvMass of rejected K0s candidates in (Anti-)Lambda peak
-      TH2D*           fhV0sCompetingInvMassLambda; //! dist of InvMass of rejected (Anti-)Lambda candidates in K0s peak
+      TH1D*                   fhV0sCounter; //! counter following V0s selection
+      TH1D*                   fhV0sCounterK0s; //! counter following K0s selection
+      TH1D*                   fhV0sCounterLambda; //! counter following (Anti-)Lambda selection
+      TH2D*                   fhV0sInvMassK0s; //! 2D inv. mass distiburion (K0s mass vs. Lambda/AntiLambda mass)
+      TH2D*                   fhV0sInvMassLambda; //! 2D inv. mass distiburion (K0s mass vs. Lambda/AntiLambda mass)
+      TH2D*                   fhV0sCompetingInvMassK0s; //! dist of InvMass of rejected K0s candidates in (Anti-)Lambda peak
+      TH2D*                   fhV0sCompetingInvMassLambda; //! dist of InvMass of rejected (Anti-)Lambda candidates in K0s peak
 
 
       // QA: events
-      TH1D*           fhQAEventsPVz[fiNumIndexQA]; //!
-      TH1D*           fhQAEventsNumContrPV[fiNumIndexQA]; //!
-      TH1D*           fhQAEventsNumSPDContrPV[fiNumIndexQA]; //!
-      TH1D*           fhQAEventsDistPVSPD[fiNumIndexQA]; //!
-      TH1D*           fhQAEventsSPDresol[fiNumIndexQA]; //!
-      TH2D*           fhQAEventsfMult32vsCentr;
-      TH2D*           fhQAEventsMult128vsCentr;
-      TH2D*           fhQAEventsfMultTPCvsTOF;
-      TH2D*           fhQAEventsfMultTPCvsESD;
+      TH1D*                   fhQAEventsPVz[QAindex::kNumQA]; //!
+      TH1D*                   fhQAEventsNumContrPV[QAindex::kNumQA]; //!
+      TH1D*                   fhQAEventsNumSPDContrPV[QAindex::kNumQA]; //!
+      TH1D*                   fhQAEventsDistPVSPD[QAindex::kNumQA]; //!
+      TH1D*                   fhQAEventsSPDresol[QAindex::kNumQA]; //!
+      TH2D*                   fhQAEventsfMult32vsCentr;
+      TH2D*                   fhQAEventsMult128vsCentr;
+      TH2D*                   fhQAEventsfMultTPCvsTOF;
+      TH2D*                   fhQAEventsfMultTPCvsESD;
       // QA: charged tracks
-      TH1D*           fhQAChargedMult[fiNumIndexQA];       //! number of AOD charged tracks distribution
-      TH1D*           fhQAChargedPt[fiNumIndexQA];         //! pT dist of charged tracks
-      TH1D*           fhQAChargedEta[fiNumIndexQA];        //! eta dist of charged tracks
-      TH1D*           fhQAChargedPhi[fiNumIndexQA];        //! phi dist of charged tracks
-      TH1D*           fhQAChargedCharge[fiNumIndexQA];     //! charge dist of charged tracks
-      TH1D*           fhQAChargedNumTPCcls[fiNumIndexQA];  //! dist of track number of TPC clusters
-      TH1D*           fhQAChargedDCAxy[fiNumIndexQA];      //! dist of Charged DCA in transverse plane
-      TH1D*           fhQAChargedDCAz[fiNumIndexQA];       //! dist of charged DCA in z coordinate
+      TH1D*                   fhQAChargedMult[QAindex::kNumQA];       //! number of AOD charged tracks distribution
+      TH1D*                   fhQAChargedPt[QAindex::kNumQA];         //! pT dist of charged tracks
+      TH1D*                   fhQAChargedEta[QAindex::kNumQA];        //! eta dist of charged tracks
+      TH1D*                   fhQAChargedPhi[QAindex::kNumQA];        //! phi dist of charged tracks
+      TH1D*                   fhQAChargedCharge[QAindex::kNumQA];     //! charge dist of charged tracks
+      TH1D*                   fhQAChargedNumTPCcls[QAindex::kNumQA];  //! dist of track number of TPC clusters
+      TH1D*                   fhQAChargedDCAxy[QAindex::kNumQA];      //! dist of Charged DCA in transverse plane
+      TH1D*                   fhQAChargedDCAz[QAindex::kNumQA];       //! dist of charged DCA in z coordinate
       // QA: PID tracks
-      TH1D*           fhQAPIDTPCstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
-      TH1D*           fhQAPIDTOFstatus[fiNumIndexQA];  //! based on AliPIDResponse::CheckPIDStatus();
-      TH2D*           fhQAPIDTPCdEdx[fiNumIndexQA];    //! TPC PID information
-      TH2D*           fhQAPIDTOFbeta[fiNumIndexQA];    //! TOF PID information
-      TH3D*           fh3QAPIDnSigmaTPCTOFPtPion[fiNumIndexQA]; //! nSigma TPC vs nSigma TOF vs pt
-      TH3D*           fh3QAPIDnSigmaTPCTOFPtKaon[fiNumIndexQA]; //! nSigma TPC vs nSigma TOF vs pt
-      TH3D*           fh3QAPIDnSigmaTPCTOFPtProton[fiNumIndexQA]; //! nSigma TPC vs nSigma TOF vs pt
+      TH1D*                   fhQAPIDTPCstatus[QAindex::kNumQA];  //! based on AliPIDResponse::CheckPIDStatus();
+      TH1D*                   fhQAPIDTOFstatus[QAindex::kNumQA];  //! based on AliPIDResponse::CheckPIDStatus();
+      TH2D*                   fhQAPIDTPCdEdx[QAindex::kNumQA];    //! TPC PID information
+      TH2D*                   fhQAPIDTOFbeta[QAindex::kNumQA];    //! TOF PID information
+      TH3D*                   fh3QAPIDnSigmaTPCTOFPtPion[QAindex::kNumQA]; //! nSigma TPC vs nSigma TOF vs pt
+      TH3D*                   fh3QAPIDnSigmaTPCTOFPtKaon[QAindex::kNumQA]; //! nSigma TPC vs nSigma TOF vs pt
+      TH3D*                   fh3QAPIDnSigmaTPCTOFPtProton[QAindex::kNumQA]; //! nSigma TPC vs nSigma TOF vs pt
       // QA: V0s candidates
-      TH1D*			  		fhQAV0sMultK0s[fiNumIndexQA];	//! number of K0s candidates
-      TH1D*			  		fhQAV0sMultLambda[fiNumIndexQA];	//! number of Lambda candidates
-      TH1D*			  		fhQAV0sMultALambda[fiNumIndexQA];	//! number of Anti-Lambda candidates
-      TH1D*			  		fhQAV0sRecoMethod[fiNumIndexQA];	//! offline/online V0 reconstruction method
-      TH1D*			  		fhQAV0sDaughterTPCRefit[fiNumIndexQA];	//! Daughters TPC refit true/false
-      TH1D*			  		fhQAV0sDaughterKinks[fiNumIndexQA];	//! Daughters kinks true/false
-      TH1D*           fhQAV0sDaughterNumTPCCls[fiNumIndexQA]; //! Daughter # of TPC findable clusters
-      TH1D*           fhQAV0sDaughterNumTPCFind[fiNumIndexQA]; //! Daughter # of TPC clusters
-      TH1D*           fhQAV0sDaughterNumTPCCrossRows[fiNumIndexQA]; //! Daughter # of TPC crossed rows
-      TH1D*           fhQAV0sDaughterTPCCrossFindRatio[fiNumIndexQA]; //! Daughter # of TPC cross / # of TPC findable cls ratio
-      TH1D*           fhQAV0sDaughterNumTPCClsPID[fiNumIndexQA]; //! Daughter # of TPC findable clusters used for PID
-      TH1D*			  		fhQAV0sDCAtoPV[fiNumIndexQA];	//! V0 DCA to PV
-      TH1D*			  		fhQAV0sDCADaughters[fiNumIndexQA];	//! DCA between V0 daughters
-      TH1D*			  		fhQAV0sDecayRadius[fiNumIndexQA];	//! Distance between PV and Secondary vertex in transverse plane
-      TH1D*           fhQAV0sInvMassK0s[fiNumIndexQA];    //! inv. mass dist of V0s (K0s mass hypothesis)
-      TH1D*					  fhQAV0sInvMassLambda[fiNumIndexQA];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
-      TH1D*           fhQAV0sMotherPt[fiNumIndexQA];  //! pT dist of V0s
-      TH1D*					  fhQAV0sMotherPhi[fiNumIndexQA];	//! azimuthal dist of V0s
-      TH1D*           fhQAV0sMotherEta[fiNumIndexQA]; //! pseudorapidity dist of V0s
-      TH1D*           fhQAV0sMotherCharge[fiNumIndexQA]; //! charge distribution of mothers
-      TH1D*           fhQAV0sMotherRapK0s[fiNumIndexQA];  //! rapidity dist of V0s (K0s mass hypothesis)
-      TH1D*           fhQAV0sMotherRapLambda[fiNumIndexQA]; //! rapidity dist of V0s (Lambda mass hypothesis)
-      TH1D*           fhQAV0sDaughterPt[fiNumIndexQA];    //! pT dist of V0 daughters
-      TH1D*					  fhQAV0sDaughterPhi[fiNumIndexQA];	//! pT dist of V0 daughters
-      TH1D*           fhQAV0sDaughterEta[fiNumIndexQA];   //! pseudorapidity dist of V0 daughters
-      TH1D*           fhQAV0sDaughterCharge[fiNumIndexQA]; //! charge distribution of daughters
-      TH1D*					  fhQAV0sDaughterTPCstatus[fiNumIndexQA];	//! TPC dEdx vs p of K0s daughters
-      TH1D*					  fhQAV0sDaughterTOFstatus[fiNumIndexQA];	//! TPC dEdx vs p of K0s daughters
-      TH2D*					  fhQAV0sDaughterTPCdEdxK0s[fiNumIndexQA];	//! TPC dEdx vs p of K0s daughters
-      TH2D*					  fhQAV0sDaughterNumSigmaPionK0s[fiNumIndexQA];	//! Number of TPC sigmas (pion) vs mother pT of K0s daughters
-      TH2D*					  fhQAV0sDaughterTPCdEdxLambda[fiNumIndexQA];	//! TPC dEdx vs p of Lambda daughters
-      TH2D*           fhQAV0sDaughterNumSigmaPionLambda[fiNumIndexQA];  //! number of TPC sigmas vs mother pT of pion (Lambda candidates)
-      TH2D*           fhQAV0sDaughterNumSigmaProtonLambda[fiNumIndexQA];  //! number of TPC sigmas vs mother pT of proton (Lambda candidates)
-      TH2D*           fhQAV0sDaughterNumSigmaPionALambda[fiNumIndexQA];  //! number of TPC sigmas vs mother pT of pion (Anti-Lambda candidates)
-      TH2D*           fhQAV0sDaughterNumSigmaProtonALambda[fiNumIndexQA];  //! number of TPC sigmas vs mother pT of proton (Anti-Lambda candidates)
-      TH1D*					  fhQAV0sCPAK0s[fiNumIndexQA];	//! cosine of pointing angle of K0s candidates
-      TH1D*					  fhQAV0sCPALambda[fiNumIndexQA];	//! cosine of pointing angle of Lambda candidates
-      TH1D*					  fhQAV0sNumTauK0s[fiNumIndexQA];	//! number of c*tau of K0s candidates
-      TH1D*					  fhQAV0sNumTauLambda[fiNumIndexQA];	//! number of c*tau of Lambda candidates
-      TH2D*				   	fhQAV0sArmenterosK0s[fiNumIndexQA];	//! Armenteros-Podolanski plot for K0s candidates
-      TH2D*			  		fhQAV0sArmenterosLambda[fiNumIndexQA];	//! Armenteros-Podolanski plot for Lambda candidates
-      TH2D*			  		fhQAV0sArmenterosALambda[fiNumIndexQA];	//! Armenteros-Podolanski plot for ALambda candidates
-
-      AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
-      AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
+      TH1D*			  		        fhQAV0sMultK0s[QAindex::kNumQA];	//! number of K0s candidates
+      TH1D*			  		        fhQAV0sMultLambda[QAindex::kNumQA];	//! number of Lambda candidates
+      TH1D*			  		        fhQAV0sMultALambda[QAindex::kNumQA];	//! number of Anti-Lambda candidates
+      TH1D*			  		        fhQAV0sRecoMethod[QAindex::kNumQA];	//! offline/online V0 reconstruction method
+      TH1D*			  		        fhQAV0sDaughterTPCRefit[QAindex::kNumQA];	//! Daughters TPC refit true/false
+      TH1D*			  		        fhQAV0sDaughterKinks[QAindex::kNumQA];	//! Daughters kinks true/false
+      TH1D*                   fhQAV0sDaughterNumTPCCls[QAindex::kNumQA]; //! Daughter # of TPC findable clusters
+      TH1D*                   fhQAV0sDaughterNumTPCFind[QAindex::kNumQA]; //! Daughter # of TPC clusters
+      TH1D*                   fhQAV0sDaughterNumTPCCrossRows[QAindex::kNumQA]; //! Daughter # of TPC crossed rows
+      TH1D*                   fhQAV0sDaughterTPCCrossFindRatio[QAindex::kNumQA]; //! Daughter # of TPC cross / # of TPC findable cls ratio
+      TH1D*                   fhQAV0sDaughterNumTPCClsPID[QAindex::kNumQA]; //! Daughter # of TPC findable clusters used for PID
+      TH1D*			  		        fhQAV0sDCAtoPV[QAindex::kNumQA];	//! V0 DCA to PV
+      TH1D*			  		        fhQAV0sDCADaughters[QAindex::kNumQA];	//! DCA between V0 daughters
+      TH1D*			  		        fhQAV0sDecayRadius[QAindex::kNumQA];	//! Distance between PV and Secondary vertex in transverse plane
+      TH1D*                   fhQAV0sInvMassK0s[QAindex::kNumQA];    //! inv. mass dist of V0s (K0s mass hypothesis)
+      TH1D*					          fhQAV0sInvMassLambda[QAindex::kNumQA];	//! inv. mass dist of V0s ((A)Lambda mass hypothesis)
+      TH1D*                   fhQAV0sMotherPt[QAindex::kNumQA];  //! pT dist of V0s
+      TH1D*					          fhQAV0sMotherPhi[QAindex::kNumQA];	//! azimuthal dist of V0s
+      TH1D*                   fhQAV0sMotherEta[QAindex::kNumQA]; //! pseudorapidity dist of V0s
+      TH1D*                   fhQAV0sMotherCharge[QAindex::kNumQA]; //! charge distribution of mothers
+      TH1D*                   fhQAV0sMotherRapK0s[QAindex::kNumQA];  //! rapidity dist of V0s (K0s mass hypothesis)
+      TH1D*                   fhQAV0sMotherRapLambda[QAindex::kNumQA]; //! rapidity dist of V0s (Lambda mass hypothesis)
+      TH1D*                   fhQAV0sDaughterPt[QAindex::kNumQA];    //! pT dist of V0 daughters
+      TH1D*					          fhQAV0sDaughterPhi[QAindex::kNumQA];	//! pT dist of V0 daughters
+      TH1D*                   fhQAV0sDaughterEta[QAindex::kNumQA];   //! pseudorapidity dist of V0 daughters
+      TH1D*                   fhQAV0sDaughterCharge[QAindex::kNumQA]; //! charge distribution of daughters
+      TH1D*					          fhQAV0sDaughterTPCstatus[QAindex::kNumQA];	//! TPC dEdx vs p of K0s daughters
+      TH1D*					          fhQAV0sDaughterTOFstatus[QAindex::kNumQA];	//! TPC dEdx vs p of K0s daughters
+      TH2D*					          fhQAV0sDaughterTPCdEdxK0s[QAindex::kNumQA];	//! TPC dEdx vs p of K0s daughters
+      TH2D*					          fhQAV0sDaughterNumSigmaPionK0s[QAindex::kNumQA];	//! Number of TPC sigmas (pion) vs mother pT of K0s daughters
+      TH2D*					          fhQAV0sDaughterTPCdEdxLambda[QAindex::kNumQA];	//! TPC dEdx vs p of Lambda daughters
+      TH2D*                   fhQAV0sDaughterNumSigmaPionLambda[QAindex::kNumQA];  //! number of TPC sigmas vs mother pT of pion (Lambda candidates)
+      TH2D*                   fhQAV0sDaughterNumSigmaProtonLambda[QAindex::kNumQA];  //! number of TPC sigmas vs mother pT of proton (Lambda candidates)
+      TH2D*                   fhQAV0sDaughterNumSigmaPionALambda[QAindex::kNumQA];  //! number of TPC sigmas vs mother pT of pion (Anti-Lambda candidates)
+      TH2D*                   fhQAV0sDaughterNumSigmaProtonALambda[QAindex::kNumQA];  //! number of TPC sigmas vs mother pT of proton (Anti-Lambda candidates)
+      TH1D*					          fhQAV0sCPAK0s[QAindex::kNumQA];	//! cosine of pointing angle of K0s candidates
+      TH1D*					          fhQAV0sCPALambda[QAindex::kNumQA];	//! cosine of pointing angle of Lambda candidates
+      TH1D*					          fhQAV0sNumTauK0s[QAindex::kNumQA];	//! number of c*tau of K0s candidates
+      TH1D*					          fhQAV0sNumTauLambda[QAindex::kNumQA];	//! number of c*tau of Lambda candidates
+      TH2D*				   	        fhQAV0sArmenterosK0s[QAindex::kNumQA];	//! Armenteros-Podolanski plot for K0s candidates
+      TH2D*			  		        fhQAV0sArmenterosLambda[QAindex::kNumQA];	//! Armenteros-Podolanski plot for Lambda candidates
+      TH2D*			  		        fhQAV0sArmenterosALambda[QAindex::kNumQA];	//! Armenteros-Podolanski plot for ALambda candidates
 
       ClassDef(AliAnalysisTaskUniFlow, 7);
 };
+
+AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
+  fbDoRefs{0},
+  fbDoPOIs{0},
+  fiNumHarm{0},
+  fiNumGaps{0},
+  fiHarm{},
+  fdGaps{},
+  fsName{},
+  fsLabel{}
+{};
+// ============================================================================
+AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::vector<Int_t> harms, std::vector<Double_t> gaps) :
+  fbDoRefs{doRFPs},
+  fbDoPOIs{doPOIs},
+  fiNumHarm{0},
+  fiNumGaps{0},
+  fiHarm{harms},
+  fdGaps{gaps},
+  fsName{},
+  fsLabel{}
+{
+  // constructor of CorrTask
+
+  fiNumHarm = harms.size();
+  fiNumGaps = gaps.size();
+
+  if(fiNumHarm < 2) { return; }
+
+  // generating name
+  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
+  sName += ")";
+
+  if(fiNumGaps > 0) {
+    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
+    sName += ")";
+  }
+
+  // generating label
+  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
+  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
+  sLabel += "}";
+
+  if(fiNumGaps > 0) {
+    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
+    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
+    sLabel += ")";
+  }
+
+  fsName = sName;
+  fsLabel = sLabel;
+}
+// ============================================================================
+void AliAnalysisTaskUniFlow::CorrTask::Print() const
+{
+  printf("CorrTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
+  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
+  printf("} | fgGaps[%d] = { ",fiNumGaps);
+  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
+  printf("}\n");
+}
 
 #endif
