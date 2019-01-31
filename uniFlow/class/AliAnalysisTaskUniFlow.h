@@ -541,7 +541,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       ClassDef(AliAnalysisTaskUniFlow, 7);
 };
 
-AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
+// ============================================================================
+inline AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
   fbDoRefs{0},
   fbDoPOIs{0},
   fiNumHarm{0},
@@ -550,9 +551,9 @@ AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
   fdGaps{},
   fsName{},
   fsLabel{}
-{};
+{}
 // ============================================================================
-AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::vector<Int_t> harms, std::vector<Double_t> gaps) :
+inline AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::vector<Int_t> harms, std::vector<Double_t> gaps) :
   fbDoRefs{doRFPs},
   fbDoPOIs{doPOIs},
   fiNumHarm{0},
@@ -595,7 +596,7 @@ AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::ve
   fsLabel = sLabel;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::CorrTask::Print() const
+inline void AliAnalysisTaskUniFlow::CorrTask::Print() const
 {
   printf("CorrTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
   for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
