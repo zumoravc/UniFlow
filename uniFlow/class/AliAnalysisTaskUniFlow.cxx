@@ -62,6 +62,7 @@
 #ifndef ALIANALYSISTASKUNIFLOW_CXX
 #define ALIANALYSISTASKUNIFLOW_CXX
 
+#include <algorithm>
 #include <TDatabasePDG.h>
 #include <TPDGCode.h>
 
@@ -1064,6 +1065,29 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fVector[kRefs]->clear();
   fVector[kCharged]->clear();
   FilterCharged();
+
+  {
+    // TEST sorting
+    AliInfo("Testing sort");
+    Int_t  size = fVector[kCharged]->size();
+    printf("Number of selected charged: %d\n", size);
+
+    for(Int_t i(0); i < size; ++i) {
+      AliPicoTrack* track = (AliPicoTrack*) fVector[kCharged]->at(i);
+      if(!track) break;
+      printf("%d : %g\n", i, track->Pt());
+    }
+
+    printf("Sorting ========================== \n");
+    std::sort(fVector[kCharged]->begin(), fVector[kCharged]->end(), [this](const AliVTrack* a, const AliVTrack* b){ return this->sortPt(a, b); });
+
+    for(Int_t i(0); i < size; ++i) {
+      AliPicoTrack* track = (AliPicoTrack*) fVector[kCharged]->at(i);
+      if(!track) break;
+      printf("%d : %g\n", i, track->Pt());
+    }
+  }
+
 
   // checking if there is at least 5 particles: needed to "properly" calculate correlations
   if(fVector[kRefs]->size() < 5) { return; }
