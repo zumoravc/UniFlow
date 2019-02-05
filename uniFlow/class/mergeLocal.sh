@@ -6,7 +6,7 @@ echo "Checking if local merging result file exits (file: /merge/AnalysisResults.
 
 if [ ! -f ./AnalysisResults.root ]; then
 	echo "File NOT found! Merging locally."
-	root -l -b -q ~/NBI/Flow/macros/mergeOutput.C
+	root -l -b -q ~/Codes/ALICE/Flow/uniFlow/macros/grid/mergeOutput.C
 fi
 
 echo "Checking if file exists now"
