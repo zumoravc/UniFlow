@@ -1,6 +1,6 @@
 void PlotVnSingle()
 {
-  TString sOutDir = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow/output/plots/";
+  TString sOutDir = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow/output/plots_new_2/";
   gSystem->mkdir(sOutDir,1);
 
   TFile* fileIn = TFile::Open("/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow/output/Processed.root","READ");
@@ -9,8 +9,8 @@ void PlotVnSingle()
   Int_t iMultCent = 1;
   TString sCent = "20-30% V0M";
 
-  // TString sSpecies = "Charged";  TString sSpesLabel = "h^{#pm}"; Color_t color = kGray+2;
-  TString sSpecies = "Pion";  TString sSpesLabel = "#pi^{#pm}"; Color_t color = kRed+1;
+  TString sSpecies = "Charged";  TString sSpesLabel = "h^{#pm}"; Color_t color = kGray+2;
+  // TString sSpecies = "Pion";  TString sSpesLabel = "#pi^{#pm}"; Color_t color = kRed+1;
   // TString sSpecies = "K0s";  TString sSpesLabel = "K^{0}_{S}"; Color_t color = kGreen+2;
   // TString sSpecies = "Lambda";  TString sSpesLabel = "#Lambda(#bar{#Lambda})"; Color_t color = kOrange+1;
   // TString sSpecies = "Phi"; TString  sSpesLabel = "#phi";   Color_t color = kMagenta;

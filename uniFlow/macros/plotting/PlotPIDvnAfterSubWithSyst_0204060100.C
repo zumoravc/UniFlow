@@ -17,19 +17,25 @@ void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircl
 void SetStyle(Bool_t graypalette=kFALSE);
 
 // plotting order (mainly for syst)
-Int_t plotOrder[] = {4,2,3,6,5,1,0}; // indexes in sSpecies_list
+// Int_t plotOrder[] = {4,2,3,6,5,1,0}; // indexes in sSpecies_list
+// Int_t plotOrder[] = {2,3,5,4,1,0}; // indexes in sSpecies_list
+Int_t plotOrder[] = {0,2,5,4,1,3}; // indexes in sSpecies_list
 
 Bool_t bDrawSyst = kTRUE;
 
 // regular order
-TString sSpecies_labels[] = {" h^{#pm}"," #pi^{#pm}"," K^{#pm}"," K^{0}_{S}"," p(#bar{p})"," #phi"," #Lambda(#bar{#Lambda})"};
-TString sSpecies_list[] = {"Charged","Pion","Kaon","K0s","Proton","Phi","Lambda"};
+TString sSpecies_labels[] = {" #pi^{#pm}"," K^{#pm}"," K^{0}_{S}"," p(#bar{p})"," #phi"," #Lambda(#bar{#Lambda})"};
+TString sSpecies_list[] = {"Pion","Kaon","K0s","Proton","Phi","Lambda"};
 // Color_t colors[] = {kBlack, kRed, kBlue, kCyan+1, kGreen+2, kMagenta, kOrange+1};
-Color_t colors[] = {kBlack, kRed, kBlue, kCyan+2, kGreen+2, kMagenta+1, kOrange-1};
-Color_t colorsFill[] = {kBlack, kRed, kBlue, kCyan+2, kGreen+2, kMagenta+1, kOrange-1};
+
+// Color_t colors[] = {kBlack, kRed, kBlue, kCyan+2, kGreen+2, kMagenta+1, kOrange-1};
+// Color_t colorsFill[] = {kBlack, kRed, kBlue, kCyan+2, kGreen+2, kMagenta+1, kOrange-1};
+
+Color_t colors[] = {kBlack, kRed, kOrange-1, kBlue, kGreen+2, kMagenta+1, kOrange-1};
+Color_t colorsFill[] = {kBlack, kRed, kOrange-1, kBlue, kGreen+2, kMagenta+1, kOrange-1};
 // Color_t colorsFill[] = {kGray, kRed-9, kBlue-9, kCyan-8, kGreen-9, kMagenta-9, kOrange-9};
-Int_t markers[] = {kOpenCircle, kFullStar, kFullTriangleUp, kFullTriangleDown, kFullSquare, kFullCross, kFullDiamond};
-Double_t markersSize[] = {1.0,1.2,1.1,1.1,1.0,1.2,1.2};
+Int_t markers[] = {kOpenCircle, kOpenSquare, kOpenStar, kOpenCross, kOpenDiamond, kOpenCircle};
+Double_t markersSize[] = {1.0,1.0,1.2,1.2,1.2,1.0,1.2};
 Double_t dAlpha = 0.35;
 // Double_t dAlpha = 1.0;
 
@@ -58,10 +64,10 @@ void PlotPIDvnAfterSubWithSyst_0204060100()
 {
   SetStyle();
 
-  TString sInputPathTop = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/merged-pPb-16qt-nua/subt/output_binning-3-0204060100/"+sGapName+"/";
-  TString sInputSystTop = "/Users/vpacik/NBI/Flow/uniFlow/results/qm-run/syst/out-binning-3/final/";
+  TString sInputPathTop = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/temp_qmrrun/merged-pPb-16qt-nua/subt/output_binning-3-0204060100/"+sGapName+"/";
+  TString sInputSystTop = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/temp_qmrrun/syst/out-binning-3/final/";
 
-  TString sOutputPath = Form("%s/results-4/",sInputPathTop.Data());
+  TString sOutputPath = Form("%s/results-replot/",sInputPathTop.Data());
   gSystem->mkdir(sOutputPath.Data(),kTRUE);
 
   TFile* fileOut = TFile::Open(Form("%s/v2-syst-final-noptshift.root",sInputPathTop.Data()),"RECREATE");
@@ -160,7 +166,7 @@ void PlotPIDvnAfterSubWithSyst_0204060100()
       graphPoints->Write();
       graphSyst->Write();
 
-      if(iCent < iNumCent-1 || spec != 5)
+      if(iCent < iNumCent-1 || spec != 4)
       {
         leg->AddEntry(graphSyst,sSpecies_labels[spec].Data(),"pf");
       }
@@ -209,7 +215,7 @@ void PlotPIDvnAfterSubWithSyst_0204060100()
         TGraphErrors* graphSyst = vecGraphSyst.at(index);
         canPlot->cd();
          // Phi in peripheral bin
-        if(iCent == iNumCent-1 && index == 5) { continue; }
+        if(iCent == iNumCent-1 && index == 4) { continue; }
         graphSyst->Draw("p2 same");
       }
     }
@@ -221,7 +227,7 @@ void PlotPIDvnAfterSubWithSyst_0204060100()
       TGraphErrors* graphPoints = vecGraphPoints.at(index);
       canPlot->cd();
       // Phi in peripheral bin
-      if(iCent == iNumCent-1 && index == 5) { continue; }
+      if(iCent == iNumCent-1 && index == 4) { continue; }
       graphPoints->Draw("p Z same");
     }
 
@@ -289,7 +295,7 @@ void SetStyle(Bool_t graypalette) {
   gStyle->SetLabelOffset(0.01,"x");
   gStyle->SetLabelColor(kBlack,"xyz");
   gStyle->SetTitleSize(0.05,"xyz");
-  gStyle->SetTitleOffset(1.4,"y");
+  gStyle->SetTitleOffset(1.52,"y");
   gStyle->SetTitleOffset(1.2,"x");
   gStyle->SetTitleFillColor(kWhite);
   gStyle->SetTextSizePixels(26);
