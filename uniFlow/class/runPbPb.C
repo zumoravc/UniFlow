@@ -8,7 +8,7 @@
 
 void runPbPb()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -36,13 +36,13 @@ void runPbPb()
 
 
     #if !defined (__CINT__) || defined (__CLING__)
-    gInterpreter->ProcessLine(".include $ROOTSYS/include");
-    gInterpreter->ProcessLine(".include $ALICE_ROOT/include");
-    gInterpreter->ProcessLine(".include $ALICE_PHYSICS/include");
+      gInterpreter->ProcessLine(".include $ROOTSYS/include");
+      gInterpreter->ProcessLine(".include $ALICE_ROOT/include");
+      gInterpreter->ProcessLine(".include $ALICE_PHYSICS/include");
     #else
-    gROOT->ProcessLine(".include $ROOTSYS/include");
-    gROOT->ProcessLine(".include $ALICE_ROOT/include");
-    gROOT->ProcessLine(".include $ALICE_PHYSICS/include");
+      gROOT->ProcessLine(".include $ROOTSYS/include");
+      gROOT->ProcessLine(".include $ALICE_ROOT/include");
+      gROOT->ProcessLine(".include $ALICE_PHYSICS/include");
     #endif
 
     // create the analysis manager
@@ -64,15 +64,16 @@ void runPbPb()
     */
 
     #if !defined (__CINT__) || defined (__CLING__)
+      // printf("\n CLING \n\n");
       gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
-      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights.root\")"));
+      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights.root\")"));
       // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
-      // AliAnalysisTaskUniFlow *task2 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"21\")"));
+      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
     #else
+      // printf("\n CINT \n\n");
       gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
       gROOT->LoadMacro("AddTaskUniFlow.C");
       AliAnalysisTaskUniFlow *task1 = AddTaskUniFlow(AliAnalysisTaskUniFlow::kPbPb);
-      // AliAnalysisTaskUniFlow *task2 = AddTaskUniFlow(AliAnalysisTaskUniFlow::kPbPb,"21");
     #endif
 
     if(!task1) { printf("E-runPbPb: Task not initialised!\n"); return; }
@@ -80,7 +81,7 @@ void runPbPb()
     // AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
-    task1->SetNumEventsAnalyse(1);
+    task1->SetNumEventsAnalyse(10);
     task1->SetMC(kFALSE);
     task1->SetSampling(kFALSE);
     task1->SetFillQAhistos(0);
@@ -88,13 +89,13 @@ void runPbPb()
     task1->SetProcessPhi(0);
     task1->SetProcessV0s(0);
     // Flow
-    task1->AddCorr({2,-2},{0.});
-    task1->AddTwo(2,-2);
+    task1->AddCorr({2,-2},{0.0});
+    // task1->AddTwo(2,-2);
     // task1->AddTwo(3,-3);
-    task1->AddFour(2,2,-2,-2);
+    // task1->AddFour(2,2,-2,-2);
     // task1->AddFour(2,3,-2,-3, kTRUE,kFALSE);
     // task1->AddFour(3,3,-3,-3);
-    task1->AddFourGap(2,2,-2,-2, 0.0, kTRUE,kFALSE);
+    // task1->AddFourGap(2,2,-2,-2, 0.0, kTRUE,kFALSE);
     // task1->AddFourGap(2,3,-2,-3, 0.0, kTRUE,kFALSE);
     // task1->AddFourGap(3,3,-3,-3, 0.0, kTRUE,kFALSE);
     // // task1->AddFourGap(2,2,-2,-2, 1.0, kTRUE,kFALSE);
@@ -103,7 +104,7 @@ void runPbPb()
     // task1->AddThree(4,-2,-2, kFALSE,kTRUE);
     // task1->AddThree(5,-3,-2, kFALSE,kTRUE);
     // task1->AddThree(6,-3,-3, kFALSE,kTRUE);
-    task1->AddThreeGap(4,-2,-2, 0.0, kFALSE,kTRUE);
+    // task1->AddThreeGap(4,-2,-2, 0.0, kFALSE,kTRUE);
     // task1->AddThreeGap(5,-3,-2, 0.0, kFALSE,kTRUE);
     // task1->AddThreeGap(6,-3,-3, 0.0, kFALSE,kTRUE);
     // // task1->AddThreeGap(4,-2,-2, 1.0, kFALSE,kTRUE);
@@ -134,7 +135,7 @@ void runPbPb()
         alienHandler->SetAnalysisSource("AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20181001-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20181002_ROOT6-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
         alienHandler->SetGridDataDir(Form("/alice/data/%s",sPeriod.Data()));
