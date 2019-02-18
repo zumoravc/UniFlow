@@ -22,6 +22,8 @@
 #include "TH3.h"
 #include "TF1.h"
 
+
+class THnSparse;
 class FlowTask;
 
 class ProcessUniFlow
@@ -136,6 +138,8 @@ class ProcessUniFlow
     TList*      flQAPhi; //! TList from input file with Phi QA plots / profiles
     TList*      flQAV0s; //! TList from input file with K0s QA plots / profiles
     std::vector<FlowTask*> fvTasks; // vector of task for individual species proccesing
+
+    ClassDef(ProcessUniFlow,1);
 };
 
 #endif

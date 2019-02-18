@@ -111,6 +111,7 @@ class FlowTask
   protected:
   private:
 
+    ClassDef(FlowTask,1);
 };
 
 #endif

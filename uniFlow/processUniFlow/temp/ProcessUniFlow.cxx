@@ -4,6 +4,7 @@
 #include <vector>
 #include "TROOT.h"
 #include "TMinuit.h"
+#include "TVirtualFitter.h"
 #include "TMath.h"
 #include "TStyle.h"
 #include "TString.h"
@@ -21,6 +22,9 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TF1.h"
+#include "THnSparse.h"
+
+ClassImp(ProcessUniFlow);
 
 //_____________________________________________________________________________
 ProcessUniFlow::ProcessUniFlow() :

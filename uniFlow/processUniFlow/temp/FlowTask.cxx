@@ -1,4 +1,4 @@
-#include "FlowTash.h"
+#include "FlowTask.h"
 
 #include <vector>
 #include "TROOT.h"
@@ -20,6 +20,8 @@
 #include "TH2.h"
 #include "TH3.h"
 #include "TF1.h"
+
+ClassImp(FlowTask);
 
 //_____________________________________________________________________________
 FlowTask::FlowTask(PartSpecies species, const char* name) :
