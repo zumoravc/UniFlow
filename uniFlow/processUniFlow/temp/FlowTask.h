@@ -2,25 +2,12 @@
 #define FLOWTASK_H
 
 #include <vector>
-#include "TROOT.h"
-#include "TMinuit.h"
-#include "TMath.h"
-#include "TStyle.h"
 #include "TString.h"
-#include "TLatex.h"
-#include "TFile.h"
-#include "TList.h"
-#include "TCanvas.h"
-#include "TLegend.h"
-#include "TSystem.h"
-#include "TLine.h"
-#include "TProfile.h"
-#include "TProfile2D.h"
-#include "TProfile3D.h"
-#include "TH1.h"
-#include "TH2.h"
-#include "TH3.h"
-#include "TF1.h"
+
+class TList;
+class TCanvas;
+class TH1D;
+
 
 class FlowTask
 {
