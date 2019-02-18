@@ -1,6 +1,4 @@
-#ifdef __CLING__
-#include "ProcessUniFlow.cpp"
-#endif
+// NEED to run .X Load.C beforehand
 
 /* RunProcess.C
  *
@@ -39,10 +37,6 @@ void RunCumulants()
 
 
 	// ##### END Parameters setting ######
-
-	#if defined (__CINT__)
-		gROOT->LoadMacro("~vpacik/Codes/ALICE/Flow/uniFlow/processUniFlow/ProcessUniFlow.cpp++g");
-	#endif
 
 	ProcessUniFlow* process = new ProcessUniFlow();
 	process->SetInputFilePath(sInputPath.Data());
