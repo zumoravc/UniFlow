@@ -29,6 +29,8 @@ stdout
 ### Directories ###
 class/misc/*
 class/misc/*
+class/FlowPID.sh
+class/myAnalysis.C
 class/tempChecksum_*
 results/*
 macros_bk

@@ -4,12 +4,13 @@
 #include "AliESDInputHandler.h"
 #include "AliAODInputHandler.h"
 #include "AliAnalysisTaskUniFlow.h"
+#include "AliAnalysisTaskUniFlow.cxx"
 #endif
 
 void runDev()
 {
     Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
-    Bool_t gridTest = 0; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
+    Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
     // TString sGridMode = "terminate";
@@ -36,13 +37,13 @@ void runDev()
 
 
     #if !defined (__CINT__) || defined (__CLING__)
-    gInterpreter->ProcessLine(".include $ROOTSYS/include");
-    gInterpreter->ProcessLine(".include $ALICE_ROOT/include");
-    gInterpreter->ProcessLine(".include $ALICE_PHYSICS/include");
+      gInterpreter->ProcessLine(".include $ROOTSYS/include");
+      gInterpreter->ProcessLine(".include $ALICE_ROOT/include");
+      gInterpreter->ProcessLine(".include $ALICE_PHYSICS/include");
     #else
-    gROOT->ProcessLine(".include $ROOTSYS/include");
-    gROOT->ProcessLine(".include $ALICE_ROOT/include");
-    gROOT->ProcessLine(".include $ALICE_PHYSICS/include");
+      gROOT->ProcessLine(".include $ROOTSYS/include");
+      gROOT->ProcessLine(".include $ALICE_ROOT/include");
+      gROOT->ProcessLine(".include $ALICE_PHYSICS/include");
     #endif
 
     // create the analysis manager
@@ -64,115 +65,89 @@ void runDev()
     */
 
     #if !defined (__CINT__) || defined (__CLING__)
-      gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
-      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(\"UniFlow\")"));
+      // printf("\n CLING \n\n");
+      // gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
+      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights/lhc15o/6519/weights.root\")"));
+      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
+      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
     #else
+      // printf("\n CINT \n\n");
       gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
       gROOT->LoadMacro("AddTaskUniFlow.C");
-      AliAnalysisTaskUniFlow *task1 = AddTaskUniFlow("UniFlow");
+      AliAnalysisTaskUniFlow *task1 = AddTaskUniFlow(AliAnalysisTaskUniFlow::kPbPb);
     #endif
+
+    if(!task1) { printf("E-runPbPb: Task not initialised!\n"); return; }
 
     // AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetAnalysisType(AliAnalysisTaskUniFlow::kAOD);
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(10);
-    task1->SetMC(kFALSE);
-    task1->SetSampling(1,2);
-    task1->SetFillQAhistos(1);
+    task1->SetSampling(1,5);
+    task1->SetFillQAhistos(0);
     task1->SetProcessPID(1);
     task1->SetProcessPhi(1);
     task1->SetProcessV0s(1);
-    // Flow
-    task1->AddTwo(2,-2);
-    // task1->AddTwo(3,-3);
-    // task1->AddFour(2,2,-2,-2);
-    // task1->AddFour(2,3,-2,-3, kTRUE,kFALSE);
-    // task1->AddFour(3,3,-3,-3);
-    // task1->AddFourGap(2,2,-2,-2, 0.0, kTRUE,kFALSE);
-    // task1->AddFourGap(2,3,-2,-3, 0.0, kTRUE,kFALSE);
-    // task1->AddFourGap(3,3,-3,-3, 0.0, kTRUE,kFALSE);
-    // // task1->AddFourGap(2,2,-2,-2, 1.0, kTRUE,kFALSE);
-    // // task1->AddFourGap(2,3,-2,-3, 1.0, kTRUE,kFALSE);
-    // // task1->AddFourGap(3,3,-3,-3, 1.0, kTRUE,kFALSE);
-    // task1->AddThree(4,-2,-2, kFALSE,kTRUE);
-    // task1->AddThree(5,-3,-2, kFALSE,kTRUE);
-    // task1->AddThree(6,-3,-3, kFALSE,kTRUE);
-    // task1->AddThreeGap(4,-2,-2, 0.0, kFALSE,kTRUE);
-    // task1->AddThreeGap(5,-3,-2, 0.0, kFALSE,kTRUE);
-    // task1->AddThreeGap(6,-3,-3, 0.0, kFALSE,kTRUE);
-    // // task1->AddThreeGap(4,-2,-2, 1.0, kFALSE,kTRUE);
-    // // task1->AddThreeGap(5,-3,-2, 1.0, kFALSE,kTRUE);
-    // // task1->AddThreeGap(6,-3,-3, 1.0, kFALSE,kTRUE);
-    // task1->SetFlowRFPsPt(0.2);
-    // task1->SetFlowPOIsPt(0.2);
-    // task1->SetFlowEtaMax(0.8);
-    task1->SetFlowFillWeights(1);
-    // task1->SetUseWeigthsFile("alien:///alice/cern.ch/user/v/vpacik/weights/LHC15o/weights_15o-hi.root",kFALSE);
-    task1->SetUseWeigthsFile("/Users/vpacik/Codes/ALICE/Flow/uniFlow/class/weights.root",kFALSE);
-    task1->SetUseWeights3D(0);
-    // Events selection
-    task1->SetTrigger(AliVEvent::kINT7);
-    task1->SetCollisionSystem(AliAnalysisTaskUniFlow::kPbPb);
-    task1->SetMultEstimator(AliAnalysisTaskUniFlow::kV0M);
-    // task1->SetPVtxZMax(10);
-    // Charged selection
-    // task1->SetChargedEtaMax(0.8);
-    // // task1->SetChargedPtMin(0.2);
-    // // task1->SetChargedPtMax(5.);
-    // // task1->SetChargedDCAzMax(0.1);
-    // // task1->SetChargedDCAxyMax(0.2);
-    // task1->SetChargedNumTPCclsMin(70);
-    // task1->SetChargedTrackFilterBit(96);
-    // // PID selection
-    // task1->SetPIDUseAntiProtonOnly(kFALSE);
-    task1->SetPIDNumSigmasPionMax(3);
-    task1->SetPIDNumSigmasKaonMax(3);
-    task1->SetPIDNumSigmasProtonMax(3);
-    task1->SetUseBayesPID(1);
-    task1->SetPIDBayesProbPionMin(0.95);
-    task1->SetPIDBayesProbKaonMin(0.85);
-    task1->SetPIDBayesProbProtonMin(0.85);
+    task1->SetCentrality(AliAnalysisTaskUniFlow::kV0M,0,90,90);
+    // weigths
+    task1->SetFlowFillWeights(0);
+    task1->SetUseWeigthsRunByRun(0);
+    task1->SetUseWeights3D(kFALSE);
+    // correlations
+    task1->AddCorr({2,-2}, {});
+    task1->AddCorr({3,-3}, {});
 
-    // // V0 selection cuts
-    task1->SetV0sOnFly(kFALSE);
-    task1->SetV0sTPCRefit(kTRUE);
-    // task1->SetV0sRejectKinks(kTRUE);
-    // task1->SetV0sUseCrossMassRejection(kTRUE);
-    // task1->SetV0sCrossMassCutK0s(0.005);
-    // task1->SetV0sCrossMassCutLambda(0.020);
-    task1->SetV0sDCAPVMin(0.1);
-    task1->SetV0sDCAPVMax(0.0);
-    task1->SetV0sDCAPVzMax(0.0);
-    // // task1->SetV0sDaughtersFilterBit(211);
-    task1->SetV0sDCADaughtersMax(0.5);
-    task1->SetV0sDecayRadiusMin(5.0);
-    task1->SetV0sDecayRadiusMax(100.0);
-    task1->SetV0sDaughterPtMin(0.0);
-    task1->SetV0sDaughterEtaMax(0.8);
-    // task1->SetV0sMotherRapMax(0.);
-    task1->SetV0sDaughterNumTPCClsMin(70);
-    task1->SetV0sDaughterRatioCrossFindMin(0.8);
-    task1->SetV0sDaughterNumTPCClsPIDMin(70);
-    task1->SetV0sK0sCPAMin(0.998);
-    task1->SetV0sLambdaCPAMin(0.998);
-    task1->SetV0sK0sNumTauMax(0.0);
-    task1->SetV0sK0sArmenterosAlphaMin(0.2);
-    task1->SetV0sLambdaNumTauMax(0.0);
-    task1->SetV0sK0sPionNumTPCSigmaMax(3.0);
-    task1->SetV0sLambdaPionNumTPCSigmaMax(3.0);
-    task1->SetV0sLambdaProtonNumTPCSigmaMax(3.0);
+    task1->AddCorr({4,-2,-2}, {}, 0,1);
+    task1->AddCorr({5,-3,-2}, {}, 0,1);
+    task1->AddCorr({6,-3,-3}, {}, 0,1);
+
+    task1->AddCorr({2,2,-2,-2}, {});
+    task1->AddCorr({2,3,-2,-3}, {}, 1,0);
+    task1->AddCorr({3,3,-3,-3}, {});
+
+    task1->AddCorr({2,-2}, {0.0});
+    task1->AddCorr({3,-3}, {0.0});
+
+    task1->AddCorr({4,-2,-2}, {0.0}, 0,1);
+    task1->AddCorr({5,-3,-2}, {0.0}, 0,1);
+    task1->AddCorr({6,-3,-3}, {0.0}, 0,1);
+
+    task1->AddCorr({2,2,-2,-2}, {0.0});
+    task1->AddCorr({2,3,-2,-3}, {0.0}, 1,0);
+    task1->AddCorr({3,3,-3,-3}, {0.0});
+
+    task1->AddCorr({2,-2}, {0.4});
+    task1->AddCorr({3,-3}, {0.4});
+
+    task1->AddCorr({4,-2,-2}, {0.4}, 0,1);
+    task1->AddCorr({5,-3,-2}, {0.4}, 0,1);
+    task1->AddCorr({6,-3,-3}, {0.4}, 0,1);
+
+    task1->AddCorr({2,2,-2,-2}, {0.4});
+    task1->AddCorr({2,3,-2,-3}, {0.4}, 1,0);
+    task1->AddCorr({3,3,-3,-3}, {0.4});
+
+    task1->AddCorr({2,-2}, {0.8});
+    task1->AddCorr({3,-3}, {0.8});
+
+    task1->AddCorr({4,-2,-2}, {0.8}, 0,1);
+    task1->AddCorr({5,-3,-2}, {0.8}, 0,1);
+    task1->AddCorr({6,-3,-3}, {0.8}, 0,1);
+
+    task1->AddCorr({2,2,-2,-2}, {0.8});
+    task1->AddCorr({2,3,-2,-3}, {0.8}, 1,0);
+    task1->AddCorr({3,3,-3,-3}, {0.8});
 
 
     if (!mgr->InitAnalysis()) return;
-    mgr->SetDebugLevel(2);
-    // mgr->PrintStatus();
+    //mgr->SetDebugLevel(2);
+    //mgr->PrintStatus();
     mgr->SetUseProgressBar(1, 500);
 
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
-        chain->Add("~/Codes/ALICE/Flow/data/2016/LHC16l/000259888/pass1/AOD/001/AliAOD.root");
+        chain->Add("~/Codes/Flow/data/2016/LHC16l/000259888/pass1/AOD/001/AliAOD.root");
         // chain->Add("~/NBI/Flow/data/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
     } else {
@@ -181,11 +156,11 @@ void runDev()
         // also specify the include (header) paths on grid
         alienHandler->AddIncludePath("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include");
         // make sure your source files get copied to grid
-        alienHandler->SetAdditionalLibs("AliAnalysisTaskUniFlow.cxx AliAnalysisTaskUniFlow.h");
+        alienHandler->SetAdditionalLibs("AliAnalysisTaskUniFlow.cxx AliAnalysisTaskUniFlow.h libPWGEMCALbase.so");
         alienHandler->SetAnalysisSource("AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20181001-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20181002_ROOT6-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
         alienHandler->SetGridDataDir(Form("/alice/data/%s",sPeriod.Data()));

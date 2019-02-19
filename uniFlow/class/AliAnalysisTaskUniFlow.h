@@ -65,7 +65,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       };
 
                               AliAnalysisTaskUniFlow(); // constructor
-                              AliAnalysisTaskUniFlow(const char *name, ColSystem colSys, Bool_t bUseWeights = kFALSE); // named (primary) constructor
+                              AliAnalysisTaskUniFlow(const char *name, ColSystem colSys, Bool_t bUseWeights = kFALSE, Bool_t bIsMC = kFALSE); // named (primary) constructor
                               AliAnalysisTaskUniFlow(const AliAnalysisTaskUniFlow&); // not implemented
                               AliAnalysisTaskUniFlow& operator=(const AliAnalysisTaskUniFlow&); // not implemented
       virtual                 ~AliAnalysisTaskUniFlow(); // destructor
@@ -79,7 +79,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetNumEventsAnalyse(Int_t num) { fNumEventsAnalyse = num; }
       void                    SetDumpTObjectTable(Bool_t dump = kTRUE) { fDumpTObjectTable = dump; }
       void					          SetAnalysisType(AnalType type = kAOD) { fAnalType = type; }
-      void                    SetMC(Bool_t mc = kTRUE) { fMC = mc; }
       void                    SetSampling(Bool_t sample = kTRUE, Int_t iNum = 10) { fSampling = sample; fNumSamples = iNum; }
       void                    SetFillQAhistos(Bool_t fill = kTRUE) { fFillQA = fill; }
       void                    SetProcessPID(Bool_t use = kTRUE) { fProcessSpec[kPion] = use; fProcessSpec[kKaon] = use; fProcessSpec[kProton] = use; }
@@ -540,68 +539,5 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       ClassDef(AliAnalysisTaskUniFlow, 7);
 };
-
-AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
-  fbDoRefs{0},
-  fbDoPOIs{0},
-  fiNumHarm{0},
-  fiNumGaps{0},
-  fiHarm{},
-  fdGaps{},
-  fsName{},
-  fsLabel{}
-{};
-// ============================================================================
-AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::vector<Int_t> harms, std::vector<Double_t> gaps) :
-  fbDoRefs{doRFPs},
-  fbDoPOIs{doPOIs},
-  fiNumHarm{0},
-  fiNumGaps{0},
-  fiHarm{harms},
-  fdGaps{gaps},
-  fsName{},
-  fsLabel{}
-{
-  // constructor of CorrTask
-
-  fiNumHarm = harms.size();
-  fiNumGaps = gaps.size();
-
-  if(fiNumHarm < 2) { return; }
-
-  // generating name
-  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
-  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
-  sName += ")";
-
-  if(fiNumGaps > 0) {
-    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
-    sName += ")";
-  }
-
-  // generating label
-  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
-  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
-  sLabel += "}";
-
-  if(fiNumGaps > 0) {
-    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
-    sLabel += ")";
-  }
-
-  fsName = sName;
-  fsLabel = sLabel;
-}
-// ============================================================================
-void AliAnalysisTaskUniFlow::CorrTask::Print() const
-{
-  printf("CorrTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
-  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
-  printf("} | fgGaps[%d] = { ",fiNumGaps);
-  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
-  printf("}\n");
-}
 
 #endif
