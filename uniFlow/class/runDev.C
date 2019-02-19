@@ -4,6 +4,7 @@
 #include "AliESDInputHandler.h"
 #include "AliAODInputHandler.h"
 #include "AliAnalysisTaskUniFlow.h"
+#include "AliAnalysisTaskUniFlow.cxx"
 #endif
 
 void runDev()
@@ -65,7 +66,7 @@ void runDev()
 
     #if !defined (__CINT__) || defined (__CLING__)
       // printf("\n CLING \n\n");
-      gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
+      // gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
       // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights/lhc15o/6519/weights.root\")"));
       // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
       AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
