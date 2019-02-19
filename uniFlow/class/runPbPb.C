@@ -4,11 +4,14 @@
 #include "AliESDInputHandler.h"
 #include "AliAODInputHandler.h"
 #include "AliAnalysisTaskUniFlow.h"
+#include "AliAnalysisTaskUniFlow.cxx"
 #endif
+
+
 
 void runPbPb()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -65,7 +68,7 @@ void runPbPb()
 
     #if !defined (__CINT__) || defined (__CLING__)
       // printf("\n CLING \n\n");
-      gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
+      // gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
       // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights.root\")"));
       // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
       AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
@@ -82,7 +85,6 @@ void runPbPb()
     // Analysis
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(10);
-    task1->SetMC(kFALSE);
     task1->SetSampling(kFALSE);
     task1->SetFillQAhistos(0);
     task1->SetProcessPID(0);
