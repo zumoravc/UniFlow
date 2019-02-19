@@ -8,7 +8,7 @@
 class AliAnalysisDataContainer;
 class AliAnalysisTaskUniFlow;
 
-AliAnalysisTaskUniFlow* AddTaskUniFlow(AliAnalysisTaskUniFlow::ColSystem colSys, TString sWeigthsFile = "", const char* suffix = "")
+AliAnalysisTaskUniFlow* AddTaskUniFlow(AliAnalysisTaskUniFlow::ColSystem colSys, TString sWeigthsFile = "", Bool_t bIsMC = kFALSE, const char* suffix = "")
 {
   AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
   if (!mgr) { return NULL; }
@@ -21,7 +21,7 @@ AliAnalysisTaskUniFlow* AddTaskUniFlow(AliAnalysisTaskUniFlow::ColSystem colSys,
   // crate a combined name for the task (required for LEGO trains)
   TString taskName = Form("UniFlow%s",suffix);
 
-  AliAnalysisTaskUniFlow* task = new AliAnalysisTaskUniFlow(taskName.Data(), colSys, bUseWeights); // now we create an instance of your task
+  AliAnalysisTaskUniFlow* task = new AliAnalysisTaskUniFlow(taskName.Data(), colSys, bUseWeights, bIsMC); // now we create an instance of your task
   if(!task) { return NULL; }
 
   // task default settings (ColSystem independent)
@@ -29,7 +29,6 @@ AliAnalysisTaskUniFlow* AddTaskUniFlow(AliAnalysisTaskUniFlow::ColSystem colSys,
   task->SetRunMode(AliAnalysisTaskUniFlow::kFull);
   task->SetNumEventsAnalyse(50);
   task->SetTrigger(AliVEvent::kINT7);
-  task->SetMC(kFALSE);
   task->SetFlowFillWeights(kTRUE);
   task->SetUseWeigthsRunByRun(kTRUE);
   task->SetUseWeights3D(kFALSE);

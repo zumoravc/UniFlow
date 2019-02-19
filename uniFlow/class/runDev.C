@@ -66,7 +66,7 @@ void runDev()
     #if !defined (__CINT__) || defined (__CLING__)
       // printf("\n CLING \n\n");
       gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
-      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights.root\")"));
+      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights/lhc15o/6519/weights.root\")"));
       // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
       AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
     #else
@@ -80,39 +80,63 @@ void runDev()
 
     // AliAnalysisTaskUniFlow* task1 = AddTaskUniFlow("UniFlow");
     // Analysis
-    task1->SetRunMode(AliAnalysisTaskUniFlow::kTest);
+    task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(10);
-    task1->SetMC(kFALSE);
-    task1->SetSampling(kFALSE);
+    task1->SetSampling(1,5);
     task1->SetFillQAhistos(0);
-    task1->SetProcessPID(0);
-    task1->SetProcessPhi(0);
-    task1->SetProcessV0s(0);
-    // Flow
-    task1->AddCorr({2,-2},{0.0});
-    // task1->AddTwo(2,-2);
-    // task1->AddTwo(3,-3);
-    // task1->AddFour(2,2,-2,-2);
-    // task1->AddFour(2,3,-2,-3, kTRUE,kFALSE);
-    // task1->AddFour(3,3,-3,-3);
-    // task1->AddFourGap(2,2,-2,-2, 0.0, kTRUE,kFALSE);
-    // task1->AddFourGap(2,3,-2,-3, 0.0, kTRUE,kFALSE);
-    // task1->AddFourGap(3,3,-3,-3, 0.0, kTRUE,kFALSE);
-    // // task1->AddFourGap(2,2,-2,-2, 1.0, kTRUE,kFALSE);
-    // // task1->AddFourGap(2,3,-2,-3, 1.0, kTRUE,kFALSE);
-    // // task1->AddFourGap(3,3,-3,-3, 1.0, kTRUE,kFALSE);
-    // task1->AddThree(4,-2,-2, kFALSE,kTRUE);
-    // task1->AddThree(5,-3,-2, kFALSE,kTRUE);
-    // task1->AddThree(6,-3,-3, kFALSE,kTRUE);
-    // task1->AddThreeGap(4,-2,-2, 0.0, kFALSE,kTRUE);
-    // task1->AddThreeGap(5,-3,-2, 0.0, kFALSE,kTRUE);
-    // task1->AddThreeGap(6,-3,-3, 0.0, kFALSE,kTRUE);
-    // // task1->AddThreeGap(4,-2,-2, 1.0, kFALSE,kTRUE);
-    // // task1->AddThreeGap(5,-3,-2, 1.0, kFALSE,kTRUE);
-    // // task1->AddThreeGap(6,-3,-3, 1.0, kFALSE,kTRUE);
-    task1->SetFlowFillWeights(1);
-    task1->SetUseWeigthsRunByRun(1);
+    task1->SetProcessPID(1);
+    task1->SetProcessPhi(1);
+    task1->SetProcessV0s(1);
+    task1->SetCentrality(AliAnalysisTaskUniFlow::kV0M,0,90,90);
+    // weigths
+    task1->SetFlowFillWeights(0);
+    task1->SetUseWeigthsRunByRun(0);
     task1->SetUseWeights3D(kFALSE);
+    // correlations
+    task1->AddCorr({2,-2}, {});
+    task1->AddCorr({3,-3}, {});
+
+    task1->AddCorr({4,-2,-2}, {}, 0,1);
+    task1->AddCorr({5,-3,-2}, {}, 0,1);
+    task1->AddCorr({6,-3,-3}, {}, 0,1);
+
+    task1->AddCorr({2,2,-2,-2}, {});
+    task1->AddCorr({2,3,-2,-3}, {}, 1,0);
+    task1->AddCorr({3,3,-3,-3}, {});
+
+    task1->AddCorr({2,-2}, {0.0});
+    task1->AddCorr({3,-3}, {0.0});
+
+    task1->AddCorr({4,-2,-2}, {0.0}, 0,1);
+    task1->AddCorr({5,-3,-2}, {0.0}, 0,1);
+    task1->AddCorr({6,-3,-3}, {0.0}, 0,1);
+
+    task1->AddCorr({2,2,-2,-2}, {0.0});
+    task1->AddCorr({2,3,-2,-3}, {0.0}, 1,0);
+    task1->AddCorr({3,3,-3,-3}, {0.0});
+
+    task1->AddCorr({2,-2}, {0.4});
+    task1->AddCorr({3,-3}, {0.4});
+
+    task1->AddCorr({4,-2,-2}, {0.4}, 0,1);
+    task1->AddCorr({5,-3,-2}, {0.4}, 0,1);
+    task1->AddCorr({6,-3,-3}, {0.4}, 0,1);
+
+    task1->AddCorr({2,2,-2,-2}, {0.4});
+    task1->AddCorr({2,3,-2,-3}, {0.4}, 1,0);
+    task1->AddCorr({3,3,-3,-3}, {0.4});
+
+    task1->AddCorr({2,-2}, {0.8});
+    task1->AddCorr({3,-3}, {0.8});
+
+    task1->AddCorr({4,-2,-2}, {0.8}, 0,1);
+    task1->AddCorr({5,-3,-2}, {0.8}, 0,1);
+    task1->AddCorr({6,-3,-3}, {0.8}, 0,1);
+
+    task1->AddCorr({2,2,-2,-2}, {0.8});
+    task1->AddCorr({2,3,-2,-3}, {0.8}, 1,0);
+    task1->AddCorr({3,3,-3,-3}, {0.8});
+
 
     if (!mgr->InitAnalysis()) return;
     //mgr->SetDebugLevel(2);
