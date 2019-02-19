@@ -199,18 +199,31 @@ AliAnalysisTaskUniFlow* AddTaskUniFlow(AliAnalysisTaskUniFlow::ColSystem colSys,
   mgr->ConnectOutput(task,14,cOutput14);
 
   if(bUseWeights) {
-    // in case of non-local run, establish connection to ALiEn for loading the weights
-    if(sWeigthsFile.Contains("alien://")) { gGrid->Connect("alien://"); }
+    TObjArray* taskContainers = mgr->GetContainers();
+    if(!taskContainers) { printf("E-AddTaskUniFlow: Task containers does not exists!\n"); return NULL; }
 
-    TFile* weights_file = TFile::Open(sWeigthsFile.Data(),"READ");
-    if(!weights_file) { printf("E-AddTaskUniFlow: Input file with weights not found!\n"); return NULL; }
+    // check if the input weights are already loaded (e.g. in different subwagon)
+    AliAnalysisDataContainer* weights = (AliAnalysisDataContainer*) taskContainers->FindObject("inputWeights");
+    if(!weights) {
+      // if it does not exists create it
 
-    TList* weights_list = (TList*) weights_file->Get("weights");
-    if(!weights_list) { printf("E-AddTaskUniFlow: Input list with weights not found!\n"); weights_file->ls(); return NULL; }
+      // in case of non-local run, establish connection to ALiEn for loading the weights
+      if(sWeigthsFile.Contains("alien://")) { gGrid->Connect("alien://"); }
 
-    AliAnalysisDataContainer* cInputWeights = mgr->CreateContainer("inputWeights",TList::Class(), AliAnalysisManager::kInputContainer);
-    cInputWeights->SetData(weights_list);
-    mgr->ConnectInput(task,1,cInputWeights);
+      TFile* weights_file = TFile::Open(sWeigthsFile.Data(),"READ");
+      if(!weights_file) { printf("E-AddTaskUniFlow: Input file with weights not found!\n"); return NULL; }
+
+      TList* weights_list = (TList*) weights_file->Get("weights");
+      if(!weights_list) { printf("E-AddTaskUniFlow: Input list with weights not found!\n"); weights_file->ls(); return NULL; }
+
+      AliAnalysisDataContainer* cInputWeights = mgr->CreateContainer("inputWeights",TList::Class(), AliAnalysisManager::kInputContainer);
+      cInputWeights->SetData(weights_list);
+      mgr->ConnectInput(task,1,cInputWeights);
+    }
+    else {
+      // connect existing container
+      mgr->ConnectInput(task,1,weights);
+    }
   }
 
   return task;
