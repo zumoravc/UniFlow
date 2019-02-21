@@ -59,6 +59,9 @@
 //
 // =================================================================================================
 
+#ifndef ALIANALYSISTASKUNIFLOW_CXX
+#define ALIANALYSISTASKUNIFLOW_CXX
+
 #include <TDatabasePDG.h>
 #include <TPDGCode.h>
 
@@ -4085,3 +4088,5 @@ void AliAnalysisTaskUniFlow::CorrTask::Print() const
   for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
   printf("}\n");
 }
+
+#endif
