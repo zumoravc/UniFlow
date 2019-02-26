@@ -1996,9 +1996,9 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TString histName, Bool_t
   if(task->fMergePosNeg)
   {
     TH1* profPos = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",histName.Data()));
-    if(!profPos) { Error("Positive profile 'profNeg' not found!","PrepareSlicesNew"); inputList->ls(); return kFALSE; }
+    if(!profPos) { Error(Form("Positive profile '%s_Pos_sample0' not found!",histName.Data()),"PrepareSlicesNew"); inputList->ls(); return kFALSE; }
     TH1* profNeg = (TH1*) inputList->FindObject(Form("%s_Neg_sample0",histName.Data()));
-    if(!profNeg) { Error("Negative profile 'profNeg' not found!","PrepareSlicesNew"); inputList->ls(); return kFALSE; }
+    if(!profNeg) { Error(Form("Negative profile '%s_Neg_sample0' not found!",histName.Data()),"PrepareSlicesNew"); inputList->ls(); return kFALSE; }
 
     TList* listMerge = new TList();
     listMerge->Add(profPos);
