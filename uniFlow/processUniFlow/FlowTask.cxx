@@ -34,13 +34,14 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fSpecies = species;
   fInputTag = "";
   fNumSamples = 10;
-  fDoFour = kFALSE;
   fConsCorr = kFALSE;
   fShowMult = kFALSE;
   fRebinning = kTRUE;
   fSampleMerging = kFALSE;
   fDesampleUseRMS = kFALSE;
-  fProcessMixed = kFALSE;
+  fDoCumTwo = kTRUE;
+  fDoCumFour = kFALSE;
+  fDoCorrMixed = kFALSE;
   fMixedDiff = "";
   fMixedRefs = "";
   fMergePosNeg = kFALSE;
@@ -154,8 +155,9 @@ void FlowTask::PrintTask()
   printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
-  printf("   fProcessMixed: %s\n", fProcessMixed ? "true" : "false");
-  printf("   fDoFour: %s\n", fDoFour ? "true" : "false");
+  printf("   fDoCumTwo: %s\n", fDoCumTwo ? "true" : "false");
+  printf("   fDoCumFour: %s\n", fDoCumFour ? "true" : "false");
+  printf("   fDoCorrMixed: %s\n", fDoCorrMixed ? "true" : "false");
   printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
   printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
   printf("   fFlowFitRangeLow: %g\n",fFlowFitRangeLow);

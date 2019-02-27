@@ -30,11 +30,12 @@ class FlowTask
     void        SetPtBins(std::vector<Double_t> array) { fPtBinsEdges = array; fNumPtBins = (Int_t) array.size() - 1; } // setup the pt binning for this task using std::vectors. NB: possible with {}
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
     void        SetConsiderCorrelations(Bool_t cor = kTRUE) { fConsCorr = cor; }
-    void        SetDoFourCorrelations(Bool_t four = kTRUE) { fDoFour = four; }
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
     void        SetMergePosNeg(Bool_t merge = kTRUE) { fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
-    void        SetProcessMixedHarmonics(TString nameDiff, TString nameRefs) { fProcessMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; }
+    void        DoCorrMixed(TString nameDiff, TString nameRefs) { fDoCorrMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; }
+    void        DoCumTwo() { fDoCumTwo = kTRUE; }
+    void        DoCumFour() { fDoCumFour = kTRUE; }
 
     // fitting
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -55,7 +56,6 @@ class FlowTask
     TString     fInputTag; // alterinative tag appended to name of input histos & profiles
     Int_t       fHarmonics; // harmonics
     Double_t    fEtaGap; // eta gap
-    Bool_t      fDoFour; // process 4-particle correlations
     Bool_t      fConsCorr; // consider correlations in cumulant / flow calculations
     Int_t       fNumSamples; // [10] number of samples
     Int_t       fNumPtBins; // actual number of pT bins (not size of array) for rebinning
@@ -65,7 +65,9 @@ class FlowTask
     Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
     Bool_t      fDesampleUseRMS; // [kFALSE] flag for using RMS as uncertainty during desampling
     Bool_t      fMergePosNeg; // [kFALSE] flag for merging results corresponding to positive and negative POIs
-    Bool_t      fProcessMixed; // [kFALSE] flag for processing mixed harmonics (non-linear flow modes)
+    Bool_t      fDoCumTwo; // [kTRUE] flag for processing 2-part. cumulants
+    Bool_t      fDoCumFour; // [kFALSE] flag for processing 4-part. cumulants
+    Bool_t      fDoCorrMixed; // [kFALSE] flag for processing mixed harmonics (non-linear flow modes)
     TString     fMixedDiff; // name (tag) for diff. profile for mixed harmonics
     TString     fMixedRefs; // name (tag) for reference profile for mixed harmonics
     // Reconstructed fitting
