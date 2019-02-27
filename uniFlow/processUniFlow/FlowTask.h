@@ -12,7 +12,7 @@ class TH1D;
 class FlowTask
 {
   public:
-    enum    PartSpecies {kUnknown=0, kRefs, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+    enum        PartSpecies {kUnknown = 0, kRefs, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
 
                 FlowTask(PartSpecies species = kUnknown, const char* name = "");
                 ~FlowTask(); // default destructor

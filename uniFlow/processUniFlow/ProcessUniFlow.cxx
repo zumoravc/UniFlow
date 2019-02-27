@@ -119,15 +119,15 @@ void ProcessUniFlow::Run()
   // main body of the class
   if(!Initialize()) { Fatal("Task not initialized","Run"); return; }
 
-  const Short_t iNumTasks = fvTasks.size();
+  const Int_t iNumTasks = fvTasks.size();
 
   Info("===== Running over tasks ======","Run");
   Info(Form("  Number of tasks: %d\n",iNumTasks),"Run");
-  for(Short_t iTask(0); iTask < iNumTasks; iTask++)
+  for(Int_t iTask(0); iTask < iNumTasks; iTask++)
   {
     FlowTask* currentTask = fvTasks.at(iTask);
-    if(!currentTask) continue;
-    if(!ProcessTask(currentTask)) {return;}
+    if(!currentTask) { continue; }
+    if(!ProcessTask(currentTask)) { return; }
   }
 
   return;
