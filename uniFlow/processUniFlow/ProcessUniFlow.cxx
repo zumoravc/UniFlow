@@ -230,8 +230,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
 
   // processing mixed
-  if(task->fDoCorrMixed)
-  {
+  if(task->fDoCorrMixed) {
     TList* listSlicesProfiles = task->fListProfiles;
     TList* listSlicesHistos = task->fListHistos;
 
@@ -244,32 +243,35 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     }
 
     if(!ProcessMixed(task)) { Error("ProcessMixed failed!","ProcessTask"); return kFALSE; }
-
-    return kTRUE;
   }
 
   // processing standard cumulants
-  switch (task->fSpecies)
-  {
-    case FlowTask::kRefs:
+  // TODO reimplement
+  if(!task->fDoCumTwo && task->fDoCumFour) { Warning("Cum{4} flag ON while Cum{2} flag OFF -> Skipping Cum{4}"); return kFALSE; }
+
+  if(task->fDoCumTwo) {
+    switch (task->fSpecies)
+    {
+      case FlowTask::kRefs:
       if(!ProcessRefs(task)) { Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(), task->GetSpeciesName().Data()),"ProcessTask"); return kFALSE; }
-    break;
+      break;
 
-    case FlowTask::kCharged:
-    case FlowTask::kPion:
-    case FlowTask::kKaon:
-    case FlowTask::kProton:
+      case FlowTask::kCharged:
+      case FlowTask::kPion:
+      case FlowTask::kKaon:
+      case FlowTask::kProton:
       for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { if(!ProcessDirect(task,binMult)) { Error(Form("Task '%s' (%s; mult. bin %d) not processed correctly!",task->fName.Data(),task->GetSpeciesName().Data(),binMult),"ProcessTask"); return kFALSE; }}
-    break;
+      break;
 
-    case FlowTask::kPhi:
-    case FlowTask::kK0s:
-    case FlowTask::kLambda:
+      case FlowTask::kPhi:
+      case FlowTask::kK0s:
+      case FlowTask::kLambda:
       if(!ProcessReconstructed(task,0)) { Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(),task->GetSpeciesName().Data()),"ProcessTask"); return kFALSE; }
-    break;
+      break;
 
-    default:
-    break;
+      default:
+      break;
+    }
   }
 
   return kTRUE;

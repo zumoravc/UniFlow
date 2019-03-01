@@ -13,8 +13,9 @@ void RunCumulants()
 
 	Int_t iNumSamples = 1;
 	Int_t iHarmonics = 2;
-	TString sInputPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow/";
+	TString sInputPath = "~/Codes/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow/";
 	// TString sOutputFilePath = sInputPath+"/output/";
+
 
 	// // ====== Starting points
 	// v2{4}
@@ -52,7 +53,8 @@ void RunCumulants()
 	FlowTask* taskRefs = new FlowTask(FlowTask::kRefs);
 	taskRefs->SetNumSamples(iNumSamples);
 	taskRefs->SetHarmonics(iHarmonics);
-	taskRefs->SetDoFourCorrelations(1);
+	taskRefs->DoCumTwo(1);
+	taskRefs->DoCumFour(1);
 	taskRefs->SetEtaGap(-1.0);
 	taskRefs->SetMergePosNeg();
 	process->AddTask(taskRefs);
@@ -60,7 +62,8 @@ void RunCumulants()
 	FlowTask* taskRefs2 = new FlowTask(FlowTask::kRefs);
 	taskRefs2->SetNumSamples(iNumSamples);
 	taskRefs2->SetHarmonics(iHarmonics);
-	taskRefs2->SetDoFourCorrelations(1);
+	taskRefs2->DoCumTwo(1);
+	taskRefs2->DoCumFour(1);
 	taskRefs2->SetEtaGap(0.0);
 	taskRefs2->SetMergePosNeg();
 	process->AddTask(taskRefs2);
@@ -68,7 +71,8 @@ void RunCumulants()
 	FlowTask* taskRefs3 = new FlowTask(FlowTask::kRefs);
 	taskRefs3->SetNumSamples(iNumSamples);
 	taskRefs3->SetHarmonics(iHarmonics);
-	taskRefs3->SetDoFourCorrelations(1);
+	taskRefs3->DoCumTwo(1);
+	taskRefs3->DoCumFour(1);
 	taskRefs3->SetEtaGap(0.4);
 	taskRefs3->SetMergePosNeg();
 	process->AddTask(taskRefs3);
@@ -76,7 +80,8 @@ void RunCumulants()
 	FlowTask* taskCharged = new FlowTask(FlowTask::kCharged);
 	taskCharged->SetNumSamples(iNumSamples);
 	taskCharged->SetHarmonics(iHarmonics);
-	taskCharged->SetDoFourCorrelations(1);
+	taskCharged->DoCumTwo(1);
+	taskCharged->DoCumFour(1);
 	taskCharged->SetEtaGap(-1.0);
 	taskCharged->SetPtBins(dPtBinningPID);
 	taskCharged->SetMergePosNeg();
@@ -85,7 +90,8 @@ void RunCumulants()
 	FlowTask* taskCharged2 = new FlowTask(FlowTask::kCharged);
 	taskCharged2->SetNumSamples(iNumSamples);
 	taskCharged2->SetHarmonics(iHarmonics);
-	taskCharged2->SetDoFourCorrelations(1);
+	taskCharged2->DoCumTwo(1);
+	taskCharged2->DoCumFour(1);
 	taskCharged2->SetEtaGap(0.0);
 	taskCharged2->SetPtBins(dPtBinningPID);
 	taskCharged2->SetMergePosNeg();
@@ -94,7 +100,8 @@ void RunCumulants()
 	FlowTask* taskCharged3 = new FlowTask(FlowTask::kCharged);
 	taskCharged3->SetNumSamples(iNumSamples);
 	taskCharged3->SetHarmonics(iHarmonics);
-	taskCharged3->SetDoFourCorrelations(1);
+	taskCharged3->DoCumTwo(1);
+	taskCharged3->DoCumFour(1);
 	taskCharged3->SetEtaGap(0.4);
 	taskCharged3->SetPtBins(dPtBinningPID);
 	taskCharged3->SetMergePosNeg();
@@ -103,7 +110,8 @@ void RunCumulants()
 	FlowTask* taskPion = new FlowTask(FlowTask::kPion);
 	taskPion->SetNumSamples(iNumSamples);
 	taskPion->SetHarmonics(iHarmonics);
-	taskPion->SetDoFourCorrelations(1);
+	taskPion->DoCumTwo(1);
+	taskPion->DoCumFour(1);
 	taskPion->SetEtaGap(-1.0);
 	taskPion->SetPtBins(dPtBinningPID);
 	taskPion->SetMergePosNeg();
@@ -112,7 +120,8 @@ void RunCumulants()
 	FlowTask* taskPion2 = new FlowTask(FlowTask::kPion);
 	taskPion2->SetNumSamples(iNumSamples);
 	taskPion2->SetHarmonics(iHarmonics);
-	taskPion2->SetDoFourCorrelations(1);
+	taskPion2->DoCumTwo(1);
+	taskPion2->DoCumFour(1);
 	taskPion2->SetEtaGap(0.0);
 	taskPion2->SetPtBins(dPtBinningPID);
 	taskPion2->SetMergePosNeg();
@@ -121,7 +130,8 @@ void RunCumulants()
 	FlowTask* taskPion3 = new FlowTask(FlowTask::kPion);
 	taskPion3->SetNumSamples(iNumSamples);
 	taskPion3->SetHarmonics(iHarmonics);
-	taskPion3->SetDoFourCorrelations(1);
+	taskPion3->DoCumTwo(1);
+	taskPion3->DoCumFour(1);
 	taskPion3->SetEtaGap(0.4);
 	taskPion3->SetPtBins(dPtBinningPID);
 	taskPion3->SetMergePosNeg();
@@ -130,7 +140,8 @@ void RunCumulants()
 	FlowTask* taskKch = new FlowTask(FlowTask::kKaon);
 	taskKch->SetNumSamples(iNumSamples);
 	taskKch->SetHarmonics(iHarmonics);
-	taskKch->SetDoFourCorrelations(1);
+	taskKch->DoCumTwo(1);
+	taskKch->DoCumFour(1);
 	taskKch->SetEtaGap(-1.0);
 	taskKch->SetPtBins(dPtBinningPID);
 	taskKch->SetMergePosNeg();
@@ -140,7 +151,8 @@ void RunCumulants()
 	FlowTask* taskKch2 = new FlowTask(FlowTask::kKaon);
 	taskKch2->SetNumSamples(iNumSamples);
 	taskKch2->SetHarmonics(iHarmonics);
-	taskKch2->SetDoFourCorrelations(1);
+	taskKch2->DoCumTwo(1);
+	taskKch2->DoCumFour(1);
 	taskKch2->SetEtaGap(0.0);
 	taskKch2->SetPtBins(dPtBinningPID);
 	taskKch2->SetMergePosNeg();
@@ -150,7 +162,8 @@ void RunCumulants()
 	FlowTask* taskKch3 = new FlowTask(FlowTask::kKaon);
 	taskKch3->SetNumSamples(iNumSamples);
 	taskKch3->SetHarmonics(iHarmonics);
-	taskKch3->SetDoFourCorrelations(1);
+	taskKch3->DoCumTwo(1);
+	taskKch3->DoCumFour(1);
 	taskKch3->SetEtaGap(0.4);
 	taskKch3->SetPtBins(dPtBinningPID);
 	taskKch3->SetMergePosNeg();
@@ -160,7 +173,8 @@ void RunCumulants()
 	FlowTask* taskProton = new FlowTask(FlowTask::kProton);
 	taskProton->SetNumSamples(iNumSamples);
 	taskProton->SetHarmonics(iHarmonics);
-	taskProton->SetDoFourCorrelations(1);
+	taskProton->DoCumTwo(1);
+	taskProton->DoCumFour(1);
 	taskProton->SetEtaGap(-1.0);
 	taskProton->SetPtBins(dPtBinningProton);
 	taskProton->SetMergePosNeg();
@@ -170,7 +184,8 @@ void RunCumulants()
 	FlowTask* taskProton2 = new FlowTask(FlowTask::kProton);
 	taskProton2->SetNumSamples(iNumSamples);
 	taskProton2->SetHarmonics(iHarmonics);
-	taskProton2->SetDoFourCorrelations(1);
+	taskProton2->DoCumTwo(1);
+	taskProton2->DoCumFour(1);
 	taskProton2->SetEtaGap(0.0);
 	taskProton2->SetPtBins(dPtBinningProton);
 	taskProton2->SetMergePosNeg();
@@ -180,7 +195,8 @@ void RunCumulants()
 	FlowTask* taskProton3 = new FlowTask(FlowTask::kProton);
 	taskProton3->SetNumSamples(iNumSamples);
 	taskProton3->SetHarmonics(iHarmonics);
-	taskProton3->SetDoFourCorrelations(1);
+	taskProton3->DoCumTwo(1);
+	taskProton3->DoCumFour(1);
 	taskProton3->SetEtaGap(0.4);
 	taskProton3->SetPtBins(dPtBinningProton);
 	taskProton3->SetMergePosNeg();
@@ -191,7 +207,8 @@ void RunCumulants()
  	FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
 	taskK0s->SetNumSamples(iNumSamples);
 	taskK0s->SetHarmonics(iHarmonics);
-	taskK0s->SetDoFourCorrelations(1);
+	taskK0s->DoCumTwo(1);
+	taskK0s->DoCumFour(1);
 	taskK0s->SetEtaGap(-1.0);
 	// taskK0s->SetInvMassRebin(2);
 	// taskK0s->SetFlowMassRebin(2);
@@ -205,7 +222,8 @@ void RunCumulants()
 	FlowTask* taskK0s2 = new FlowTask(FlowTask::kK0s);
 	taskK0s2->SetNumSamples(iNumSamples);
 	taskK0s2->SetHarmonics(iHarmonics);
-	taskK0s2->SetDoFourCorrelations(1);
+	taskK0s2->DoCumTwo(1);
+	taskK0s2->DoCumFour(1);
 	taskK0s2->SetEtaGap(0.0);
 	// taskK0s2->SetInvMassRebin(2);
 	// taskK0s2->SetFlowMassRebin(2);
@@ -219,7 +237,8 @@ void RunCumulants()
 	FlowTask* taskK0s3 = new FlowTask(FlowTask::kK0s);
 	taskK0s3->SetNumSamples(iNumSamples);
 	taskK0s3->SetHarmonics(iHarmonics);
-	taskK0s3->SetDoFourCorrelations(1);
+	taskK0s3->DoCumTwo(1);
+	taskK0s3->DoCumFour(1);
 	taskK0s3->SetEtaGap(0.4);
 	// taskK0s2->SetInvMassRebin(2);
 	// taskK0s2->SetFlowMassRebin(2);
@@ -234,7 +253,8 @@ void RunCumulants()
 	taskLambda->SetNumSamples(iNumSamples);
 	taskLambda->SetHarmonics(iHarmonics);
 	taskLambda->SetEtaGap(-1.0);
-	taskLambda->SetDoFourCorrelations(1);
+	taskLambda->DoCumTwo(1);
+	taskLambda->DoCumFour(1);
 	taskLambda->SetInvMassRebin(2);
 	taskLambda->SetFlowMassRebin(2);
 	taskLambda->SetPtBins(dPtBinningLambda);
@@ -248,7 +268,8 @@ void RunCumulants()
 	taskLambda2->SetNumSamples(iNumSamples);
 	taskLambda2->SetHarmonics(iHarmonics);
 	taskLambda2->SetEtaGap(0.0);
-	taskLambda2->SetDoFourCorrelations(1);
+	taskLambda2->DoCumTwo(1);
+	taskLambda2->DoCumFour(1);
 	taskLambda2->SetInvMassRebin(2);
 	taskLambda2->SetFlowMassRebin(2);
 	taskLambda2->SetPtBins(dPtBinningLambda);
@@ -262,7 +283,8 @@ void RunCumulants()
 	taskLambda3->SetNumSamples(iNumSamples);
 	taskLambda3->SetHarmonics(iHarmonics);
 	taskLambda3->SetEtaGap(0.4);
-	taskLambda3->SetDoFourCorrelations(1);
+	taskLambda3->DoCumTwo(1);
+	taskLambda3->DoCumFour(1);
 	taskLambda3->SetInvMassRebin(2);
 	taskLambda3->SetFlowMassRebin(2);
 	taskLambda3->SetPtBins(dPtBinningLambda);
@@ -275,7 +297,8 @@ void RunCumulants()
 	FlowTask* taskPhi = new FlowTask(FlowTask::kPhi);
 	taskPhi->SetNumSamples(iNumSamples);
 	taskPhi->SetHarmonics(iHarmonics);
-	taskPhi->SetDoFourCorrelations(1);
+	taskPhi->DoCumTwo(1);
+	taskPhi->DoCumFour(1);
 	taskPhi->SetEtaGap(-1.0);
 	// taskPhi->SetInvMassRebin(2);
 	taskPhi->SetFlowMassRebin(2);
@@ -289,7 +312,8 @@ void RunCumulants()
 	FlowTask* taskPhi2 = new FlowTask(FlowTask::kPhi);
 	taskPhi2->SetNumSamples(iNumSamples);
 	taskPhi2->SetHarmonics(iHarmonics);
-	taskPhi2->SetDoFourCorrelations(1);
+	taskPhi2->DoCumTwo(1);
+	taskPhi2->DoCumFour(1);
 	taskPhi2->SetEtaGap(0.0);
 	// taskPhi->SetInvMassRebin(2);
 	taskPhi2->SetFlowMassRebin(2);
@@ -303,7 +327,8 @@ void RunCumulants()
 	FlowTask* taskPhi3 = new FlowTask(FlowTask::kPhi);
 	taskPhi3->SetNumSamples(iNumSamples);
 	taskPhi3->SetHarmonics(iHarmonics);
-	taskPhi3->SetDoFourCorrelations(1);
+	taskPhi3->DoCumTwo(1);
+	taskPhi3->DoCumFour(1);
 	taskPhi3->SetEtaGap(0.4);
 	// taskPhi->SetInvMassRebin(2);
 	taskPhi3->SetFlowMassRebin(2);

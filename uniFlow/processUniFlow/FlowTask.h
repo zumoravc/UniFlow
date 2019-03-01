@@ -34,8 +34,8 @@ class FlowTask
     void        SetMergePosNeg(Bool_t merge = kTRUE) { fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
     void        DoCorrMixed(TString nameDiff, TString nameRefs) { fDoCorrMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; }
-    void        DoCumTwo() { fDoCumTwo = kTRUE; }
-    void        DoCumFour() { fDoCumFour = kTRUE; }
+    void        DoCumTwo(Bool_t use = kTRUE) { fDoCumTwo = use; }
+    void        DoCumFour(Bool_t use = kTRUE) { fDoCumFour = use; }
 
     // fitting
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }

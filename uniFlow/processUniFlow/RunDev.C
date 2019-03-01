@@ -18,7 +18,8 @@ void RunDev()
 	TString sInputPath = "~/Codes/Flow/uniFlow/results/trains/CF_PbPb/6527_20190218-2140/merge/";
 	// TString sOutputFilePath = sInputPath+"/output_test/"+sEtaGap+"/";
 	// TString sOutputFilePath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/flow-modes/cross-charged-you/15o_hi_pass1/mixed";
-	TString sOutputFilePath = "./test/";
+	// TString sOutputFilePath = "./test/";
+	TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test/";
 
 	// Double_t dMultBinning[] = {0,10,20,40,60,100};
 
@@ -51,7 +52,8 @@ void RunDev()
 	taskRefs->SetPtBins(vecPtBins);
 	taskRefs->SetMergePosNeg(1);
 	taskRefs->SetHarmonics(2);
-	taskRefs->DoCumFour();
+	taskRefs->DoCumTwo(0);
+	taskRefs->DoCumFour(0);
 	// taskRefs->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
 	process->AddTask(taskRefs);
 
@@ -61,7 +63,8 @@ void RunDev()
 	taskCharged->SetMergePosNeg(1);
 	taskCharged->SetHarmonics(2);
 	taskCharged->SetEtaGap(0.0);
-	// taskCharged->DoCumFour();
+	taskCharged->DoCumTwo(0);
+	taskCharged->DoCumFour(0);
 	taskCharged->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)");
 	process->AddTask(taskCharged);
 
@@ -71,17 +74,21 @@ void RunDev()
 	taskCharged2->SetMergePosNeg(1);
 	taskCharged2->SetHarmonics(2);
 	taskCharged2->SetEtaGap(0.0);
-	taskCharged->DoCorrMixed("<<3>>(5,-3,-2)_2sub(0)","<<4>>(2,3,-2,-3)_2sub(0)");
-	// process->AddTask(taskCharged2);
+	taskCharged2->DoCumTwo(0);
+	taskCharged2->DoCumFour(0);
+	taskCharged2->DoCorrMixed("<<3>>(5,-3,-2)_2sub(0)","<<4>>(2,3,-2,-3)_2sub(0)");
+	process->AddTask(taskCharged2);
 
 	FlowTask* taskCharged3 = new FlowTask(FlowTask::kCharged);
 	taskCharged3->SetNumSamples(1);
-	taskCharged3->SetPtBins({1.2,1.4});
+	taskCharged3->SetPtBins(vecPtBins);
 	taskCharged3->SetMergePosNeg(1);
 	taskCharged3->SetHarmonics(2);
 	taskCharged3->SetEtaGap(0.0);
-	taskCharged->DoCorrMixed("<<3>>(6,-3,-3)_2sub(0)","<<4>>(3,3,-3,-3)_2sub(0)");
-	// process->AddTask(taskCharged3);
+	taskCharged3->DoCumTwo(0);
+	taskCharged3->DoCumFour(0);
+	taskCharged3->DoCorrMixed("<<3>>(6,-3,-3)_2sub(0)","<<4>>(3,3,-3,-3)_2sub(0)");
+	process->AddTask(taskCharged3);
 
 
 	// FlowTask* taskPion = new FlowTask(FlowTask::kPion);
