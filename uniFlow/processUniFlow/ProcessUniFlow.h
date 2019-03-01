@@ -41,6 +41,13 @@ class ProcessUniFlow
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
     void        Clear(); // clearing (removing tasks, etc.) after running
+
+    // printing output methods
+    static void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
+    static void        Error(TString sMsg, TString sMethod = ""); // printf the msg as error
+    static void        Warning(TString sMsg, TString sMethod = ""); // printf the msg as warning
+    static void        Info(TString sMsg, TString sMethod = ""); // printf the msg as info
+    void               Debug(TString sMsg, TString sMethod = ""); // printf the msg as info
   protected:
 
   private:
@@ -87,14 +94,6 @@ class ProcessUniFlow
     TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
     TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
     TH2D*       DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
-
-
-    // printing output methods
-    void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
-    void        Error(TString sMsg, TString sMethod = ""); // printf the msg as error
-    void        Warning(TString sMsg, TString sMethod = ""); // printf the msg as warning
-    void        Info(TString sMsg, TString sMethod = ""); // printf the msg as info
-    void        Debug(TString sMsg, TString sMethod = ""); // printf the msg as info
 
     std::vector<Double_t>    fdMultBins; // global multiplicity/centrality binning
     Int_t     fiNumMultBins; // number of multiplicity bins (not size of array)
