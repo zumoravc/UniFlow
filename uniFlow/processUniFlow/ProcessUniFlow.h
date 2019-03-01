@@ -42,6 +42,8 @@ class ProcessUniFlow
 
     static TString     GetSpeciesName(PartSpecies species); // system species name (Charged, K0s, ...)
     static TString     GetSpeciesLabel(PartSpecies species); // readable species name (h^{#pm}, K^{0}_{S}, ...)
+    static Bool_t      IsSpeciesDirect(PartSpecies sp) { return (sp == kCharged || sp == kPion || sp == kKaon || sp == kProton); } //
+    static Bool_t      IsSpeciesReconstructed(PartSpecies sp) { return (sp == kK0s || sp == kLambda || sp == kPhi); } //
 
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)

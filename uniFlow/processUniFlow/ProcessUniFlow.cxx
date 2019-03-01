@@ -230,8 +230,10 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 
   task->PrintTask();
 
+  PartSpecies spec = task->fSpecies;
+
   // task checks & initialization
-  if(task->fNumPtBins < 1) { Error(Form("Too small number of bins: %d (at least 1 needed)!",task->fNumPtBins),"ProcesTask"); return kFALSE; }
+  if(spec != kRefs && task->fNumPtBins < 1) { Error(Form("Too small number of bins: %d (at least 1 needed)!",task->fNumPtBins),"ProcesTask"); return kFALSE; }
   if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
 
   // processing mixed
@@ -254,28 +256,25 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
   // TODO reimplement
   if(!task->fDoCumTwo && task->fDoCumFour) { Warning("Cum{4} flag ON while Cum{2} flag OFF -> Skipping Cum{4}"); return kFALSE; }
 
+
   if(task->fDoCumTwo) {
-    switch (task->fSpecies)
-    {
-      case kRefs:
-      if(!ProcessRefs(task)) { Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(), GetSpeciesName(task->fSpecies).Data()),"ProcessTask"); return kFALSE; }
-      break;
+    if(spec == kRefs && !ProcessRefs(task)) {
+      Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(), GetSpeciesName(spec).Data()),"ProcessTask");
+      return kFALSE;
+    }
 
-      case kCharged:
-      case kPion:
-      case kKaon:
-      case kProton:
-      for(Short_t binMult(0); binMult < fiNumMultBins; binMult++) { if(!ProcessDirect(task,binMult)) { Error(Form("Task '%s' (%s; mult. bin %d) not processed correctly!",task->fName.Data(),GetSpeciesName(task->fSpecies).Data(),binMult),"ProcessTask"); return kFALSE; }}
-      break;
+    if(IsSpeciesDirect(spec)) {
+      for(Int_t binMult(0); binMult < fiNumMultBins; ++binMult) {
+        if(!ProcessDirect(task,binMult)) {
+          Error(Form("Task '%s' (%s; mult. bin %d) not processed correctly!",task->fName.Data(),GetSpeciesName(spec).Data(),binMult),"ProcessTask");
+          return kFALSE;
+        }
+      }
+    }
 
-      case kPhi:
-      case kK0s:
-      case kLambda:
-      if(!ProcessReconstructed(task,0)) { Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(),GetSpeciesName(task->fSpecies).Data()),"ProcessTask"); return kFALSE; }
-      break;
-
-      default:
-      break;
+    if(IsSpeciesReconstructed(spec) && !ProcessReconstructed(task,0)) {
+      Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(),GetSpeciesName(spec).Data()),"ProcessTask");
+      return kFALSE;
     }
   }
 
@@ -288,11 +287,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
   Debug("Processing mixed","ProcessMixed");
 
   PartSpecies species = task->fSpecies;
-  Bool_t bReco = kFALSE;
-  if(species == kK0s || species == kLambda || species == kPhi) { bReco = kTRUE; }
-  // if(bReco) { Error("Currently fully hardcoded for validation purposes for Direct only","ProcessMixed"); return kFALSE; }
-
-  TList* listPOIs = flFlow[species];
+  Bool_t bReco = IsSpeciesReconstructed(species);
 
   Int_t iSample = 0;
   TString sNameRefs = Form("%s_Pos_sample%d", task->fMixedRefs.Data(),iSample);
@@ -1007,7 +1002,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   if(!task) { Error("Task not valid!","ProcessDirect"); return kFALSE; }
 
   PartSpecies spec = task->fSpecies;
-  if(spec != kCharged && spec != kPion && spec != kKaon && spec != kProton) {
+  if(!IsSpeciesDirect(spec)) {
     Error("Task species not direct!","ProcessDirect");
     return kFALSE;
   }
@@ -1955,8 +1950,7 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TString histName, Bool_t
   if(!task) { Error("FlowTask does not exists!","PrepareSlicesNew"); return kFALSE; }
 
   PartSpecies species = task->fSpecies;
-  Bool_t bReco = kFALSE;
-  if(species == kK0s || species == kLambda || species == kPhi) { bReco = kTRUE; }
+  Bool_t bReco = IsSpeciesReconstructed(species);
 
   TList* inputList = flFlow[species];
   if(!inputList) { Error("Input TList not found!","PrepareSlicesNew"); return kFALSE; }
@@ -2010,8 +2004,7 @@ Bool_t ProcessUniFlow::MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* 
   PartSpecies spec = task->fSpecies;
   if(spec == kRefs) { Error("Species is 'kRefs': no slicing required!","MakeProfileSlices"); return kFALSE; }
 
-  Bool_t bReco = kFALSE;
-  if(spec == kK0s || spec == kLambda || spec == kPhi) { bReco = kTRUE; }
+  Bool_t bReco = IsSpeciesReconstructed(spec);
 
   Int_t iNumBinsMult = fiNumMultBins;
   Int_t iNumBinsPt = task->fNumPtBins;
@@ -2081,7 +2074,7 @@ Bool_t ProcessUniFlow::MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, 
   // if(outList->GetEntries() > 0) { Error("Output TList is not empty!","MakeSparseSlices"); return kFALSE; }
 
   PartSpecies species = task->fSpecies;
-  if(species != kK0s && species != kLambda && species != kPhi) {
+  if(!IsSpeciesReconstructed(species)) {
     Error("Not a reconstructed species!","MakeSparseSlices");
     return kFALSE;
   }
@@ -2713,7 +2706,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
   if(!task) { Error("FlowTask not found!","FitInvMass"); return kFALSE; }
 
   PartSpecies species = task->fSpecies;
-  if(species != kPhi && species != kK0s && species != kLambda) { Error("Invalid species!","FitInvMass"); return kFALSE; }
+  if(!IsSpeciesReconstructed(species)) { Error("Invalid species!","FitInvMass"); return kFALSE; }
 
   Double_t dMassRangeLow = hist->GetXaxis()->GetXmin();
   Double_t dMassRangeHigh = hist->GetXaxis()->GetXmax();
@@ -2933,7 +2926,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
   if(!task) { Error("FlowTask not found!","FitCorrelations"); return kFALSE; }
 
   PartSpecies species = task->fSpecies;
-  if(species != kPhi && species != kK0s && species != kLambda) { Error("Invalid species!","FitCorrelations"); return kFALSE; }
+  if(!IsSpeciesReconstructed(species)) { Error("Invalid species!","FitCorrelations"); return kFALSE; }
 
   // === Fitting parametrisation (species dependent default) ===
 
