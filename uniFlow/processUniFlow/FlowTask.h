@@ -8,7 +8,6 @@ class TList;
 class TCanvas;
 class TH1D;
 
-
 class FlowTask
 {
   public:
@@ -72,8 +71,8 @@ class FlowTask
     TString     fMixedRefs; // name (tag) for reference profile for mixed harmonics
     // Reconstructed fitting
     Bool_t      fFlowFitPhiSubtLS; // [kFALSE] flag for subtraction of like-sign background from the unlike-sign one
-    Short_t     fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
-    Short_t     fRebinFlowMass; // flag for rebinning flow-mass profile
+    Int_t       fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
+    Int_t       fRebinFlowMass; // flag for rebinning flow-mass profile
 
     Double_t    fFlowFitRangeLow; // lower edge for fitting during flow extraction
     Double_t    fFlowFitRangeHigh; // high edge for fitting during flow extraction
@@ -95,7 +94,6 @@ class FlowTask
     std::vector<TH1D*>* fVecHistInvMassBG; // container for sliced inv. mass projections for BG candidates (phi)
     std::vector<TH1D*>* fVecHistFlowMass; // container for sliced flow-mass projections
     std::vector<TH1D*>* fVecHistFlowMassFour; // container for sliced flow-mass projections
-    TCanvas*     fCanvas; // temporary canvas for mass plotting
 
   protected:
   private:
