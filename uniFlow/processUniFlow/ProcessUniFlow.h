@@ -19,7 +19,7 @@ class TProfile;
 class TProfile2D;
 class TProfile3D;
 
-enum        PartSpecies {kUnknown = 0, kRefs, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+enum        PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest
 
 class ProcessUniFlow
 {
@@ -122,14 +122,7 @@ class ProcessUniFlow
     TFile*      ffOutputFile; //! output file container
     TFile*      ffDesampleFile; //! output file for results of desampling
     TFile*      ffFitsFile; //! output file for fitting procedure
-    TList*      flFlowRefs; //! TList from input file with RFPs flow profiles
-    TList*      flFlowCharged; //! TList from input file with Charged flow profiles
-    TList*      flFlowPion; //! TList from input file with pion flow profiles
-    TList*      flFlowKaon; //! TList from input file with kaon flow profiles
-    TList*      flFlowProton; //! TList from input file with proton flow profiles
-    TList*      flFlowPhi; //! TList from input file with Phi flow profiles
-    TList*      flFlowK0s; //! TList from input file with K0s flow profiles
-    TList*      flFlowLambda; //! TList from input file with Lambda flow profiles
+    TList*      flFlow[kUnknown]; //! TList array for input flow profiles
     TList*      flQACharged; //! TList from input file with Charged QA plots / profiles
     TList*      flQAPID; //! TList from input file with PID (pi,K,p) QA plots / profiles
     TList*      flQAPhi; //! TList from input file with Phi QA plots / profiles
