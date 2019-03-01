@@ -28,51 +28,49 @@ ClassImp(ProcessUniFlow);
 
 //_____________________________________________________________________________
 ProcessUniFlow::ProcessUniFlow() :
-  fbDebug(kFALSE),
-  fbInit(kFALSE),
-  fbSaveMult(kFALSE),
-  fFlowFitCumulants(kFALSE),
-  fSaveInterSteps(kFALSE),
-  fdMultBins(),
-  fiNumMultBins(0),
-  ffInputFile(nullptr),
-  ffOutputFile(nullptr),
-  ffFitsFile(nullptr),
-  ffDesampleFile(nullptr),
+  fbDebug{kFALSE},
+  fbInit{kFALSE},
+  fbSaveMult{kFALSE},
+  fFlowFitCumulants{kFALSE},
+  fSaveInterSteps{kFALSE},
+  fdMultBins{},
+  fiNumMultBins{0},
+  ffInputFile{nullptr},
+  ffOutputFile{nullptr},
+  ffFitsFile{nullptr},
+  ffDesampleFile{nullptr},
+  fsInputFilePath{},
+  fsInputFileName{"AnalysisResults.root"},
+  fsOutputFilePathRoot{},
+  fsOutputFilePath{},
+  fsOutputFileName{"UniFlow.root"},
+  fsOutputFileMode{"RECREATE"},
+  fsTaskName{"UniFlow"},
+  fsOutputFileFormat{"pdf"},
+  fsGlobalProfNameLabel{},
   flFlow{},
-  flQACharged(nullptr),
-  flQAPID(nullptr),
-  flQAPhi(nullptr),
-  flQAV0s(nullptr)
+  flQACharged{nullptr},
+  flQAPID{nullptr},
+  flQAPhi{nullptr},
+  flQAV0s{nullptr},
+  fvTasks{}
 {
   // default constructor
-  fsInputFilePath = TString("");
-  fsInputFileName = TString("AnalysisResults.root");
-  fsOutputFilePathRoot = TString("");
-  fsOutputFilePath = TString("");
-  fsOutputFileName = TString("UniFlow.root");
-  fsOutputFileMode = TString("RECREATE");
-  fsTaskName = TString("UniFlow");
-  fsOutputFileFormat = TString("pdf");
-  fsGlobalProfNameLabel = TString("");
-  fvTasks = std::vector<FlowTask*>();
+
 }
 //_____________________________________________________________________________
 ProcessUniFlow::~ProcessUniFlow()
 {
   // default destructor
-  if(ffInputFile) delete ffInputFile;
-  if(ffOutputFile) delete ffOutputFile;
-  if(ffFitsFile) delete ffFitsFile;
+  if(ffInputFile) { delete ffInputFile; }
+  if(ffOutputFile) { delete ffOutputFile; }
+  if(ffFitsFile) { delete ffFitsFile; }
 
   for(Int_t i(0); i < kUnknown; i++) { if(flFlow[i]) delete flFlow[i]; }
 
   // deleting the FlowTasks
-  const Short_t iNumTasks = fvTasks.size();
-  for(Short_t index(0); index < iNumTasks; index++)
-  {
-    delete fvTasks.at(index);
-  }
+  const Int_t iNumTasks = fvTasks.size();
+  for(Int_t index(0); index < iNumTasks; ++index) { delete fvTasks.at(index); }
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Clear()
