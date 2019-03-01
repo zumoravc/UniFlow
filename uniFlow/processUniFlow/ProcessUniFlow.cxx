@@ -232,7 +232,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
 
   // task checks & initialization
   if(spec != kRefs && task->fNumPtBins < 1) { Error(Form("Too small number of bins: %d (at least 1 needed)!",task->fNumPtBins),"ProcesTask"); return kFALSE; }
-  if(task->fEtaGap < 0.0 && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
+  if(!task->HasGap() && task->fMergePosNeg) { task->fMergePosNeg = kFALSE; Warning("Merging Pos&Neg 'fMergePosNeg' switch off (no gap)","ProcessTask"); }
 
   // processing mixed
   if(task->fDoCorrMixed) {
@@ -513,7 +513,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // new naming convention for input histos (from FlowTask)
   TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
   TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
-  if(task->fEtaGap > -1.0) {
+  if(task->HasGap()) {
     sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
     sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
   }
@@ -544,7 +544,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     }
 
     // naming <<X>>
-    TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
+    TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
     pCorTwo->SetTitle(Form("%s: <<2>>_{%d} %s",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
     listCorTwo->Add(pCorTwo);
     if(bDoFour)
@@ -693,7 +693,7 @@ TH1D* ProcessUniFlow::CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task)
 
   TH1D* histCum = (TH1D*) hTwoRef->ProjectionX(Form("hCum2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histCum->SetTitle(Form("%s: c_{%d}{2%s}",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
 
   return histCum;
@@ -711,7 +711,7 @@ TH1D* ProcessUniFlow::CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, Flow
 
   TH1D* histCum = (TH1D*) hFourRef->ProjectionX(Form("hCum4_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histCum->SetTitle(Form("%s: c_{%d}{4%s}",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
   histCum->Reset();
 
@@ -759,7 +759,7 @@ TH1D* ProcessUniFlow::CalcDifCumTwo(TH1D* hTwoDif, FlowTask* task)
 
   TH1D* histCum = (TH1D*) hTwoDif->Clone(Form("hCum2_%s_harm%d_gap%s",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histCum->SetTitle(Form("%s: d_{%d}{2%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
 
   return histCum;
@@ -790,7 +790,7 @@ TH1D* ProcessUniFlow::CalcDifCumFour(TH1D* hFourDif, TH1* hTwoDif, TH1* hTwoRef,
 
   TH1D* histCum = (TH1D*) hFourDif->Clone(Form("hCum4_%s_harm%d_gap%s",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histCum->SetTitle(Form("%s: d_{%d}{4%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
   histCum->Reset();
 
@@ -830,7 +830,7 @@ TH1D* ProcessUniFlow::CalcRefFlowTwo(TH1D* hTwoRef, FlowTask* task)
 
   TH1D* histFlow = (TH1D*) hTwoRef->Clone(Form("hFlow2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histFlow->SetTitle(Form("%s: v_{%d}{2%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
   histFlow->Reset();
 
@@ -866,7 +866,7 @@ TH1D* ProcessUniFlow::CalcRefFlowFour(TH1D* hFourRef, FlowTask* task)
 
   TH1D* histFlow = (TH1D*) hFourRef->Clone(Form("hFlow4_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histFlow->SetTitle(Form("%s: v_{%d}{4%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
   histFlow->Reset();
 
@@ -904,7 +904,7 @@ TH1D* ProcessUniFlow::CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin
 
   TH1D* histFlow = (TH1D*) hTwoDif->Clone(Form("hFlow2_%s_harm%d_gap%s",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histFlow->SetTitle(Form("%s: v_{%d}{2%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
   histFlow->Reset();
 
@@ -955,7 +955,7 @@ TH1D* ProcessUniFlow::CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRef
 
   TH1D* histFlow = (TH1D*) hFourDif->Clone(Form("hFlow4_%s_harm%d_gap%s",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics,task->GetEtaGapString().Data()));
 
-  TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
   histFlow->SetTitle(Form("%s: v_{%d}{4%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
   histFlow->Reset();
 
@@ -1039,7 +1039,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   // new naming convention for input histos (from FlowTask)
   TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
   TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
-  if(task->fEtaGap > -1.0) {
+  if(task->HasGap()) {
     sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
     sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
   }
@@ -1125,7 +1125,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     }
 
     // renaming
-    TString sGap = TString(); if(task->fEtaGap > -1.0) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
+    TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
     pCorTwoDif->SetTitle(Form("%s: <<2'>>_{%d} %s; #it{p}_{T} (GeV/#it{c});",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
     if(bDoFour) { pCorFourDif->SetTitle(Form("%s: <<4'>>_{%d} %s; #it{p}_{T} (GeV/#it{c});",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data())); }
 
@@ -1302,7 +1302,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   // new naming convention for input histos (from FlowTask)
   TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
   TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
-  if(task->fEtaGap > -1.0) {
+  if(task->HasGap()) {
     sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
     sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
   }
@@ -2081,7 +2081,7 @@ Bool_t ProcessUniFlow::MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, 
   trashCol.SetOwner(kTRUE);
 
   Double_t dEtaGap = task->fEtaGap;
-  Bool_t bHasGap = dEtaGap < 0.0 ? kFALSE : kTRUE;
+  Bool_t bHasGap = task->HasGap();
 
   TH3D* histEntries = nullptr;
   TH3D* histEntriesPos = nullptr;

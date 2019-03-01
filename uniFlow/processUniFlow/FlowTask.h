@@ -46,6 +46,8 @@ class FlowTask
     void        SetFitParLimitsLow(Double_t* array, Int_t size);
     void        SetFitParLimitsHigh(Double_t* array, Int_t size);
 
+    Bool_t      HasGap() const { return (fEtaGap > -1.0); }; // 
+
     TString     fTaskTag; // "unique" tag used primarily for storing output
     TString     fName; // task name
     PartSpecies fSpecies; // species involved
