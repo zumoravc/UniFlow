@@ -50,7 +50,7 @@ void RunCumulants()
 	process->SetFitCumulants(kFALSE);
 	process->SetDebug(1);
 
-	FlowTask* taskRefs = new FlowTask(FlowTask::kRefs);
+	FlowTask* taskRefs = new FlowTask(kRefs);
 	taskRefs->SetNumSamples(iNumSamples);
 	taskRefs->SetHarmonics(iHarmonics);
 	taskRefs->DoCumTwo(1);
@@ -59,7 +59,7 @@ void RunCumulants()
 	taskRefs->SetMergePosNeg();
 	process->AddTask(taskRefs);
 
-	FlowTask* taskRefs2 = new FlowTask(FlowTask::kRefs);
+	FlowTask* taskRefs2 = new FlowTask(kRefs);
 	taskRefs2->SetNumSamples(iNumSamples);
 	taskRefs2->SetHarmonics(iHarmonics);
 	taskRefs2->DoCumTwo(1);
@@ -68,7 +68,7 @@ void RunCumulants()
 	taskRefs2->SetMergePosNeg();
 	process->AddTask(taskRefs2);
 
-	FlowTask* taskRefs3 = new FlowTask(FlowTask::kRefs);
+	FlowTask* taskRefs3 = new FlowTask(kRefs);
 	taskRefs3->SetNumSamples(iNumSamples);
 	taskRefs3->SetHarmonics(iHarmonics);
 	taskRefs3->DoCumTwo(1);
@@ -77,7 +77,7 @@ void RunCumulants()
 	taskRefs3->SetMergePosNeg();
 	process->AddTask(taskRefs3);
 
-	FlowTask* taskCharged = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged = new FlowTask(kCharged);
 	taskCharged->SetNumSamples(iNumSamples);
 	taskCharged->SetHarmonics(iHarmonics);
 	taskCharged->DoCumTwo(1);
@@ -87,7 +87,7 @@ void RunCumulants()
 	taskCharged->SetMergePosNeg();
 	process->AddTask(taskCharged);
 
-	FlowTask* taskCharged2 = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged2 = new FlowTask(kCharged);
 	taskCharged2->SetNumSamples(iNumSamples);
 	taskCharged2->SetHarmonics(iHarmonics);
 	taskCharged2->DoCumTwo(1);
@@ -97,7 +97,7 @@ void RunCumulants()
 	taskCharged2->SetMergePosNeg();
 	process->AddTask(taskCharged2);
 
-	FlowTask* taskCharged3 = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged3 = new FlowTask(kCharged);
 	taskCharged3->SetNumSamples(iNumSamples);
 	taskCharged3->SetHarmonics(iHarmonics);
 	taskCharged3->DoCumTwo(1);
@@ -107,7 +107,7 @@ void RunCumulants()
 	taskCharged3->SetMergePosNeg();
 	process->AddTask(taskCharged3);
 
-	FlowTask* taskPion = new FlowTask(FlowTask::kPion);
+	FlowTask* taskPion = new FlowTask(kPion);
 	taskPion->SetNumSamples(iNumSamples);
 	taskPion->SetHarmonics(iHarmonics);
 	taskPion->DoCumTwo(1);
@@ -117,7 +117,7 @@ void RunCumulants()
 	taskPion->SetMergePosNeg();
 	process->AddTask(taskPion);
 
-	FlowTask* taskPion2 = new FlowTask(FlowTask::kPion);
+	FlowTask* taskPion2 = new FlowTask(kPion);
 	taskPion2->SetNumSamples(iNumSamples);
 	taskPion2->SetHarmonics(iHarmonics);
 	taskPion2->DoCumTwo(1);
@@ -127,7 +127,7 @@ void RunCumulants()
 	taskPion2->SetMergePosNeg();
 	process->AddTask(taskPion2);
 
-	FlowTask* taskPion3 = new FlowTask(FlowTask::kPion);
+	FlowTask* taskPion3 = new FlowTask(kPion);
 	taskPion3->SetNumSamples(iNumSamples);
 	taskPion3->SetHarmonics(iHarmonics);
 	taskPion3->DoCumTwo(1);
@@ -137,7 +137,7 @@ void RunCumulants()
 	taskPion3->SetMergePosNeg();
 	process->AddTask(taskPion3);
 
-	FlowTask* taskKch = new FlowTask(FlowTask::kKaon);
+	FlowTask* taskKch = new FlowTask(kKaon);
 	taskKch->SetNumSamples(iNumSamples);
 	taskKch->SetHarmonics(iHarmonics);
 	taskKch->DoCumTwo(1);
@@ -148,7 +148,7 @@ void RunCumulants()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskKch);
 
-	FlowTask* taskKch2 = new FlowTask(FlowTask::kKaon);
+	FlowTask* taskKch2 = new FlowTask(kKaon);
 	taskKch2->SetNumSamples(iNumSamples);
 	taskKch2->SetHarmonics(iHarmonics);
 	taskKch2->DoCumTwo(1);
@@ -159,7 +159,7 @@ void RunCumulants()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskKch2);
 
-	FlowTask* taskKch3 = new FlowTask(FlowTask::kKaon);
+	FlowTask* taskKch3 = new FlowTask(kKaon);
 	taskKch3->SetNumSamples(iNumSamples);
 	taskKch3->SetHarmonics(iHarmonics);
 	taskKch3->DoCumTwo(1);
@@ -170,7 +170,7 @@ void RunCumulants()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskKch3);
 
-	FlowTask* taskProton = new FlowTask(FlowTask::kProton);
+	FlowTask* taskProton = new FlowTask(kProton);
 	taskProton->SetNumSamples(iNumSamples);
 	taskProton->SetHarmonics(iHarmonics);
 	taskProton->DoCumTwo(1);
@@ -181,7 +181,7 @@ void RunCumulants()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskProton);
 
-	FlowTask* taskProton2 = new FlowTask(FlowTask::kProton);
+	FlowTask* taskProton2 = new FlowTask(kProton);
 	taskProton2->SetNumSamples(iNumSamples);
 	taskProton2->SetHarmonics(iHarmonics);
 	taskProton2->DoCumTwo(1);
@@ -192,7 +192,7 @@ void RunCumulants()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskProton2);
 
-	FlowTask* taskProton3 = new FlowTask(FlowTask::kProton);
+	FlowTask* taskProton3 = new FlowTask(kProton);
 	taskProton3->SetNumSamples(iNumSamples);
 	taskProton3->SetHarmonics(iHarmonics);
 	taskProton3->DoCumTwo(1);
@@ -204,7 +204,7 @@ void RunCumulants()
 	process->AddTask(taskProton3);
 
 
- 	FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
+ 	FlowTask* taskK0s = new FlowTask(kK0s);
 	taskK0s->SetNumSamples(iNumSamples);
 	taskK0s->SetHarmonics(iHarmonics);
 	taskK0s->DoCumTwo(1);
@@ -219,7 +219,7 @@ void RunCumulants()
 	// taskK0s->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskK0s);
 
-	FlowTask* taskK0s2 = new FlowTask(FlowTask::kK0s);
+	FlowTask* taskK0s2 = new FlowTask(kK0s);
 	taskK0s2->SetNumSamples(iNumSamples);
 	taskK0s2->SetHarmonics(iHarmonics);
 	taskK0s2->DoCumTwo(1);
@@ -234,7 +234,7 @@ void RunCumulants()
 	// taskK0s2->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskK0s2);
 
-	FlowTask* taskK0s3 = new FlowTask(FlowTask::kK0s);
+	FlowTask* taskK0s3 = new FlowTask(kK0s);
 	taskK0s3->SetNumSamples(iNumSamples);
 	taskK0s3->SetHarmonics(iHarmonics);
 	taskK0s3->DoCumTwo(1);
@@ -249,7 +249,7 @@ void RunCumulants()
 	// taskK0s2->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskK0s3);
 
-	FlowTask* taskLambda = new FlowTask(FlowTask::kLambda	);
+	FlowTask* taskLambda = new FlowTask(kLambda);
 	taskLambda->SetNumSamples(iNumSamples);
 	taskLambda->SetHarmonics(iHarmonics);
 	taskLambda->SetEtaGap(-1.0);
@@ -264,7 +264,7 @@ void RunCumulants()
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskLambda);
 
-	FlowTask* taskLambda2 = new FlowTask(FlowTask::kLambda	);
+	FlowTask* taskLambda2 = new FlowTask(kLambda);
 	taskLambda2->SetNumSamples(iNumSamples);
 	taskLambda2->SetHarmonics(iHarmonics);
 	taskLambda2->SetEtaGap(0.0);
@@ -279,7 +279,7 @@ void RunCumulants()
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskLambda2);
 
-	FlowTask* taskLambda3 = new FlowTask(FlowTask::kLambda	);
+	FlowTask* taskLambda3 = new FlowTask(kLambda);
 	taskLambda3->SetNumSamples(iNumSamples);
 	taskLambda3->SetHarmonics(iHarmonics);
 	taskLambda3->SetEtaGap(0.4);
@@ -294,7 +294,7 @@ void RunCumulants()
 	// taskLambda->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskLambda3);
 
-	FlowTask* taskPhi = new FlowTask(FlowTask::kPhi);
+	FlowTask* taskPhi = new FlowTask(kPhi);
 	taskPhi->SetNumSamples(iNumSamples);
 	taskPhi->SetHarmonics(iHarmonics);
 	taskPhi->DoCumTwo(1);
@@ -309,7 +309,7 @@ void RunCumulants()
 	// taskPhi->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskPhi);
 
-	FlowTask* taskPhi2 = new FlowTask(FlowTask::kPhi);
+	FlowTask* taskPhi2 = new FlowTask(kPhi);
 	taskPhi2->SetNumSamples(iNumSamples);
 	taskPhi2->SetHarmonics(iHarmonics);
 	taskPhi2->DoCumTwo(1);
@@ -324,7 +324,7 @@ void RunCumulants()
 	// taskPhi->SetAlternativeProfileName("fp3V0sCorrK0s_<2>_harm2_gap08_Neg");
 	process->AddTask(taskPhi2);
 
-	FlowTask* taskPhi3 = new FlowTask(FlowTask::kPhi);
+	FlowTask* taskPhi3 = new FlowTask(kPhi);
 	taskPhi3->SetNumSamples(iNumSamples);
 	taskPhi3->SetHarmonics(iHarmonics);
 	taskPhi3->DoCumTwo(1);

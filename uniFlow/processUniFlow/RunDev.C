@@ -46,7 +46,7 @@ void RunDev()
 	process->SetMultiplicityBins(dMultBinning);
 	process->SetDebug(1);
 
-	FlowTask* taskRefs = new FlowTask(FlowTask::kRefs);
+	FlowTask* taskRefs = new FlowTask(kRefs);
 	taskRefs->SetNumSamples(1);
 	taskRefs->SetEtaGap(0.0);
 	taskRefs->SetPtBins(vecPtBins);
@@ -57,7 +57,7 @@ void RunDev()
 	// taskRefs->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
 	process->AddTask(taskRefs);
 
-	FlowTask* taskCharged = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged = new FlowTask(kCharged);
 	taskCharged->SetNumSamples(1);
 	taskCharged->SetPtBins(vecPtBins);
 	taskCharged->SetMergePosNeg(1);
@@ -68,7 +68,7 @@ void RunDev()
 	taskCharged->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)");
 	process->AddTask(taskCharged);
 
-	FlowTask* taskCharged2 = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged2 = new FlowTask(kCharged);
 	taskCharged2->SetNumSamples(1);
 	taskCharged2->SetPtBins(vecPtBins);
 	taskCharged2->SetMergePosNeg(1);
@@ -79,7 +79,7 @@ void RunDev()
 	taskCharged2->DoCorrMixed("<<3>>(5,-3,-2)_2sub(0)","<<4>>(2,3,-2,-3)_2sub(0)");
 	process->AddTask(taskCharged2);
 
-	FlowTask* taskCharged3 = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged3 = new FlowTask(kCharged);
 	taskCharged3->SetNumSamples(1);
 	taskCharged3->SetPtBins(vecPtBins);
 	taskCharged3->SetMergePosNeg(1);
@@ -91,7 +91,7 @@ void RunDev()
 	process->AddTask(taskCharged3);
 
 
-	// FlowTask* taskPion = new FlowTask(FlowTask::kPion);
+	// FlowTask* taskPion = new FlowTask(kPion);
 	// taskPion->SetNumSamples(1);
 	// taskPion->SetEtaGap(0.0);
 	// taskPion->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
@@ -100,7 +100,7 @@ void RunDev()
 	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
 	// process->AddTask(taskPion);
 	//
-	FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
+	FlowTask* taskK0s = new FlowTask(kK0s);
 	taskK0s->SetNumSamples(1);
 	taskK0s->SetEtaGap(0.0);
 	taskK0s->SetPtBins(vecPtBins);
@@ -109,7 +109,7 @@ void RunDev()
 	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
 	// process->AddTask(taskK0s);
 
-	FlowTask* taskLambda = new FlowTask(FlowTask::kLambda);
+	FlowTask* taskLambda = new FlowTask(kLambda);
 	taskLambda->SetNumSamples(1);
 	taskLambda->SetEtaGap(0.0);
 	taskLambda->SetPtBins(vecPtBins);
@@ -119,7 +119,7 @@ void RunDev()
 	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
 	// process->AddTask(taskLambda);
 
-	FlowTask* taskPhi = new FlowTask(FlowTask::kPhi);
+	FlowTask* taskPhi = new FlowTask(kPhi);
 	taskPhi->SetNumSamples(1);
 	taskPhi->SetEtaGap(0.0);
 	taskPhi->SetPtBins(vecPtBins);
@@ -128,7 +128,7 @@ void RunDev()
 	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
 	// process->AddTask(taskPhi);
 
-	FlowTask* taskK0sMix = new FlowTask(FlowTask::kK0s);
+	FlowTask* taskK0sMix = new FlowTask(kK0s);
 	taskK0sMix->SetNumSamples(1);
 	taskK0sMix->SetEtaGap(0.0);
 	taskK0sMix->SetPtBins(vecPtBins);

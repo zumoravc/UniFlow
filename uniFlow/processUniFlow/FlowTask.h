@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "TString.h"
+#include "ProcessUniFlow.h"
 
 class TList;
 class TCanvas;
@@ -11,15 +12,11 @@ class TH1D;
 class FlowTask
 {
   public:
-    enum        PartSpecies {kUnknown = 0, kRefs, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
-
                 FlowTask(PartSpecies species = kUnknown, const char* name = "");
                 ~FlowTask(); // default destructor
 
     void        PrintTask(); // listing values of internal properties
 
-    TString     GetSpeciesName(); // system species name (Charged, K0s, ...)
-    TString     GetSpeciesLabel(); // readable species name (h^{#pm}, K^{0}_{S}, ...)
     TString     GetEtaGapString() { return TString(Form("%02.2g",10*fEtaGap)); } // used for "character-safe" names
 
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }

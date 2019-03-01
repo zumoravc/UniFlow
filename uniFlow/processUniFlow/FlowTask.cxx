@@ -53,7 +53,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fListHistos = new TList();
   fListHistos->SetOwner(kTRUE);
 
-  fTaskTag = this->GetSpeciesName();
+  fTaskTag = ProcessUniFlow::GetSpeciesName(species);
   if(!fName.EqualTo("")) fTaskTag.Append(Form("_%s",fName.Data()));
 }
 //_____________________________________________________________________________
@@ -97,51 +97,13 @@ void FlowTask::SetFitParLimitsHigh(Double_t* array, Int_t size)
   return;
 }
 //_____________________________________________________________________________
-TString FlowTask::GetSpeciesName()
-{
-  TString name = TString();
-  switch (fSpecies)
-  {
-    case kRefs : name.Append("Refs"); break;
-    case kCharged : name.Append("Charged"); break;
-    case kPion : name.Append("Pion"); break;
-    case kKaon : name.Append("Kaon"); break;
-    case kProton : name.Append("Proton"); break;
-    case kPhi : name.Append("Phi"); break;
-    case kK0s : name.Append("K0s"); break;
-    case kLambda : name.Append("Lambda"); break;
-    default: name.Append("Unknown");
-  }
-
-  return name;
-}
-//_____________________________________________________________________________
-TString FlowTask::GetSpeciesLabel()
-{
-  TString label = TString();
-  switch (fSpecies)
-  {
-    case kRefs : label.Append("RFP"); break;
-    case kCharged : label.Append("h^{#pm}"); break;
-    case kPion : label.Append("#pi^{#pm}"); break;
-    case kKaon : label.Append("K^{#pm}"); break;
-    case kProton : label.Append("p/{#bar{p}}"); break;
-    case kPhi : label.Append("#phi"); break;
-    case kK0s : label.Append("K_{S}^{0}"); break;
-    case kLambda : label.Append("#Lambda/#bar{#Lambda}"); break;
-    default: label.Append("N/A");
-  }
-
-  return label;
-}
-//_____________________________________________________________________________
 void FlowTask::PrintTask()
 {
   printf("----- Printing task info ------\n");
   printf("   fName: \"%s\"\n",fName.Data());
   printf("   fTaskTag: \"%s\"\n",fTaskTag.Data());
   printf("   fInputTag: \"%s\"\n",fInputTag.Data());
-  printf("   fSpecies: %s (%d)\n",GetSpeciesName().Data(),fSpecies);
+  printf("   fSpecies: %s (%d)\n",ProcessUniFlow::GetSpeciesName(fSpecies).Data(),fSpecies);
   printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
   printf("   fNumPtBins: %d\n",fNumPtBins);

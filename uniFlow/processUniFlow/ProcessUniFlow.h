@@ -19,10 +19,11 @@ class TProfile;
 class TProfile2D;
 class TProfile3D;
 
+enum        PartSpecies {kUnknown = 0, kRefs, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi}; // list of all particle species of interest
+
 class ProcessUniFlow
 {
   public:
-
                 ProcessUniFlow(); // default constructor
                 ~ProcessUniFlow(); // default destructor
 
@@ -38,6 +39,10 @@ class ProcessUniFlow
     void        SetFitCumulants(Bool_t cum = kTRUE) { fFlowFitCumulants = cum; } // use cn{2} vs m_inv instead of vn{2} vs. m_inv
     void        SetSaveInterSteps(Bool_t save = kTRUE) { fSaveInterSteps = save; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
+
+    static TString     GetSpeciesName(PartSpecies species); // system species name (Charged, K0s, ...)
+    static TString     GetSpeciesLabel(PartSpecies species); // readable species name (h^{#pm}, K^{0}_{S}, ...)
+
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
     void        Clear(); // clearing (removing tasks, etc.) after running

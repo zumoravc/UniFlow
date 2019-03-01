@@ -53,7 +53,7 @@ void RunMixed()
 	process->SetFitCumulants(kFALSE);
 	process->SetDebug(1);
 
-	FlowTask* taskCharged = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged = new FlowTask(kCharged);
 	taskCharged->SetNumSamples(iNumSamples);
 	taskCharged->SetEtaGap(dGap);
 	taskCharged->DoCorrMixed(Form("<<3>>(4,-2,-2)%s",sGap.Data()),Form("<<4>>(2,2,-2,-2)%s",sGap.Data()));
@@ -61,7 +61,7 @@ void RunMixed()
 	taskCharged->SetMergePosNeg();
 	process->AddTask(taskCharged);
 
-	FlowTask* taskCharged2 = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged2 = new FlowTask(kCharged);
 	taskCharged2->SetNumSamples(iNumSamples);
 	taskCharged2->SetEtaGap(dGap);
 	taskCharged2->DoCorrMixed(Form("<<3>>(5,-3,-2)%s",sGap.Data()),Form("<<4>>(2,3,-2,-3)%s",sGap.Data()));
@@ -69,7 +69,7 @@ void RunMixed()
 	taskCharged2->SetMergePosNeg();
 	process->AddTask(taskCharged2);
 
-	FlowTask* taskCharged3 = new FlowTask(FlowTask::kCharged);
+	FlowTask* taskCharged3 = new FlowTask(kCharged);
 	taskCharged3->SetNumSamples(iNumSamples);
 	taskCharged3->SetEtaGap(dGap);
 	taskCharged3->DoCorrMixed(Form("<<3>>(6,-3,-3)%s",sGap.Data()),Form("<<4>>(3,3,-3,-3)%s",sGap.Data()));
@@ -77,21 +77,21 @@ void RunMixed()
 	taskCharged3->SetMergePosNeg();
 	process->AddTask(taskCharged3);
 
-	FlowTask* taskPion = new FlowTask(FlowTask::kPion);
+	FlowTask* taskPion = new FlowTask(kPion);
 	taskPion->SetNumSamples(iNumSamples);
 	taskPion->SetEtaGap(dGap);
 	taskPion->DoCorrMixed(Form("<<3>>(4,-2,-2)%s",sGap.Data()),Form("<<4>>(2,2,-2,-2)%s",sGap.Data()));
 	taskPion->SetPtBins(dPtBinningPID);
 	taskPion->SetMergePosNeg();
 	process->AddTask(taskPion);
-	FlowTask* taskPion2 = new FlowTask(FlowTask::kPion);
+	FlowTask* taskPion2 = new FlowTask(kPion);
 	taskPion2->SetNumSamples(iNumSamples);
 	taskPion2->SetEtaGap(dGap);
 	taskPion2->DoCorrMixed(Form("<<3>>(5,-3,-2)%s",sGap.Data()),Form("<<4>>(2,3,-2,-3)%s",sGap.Data()));
 	taskPion2->SetPtBins(dPtBinningPID);
 	taskPion2->SetMergePosNeg();
 	process->AddTask(taskPion2);
-	FlowTask* taskPion3 = new FlowTask(FlowTask::kPion);
+	FlowTask* taskPion3 = new FlowTask(kPion);
 	taskPion3->SetNumSamples(iNumSamples);
 	taskPion3->SetEtaGap(dGap);
 	taskPion3->DoCorrMixed(Form("<<3>>(6,-3,-3)%s",sGap.Data()),Form("<<4>>(3,3,-3,-3)%s",sGap.Data()));
@@ -99,21 +99,21 @@ void RunMixed()
 	taskPion3->SetMergePosNeg();
 	process->AddTask(taskPion3);
 
-	FlowTask* taskKaon = new FlowTask(FlowTask::kKaon);
+	FlowTask* taskKaon = new FlowTask(kKaon);
 	taskKaon->SetNumSamples(iNumSamples);
 	taskKaon->SetEtaGap(dGap);
 	taskKaon->DoCorrMixed(Form("<<3>>(4,-2,-2)%s",sGap.Data()),Form("<<4>>(2,2,-2,-2)%s",sGap.Data()));
 	taskKaon->SetPtBins(dPtBinningPID);
 	taskKaon->SetMergePosNeg();
 	process->AddTask(taskKaon);
-	FlowTask* taskKaon2 = new FlowTask(FlowTask::kKaon);
+	FlowTask* taskKaon2 = new FlowTask(kKaon);
 	taskKaon2->SetNumSamples(iNumSamples);
 	taskKaon2->SetEtaGap(dGap);
 	taskKaon2->DoCorrMixed(Form("<<3>>(5,-3,-2)%s",sGap.Data()),Form("<<4>>(2,3,-2,-3)%s",sGap.Data()));
 	taskKaon2->SetPtBins(dPtBinningPID);
 	taskKaon2->SetMergePosNeg();
 	process->AddTask(taskKaon2);
-	FlowTask* taskKaon3 = new FlowTask(FlowTask::kKaon);
+	FlowTask* taskKaon3 = new FlowTask(kKaon);
 	taskKaon3->SetNumSamples(iNumSamples);
 	taskKaon3->SetEtaGap(dGap);
 	taskKaon3->DoCorrMixed(Form("<<3>>(6,-3,-3)%s",sGap.Data()),Form("<<4>>(3,3,-3,-3)%s",sGap.Data()));
@@ -121,21 +121,21 @@ void RunMixed()
 	taskKaon3->SetMergePosNeg();
 	process->AddTask(taskKaon3);
 
-	FlowTask* taskProton = new FlowTask(FlowTask::kProton);
+	FlowTask* taskProton = new FlowTask(kProton);
 	taskProton->SetNumSamples(iNumSamples);
 	taskProton->SetEtaGap(dGap);
 	taskProton->DoCorrMixed(Form("<<3>>(4,-2,-2)%s",sGap.Data()),Form("<<4>>(2,2,-2,-2)%s",sGap.Data()));
 	taskProton->SetPtBins(dPtBinningPID);
 	taskProton->SetMergePosNeg();
 	process->AddTask(taskProton);
-	FlowTask* taskProton2 = new FlowTask(FlowTask::kProton);
+	FlowTask* taskProton2 = new FlowTask(kProton);
 	taskProton2->SetNumSamples(iNumSamples);
 	taskProton2->SetEtaGap(dGap);
 	taskProton2->DoCorrMixed(Form("<<3>>(5,-3,-2)%s",sGap.Data()),Form("<<4>>(2,3,-2,-3)%s",sGap.Data()));
 	taskProton2->SetPtBins(dPtBinningPID);
 	taskProton2->SetMergePosNeg();
 	process->AddTask(taskProton2);
-	FlowTask* taskProton3 = new FlowTask(FlowTask::kProton);
+	FlowTask* taskProton3 = new FlowTask(kProton);
 	taskProton3->SetNumSamples(iNumSamples);
 	taskProton3->SetEtaGap(dGap);
 	taskProton3->DoCorrMixed(Form("<<3>>(6,-3,-3)%s",sGap.Data()),Form("<<4>>(3,3,-3,-3)%s",sGap.Data()));
@@ -143,7 +143,7 @@ void RunMixed()
 	taskProton3->SetMergePosNeg();
 	process->AddTask(taskProton3);
 
-	FlowTask* taskK0s = new FlowTask(FlowTask::kK0s);
+	FlowTask* taskK0s = new FlowTask(kK0s);
 	taskK0s->SetNumSamples(iNumSamples);
 	taskK0s->SetEtaGap(dGap);
 	taskK0s->DoCorrMixed(Form("<<3>>(4,-2,-2)%s",sGap.Data()),Form("<<4>>(2,2,-2,-2)%s",sGap.Data()));
@@ -152,7 +152,7 @@ void RunMixed()
 	taskK0s->SetFlowMassRebin(2);
 	process->AddTask(taskK0s);
 
-	FlowTask* taskK0s2 = new FlowTask(FlowTask::kK0s);
+	FlowTask* taskK0s2 = new FlowTask(kK0s);
 	taskK0s2->SetNumSamples(iNumSamples);
 	taskK0s2->SetEtaGap(dGap);
 	taskK0s2->DoCorrMixed(Form("<<3>>(5,-3,-2)%s",sGap.Data()),Form("<<4>>(2,3,-2,-3)%s",sGap.Data()));
@@ -161,7 +161,7 @@ void RunMixed()
 	taskK0s2->SetFlowMassRebin(2);
 	process->AddTask(taskK0s2);
 
-	FlowTask* taskK0s3 = new FlowTask(FlowTask::kK0s);
+	FlowTask* taskK0s3 = new FlowTask(kK0s);
 	taskK0s3->SetNumSamples(iNumSamples);
 	taskK0s3->SetEtaGap(dGap);
 	taskK0s3->DoCorrMixed(Form("<<3>>(6,-3,-3)%s",sGap.Data()),Form("<<4>>(3,3,-3,-3)%s",sGap.Data()));
@@ -170,7 +170,7 @@ void RunMixed()
 	taskK0s3->SetFlowMassRebin(2);
 	process->AddTask(taskK0s3);
 
-	FlowTask* taskLambda = new FlowTask(FlowTask::kLambda);
+	FlowTask* taskLambda = new FlowTask(kLambda);
 	taskLambda->SetNumSamples(iNumSamples);
 	taskLambda->SetEtaGap(dGap);
 	taskLambda->DoCorrMixed(Form("<<3>>(4,-2,-2)%s",sGap.Data()),Form("<<4>>(2,2,-2,-2)%s",sGap.Data()));
@@ -180,7 +180,7 @@ void RunMixed()
 	taskLambda->SetInvMassRebin(2);
 	process->AddTask(taskLambda);
 
-	FlowTask* taskLambda2 = new FlowTask(FlowTask::kLambda);
+	FlowTask* taskLambda2 = new FlowTask(kLambda);
 	taskLambda2->SetNumSamples(iNumSamples);
 	taskLambda2->SetEtaGap(dGap);
 	taskLambda2->DoCorrMixed(Form("<<3>>(5,-3,-2)%s",sGap.Data()),Form("<<4>>(2,3,-2,-3)%s",sGap.Data()));
@@ -190,7 +190,7 @@ void RunMixed()
 	taskLambda2->SetInvMassRebin(2);
 	process->AddTask(taskLambda2);
 
-	FlowTask* taskLambda3 = new FlowTask(FlowTask::kLambda);
+	FlowTask* taskLambda3 = new FlowTask(kLambda);
 	taskLambda3->SetNumSamples(iNumSamples);
 	taskLambda3->SetEtaGap(dGap);
 	taskLambda3->DoCorrMixed(Form("<<3>>(6,-3,-3)%s",sGap.Data()),Form("<<4>>(3,3,-3,-3)%s",sGap.Data()));
@@ -200,7 +200,7 @@ void RunMixed()
 	taskLambda3->SetInvMassRebin(2);
 	process->AddTask(taskLambda3);
 
-	FlowTask* taskPhi = new FlowTask(FlowTask::kPhi);
+	FlowTask* taskPhi = new FlowTask(kPhi);
 	taskPhi->SetNumSamples(iNumSamples);
 	taskPhi->SetEtaGap(dGap);
 	taskPhi->DoCorrMixed(Form("<<3>>(4,-2,-2)%s",sGap.Data()),Form("<<4>>(2,2,-2,-2)%s",sGap.Data()));
@@ -208,7 +208,7 @@ void RunMixed()
 	taskPhi->SetMergePosNeg();
 	process->AddTask(taskPhi);
 
-	FlowTask* taskPhi2 = new FlowTask(FlowTask::kPhi);
+	FlowTask* taskPhi2 = new FlowTask(kPhi);
 	taskPhi2->SetNumSamples(iNumSamples);
 	taskPhi2->SetEtaGap(dGap);
 	taskPhi2->DoCorrMixed(Form("<<3>>(5,-3,-2)%s",sGap.Data()),Form("<<4>>(2,3,-2,-3)%s",sGap.Data()));
@@ -216,7 +216,7 @@ void RunMixed()
 	taskPhi2->SetMergePosNeg();
 	process->AddTask(taskPhi2);
 
-	FlowTask* taskPhi3 = new FlowTask(FlowTask::kPhi);
+	FlowTask* taskPhi3 = new FlowTask(kPhi);
 	taskPhi3->SetNumSamples(iNumSamples);
 	taskPhi3->SetEtaGap(dGap);
 	taskPhi3->DoCorrMixed(Form("<<3>>(6,-3,-3)%s",sGap.Data()),Form("<<4>>(3,3,-3,-3)%s",sGap.Data()));
