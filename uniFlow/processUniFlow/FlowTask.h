@@ -30,8 +30,8 @@ class FlowTask
     void        SetMergePosNeg(Bool_t merge = kTRUE) { fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
     void        DoCorrMixed(TString nameDiff, TString nameRefs) { fDoCorrMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; }
-    void        DoCumTwo(Bool_t use = kTRUE) { fDoCumTwo = use; }
-    void        DoCumFour(Bool_t use = kTRUE) { fDoCumFour = use; }
+    void        DoCumOrderMax(Cumulants cum) { fCumOrderMax = cum; }
+    void        DoCumOrderMax(Int_t cum) { fCumOrderMax = Cumulants(cum); }
 
     // fitting
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -46,7 +46,7 @@ class FlowTask
     void        SetFitParLimitsLow(Double_t* array, Int_t size);
     void        SetFitParLimitsHigh(Double_t* array, Int_t size);
 
-    Bool_t      HasGap() const { return (fEtaGap > -1.0); }; // 
+    Bool_t      HasGap() const { return (fEtaGap > -1.0); }; //
 
     TString     fTaskTag; // "unique" tag used primarily for storing output
     TString     fName; // task name
@@ -63,8 +63,7 @@ class FlowTask
     Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
     Bool_t      fDesampleUseRMS; // [kFALSE] flag for using RMS as uncertainty during desampling
     Bool_t      fMergePosNeg; // [kFALSE] flag for merging results corresponding to positive and negative POIs
-    Bool_t      fDoCumTwo; // [kTRUE] flag for processing 2-part. cumulants
-    Bool_t      fDoCumFour; // [kFALSE] flag for processing 4-part. cumulants
+    Cumulants   fCumOrderMax; // [kTwo] maximal cumulant order to be processed
     Bool_t      fDoCorrMixed; // [kFALSE] flag for processing mixed harmonics (non-linear flow modes)
     TString     fMixedDiff; // name (tag) for diff. profile for mixed harmonics
     TString     fMixedRefs; // name (tag) for reference profile for mixed harmonics

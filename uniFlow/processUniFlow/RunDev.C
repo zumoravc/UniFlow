@@ -52,9 +52,7 @@ void RunDev()
 	taskRefs->SetPtBins(vecPtBins);
 	taskRefs->SetMergePosNeg(1);
 	taskRefs->SetHarmonics(2);
-	taskRefs->DoCumTwo(0);
-	taskRefs->DoCumFour(0);
-	// taskRefs->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
+	taskRefs->DoCumOrderMax(4);
 	process->AddTask(taskRefs);
 
 	FlowTask* taskCharged = new FlowTask(kCharged);
@@ -63,8 +61,7 @@ void RunDev()
 	taskCharged->SetMergePosNeg(1);
 	taskCharged->SetHarmonics(2);
 	taskCharged->SetEtaGap(0.0);
-	taskCharged->DoCumTwo(0);
-	taskCharged->DoCumFour(0);
+	taskCharged->DoCumOrderMax(kFour);
 	taskCharged->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)");
 	process->AddTask(taskCharged);
 
@@ -74,8 +71,6 @@ void RunDev()
 	taskCharged2->SetMergePosNeg(1);
 	taskCharged2->SetHarmonics(2);
 	taskCharged2->SetEtaGap(0.0);
-	taskCharged2->DoCumTwo(0);
-	taskCharged2->DoCumFour(0);
 	taskCharged2->DoCorrMixed("<<3>>(5,-3,-2)_2sub(0)","<<4>>(2,3,-2,-3)_2sub(0)");
 	process->AddTask(taskCharged2);
 
@@ -85,8 +80,6 @@ void RunDev()
 	taskCharged3->SetMergePosNeg(1);
 	taskCharged3->SetHarmonics(2);
 	taskCharged3->SetEtaGap(0.0);
-	taskCharged3->DoCumTwo(0);
-	taskCharged3->DoCumFour(0);
 	taskCharged3->DoCorrMixed("<<3>>(6,-3,-3)_2sub(0)","<<4>>(3,3,-3,-3)_2sub(0)");
 	process->AddTask(taskCharged3);
 
@@ -115,7 +108,7 @@ void RunDev()
 	taskLambda->SetPtBins(vecPtBins);
 	taskLambda->SetMergePosNeg(1);
 	taskLambda->SetHarmonics(2);
-	taskLambda->DoCumFour();
+	taskLambda->DoCumOrderMax(4);
 	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
 	// process->AddTask(taskLambda);
 

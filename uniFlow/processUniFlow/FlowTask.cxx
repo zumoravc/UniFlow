@@ -20,8 +20,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fRebinning{kTRUE},
   fSampleMerging{kFALSE},
   fDesampleUseRMS{kFALSE},
-  fDoCumTwo{kTRUE},
-  fDoCumFour{kFALSE},
+  fCumOrderMax{kNon},
   fDoCorrMixed{kFALSE},
   fMergePosNeg{kFALSE},
   fFlowFitPhiSubtLS{kFALSE},
@@ -115,8 +114,7 @@ void FlowTask::PrintTask()
   printf("   fSampleMerging: %s\n", fSampleMerging ? "true" : "false");
   printf("   fConsCorr: %s\n", fConsCorr ? "true" : "false");
   printf("   fShowMult: %s\n", fShowMult ? "true" : "false");
-  printf("   fDoCumTwo: %s\n", fDoCumTwo ? "true" : "false");
-  printf("   fDoCumFour: %s\n", fDoCumFour ? "true" : "false");
+  printf("   fCumOrderMax: %d\n", fCumOrderMax);
   printf("   fDoCorrMixed: %s\n", fDoCorrMixed ? "true" : "false");
   printf("   fMixedRefs: %s\n",fMixedRefs.Data());
   printf("   fMixedDiff: %s\n",fMixedDiff.Data());

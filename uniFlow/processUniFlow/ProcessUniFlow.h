@@ -20,6 +20,7 @@ class TProfile2D;
 class TProfile3D;
 
 enum        PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest
+enum        Cumulants {kNon = 0, kTwo = 2, kFour = 4}; // Cumulants order
 
 class ProcessUniFlow
 {
