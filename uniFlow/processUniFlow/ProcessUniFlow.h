@@ -19,10 +19,12 @@ class TProfile;
 class TProfile2D;
 class TProfile3D;
 
+enum        PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest
+enum        Cumulants {kNon = 0, kTwo = 2, kFour = 4}; // Cumulants order
+
 class ProcessUniFlow
 {
   public:
-
                 ProcessUniFlow(); // default constructor
                 ~ProcessUniFlow(); // default destructor
 
@@ -38,9 +40,22 @@ class ProcessUniFlow
     void        SetFitCumulants(Bool_t cum = kTRUE) { fFlowFitCumulants = cum; } // use cn{2} vs m_inv instead of vn{2} vs. m_inv
     void        SetSaveInterSteps(Bool_t save = kTRUE) { fSaveInterSteps = save; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
+
+    static TString     GetSpeciesName(PartSpecies species); // system species name (Charged, K0s, ...)
+    static TString     GetSpeciesLabel(PartSpecies species); // readable species name (h^{#pm}, K^{0}_{S}, ...)
+    static Bool_t      IsSpeciesDirect(PartSpecies sp) { return (sp == kCharged || sp == kPion || sp == kKaon || sp == kProton); } //
+    static Bool_t      IsSpeciesReconstructed(PartSpecies sp) { return (sp == kK0s || sp == kLambda || sp == kPhi); } //
+
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
     void        Run(); // running the task (main body of the class)
     void        Clear(); // clearing (removing tasks, etc.) after running
+
+    // printing output methods
+    static void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
+    static void        Error(TString sMsg, TString sMethod = ""); // printf the msg as error
+    static void        Warning(TString sMsg, TString sMethod = ""); // printf the msg as warning
+    static void        Info(TString sMsg, TString sMethod = ""); // printf the msg as info
+    void               Debug(TString sMsg, TString sMethod = ""); // printf the msg as info
   protected:
 
   private:
@@ -88,14 +103,6 @@ class ProcessUniFlow
     TProfile2D* DoProjectProfile2D(TProfile3D* h3, const char* name, const char * title, TAxis* projX, TAxis* projY,bool originalRange, bool useUF, bool useOF) const;
     TH2D*       DoProject2D(TH3D* h3, const char * name, const char * title, TAxis* projX, TAxis* projY, bool computeErrors, bool originalRange, bool useUF, bool useOF) const;
 
-
-    // printing output methods
-    void        Fatal(TString sMsg, TString sMethod = ""); // printf the msg as error
-    void        Error(TString sMsg, TString sMethod = ""); // printf the msg as error
-    void        Warning(TString sMsg, TString sMethod = ""); // printf the msg as warning
-    void        Info(TString sMsg, TString sMethod = ""); // printf the msg as info
-    void        Debug(TString sMsg, TString sMethod = ""); // printf the msg as info
-
     std::vector<Double_t>    fdMultBins; // global multiplicity/centrality binning
     Int_t     fiNumMultBins; // number of multiplicity bins (not size of array)
 
@@ -118,14 +125,7 @@ class ProcessUniFlow
     TFile*      ffOutputFile; //! output file container
     TFile*      ffDesampleFile; //! output file for results of desampling
     TFile*      ffFitsFile; //! output file for fitting procedure
-    TList*      flFlowRefs; //! TList from input file with RFPs flow profiles
-    TList*      flFlowCharged; //! TList from input file with Charged flow profiles
-    TList*      flFlowPion; //! TList from input file with pion flow profiles
-    TList*      flFlowKaon; //! TList from input file with kaon flow profiles
-    TList*      flFlowProton; //! TList from input file with proton flow profiles
-    TList*      flFlowPhi; //! TList from input file with Phi flow profiles
-    TList*      flFlowK0s; //! TList from input file with K0s flow profiles
-    TList*      flFlowLambda; //! TList from input file with Lambda flow profiles
+    TList*      flFlow[kUnknown]; //! TList array for input flow profiles
     TList*      flQACharged; //! TList from input file with Charged QA plots / profiles
     TList*      flQAPID; //! TList from input file with PID (pi,K,p) QA plots / profiles
     TList*      flQAPhi; //! TList from input file with Phi QA plots / profiles
