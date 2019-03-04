@@ -59,6 +59,9 @@
 //
 // =================================================================================================
 
+#ifndef ALIANALYSISTASKUNIFLOW_CXX
+#define ALIANALYSISTASKUNIFLOW_CXX
+
 #include <TDatabasePDG.h>
 #include <TPDGCode.h>
 
@@ -963,7 +966,7 @@ Bool_t AliAnalysisTaskUniFlow::InitializeTask()
   // checking for weights source file
   if(fFlowUseWeights)
   {
-    if(fFlowUse3Dweights && fFlowFillWeights) { AliFatal("Cannot fill and run with 3D weights at the same time"); return kFALSE; }
+    if(fFlowFillWeights) { AliFatal("Cannot fill and run weights at the same time"); return kFALSE; }
     // BUG currently two pointer arrays overlay with each other, to-be-fixed
 
     fFlowWeightsList = (TList*) GetInputData(1);
@@ -1296,7 +1299,11 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(const AliVTrack* track, const Part
   if(species == kUnknown) { AliError("Invalid species 'Unknown'!"); return kFALSE; }
 
   if(fFlowFillWeights) {
-    fh3Weights[species]->Fill(track->Phi(),track->Eta(),fPVz);
+    if(fFlowUse3Dweights) {
+      fh3Weights[species]->Fill(track->Phi(),track->Eta(),fPVz);
+    } else {
+      fh2Weights[species]->Fill(track->Phi(),track->Eta());
+    }
   }
 
   if(fFlowUseWeights) {
@@ -3600,13 +3607,20 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
       if(!fProcessSpec[iSpec]) { continue; }
       if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
-      if(fFlowFillWeights)
-      {
-        const char* weightName = Form("fh3Weights%s",GetSpeciesName(PartSpecies(iSpec)));
-        const char* weightLabel = Form("Weights: %s; #varphi; #eta; PV-z (cm)", GetSpeciesName(PartSpecies(iSpec)));
-        fh3Weights[iSpec] = new TH3D(weightName, weightLabel, fFlowPhiBinNum,0.0,TMath::TwoPi(), fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
-        fh3Weights[iSpec]->Sumw2();
-        fFlowWeights->Add(fh3Weights[iSpec]);
+      if(fFlowFillWeights) {
+        if(fFlowUse3Dweights) {
+          const char* weightName = Form("fh3Weights%s",GetSpeciesName(PartSpecies(iSpec)));
+          const char* weightLabel = Form("Weights: %s; #varphi; #eta; PV-z (cm)", GetSpeciesName(PartSpecies(iSpec)));
+          fh3Weights[iSpec] = new TH3D(weightName, weightLabel, fFlowPhiBinNum,0.0,TMath::TwoPi(), fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax, 2*fPVtxCutZ,-fPVtxCutZ,fPVtxCutZ);
+          fh3Weights[iSpec]->Sumw2();
+          fFlowWeights->Add(fh3Weights[iSpec]);
+        } else {
+          const char* weightName = Form("fh2Weights%s",GetSpeciesName(PartSpecies(iSpec)));
+          const char* weightLabel = Form("Weights: %s; #varphi; #eta", GetSpeciesName(PartSpecies(iSpec)));
+          fh2Weights[iSpec] = new TH2D(weightName, weightLabel, fFlowPhiBinNum,0.0,TMath::TwoPi(), fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
+          fh2Weights[iSpec]->Sumw2();
+          fFlowWeights->Add(fh2Weights[iSpec]);
+        }
       }
 
       if(fFlowUseWeights)
@@ -4085,3 +4099,5 @@ void AliAnalysisTaskUniFlow::CorrTask::Print() const
   for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
   printf("}\n");
 }
+
+#endif
