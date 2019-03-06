@@ -2016,20 +2016,18 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TString histName, Bool_t
 
   // preparing flow slices
   TH1* prof = nullptr;
-  if(task->fMergePosNeg)
-  {
-    TH1* profPos = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",histName.Data()));
-    if(!profPos) { Error(Form("Positive profile '%s_Pos_sample0' not found!",histName.Data()),"PrepareSlicesNew"); inputList->ls(); return kFALSE; }
-    TH1* profNeg = (TH1*) inputList->FindObject(Form("%s_Neg_sample0",histName.Data()));
-    if(!profNeg) { Error(Form("Negative profile '%s_Neg_sample0' not found!",histName.Data()),"PrepareSlicesNew"); inputList->ls(); return kFALSE; }
 
-    TList* listMerge = new TList();
-    listMerge->Add(profPos);
-    listMerge->Add(profNeg);
-    prof = (TH1*) MergeListProfiles(listMerge);
-    delete listMerge;
-  } else {
-    prof = (TH1*) inputList->FindObject(Form("%s_Pos_sample0",histName.Data()));
+  TList* listPos = LoadSamples(inputList, Form("%s_Pos",histName.Data()), task->fNumSamples);
+  TH1* profPos = (TH1*) MergeListProfiles(listPos);
+  if(!profPos) { Error(Form("Positive profile '%s_Neg' not found!",histName.Data()),"PrepareSlicesNew"); return kFALSE; }
+  prof = profPos;
+
+  if(task->fMergePosNeg) {
+    TList* listNeg = LoadSamples(inputList, Form("%s_Neg",histName.Data()), task->fNumSamples);
+    TH1* profNeg = (TH1*) MergeListProfiles(listNeg);
+    if(!profNeg) { Error(Form("Negative profile '%s_Neg' not found!",histName.Data()),"PrepareSlicesNew"); return kFALSE; }
+
+    prof = (TH1*) Merge(profPos, profNeg);
   }
 
   if(!prof) { Error(Form("Profile '%s' not found!",histName.Data()),"PrepareSlicesNew"); inputList->ls(); return kFALSE; }
