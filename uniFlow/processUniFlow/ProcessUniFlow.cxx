@@ -1572,6 +1572,34 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   return kTRUE;
 }
 //_____________________________________________________________________________
+TList* ProcessUniFlow::LoadSamples(TList* list, TString sHistName, Int_t iNumSamples)
+{
+    if(!list) {
+        Error("Input list not found!", "LoadSamples");
+        return nullptr;
+    }
+
+    TList* outList = new TList();
+
+    for(Int_t iSample(0); iSample < iNumSamples; ++iSample) {
+        TString sSampleName = sHistName + Form("_sample%d",iSample);
+        TH1* hist = (TH1*) list->FindObject(sSampleName.Data());
+        if(!hist) {
+            Error(Form("Sample '%s' not found in input list!", sSampleName.Data()),"LoadSamples");
+            list->ls();
+            delete outList;
+            return nullptr;
+        }
+        outList->Add(hist);
+    }
+
+    if(outList->GetEntries() != iNumSamples) {
+        Warning(Form("Unexpected number of samples (%d instead of %d) !!!",outList->GetEntries(),iNumSamples),"LoadSamples");
+    }
+
+    return outList;
+}
+//_____________________________________________________________________________
 TH1* ProcessUniFlow::MergeListProfiles(TList* list)
 {
   // merge list of TProfiles into single TProfile and return it

@@ -94,6 +94,7 @@ class ProcessUniFlow
     Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
     Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for Lambda candidates
 
+    TList*      LoadSamples(TList* list, TString sHistName, Int_t iNumSamples); // find all samples histos in list
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
     TH1*        Merge(TH1* a, TH1* b); // merge two histogram
     TH1D*       DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling = kFALSE); // Desample list of samples for estimating the uncertanity
