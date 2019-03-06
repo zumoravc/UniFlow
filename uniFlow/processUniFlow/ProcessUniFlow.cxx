@@ -296,6 +296,12 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
   PartSpecies species = task->fSpecies;
   Bool_t bReco = IsSpeciesReconstructed(species);
 
+    if(bReco && task->fNumSamples > 1) {
+        Error("Implemented only for 1 sample. Terminating!","ProcessMixed");
+        Warning("TO DO","ProcessMixed");
+        return kFALSE;
+    }
+
   Int_t iSample = 0;
   TString sNameRefs = Form("%s_Pos_sample%d", task->fMixedRefs.Data(),iSample);
   TString sNamePOIs = Form("%s_Pos_sample%d", task->fMixedDiff.Data(), iSample);
@@ -305,13 +311,17 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
   trashCol.SetOwner(kTRUE);
 
   // ### Preparing Refs ###
-  TProfile* profRef_preRebin = (TProfile*) flFlow[kRefs]->FindObject(sNameRefs.Data());
+  TList* listRefs = LoadSamples(flFlow[kRefs], Form("%s_Pos", task->fMixedRefs.Data()), task->fNumSamplesRefs);
+  if(!listRefs) { Error("Loading list with Refs samples failed","ProcessMixed"); return kFALSE; }
+
+  // TProfile* profRef_preRebin = (TProfile*) flFlow[kRefs]->FindObject(sNameRefs.Data());
+  TProfile* profRef_preRebin = (TProfile*) MergeListProfiles(listRefs);
   if(!profRef_preRebin) { Error(Form("Refs profile '%s' pre-rebin not found!",sNameRefs.Data()),"ProcessMixed"); flFlow[kRefs]->ls(); return kFALSE; }
   TProfile* profRef = (TProfile*) profRef_preRebin->Rebin(fiNumMultBins,Form("%s_rebin",sNameRefs.Data()),fdMultBins.data());
   if(!profRef) { Error("Refs profile rebinning failed!","ProcessMixed"); return kFALSE; }
   trashCol.Add(profRef);
 
-  // ### Preparing POIs ###
+   // ### Preparing POIs ###
   for(Int_t iMultBin(0); iMultBin < fiNumMultBins; ++iMultBin) {
 
     TH1D* histFlow = nullptr; // histo with final results
