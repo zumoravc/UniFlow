@@ -1593,6 +1593,20 @@ TH1* ProcessUniFlow::MergeListProfiles(TList* list)
   return merged;
 }
 //_____________________________________________________________________________
+TH1* ProcessUniFlow::Merge(TH1* a, TH1* b)
+{
+    if(!a) { Error("Histogram (first) not found","Merge"); return nullptr; }
+    if(!b) { Error("Histogram (second) not found","Merge"); return nullptr; }
+
+    TList* list = new TList();
+    list->Add(a);
+    list->Add(b);
+
+    TH1* merged = MergeListProfiles(list);
+    delete list;
+    return merged;
+}
+//_____________________________________________________________________________
 TH1D* ProcessUniFlow::DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling)
 {
   // bSkipDesampling [kFALSE] is used to keep the output structure cosistent (for check) even if Desampling can be skipped
