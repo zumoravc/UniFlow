@@ -29,7 +29,7 @@ class FlowTask
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
     void        SetMergePosNeg(Bool_t merge = kTRUE) { fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
-    void        DoCorrMixed(TString nameDiff, TString nameRefs) { fDoCorrMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; }
+    void        DoCorrMixed(TString nameDiff, TString nameRefs, Int_t numSamplRefs = 1) { fDoCorrMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; fNumSamplesRefs = numSamplRefs; }
     void        DoCumOrderMax(Cumulants cum) { fCumOrderMax = cum; }
     void        DoCumOrderMax(Int_t cum) { fCumOrderMax = Cumulants(cum); }
 
@@ -56,6 +56,7 @@ class FlowTask
     Double_t    fEtaGap; // eta gap
     Bool_t      fConsCorr; // consider correlations in cumulant / flow calculations
     Int_t       fNumSamples; // [10] number of samples
+    Int_t       fNumSamplesRefs; // [1] number of samples for refs only
     Int_t       fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     std::vector<Double_t>   fPtBinsEdges; // pt binning
     Bool_t      fShowMult; // show multiplicity distribution

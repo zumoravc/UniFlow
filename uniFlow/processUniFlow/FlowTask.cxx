@@ -15,6 +15,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fNumPtBins{-1},
   fPtBinsEdges{},
   fNumSamples{10},
+  fNumSamplesRefs{1},
   fConsCorr{kFALSE},
   fShowMult{kFALSE},
   fRebinning{kTRUE},
@@ -110,6 +111,7 @@ void FlowTask::PrintTask()
   printf("   fRebinning: %s\n", fRebinning ? "true" : "false");
   printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
   printf("   fNumSamples: %d\n", fNumSamples);
+  printf("   fNumSamplesRefs: %d\n", fNumSamplesRefs);
   printf("   fDesampleUseRMS: %s\n", fDesampleUseRMS ? "true" : "false");
   printf("   fSampleMerging: %s\n", fSampleMerging ? "true" : "false");
   printf("   fConsCorr: %s\n", fConsCorr ? "true" : "false");

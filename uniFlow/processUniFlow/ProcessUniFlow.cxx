@@ -221,8 +221,14 @@ TString ProcessUniFlow::GetSpeciesLabel(PartSpecies species)
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::InitTask(FlowTask* task)
 {
-  if(!task) { Error("Task not valid!","InitTask"); return kFALSE; }
-  return kTRUE;
+    if(!task) { Error("Task not valid!","InitTask"); return kFALSE; }
+
+    // checking fNumSamplesRefs
+    if(task->fNumSamplesRefs != task->fNumSamples && !IsSpeciesReconstructed(task->fSpecies)) {
+        Warning(Form("fNumSamplesRefs set to fNumSamples (was %d | now %d)",task->fNumSamplesRefs,task->fNumSamples),"InitTask");
+        task->fNumSamplesRefs = task->fNumSamples;
+    }
+    return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
