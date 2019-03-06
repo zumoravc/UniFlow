@@ -104,6 +104,7 @@ void ProcessUniFlow::Run()
   {
     FlowTask* currentTask = fvTasks.at(iTask);
     if(!currentTask) { continue; }
+    if(!InitTask(currentTask)) { return; }
     if(!ProcessTask(currentTask)) { return; }
   }
 
@@ -216,6 +217,12 @@ TString ProcessUniFlow::GetSpeciesLabel(PartSpecies species)
   }
 
   return label;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::InitTask(FlowTask* task)
+{
+  if(!task) { Error("Task not valid!","InitTask"); return kFALSE; }
+  return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)

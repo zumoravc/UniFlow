@@ -62,8 +62,9 @@ class ProcessUniFlow
     Bool_t      Initialize(); // initialization task
     Bool_t      LoadLists(); // loading flow lists from input file
 
-    Bool_t      ProcessMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
+    Bool_t      InitTask(FlowTask* task); // initialize FlowTask
     Bool_t      ProcessTask(FlowTask* task); // process FlowTask according to it setting
+    Bool_t      ProcessMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
     Bool_t      ProcessRefs(FlowTask* task); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
