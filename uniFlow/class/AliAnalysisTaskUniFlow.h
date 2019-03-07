@@ -107,6 +107,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetFlowFillWeights(Bool_t weights = kTRUE) { fFlowFillWeights = weights; }
       void                    SetFlowFillAfterWeights(Bool_t weights = kTRUE) { fFlowFillAfterWeights = weights; }
       void                    SetUseWeigthsRunByRun(Bool_t bRunByRun = kTRUE) { fFlowRunByRunWeights = bRunByRun; }
+      void                    SetWeightsTag(TString tag) { fFlowWeightsTag = tag; }
       void                    SetUseWeights3D(Bool_t use = kTRUE) { fFlowUse3Dweights = use; }
       // events setters
       void                    SetCentrality(CentEst est, Int_t min = 0, Int_t max = 0, Int_t bins = 0) { fCentEstimator = est; fCentMin = min; fCentMax = max; fCentBinNum = bins; }
@@ -312,6 +313,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Int_t                   fPhiNumBinsMass; // number of InvMass bins for phi distribution
       Int_t                   fV0sNumBinsMass; // number of InvMass bins for V0s distribution
       Int_t                   fNumSamples; // [1] overall number of samples (from random sampling) used
+      TString                 fFlowWeightsTag; // [""] tag with TList name for weights (used for systematics)
       Bool_t                  fFlowFillWeights; //[kFALSE] flag for filling weights
       Bool_t                  fFlowFillAfterWeights; //[kTRUE] flag for filling weights after NUA (only if fUseWeights is on)
       Bool_t                  fFlowUseWeights; //[kFALSE] flag for using the previously filled weights
