@@ -83,23 +83,27 @@ void runDev()
     // Analysis
     task1->SetRunMode(AliAnalysisTaskUniFlow::kFull);
     task1->SetNumEventsAnalyse(10);
-    task1->SetSampling(1,5);
+    task1->SetSampling(0);
     task1->SetFillQAhistos(0);
     task1->SetProcessPID(1);
     task1->SetProcessPhi(1);
     task1->SetProcessV0s(1);
     task1->SetCentrality(AliAnalysisTaskUniFlow::kV0M,0,90,90);
+    task1->SetFlowPOIsPtBins({1.0,4.0}, AliAnalysisTaskUniFlow::kK0s);
+    task1->SetFlowPOIsPtBins({2.0,3.0}, AliAnalysisTaskUniFlow::kLambda);
+    task1->SetFlowPOIsPtBins({0.1,2.0}, AliAnalysisTaskUniFlow::kPhi);
+    task1->SetFlowPOIsPtBins({1.0,3.0,3.2,5.}, AliAnalysisTaskUniFlow::kCharged);
     // weigths
     task1->SetFlowFillWeights(0);
     task1->SetUseWeigthsRunByRun(0);
     task1->SetUseWeights3D(kFALSE);
     // correlations
-    task1->AddCorr({2,-2}, {});
-    task1->AddCorr({3,-3}, {});
+    task1->AddCorr({2,-2}, {0.0});
+    // task1->AddCorr({3,-3}, {0.0});
 
-    task1->AddCorr({4,-2,-2}, {}, 0,1);
-    task1->AddCorr({5,-3,-2}, {}, 0,1);
-    task1->AddCorr({6,-3,-3}, {}, 0,1);
+    // task1->AddCorr({4,-2,-2}, {}, 0,1);
+    // task1->AddCorr({5,-3,-2}, {}, 0,1);
+    // task1->AddCorr({6,-3,-3}, {}, 0,1);
 
     // task1->AddCorr({2,2,-2,-2}, {});
     // task1->AddCorr({2,3,-2,-3}, {}, 1,0);

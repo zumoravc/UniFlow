@@ -99,6 +99,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       void                    SetFlowRFPsPt(Double_t min, Double_t max) { fFlowRFPsPtMin = min; fFlowRFPsPtMax = max; }
       void                    SetFlowPOIsPt(Double_t min, Double_t max, Int_t bins = 0) { fFlowPOIsPtMin = min; fFlowPOIsPtMax = max; fFlowPOIsPtBinNum = bins; }
+      void                    SetFlowPOIsPtBins(std::vector<Double_t> bins, PartSpecies species) { fFlowPOIsPtBinEdges[species] = bins; }
       void                    SetFlowEta(Double_t max, Int_t bins = 0) { fFlowEtaMax = max; fFlowEtaBinNum = bins; }
       void                    SetFlowPhiBins(Int_t bins) { fFlowPhiBinNum = bins; }
       void                    SetV0sMassBins(Int_t bins) { fV0sNumBinsMass = bins; }
@@ -303,6 +304,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Double_t                fFlowPOIsPtMin; // [0] (GeV/c) min pT treshold for POIs for differential flow
       Double_t                fFlowPOIsPtMax; // [10] (GeV/c) max pT treshold for POIs for differential flow
       Int_t                   fFlowPOIsPtBinNum; // [0] number of pt bins
+      std::vector<Double_t>   fFlowPOIsPtBinEdges[kUnknown]; // pt bin edges for fixed pt bins per species
       Double_t                fFlowEtaMax; // [0.8] max eta acceptance for flow particles (RFPs & POIs)
       Int_t                   fFlowEtaBinNum; // [0] number of eta bins
       Int_t                   fFlowPhiBinNum; // [100] number of phi bins

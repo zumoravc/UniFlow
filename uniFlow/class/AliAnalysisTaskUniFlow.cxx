@@ -140,6 +140,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowPOIsPtMin{0.0},
   fFlowPOIsPtMax{10.0},
   fFlowPOIsPtBinNum{0},
+  fFlowPOIsPtBinEdges{},
   fFlowEtaMax{0.8},
   fFlowEtaBinNum{0},
   fFlowPhiBinNum{100},
@@ -399,6 +400,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fFlowPOIsPtMin{0.0},
   fFlowPOIsPtMax{10.0},
   fFlowPOIsPtBinNum{0},
+  fFlowPOIsPtBinEdges{},
   fFlowEtaMax{0.8},
   fFlowEtaBinNum{0},
   fFlowPhiBinNum{100},
@@ -3489,6 +3491,9 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         if(!fProcessSpec[iSpec]) { continue; }
         if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
+        Int_t iNumPtFixBins = fFlowPOIsPtBinEdges[iSpec].size() - 1;
+        Double_t* dPtFixBinEdges = fFlowPOIsPtBinEdges[iSpec].data();
+
         for(Int_t iSample(0); iSample < fNumSamples; ++iSample)
         {
           if(iSample > 0 && !fSampling) { break; }
@@ -3510,30 +3515,50 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
             case kKaon :
             case kProton :
             {
-              profile = new TProfile2D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-              if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax); }
-              break;
+                if(iNumPtFixBins > 0) {
+                    profile = new TProfile2D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel, GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, iNumPtFixBins,dPtFixBinEdges,"");
+                    if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, iNumPtFixBins,dPtFixBinEdges,""); }
+                } else {
+                    profile = new TProfile2D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
+                    if(bHasGap) { profileNeg = new TProfile2D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c})",GetSpeciesLabel(PartSpecies(iSpec)), corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax); }
+                }
+                break;
             }
 
             case kK0s:
             {
-              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
-              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax); }
-              break;
+                if(iNumPtFixBins > 0) {
+                    profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,MakeBinsVector(fCentBinNum,fCentMin,fCentMax).data(), iNumPtFixBins,dPtFixBinEdges, fV0sNumBinsMass,MakeBinsVector(fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax).data(),"");
+                    if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,MakeBinsVector(fCentBinNum,fCentMin,fCentMax).data(), iNumPtFixBins,dPtFixBinEdges, fV0sNumBinsMass,MakeBinsVector(fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax).data(),""); }
+                } else {
+                    profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax);
+                    if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassK0sMin,fCutV0sInvMassK0sMax); }
+                }
+                break;
             }
 
             case kLambda:
             {
-              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
-              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax); }
-              break;
+                if(iNumPtFixBins > 0) {
+                    profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,MakeBinsVector(fCentBinNum,fCentMin,fCentMax).data(), iNumPtFixBins,dPtFixBinEdges, fV0sNumBinsMass,MakeBinsVector(fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax).data());
+                    if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,MakeBinsVector(fCentBinNum,fCentMin,fCentMax).data(), iNumPtFixBins,dPtFixBinEdges, fV0sNumBinsMass,MakeBinsVector(fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax).data()); }
+                } else {
+                    profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax);
+                    if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fV0sNumBinsMass,fCutV0sInvMassLambdaMin,fCutV0sInvMassLambdaMax); }
+                }
+                break;
             }
 
             case kPhi:
             {
-              profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
-              if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax); }
-              break;
+                if(iNumPtFixBins > 0) {
+                    profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,MakeBinsVector(fCentBinNum,fCentMin,fCentMax).data(), iNumPtFixBins,dPtFixBinEdges, fPhiNumBinsMass,MakeBinsVector(fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax).data());
+                    if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,MakeBinsVector(fCentBinNum,fCentMin,fCentMax).data(), iNumPtFixBins,dPtFixBinEdges, fPhiNumBinsMass,MakeBinsVector(fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax).data()); }
+                } else {
+                    profile = new TProfile3D(Form("%s_Pos_sample%d",corName,iSample), Form("%s: %s (Pos); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax);
+                    if(bHasGap) { profileNeg = new TProfile3D(Form("%s_Neg_sample%d",corName,iSample), Form("%s: %s (Neg); %s; #it{p}_{T} (GeV/#it{c}); #it{m}_{inv} (GeV/#it{c}^{2})",GetSpeciesLabel(PartSpecies(iSpec)),corLabel,GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax, fPhiNumBinsMass,fCutPhiInvMassMin,fCutPhiInvMassMax); }
+                }
+                break;
             }
           }
 
@@ -3583,35 +3608,62 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
     Int_t iNumBinsCand[SparseCand::kDim]; Double_t dMinCand[SparseCand::kDim]; Double_t dMaxCand[SparseCand::kDim];
     iNumBinsCand[SparseCand::kCent] = fCentBinNum; dMinCand[SparseCand::kCent] = fCentMin; dMaxCand[SparseCand::kCent] = fCentMax;
-    iNumBinsCand[SparseCand::kPt] = fFlowPOIsPtBinNum; dMinCand[SparseCand::kPt] = fFlowPOIsPtMin; dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
     iNumBinsCand[SparseCand::kEta] = fFlowEtaBinNum; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
 
     // species dependent
     if(fProcessSpec[kK0s] || fProcessSpec[kLambda])
     {
-      iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMax;
-      fhsCandK0s = new THnSparseD("fhsCandK0s",Form("K_{S}^{0}: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
-      fhsCandK0s->Sumw2();
-      fListFlow[kK0s]->Add(fhsCandK0s);
+        if(fFlowPOIsPtBinEdges[kK0s].size() > 0) {
+            iNumBinsCand[SparseCand::kPt] = (fFlowPOIsPtBinEdges[kK0s].size() - 1);
+            dMinCand[SparseCand::kPt] = fFlowPOIsPtBinEdges[kK0s].front();
+            dMaxCand[SparseCand::kPt] = fFlowPOIsPtBinEdges[kK0s].back();
+        } else {
+            iNumBinsCand[SparseCand::kPt] = fFlowPOIsPtBinNum;
+            dMinCand[SparseCand::kPt] = fFlowPOIsPtMin;
+            dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
+        }
 
-      iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMax;
-      fhsCandLambda = new THnSparseD("fhsCandLambda",Form("#Lambda: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
-      fhsCandLambda->Sumw2();
-      fListFlow[kLambda]->Add(fhsCandLambda);
+        iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassK0sMax;
+        fhsCandK0s = new THnSparseD("fhsCandK0s",Form("K_{S}^{0}: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+        fhsCandK0s->Sumw2();
+        fListFlow[kK0s]->Add(fhsCandK0s);
+
+        if(fFlowPOIsPtBinEdges[kLambda].size() > 0) {
+            iNumBinsCand[SparseCand::kPt] = (fFlowPOIsPtBinEdges[kLambda].size() - 1);
+            dMinCand[SparseCand::kPt] = fFlowPOIsPtBinEdges[kLambda].front();
+            dMaxCand[SparseCand::kPt] = fFlowPOIsPtBinEdges[kLambda].back();
+        } else {
+            iNumBinsCand[SparseCand::kPt] = fFlowPOIsPtBinNum;
+            dMinCand[SparseCand::kPt] = fFlowPOIsPtMin;
+            dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
+        }
+
+        iNumBinsCand[SparseCand::kInvMass] = fV0sNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMin; dMaxCand[SparseCand::kInvMass] = fCutV0sInvMassLambdaMax;
+        fhsCandLambda = new THnSparseD("fhsCandLambda",Form("#Lambda: Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+        fhsCandLambda->Sumw2();
+        fListFlow[kLambda]->Add(fhsCandLambda);
     }
 
     if(fProcessSpec[kPhi])
     {
-      iNumBinsCand[SparseCand::kEta] = fFlowEtaBinNum; dMinCand[SparseCand::kEta] = -fFlowEtaMax; dMaxCand[SparseCand::kEta] = fFlowEtaMax;
-      iNumBinsCand[SparseCand::kInvMass] = fPhiNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutPhiInvMassMin; dMaxCand[SparseCand::kInvMass] = fCutPhiInvMassMax;
+        if(fFlowPOIsPtBinEdges[kPhi].size() > 0) {
+            iNumBinsCand[SparseCand::kPt] = (fFlowPOIsPtBinEdges[kPhi].size() - 1);
+            dMinCand[SparseCand::kPt] = fFlowPOIsPtBinEdges[kPhi].front();
+            dMaxCand[SparseCand::kPt] = fFlowPOIsPtBinEdges[kPhi].back();
+        } else {
+            iNumBinsCand[SparseCand::kPt] = fFlowPOIsPtBinNum;
+            dMinCand[SparseCand::kPt] = fFlowPOIsPtMin;
+            dMaxCand[SparseCand::kPt] = fFlowPOIsPtMax;
+        }
 
-      fhsCandPhi = new THnSparseD("fhsCandPhi",Form("#phi (Sig): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
-      fhsCandPhi->Sumw2();
-      fListFlow[kPhi]->Add(fhsCandPhi);
+        iNumBinsCand[SparseCand::kInvMass] = fPhiNumBinsMass; dMinCand[SparseCand::kInvMass] = fCutPhiInvMassMin; dMaxCand[SparseCand::kInvMass] = fCutPhiInvMassMax;
+        fhsCandPhi = new THnSparseD("fhsCandPhi",Form("#phi (Sig): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+        fhsCandPhi->Sumw2();
+        fListFlow[kPhi]->Add(fhsCandPhi);
 
-      fhsCandPhiBg = new THnSparseD("fhsCandPhiBg",Form("#phi (Bg): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
-      fhsCandPhiBg->Sumw2();
-      fListFlow[kPhi]->Add(fhsCandPhiBg);
+        fhsCandPhiBg = new THnSparseD("fhsCandPhiBg",Form("#phi (Bg): Distribution; %s;", sAxes.Data()), SparseCand::kDim, iNumBinsCand, dMinCand, dMaxCand);
+        fhsCandPhiBg->Sumw2();
+        fListFlow[kPhi]->Add(fhsCandPhiBg);
     }
   } // end-if {fRunMode != fSkipFlow || iNumCorrTask > 0 }
 
