@@ -3408,6 +3408,22 @@ TComplex AliAnalysisTaskUniFlow::FourDiffGapNeg(const Int_t n1, const Int_t n2, 
   return formula;
 }
 // ============================================================================
+std::vector<Double_t> AliAnalysisTaskUniFlow::MakeBinsVector(Int_t num, Double_t min, Double_t max)
+{
+    std::vector<Double_t> vec = std::vector<Double_t>();
+    Double_t step = (max - min) / num;
+    Double_t edge = min;
+
+    for(Int_t i(0); i < num+1; ++i) {
+        vec.push_back(edge);
+        // printf("%d: %f\n",i,edge);
+        edge += step;
+    }
+    // printf("num %d | size %lu\n",num,vec.size() );
+
+    return vec;
+}
+// ============================================================================
 void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 {
   // create output objects

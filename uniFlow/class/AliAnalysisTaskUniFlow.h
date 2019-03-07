@@ -186,6 +186,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    ListParameters() const; // list all task parameters
       void                    ClearVectors(); // properly clear all particle vectors
       void                    DumpTObjTable(const char* note, Option_t* opt = "") const; // add a printf statmenet given by note followed by gObjTable->Print() dump
+      std::vector<Double_t>   MakeBinsVector(Int_t num, Double_t min, Double_t max); // transform fixed sized bins into an array of Double_t
 
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
       Bool_t                  IsEventRejectedAddPileUp() const; // additional pile-up rejection for Run2 Pb-Pb
