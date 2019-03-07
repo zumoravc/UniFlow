@@ -4093,11 +4093,16 @@ AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::ve
 // ============================================================================
 void AliAnalysisTaskUniFlow::CorrTask::Print() const
 {
-  printf("CorrTask::Print() : '%s' (%s) | fbDoRefs %d | fbDoPOIs %d | fiHarm[%d] = { ",fsName.Data(), fsLabel.Data(), fbDoRefs, fbDoPOIs, fiNumHarm);
-  for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }
-  printf("} | fgGaps[%d] = { ",fiNumGaps);
-  for(Int_t i(0); i < fiNumGaps; ++i) { printf("%0.2f ",fdGaps[i]); }
-  printf("}\n");
+  printf("CorrTask::Print():\n");
+  printf("# fsName:\t %s\n", fsName.Data());
+  printf("# fsLabel:\t %s\n", fsLabel.Data());
+  printf("# fbDoRefs:\t %d\n", fbDoRefs);
+  printf("# fbDoPOIs:\t %d\n", fbDoPOIs);
+  printf("# fiNumHarm:\t %d\n", fiNumHarm);
+  printf("# fiHarm:\t { "); for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }  printf("}\n");
+  printf("# fiNumGaps:\t %d\n", fiNumGaps);
+  printf("# fdGaps:\t { "); for(Int_t i(0); i < fiNumGaps; ++i) { printf("%f ",fdGaps[i]); } printf("}\n");
+  printf("############################################\n");
 }
 
 #endif

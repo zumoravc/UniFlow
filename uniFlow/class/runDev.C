@@ -101,42 +101,42 @@ void runDev()
     task1->AddCorr({5,-3,-2}, {}, 0,1);
     task1->AddCorr({6,-3,-3}, {}, 0,1);
 
-    task1->AddCorr({2,2,-2,-2}, {});
-    task1->AddCorr({2,3,-2,-3}, {}, 1,0);
-    task1->AddCorr({3,3,-3,-3}, {});
-
-    task1->AddCorr({2,-2}, {0.0});
-    task1->AddCorr({3,-3}, {0.0});
-
-    task1->AddCorr({4,-2,-2}, {0.0}, 0,1);
-    task1->AddCorr({5,-3,-2}, {0.0}, 0,1);
-    task1->AddCorr({6,-3,-3}, {0.0}, 0,1);
-
-    task1->AddCorr({2,2,-2,-2}, {0.0});
-    task1->AddCorr({2,3,-2,-3}, {0.0}, 1,0);
-    task1->AddCorr({3,3,-3,-3}, {0.0});
-
-    task1->AddCorr({2,-2}, {0.4});
-    task1->AddCorr({3,-3}, {0.4});
-
-    task1->AddCorr({4,-2,-2}, {0.4}, 0,1);
-    task1->AddCorr({5,-3,-2}, {0.4}, 0,1);
-    task1->AddCorr({6,-3,-3}, {0.4}, 0,1);
-
-    task1->AddCorr({2,2,-2,-2}, {0.4});
-    task1->AddCorr({2,3,-2,-3}, {0.4}, 1,0);
-    task1->AddCorr({3,3,-3,-3}, {0.4});
-
-    task1->AddCorr({2,-2}, {0.8});
-    task1->AddCorr({3,-3}, {0.8});
-
-    task1->AddCorr({4,-2,-2}, {0.8}, 0,1);
-    task1->AddCorr({5,-3,-2}, {0.8}, 0,1);
-    task1->AddCorr({6,-3,-3}, {0.8}, 0,1);
-
-    task1->AddCorr({2,2,-2,-2}, {0.8});
-    task1->AddCorr({2,3,-2,-3}, {0.8}, 1,0);
-    task1->AddCorr({3,3,-3,-3}, {0.8});
+    // task1->AddCorr({2,2,-2,-2}, {});
+    // task1->AddCorr({2,3,-2,-3}, {}, 1,0);
+    // task1->AddCorr({3,3,-3,-3}, {});
+    //
+    // task1->AddCorr({2,-2}, {0.0});
+    // task1->AddCorr({3,-3}, {0.0});
+    //
+    // task1->AddCorr({4,-2,-2}, {0.0}, 0,1);
+    // task1->AddCorr({5,-3,-2}, {0.0}, 0,1);
+    // task1->AddCorr({6,-3,-3}, {0.0}, 0,1);
+    //
+    // task1->AddCorr({2,2,-2,-2}, {0.0});
+    // task1->AddCorr({2,3,-2,-3}, {0.0}, 1,0);
+    // task1->AddCorr({3,3,-3,-3}, {0.0});
+    //
+    // task1->AddCorr({2,-2}, {0.4});
+    // task1->AddCorr({3,-3}, {0.4});
+    //
+    // task1->AddCorr({4,-2,-2}, {0.4}, 0,1);
+    // task1->AddCorr({5,-3,-2}, {0.4}, 0,1);
+    // task1->AddCorr({6,-3,-3}, {0.4}, 0,1);
+    //
+    // task1->AddCorr({2,2,-2,-2}, {0.4});
+    // task1->AddCorr({2,3,-2,-3}, {0.4}, 1,0);
+    // task1->AddCorr({3,3,-3,-3}, {0.4});
+    //
+    // task1->AddCorr({2,-2}, {0.8});
+    // task1->AddCorr({3,-3}, {0.8});
+    //
+    // task1->AddCorr({4,-2,-2}, {0.8}, 0,1);
+    // task1->AddCorr({5,-3,-2}, {0.8}, 0,1);
+    // task1->AddCorr({6,-3,-3}, {0.8}, 0,1);
+    //
+    // task1->AddCorr({2,2,-2,-2}, {0.8});
+    // task1->AddCorr({2,3,-2,-3}, {0.8}, 1,0);
+    // task1->AddCorr({3,3,-3,-3}, {0.8});
 
 
     if (!mgr->InitAnalysis()) return;
