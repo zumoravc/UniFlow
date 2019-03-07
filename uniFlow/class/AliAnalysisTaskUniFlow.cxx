@@ -148,6 +148,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fV0sNumBinsMass{60},
   fNumSamples{1},
   fFlowFillWeights{kTRUE},
+  fFlowFillAfterWeights{kTRUE},
   fFlowUseWeights{kFALSE},
   fFlowUse3Dweights{kFALSE},
   fFlowRunByRunWeights{kTRUE},
@@ -408,6 +409,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fV0sNumBinsMass{60},
   fNumSamples{1},
   fFlowFillWeights{kTRUE},
+  fFlowFillAfterWeights{kTRUE},
   fFlowUseWeights{bUseWeights},
   fFlowUse3Dweights{kFALSE},
   fFlowRunByRunWeights{kTRUE},
@@ -731,6 +733,8 @@ void AliAnalysisTaskUniFlow::ListParameters() const
   printf("      fFlowPhiBinNum: (Int_t) %d\n",    fFlowPhiBinNum);
   printf("      fV0sNumBinsMass: (Int_t) %d\n",    fV0sNumBinsMass);
   printf("      fPhiNumBinsMass: (Int_t) %d\n",    fPhiNumBinsMass);
+  printf("      fFlowFillWeights: (Bool_t) %s\n",    fFlowFillWeights ? "kTRUE" : "kFALSE");
+  printf("      fFlowFillAfterWeights: (Bool_t) %s\n",    fFlowFillAfterWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowRunByRunWeights: (Bool_t) %s\n",    fFlowRunByRunWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowUse3Dweights: (Bool_t) %s\n",    fFlowUse3Dweights ? "kTRUE" : "kFALSE");
@@ -1308,7 +1312,7 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(const AliVTrack* track, const Part
     }
   }
 
-  if(fFlowUseWeights) {
+  if(fFlowUseWeights && fFlowFillAfterWeights) {
     Double_t weight = GetFlowWeight(track, species);
 
     if(fFlowUse3Dweights) {
@@ -3691,7 +3695,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         }
       }
 
-      if(fFlowUseWeights)
+      if(fFlowUseWeights && fFlowFillAfterWeights)
       {
         if(fFlowUse3Dweights) {
           const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));

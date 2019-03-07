@@ -68,8 +68,8 @@ void runDev()
       // printf("\n CLING \n\n");
       // gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
       // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights/lhc15o/6519/weights.root\")"));
-      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
-      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
+      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
+      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
     #else
       // printf("\n CINT \n\n");
       gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
@@ -95,6 +95,7 @@ void runDev()
     task1->SetFlowPOIsPtBins({1.0,3.0,3.2,5.}, AliAnalysisTaskUniFlow::kCharged);
     // weigths
     task1->SetFlowFillWeights(0);
+    task1->SetFlowFillAfterWeights(1);
     task1->SetUseWeigthsRunByRun(0);
     task1->SetUseWeights3D(kFALSE);
     // correlations
