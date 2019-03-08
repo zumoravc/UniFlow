@@ -89,7 +89,7 @@ void PrepareWeights3D()
     if(!fInput) return;
 
     fInput->cd(sTaskTag.Data());
-    TList* list =  (TList*) gDirectory->Get(Form("Flow_Weights_%s",sTaskTag.Data()));
+    TList* list =  (TList*) gDirectory->Get(Form("Weights_%s",sTaskTag.Data()));
     if(!list) return;
 
     TList* listRun = new TList();
@@ -168,7 +168,7 @@ void PrepareWeights3D()
 
       fileTemp->cd(sTaskTag.Data());
 
-      TList* listTemp = (TList*) gDirectory->Get(Form("Flow_Weights_%s",sTaskTag.Data()));
+      TList* listTemp = (TList*) gDirectory->Get(Form("Weights_%s",sTaskTag.Data()));
       if(!listTemp) { printf("Run %d | TList with weights not found\n",iRunList[iRun]); gDirectory->ls() ;return; }
 
       TList* listRun = new TList();
