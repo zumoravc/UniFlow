@@ -148,9 +148,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fV0sNumBinsMass{60},
   fNumSamples{1},
   fFlowFillWeights{kTRUE},
+  fFlowFillAfterWeights{kTRUE},
   fFlowUseWeights{kFALSE},
   fFlowUse3Dweights{kFALSE},
   fFlowRunByRunWeights{kTRUE},
+  fFlowWeightsTag{},
   fColSystem{kPPb},
   fTrigger{AliVEvent::kINT7},
   fCentEstimator{kV0A},
@@ -408,9 +410,11 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fV0sNumBinsMass{60},
   fNumSamples{1},
   fFlowFillWeights{kTRUE},
+  fFlowFillAfterWeights{kTRUE},
   fFlowUseWeights{bUseWeights},
   fFlowUse3Dweights{kFALSE},
   fFlowRunByRunWeights{kTRUE},
+  fFlowWeightsTag{},
   fColSystem{colSys},
   fTrigger{AliVEvent::kINT7},
   fCentEstimator{kV0A},
@@ -731,7 +735,10 @@ void AliAnalysisTaskUniFlow::ListParameters() const
   printf("      fFlowPhiBinNum: (Int_t) %d\n",    fFlowPhiBinNum);
   printf("      fV0sNumBinsMass: (Int_t) %d\n",    fV0sNumBinsMass);
   printf("      fPhiNumBinsMass: (Int_t) %d\n",    fPhiNumBinsMass);
+  printf("      fFlowFillWeights: (Bool_t) %s\n",    fFlowFillWeights ? "kTRUE" : "kFALSE");
+  printf("      fFlowFillAfterWeights: (Bool_t) %s\n",    fFlowFillAfterWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowUseWeights: (Bool_t) %s\n",    fFlowUseWeights ? "kTRUE" : "kFALSE");
+  printf("      fFlowWeightsTag: (TString) '%s'\n",    fFlowWeightsTag.Data());
   printf("      fFlowRunByRunWeights: (Bool_t) %s\n",    fFlowRunByRunWeights ? "kTRUE" : "kFALSE");
   printf("      fFlowUse3Dweights: (Bool_t) %s\n",    fFlowUse3Dweights ? "kTRUE" : "kFALSE");
   printf("   -------- Events ----------------------------------------------\n");
@@ -1263,21 +1270,28 @@ Bool_t AliAnalysisTaskUniFlow::LoadWeights()
 
   TList* listFlowWeights = nullptr;
 
-  if(!fFlowRunByRunWeights) {
-    // loading run-averaged weights
-    listFlowWeights = (TList*) fFlowWeightsList->FindObject("averaged");
-    if(!listFlowWeights) { AliError("TList with flow run-averaged weights not found."); fFlowWeightsList->ls(); return kFALSE; }
+  if(!fFlowWeightsTag.IsNull()) {
+      // using weights Tag if provided (systematics)
+      listFlowWeights = (TList*) fFlowWeightsList->FindObject(fFlowWeightsTag.Data());
+      if(!listFlowWeights) { AliError(Form("TList with tag '%s' not found!",fFlowWeightsTag.Data())); fFlowWeightsList->ls(); return kFALSE; }
   } else {
-    // loading run-specific weights
-    listFlowWeights = (TList*) fFlowWeightsList->FindObject(Form("%d",fEventAOD->GetRunNumber()));
+      if(!fFlowRunByRunWeights) {
+          // loading run-averaged weights
+          listFlowWeights = (TList*) fFlowWeightsList->FindObject("averaged");
+          if(!listFlowWeights) { AliError("TList with flow run-averaged weights not found."); fFlowWeightsList->ls(); return kFALSE; }
+      } else {
+          // loading run-specific weights
+          listFlowWeights = (TList*) fFlowWeightsList->FindObject(Form("%d",fEventAOD->GetRunNumber()));
 
-    if(!listFlowWeights) {
-      // run-specific weights not found for this run; loading run-averaged instead
-      AliWarning(Form("TList with flow weights (run %d) not found. Using run-averaged weights instead (as a back-up)", fEventAOD->GetRunNumber()));
-      listFlowWeights = (TList*) fFlowWeightsList->FindObject("averaged");
-      if(!listFlowWeights) { AliError("Loading run-averaged weights failed!"); fFlowWeightsList->ls(); return kFALSE; }
-    }
+          if(!listFlowWeights) {
+              // run-specific weights not found for this run; loading run-averaged instead
+              AliWarning(Form("TList with flow weights (run %d) not found. Using run-averaged weights instead (as a back-up)", fEventAOD->GetRunNumber()));
+              listFlowWeights = (TList*) fFlowWeightsList->FindObject("averaged");
+              if(!listFlowWeights) { AliError("Loading run-averaged weights failed!"); fFlowWeightsList->ls(); return kFALSE; }
+          }
+      }
   }
+
 
   for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
     if(!fProcessSpec[iSpec]) { continue; }
@@ -1308,7 +1322,7 @@ Bool_t AliAnalysisTaskUniFlow::FillFlowWeight(const AliVTrack* track, const Part
     }
   }
 
-  if(fFlowUseWeights) {
+  if(fFlowUseWeights && fFlowFillAfterWeights) {
     Double_t weight = GetFlowWeight(track, species);
 
     if(fFlowUse3Dweights) {
@@ -3691,7 +3705,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
         }
       }
 
-      if(fFlowUseWeights)
+      if(fFlowUseWeights && fFlowFillAfterWeights)
       {
         if(fFlowUse3Dweights) {
           const char* weightName = Form("fh3AfterWeights%s",GetSpeciesName(PartSpecies(iSpec)));
