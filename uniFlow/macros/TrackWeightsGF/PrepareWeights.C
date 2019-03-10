@@ -21,6 +21,7 @@
 Bool_t fbDebug = kFALSE;
 Bool_t fbUse3Dweights = kFALSE;
 TString sTaskName = "UniFlow";
+// TString sTag = "TPCcls90";
 TString sTag = "FB768";
 TString sPath = "/mnt/CodesALICE/";
 // TString sOutputPath = "./" + sTag + "/";
@@ -88,13 +89,20 @@ void PrepareWeights()
 {
     gSystem->mkdir(sOutputPath.Data(),kTRUE);
 
-    TFile* fOutput = TFile::Open(Form("%s/%s",sOutputPath.Data(),sOutFileName.Data()),"RECREATE");
-    if(!fOutput) { Error("Output file creation failed!"); return; }
+    TFile* fOutput = TFile::Open(Form("%s/%s",sOutputPath.Data(),sOutFileName.Data()),"UPDATE");
+    if(!fOutput) { Error("Output opening failed!"); return; }
 
     if(!sTag.IsNull()) { sTaskName += sTag; }
 
-    TList* outList = new TList();
-    outList->SetOwner(kTRUE);
+    // check if "weights" list already exists
+    TList* outList = nullptr;
+    outList = (TList*) fOutput->Get("weights");
+    if(outList) {
+        Warning("Outlist already exists, using it instead of creating it now!");
+    } else {
+        outList = new TList();
+        outList->SetOwner(kTRUE);
+    }
 
     if(!bRunByRun) {
 
@@ -105,10 +113,18 @@ void PrepareWeights()
         TList* list =  (TList*) gDirectory->Get(Form("Weights_%s",sTaskName.Data()));
         if(!list) { Error("Input TList with weights not opened!"); return; }
 
+        TString sListName = "averaged";
+        if(!sTag.IsNull()) { sListName = sTag; }
+
+        if(outList->FindObject(sListName.Data())) {
+            Error(Form("This listRun '%s' already exits within output file. Terminating!",sListName.Data()));
+            outList->ls();
+            return;
+        }
+
         TList* listRun = new TList();
         listRun->SetOwner(kTRUE);
-        listRun->SetName("averaged");
-        if(!sTag.IsNull()) { listRun->SetName(sTag.Data()); }
+        listRun->SetName(sListName.Data());
 
         for(Int_t part = 0; part < iNumPart; ++part) {
             Info(Form(" -part %d (out of %d)",part+1,iNumPart));
@@ -201,7 +217,7 @@ void PrepareWeights()
     }
 
     fOutput->cd();
-    outList->Write("weights",TObject::kSingleKey);
+    outList->Write("weights",TObject::kSingleKey+TObject::kOverwrite);
 
     return;
 }
