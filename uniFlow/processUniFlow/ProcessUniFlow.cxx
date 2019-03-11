@@ -2787,15 +2787,16 @@ TH1* ProcessUniFlow::SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask*
     if(iNumBins != hInvMassBg->GetNbinsX()) { Error("Different number of bins for signal & bg histo!","SubtractInvMassBg"); return nullptr; }
 
     TH1* hInvMassSubt = (TH1*) hInvMass->Clone();
+    hInvMassSubt->Add(hInvMassBg, -1.0);
 
-    for(Int_t iBin(0); iBin < iNumBins+1; ++iBin) {
-        Double_t dContSig = hInvMass->GetBinContent(iBin);
-        Double_t dContBg = hInvMassBg->GetBinContent(iBin);
-        Double_t dContNew = dContSig - dContBg;
-
-        hInvMassSubt->SetBinContent(iBin, dContNew);
-        hInvMassSubt->SetBinError(iBin, TMath::Sqrt(dContSig+dContBg));
-    }
+    // for(Int_t iBin(0); iBin < iNumBins+1; ++iBin) {
+    //     Double_t dContSig = hInvMass->GetBinContent(iBin);
+    //     Double_t dContBg = hInvMassBg->GetBinContent(iBin);
+    //     Double_t dContNew = dContSig - dContBg;
+    //
+    //     hInvMassSubt->SetBinContent(iBin, dContNew);
+    //     hInvMassSubt->SetBinError(iBin, TMath::Sqrt(dContSig+dContBg));
+    // }
 
     return hInvMassSubt;
 }
