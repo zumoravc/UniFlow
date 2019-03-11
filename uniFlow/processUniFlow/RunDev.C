@@ -33,7 +33,7 @@ void RunDev()
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
 	std::vector<Double_t> dMultBinning = {10,20};
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
-	Double_t dPtBins[] = {1.0,2.0,3.0,4.0};
+	Double_t dPtBins[] = {1.0,4.0};
 	std::vector<Double_t> vecPtBins = {1.0,2.0,3.0,4.0};
 	// ##### END Parameters setting ######
 
@@ -100,7 +100,7 @@ void RunDev()
 	taskK0s->SetMergePosNeg(1);
 	taskK0s->SetHarmonics(2);
 	taskK0s->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)",5);
-	process->AddTask(taskK0s);
+	// process->AddTask(taskK0s);
 
 	FlowTask* taskLambda = new FlowTask(kLambda);
 	taskLambda->SetNumSamples(1);

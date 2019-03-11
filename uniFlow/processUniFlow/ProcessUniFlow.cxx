@@ -378,9 +378,15 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         if(!hInvMass) { Error("Loading inv. mass slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
 
         TH1D* hInvMassBg = nullptr;
+        TH1D* hInvMassSubt = nullptr;
+
         if(species == kPhi) {
           hInvMassBg = (TH1D*) task->fListHistos->FindObject(Form("hInvMassBg_mult%d_pt%d",iMultBin,iPtBin));
           if(!hInvMassBg) { Error("Loading inv. mass (Bg) slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
+
+          hInvMassSubt = (TH1D*) SubtractInvMassBg(hInvMass, hInvMassBg, task);
+          if(!hInvMassSubt) { Error("Inv. mass BG subtraction failed!","ProcessMixed"); return kFALSE; }
+          hInvMassSubt->SetName(Form("hInvMassSubt_mult%d_pt%d",iMultBin,iPtBin));
         }
 
         TString sName = Form("%s_Pos_sample0_mult%d_pt%d",task->fMixedDiff.Data(),iMultBin,iPtBin);
@@ -422,7 +428,12 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 
         TF1 fitMass, fitMassSig, fitMassBg, fitFlow, fitFlowSig, fitFlowBg;
 
-        Bool_t bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg);
+        Bool_t bFitMass = kFALSE;
+        if(species == kPhi) {
+            bFitMass = FitInvMass(hInvMassSubt, task, fitMass, fitMassSig, fitMassBg);
+        } else {
+            bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg);
+        }
 
         if(!bFitMass) {
           Warning("Fitting inv.mass unsuccesfull","ProcessMixed");
@@ -432,6 +443,10 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         }
 
         listFits->Add(hInvMass);
+        if(species == kPhi) {
+            listFits->Add(hInvMassBg);
+            listFits->Add(hInvMassSubt);
+        }
         listFits->Add(&fitMass);
         listFits->Add(&fitMassSig);
         listFits->Add(&fitMassBg);
@@ -2763,6 +2778,29 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
 
 
      return h2;
+}
+//_____________________________________________________________________________
+TH1* ProcessUniFlow::SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask* task)
+{
+    if(!hInvMass) { Error("Input inv. mass histo not found!","SubtractInvMassBg"); return nullptr; }
+    if(!hInvMassBg) { Error("Input inv. mass Bg histo not found!","SubtractInvMassBg"); return nullptr; }
+    if(!task) { Error("FlowTask not found!","SubtractInvMassBg"); return nullptr; }
+
+    const Int_t iNumBins = hInvMass->GetNbinsX();
+    if(iNumBins != hInvMassBg->GetNbinsX()) { Error("Different number of bins for signal & bg histo!","SubtractInvMassBg"); return nullptr; }
+
+    TH1* hInvMassSubt = (TH1*) hInvMass->Clone();
+
+    for(Int_t iBin(0); iBin < iNumBins+1; ++iBin) {
+        Double_t dContSig = hInvMass->GetBinContent(iBin);
+        Double_t dContBg = hInvMassBg->GetBinContent(iBin);
+        Double_t dContNew = dContSig - dContBg;
+
+        hInvMassSubt->SetBinContent(iBin, dContNew);
+        hInvMassSubt->SetBinError(iBin, TMath::Sqrt(dContSig+dContBg));
+    }
+
+    return hInvMassSubt;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg)
