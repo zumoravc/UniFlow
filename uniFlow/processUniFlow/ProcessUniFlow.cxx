@@ -2777,6 +2777,22 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
      return h2;
 }
 //_____________________________________________________________________________
+void ProcessUniFlow::PrintFitFunction(const TF1* func)
+{
+    if(!func) { Error("Input function not found!","PrintFitFunction"); return; }
+    printf("Name '%s'\n",func->GetName());
+    printf("Title '%s'\n", func->GetTitle());
+    // printf("Status '%s'\n",func->fCstatus.Data());
+    for(Int_t iPar(0); iPar < func->GetNpar(); ++iPar) {
+        Double_t dLimLow, dLimHigh;
+        func->GetParLimits(iPar,dLimLow,dLimHigh);
+        printf("  par%d \t'%s' : \t%g \t+- \t%g \t(%g <=> %g)\n", iPar, func->GetParName(iPar), func->GetParameter(iPar), func->GetParError(iPar), dLimLow, dLimHigh);
+    }
+    printf("Chi2/ndf = %.3g/%d = %.3g\n", func->GetChisquare(), func->GetNDF(),func->GetChisquare()/func->GetNDF());
+    printf("p-value = %g\n",func->GetProb());
+    printf("##############################################################\n");
+}
+//_____________________________________________________________________________
 TH1* ProcessUniFlow::SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask* task)
 {
     if(!hInvMass) { Error("Input inv. mass histo not found!","SubtractInvMassBg"); return nullptr; }
