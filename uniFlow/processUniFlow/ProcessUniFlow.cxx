@@ -420,9 +420,9 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 
         // Bool_t bExtracted = ExtractFlowOneGo(task,hInvMass,hInvMassBg,histVn,dFlow,dFlowError,canFitInvMass,listFits);
 
-        TF1 fitMassSig, fitMassBg, fitFlowSig, fitFlowBg;
+        TF1 fitMass, fitMassSig, fitMassBg, fitFlow, fitFlowSig, fitFlowBg;
 
-        Bool_t bFitMass = FitInvMass(hInvMass, task, fitMassSig, fitMassBg);
+        Bool_t bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg);
 
         if(!bFitMass) {
           Warning("Fitting inv.mass unsuccesfull","ProcessMixed");
@@ -432,10 +432,11 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         }
 
         listFits->Add(hInvMass);
+        listFits->Add(&fitMass);
         listFits->Add(&fitMassSig);
         listFits->Add(&fitMassBg);
 
-        Bool_t bFitFlow = FitCorrelations(histVn, task, fitFlowSig, fitFlowBg, fitMassSig, fitMassBg);
+        Bool_t bFitFlow = FitCorrelations(histVn, task, fitFlow, fitFlowSig, fitFlowBg, fitMassSig, fitMassBg);
 
 
         if(!bFitFlow) {
@@ -446,6 +447,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         }
 
         listFits->Add(histVn);
+        listFits->Add(&fitFlow);
         listFits->Add(&fitFlowSig);
         listFits->Add(&fitFlowBg);
 
@@ -1407,6 +1409,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       listFits->SetOwner(1);
 
       TList* listFitsFour = nullptr;
+      TF1 fitCorFour;
       TF1 fitCorSigFour;
       TF1 fitCorBgFour;
 
@@ -1424,21 +1427,25 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
       TF1 fitOutSig;
       TF1 fitOutBg;
+      TF1 fitOut;
 
-      Bool_t fitMass = FitInvMass(hInvMass, task, fitOutSig, fitOutBg);
+      Bool_t fitMass = FitInvMass(hInvMass, task, fitOut, fitOutSig, fitOutBg);
       if(!fitMass) { Error("FitMass failed!","ProcessReconstructed"); ffFitsFile->cd(); fitOutSig.Write("fitMassSig"); fitOutBg.Write("fitMassBg"); return kFALSE; }
 
+      TF1 fitCor;
       TF1 fitCorSig;
       TF1 fitCorBg;
 
-      Bool_t fitCor = FitCorrelations(hFlowMass, task, fitCorSig, fitCorBg, fitOutSig, fitOutBg);
-      if(!fitCor) { Error("FitCor failed!","ProcessReconstructed"); ffFitsFile->cd(); fitCorSig.Write("fitCorSig"); fitCorBg.Write("fitCorBg"); return kFALSE; }
+      Bool_t bFitCor = FitCorrelations(hFlowMass, task, fitCor, fitCorSig, fitCorBg, fitOutSig, fitOutBg);
+      if(!bFitCor) { Error("FitCor failed!","ProcessReconstructed"); ffFitsFile->cd(); fitCorSig.Write("fitCorSig"); fitCorBg.Write("fitCorBg"); return kFALSE; }
 
       // storing fits
       listFits->Add(hInvMass);
+      listFits->Add(&fitOut);
       listFits->Add(&fitOutSig);
       listFits->Add(&fitOutBg);
       listFits->Add(hFlowMass);
+      listFits->Add(&fitCor);
       listFits->Add(&fitCorSig);
       listFits->Add(&fitCorBg);
 
@@ -1448,14 +1455,15 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
       if(task->fCumOrderMax >= 4)
       {
-        Bool_t fitCorFour = FitCorrelations(hFlowMassFour, task, fitCorSigFour, fitCorBgFour, fitOutSig, fitOutBg);
-        if(!fitCorFour) { Error("FitCorFour failed!","ProcessReconstructed"); return kFALSE; }
+        Bool_t bFitCorFour = FitCorrelations(hFlowMassFour, task, fitCorFour, fitCorSigFour, fitCorBgFour, fitOutSig, fitOutBg);
+        if(!bFitCorFour) { Error("FitCorFour failed!","ProcessReconstructed"); return kFALSE; }
 
         // storing fits
         listFitsFour->Add(hInvMass);
         listFitsFour->Add(&fitOutSig);
         listFitsFour->Add(&fitOutBg);
         listFitsFour->Add(hFlowMassFour);
+        listFitsFour->Add(&fitCorFour);
         listFitsFour->Add(&fitCorSigFour);
         listFitsFour->Add(&fitCorBgFour);
 
@@ -2757,7 +2765,7 @@ TH2D* ProcessUniFlow::DoProject2D(TH3D* h3, const char * name, const char * titl
      return h2;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg)
+Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg)
 {
   if(!hist) { Error("Input histo not found!","FitInvMass"); return kFALSE; }
   if(!task) { Error("FlowTask not found!","FitInvMass"); return kFALSE; }
@@ -2966,18 +2974,17 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1
     fitSig.SetParError(iPar, fitMass->GetParError(iPar));
   }
 
+  fitOut = *fitMass;
   fitOutSig = fitSig;
   fitOutBg = fitBg;
 
-  if(!bFitOK) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); delete fitMass; return kFALSE; }
+  if(!bFitOK) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); return kFALSE; }
   Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
-
-  delete fitMass;
 
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg)
+Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg)
 {
   if(!hist) { Error("Input histo not found!","FitCorrelations"); return kFALSE; }
   if(!task) { Error("FlowTask not found!","FitCorrelations"); return kFALSE; }
@@ -3116,7 +3123,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
 
   // === Fitting procedure ===
 
-  TF1* fitVn = new TF1(Form("fitVn"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
+  TF1* fitVn = new TF1(Form("fitCor"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
 
   // fixing fraction from input fits
 
@@ -3180,7 +3187,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
 
   // === Extracting fitting components to separated TF1's ===
 
-  TF1 fitFlowBg = TF1("fitFlowBg", Form("(%s)*(%s)/(%s + %s)", sFlowBG.Data(), sMassBG.Data(), sMassSig.Data(), sMassBG.Data()), dMassRangeLow,dMassRangeHigh);
+  TF1 fitFlowBg = TF1("fitCorBg", Form("(%s)*(%s)/(%s + %s)", sFlowBG.Data(), sMassBG.Data(), sMassSig.Data(), sMassBG.Data()), dMassRangeLow,dMassRangeHigh);
   fitFlowBg.SetLineColor(kBlue);
   fitFlowBg.SetLineStyle(2);
   for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar)
@@ -3199,7 +3206,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
     fitFlowBg.SetParError(iPar, fitVn->GetParError(iPar));
   }
 
-  TF1 fitFlowSig = TF1("fitFlowSig", Form("[%d]*(%s)/(%s + %s)", iParFlow, sMassSig.Data(), sMassSig.Data(), sMassBG.Data()), dMassRangeLow,dMassRangeHigh);
+  TF1 fitFlowSig = TF1("fitCorSig", Form("[%d]*(%s)/(%s + %s)", iParFlow, sMassSig.Data(), sMassSig.Data(), sMassBG.Data()), dMassRangeLow,dMassRangeHigh);
   fitFlowSig.SetLineColor(kGreen+2);
   fitFlowSig.SetLineStyle(2);
   for(Int_t iPar(0); iPar < iNumParMass; ++iPar)
@@ -3215,6 +3222,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig
   fitFlowSig.SetParameter(iParFlow, fitVn->GetParameter(iParFlow));
   fitFlowSig.SetParError(iParFlow, fitVn->GetParError(iParFlow));
 
+  fitOut = *fitVn;
   fitOutSig = fitFlowSig;
   fitOutBg = fitFlowBg;
 

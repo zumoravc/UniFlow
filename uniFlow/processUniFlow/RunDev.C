@@ -53,7 +53,7 @@ void RunDev()
 	taskRefs->SetMergePosNeg(1);
 	taskRefs->SetHarmonics(2);
 	taskRefs->DoCumOrderMax(4);
-	process->AddTask(taskRefs);
+	// process->AddTask(taskRefs);
 
 	FlowTask* taskCharged = new FlowTask(kCharged);
 	taskCharged->SetNumSamples(1);
@@ -63,7 +63,7 @@ void RunDev()
 	taskCharged->SetEtaGap(0.0);
 	taskCharged->DoCumOrderMax(kFour);
 	taskCharged->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)");
-	process->AddTask(taskCharged);
+	// process->AddTask(taskCharged);
 
 	FlowTask* taskCharged2 = new FlowTask(kCharged);
 	taskCharged2->SetNumSamples(1);
@@ -72,7 +72,7 @@ void RunDev()
 	taskCharged2->SetHarmonics(2);
 	taskCharged2->SetEtaGap(0.0);
 	taskCharged2->DoCorrMixed("<<3>>(5,-3,-2)_2sub(0)","<<4>>(2,3,-2,-3)_2sub(0)");
-	process->AddTask(taskCharged2);
+	// process->AddTask(taskCharged2);
 
 	FlowTask* taskCharged3 = new FlowTask(kCharged);
 	taskCharged3->SetNumSamples(1);
@@ -81,7 +81,7 @@ void RunDev()
 	taskCharged3->SetHarmonics(2);
 	taskCharged3->SetEtaGap(0.0);
 	taskCharged3->DoCorrMixed("<<3>>(6,-3,-3)_2sub(0)","<<4>>(3,3,-3,-3)_2sub(0)");
-	process->AddTask(taskCharged3);
+	// process->AddTask(taskCharged3);
 
 
 	// FlowTask* taskPion = new FlowTask(kPion);
@@ -99,8 +99,8 @@ void RunDev()
 	taskK0s->SetPtBins(vecPtBins);
 	taskK0s->SetMergePosNeg(1);
 	taskK0s->SetHarmonics(2);
-	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
-	// process->AddTask(taskK0s);
+	taskK0s->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)",5);
+	process->AddTask(taskK0s);
 
 	FlowTask* taskLambda = new FlowTask(kLambda);
 	taskLambda->SetNumSamples(1);
@@ -118,18 +118,9 @@ void RunDev()
 	taskPhi->SetPtBins(vecPtBins);
 	taskPhi->SetMergePosNeg(1);
 	taskPhi->SetHarmonics(2);
-	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
-	// process->AddTask(taskPhi);
+	taskPhi->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)",5);
+	process->AddTask(taskPhi);
 
-	FlowTask* taskK0sMix = new FlowTask(kK0s);
-	taskK0sMix->SetNumSamples(1);
-	taskK0sMix->SetEtaGap(0.0);
-	taskK0sMix->SetPtBins(vecPtBins);
-	taskK0sMix->SetMergePosNeg(1);
-	taskK0sMix->SetHarmonics(2);
-	taskK0sMix->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)");
-	// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
-	// process->AddTask(taskK0sMix);
 
 
 	process->Run();
