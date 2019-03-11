@@ -33,8 +33,8 @@ void RunDev()
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
 	std::vector<Double_t> dMultBinning = {10,20};
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
-	Double_t dPtBins[] = {1.0,4.0};
-	std::vector<Double_t> vecPtBins = {1.0,2.0,3.0,4.0};
+	Double_t dPtBins[] = {2.0,2.5};
+	std::vector<Double_t> vecPtBins = {1.5,2.0};
 	// ##### END Parameters setting ######
 
 	ProcessUniFlow* process = new ProcessUniFlow();
@@ -45,6 +45,7 @@ void RunDev()
 	process->SetOutputFileName("Processed.root");
 	process->SetMultiplicityBins(dMultBinning);
 	process->SetDebug(1);
+	process->SetSaveInterSteps(1);
 
 	FlowTask* taskRefs = new FlowTask(kRefs);
 	taskRefs->SetNumSamples(1);
