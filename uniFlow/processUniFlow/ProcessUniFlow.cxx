@@ -388,10 +388,10 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
           if(!hInvMassBg) { Error("Loading inv. mass (Bg) slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
           listFits->Add(hInvMassBg);
 
-          hInvMassSubt = (TH1D*) SubtractInvMassBg(hInvMass, hInvMassBg, task);
-          if(!hInvMassSubt) { Error("Inv. mass BG subtraction failed!","ProcessMixed"); return kFALSE; }
-          hInvMassSubt->SetName(Form("hInvMassSubt_mult%d_pt%d",iMultBin,iPtBin));
-          listFits->Add(hInvMassSubt);
+          // hInvMassSubt = (TH1D*) SubtractInvMassBg(hInvMass, hInvMassBg, task);
+          // if(!hInvMassSubt) { Error("Inv. mass BG subtraction failed!","ProcessMixed"); return kFALSE; }
+          // hInvMassSubt->SetName(Form("hInvMassSubt_mult%d_pt%d",iMultBin,iPtBin));
+          // listFits->Add(hInvMassSubt);
         }
 
         TString sName = Form("%s_Pos_sample0_mult%d_pt%d",task->fMixedDiff.Data(),iMultBin,iPtBin);
@@ -434,7 +434,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         // Bool_t bExtracted = ExtractFlowOneGo(task,hInvMass,hInvMassBg,histVn,dFlow,dFlowError,canFitInvMass,listFits);
 
         if(species == kPhi) {
-            bFitMass = FitInvMass(hInvMassSubt, task, fitMass, fitMassSig, fitMassBg, listFits);
+            bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg, listFits, hInvMassBg);
         } else {
             bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg, listFits);
         }
@@ -2801,13 +2801,14 @@ TH1* ProcessUniFlow::SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask*
     return hInvMassSubt;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList)
+Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList, TH1* histBg)
 {
   if(!hist) { Error("Input histo not found!","FitInvMass"); return kFALSE; }
   if(!task) { Error("FlowTask not found!","FitInvMass"); return kFALSE; }
   if(!outList) { Error("Output TList outList not found!"); return kFALSE; }
 
   PartSpecies species = task->fSpecies;
+  if(species == kPhi && !histBg) { Error("Input histo bg not found!"); return kFALSE; }
   if(!IsSpeciesReconstructed(species)) { Error("Invalid species!","FitInvMass"); return kFALSE; }
 
   Double_t dMassRangeLow = hist->GetXaxis()->GetXmin();
