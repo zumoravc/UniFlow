@@ -2816,7 +2816,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   Double_t dMaximum = hist->GetMaximum();
 
   Int_t iNpx = 10000;
-  TString sFitOptMass = "RNL";
+  TString sFitOptMass = "RNLB";
 
   TString sMassBG = TString(); Int_t iNumParsMassBG = 0; // function for inv. mass dist. (BG component)
   TString sMassSig = TString();  Int_t iNumParsMassSig = 0; // function for inv. mass dist. (sig component)
@@ -2832,7 +2832,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(species == kPhi) {
     Debug("Setting paramters for Phi","FitInvMass");
 
-    dMassRangeLow = 0.994;
+    // dMassRangeLow = 0.994;
     // dMassRangeHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
@@ -2841,7 +2841,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     iParMass = 5;
     iParWidth = 6;
 
-    dParDef =     {dMaximum,1000,1.0,0.0,   dMaximum,1.019445,0.0046};
+    dParDef =     {1.0,1.0,1.0,0.0,   dMaximum,1.019445,0.0046};
     dParLimLow =  {-1,-1,-1,-1,    0.0,1.018,0.001};
     dParLimHigh = {-1,-1,-1,-1,  1.2*dMaximum,1.022,0.008};
 
@@ -2951,7 +2951,10 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     Double_t dLimLow = dParLimLow.at(par);
     Double_t dLimHigh = dParLimHigh.at(par);
 
-    if(dLimLow > -1.0 && dLimHigh > -1.0) { fitMass->SetParLimits(par, dLimLow, dLimHigh); }
+    if(dLimLow > -1.0 && dLimHigh > -1.0) {
+        fitMass->SetParLimits(par, dLimLow, dLimHigh);
+        if(dLimLow == dLimHigh && dLimLow == dParDef.at(par)) { fitMass->FixParameter(par,dLimLow); }
+    }
     else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"FitInvMass"); return kFALSE; }
   }
 
@@ -2974,7 +2977,11 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
         Double_t dLimLow = dParLimLow.at(par);
         Double_t dLimHigh = dParLimHigh.at(par);
 
-        if(dLimLow > -1.0 && dLimHigh > -1.0) { fitMass->SetParLimits(par, dLimLow, dLimHigh); }
+        if(dLimLow > -1.0 && dLimHigh > -1.0) {
+            fitMass->SetParLimits(par, dLimLow, dLimHigh);
+            if(dLimLow == dLimHigh && dLimLow == dParDef.at(par)) { fitMass->FixParameter(par,dLimLow); }
+        }
+
         else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"FitInvMass"); return kFALSE; }
       }
     }
@@ -3051,7 +3058,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   {
     Debug("Setting paramters for Phi","FitCorrelations");
 
-    dMassRangeLow = 0.994;
+    // dMassRangeLow = 0.994;
     // dMassRangeHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
