@@ -400,24 +400,24 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 
         // Making vn out of cn,dn
         TH1D* histVn = (TH1D*) profVn->ProjectionX();
-        listFits->Add(histVn);
-
-        for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin) {
-          if(dRefCont < 0.0) {
-            histVn->SetBinContent(bin, 9999.9);
-            histVn->SetBinError(bin, 9999.9);
-            continue;
-          }
-
-          Double_t dOldCont = histVn->GetBinContent(bin);
-          Double_t dOldErr = histVn->GetBinError(bin);
-
-          Double_t dNewCont = dOldCont / TMath::Sqrt(dRefCont);
-          Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
-
-          histVn->SetBinContent(bin, dNewCont);
-          histVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
-        }
+        // trashCol.Add(histVn);
+        //
+        // for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin) {
+        //   if(dRefCont < 0.0) {
+        //     histVn->SetBinContent(bin, 9999.9);
+        //     histVn->SetBinError(bin, 9999.9);
+        //     continue;
+        //   }
+        //
+        //   Double_t dOldCont = histVn->GetBinContent(bin);
+        //   Double_t dOldErr = histVn->GetBinError(bin);
+        //
+        //   Double_t dNewCont = dOldCont / TMath::Sqrt(dRefCont);
+        //   Double_t dNewErrSq = dOldErr*dOldErr/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dOldCont*dOldCont*dRefErr*dRefErr;
+        //
+        //   histVn->SetBinContent(bin, dNewCont);
+        //   histVn->SetBinError(bin, TMath::Sqrt(dNewErrSq));
+        // }
 
         // Here ready for fitting
 
@@ -468,13 +468,22 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         Int_t iParFlow = fitFlowSig.GetNpar() - 1;
         dFlow = fitFlowSig.GetParameter(iParFlow);
         dFlowError = fitFlowSig.GetParError(iParFlow);
+        // histFlow->SetBinContent(iPtBin+1,dFlow);
+        // histFlow->SetBinError(iPtBin+1,dFlowError);
 
         Double_t dFlowRel = -999.9; if(TMath::Abs(dFlow) > 0.0) { dFlowRel = dFlowError / dFlow; }
-        Info(Form("Final v(n,m,k): (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,iPtBin,dFlow,dFlowError,dFlowRel), "ProcessMixed");
+        Info(Form("Final corr(n,m,k): (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,iPtBin,dFlow,dFlowError,dFlowRel), "ProcessMixed");
 
-        histFlow->SetBinContent(iPtBin+1,dFlow);
-        histFlow->SetBinError(iPtBin+1,dFlowError);
+        Double_t dNewCont = dFlow / TMath::Sqrt(dRefCont);
+        Double_t dNewErrSq = dFlowError*dFlowError/dRefCont + 0.25*TMath::Power(dRefCont,-3.0)*dFlow*dFlow*dRefErr*dRefErr;
+        Double_t dNewErr = TMath::Sqrt(dNewErrSq);
 
+        histFlow->SetBinContent(iPtBin+1,dNewCont);
+        histFlow->SetBinError(iPtBin+1,dNewErr);
+        Info(Form("Final v(n,m,k): (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,iPtBin,dNewCont,dNewErr,dNewErr/dNewCont), "ProcessMixed");
+
+        ffFitsFile->cd();
+        listFits->Write(Form("fits_%s_cent%d_pt%d",GetSpeciesName(task->fSpecies).Data(),iMultBin,iPtBin),TObject::kSingleKey);
         // // === Plotting fits ===
         // TLatex latex2;
         // // latex2.SetTextFont(43);
