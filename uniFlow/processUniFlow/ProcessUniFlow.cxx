@@ -2841,7 +2841,8 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   Double_t dMaximum = hist->GetMaximum();
 
   Int_t iNpx = 10000;
-  TString sFitOptMass = "RNLB";
+  TString sFitOptMass = "RNB";
+  // TString sFitOptMass = "RNLB";
 
   TString sMassBG = TString(); Int_t iNumParsMassBG = 0; // function for inv. mass dist. (BG component)
   TString sMassSig = TString();  Int_t iNumParsMassSig = 0; // function for inv. mass dist. (sig component)
@@ -2894,7 +2895,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     Debug("Setting paramters for Lambda","FitInvMass");
 
     dMassRangeLow = 1.096;
-    dMassRangeHigh = 1.150;
+    // dMassRangeHigh = 0.0;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
@@ -3074,7 +3075,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   Double_t dMaximum = hist->GetMaximum();
 
   Int_t iNpx = 10000;
-  TString sFitOptFlow = "RN";
+  TString sFitOptFlow = "RNI";
 
   TString sMassBG = TString(); Int_t iNumParsMassBG = 0; // function for inv. mass dist. (BG component)
   TString sMassSig = TString();  Int_t iNumParsMassSig = 0; // function for inv. mass dist. (sig component)
@@ -3115,7 +3116,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
     Debug("Setting paramters for Lambda","FitCorrelations");
 
     dMassRangeLow = 1.096;
-    dMassRangeHigh = 1.150;
+    // dMassRangeHigh = 1.150;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
