@@ -434,21 +434,13 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         TF1 fitMass, fitMassSig, fitMassBg, fitFlow, fitFlowSig, fitFlowBg;
 
         // Bool_t bExtracted = ExtractFlowOneGo(task,hInvMass,hInvMassBg,histVn,dFlow,dFlowError,canFitInvMass,listFits);
+        bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg, listFits, hInvMassBg);
 
-        if(species == kPhi) {
-            bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg, listFits, hInvMassBg);
-        } else {
-            bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg, listFits);
-        }
+        listFits->Add(histVn);
 
         if(bFitMass) {
             bFitFlow = FitCorrelations(histVn, task, fitFlow, fitFlowSig, fitFlowBg, fitMassSig, fitMassBg, listFits);
         }
-
-        listFits->Add(histVn);
-
-        ffFitsFile->cd();
-        listFits->Write(Form("fits_%s_cent%d_pt%d",GetSpeciesName(task->fSpecies).Data(),iMultBin,iPtBin),TObject::kSingleKey);
 
         // if either FitInvMass or FitCorrelations fails, terminate here!
         // NB: It is important to save output listFist first for debugging
