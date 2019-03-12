@@ -379,6 +379,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 
         TH1D* hInvMass = (TH1D*) task->fListHistos->FindObject(Form("hInvMass_mult%d_pt%d",iMultBin,iPtBin));
         if(!hInvMass) { Error("Loading inv. mass slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
+        hInvMass->SetName("hInvMass");
         listFits->Add(hInvMass);
 
         TH1D* hInvMassBg = nullptr;
@@ -386,6 +387,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         if(species == kPhi) {
           hInvMassBg = (TH1D*) task->fListHistos->FindObject(Form("hInvMassBg_mult%d_pt%d",iMultBin,iPtBin));
           if(!hInvMassBg) { Error("Loading inv. mass (Bg) slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
+          hInvMass->SetName("hInvMassBg");
           listFits->Add(hInvMassBg);
 
           // hInvMassSubt = (TH1D*) SubtractInvMassBg(hInvMass, hInvMassBg, task);
@@ -400,8 +402,8 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 
         // Making vn out of cn,dn
         TH1D* histVn = (TH1D*) profVn->ProjectionX();
-        // trashCol.Add(histVn);
-        //
+        histVn->SetName("hCorr");
+
         // for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin) {
         //   if(dRefCont < 0.0) {
         //     histVn->SetBinContent(bin, 9999.9);
@@ -483,7 +485,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         Info(Form("Final v(n,m,k): (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,iPtBin,dNewCont,dNewErr,dNewErr/dNewCont), "ProcessMixed");
 
         ffFitsFile->cd();
-        listFits->Write(Form("fits_%s_cent%d_pt%d",GetSpeciesName(task->fSpecies).Data(),iMultBin,iPtBin),TObject::kSingleKey);
+        listFits->Write(Form("%s_%s_cent%d_pt%d",GetSpeciesName(task->fSpecies).Data(),task->fMixedDiff.Data(),iMultBin,iPtBin),TObject::kSingleKey);
         // // === Plotting fits ===
         // TLatex latex2;
         // // latex2.SetTextFont(43);
