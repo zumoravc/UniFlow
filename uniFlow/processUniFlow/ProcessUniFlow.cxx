@@ -445,17 +445,20 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         // if either FitInvMass or FitCorrelations fails, terminate here!
         // NB: It is important to save output listFist first for debugging
 
+        ffFitsFile->cd();
+        listFits->Write(Form("%s_%s_cent%d_pt%d",GetSpeciesName(task->fSpecies).Data(),task->fMixedDiff.Data(),iMultBin,iPtBin),TObject::kSingleKey);
+
         if(!bFitMass) {
           Error("Fitting inv.mass unsuccesfull","ProcessMixed");
           delete canFitInvMass;
-          delete listFits;
+          // delete listFits;
           return kFALSE;
         }
 
         if(!bFitFlow) {
           Error("Fitting flow unsuccesfull","ProcessMixed");
           delete canFitInvMass;
-          delete listFits;
+          // delete listFits;
           return kFALSE;
         }
 
@@ -476,8 +479,6 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         histFlow->SetBinError(iPtBin+1,dNewErr);
         Info(Form("Final v(n,m,k): (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,iPtBin,dNewCont,dNewErr,dNewErr/dNewCont), "ProcessMixed");
 
-        ffFitsFile->cd();
-        listFits->Write(Form("%s_%s_cent%d_pt%d",GetSpeciesName(task->fSpecies).Data(),task->fMixedDiff.Data(),iMultBin,iPtBin),TObject::kSingleKey);
         // // === Plotting fits ===
         // TLatex latex2;
         // // latex2.SetTextFont(43);
