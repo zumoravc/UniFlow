@@ -6,6 +6,7 @@
 #include "TROOT.h"
 #include "TMinuit.h"
 #include "TVirtualFitter.h"
+#include "TFitResult.h"
 #include "TMath.h"
 #include "TStyle.h"
 #include "TString.h"
@@ -2837,7 +2838,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   Double_t dMaximum = hist->GetMaximum();
 
   Int_t iNpx = 10000;
-  TString sFitOptMass = "RNB";
+  TString sFitOptMass = "RNBS";
   // TString sFitOptMass = "RNLB";
 
   TString sMassBG = TString(); Int_t iNumParsMassBG = 0; // function for inv. mass dist. (BG component)
@@ -2985,6 +2986,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   Bool_t bFitOK = kFALSE;
 
   TVirtualFitter::SetMaxIterations(10000);
+  TFitResultPtr fitRes;
 
   while(!bFitOK && (nfitsA < 30))
   {
@@ -3008,11 +3010,13 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
       }
     }
 
-    hist->Fit(fitMass, sFitOptMass.Data());
+    fitRes = hist->Fit(fitMass, sFitOptMass.Data());
+    Int_t fitStatus = fitRes;
 
     TString statusA = gMinuit->fCstatu.Data();
 
-    if(statusA.Contains("CONVERGED")) { bFitOK = kTRUE; }
+    if(fitStatus == 0 && statusA.Contains("CONVERGED")) { bFitOK = kTRUE; }
+    if(fitStatus == 0 && nfitsA > 10 && statusA.Contains("NOT POSDEF")) { bFitOK = kTRUE; }
     nfitsA++;
   }
 
@@ -3078,7 +3082,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   Double_t dMaximum = hist->GetMaximum();
 
   Int_t iNpx = 10000;
-  TString sFitOptFlow = "RNI";
+  TString sFitOptFlow = "RNIS";
 
   TString sMassBG = TString(); Int_t iNumParsMassBG = 0; // function for inv. mass dist. (BG component)
   TString sMassSig = TString();  Int_t iNumParsMassSig = 0; // function for inv. mass dist. (sig component)
@@ -3228,7 +3232,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   Bool_t bFitOK = kFALSE;
 
   TVirtualFitter::SetMaxIterations(10000);
-
+  TFitResultPtr fitRes;
 
   // NB: Currently only one iteration
   // // fitting
@@ -3260,9 +3264,10 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   //   nfitsA++;
   // }
 
-  hist->Fit(fitVn, sFitOptFlow.Data());
+  fitRes = hist->Fit(fitVn, sFitOptFlow.Data());
+  Int_t fitStatus = fitRes;
 
-  bFitOK = gMinuit->fCstatu.Contains("CONVERGED");
+  bFitOK = (fitStatus == 0 && gMinuit->fCstatu.Contains("CONVERGED"));
 
   // === Extracting fitting components to separated TF1's ===
 
