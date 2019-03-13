@@ -2,6 +2,7 @@
 #include "FlowTask.h"
 
 #include <vector>
+#include <iostream>
 #include "TROOT.h"
 #include "TMinuit.h"
 #include "TVirtualFitter.h"
@@ -3048,7 +3049,14 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   outList->Add(fitSig);
   outList->Add(fitBg);
 
-  if(!bFitOK) { Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA)); return kFALSE; }
+  if(!bFitOK) {
+      Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA));
+      TVirtualFitter* fitter = TVirtualFitter::GetFitter();
+      fitter->PrintResults(3,0.0);
+      Info(Form("%s",gMinuit->fCstatu.Data()),"FitInvMass");
+      PrintFitFunction(fitMass);
+      return kFALSE;
+  }
   Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
 
   return kTRUE;
@@ -3301,7 +3309,14 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   outList->Add(fitFlowSig);
   outList->Add(fitFlowBg);
 
-  if(!bFitOK) { Error(Form("Flow-mass fit does not converged within iterations limit (1)!"), "FitCorrelations"); return kFALSE; }
+  if(!bFitOK) {
+      Error(Form("Flow-mass fit does not converged within iterations limit (1)!"), "FitCorrelations");
+      TVirtualFitter* fitter = TVirtualFitter::GetFitter();
+      fitter->PrintResults(3,0.0);
+      Info(Form("%s",gMinuit->fCstatu.Data()),"FitCorrelations");
+      PrintFitFunction(fitVn);
+      return kFALSE;
+  }
   Info(Form("Flow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "FitCorrelations");
 
   return kTRUE;
