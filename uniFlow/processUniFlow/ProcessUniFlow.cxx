@@ -2823,6 +2823,67 @@ TH1* ProcessUniFlow::SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask*
     return hInvMassSubt;
 }
 //_____________________________________________________________________________
+Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, Double_t* dVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh)
+{
+    if(!func) { Error("Input function not found!","SetFuncParameters"); return kFALSE; }
+    Int_t iNumPar = func->GetNpar();
+    std::vector<Double_t> dVec;
+
+    for(Int_t iPar(0); iPar < iNumPar; ++iPar) {
+        Double_t v = dVal[iPar];
+        dVec.push_back(v);
+        // printf("%d  :  %f    %f\n",iPar,v,dVec.at(iPar));
+    }
+
+    return SetFuncParameters(func, dVec, vecLow,vecHigh);
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, const std::vector<Double_t>& vecVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh)
+{
+    if(!func) { Error("Input function not found!","SetFuncParameters"); return kFALSE; }
+
+    Int_t iNumPar = func->GetNpar();
+    Int_t iSizeVal = vecVal.size();
+    Int_t iSizeLow = vecLow.size();
+    Int_t iSizeHigh = vecHigh.size();
+
+    if(iSizeVal != iSizeLow) { Error("Size of vector dVal different from dLow!","SetFuncParameters"); return kFALSE; }
+    if(iSizeVal != iSizeHigh) { Error("Size of vector dVal different from dHigh!","SetFuncParameters"); return kFALSE; }
+    if(iSizeVal < iNumPar) { Error("Size of vector dVal smaller than number of func parameters!","SetFuncParameters"); return kFALSE; }
+
+    for(Int_t par(0); par < iNumPar; ++par) {
+        Double_t dVal = vecVal.at(par);
+        Double_t dLow = vecLow.at(par);
+        Double_t dHigh = vecHigh.at(par);
+
+        if(dLow > -1.0 || dHigh > -1.0) {
+            if(dLow > -1.0 && dHigh > -1.0) {
+                // both limits == par val -> fix parameter
+                if(dLow == dHigh && dLow == dVal) {
+                    func->FixParameter(par,dVal);
+                    continue;
+                // both limits set and proper value
+                } else if (dLow < dHigh && dLow <= dVal && dVal <= dHigh) {
+                    func->SetParameter(par, dVal);
+                    func->SetParLimits(par, dLow, dHigh);
+                    continue;
+                } else {
+                    Error(Form("Badly setup parameter limits: parameter %d | dLow %g | dPar %g | dHigh %g", par, dLow, dVal, dHigh),"SetFuncParameters");
+                    return kFALSE;
+                }
+            }
+            // only one limit set
+            Error(Form("Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!", par, dVal, dLow, dHigh),"SetFuncParameters");
+            return kFALSE;
+        } else {
+            // no limits set, just set parameter
+            func->SetParameter(par, dVal);
+        }
+    }
+
+    return kTRUE;
+}
+//_____________________________________________________________________________
 Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList, TH1* histBg)
 {
   if(!hist) { Error("Input histo not found!","FitInvMass"); return kFALSE; }
@@ -2868,7 +2929,6 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     dParLimLow =  {-1,-1,-1,-1,    0.0,1.0185,0.004};
     dParLimHigh = {-1,-1,-1,-1,  dMaximum,1.021,0.007};
 
-    // assignment to external arrays
   }
 
   if(species == kK0s)
@@ -2968,18 +3028,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   TF1* fitMass = new TF1(Form("fitMass"), sFuncMass.Data(), dMassRangeLow,dMassRangeHigh);
   fitMass->SetNpx(iNpx);
 
-  for(Int_t par(0); par < iNumParMass; ++par) {
-    fitMass->SetParameter(par, dParDef.at(par));
-
-    Double_t dLimLow = dParLimLow.at(par);
-    Double_t dLimHigh = dParLimHigh.at(par);
-
-    if(dLimLow > -1.0 && dLimHigh > -1.0) {
-        fitMass->SetParLimits(par, dLimLow, dLimHigh);
-        if(dLimLow == dLimHigh && dLimLow == dParDef.at(par)) { fitMass->FixParameter(par,dLimLow); }
-    }
-    else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"FitInvMass"); return kFALSE; }
-  }
+  if(!SetFuncParameters(fitMass, dParDef,dParLimLow,dParLimHigh)) { Error("Setting default fitMass parameters failed!","FitInvMass"); return kFALSE; }
 
   // fitting
   Int_t nfitsA = 1;
@@ -2992,22 +3041,10 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   {
     if(nfitsA > 1)
     {
-      fitMass->SetParameter(0, fitMass->GetParameter(0)/nfitsA);
+        Double_t* dOldPars = fitMass->GetParameters();
+        dOldPars[0] = fitMass->GetParameter(0)/nfitsA;
 
-      for(Int_t par(1); par < iNumParMass; ++par)
-      {
-        fitMass->SetParameter(par, fitMass->GetParameter(par));
-
-        Double_t dLimLow = dParLimLow.at(par);
-        Double_t dLimHigh = dParLimHigh.at(par);
-
-        if(dLimLow > -1.0 && dLimHigh > -1.0) {
-            fitMass->SetParLimits(par, dLimLow, dLimHigh);
-            if(dLimLow == dLimHigh && dLimLow == dParDef.at(par)) { fitMass->FixParameter(par,dLimLow); }
-        }
-
-        else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Inv.mass (def): Only one of the parameter limits is set (par %d : %g :%g < %g). Fix this!",par,dParDef[par], dLimLow, dLimHigh),"FitInvMass"); return kFALSE; }
-      }
+        if(!SetFuncParameters(fitMass, dOldPars,dParLimLow,dParLimHigh)) { Error(Form("Setting fitMass parameters failed! (iteration %d)",nfitsA),"FitInvMass"); return kFALSE; }
     }
 
     fitRes = hist->Fit(fitMass, sFitOptMass.Data());
@@ -3030,8 +3067,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   fitSig->SetLineColor(kGreen+2);
   fitSig->SetLineStyle(2);
 
-  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar)
-  {
+  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) {
     fitBg->SetParameter(iPar, fitMass->GetParameter(iPar));
     fitBg->SetParError(iPar, fitMass->GetParError(iPar));
 
@@ -3039,8 +3075,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     fitSig->SetParError(iPar, 0.0);
   }
 
-  for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar)
-  {
+  for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar) {
     fitSig->SetParameter(iPar, fitMass->GetParameter(iPar));
     fitSig->SetParError(iPar, fitMass->GetParError(iPar));
   }
