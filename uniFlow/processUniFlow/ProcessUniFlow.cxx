@@ -2884,6 +2884,45 @@ Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, const std::vector<Double_t>&
     return kTRUE;
 }
 //_____________________________________________________________________________
+Bool_t ProcessUniFlow::CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF)
+{
+    Bool_t isOK = kTRUE;
+
+    Int_t status = (Int_t) result;
+
+    if(status != 0) {
+        Error(Form("Fit result status not zero (%d)!",status),"CheckFitResult");
+        isOK = kFALSE;
+    }
+
+    if(!gMinuit) {
+        Error(Form("gMinuit not available! "),"CheckFitResult");
+        isOK = kFALSE;
+    }
+
+    TString sMinuit = gMinuit->fCstatu;
+
+    if(sMinuit.Contains("NOT POSDEF")) {
+        if(!bIgnorePOSDEF) {
+            Error(Form("gMinuit status is '%s' while ignorePOSDEF is OFF! ",sMinuit.Data()),"CheckFitResult");
+            isOK = kFALSE;
+        } else {
+            Warning(Form("gMinuit status is '%s'! Ignored.",sMinuit.Data()),"CheckFitResult");
+        }
+    } else if (!sMinuit.Contains("CONVERGED")) {
+        Error(Form("gMinuit status ('%s') does not converged! ",sMinuit.Data()),"CheckFitResult");
+        isOK = kFALSE;
+    }
+
+    // NB: if Debug flag is ON, the fit statistics will be shown anyway
+    if(!isOK && !fbDebug) {
+        TVirtualFitter* fitter = TVirtualFitter::GetFitter();
+        fitter->PrintResults(3,0.0);
+    }
+
+    return isOK;
+}
+//_____________________________________________________________________________
 Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList, TH1* histBg)
 {
   if(!hist) { Error("Input histo not found!","FitInvMass"); return kFALSE; }
@@ -3031,11 +3070,10 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(!SetFuncParameters(fitMass, dParDef,dParLimLow,dParLimHigh)) { Error("Setting default fitMass parameters failed!","FitInvMass"); return kFALSE; }
 
   // fitting
-  Int_t nfitsA = 1;
-  Bool_t bFitOK = kFALSE;
-
   TVirtualFitter::SetMaxIterations(10000);
-  TFitResultPtr fitRes;
+
+  Bool_t bFitOK = kFALSE;
+  Int_t nfitsA = 1;
 
   while(!bFitOK && (nfitsA < 30))
   {
@@ -3047,13 +3085,8 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
         if(!SetFuncParameters(fitMass, dOldPars,dParLimLow,dParLimHigh)) { Error(Form("Setting fitMass parameters failed! (iteration %d)",nfitsA),"FitInvMass"); return kFALSE; }
     }
 
-    fitRes = hist->Fit(fitMass, sFitOptMass.Data());
-    Int_t fitStatus = fitRes;
+    bFitOK = CheckFitResult(hist->Fit(fitMass, sFitOptMass.Data()), nfitsA > 10);
 
-    TString statusA = gMinuit->fCstatu.Data();
-
-    if(fitStatus == 0 && statusA.Contains("CONVERGED")) { bFitOK = kTRUE; }
-    if(fitStatus == 0 && nfitsA > 10 && statusA.Contains("NOT POSDEF")) { bFitOK = kTRUE; }
     nfitsA++;
   }
 
@@ -3089,11 +3122,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   outList->Add(fitBg);
 
   if(!bFitOK) {
-      Error(Form("Inv.mass fit does not converged (%d iterations)",nfitsA));
-      TVirtualFitter* fitter = TVirtualFitter::GetFitter();
-      fitter->PrintResults(3,0.0);
-      Info(Form("%s",gMinuit->fCstatu.Data()),"FitInvMass");
-      PrintFitFunction(fitMass);
+      Error(Form("Inv.mass fit does not converged!"));
       return kFALSE;
   }
   Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
@@ -3263,11 +3292,8 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   fitVn->SetParLimits(iParFlow, -0.5,1.0);
 
   // fitting
-  Int_t nfitsA = 1;
-  Bool_t bFitOK = kFALSE;
 
   TVirtualFitter::SetMaxIterations(10000);
-  TFitResultPtr fitRes;
 
   // NB: Currently only one iteration
   // // fitting
@@ -3299,10 +3325,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   //   nfitsA++;
   // }
 
-  fitRes = hist->Fit(fitVn, sFitOptFlow.Data());
-  Int_t fitStatus = fitRes;
-
-  bFitOK = (fitStatus == 0 && gMinuit->fCstatu.Contains("CONVERGED"));
+  if(!CheckFitResult( hist->Fit(fitVn, sFitOptFlow.Data()) )) { Error(Form("Flow-mass fit does not converged within iterations limit (%d)!",1), "FitCorrelations"); PrintFitFunction(fitVn); outList->Add(fitVn); return kFALSE; }
 
   // === Extracting fitting components to separated TF1's ===
 
@@ -3341,22 +3364,13 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   fitFlowSig->SetParameter(iParFlow, fitVn->GetParameter(iParFlow));
   fitFlowSig->SetParError(iParFlow, fitVn->GetParError(iParFlow));
 
+  outList->Add(fitFlowSig);
+  outList->Add(fitFlowBg);
+
   fitOut = *fitVn;
   fitOutSig = *fitFlowSig;
   fitOutBg = *fitFlowBg;
 
-  outList->Add(fitVn);
-  outList->Add(fitFlowSig);
-  outList->Add(fitFlowBg);
-
-  if(!bFitOK) {
-      Error(Form("Flow-mass fit does not converged within iterations limit (1)!"), "FitCorrelations");
-      TVirtualFitter* fitter = TVirtualFitter::GetFitter();
-      fitter->PrintResults(3,0.0);
-      Info(Form("%s",gMinuit->fCstatu.Data()),"FitCorrelations");
-      PrintFitFunction(fitVn);
-      return kFALSE;
-  }
   Info(Form("Flow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "FitCorrelations");
 
   return kTRUE;

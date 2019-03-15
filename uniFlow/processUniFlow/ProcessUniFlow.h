@@ -18,6 +18,7 @@ class TH3D;
 class TProfile;
 class TProfile2D;
 class TProfile3D;
+class TFitResultPtr;
 
 enum        PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest
 enum        Cumulants {kNon = 0, kTwo = 2, kFour = 4}; // Cumulants order
@@ -88,6 +89,7 @@ class ProcessUniFlow
     void        PrintFitFunction(const TF1* func);
     Bool_t      SetFuncParameters(TF1* func, Double_t* dVec, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh); // set func parameters & limits (including fixed paramters)
     Bool_t      SetFuncParameters(TF1* func, const std::vector<Double_t>& vecVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh); // set func parameters & limits (including fixed paramters)
+    Bool_t      CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF = kFALSE);
     TH1*        SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask* task);
     Bool_t      FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList, TH1* histBg = nullptr);
     Bool_t      FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg, TList* outList);
