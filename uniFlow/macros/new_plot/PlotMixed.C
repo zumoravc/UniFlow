@@ -10,8 +10,8 @@ void PlotMixed()
   // TString sCorr = "<<3>>(5,-3,-2)_2sub(0.4)"; TString sLabel = "v_{5,-3,-2} {|#Delta#eta| > 0.4} "; TString sGap = "gap4";
 
   // TString sCorr = "<<3>>(6,-3,-3)"; TString sLabel = "v_{6,-3,-3}"; TString sGap = "gap-10";
-  // TString sCorr = "<<3>>(6,-3,-3)_2sub(0)"; TString sLabel = "v_{6,-3,-3} {|#Delta#eta| > 0} "; TString sGap = "gap0";
-  TString sCorr = "<<3>>(6,-3,-3)_2sub(0.4)"; TString sLabel = "v_{6,-3,-3} {|#Delta#eta| > 0.4} "; TString sGap = "gap4";
+  TString sCorr = "<<3>>(6,-3,-3)_2sub(0)"; TString sLabel = "v_{6,-3,-3} {|#Delta#eta| > 0} "; TString sGap = "gap0";
+  // TString sCorr = "<<3>>(6,-3,-3)_2sub(0.4)"; TString sLabel = "v_{6,-3,-3} {|#Delta#eta| > 0.4} "; TString sGap = "gap4";
 
   TString sCent[] = {
     "0-5% V0M",
@@ -25,9 +25,10 @@ void PlotMixed()
 
   Int_t iNumMult = sizeof(sCent) / sizeof(sCent[0]);
 
-  TString sInputPath = Form("/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow/output_mixed/%s",sGap.Data());
+  // TString sInputPath = Form("/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow/output_mixed/%s",sGap.Data());
+  TString sInputPath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/All/");
   // TString sOutDir = sInputPath+"/plots";
-  TString sOutDir = sInputPath+"/plots_all";
+  TString sOutDir = sInputPath+"/plots/";
 
 
   // Int_t iMultCent = 0; TString sCent = "10-20% V0M";
@@ -36,51 +37,51 @@ void PlotMixed()
   // Int_t iMultCent = 3; TString sCent = "40-50% V0M";
 
   TString sSpecies[] = {
-    "Charged",
-    "Pion",
-    "Kaon",
+    // "Charged",
+    // "Pion",
+    // "Kaon",
     "K0s",
-    "Proton",
+    // "Proton",
     "Lambda",
-    // "Phi",
+    "Phi",
   };
 
   TString sSpesLabels[] = {
-    "h^{#pm}",
-    "#pi^{#pm}",
-    "K^{#pm}",
+    // "h^{#pm}",
+    // "#pi^{#pm}",
+    // "K^{#pm}",
     "K^{0}_{S}",
-    "p^{#pm}",
+    // "p^{#pm}",
     "#Lambda(#bar{#Lambda})",
     "#phi"
   };
 
   Color_t colors[] = {
-    kGray+2,
-    kRed+1,
-    kGreen+1,
+    // kGray+2,
+    // kRed+1,
+    // kGreen+1,
     kGreen+2,
-    kBlue,
+    // kBlue,
     kOrange+1,
     kMagenta
   };
 
   Int_t markers[] = {
-    kOpenCircle,
-    kFullCircle,
-    kFullTriangleDown,
+    // kOpenCircle,
+    // kFullCircle,
+    // kFullTriangleDown,
     kFullSquare,
-    kFullTriangleUp,
+    // kFullTriangleUp,
     kFullCross,
-    kFullDiamond,
+    kFullDiamond
   };
 
   Double_t markerSizes[] = {
-    1.0,
-    1.0,
+    // 1.0,
+    // 1.0,
+    // 1.1,
     1.1,
-    1.1,
-    1.0,
+    // 1.0,
     1.2,
     1.4
   };
