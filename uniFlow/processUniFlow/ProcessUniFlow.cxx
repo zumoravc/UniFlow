@@ -2855,7 +2855,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(species == kPhi) {
     Debug("Setting paramters for Phi","FitInvMass");
 
-    // dMassRangeLow = 0.994;
+    dMassRangeLow = 0.994;
     // dMassRangeHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
@@ -2864,9 +2864,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     iParMass = 5;
     iParWidth = 6;
 
-    dParDef =     {1.0,1.0,1.0,0.0,   dMaximum,1.019445,0.0046};
-    dParLimLow =  {-1,-1,-1,-1,    0.0,1.018,0.001};
-    dParLimHigh = {-1,-1,-1,-1,  1.2*dMaximum,1.022,0.008};
+    dParDef =     {1.0,1.0,1.0,0.0,   dMaximum,1.019445,0.006};
+    dParLimLow =  {-1,-1,-1,-1,    0.0,1.0185,0.004};
+    dParLimHigh = {-1,-1,-1,-1,  dMaximum,1.021,0.007};
 
     // assignment to external arrays
   }
@@ -3096,7 +3096,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   {
     Debug("Setting paramters for Phi","FitCorrelations");
 
-    // dMassRangeLow = 0.994;
+    dMassRangeLow = 0.994;
     // dMassRangeHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
