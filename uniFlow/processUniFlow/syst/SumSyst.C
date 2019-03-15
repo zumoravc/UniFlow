@@ -15,7 +15,7 @@ Double_t dMax = 0.3;
 
 void SetCustomPalette();
 
-void ProcessSingle(
+Bool_t ProcessSingle(
     const char* histName,
     const char* path,
     std::vector<TString>& vec
@@ -46,11 +46,11 @@ void SumSyst()
     vecSyst.push_back("PVz8");
     vecSyst.push_back("TPCcls90");
 	// vecSyst.push_back("V0sCPA099");
-	// vecSyst.push_back("V0sCrossFind1");
-	vecSyst.push_back("V0sDaugDCA3");
+	vecSyst.push_back("V0sCrossFind1");
+	// vecSyst.push_back("V0sDaugDCA3");
 	// vecSyst.push_back("V0sDaugPt02");
 	vecSyst.push_back("V0sDecRad10");
-	// vecSyst.push_back("V0sFinderOn");
+	vecSyst.push_back("V0sFinderOn");
 	vecSyst.push_back("V0sPVDCA3");
 
     for(Int_t iCent(0); iCent < iNumCent; ++iCent) {
@@ -58,7 +58,7 @@ void SumSyst()
         for(Int_t iHist(0); iHist < iNumHist; ++iHist) {
             // Int_t iHist = 0;
 
-            ProcessSingle(Form("%s_%s_mult%d",species.Data(),histoName[iHist].Data(),iCent),path.Data(),vecSyst);
+            if(!ProcessSingle(Form("%s_%s_mult%d",species.Data(),histoName[iHist].Data(),iCent),path.Data(),vecSyst)) { return; }
         }
     }
 
@@ -69,10 +69,10 @@ void SumSyst()
 // ==================================================================================================================
 // ==================================================================================================================
 
-void ProcessSingle(const char* histName, const char* path, std::vector<TString>& vec)
+Bool_t ProcessSingle(const char* histName, const char* path, std::vector<TString>& vec)
 {
     Int_t iNumSyst = vec.size();
-    if(iNumSyst == 0) { printf("E: Input vector is empty!\n"); return; }
+    if(iNumSyst == 0) { printf("E: Input vector is empty!\n"); return kFALSE; }
 
     std::vector<TF1*> vecObj;
 
@@ -85,13 +85,13 @@ void ProcessSingle(const char* histName, const char* path, std::vector<TString>&
         TString sObjectName = "fitDiff";
 
         TFile* fileIn = TFile::Open(Form("%s/%s/syst_root/%s.root",path,sSyst.Data(),histName),"READ");
-        if(!fileIn) { printf("E: Input file '%s' not found!\n", histName); return; }
+        if(!fileIn) { printf("E: Input file '%s' not found!\n", histName); return kFALSE; }
 
         TList* list = (TList*) fileIn->Get("list");
-        if(!list) { printf("E: Input list not found!\n"); fileIn->ls(); return; }
+        if(!list) { printf("E: Input list not found!\n"); fileIn->ls(); return kFALSE; }
 
         TF1* fit = (TF1*) list->FindObject(sObjectName.Data());
-        if(!fit) { printf("E: Input object '%s' not found!\n",sObjectName.Data()); list->ls(); return; }
+        if(!fit) { printf("E: Input object '%s' not found!\n",sObjectName.Data()); list->ls(); return kFALSE; }
 
         vecObj.push_back(fit);
 
@@ -100,14 +100,14 @@ void ProcessSingle(const char* histName, const char* path, std::vector<TString>&
             if(!hist) {
                 printf("E: Template input histo not found!\n");
                 list->ls();
-                return;
+                return kFALSE;
             }
         }
     }
 
     Int_t iNumObj = vecObj.size();
     printf("Found %d objects!\n", iNumObj);
-    if(iNumObj != iNumSyst) { printf("E: Unexpected number of objects!\n"); return; }
+    if(iNumObj != iNumSyst) { printf("E: Unexpected number of objects!\n"); return kFALSE; }
 
     // plotting stuff
 
@@ -178,11 +178,11 @@ void ProcessSingle(const char* histName, const char* path, std::vector<TString>&
     can->SaveAs(Form("%s/final/plots_eps/%s.eps",path,histName),"eps");
 
     TFile* fileOut = TFile::Open(Form("%s/final/syst_total.root",path),"UPDATE");
-    if(!fileOut) { printf("E: Output file not opened!\n"); return; }
+    if(!fileOut) { printf("E: Output file not opened!\n"); return kFALSE; }
     fileOut->cd();
     fitTotal->Write(Form("%s",histName));
 
-    return;
+    return kTRUE;
 }
 // ==================================================================================================================
 void SetCustomPalette()

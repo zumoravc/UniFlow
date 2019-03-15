@@ -33,55 +33,90 @@ TH1D* BarlowTest(TH1* nom, TH1* denom, Bool_t bCor = kFALSE);
 TH1D* ApplyBarlow(TH1* diff, TH1* barlow);
 TH1D* Diff(TH1* ratio);
 void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircle, Bool_t showStats = kFALSE);
-TCanvas* PrepareCanvas(const char* name);
+TCanvas* PrepareCanvas(TString name);
 TList* PrepareCanvasRatioSub(TCanvas* can);
 
-void ProcessSingle(
-    const char* hist,
-    const char* path,
-    const char* syst,
-    const char* baseline = "default"
+Bool_t ProcessSingle(
+    TString hist,
+    TString path,
+    TString syst,
+    TString baseline = "default"
 );
 
 
 void Syst()
 {
-    const char* path = "/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/Lambda/";
-    // const char* syst = "TPCcls90";
-    // const char* syst = "PVz8";
-    const char* syst = "V0sDecRad10";
 
-    const char* histoName = "Lambda_<<3>>(4,-2,-2)_2sub(0)_mult2";
+    std::vector<TString> vecSyst;
 
-    ProcessSingle(histoName, path, syst);
+    // vecSyst.push_back("FB768");
+    // vecSyst.push_back("PID3sigma");
+    vecSyst.push_back("PVz8");
+    vecSyst.push_back("TPCcls90");
+    // vecSyst.push_back("V0sCPA099");
+    vecSyst.push_back("V0sCrossFind1");
+    // vecSyst.push_back("V0sDaugDCA3");
+    // vecSyst.push_back("V0sDaugPt02");
+    vecSyst.push_back("V0sDecRad10");
+    vecSyst.push_back("V0sFinderOn");
+    vecSyst.push_back("V0sPVDCA3");
+
+    Int_t iNumCent = 7;
+    TString species = "Lambda";
+
+    TString path = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/%s/",species.Data());
+
+
+    TString histoName[] = {
+        "<<3>>(4,-2,-2)_2sub(0)",
+        "<<3>>(5,-3,-2)_2sub(0)",
+        "<<3>>(6,-3,-3)_2sub(0)"
+    };
+
+    Int_t iNumHist = sizeof(histoName) / sizeof(histoName[0]);
+
+    for(Int_t iCent(0); iCent < iNumCent; ++iCent) {
+        // Int_t iCent = 2;
+        for(Int_t iHist(0); iHist < iNumHist; ++iHist) {
+            // Int_t iHist = 0;
+            for(Int_t iSyst(0); iSyst < (Int_t) vecSyst.size(); ++iSyst) {
+
+                if(!ProcessSingle(Form("%s_%s_mult%d",species.Data(),histoName[iHist].Data(),iCent),path,vecSyst.at(iSyst))) { return; }
+
+            }
+        }
+    }
+
+
+    // ProcessSingle(histoName.Data(), path, syst);
 }
 
-void ProcessSingle(const char* hist, const char* path, const char* syst, const char* baseline)
+Bool_t ProcessSingle(TString hist, TString path, TString syst, TString baseline)
 {
-    TFile* fileBase = TFile::Open(Form("%s/%s/Processed.root",path,baseline),"READ");
-    if(!fileBase) { printf("E: Baseline file '%s/%s/Processed.root' not found!",path,baseline); return; }
+    TFile* fileBase = TFile::Open(Form("%s/%s/Processed.root",path.Data(),baseline.Data()),"READ");
+    if(!fileBase) { printf("E: Baseline file '%s/%s/Processed.root' not found!",path.Data(),baseline.Data()); return kFALSE; }
 
-    TFile* fileSyst = TFile::Open(Form("%s/%s/Processed.root",path,syst),"READ");
-    if(!fileSyst) { printf("E: Systematic file '%s/%s/Processed.root' not found!",path,syst); return; }
+    TFile* fileSyst = TFile::Open(Form("%s/%s/Processed.root",path.Data(),syst.Data()),"READ");
+    if(!fileSyst) { printf("E: Systematic file '%s/%s/Processed.root' not found!",path.Data(),syst.Data()); return kFALSE; }
 
-    TH1D* histBase = (TH1D*) fileBase->Get(hist);
-    if(!histBase) { printf("E: Baseline histo '%s' not found!",hist); fileBase->ls(); return; }
+    TH1D* histBase = (TH1D*) fileBase->Get(hist.Data());
+    if(!histBase) { printf("E: Baseline histo '%s' not found!",hist.Data()); fileBase->ls(); return kFALSE; }
     StyleHist(histBase,colBase,markBase);
     histBase->SetName("Base");
 
-    TH1D* histSyst = (TH1D*) fileSyst->Get(hist);
-    if(!histSyst) { printf("E: Systematic histo '%s' not found!",hist); fileSyst->ls(); return; }
+    TH1D* histSyst = (TH1D*) fileSyst->Get(hist.Data());
+    if(!histSyst) { printf("E: Systematic histo '%s' not found!",hist.Data()); fileSyst->ls(); return kFALSE; }
     StyleHist(histSyst,colSyst,markSyst);
     histBase->SetName("Syst");
 
     TH1D* histRatio = DivideHistos(histSyst,histBase,bCorrelated);
-    if(!histRatio) { printf("ERROR: Ratio failed\n"); return; }
+    if(!histRatio) { printf("ERROR: Ratio failed\n"); return kFALSE; }
 
     TH1D* histBarlow = BarlowTest(histBase,histSyst,bCorrelated);
-    if(!histBarlow) { printf("ERROR : Barlow failed\n"); return; }
+    if(!histBarlow) { printf("ERROR : Barlow failed\n"); return kFALSE; }
 
     TH1D* histDiff = Diff(histRatio);
-    if(!histDiff) { printf("ERROR: Diff failed\n"); return; }
+    if(!histDiff) { printf("ERROR: Diff failed\n"); return kFALSE; }
 
     Double_t xmin = histBase->GetXaxis()->GetXmin();
     Double_t xmax = histBase->GetXaxis()->GetXmax();
@@ -123,7 +158,7 @@ void ProcessSingle(const char* hist, const char* path, const char* syst, const c
     // latex->SetTextSize(0.05);
     // latex->SetNDC();
 
-    TCanvas* can = PrepareCanvas(Form("can_%s",syst));
+    TCanvas* can = PrepareCanvas(Form("can_%s",syst.Data()));
     can->cd(1);
     histBase->DrawCopy("e1");
     histSyst->DrawCopy("same e1");
@@ -149,10 +184,12 @@ void ProcessSingle(const char* hist, const char* path, const char* syst, const c
 
 
     // saving output
-    gSystem->mkdir(Form("%s/%s/out/",path,syst),kTRUE);
+    gSystem->mkdir(Form("%s/%s/plots_root/",path.Data(),syst.Data()),kTRUE);
+    gSystem->mkdir(Form("%s/%s/plots_pdf/",path.Data(),syst.Data()),kTRUE);
+    gSystem->mkdir(Form("%s/%s/plots_eps/",path.Data(),syst.Data()),kTRUE);
 
-    TFile* fileOut = TFile::Open(Form("%s/%s/out/syst.root",path,syst),"RECREATE");
-    if(!fileOut) { printf("E: Output file not created!"); return; }
+    TFile* fileOut = TFile::Open(Form("%s/%s/plots_root/%s.root",path.Data(),syst.Data(),hist.Data()),"RECREATE");
+    if(!fileOut) { printf("E: Output file not created!"); return kFALSE; }
 
     TList* outList = new TList();
     outList->Add(histBase);
@@ -165,12 +202,12 @@ void ProcessSingle(const char* hist, const char* path, const char* syst, const c
     outList->Add(fitAfterBarlow);
 
     fileOut->cd();
-    outList->Write(hist,TObject::kSingleKey);
+    outList->Write("list",TObject::kSingleKey);
 
-    can->SaveAs(Form("%s/%s/out/%s.pdf",path,syst,syst),"pdf");
-    can->SaveAs(Form("%s/%s/out/%s.eps",path,syst,syst),"eps");
+    can->SaveAs(Form("%s/%s/plots_pdf/%s.pdf",path.Data(),syst.Data(),hist.Data()),"pdf");
+    can->SaveAs(Form("%s/%s/plots_eps/%s.eps",path.Data(),syst.Data(),hist.Data()),"eps");
 
-    return;
+    return kTRUE;
 }
 // ==================================================================================================================
 void StyleHist(TH1* hist, Color_t color, Style_t markerStyle, Bool_t showStats)
@@ -334,9 +371,9 @@ TH1D* ApplyBarlow(TH1* diff, TH1* barlow)
   return after;
 }
 // ==================================================================================================================
-TCanvas* PrepareCanvas(const char* name)
+TCanvas* PrepareCanvas(TString name)
 {
-    TCanvas* can = new TCanvas(name, name, 700,700);
+    TCanvas* can = new TCanvas(name.Data(), name.Data(), 700,700);
     can->Divide(2,2);
 
     can->cd(1);
