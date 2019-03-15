@@ -2953,7 +2953,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   std::vector<Double_t> dParLimHigh;
 
   if(species == kPhi) {
-    Debug("Setting paramters for Phi","FitInvMass");
+    Debug("Setting parameters for Phi","FitInvMass");
 
     dMassRangeLow = 0.994;
     // dMassRangeHigh = 1.134;
@@ -2964,15 +2964,21 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     iParMass = 5;
     iParWidth = 6;
 
-    dParDef =     {1.0,1.0,1.0,0.0,   dMaximum,1.019445,0.006};
-    dParLimLow =  {-1,-1,-1,-1,    0.0,1.0185,0.004};
-    dParLimHigh = {-1,-1,-1,-1,  dMaximum,1.021,0.007};
+    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
+    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    dParDef.push_back(1.019445);    dParLimLow.push_back(1.0185);       dParLimHigh.push_back(1.021);
+    dParDef.push_back(0.006);       dParLimLow.push_back(0.004);        dParLimHigh.push_back(0.007);
   }
 
-  if(species == kK0s)
-  {
-    Debug("Setting paramters for K0s","FitInvMass");
+  if(species == kK0s) {
+    Debug("Setting parameters for K0s","FitInvMass");
+
+    // dMassRangeLow = 0.994;
+    // dMassRangeHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
@@ -2981,14 +2987,21 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     iParWidth = 6;
     iParWidth_2 = 8;
 
-    dParDef =       {1.0,1.0,1.0,1.0,   dMaximum,0.4976,0.003,dMaximum,0.01};
-    dParLimLow =    {-1,-1,-1,-1,    0.0,0.48,0.003,0.0,0.003};
-    dParLimHigh =   {-1,-1,-1,-1,  1.2*dMaximum,0.52,0.006,2.0*dMaximum,0.015};
+    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+
+    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    dParDef.push_back(0.4976);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.52);
+    dParDef.push_back(0.003);       dParLimLow.push_back(0.003);        dParLimHigh.push_back(0.006);
+    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(2.0*dMaximum);
+    dParDef.push_back(0.01);        dParLimLow.push_back(0.003);        dParLimHigh.push_back(0.015);
   }
 
   if(species == kLambda)
   {
-    Debug("Setting paramters for Lambda","FitInvMass");
+    Debug("Setting parameters for Lambda","FitInvMass");
 
     dMassRangeLow = 1.096;
     // dMassRangeHigh = 0.0;
@@ -3000,9 +3013,16 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     iParWidth = 6;
     iParWidth_2 = 8;
 
-    dParDef = {1.0,1.0,1.0,1.0,   dMaximum,1.115, 0.001,dMaximum,0.01};
-    dParLimLow = {-1,-1,-1,-1,    0.0,1.10,0.001,0.0,0.001};
-    dParLimHigh = {-1,-1,-1,-1,  1.2*dMaximum,1.13,0.008,2.0*dMaximum,0.01};
+    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+
+    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    dParDef.push_back(1.115);       dParLimLow.push_back(1.10);         dParLimHigh.push_back(1.13);
+    dParDef.push_back(0.001);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.008);
+    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(2.0*dMaximum);
+    dParDef.push_back(0.01);        dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.01);
   }
 
   // check if parametrisation is setup manually
