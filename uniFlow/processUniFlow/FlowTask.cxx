@@ -25,6 +25,9 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fDoCorrMixed{kFALSE},
   fMergePosNeg{kFALSE},
   fFlowFitPhiSubtLS{kTRUE},
+  fbNormLS{kTRUE},
+  fdNormLSLow{1.05},
+  fdNormLSHigh{1.06},
   fRebinFlowMass{0},
   fRebinInvMass{0},
   fFlowFitRangeLow{-1.0},
@@ -123,6 +126,9 @@ void FlowTask::PrintTask()
   printf("   fFlowFitRangeLow: %g\n",fFlowFitRangeLow);
   printf("   fFlowFitRangeHigh: %g\n",fFlowFitRangeHigh);
   printf("   fFlowFitPhiSubtLS: %s\n", fFlowFitPhiSubtLS ? "true" : "false");
+  printf("   fbNormLS: %s\n", fbNormLS ? "true" : "false");
+  printf("   fdNormLSLow: %g\n",fdNormLSLow);
+  printf("   fdNormLSHigh: %g\n",fdNormLSHigh);
   printf("   fRebinFlowMass: %d\n",fRebinFlowMass);
   printf("   fRebinInvMass: %d\n",fRebinInvMass);
   printf("------------------------------\n");

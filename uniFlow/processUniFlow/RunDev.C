@@ -120,6 +120,7 @@ void RunDev()
 	taskPhi->SetMergePosNeg(1);
 	taskPhi->SetHarmonics(2);
 	taskPhi->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)",5);
+	taskPhi->SetFitPhiSubtLS(1,1,0.99,1.01);
 	process->AddTask(taskPhi);
 
 

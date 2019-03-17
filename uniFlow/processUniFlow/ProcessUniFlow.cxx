@@ -2791,11 +2791,40 @@ TH1* ProcessUniFlow::SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask*
     if(!hInvMassBg) { Error("Input inv. mass Bg histo not found!","SubtractInvMassBg"); return nullptr; }
     if(!task) { Error("FlowTask not found!","SubtractInvMassBg"); return nullptr; }
 
-    const Int_t iNumBins = hInvMass->GetNbinsX();
-    if(iNumBins != hInvMassBg->GetNbinsX()) { Error("Different number of bins for signal & bg histo!","SubtractInvMassBg"); return nullptr; }
+    if(hInvMass->GetNbinsX() != hInvMassBg->GetNbinsX()) { Error("Different number of bins for signal & bg histo!","SubtractInvMassBg"); return nullptr; }
+
+    Double_t dNorm = 1.0;
+
+    // normalise
+    if(task->fbNormLS) {
+        Double_t dLow = task->fdNormLSLow;
+        Double_t dHigh = task->fdNormLSHigh;
+
+        Int_t binLow = hInvMass->FindBin(task->fdNormLSLow);
+        Int_t binHigh = hInvMass->FindBin( task->fdNormLSHigh);
+
+        if(binLow >= binHigh) { Error("Low norm. range is higher than high norm. range!","SubtractInvMassBg"); return nullptr; }
+        if(binLow < 1) { Error("Low norm. range is lower than histo range!","SubtractInvMassBg"); return nullptr; }
+        if(binHigh > hInvMass->GetNbinsX()) { Error("High norm. range is higher than histo range!","SubtractInvMassBg"); return nullptr; }
+        if(binLow != (hInvMassBg->FindBin(task->fdNormLSLow)) ) { Error("Low norm. range bin is different in hInvMassBg histo!","SubtractInvMassBg"); return nullptr; }
+        if(binHigh != (hInvMassBg->FindBin(task->fdNormLSHigh)) ) { Error("High norm. range bin is different in hInvMassBg histo!","SubtractInvMassBg"); return nullptr; }
+
+        Double_t dIntegral = hInvMass->Integral(binLow,binHigh);
+        Double_t dIntegralBg = hInvMassBg->Integral(binLow,binHigh);
+
+
+        if(dIntegral > 0 && dIntegralBg > 0) {
+            dNorm = dIntegral / dIntegralBg;
+        } else {
+            Error("Either of the integrals is 0!","SubtractInvMassBg");
+            return nullptr;
+        }
+
+        Debug(Form("dNorm = (dIntegral = %g / dIntegralBg = %g) = %g",dIntegral,dIntegralBg,dNorm),"SubtractInvMassBg");
+    }
 
     TH1* hInvMassSubt = (TH1*) hInvMass->Clone();
-    hInvMassSubt->Add(hInvMassBg, -1.0);
+    hInvMassSubt->Add(hInvMassBg, -1.0*dNorm);
 
     // for(Int_t iBin(0); iBin < iNumBins+1; ++iBin) {
     //     Double_t dContSig = hInvMass->GetBinContent(iBin);
