@@ -2788,7 +2788,7 @@ void ProcessUniFlow::PrintFitFunction(const TF1* func)
     for(Int_t iPar(0); iPar < func->GetNpar(); ++iPar) {
         Double_t dLimLow, dLimHigh;
         func->GetParLimits(iPar,dLimLow,dLimHigh);
-        printf("  par%d \t'%s' : \t%g \t+- \t%g \t(%g <=> %g)\n", iPar, func->GetParName(iPar), func->GetParameter(iPar), func->GetParError(iPar), dLimLow, dLimHigh);
+        printf("  p%d  \t'%s' :    \t%g \t+- \t%g   \t(%g <=> %g)\n", iPar, func->GetParName(iPar), func->GetParameter(iPar), func->GetParError(iPar), dLimLow, dLimHigh);
     }
     printf("Chi2/ndf = %.3g/%d = %.3g\n", func->GetChisquare(), func->GetNDF(),func->GetChisquare()/func->GetNDF());
     printf("p-value = %g\n",func->GetProb());
@@ -3220,7 +3220,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
 
   // === Preparing fractions ==
   Debug("Working on proper fractions!","FitInvMass");
- 
+
   // Cloning original inv.mass distrubution : serves as baseline for fractions
   TH1D* hist_copy = nullptr;
 
