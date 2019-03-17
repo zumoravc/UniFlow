@@ -24,7 +24,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fCumOrderMax{kNon},
   fDoCorrMixed{kFALSE},
   fMergePosNeg{kFALSE},
-  fFlowFitPhiSubtLS{kFALSE},
+  fFlowFitPhiSubtLS{kTRUE},
   fRebinFlowMass{0},
   fRebinInvMass{0},
   fFlowFitRangeLow{-1.0},

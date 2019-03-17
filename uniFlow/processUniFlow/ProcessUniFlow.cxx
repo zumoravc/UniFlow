@@ -2916,7 +2916,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(!outList) { Error("Output TList outList not found!"); return kFALSE; }
 
   PartSpecies species = task->fSpecies;
-  if(species == kPhi && !histBg) { Error("Input histo bg not found!"); return kFALSE; }
+  if(task->fFlowFitPhiSubtLS && species == kPhi && !histBg) { Error("Input histo bg not found!"); return kFALSE; }
   if(!IsSpeciesReconstructed(species)) { Error("Invalid species!","FitInvMass"); return kFALSE; }
 
   Double_t dMassRangeLow = hist->GetXaxis()->GetXmin();
@@ -3024,7 +3024,6 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(task->fNumParMassBG > 0) { bUserPars = kTRUE; sMassBG = task->fFlowFitMassBG; iNumParsMassBG = task->fNumParMassBG; Debug(" Task massBG set","FitInvMass"); }
   if(bUserPars && (task->fNumParMassSig == 0 || task->fNumParMassBG == 0)) { Error("Only a subset of functions has been changed. Provide all, or non.","FitInvMass"); return kFALSE; }
 
-
   if(bUserPars) {
     Info("Setting UserParameters","FitInvMass");
     dParDef.clear();
@@ -3050,14 +3049,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(iNumParDefs != iNumParLimHigh) { Error(Form("Different length of arrays with parameter defauls and high limit values (%d != %d).",iNumParDefs,iNumParLimHigh),"FitInvMass"); return kFALSE; }
 
   // check the output of the vector assigment
-  if(fbDebug) {
-    Debug("Fittin setting done","FitInvMass");
-    printf("Form: (%s) + (%s)\n",sMassBG.Data(), sMassSig.Data());
-    for(Int_t par(0); par < iNumParDefs; ++par) { printf("  par %d: %g (%g<%g)\n",par, dParDef.at(par), dParLimLow.at(par), dParLimHigh.at(par)); }
-  }
+  Debug("Fitting parameters setting done","FitInvMass");
 
   // === Initialision ===
-  Int_t iNumParMass = iNumParTot;
 
   // master formula used in the fitting procedure
   if(!fbDebug) { sFitOptMass += "Q"; } // quite fitting option if NOT in debug
@@ -3081,6 +3075,8 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   // fitting
   TVirtualFitter::SetMaxIterations(10000);
 
+  Debug("Fitting : 'fitMass'","FitInvMass");
+
   Bool_t bFitOK = kFALSE;
   Int_t nfitsA = 1;
 
@@ -3100,7 +3096,6 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   }
 
   // === Extracting fitting components to separated TF1's ===
-
   TF1* fitMass_partBg = new TF1("fitMass_partBg",sMassBG.Data(),dMassRangeLow,dMassRangeHigh);
   fitMass_partBg->SetLineColor(kBlue);
   fitMass_partBg->SetLineStyle(2);
