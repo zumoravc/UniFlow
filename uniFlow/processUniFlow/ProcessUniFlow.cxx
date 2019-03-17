@@ -262,7 +262,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
       listSlicesHistos->Write("MakeHistosSlices",TObject::kSingleKey);
     }
 
-    if(!ProcessMixed(task)) { Error("ProcessMixed failed!","ProcessTask"); return kFALSE; }
+    if(!ProcessMixed(task)) { Error(Form("ProcessMixed '%s' failed!",task->fMixedDiff.Data()),"ProcessTask"); return kFALSE; }
   }
 
   // processing standard cumulants
@@ -2985,6 +2985,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   Double_t dPeakLow = 0.0;
   Double_t dPeakHigh = 0.0;
 
+  Double_t dFracLimLow = 0.0; // shift of fix fraction
+  Double_t dFracLimHigh = 0.0;
+
   std::vector<Double_t> dParDef;
   std::vector<Double_t> dParLimLow;
   std::vector<Double_t> dParLimHigh;
@@ -3000,6 +3003,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
 
     dPeakLow = 1.007;
     dPeakHigh = 1.03;
+
+    dFracLimLow = 0.05;
+    dFracLimLow = 0.07;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::BreitWigner(x,[6],[7]))"; iNumParsMassSig = 4;
@@ -3026,6 +3032,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
 
     dPeakLow = 0.44;
     dPeakHigh = 0.56;
+
+    dFracLimLow = 0.05;
+    dFracLimLow = 0.07;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+(1.0-[5])*TMath::Gaus(x,[8],[9]))"; iNumParsMassSig = 6;
@@ -3059,9 +3068,11 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     dPeakLow = 1.104;
     dPeakHigh = 1.134;
 
+    dFracLimLow = 0.05;
+    dFracLimLow = 0.07;
+
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+[8]*TMath::Gaus(x,[6],[9]))"; iNumParsMassSig = 6;
-
 
     iParMass = 6;
     iParWidth = 7;
@@ -3252,6 +3263,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   Debug("Fitting : 'fitMass_exclPeak'","FitInvMass");
   TF1* fitMass_exclPeak = new TF1("fitMass_exclPeak",sMassBG.Data(),dMassRangeLow,dMassRangeHigh);
   if(!SetFuncParameters(fitMass_exclPeak, dParDef, dParLimLow, dParLimHigh)) { Error("Setting fitMass_exclPeak parameters failed!","FitInvMass"); return kFALSE; }
+  if(bFitOK) { for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) { fitMass_exclPeak->SetParameter(iPar, fitMass->GetParameter(iPar)); } }
   for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar) { fitMass_exclPeak->FixParameter(iPar,0.0); }
   outList->Add(fitMass_exclPeak);
   if(!CheckFitResult(histMass_exclPeak->Fit(fitMass_exclPeak, sFitOptMass.Data()), kTRUE) ) { Error("fitMass_exclPeak failed!","FitInvMass"); PrintFitFunction(fitMass_exclPeak); return kFALSE; }
@@ -3271,8 +3283,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   TF1* fitMass_sig = new TF1("fitMass_sig",sMassSig.Data(),dMassRangeLow,dMassRangeHigh);
   if(!SetFuncParameters(fitMass_sig, dParDef,dParLimLow, dParLimHigh, sParNames)) { Error("Setting fitMass_sig parameters failed!","FitInvMass"); return kFALSE; }
   for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) { fitMass_sig->FixParameter(iPar,0.0); }
+  if(bFitOK) { for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar) { fitMass_sig->SetParameter(iPar, fitMass->GetParameter(iPar)); } }
   outList->Add(fitMass_sig);
-  if(!CheckFitResult(histMass_sig->Fit(fitMass_sig, sFitOptMass.Data()))) { Error("fitMass_sig failed!","FitInvMass"); PrintFitFunction(fitMass_sig); return kFALSE; }
+  if(!CheckFitResult(histMass_sig->Fit(fitMass_sig, sFitOptMass.Data()), kTRUE)) { Error("fitMass_sig failed!","FitInvMass"); PrintFitFunction(fitMass_sig); return kFALSE; }
 
   // Cloning fitMass_bg for consistency reason (QA)
   TF1* fitMass_bg = (TF1*) fitMass_exclPeak->Clone("fitMass_bg");
@@ -3296,11 +3309,15 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   // Fitting fractions
   Debug("Fitting : 'fitMass_fracSig'","FitInvMass");
   TF1* fitMass_fracSig = (TF1*) fitMass_sig->Clone("fitMass_fracSig");
-  // if(!SetFuncParameters(fitMass_fracSig, fitMass_sig->GetParameters(),dParLimLow, dParLimHigh, sParNames)) { Error("Setting fitMass_fracSig parameters failed!","FitInvMass"); return kFALSE; }
+  if(!SetFuncParameters(fitMass_fracSig, fitMass_sig->GetParameters(),dParLimLow, dParLimHigh, sParNames)) { Error("Setting fitMass_fracSig parameters failed!","FitInvMass"); return kFALSE; }
+  if(bFitOK) { for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar) { fitMass_fracSig->SetParameters(iPar, fitMass_fracSigHard->GetParameter(iPar)); } }
   for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) { fitMass_fracSig->FixParameter(iPar,0.0); }
-  fitMass_fracSig->SetParameter(iNumParsMassBG, 0.8); // contribution from sMassSig == 0
-  fitMass_fracSig->SetParLimits(iNumParsMassBG, 0.0,1.00); // contribution from sMassSig == 0
-  // fitMass_fracSig->FixParameter(iNumParsMassBG,1.0); // contribution from sMassSig == 0
+
+  Double_t dFracMax = histMass_fracSig->GetBinContent(histMass_fracSig->GetMaximumBin());
+  fitMass_fracSig->SetParameter(iNumParsMassBG, dFracMax - dFracLimLow); // contribution from sMassSig == 0
+  fitMass_fracSig->SetParLimits(iNumParsMassBG, ((dFracMax - dFracLimLow) > 0.0 ? (dFracMax - dFracLimLow) : 0.0) , ((dFracMax + dFracLimHigh) < 1.0 ? (dFracMax + dFracLimHigh) : 1.0)); // contribution from sMassSig == 0
+  // fitMass_fracSig->SetParLimits(iNumParsMassBG, 0.0,1.0); // contribution from sMassSig == 0
+
   outList->Add(fitMass_fracSig);
   // if(!CheckFitResult(histMass_fracSig->Fit(fitMass_fracSig, sFitOptMass.Data()), kTRUE)) { Error("fitMass_fracSig failed!","FitInvMass"); PrintFitFunction(fitMass_fracSig); return kFALSE; }
   Bool_t bFitFracOK = CheckFitResult(histMass_fracSig->Fit(fitMass_fracSig, Form("IL%s",sFitOptMass.Data())), kTRUE);
