@@ -3005,7 +3005,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     dPeakHigh = 1.03;
 
     dFracLimLow = 0.05;
-    dFracLimLow = 0.07;
+    dFracLimLow = 0.10;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::BreitWigner(x,[6],[7]))"; iNumParsMassSig = 4;
@@ -3021,7 +3021,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
     sParNames.push_back("ampBW");       dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
     sParNames.push_back("mean");        dParDef.push_back(1.019445);    dParLimLow.push_back(1.0185);       dParLimHigh.push_back(1.021);
-    sParNames.push_back("width");       dParDef.push_back(0.006);       dParLimLow.push_back(0.004);        dParLimHigh.push_back(0.007);
+    sParNames.push_back("width");       dParDef.push_back(0.004);       dParLimLow.push_back(0.004);        dParLimHigh.push_back(0.008);
   }
 
   if(species == kK0s) {
