@@ -26,12 +26,14 @@ void RunMixed()
 
 	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/K0s/");
 	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/Lambda/");
-	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/Phi/");
-	TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/All/");
+	TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/Phi/");
+	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/All/");
 
 
 	// TString sOutputFilePath = sInputPath+Form("output_mixed/gap%02g/K0s/",10*dGap);
-	std::vector<Double_t> dMultBinning = {0,5,10,20,30,40,50,60};
+	std::vector<Double_t> dMultBinning = {10,20,30,40,50,60};
+	// std::vector<Double_t> dMultBinning = {0,5,10,20,30,40,50,60};
+
 	std::vector<Double_t> dPtBinningPID = {0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.0,4.4,4.8,5.2,5.6,6.0};
 	std::vector<Double_t> dPtBinningProton = {0.2,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,6.0,7.0};
 	// std::vector<Double_t> dPtBinningK0s = {0.4,0.8,1.2,1.8,2.4,3.0,3.6,4.6,6.0};
@@ -232,12 +234,12 @@ void RunMixed()
 	// process->AddTask(taskProton);
 	// process->AddTask(taskProton2);
 	// process->AddTask(taskProton3);
-	process->AddTask(taskK0s);
-	process->AddTask(taskK0s2);
-	process->AddTask(taskK0s3);
-	process->AddTask(taskLambda);
-	process->AddTask(taskLambda2);
-	process->AddTask(taskLambda3);
+	// process->AddTask(taskK0s);
+	// process->AddTask(taskK0s2);
+	// process->AddTask(taskK0s3);
+	// process->AddTask(taskLambda);
+	// process->AddTask(taskLambda2);
+	// process->AddTask(taskLambda3);
 	process->AddTask(taskPhi);
 	process->AddTask(taskPhi2);
 	process->AddTask(taskPhi3);

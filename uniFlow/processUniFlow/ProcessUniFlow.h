@@ -87,8 +87,8 @@ class ProcessUniFlow
     TH1D*       CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate vn'{4} out of dn{4} and vn{4}
 
     void        PrintFitFunction(const TF1* func);
-    Bool_t      SetFuncParameters(TF1* func, Double_t* dVec, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh); // set func parameters & limits (including fixed paramters)
-    Bool_t      SetFuncParameters(TF1* func, const std::vector<Double_t>& vecVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh); // set func parameters & limits (including fixed paramters)
+    Bool_t      SetFuncParameters(TF1* func, Double_t* dVec, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh, const std::vector<TString> vecNames = {}); // set func parameters & limits (including fixed paramters)
+    Bool_t      SetFuncParameters(TF1* func, const std::vector<Double_t>& vecVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh, const std::vector<TString> vecNames = {}); // set func parameters & limits (including fixed paramters)
     Bool_t      CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF = kFALSE);
     TH1*        SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask* task);
     Bool_t      FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList, TH1* histBg = nullptr);

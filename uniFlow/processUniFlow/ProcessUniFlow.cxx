@@ -2838,7 +2838,7 @@ TH1* ProcessUniFlow::SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask*
     return hInvMassSubt;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, Double_t* dVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh)
+Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, Double_t* dVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh, const std::vector<TString> vecNames)
 {
     if(!func) { Error("Input function not found!","SetFuncParameters"); return kFALSE; }
     Int_t iNumPar = func->GetNpar();
@@ -2850,10 +2850,10 @@ Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, Double_t* dVal, const std::v
         // printf("%d  :  %f    %f\n",iPar,v,dVec.at(iPar));
     }
 
-    return SetFuncParameters(func, dVec, vecLow,vecHigh);
+    return SetFuncParameters(func, dVec, vecLow, vecHigh, vecNames);
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, const std::vector<Double_t>& vecVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh)
+Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, const std::vector<Double_t>& vecVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh,  const std::vector<TString> vecNames)
 {
     if(!func) { Error("Input function not found!","SetFuncParameters"); return kFALSE; }
 
@@ -2861,15 +2861,19 @@ Bool_t ProcessUniFlow::SetFuncParameters(TF1* func, const std::vector<Double_t>&
     Int_t iSizeVal = vecVal.size();
     Int_t iSizeLow = vecLow.size();
     Int_t iSizeHigh = vecHigh.size();
+    Int_t iSizeNames = vecNames.size();
 
-    if(iSizeVal != iSizeLow) { Error("Size of vector dVal different from dLow!","SetFuncParameters"); return kFALSE; }
-    if(iSizeVal != iSizeHigh) { Error("Size of vector dVal different from dHigh!","SetFuncParameters"); return kFALSE; }
-    if(iSizeVal < iNumPar) { Error("Size of vector dVal smaller than number of func parameters!","SetFuncParameters"); return kFALSE; }
+    if(iSizeVal != iSizeLow) { Error("Size of vector vecVal different from dLow!","SetFuncParameters"); return kFALSE; }
+    if(iSizeVal != iSizeHigh) { Error("Size of vector vecVal different from dHigh!","SetFuncParameters"); return kFALSE; }
+    if(iSizeVal < iNumPar) { Error("Size of vector vecVal smaller than number of func parameters!","SetFuncParameters"); return kFALSE; }
+    if(iSizeNames && iSizeNames != iNumPar) { Error("Size of vector vecNames smaller than number of func parameters!","SetFuncParameters"); return kFALSE; }
 
     for(Int_t par(0); par < iNumPar; ++par) {
         Double_t dVal = vecVal.at(par);
         Double_t dLow = vecLow.at(par);
         Double_t dHigh = vecHigh.at(par);
+
+        if(iSizeNames) { func->SetParName(par, vecNames.at(par).Data()); }
 
         if(dLow > -1.0 || dHigh > -1.0) {
             if(dLow > -1.0 && dHigh > -1.0) {
@@ -2970,6 +2974,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   std::vector<Double_t> dParDef;
   std::vector<Double_t> dParLimLow;
   std::vector<Double_t> dParLimHigh;
+  std::vector<TString> sParNames;
 
   if(species == kPhi) {
     Debug("Setting parameters for Phi","FitInvMass");
@@ -2985,15 +2990,15 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     iParMass = 6;
     iParWidth = 7;
 
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg0");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg1");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg2");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
-    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
-    dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
-    dParDef.push_back(1.019445);    dParLimLow.push_back(1.0185);       dParLimHigh.push_back(1.021);
-    dParDef.push_back(0.006);       dParLimLow.push_back(0.004);        dParLimHigh.push_back(0.007);
+    sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    sParNames.push_back("ampBW");       dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("mean");        dParDef.push_back(1.019445);    dParLimLow.push_back(1.0185);       dParLimHigh.push_back(1.021);
+    sParNames.push_back("width");       dParDef.push_back(0.006);       dParLimLow.push_back(0.004);        dParLimHigh.push_back(0.007);
   }
 
   if(species == kK0s) {
@@ -3003,23 +3008,25 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     // dMassRangeHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
-    sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+[8]*TMath::Gaus(x,[6],[9]))"; iNumParsMassSig = 6;
+    sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+[8]*TMath::Gaus(x,[9],[10]))"; iNumParsMassSig = 7;
 
     iParMass = 6;
+    iParMass_2 = 9;
     iParWidth = 7;
-    iParWidth_2 = 9;
+    iParWidth_2 = 10;
 
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg0");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg1");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg2");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
-    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
-    dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
-    dParDef.push_back(0.4976);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.52);
-    dParDef.push_back(0.003);       dParLimLow.push_back(0.003);        dParLimHigh.push_back(0.006);
-    dParDef.push_back(0.0);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
-    dParDef.push_back(0.01);        dParLimLow.push_back(0.003);        dParLimHigh.push_back(0.015);
+    sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    sParNames.push_back("ampG1");       dParDef.push_back(1.0);         dParLimLow.push_back(0.4);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("meanG1");      dParDef.push_back(0.4976);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.51);
+    sParNames.push_back("sigmaG1");     dParDef.push_back(0.01);       dParLimLow.push_back(0.002);        dParLimHigh.push_back(0.03);
+    sParNames.push_back("ampG2");       dParDef.push_back(0.0);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(0.4);
+    sParNames.push_back("meanG2");      dParDef.push_back(0.4976);      dParLimLow.push_back(0.47);         dParLimHigh.push_back(0.52);
+    sParNames.push_back("sigmaG2");     dParDef.push_back(0.0);        dParLimLow.push_back(0.0);        dParLimHigh.push_back(0.05);
   }
 
   if(species == kLambda)
@@ -3037,17 +3044,17 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     iParWidth = 7;
     iParWidth_2 = 9;
 
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg0");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg1");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg2");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
-    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
-    dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
-    dParDef.push_back(1.115);       dParLimLow.push_back(1.10);         dParLimHigh.push_back(1.13);
-    dParDef.push_back(0.001);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.008);
-    dParDef.push_back(0.2);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
-    dParDef.push_back(0.01);        dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.01);
+    sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    sParNames.push_back("ampG1");       dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("meanG1");      dParDef.push_back(1.115);       dParLimLow.push_back(1.10);         dParLimHigh.push_back(1.13);
+    sParNames.push_back("sigmaG1");     dParDef.push_back(0.001);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.008);
+    sParNames.push_back("ampG2");       dParDef.push_back(0.2);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("sigmaG2");     dParDef.push_back(0.01);        dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.01);
   }
 
   // check if parametrisation is setup manually
@@ -3106,7 +3113,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   TF1* fitMass = new TF1(Form("fitMass"), sFuncMass.Data(), dMassRangeLow,dMassRangeHigh);
   fitMass->SetNpx(iNpx);
 
-  if(!SetFuncParameters(fitMass, dParDef,dParLimLow,dParLimHigh)) { Error("Setting default fitMass parameters failed!","FitInvMass"); return kFALSE; }
+  if(!SetFuncParameters(fitMass, dParDef,dParLimLow,dParLimHigh,sParNames)) { Error("Setting default fitMass parameters failed!","FitInvMass"); return kFALSE; }
 
   // fitting
   TVirtualFitter::SetMaxIterations(10000);
@@ -3123,7 +3130,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
         Double_t* dOldPars = fitMass->GetParameters();
         dOldPars[0] = fitMass->GetParameter(0)/nfitsA;
 
-        if(!SetFuncParameters(fitMass, dOldPars,dParLimLow,dParLimHigh)) { Error(Form("Setting fitMass parameters failed! (iteration %d)",nfitsA),"FitInvMass"); return kFALSE; }
+        if(!SetFuncParameters(fitMass, dOldPars,dParLimLow,dParLimHigh,sParNames)) { Error(Form("Setting fitMass parameters failed! (iteration %d)",nfitsA),"FitInvMass"); return kFALSE; }
     }
 
     bFitOK = CheckFitResult(hist->Fit(fitMass, sFitOptMass.Data()), nfitsA > 10);
