@@ -381,21 +381,11 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 
         TH1D* hInvMass = (TH1D*) task->fListHistos->FindObject(Form("hInvMass_mult%d_pt%d",iMultBin,iPtBin));
         if(!hInvMass) { Error("Loading inv. mass slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
-        hInvMass->SetName("hInvMass");
-        listFits->Add(hInvMass);
 
         TH1D* hInvMassBg = nullptr;
-        TH1D* hInvMassSubt = nullptr;
         if(species == kPhi) {
           hInvMassBg = (TH1D*) task->fListHistos->FindObject(Form("hInvMassBg_mult%d_pt%d",iMultBin,iPtBin));
           if(!hInvMassBg) { Error("Loading inv. mass (Bg) slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
-          hInvMass->SetName("hInvMassBg");
-          listFits->Add(hInvMassBg);
-
-          // hInvMassSubt = (TH1D*) SubtractInvMassBg(hInvMass, hInvMassBg, task);
-          // if(!hInvMassSubt) { Error("Inv. mass BG subtraction failed!","ProcessMixed"); return kFALSE; }
-          // hInvMassSubt->SetName(Form("hInvMassSubt_mult%d_pt%d",iMultBin,iPtBin));
-          // listFits->Add(hInvMassSubt);
         }
 
         TString sName = Form("%s_Pos_sample0_mult%d_pt%d",task->fMixedDiff.Data(),iMultBin,iPtBin);
@@ -404,7 +394,6 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
 
         // Making vn out of cn,dn
         TH1D* histVn = (TH1D*) profVn->ProjectionX();
-        histVn->SetName("hCorr");
 
         // for(Int_t bin(0); bin < profVn->GetNbinsX()+1; ++bin) {
         //   if(dRefCont < 0.0) {
@@ -436,8 +425,6 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         TF1 fitMass, fitMassSig, fitMassBg, fitFlow, fitFlowSig, fitFlowBg;
 
         bFitMass = FitInvMass(hInvMass, task, fitMass, fitMassSig, fitMassBg, listFits, hInvMassBg);
-
-        listFits->Add(histVn);
 
         if(bFitMass) {
             bFitFlow = FitCorrelations(histVn, task, fitFlow, fitFlowSig, fitFlowBg, fitMassSig, fitMassBg, listFits);
@@ -2936,6 +2923,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   Double_t dMassRangeHigh = hist->GetXaxis()->GetXmax();
   Double_t dMaximum = hist->GetMaximum();
 
+  hist->SetName("histMass");
+  outList->Add(hist);
+
   Int_t iNpx = 10000;
   TString sFitOptMass = "RNBS";
   // TString sFitOptMass = "RNLB";
@@ -3111,45 +3101,45 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
 
   // === Extracting fitting components to separated TF1's ===
 
-  TF1* fitBg = new TF1("fitMassBG",sMassBG.Data(),dMassRangeLow,dMassRangeHigh);
-  fitBg->SetLineColor(kBlue);
-  fitBg->SetLineStyle(2);
+  TF1* fitMass_partBg = new TF1("fitMass_partBg",sMassBG.Data(),dMassRangeLow,dMassRangeHigh);
+  fitMass_partBg->SetLineColor(kBlue);
+  fitMass_partBg->SetLineStyle(2);
 
-  TF1* fitSig = new TF1("fitMassSig", sMassSig.Data(), dMassRangeLow,dMassRangeHigh);
-  fitSig->SetLineColor(kGreen+2);
-  fitSig->SetLineStyle(2);
+  TF1* fitMass_partSig = new TF1("fitMass_partSig", sMassSig.Data(), dMassRangeLow,dMassRangeHigh);
+  fitMass_partSig->SetLineColor(kGreen+2);
+  fitMass_partSig->SetLineStyle(2);
 
   for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) {
-    fitBg->SetParameter(iPar, fitMass->GetParameter(iPar));
-    fitBg->SetParError(iPar, fitMass->GetParError(iPar));
+    fitMass_partBg->SetParameter(iPar, fitMass->GetParameter(iPar));
+    fitMass_partBg->SetParError(iPar, fitMass->GetParError(iPar));
 
-    fitSig->SetParameter(iPar, 0.0);
-    fitSig->SetParError(iPar, 0.0);
+    fitMass_partSig->SetParameter(iPar, 0.0);
+    fitMass_partSig->SetParError(iPar, 0.0);
   }
 
   for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar) {
-    fitSig->SetParameter(iPar, fitMass->GetParameter(iPar));
-    fitSig->SetParError(iPar, fitMass->GetParError(iPar));
+    fitMass_partSig->SetParameter(iPar, fitMass->GetParameter(iPar));
+    fitMass_partSig->SetParError(iPar, fitMass->GetParError(iPar));
   }
 
   // making "hard" fractions insted of individual components
-  TF1* fracSig = new TF1("fracSig",Form("(%s)/(%s+%s)",sMassSig.Data(), sMassBG.Data(), sMassSig.Data()), dMassRangeLow, dMassRangeHigh);
-  fracSig->SetParameters(fitMass->GetParameters());
-  fracSig->SetParErrors(fitMass->GetParErrors());
-  TF1* fracBg = new TF1("fracBg",Form("(%s)/(%s+%s)",sMassBG.Data(), sMassBG.Data(), sMassSig.Data()), dMassRangeLow, dMassRangeHigh);
-  fracBg->SetParameters(fitMass->GetParameters());
-  fracBg->SetParErrors(fitMass->GetParErrors());
+  TF1* fitMass_fracSigHard = new TF1("fitMass_fracSigHard",Form("(%s)/(%s+%s)",sMassSig.Data(), sMassBG.Data(), sMassSig.Data()), dMassRangeLow, dMassRangeHigh);
+  fitMass_fracSigHard->SetParameters(fitMass->GetParameters());
+  fitMass_fracSigHard->SetParErrors(fitMass->GetParErrors());
+  TF1* fitMass_fracBgHard = new TF1("fitMass_fracBgHard",Form("(%s)/(%s+%s)",sMassBG.Data(), sMassBG.Data(), sMassSig.Data()), dMassRangeLow, dMassRangeHigh);
+  fitMass_fracBgHard->SetParameters(fitMass->GetParameters());
+  fitMass_fracBgHard->SetParErrors(fitMass->GetParErrors());
   for(Int_t par(0); par < fitMass->GetNpar(); ++par) {
       Double_t dLow, dHigh;
       fitMass->GetParLimits(par,dLow,dHigh);
-      fracSig->SetParLimits(par,dLow,dHigh);
-      fracBg->SetParLimits(par,dLow,dHigh);
+      fitMass_fracSigHard->SetParLimits(par,dLow,dHigh);
+      fitMass_fracBgHard->SetParLimits(par,dLow,dHigh);
   }
-  outList->Add(fracSig);
-  outList->Add(fracBg);
+  outList->Add(fitMass_fracSigHard);
+  outList->Add(fitMass_fracBgHard);
   // PrintFitFunction(fitMass);
-  // PrintFitFunction(fracSig);
-  // PrintFitFunction(fracBg);
+  // PrintFitFunction(fitMass_fracSigHard);
+  // PrintFitFunction(fitMass_fracBgHard);
 
   fitOut = *fitMass;
   fitOutSig = *fracSig;
@@ -3182,6 +3172,8 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   Double_t dMassRangeLow = fitInSig.GetXmin();
   Double_t dMassRangeHigh = fitInSig.GetXmax();
   Double_t dMaximum = hist->GetMaximum();
+  hist->SetName("histCorr");
+  outList->Add(hist);
 
   Int_t iNumParMass = fitInSig.GetNpar();
 
@@ -3267,26 +3259,26 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
 
   // === Fitting procedure ===
 
-  TF1* fitVn = new TF1(Form("fitCor"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
+  TF1* fitCorr = new TF1(Form("fitCorr"), sFuncVn.Data(), dMassRangeLow,dMassRangeHigh);
 
   // fixing fraction from input fits
   for(Int_t par(0); par < iNumParMass; ++par) {
-      fitVn->FixParameter(par, fitInSig.GetParameter(par));
+      fitCorr->FixParameter(par, fitInSig.GetParameter(par));
   }
 
   for(Int_t par(iNumParMass); par < iParFlow; ++par) {
     // Here par-iNumParMass is to account for a fact that dParDef takes only flow part (vector index != parameter index)
-    fitVn->SetParameter(par, dParDef.at(par-iNumParMass));
+    fitCorr->SetParameter(par, dParDef.at(par-iNumParMass));
     Debug(Form("Parameter %d : %f",par,dParDef.at(par-iNumParMass) ),"FitCorrelations");
     Double_t dLimLow = dParLimLow.at(par-iNumParMass);
     Double_t dLimHigh = dParLimHigh.at(par-iNumParMass);
 
-    if(dLimLow > -1.0 && dLimHigh > -1.0) { fitVn->SetParLimits(par, dLimLow,dLimHigh); }
+    if(dLimLow > -1.0 && dLimHigh > -1.0) { fitCorr->SetParLimits(par, dLimLow,dLimHigh); }
     else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Flow-mass: Only one of the parameter limits is set (par %d). Fix this!",par),"FitCorrelations"); return kFALSE; }
   }
 
-  fitVn->SetParameter(iParFlow, 0.5);
-  fitVn->SetParLimits(iParFlow, -0.5,1.0);
+  fitCorr->SetParameter(iParFlow, 0.5);
+  fitCorr->SetParLimits(iParFlow, -0.5,1.0);
 
   // fitting
 
@@ -3315,14 +3307,15 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   //     }
   //   }
 
-  //   hist->Fit(fitVn, sFitOptFlow.Data());
+  //   hist->Fit(fitCorr, sFitOptFlow.Data());
   //
   //   TString statusA = gMinuit->fCstatu.Data();
   //   if(statusA.Contains("CONVERGED")) { bFitOK = kTRUE; }
   //   nfitsA++;
   // }
 
-  if(!CheckFitResult( hist->Fit(fitVn, sFitOptFlow.Data()) )) { Error(Form("Flow-mass fit does not converged within iterations limit (%d)!",1), "FitCorrelations"); PrintFitFunction(fitVn); outList->Add(fitVn); return kFALSE; }
+  outList->Add(fitCorr);
+  if(!CheckFitResult( hist->Fit(fitCorr, sFitOptFlow.Data()) )) { Error(Form("Flow-mass fit does not converged within iterations limit (%d)!",1), "FitCorrelations"); PrintFitFunction(fitCorr); return kFALSE; }
 
   // === Extracting fitting components to separated TF1's ===
 
@@ -3346,21 +3339,21 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
       fitFlowSig->SetParameter(iPar, 0.0);
       fitFlowSig->SetParError(iPar, 0.0);
 
-      fitFlowBg->SetParameter(iPar, fitVn->GetParameter(iPar));
-      fitFlowBg->SetParError(iPar, fitVn->GetParError(iPar));
+      fitFlowBg->SetParameter(iPar, fitCorr->GetParameter(iPar));
+      fitFlowBg->SetParError(iPar, fitCorr->GetParError(iPar));
   }
 
-  fitFlowSig->SetParameter(iParFlow, fitVn->GetParameter(iParFlow));
-  fitFlowSig->SetParError(iParFlow, fitVn->GetParError(iParFlow));
+  fitFlowSig->SetParameter(iParFlow, fitCorr->GetParameter(iParFlow));
+  fitFlowSig->SetParError(iParFlow, fitCorr->GetParError(iParFlow));
 
   outList->Add(fitFlowSig);
   outList->Add(fitFlowBg);
 
-  fitOut = *fitVn;
+  fitOut = *fitCorr;
   fitOutSig = *fitFlowSig;
   fitOutBg = *fitFlowBg;
 
-  Info(Form("Flow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitVn->GetChisquare(), fitVn->GetNDF(),fitVn->GetChisquare()/fitVn->GetNDF(),fitVn->GetProb()), "FitCorrelations");
+  Info(Form("Flow-mass fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitCorr->GetChisquare(), fitCorr->GetNDF(),fitCorr->GetChisquare()/fitCorr->GetNDF(),fitCorr->GetProb()), "FitCorrelations");
 
   return kTRUE;
 }
