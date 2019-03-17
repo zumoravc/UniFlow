@@ -19,7 +19,9 @@ void RunDev()
 	// TString sOutputFilePath = sInputPath+"/output_test/"+sEtaGap+"/";
 	// TString sOutputFilePath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/flow-modes/cross-charged-you/15o_hi_pass1/mixed";
 	// TString sOutputFilePath = "./test/";
-	TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test/";
+	// TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test-K0s";
+	// TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test-Lambda";
+	TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test-Phi";
 
 	// Double_t dMultBinning[] = {0,10,20,40,60,100};
 
@@ -109,8 +111,7 @@ void RunDev()
 	taskLambda->SetPtBins(vecPtBins);
 	taskLambda->SetMergePosNeg(1);
 	taskLambda->SetHarmonics(2);
-	taskLambda->DoCumOrderMax(4);
-	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
+	taskLambda->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)",5);
 	// process->AddTask(taskLambda);
 
 	FlowTask* taskPhi = new FlowTask(kPhi);

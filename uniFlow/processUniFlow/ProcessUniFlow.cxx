@@ -2963,6 +2963,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   TString sMassSig = TString();  Int_t iNumParsMassSig = 0; // function for inv. mass dist. (sig component)
 
   Int_t iParMass = 0;
+  Int_t iParMass_2 = 0;
   Int_t iParWidth = 0;
   Int_t iParWidth_2 = 0;
 
@@ -2973,21 +2974,24 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(species == kPhi) {
     Debug("Setting parameters for Phi","FitInvMass");
 
-    dMassRangeLow = 0.994;
+    dMassRangeLow = 1.00;
+    dMassRangeHigh = 1.06;
+    // dMassRangeLow = 0.994;
     // dMassRangeHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
-    sMassSig = "[4]*TMath::BreitWigner(x,[5],[6])"; iNumParsMassSig = 3;
+    sMassSig = "[4]*([5]*TMath::BreitWigner(x,[6],[7]))"; iNumParsMassSig = 4;
 
-    iParMass = 5;
-    iParWidth = 6;
+    iParMass = 6;
+    iParWidth = 7;
 
-    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
     dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
     dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
     dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
     dParDef.push_back(1.019445);    dParLimLow.push_back(1.0185);       dParLimHigh.push_back(1.021);
     dParDef.push_back(0.006);       dParLimLow.push_back(0.004);        dParLimHigh.push_back(0.007);
   }
@@ -2999,21 +3003,22 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     // dMassRangeHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
-    sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+    sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+[8]*TMath::Gaus(x,[6],[9]))"; iNumParsMassSig = 6;
 
-    iParMass = 5;
-    iParWidth = 6;
-    iParWidth_2 = 8;
+    iParMass = 6;
+    iParWidth = 7;
+    iParWidth_2 = 9;
 
-    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
     dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
     dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
     dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
     dParDef.push_back(0.4976);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.52);
     dParDef.push_back(0.003);       dParLimLow.push_back(0.003);        dParLimHigh.push_back(0.006);
-    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(2.0*dMaximum);
+    dParDef.push_back(0.0);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
     dParDef.push_back(0.01);        dParLimLow.push_back(0.003);        dParLimHigh.push_back(0.015);
   }
 
@@ -3021,25 +3026,27 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   {
     Debug("Setting parameters for Lambda","FitInvMass");
 
-    dMassRangeLow = 1.096;
+    dMassRangeLow = 1.10;
     // dMassRangeHigh = 0.0;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
-    sMassSig = "[4]*TMath::Gaus(x,[5],[6])+[7]*TMath::Gaus(x,[5],[8])"; iNumParsMassSig = 5;
+    sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+[8]*TMath::Gaus(x,[6],[9]))"; iNumParsMassSig = 6;
 
-    iParMass = 5;
-    iParWidth = 6;
-    iParWidth_2 = 8;
 
-    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
-    dParDef.push_back(1.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    iParMass = 6;
+    iParWidth = 7;
+    iParWidth_2 = 9;
+
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
+    dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
     dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
     dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
     dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
     dParDef.push_back(1.115);       dParLimLow.push_back(1.10);         dParLimHigh.push_back(1.13);
     dParDef.push_back(0.001);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.008);
-    dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(2.0*dMaximum);
+    dParDef.push_back(0.2);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
     dParDef.push_back(0.01);        dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.01);
   }
 
@@ -3159,19 +3166,17 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
       fitMass_fracSigHard->SetParLimits(par,dLow,dHigh);
       fitMass_fracBgHard->SetParLimits(par,dLow,dHigh);
   }
-  outList->Add(fitMass_fracSigHard);
-  outList->Add(fitMass_fracBgHard);
   // PrintFitFunction(fitMass);
   // PrintFitFunction(fitMass_fracSigHard);
   // PrintFitFunction(fitMass_fracBgHard);
 
   fitOut = *fitMass;
-  fitOutSig = *fracSig;
-  fitOutBg = *fracBg;
+  fitOutSig = *fitMass_fracSigHard;
+  fitOutBg = *fitMass_fracBgHard;
 
   outList->Add(fitMass);
-  outList->Add(fitSig);
-  outList->Add(fitBg);
+  outList->Add(fitMass_fracSigHard);
+  outList->Add(fitMass_fracBgHard);
 
   if(!bFitOK) {
       Error(Form("Inv.mass fit does not converged!"));
