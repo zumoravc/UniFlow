@@ -447,14 +447,14 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         listFits->Write(Form("%s_%s_cent%d_pt%d",GetSpeciesName(task->fSpecies).Data(),task->fMixedDiff.Data(),iMultBin,iPtBin),TObject::kSingleKey);
 
         if(!bFitMass) {
-          Error("Fitting inv.mass unsuccesfull","ProcessMixed");
+          Error(Form("Fitting inv.mass unsuccesfull (mult %d | pt %d)",iMultBin,iPtBin),"ProcessMixed");
           delete canFitInvMass;
           // delete listFits;
           return kFALSE;
         }
 
         if(!bFitFlow) {
-          Error("Fitting flow unsuccesfull","ProcessMixed");
+          Error(Form("Fitting vn-mass unsuccesfull (mult %d | pt %d)",iMultBin,iPtBin),"ProcessMixed");
           delete canFitInvMass;
           // delete listFits;
           return kFALSE;
@@ -2834,6 +2834,7 @@ TH1* ProcessUniFlow::SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask*
     }
 
     TH1* hInvMassSubt = (TH1*) hInvMass->Clone();
+    hInvMassSubt->Sumw2();
     hInvMassSubt->Add(hInvMassBg, -1.0*dNorm);
 
     // for(Int_t iBin(0); iBin < iNumBins+1; ++iBin) {
@@ -2964,7 +2965,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
 
   Double_t dMassRangeLow = hist->GetXaxis()->GetXmin();
   Double_t dMassRangeHigh = hist->GetXaxis()->GetXmax();
-  Double_t dMaximum = hist->GetMaximum();
+  Double_t dMaximum = hist->GetBinContent(hist->GetMaximumBin());
 
   hist->SetName("histMass");
   outList->Add(hist);
@@ -2981,6 +2982,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   Int_t iParWidth = 0;
   Int_t iParWidth_2 = 0;
 
+  Double_t dPeakLow = 0.0;
+  Double_t dPeakHigh = 0.0;
+
   std::vector<Double_t> dParDef;
   std::vector<Double_t> dParLimLow;
   std::vector<Double_t> dParLimHigh;
@@ -2993,6 +2997,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     dMassRangeHigh = 1.06;
     // dMassRangeLow = 0.994;
     // dMassRangeHigh = 1.134;
+
+    dPeakLow = 1.007;
+    dPeakHigh = 1.03;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::BreitWigner(x,[6],[7]))"; iNumParsMassSig = 4;
@@ -3017,13 +3024,16 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     // dMassRangeLow = 0.994;
     // dMassRangeHigh = 1.134;
 
+    dPeakLow = 0.44;
+    dPeakHigh = 0.56;
+
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
-    sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+[8]*TMath::Gaus(x,[9],[10]))"; iNumParsMassSig = 7;
+    sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+(1.0-[5])*TMath::Gaus(x,[8],[9]))"; iNumParsMassSig = 6;
 
     iParMass = 6;
-    iParMass_2 = 9;
+    iParMass_2 = 8;
     iParWidth = 7;
-    iParWidth_2 = 10;
+    iParWidth_2 = 9;
 
     sParNames.push_back("bg0");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
     sParNames.push_back("bg1");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
@@ -3031,12 +3041,12 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
     sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
-    sParNames.push_back("ampG1");       dParDef.push_back(1.0);         dParLimLow.push_back(0.4);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("ampG1");       dParDef.push_back(1.0);         dParLimLow.push_back(0.55);          dParLimHigh.push_back(1.0);
     sParNames.push_back("meanG1");      dParDef.push_back(0.4976);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.51);
-    sParNames.push_back("sigmaG1");     dParDef.push_back(0.01);       dParLimLow.push_back(0.002);        dParLimHigh.push_back(0.03);
-    sParNames.push_back("ampG2");       dParDef.push_back(0.0);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(0.4);
-    sParNames.push_back("meanG2");      dParDef.push_back(0.4976);      dParLimLow.push_back(0.47);         dParLimHigh.push_back(0.52);
-    sParNames.push_back("sigmaG2");     dParDef.push_back(0.0);        dParLimLow.push_back(0.0);        dParLimHigh.push_back(0.05);
+    sParNames.push_back("sigmaG1");     dParDef.push_back(0.005);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.05);
+    // sParNames.push_back("ampG2");       dParDef.push_back(0.0);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(0.4);
+    sParNames.push_back("meanG2");      dParDef.push_back(0.47);      dParLimLow.push_back(0.47);         dParLimHigh.push_back(0.52);
+    sParNames.push_back("sigmaG2");     dParDef.push_back(0.2);        dParLimLow.push_back(0.0);        dParLimHigh.push_back(0.2);
   }
 
   if(species == kLambda)
@@ -3045,6 +3055,9 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
 
     dMassRangeLow = 1.10;
     // dMassRangeHigh = 0.0;
+
+    dPeakLow = 1.104;
+    dPeakHigh = 1.134;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+[8]*TMath::Gaus(x,[6],[9]))"; iNumParsMassSig = 6;
@@ -3170,6 +3183,10 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     fitMass_partSig->SetParError(iPar, fitMass->GetParError(iPar));
   }
 
+  outList->Add(fitMass);
+  outList->Add(fitMass_partSig);
+  outList->Add(fitMass_partBg);
+
   // making "hard" fractions insted of individual components
   TF1* fitMass_fracSigHard = new TF1("fitMass_fracSigHard",Form("(%s)/(%s+%s)",sMassSig.Data(), sMassBG.Data(), sMassSig.Data()), dMassRangeLow, dMassRangeHigh);
   fitMass_fracSigHard->SetParameters(fitMass->GetParameters());
@@ -3196,10 +3213,122 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   outList->Add(fitMass_fracBgHard);
 
   if(!bFitOK) {
-      Error(Form("Inv.mass fit does not converged!"));
-      return kFALSE;
+      Error("fitMass failed!","FitInvMass");
+      PrintFitFunction(fitMass);
+      // return kFALSE;
   }
-  Info(Form("Inv.mass distribution fit: SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
+
+  // === Preparing fractions ==
+  Debug("Working on proper fractions!","FitInvMass");
+ 
+  // Cloning original inv.mass distrubution : serves as baseline for fractions
+  TH1D* hist_copy = nullptr;
+
+  // Subtracting LS background out of US histo
+  if(species == kPhi && task->fFlowFitPhiSubtLS) {
+      histBg->SetName("histMass_bgLS");
+      outList->Add(histBg);
+
+      TH1D* histMass_subtLS = (TH1D*) SubtractInvMassBg(hist, histBg, task);
+      if(!histMass_subtLS) { Error("Inv. mass BG subtraction failed!","FitInvMass"); return kFALSE; }
+      histMass_subtLS->SetName("histMass_subtLS");
+      outList->Add(histMass_subtLS);
+
+      // setting subtLs as a baseline for all following operations
+      hist_copy = histMass_subtLS;
+  } else {
+      hist_copy = (TH1D*) hist->Clone("hist_copy");
+  }
+
+  // excluding peak region
+  TH1D* histMass_exclPeak = (TH1D*) hist_copy->Clone("histMass_exclPeak");
+  for(Int_t iBin(0); iBin < histMass_exclPeak->GetNbinsX()+2; ++iBin) {
+      Double_t x = histMass_exclPeak->GetBinCenter(iBin);
+      if(x > dPeakLow && x < dPeakHigh) { histMass_exclPeak->SetBinError(iBin,2.0*dMaximum); }
+  }
+  outList->Add(histMass_exclPeak);
+
+  // Fitting BG only in histMass_exclPeak
+  Debug("Fitting : 'fitMass_exclPeak'","FitInvMass");
+  TF1* fitMass_exclPeak = new TF1("fitMass_exclPeak",sMassBG.Data(),dMassRangeLow,dMassRangeHigh);
+  if(!SetFuncParameters(fitMass_exclPeak, dParDef, dParLimLow, dParLimHigh)) { Error("Setting fitMass_exclPeak parameters failed!","FitInvMass"); return kFALSE; }
+  for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar) { fitMass_exclPeak->FixParameter(iPar,0.0); }
+  outList->Add(fitMass_exclPeak);
+  if(!CheckFitResult(histMass_exclPeak->Fit(fitMass_exclPeak, sFitOptMass.Data()), kTRUE) ) { Error("fitMass_exclPeak failed!","FitInvMass"); PrintFitFunction(fitMass_exclPeak); return kFALSE; }
+
+  // Subtracting BG from total hist_copy (signal only)
+  TH1D* histMass_sig = (TH1D*) hist_copy->Clone("histMass_sig");
+  histMass_sig->Add(fitMass_exclPeak,-1.0);
+  outList->Add(histMass_sig);
+
+  // Subtracting Sig from total hist (bg only)  (NOT 'hist_copy')
+  TH1D* histMass_bg = (TH1D*) hist->Clone("histMass_bg");
+  histMass_bg->Add(histMass_sig,-1.0);
+  outList->Add(histMass_bg);
+
+  // Fitting Signal in BG free
+  Debug("Fitting : 'fitMass_sig'","FitInvMass");
+  TF1* fitMass_sig = new TF1("fitMass_sig",sMassSig.Data(),dMassRangeLow,dMassRangeHigh);
+  if(!SetFuncParameters(fitMass_sig, dParDef,dParLimLow, dParLimHigh, sParNames)) { Error("Setting fitMass_sig parameters failed!","FitInvMass"); return kFALSE; }
+  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) { fitMass_sig->FixParameter(iPar,0.0); }
+  outList->Add(fitMass_sig);
+  if(!CheckFitResult(histMass_sig->Fit(fitMass_sig, sFitOptMass.Data()))) { Error("fitMass_sig failed!","FitInvMass"); PrintFitFunction(fitMass_sig); return kFALSE; }
+
+  // Cloning fitMass_bg for consistency reason (QA)
+  TF1* fitMass_bg = (TF1*) fitMass_exclPeak->Clone("fitMass_bg");
+  outList->Add(fitMass_bg);
+
+  // Making sum of sig + bg (QA reasons)
+  TF1* fitMass_tot = new TF1("fitMass_tot",sFuncMass.Data(), dMassRangeLow, dMassRangeHigh);
+  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) { fitMass_tot->SetParameter(iPar,fitMass_bg->GetParameter(iPar)); }
+  for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar) { fitMass_tot->SetParameter(iPar,fitMass_sig->GetParameter(iPar)); }
+  outList->Add(fitMass_tot);
+
+  // Making fraction // NB: Here 'hist' has to be in denominator (not 'hist_copy' !!!)
+  TH1D* histMass_fracSig = (TH1D*) histMass_sig->Clone("histMass_fracSig");
+  histMass_fracSig->Divide(hist);
+  outList->Add(histMass_fracSig);
+
+  TH1D* histMass_fracBg = (TH1D*) histMass_bg->Clone("histMass_fracBg");
+  histMass_fracBg->Divide(hist);
+  outList->Add(histMass_fracBg);
+
+  // Fitting fractions
+  Debug("Fitting : 'fitMass_fracSig'","FitInvMass");
+  TF1* fitMass_fracSig = (TF1*) fitMass_sig->Clone("fitMass_fracSig");
+  // if(!SetFuncParameters(fitMass_fracSig, fitMass_sig->GetParameters(),dParLimLow, dParLimHigh, sParNames)) { Error("Setting fitMass_fracSig parameters failed!","FitInvMass"); return kFALSE; }
+  for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) { fitMass_fracSig->FixParameter(iPar,0.0); }
+  fitMass_fracSig->SetParameter(iNumParsMassBG, 0.8); // contribution from sMassSig == 0
+  fitMass_fracSig->SetParLimits(iNumParsMassBG, 0.0,1.00); // contribution from sMassSig == 0
+  // fitMass_fracSig->FixParameter(iNumParsMassBG,1.0); // contribution from sMassSig == 0
+  outList->Add(fitMass_fracSig);
+  // if(!CheckFitResult(histMass_fracSig->Fit(fitMass_fracSig, sFitOptMass.Data()), kTRUE)) { Error("fitMass_fracSig failed!","FitInvMass"); PrintFitFunction(fitMass_fracSig); return kFALSE; }
+  Bool_t bFitFracOK = CheckFitResult(histMass_fracSig->Fit(fitMass_fracSig, Form("IL%s",sFitOptMass.Data())), kTRUE);
+
+  TF1* fitMass_fracBg = new TF1("fitMass_fracBg",Form("1.0-(%s)",sMassSig.Data()),dMassRangeLow,dMassRangeHigh);
+  fitMass_fracBg->SetParameters(fitMass_fracSig->GetParameters());
+  outList->Add(fitMass_fracBg);
+
+  if(species != kPhi) {
+      // splitiign two gauss
+      TF1* fitMass_fracSig_partGauss1 = (TF1*) fitMass_fracSig->Clone("fitMass_fracSig_partGauss1");
+      fitMass_fracSig_partGauss1->SetParameter(iParMass_2,0.0);
+
+      TF1* fitMass_fracSig_partGauss2 = (TF1*) fitMass_fracSig->Clone("fitMass_fracSig_partGauss2");
+      fitMass_fracSig_partGauss2->SetParameter(iParMass,0.0);
+
+      outList->Add(fitMass_fracSig_partGauss1);
+      outList->Add(fitMass_fracSig_partGauss2);
+  }
+
+   if(!bFitFracOK) { Error("fitMass_fracSig failed!","FitInvMass"); PrintFitFunction(fitMass_fracSig); return kFALSE; }
+
+  fitOut = *fitMass;
+  fitOutSig = *fitMass_fracSig;
+  fitOutBg = *fitMass_fracBg;
+
+  Info(Form("Inv.mass distribution fit (fitMass): SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g; %d iterations)",fitMass->GetChisquare(), fitMass->GetNDF(),fitMass->GetChisquare()/fitMass->GetNDF(),fitMass->GetProb(),nfitsA), "FitInvMass");
+  Info(Form("Inv.mass distribution fit (fitMass_fracSig): SUCCESSFULL (chi2/ndf = %.3g/%d = %.3g; prob = %0.2g)",fitMass_fracSig->GetChisquare(), fitMass_fracSig->GetNDF(),fitMass_fracSig->GetChisquare()/fitMass_fracSig->GetNDF(),fitMass_fracSig->GetProb()), "FitInvMass");
 
   return kTRUE;
 }
