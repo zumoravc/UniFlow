@@ -3062,19 +3062,20 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   {
     Debug("Setting parameters for Lambda","FitInvMass");
 
-    dMassRangeLow = 1.10;
-    // dMassRangeHigh = 0.0;
+    dMassRangeLow = 1.099;
+    // dMassRangeHigh = 1.15;
 
-    dPeakLow = 1.104;
+    dPeakLow = 1.106;
     dPeakHigh = 1.134;
 
     dFracLimLow = 0.05;
     dFracLimLow = 0.07;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
-    sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+[8]*TMath::Gaus(x,[6],[9]))"; iNumParsMassSig = 6;
+    sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+(1.0-[5])*TMath::Gaus(x,[8],[9]))"; iNumParsMassSig = 6;
 
     iParMass = 6;
+    iParMass_2 = 8;
     iParWidth = 7;
     iParWidth_2 = 9;
 
@@ -3084,10 +3085,11 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
     sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
-    sParNames.push_back("ampG1");       dParDef.push_back(0.8);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
-    sParNames.push_back("meanG1");      dParDef.push_back(1.115);       dParLimLow.push_back(1.10);         dParLimHigh.push_back(1.13);
-    sParNames.push_back("sigmaG1");     dParDef.push_back(0.001);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.008);
-    sParNames.push_back("ampG2");       dParDef.push_back(0.2);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("ampG1");       dParDef.push_back(1.0);         dParLimLow.push_back(0.51);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("meanG1");      dParDef.push_back(1.115);       dParLimLow.push_back(1.11);         dParLimHigh.push_back(1.12);
+    sParNames.push_back("sigmaG1");     dParDef.push_back(0.001);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.007);
+    // sParNames.push_back("ampG2");       dParDef.push_back(0.2);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("meanG2");      dParDef.push_back(1.109);       dParLimLow.push_back(1.109);         dParLimHigh.push_back(1.125);
     sParNames.push_back("sigmaG2");     dParDef.push_back(0.01);        dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.01);
   }
 
