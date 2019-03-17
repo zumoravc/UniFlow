@@ -2928,7 +2928,7 @@ Bool_t ProcessUniFlow::CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF
         } else {
             Warning(Form("gMinuit status is '%s'! Ignored.",sMinuit.Data()),"CheckFitResult");
         }
-    } else if (!sMinuit.Contains("CONVERGED")) {
+    } else if (!sMinuit.Contains("CONVERGED") && !sMinuit.Contains("OK") ) {
         Error(Form("gMinuit status ('%s') does not converged! ",sMinuit.Data()),"CheckFitResult");
         isOK = kFALSE;
     }
