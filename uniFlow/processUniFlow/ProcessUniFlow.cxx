@@ -379,6 +379,16 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
         TList* listFits = new TList();
         // listFits->SetOwner(kTRUE); // NB: when on, seg fault happen
 
+        // Adding description strings
+        TNamed* corr = new TNamed("corr",Form("%s",task->fMixedDiff.Data()));
+        listFits->Add(corr);
+        TNamed* spec = new TNamed("spec",Form("%s",GetSpeciesLabel(task->fSpecies).Data()));
+        listFits->Add(spec);
+        TNamed* nCent = new TNamed("cent",Form("%d-%d",(Int_t)fdMultBins[iMultBin],(Int_t)fdMultBins[iMultBin+1]));
+        listFits->Add(nCent);
+        TNamed* nPt = new TNamed("pt",Form("%g-%g",task->fPtBinsEdges[iPtBin],task->fPtBinsEdges[iPtBin+1]));
+        listFits->Add(nPt);
+
         TH1D* hInvMass = (TH1D*) task->fListHistos->FindObject(Form("hInvMass_mult%d_pt%d",iMultBin,iPtBin));
         if(!hInvMass) { Error("Loading inv. mass slice failed!","ProcessMixed"); task->fListHistos->ls(); return kFALSE; }
 
