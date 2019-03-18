@@ -3005,7 +3005,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     dPeakHigh = 1.03;
 
     dFracLimLow = 0.05;
-    dFracLimLow = 0.10;
+    dFracLimHigh = 0.10;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::BreitWigner(x,[6],[7]))"; iNumParsMassSig = 4;
@@ -3031,10 +3031,10 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     // dMassRangeHigh = 1.134;
 
     dPeakLow = 0.44;
-    dPeakHigh = 0.56;
+    dPeakHigh = 0.55;
 
     dFracLimLow = 0.05;
-    dFracLimLow = 0.07;
+    dFracLimHigh = 0.07;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+(1.0-[5])*TMath::Gaus(x,[8],[9]))"; iNumParsMassSig = 6;
@@ -3050,12 +3050,12 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
     sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
-    sParNames.push_back("ampG1");       dParDef.push_back(1.0);         dParLimLow.push_back(0.55);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("ampG1");       dParDef.push_back(0.55);         dParLimLow.push_back(0.55);          dParLimHigh.push_back(0.99);
     sParNames.push_back("meanG1");      dParDef.push_back(0.4976);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.51);
     sParNames.push_back("sigmaG1");     dParDef.push_back(0.005);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.05);
     // sParNames.push_back("ampG2");       dParDef.push_back(0.0);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(0.4);
-    sParNames.push_back("meanG2");      dParDef.push_back(0.47);      dParLimLow.push_back(0.47);         dParLimHigh.push_back(0.52);
-    sParNames.push_back("sigmaG2");     dParDef.push_back(0.2);        dParLimLow.push_back(0.0);        dParLimHigh.push_back(0.2);
+    sParNames.push_back("meanG2");      dParDef.push_back(0.48);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.52);
+    sParNames.push_back("sigmaG2");     dParDef.push_back(0.2);        dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.2);
   }
 
   if(species == kLambda)
@@ -3069,7 +3069,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     dPeakHigh = 1.134;
 
     dFracLimLow = 0.05;
-    dFracLimLow = 0.07;
+    dFracLimHigh = 0.07;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*([5]*TMath::Gaus(x,[6],[7])+(1.0-[5])*TMath::Gaus(x,[8],[9]))"; iNumParsMassSig = 6;
@@ -3472,7 +3472,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   }
 
   fitCorr->SetParameter(iParFlow, 0.5);
-  fitCorr->SetParLimits(iParFlow, 0.0,1.0);
+  fitCorr->SetParLimits(iParFlow, -0.5,1.0);
 
   // fitting
 
