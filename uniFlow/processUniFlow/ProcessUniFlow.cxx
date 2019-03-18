@@ -3472,7 +3472,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   }
 
   fitCorr->SetParameter(iParFlow, 0.5);
-  fitCorr->SetParLimits(iParFlow, -0.5,1.0);
+  fitCorr->SetParLimits(iParFlow, 0.0,1.0);
 
   // fitting
 
