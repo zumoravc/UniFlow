@@ -2921,12 +2921,12 @@ Bool_t ProcessUniFlow::CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF
     Int_t status = (Int_t) result;
 
     if(status != 0) {
-        Error(Form("Fit result status not zero (%d)!",status),"CheckFitResult");
+        Warning(Form("Fit result status not zero (%d)!",status),"CheckFitResult");
         isOK = kFALSE;
     }
 
     if(!gMinuit) {
-        Error(Form("gMinuit not available! "),"CheckFitResult");
+        Warning(Form("gMinuit not available! "),"CheckFitResult");
         isOK = kFALSE;
     }
 
@@ -2934,13 +2934,13 @@ Bool_t ProcessUniFlow::CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF
 
     if(sMinuit.Contains("NOT POSDEF")) {
         if(!bIgnorePOSDEF) {
-            Error(Form("gMinuit status is '%s' while ignorePOSDEF is OFF! ",sMinuit.Data()),"CheckFitResult");
+            Warning(Form("gMinuit status is '%s' while ignorePOSDEF is OFF! ",sMinuit.Data()),"CheckFitResult");
             isOK = kFALSE;
         } else {
             Warning(Form("gMinuit status is '%s'! Ignored.",sMinuit.Data()),"CheckFitResult");
         }
     } else if (!sMinuit.Contains("CONVERGED") && !sMinuit.Contains("OK") ) {
-        Error(Form("gMinuit status ('%s') does not converged! ",sMinuit.Data()),"CheckFitResult");
+        Warning(Form("gMinuit status ('%s') does not converged! ",sMinuit.Data()),"CheckFitResult");
         isOK = kFALSE;
     }
 
