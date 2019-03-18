@@ -30,7 +30,7 @@ Int_t markSyst = kFullCircle;
 
 TH1D* DivideHistos(TH1* nom, TH1* denom, Bool_t bCor = kFALSE);
 TH1D* BarlowTest(TH1* nom, TH1* denom, Bool_t bCor = kFALSE);
-TH1D* ApplyBarlow(TH1* diff, TH1* barlow);
+Double_t ApplyBarlow(TH1* diff, TH1* barlow);
 TH1D* Diff(TH1* ratio);
 void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircle, Bool_t showStats = kFALSE);
 TCanvas* PrepareCanvas(TString name);
@@ -127,13 +127,20 @@ Bool_t ProcessSingle(TString hist, TString path, TString syst, TString baseline)
     fitDiff->SetLineStyle(7);
     histDiff->Fit(fitDiff,"RN");
 
-    TH1D* histAfterBarlow = ApplyBarlow(histDiff, histBarlow);
+    // TH1D* histAfterBarlow = ApplyBarlow(histDiff, histBarlow);
+    // TF1* fitAfterBarlow = new TF1("fitAfterBarlow","[0]",xmin,xmax);
+    // fitAfterBarlow->SetLineColor(kGreen+2);
+    // fitAfterBarlow->SetLineStyle(9);
+    // histAfterBarlow->Fit(fitAfterBarlow,"RN");
+
+    Double_t dAfterBarlow = ApplyBarlow(histDiff, histBarlow);
     TF1* fitAfterBarlow = new TF1("fitAfterBarlow","[0]",xmin,xmax);
-    fitAfterBarlow->SetLineColor(kGreen+2);
+    fitAfterBarlow->FixParameter(0,dAfterBarlow);
     fitAfterBarlow->SetLineStyle(9);
-    histAfterBarlow->Fit(fitAfterBarlow,"RN");
+    fitAfterBarlow->SetLineColor(kGreen+2);
 
     // Plotting stuff
+
 
     // TLegend* leg = new TLegend(0.55,0.15,0.88,0.38);
     TLegend* leg = new TLegend(0.16,0.7,0.5,0.88);
@@ -196,7 +203,7 @@ Bool_t ProcessSingle(TString hist, TString path, TString syst, TString baseline)
     outList->Add(histSyst);
     outList->Add(histRatio);
     outList->Add(histBarlow);
-    outList->Add(histAfterBarlow);
+    // outList->Add(histAfterBarlow);
     outList->Add(histDiff);
     outList->Add(fitDiff);
     outList->Add(fitAfterBarlow);
@@ -344,31 +351,40 @@ TH1D* BarlowTest(TH1* nom, TH1* denom, Bool_t bCor)
   }
 
   hBarlow->SetMinimum(0.0);
+  hBarlow->SetMaximum(10.0);
 
   return hBarlow;
 }
 // ==================================================================================================================
-TH1D* ApplyBarlow(TH1* diff, TH1* barlow)
+Double_t ApplyBarlow(TH1* diff, TH1* barlow)
 {
-  if(!diff) { printf("ERROR-ApplyBarlow : no diff\n"); return 0x0; }
-  if(!barlow) { printf("ERROR-ApplyBarlow : no barlow\n"); return 0x0; }
+  if(!diff) { printf("ERROR-ApplyBarlow : no diff\n"); return -1.0; }
+  if(!barlow) { printf("ERROR-ApplyBarlow : no barlow\n"); return -1.0; }
 
   // TH1D* after = (TH1D*) diff->Clone(Form("%s_Barlowed",diff->GetName()));
   TH1D* after = (TH1D*) diff->Clone("AfterBarlow");
   // if(dCut < 0.0) { return after; }
 
+  Double_t dSum = 0.0;
+  Double_t dSumWeights = 0.0;
+
   for(Int_t iBin(1); iBin < after->GetNbinsX()+1; ++iBin) {
     Double_t dBarlow = barlow->GetBinContent(iBin);
-    Double_t dWeight = 1.0;
+    Double_t dWeight = 0.0;
     if(dBarlow > 0.0) { dWeight = 1.0 / dBarlow; }
 
-    // dWeight = dBarlow;
+    Double_t dContent = diff->GetBinContent(iBin);
 
-    after->SetBinContent(iBin, diff->GetBinContent(iBin));
-    after->SetBinError(iBin, dWeight);
+    dSum += dWeight*dContent;
+    dSumWeights += dWeight;
+
+    // after->SetBinContent(iBin, diff->GetBinContent(iBin));
+    // after->SetBinError(iBin, dWeight);
   }
 
-  return after;
+  Double_t dFit = dSum / dSumWeights;
+
+  return dFit;
 }
 // ==================================================================================================================
 TCanvas* PrepareCanvas(TString name)
