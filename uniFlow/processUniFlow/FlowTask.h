@@ -29,7 +29,7 @@ class FlowTask
     void        SetRebinning(Bool_t rebin = kTRUE) { fRebinning = rebin; }
     void        SetMergePosNeg(Bool_t merge = kTRUE) { fMergePosNeg = merge; }
     void        SetDesamplingUseRMS(Bool_t use = kTRUE) { fDesampleUseRMS = use; }
-    void        DoCorrMixed(TString nameDiff, TString nameRefs) { fDoCorrMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; }
+    void        DoCorrMixed(TString nameDiff, TString nameRefs, Int_t numSamplRefs = 1) { fDoCorrMixed = kTRUE; fMixedDiff = nameDiff; fMixedRefs = nameRefs; fNumSamplesRefs = numSamplRefs; }
     void        DoCumOrderMax(Cumulants cum) { fCumOrderMax = cum; }
     void        DoCumOrderMax(Int_t cum) { fCumOrderMax = Cumulants(cum); }
 
@@ -37,7 +37,7 @@ class FlowTask
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
     void        SetFlowMassRebin(Short_t rebin = 2) { fRebinFlowMass = rebin; }
     // fitting parameters
-    void        SetFitPhiSubtLS(Bool_t sub = kTRUE) { fFlowFitPhiSubtLS = sub; }
+    void        SetFitPhiSubtLS(Bool_t sub = kTRUE, Bool_t norm = kFALSE, Double_t low = 0.0, Double_t high = 0.0) { fFlowFitPhiSubtLS = sub; fbNormLS = norm; fdNormLSLow = low;  fdNormLSHigh = high; }
     void        SetFitMassRange(Double_t dLow, Double_t dHigh) { fFlowFitRangeLow = dLow; fFlowFitRangeHigh = dHigh; }
     void        SetFitMassSig(TString func, Int_t pars) { fFlowFitMassSig = func; fNumParMassSig = pars; }
     void        SetFitMassBG(TString func, Int_t pars) { fFlowFitMassBG = func; fNumParMassBG = pars; }
@@ -56,6 +56,7 @@ class FlowTask
     Double_t    fEtaGap; // eta gap
     Bool_t      fConsCorr; // consider correlations in cumulant / flow calculations
     Int_t       fNumSamples; // [10] number of samples
+    Int_t       fNumSamplesRefs; // [1] number of samples for refs only
     Int_t       fNumPtBins; // actual number of pT bins (not size of array) for rebinning
     std::vector<Double_t>   fPtBinsEdges; // pt binning
     Bool_t      fShowMult; // show multiplicity distribution
@@ -68,7 +69,10 @@ class FlowTask
     TString     fMixedDiff; // name (tag) for diff. profile for mixed harmonics
     TString     fMixedRefs; // name (tag) for reference profile for mixed harmonics
     // Reconstructed fitting
-    Bool_t      fFlowFitPhiSubtLS; // [kFALSE] flag for subtraction of like-sign background from the unlike-sign one
+    Bool_t      fFlowFitPhiSubtLS; // [kTRUE] flag for subtraction of like-sign background from the unlike-sign one
+    Bool_t      fbNormLS; // [kTRUE] flag for normalising LS subtraction
+    Double_t    fdNormLSLow; // [1.05] low edge for normalisation region
+    Double_t    fdNormLSHigh; // [1.06] low edge for normalisation region
     Int_t       fRebinInvMass; // flag for rebinning inv-mass (and BG) histo
     Int_t       fRebinFlowMass; // flag for rebinning flow-mass profile
 

@@ -15,6 +15,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fNumPtBins{-1},
   fPtBinsEdges{},
   fNumSamples{10},
+  fNumSamplesRefs{1},
   fConsCorr{kFALSE},
   fShowMult{kFALSE},
   fRebinning{kTRUE},
@@ -23,7 +24,10 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fCumOrderMax{kNon},
   fDoCorrMixed{kFALSE},
   fMergePosNeg{kFALSE},
-  fFlowFitPhiSubtLS{kFALSE},
+  fFlowFitPhiSubtLS{kTRUE},
+  fbNormLS{kTRUE},
+  fdNormLSLow{1.05},
+  fdNormLSHigh{1.06},
   fRebinFlowMass{0},
   fRebinInvMass{0},
   fFlowFitRangeLow{-1.0},
@@ -110,6 +114,7 @@ void FlowTask::PrintTask()
   printf("   fRebinning: %s\n", fRebinning ? "true" : "false");
   printf("   fMergePosNeg: %s\n", fMergePosNeg ? "true" : "false");
   printf("   fNumSamples: %d\n", fNumSamples);
+  printf("   fNumSamplesRefs: %d\n", fNumSamplesRefs);
   printf("   fDesampleUseRMS: %s\n", fDesampleUseRMS ? "true" : "false");
   printf("   fSampleMerging: %s\n", fSampleMerging ? "true" : "false");
   printf("   fConsCorr: %s\n", fConsCorr ? "true" : "false");
@@ -121,6 +126,9 @@ void FlowTask::PrintTask()
   printf("   fFlowFitRangeLow: %g\n",fFlowFitRangeLow);
   printf("   fFlowFitRangeHigh: %g\n",fFlowFitRangeHigh);
   printf("   fFlowFitPhiSubtLS: %s\n", fFlowFitPhiSubtLS ? "true" : "false");
+  printf("   fbNormLS: %s\n", fbNormLS ? "true" : "false");
+  printf("   fdNormLSLow: %g\n",fdNormLSLow);
+  printf("   fdNormLSHigh: %g\n",fdNormLSHigh);
   printf("   fRebinFlowMass: %d\n",fRebinFlowMass);
   printf("   fRebinInvMass: %d\n",fRebinInvMass);
   printf("------------------------------\n");

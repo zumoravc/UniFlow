@@ -8,17 +8,36 @@
  * Author: Vojtech Pacik (vojtech.pacik@cern.ch), NBI, 2018
  */
 
-void RunMixed()
+void RunMixedSyst(TString tag = "V0sPVDCA3")
 {
-	Int_t iNumSamples = 1;
-	Int_t iNumSamplesRefs = 5;
-	Int_t iHarmonics = 2;
+	Int_t iNumSamplesRefs = 1;
+
+	// TString sTaskTag = "FB768";
+	// TString sTaskTag = "PID3sigma";
+	// TString sTaskTag = "PVz8";
+	// TString sTaskTag = "TPCcls90";
+	// TString sTaskTag = "V0sCPA099";
+	// TString sTaskTag = "V0sCrossFind1";
+	// TString sTaskTag = "V0sDaugDCA3";
+	// TString sTaskTag = "V0sDaugPt02";
+	// TString sTaskTag = "V0sDecRad10";
+	// TString sTaskTag = "V0sFinderOn";
+	// TString sTaskTag = "V0sPVDCA3";
+
+	TString sTaskTag = tag;
 
 	// Double_t dGap = -1.0; TString sGap = "";
 	Double_t dGap = 0.0; TString sGap = "_2sub(0)";
 	// Double_t dGap = 0.4; TString sGap = "_2sub(0.4)";
 
-	TString sInputPath = "/mnt/CodesALICE/Flow/uniFlow/results/trains/CF_PbPb/6527_20190218-2140/merge/";
+	TString sInputPath = "/mnt/CodesALICE/Flow/uniFlow/results/trains/CF_PbPb/6615_20190311-1326/merged/";
+
+	// // ====== Starting points
+
+	// std::vector<Double_t> dMultBinning = {10,20,30,40,50};
+	// std::vector<Double_t> dPtBinningK0s = {0.4,0.8,1.2,1.6,2.0,2.4,3.0,3.6,4.6,6.0};
+	// std::vector<Double_t> dPtBinningLambda = {0.8,1.2,1.6,2.0,2.4,2.8,3.2,3.6,4.4,6.0};
+	// std::vector<Double_t> dPtBinningPhi = {0.5,1.0,1.5,2.0,3.0,4.0,6.0};
 
 	std::vector<Double_t> dMultBinning = {0,5,10,20,30,40,50,60};
 	std::vector<Double_t> dPtBinningK0s = {0.8,1.2,1.6,2.0,2.4,3.0,3.6,4.6,6.0};
@@ -27,17 +46,8 @@ void RunMixed()
 	std::vector<Double_t> dPtBinningPhi = {1.0,1.5,2.0,3.0,4.5,6.0};
 	// std::vector<Double_t> dPtBinningPhi = {1.0,2.0,3.0,4.0,6.0};
 
-	// std::vector<Double_t> dPtBinningK0sV633 = {0.8,1.4,2.0,2.6,3.2,4.4,6.0};
-	// std::vector<Double_t> dPtBinningK0sV633 = {0.8,1.2,1.6,2.0,2.4,3.0,3.6,4.6,6.0};
-	// std::vector<Double_t> dPtBinningLambdaV633 = {1.0,2.0,3.0,4.0,6.0};
-
-	// std::vector<Double_t> dMultBinning_2 = {0,5,50,60};
-	// std::vector<Double_t> dPtBinningK0s_2 = {0.8,1.2,1.6,2.0,2.4,3.0,4.0,5.0,6.0};
-	// std::vector<Double_t> dPtBinningLambda_2 = {1.0,2.0,3.0,4.0,6.0};
-	// std::vector<Double_t> dPtBinningPhi_2 = {0.5,1.0,1.5,2.0,3.0,4.0,6.0};
 
 	// ##### END Parameters setting ######
-
 	FlowTask* taskK0s = new FlowTask(kK0s);
 	taskK0s->SetNumSamples(1);
 	taskK0s->SetEtaGap(dGap);
@@ -113,22 +123,19 @@ void RunMixed()
 	taskPhi3->SetMergePosNeg();
 	taskPhi3->SetFlowMassRebin(2);
 
+	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/K0s");
+	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/Lambda");
+	TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/Phi");
 
-	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/K0s/");
-	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/K0s_v422");
-	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/K0s_v532");
-	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/Lambda");
-	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/Lambda_v532");
-	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/Lambda_v633");
-	TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/Phi");
-	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/All");
+	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/K0s/%s/",sTaskTag.Data());
+	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/Lambda/%s/",sTaskTag.Data());
+	// TString sOutputFilePath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/Phi/%s/",sTaskTag.Data());
+
 
 
 	ProcessUniFlow* process = new ProcessUniFlow();
 	process->SetInputFilePath(sInputPath.Data());
 	process->SetInputFileName("AnalysisResults.root");
-	process->SetTaskName("UniFlow");
-	process->SetOutputFilePath(sOutputFilePath.Data());
 	process->SetOutputFileName("Processed.root");
 	process->SetMultiplicityBins(dMultBinning);
 	process->SetSaveMult(0);
@@ -136,41 +143,21 @@ void RunMixed()
 	process->SetFitCumulants(kFALSE);
 	process->SetDebug(0);
 	process->SetSaveInterSteps(1);
+	process->SetTaskName(Form("UniFlow%s",sTaskTag.Data()));
+	process->SetOutputFilePath(Form("%s/%s/",sOutputFilePath.Data(),sTaskTag.Data()));
+
 
 	// process->AddTask(taskK0s);
 	// process->AddTask(taskK0s2);
 	// process->AddTask(taskK0s3);
-
 	// process->AddTask(taskLambda);
 	// process->AddTask(taskLambda2);
 	// process->AddTask(taskLambda3);
-
 	process->AddTask(taskPhi);
-	process->AddTask(taskPhi2);
-	process->AddTask(taskPhi3);
+	// process->AddTask(taskPhi2);
+	// process->AddTask(taskPhi3);
 
 	process->Run();
-
-
-	// process->SetMultiplicityBins(dMultBinning_2);
-	// process->SetOutputFilePath(Form("%s_lowMult",sOutputFilePath.Data()));
-	//
-	// taskK0s->SetPtBins(dPtBinningK0s_2);
-	// taskK0s->SetFlowMassRebin(4);
-	// taskK0s2->SetPtBins(dPtBinningK0s_2);
-	// taskK0s2->SetFlowMassRebin(4);
-	// taskK0s3->SetPtBins(dPtBinningK0s_2);
-	// taskK0s3->SetFlowMassRebin(4);
-	//
-	// taskLambda->SetPtBins(dPtBinningLambda_2);
-	// taskLambda2->SetPtBins(dPtBinningLambda_2);
-	// taskLambda3->SetPtBins(dPtBinningLambda_2);
-	//
-	// taskPhi->SetPtBins(dPtBinningPhi_2);
-	// taskPhi2->SetPtBins(dPtBinningPhi_2);
-	// taskPhi3->SetPtBins(dPtBinningPhi_2);
-
-	// process->Run();
 
 	return;
 }
