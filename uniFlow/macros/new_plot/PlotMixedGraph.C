@@ -9,9 +9,9 @@ void PlotMixedGraph()
 
 
   TString sGap = "_gap00";
-  // TString sCorr = "Mergedv422"; TString sLabel = "v_{4,-2,-2} {|#Delta#eta| > 0} ";  TString sCorrSyst = "MergedSystv422"; Double_t dYlow = -0.01; Double_t dYhigh = 0.1;
+  TString sCorr = "Mergedv422"; TString sLabel = "v_{4,-2,-2} {|#Delta#eta| > 0} ";  TString sCorrSyst = "MergedSystv422"; Double_t dYlow = -0.01; Double_t dYhigh = 0.1;
   // TString sCorr = "Mergedv523"; TString sLabel = "v_{5,-3,-2} {|#Delta#eta| > 0} "; TString sCorrSyst = "MergedSystv523"; Double_t dYlow = -0.01; Double_t dYhigh = 0.1;
-  TString sCorr = "Mergedv633"; TString sLabel = "v_{6,-3,-3} {|#Delta#eta| > 0} ";TString sCorrSyst = "MergedSystv633"; Double_t dYlow = -0.01; Double_t dYhigh = 0.06;
+  // TString sCorr = "Mergedv633"; TString sLabel = "v_{6,-3,-3} {|#Delta#eta| > 0} ";TString sCorrSyst = "MergedSystv633"; Double_t dYlow = -0.01; Double_t dYhigh = 0.06;
 
   // TString sCorr = "<<3>>(4,-2,-2)_2sub(0.4)"; TString sLabel = "v_{4,-2,-2} {|#Delta#eta| > 0.4} ";
   // TString sCorr = "<<3>>(5,-3,-2)_2sub(0.4)"; TString sLabel = "v_{5,-3,-2} {|#Delta#eta| > 0.4} ";
@@ -39,7 +39,7 @@ void PlotMixedGraph()
 
   Int_t iNumMult = sizeof(sCent) / sizeof(sCent[0]);
 
-  TString sInputPath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/All/graphs/");
+  TString sInputPath = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/output/All/graphs_bk_2/");
   TString sOutDir = sInputPath+"/../plots/";
 
 
@@ -147,6 +147,7 @@ void PlotMixedGraph()
       }
 
       TFile* fileIn = TFile::Open(Form("%s/%s%s.root",sInputPath.Data(),sCorr.Data(),sSpecies[i].Data()),"READ");
+      if(!fileIn) {continue; }
       // TString sName = Form("%s_%s_mult%d",sSpecies[i].Data(), sCorr.Data(), iMult);
       TString sName = Form("%spT_%s%s",sCorr.Data(),sCentLab[iMult].Data(),sGap.Data());
 

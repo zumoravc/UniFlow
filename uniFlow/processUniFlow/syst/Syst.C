@@ -30,7 +30,7 @@ Int_t markSyst = kFullCircle;
 
 TH1D* DivideHistos(TH1* nom, TH1* denom, Bool_t bCor = kFALSE);
 TH1D* BarlowTest(TH1* nom, TH1* denom, Bool_t bCor = kFALSE);
-Double_t ApplyBarlow(TH1* diff, TH1* barlow);
+TH1D* ApplyBarlow(TH1* diff, TH1* barlow);
 TH1D* Diff(TH1* ratio);
 void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircle, Bool_t showStats = kFALSE);
 TCanvas* PrepareCanvas(TString name);
@@ -49,28 +49,28 @@ void Syst()
 
     std::vector<TString> vecSyst;
 
-    // vecSyst.push_back("FB768");
-    // vecSyst.push_back("PID3sigma");
-    vecSyst.push_back("PVz8");
+    vecSyst.push_back("FB768");
+    vecSyst.push_back("PID3sigma");
+    // vecSyst.push_back("PVz8");
     vecSyst.push_back("TPCcls90");
     // vecSyst.push_back("V0sCPA099");
-    vecSyst.push_back("V0sCrossFind1");
+    // vecSyst.push_back("V0sCrossFind1");
     // vecSyst.push_back("V0sDaugDCA3");
     // vecSyst.push_back("V0sDaugPt02");
-    vecSyst.push_back("V0sDecRad10");
-    vecSyst.push_back("V0sFinderOn");
-    vecSyst.push_back("V0sPVDCA3");
+    // vecSyst.push_back("V0sDecRad10");
+    // vecSyst.push_back("V0sFinderOn");
+    // vecSyst.push_back("V0sPVDCA3");
 
     Int_t iNumCent = 7;
-    TString species = "Lambda";
+    TString species = "Phi";
 
     TString path = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/%s/",species.Data());
 
 
     TString histoName[] = {
         "<<3>>(4,-2,-2)_2sub(0)",
-        "<<3>>(5,-3,-2)_2sub(0)",
-        "<<3>>(6,-3,-3)_2sub(0)"
+        // "<<3>>(5,-3,-2)_2sub(0)",
+        // "<<3>>(6,-3,-3)_2sub(0)"
     };
 
     Int_t iNumHist = sizeof(histoName) / sizeof(histoName[0]);
@@ -127,17 +127,17 @@ Bool_t ProcessSingle(TString hist, TString path, TString syst, TString baseline)
     fitDiff->SetLineStyle(7);
     histDiff->Fit(fitDiff,"RN");
 
-    // TH1D* histAfterBarlow = ApplyBarlow(histDiff, histBarlow);
-    // TF1* fitAfterBarlow = new TF1("fitAfterBarlow","[0]",xmin,xmax);
-    // fitAfterBarlow->SetLineColor(kGreen+2);
-    // fitAfterBarlow->SetLineStyle(9);
-    // histAfterBarlow->Fit(fitAfterBarlow,"RN");
-
-    Double_t dAfterBarlow = ApplyBarlow(histDiff, histBarlow);
+    TH1D* histAfterBarlow = ApplyBarlow(histDiff, histBarlow);
     TF1* fitAfterBarlow = new TF1("fitAfterBarlow","[0]",xmin,xmax);
-    fitAfterBarlow->FixParameter(0,dAfterBarlow);
-    fitAfterBarlow->SetLineStyle(9);
     fitAfterBarlow->SetLineColor(kGreen+2);
+    fitAfterBarlow->SetLineStyle(9);
+    histAfterBarlow->Fit(fitAfterBarlow,"RN");
+
+    // Double_t dAfterBarlow = ApplyBarlow(histDiff, histBarlow);
+    // TF1* fitAfterBarlow = new TF1("fitAfterBarlow","[0]",xmin,xmax);
+    // fitAfterBarlow->FixParameter(0,dAfterBarlow);
+    // fitAfterBarlow->SetLineStyle(9);
+    // fitAfterBarlow->SetLineColor(kGreen+2);
 
     // Plotting stuff
 
@@ -191,11 +191,11 @@ Bool_t ProcessSingle(TString hist, TString path, TString syst, TString baseline)
 
 
     // saving output
-    gSystem->mkdir(Form("%s/%s/plots_root/",path.Data(),syst.Data()),kTRUE);
-    gSystem->mkdir(Form("%s/%s/plots_pdf/",path.Data(),syst.Data()),kTRUE);
-    gSystem->mkdir(Form("%s/%s/plots_eps/",path.Data(),syst.Data()),kTRUE);
+    gSystem->mkdir(Form("%s/%s/syst_root/",path.Data(),syst.Data()),kTRUE);
+    gSystem->mkdir(Form("%s/%s/syst_pdf/",path.Data(),syst.Data()),kTRUE);
+    gSystem->mkdir(Form("%s/%s/syst_eps/",path.Data(),syst.Data()),kTRUE);
 
-    TFile* fileOut = TFile::Open(Form("%s/%s/plots_root/%s.root",path.Data(),syst.Data(),hist.Data()),"RECREATE");
+    TFile* fileOut = TFile::Open(Form("%s/%s/syst_root/%s.root",path.Data(),syst.Data(),hist.Data()),"RECREATE");
     if(!fileOut) { printf("E: Output file not created!"); return kFALSE; }
 
     TList* outList = new TList();
@@ -203,7 +203,7 @@ Bool_t ProcessSingle(TString hist, TString path, TString syst, TString baseline)
     outList->Add(histSyst);
     outList->Add(histRatio);
     outList->Add(histBarlow);
-    // outList->Add(histAfterBarlow);
+    outList->Add(histAfterBarlow);
     outList->Add(histDiff);
     outList->Add(fitDiff);
     outList->Add(fitAfterBarlow);
@@ -211,8 +211,8 @@ Bool_t ProcessSingle(TString hist, TString path, TString syst, TString baseline)
     fileOut->cd();
     outList->Write("list",TObject::kSingleKey);
 
-    can->SaveAs(Form("%s/%s/plots_pdf/%s.pdf",path.Data(),syst.Data(),hist.Data()),"pdf");
-    can->SaveAs(Form("%s/%s/plots_eps/%s.eps",path.Data(),syst.Data(),hist.Data()),"eps");
+    can->SaveAs(Form("%s/%s/syst_pdf/%s.pdf",path.Data(),syst.Data(),hist.Data()),"pdf");
+    can->SaveAs(Form("%s/%s/syst_eps/%s.eps",path.Data(),syst.Data(),hist.Data()),"eps");
 
     return kTRUE;
 }
@@ -356,35 +356,29 @@ TH1D* BarlowTest(TH1* nom, TH1* denom, Bool_t bCor)
   return hBarlow;
 }
 // ==================================================================================================================
-Double_t ApplyBarlow(TH1* diff, TH1* barlow)
+TH1D* ApplyBarlow(TH1* diff, TH1* barlow)
 {
-  if(!diff) { printf("ERROR-ApplyBarlow : no diff\n"); return -1.0; }
-  if(!barlow) { printf("ERROR-ApplyBarlow : no barlow\n"); return -1.0; }
+  if(!diff) { printf("ERROR-ApplyBarlow : no diff\n"); return 0x0; }
+  if(!barlow) { printf("ERROR-ApplyBarlow : no barlow\n"); return 0x0; }
 
   // TH1D* after = (TH1D*) diff->Clone(Form("%s_Barlowed",diff->GetName()));
   TH1D* after = (TH1D*) diff->Clone("AfterBarlow");
   // if(dCut < 0.0) { return after; }
 
-  Double_t dSum = 0.0;
-  Double_t dSumWeights = 0.0;
-
   for(Int_t iBin(1); iBin < after->GetNbinsX()+1; ++iBin) {
     Double_t dBarlow = barlow->GetBinContent(iBin);
-    Double_t dWeight = 0.0;
-    if(dBarlow > 0.0) { dWeight = 1.0 / dBarlow; }
+    Double_t dWeight = diff->GetBinError(iBin);
+    // if(dBarlow > 0.0) { dWeight = 1.0 / dBarlow; }
 
-    Double_t dContent = diff->GetBinContent(iBin);
+    if(dBarlow < 1.0) { dWeight = 99.9; }
 
-    dSum += dWeight*dContent;
-    dSumWeights += dWeight;
+    // dWeight = dBarlow;
 
-    // after->SetBinContent(iBin, diff->GetBinContent(iBin));
-    // after->SetBinError(iBin, dWeight);
-  }
+    after->SetBinContent(iBin, diff->GetBinContent(iBin));
+    after->SetBinError(iBin, dWeight);
+    }
 
-  Double_t dFit = dSum / dSumWeights;
-
-  return dFit;
+  return after;
 }
 // ==================================================================================================================
 TCanvas* PrepareCanvas(TString name)

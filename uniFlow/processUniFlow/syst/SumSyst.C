@@ -31,13 +31,11 @@ void SumSyst()
     TString species = "Lambda";
     TString path = Form("/mnt/CodesALICE/Flow/uniFlow/results/nlf/systematics/%s/",species.Data());
 
-    TString histoName[] = {
-        "<<3>>(4,-2,-2)_2sub(0)",
-        "<<3>>(5,-3,-2)_2sub(0)",
-        "<<3>>(6,-3,-3)_2sub(0)"
-    };
 
-    Int_t iNumHist = sizeof(histoName) / sizeof(histoName[0]);
+    std::vector<TString> vecHist = {};
+    vecHist.push_back("<<3>>(4,-2,-2)_2sub(0)");
+    vecHist.push_back("<<3>>(5,-3,-2)_2sub(0)");
+    vecHist.push_back("<<3>>(6,-3,-3)_2sub(0)");
 
     std::vector<TString> vecSyst;
 
@@ -45,23 +43,24 @@ void SumSyst()
 	// vecSyst.push_back("PID3sigma");
     vecSyst.push_back("PVz8");
     vecSyst.push_back("TPCcls90");
-	// vecSyst.push_back("V0sCPA099");
+	vecSyst.push_back("V0sCPA099");
 	vecSyst.push_back("V0sCrossFind1");
-	// vecSyst.push_back("V0sDaugDCA3");
-	// vecSyst.push_back("V0sDaugPt02");
+	vecSyst.push_back("V0sDaugDCA3");
+	vecSyst.push_back("V0sDaugPt02");
 	vecSyst.push_back("V0sDecRad10");
 	vecSyst.push_back("V0sFinderOn");
 	vecSyst.push_back("V0sPVDCA3");
 
     for(Int_t iCent(0); iCent < iNumCent; ++iCent) {
         // Int_t iCent = 2;
-        for(Int_t iHist(0); iHist < iNumHist; ++iHist) {
+        for(Int_t iHist(0); iHist < (Int_t) vecHist.size(); ++iHist) {
             // Int_t iHist = 0;
 
-            if(!ProcessSingle(Form("%s_%s_mult%d",species.Data(),histoName[iHist].Data(),iCent),path.Data(),vecSyst)) { return; }
+            TString histoName = vecHist.at(iHist);
+
+            if(!ProcessSingle(Form("%s_%s_mult%d",species.Data(),histoName.Data(),iCent),path.Data(),vecSyst)) { return; }
         }
     }
-
 
     return;
 }
@@ -172,10 +171,10 @@ Bool_t ProcessSingle(const char* histName, const char* path, std::vector<TString
     lineUnity->DrawLine(hist->GetXaxis()->GetXmin(), 0.0, hist->GetXaxis()->GetXmax(), 0.0);
     leg->Draw();
 
-    gSystem->mkdir(Form("%s/final/plots_pdf/",path),kTRUE);
-    gSystem->mkdir(Form("%s/final/plots_eps/",path),kTRUE);
-    can->SaveAs(Form("%s/final/plots_pdf/%s.pdf",path,histName),"pdf");
-    can->SaveAs(Form("%s/final/plots_eps/%s.eps",path,histName),"eps");
+    gSystem->mkdir(Form("%s/final/syst_pdf/",path),kTRUE);
+    gSystem->mkdir(Form("%s/final/syst_eps/",path),kTRUE);
+    can->SaveAs(Form("%s/final/syst_pdf/%s.pdf",path,histName),"pdf");
+    can->SaveAs(Form("%s/final/syst_eps/%s.eps",path,histName),"eps");
 
     TFile* fileOut = TFile::Open(Form("%s/final/syst_total.root",path),"UPDATE");
     if(!fileOut) { printf("E: Output file not opened!\n"); return kFALSE; }

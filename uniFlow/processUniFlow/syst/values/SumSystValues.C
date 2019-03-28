@@ -25,9 +25,6 @@ void SetCustomPalette();
 
 void SumSystValues()
 {
-
-    TString species = "Lambda"; Double_t xMin = 0.8; Double_t xMax = 6.0;
-
     TString sSyst[] = {
         // "FB768",
         // "PID3sigma",
@@ -42,23 +39,25 @@ void SumSystValues()
         "V0sPVDCA3"
     };
 
-    // TString corName = "v422";
-    // Double_t dVal[] = {  0,     2,      0,      0,      1,      1,      2,      2,      2 };  Int_t iCent = 0; TString sCent = "0-5%";
-    // Double_t dVal[] = {  2,     2,      0,      1,      2,      1,      2.1,    3,      3 };  Int_t iCent = 1; TString sCent = "5-10%";
+    TString species = "Lambda"; Double_t xMin = 0.8; Double_t xMax = 6.0;
+
+    TString corName = "v422";
+    // Double_t dVal[] = {  0,     2,      0,      0,      1,      1,1      2,      2,      2 };  Int_t iCent = 0; TString sCent = "0-5%";
+    // Double_t dVal[] = {  2,     2,      0,      1,     2,      1,      2.1,    3,      3 };  Int_t iCent = 1; TString sCent = "5-10%";
     // Double_t dVal[] = {  1.2,   2.2,      2,      3,      1,      1,      3.2,   3,      4 };  Int_t iCent = 2; TString sCent = "10-20%";
-    // Double_t dVal[] = {  1.1,   2,      1,      2,      1,      1,      3,      3,      4 };  Int_t iCent = 3; TString sCent = "20-30%";
+    Double_t dVal[] = {  1.1,   2,      1,      3.1,      1,      1,      3,      3,      4 };  Int_t iCent = 3; TString sCent = "20-30%";
     // Double_t dVal[] = {  1,     1,      1,      2,      1,      1,      2,      2,      2 };  Int_t iCent = 4; TString sCent = "30-40%";
     // Double_t dVal[] = {  0.1,   2.1,      0,      0.5,    1,      0.5,    1,      2,      2 };  Int_t iCent = 5; TString sCent = "40-50%";
     // Double_t dVal[] = {  2,     2,      0,      1,      2,      0.5,    2,      3,      3 };  Int_t iCent = 6; TString sCent = "50-60%";
 
-    TString corName = "v523";
+    // TString corName = "v523";
     // Double_t dVal[] = {  0,  2,  0,  1,  0,  2,  2,  1,  2 };  Int_t iCent = 0; TString sCent = "0-5%";
     // Double_t dVal[] = {  1,  2,  3,  1,  3,  2,  2,  1,  2.2 };  Int_t iCent = 1; TString sCent = "5-10%";
     // Double_t dVal[] = {  2,  2,  1,  2,  4,  3,  1,  1,  2.4 };  Int_t iCent = 2; TString sCent = "10-20%";
     // Double_t dVal[] = {  2,  2,  1,  2,  3,  3,  2,  1,  3 };  Int_t iCent = 3; TString sCent = "20-30%";
     // Double_t dVal[] = {  3,  2,  2,  1.4,  2,  2,  1,  1,  2.1 };  Int_t iCent = 4; TString sCent = "30-40%";
     // Double_t dVal[] = {  1,  2,  0,  1.1,  4,  3,  2,  1,  2 };  Int_t iCent = 5; TString sCent = "40-50%";
-    Double_t dVal[] = {  0,  2,  0,  1,  0,  2,  0,  1,  2 };  Int_t iCent = 6; TString sCent = "50-60%";
+    // Double_t dVal[] = {  0,  2,  0,  1,  0,  2,  0,  1,  2 };  Int_t iCent = 6; TString sCent = "50-60%";
     //
     // TString corName = "v633";
     // Double_t dVal[] = {  1,  2,  1,  3,  0,  0,  2,  1,  2 };  Int_t iCent = 0; TString sCent = "0-5%";
@@ -70,11 +69,56 @@ void SumSystValues()
     // Double_t dVal[] = {  1,  2,  1,  3,  0,  0,  2,  1,  2 };  Int_t iCent = 6; TString sCent = "50-60%";
 
 
+    // TString species = "K0s"; Double_t xMin = 0.8; Double_t xMax = 6.0;
+
+    // TString corName = "v422";
+    // Double_t dVal[] = {  0,   0,      4,      0,      0,      3,      5,      5,      5 };  Int_t iCent = 0; TString sCent = "0-5%";
+    // Double_t dVal[] = {  0,   0,      4,      0,      0,      3,      5,    5,      5 };  Int_t iCent = 1; TString sCent = "5-10%";
+    // Double_t dVal[] = {  0,   3,    3.2,      1,      3,      3.2,      4.8,    5,       5 };  Int_t iCent = 2; TString sCent = "10-20%";
+    // Double_t dVal[] = {  0,   1,      4,      1.5,      2,      3.5,      4.5,      4,      2 };  Int_t iCent = 3; TString sCent = "20-30%";
+    // Double_t dVal[] = {  0,   2,      3.8,     1.1,      2.7,      2,      5,      3.5,      3 };  Int_t iCent = 4; TString sCent = "30-40%";
+    // Double_t dVal[] = {  0,   2,    3.3,      2,  1,  1,       3,            5,            4 };  Int_t iCent = 5; TString sCent = "40-50%";
+    // Double_t dVal[] = {  0,   2.4,      3.5,      0,      0,      3,    5,      5,      5 };  Int_t iCent = 6; TString sCent = "50-60%";
+    //
+    // TString corName = "v523";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      3,      5,       5,        5 };  Int_t iCent = 0; TString sCent = "0-5%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      3,      3,      5,       5,        5 };  Int_t iCent = 1; TString sCent = "5-10%";
+    // Double_t dVal[] = {  0,     0,      3.4,      0,      4,      2.8,      5.2,       5,    5 };  Int_t iCent = 2; TString sCent = "10-20%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      3.5,      3,      6,       5,        5.2 };  Int_t iCent = 3; TString sCent = "20-30%";
+    // Double_t dVal[] = {  0,     0,      3.2,      0,    3,      2,    5.4,      5,      5.1 };  Int_t iCent = 4; TString sCent = "30-40%";
+    // Double_t dVal[] = {  0,     0,      3,      0,    0,      3,    5,      5,      4.7 };  Int_t iCent = 5; TString sCent = "40-50%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      2,      5,      5,         4.9 };  Int_t iCent = 6; TString sCent = "50-60%";
+    //
+    // TString corName = "v633";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      0,      5,      5,      5 };  Int_t iCent = 0; TString sCent = "0-5%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      0,      5,      5,      5 };  Int_t iCent = 1; TString sCent = "5-10%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      0,      5,      5,      5 };  Int_t iCent = 2; TString sCent = "10-20%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      0,      5,      5,      5 };  Int_t iCent = 3; TString sCent = "20-30%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      0,      5,      5,      5 };  Int_t iCent = 4; TString sCent = "30-40%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      0,      5,      5,      5 };  Int_t iCent = 5; TString sCent = "40-50%";
+    // Double_t dVal[] = {  0,     0,      3,      0,      0,      0,      5,      5,      5 };  Int_t iCent = 6; TString sCent = "50-60%";
 
 
-
-
-
+    // TString sSyst[] = {
+    //     "FB768",
+    //     "PID3sigma",
+    //     "PVz8",
+    //     "TPCcls90"
+    // };
+    //
+    //
+    // TString species = "Phi"; Double_t xMin = 1.0; Double_t xMax = 6.0;
+    //
+    // TString corName = "v422";
+    // // Double_t dVal[] = {  2,   5,      1,      2};  Int_t iCent = 0; TString sCent = "0-5%";
+    // // Double_t dVal[] = {  2,   5,      1,      2};  Int_t iCent = 1; TString sCent = "5-10%";
+    // // Double_t dVal[] = {  2,   4.2,      1,      2};  Int_t iCent = 2; TString sCent = "10-20%";
+    // // Double_t dVal[] = {  2,   6.3,      1,      2};  Int_t iCent = 3; TString sCent = "20-30%";
+    // // Double_t dVal[] = {  2,   5.5,      1,    2};  Int_t iCent = 4; TString sCent = "30-40%";
+    // // Double_t dVal[] = {  2,   5.2,      1,      2};  Int_t iCent = 5; TString sCent = "40-50%";
+    // // Double_t dVal[] = {  2,   5,    1,  2};  Int_t iCent = 6; TString sCent = "50-60%";
+    //
+    //
 
 
 

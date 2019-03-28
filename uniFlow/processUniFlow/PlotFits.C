@@ -31,8 +31,15 @@ TString sFileName = "fits.root";
 TString gOutFormat = "pdf";
 TString sPath;
 
-TString sSpecies = "Lambda"; Int_t iNumPt = 9; Int_t iNumCent = 4;
+// TString sSpecies = "K0s"; Int_t iNumPt = 8; Int_t iNumCent = 7;
 
+// TString sSpecies = "Lambda"; Int_t iNumPt = 9; Int_t iNumCent = 7;
+// TString sSpecies = "Lambda"; Int_t iNumPt = 4; Int_t iNumCent = 3;
+
+TString sSpecies = "Phi"; Int_t iNumPt = 5; Int_t iNumCent = 7;
+
+// Double_t dMax = 1e-4;
+// Double_t dMin = -1.0*1e-4;
 
 void PrepareCanvas();
 void SetPad();
@@ -41,7 +48,7 @@ void SetFuncAtt(TF1* func, Color_t color, Style_t style, Int_t width = 2.0);
 void SetHistAtt(TH1* hist, Color_t color, Style_t markStyle, Double_t markSize = 1.0);
 Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex = -1);
 
-void PlotFits(TString path = "../results/nlf/output/Lambda/")
+void PlotFits(TString path = "../results/nlf/output/Phi/")
 {
     sPath = path;
     //sPath = "../results/nlf/systematics/Lambda/";
@@ -51,6 +58,8 @@ void PlotFits(TString path = "../results/nlf/output/Lambda/")
     vecCorr.push_back("<<3>>(4,-2,-2)_2sub(0)");
     // vecCorr.push_back("<<3>>(5,-3,-2)_2sub(0)");
     // vecCorr.push_back("<<3>>(6,-3,-3)_2sub(0)");
+
+
 
     TFile* fInput = TFile::Open(Form("%s/%s",sPath.Data(),sFileName.Data()),"READ");
     if(!fInput) { printf("ERROR: File not open!\n"); return; }
@@ -96,7 +105,7 @@ Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex)
     TString sCent = ((TNamed*) list->FindObject("cent"))->GetTitle();
     TString sPt = ((TNamed*) list->FindObject("pt"))->GetTitle();
 
-    TString sTitle = Form("%s: pt %s GeV (%s%%)",sSpec.Data(), sPt.Data(), sCent.Data());
+    TString sTitle = Form("%s: %s GeV (%s%%)",sSpec.Data(), sPt.Data(), sCent.Data());
 
     // ========== Processing histCorr =======================================
 
@@ -120,10 +129,17 @@ Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex)
     histCorr->SetStats(0);
     // histCorr->SetMinimum(0.0);
 
-    histCorr->SetMinimum(-0.05*histCorr->GetBinContent(histCorr->GetMaximumBin()));
-    histCorr->SetMaximum(1.2*histCorr->GetBinContent(histCorr->GetMaximumBin()));
+    // histCorr->SetMinimum(-0.05*histCorr->GetBinContent(histCorr->GetMaximumBin()));
+    // histCorr->SetMaximum(1.2*histCorr->GetBinContent(histCorr->GetMaximumBin()));
+
+    histCorr->SetMinimum();
+    histCorr->SetMaximum();
+    if(histCorr->GetMinimum() > 0.0) { histCorr->SetMinimum(0.0); }
+
+
+    // histCorr->SetMaximum(dMax);
     // histCorr->SetMaximum(0.0);
-    SetHistAtt(histCorr, kBlack, kFullCircle, markSize);
+    SetHistAtt(histCorr, kBlack, kDot, markSize);
 
     SetFuncAtt(fitCorr, colorTot, styleTot, lineSize);
     SetFuncAtt(fitCorrSig, colorSig, styleSig, lineSize);
@@ -228,6 +244,8 @@ void SetPad()
 
 void SetHistOff(TH1* hist)
 {
+    hist->GetXaxis()->SetNdivisions(505,1);
+
     hist->SetLabelFont(43,"XY");
     hist->SetLabelSize(12,"XY");
 
@@ -235,6 +253,7 @@ void SetHistOff(TH1* hist)
     hist->SetTitleSize(12,"XY");
 
     hist->SetTitleOffset(4.3,"X");
+    // hist->SetTitleOffset(4.3,"t");
     // hist->SetTitleFont(43,"t");
     // hist->SetTitleSize(15,"t");
 
