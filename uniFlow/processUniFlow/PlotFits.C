@@ -29,11 +29,17 @@ std::vector<TString> vecCorr = {};
 
 TString sFileName = "fits.root";
 TString gOutFormat = "pdf";
-TString sPath = "../results/nlf/output/Lambda";
-TString sSpecies = "Lambda";
+TString sPath;
 
-Int_t iNumCent = 5;
-Int_t iNumPt = 10;
+// TString sSpecies = "K0s"; Int_t iNumPt = 8; Int_t iNumCent = 7;
+
+// TString sSpecies = "Lambda"; Int_t iNumPt = 9; Int_t iNumCent = 7;
+// TString sSpecies = "Lambda"; Int_t iNumPt = 4; Int_t iNumCent = 3;
+
+TString sSpecies = "Phi"; Int_t iNumPt = 5; Int_t iNumCent = 7;
+
+// Double_t dMax = 1e-4;
+// Double_t dMin = -1.0*1e-4;
 
 void PrepareCanvas();
 void SetPad();
@@ -42,18 +48,23 @@ void SetFuncAtt(TF1* func, Color_t color, Style_t style, Int_t width = 2.0);
 void SetHistAtt(TH1* hist, Color_t color, Style_t markStyle, Double_t markSize = 1.0);
 Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex = -1);
 
-void PlotFits()
+void PlotFits(TString path = "../results/nlf/output/Phi/")
 {
+    sPath = path;
+    //sPath = "../results/nlf/systematics/Lambda/";
+
     PrepareCanvas();
 
     vecCorr.push_back("<<3>>(4,-2,-2)_2sub(0)");
-    vecCorr.push_back("<<3>>(5,-3,-2)_2sub(0)");
-    vecCorr.push_back("<<3>>(6,-3,-3)_2sub(0)");
+    // vecCorr.push_back("<<3>>(5,-3,-2)_2sub(0)");
+    // vecCorr.push_back("<<3>>(6,-3,-3)_2sub(0)");
+
+
 
     TFile* fInput = TFile::Open(Form("%s/%s",sPath.Data(),sFileName.Data()),"READ");
     if(!fInput) { printf("ERROR: File not open!\n"); return; }
 
-    gSystem->mkdir(Form("%s/plots/",sPath.Data()),1);
+    gSystem->mkdir(Form("%s/fits/",sPath.Data()),1);
 
     for(Int_t iCor(0); iCor < (Int_t) vecCorr.size(); ++iCor) {
 
@@ -68,10 +79,10 @@ void PlotFits()
             }
 
             gCanOverMass->cd(0);
-            gCanOverMass->SaveAs(Form("%s/plots/mass/mass_%s_cent%d.%s",sPath.Data(),sCorrName.Data(),iCent,gOutFormat.Data()),gOutFormat.Data());
+            gCanOverMass->SaveAs(Form("%s/fits/mass/mass_%s_cent%d.%s",sPath.Data(),sCorrName.Data(),iCent,gOutFormat.Data()),gOutFormat.Data());
             gCanOverMass->Clear("D");
             gCanOverCorr->cd(0);
-            gCanOverCorr->SaveAs(Form("%s/plots/corr/corr_%s_cent%d.%s",sPath.Data(),sCorrName.Data(),iCent,gOutFormat.Data()),gOutFormat.Data());
+            gCanOverCorr->SaveAs(Form("%s/fits/corr/corr_%s_cent%d.%s",sPath.Data(),sCorrName.Data(),iCent,gOutFormat.Data()),gOutFormat.Data());
             gCanOverCorr->Clear("D");
 
         }
@@ -94,7 +105,7 @@ Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex)
     TString sCent = ((TNamed*) list->FindObject("cent"))->GetTitle();
     TString sPt = ((TNamed*) list->FindObject("pt"))->GetTitle();
 
-    TString sTitle = Form("%s: pt %s GeV (%s%%)",sSpec.Data(), sPt.Data(), sCent.Data());
+    TString sTitle = Form("%s: %s GeV (%s%%)",sSpec.Data(), sPt.Data(), sCent.Data());
 
     // ========== Processing histCorr =======================================
 
@@ -116,22 +127,32 @@ Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex)
     histCorr->SetTitle(sTitle.Data());
     histCorr->GetXaxis()->SetRangeUser(dXlow,dXhigh);
     histCorr->SetStats(0);
-    histCorr->SetMinimum(0.0);
+    // histCorr->SetMinimum(0.0);
+
+    // histCorr->SetMinimum(-0.05*histCorr->GetBinContent(histCorr->GetMaximumBin()));
+    // histCorr->SetMaximum(1.2*histCorr->GetBinContent(histCorr->GetMaximumBin()));
+
+    histCorr->SetMinimum();
+    histCorr->SetMaximum();
+    if(histCorr->GetMinimum() > 0.0) { histCorr->SetMinimum(0.0); }
+
+
+    // histCorr->SetMaximum(dMax);
     // histCorr->SetMaximum(0.0);
-    SetHistAtt(histCorr, kBlack, kFullCircle, markSize);
+    SetHistAtt(histCorr, kBlack, kDot, markSize);
 
     SetFuncAtt(fitCorr, colorTot, styleTot, lineSize);
     SetFuncAtt(fitCorrSig, colorSig, styleSig, lineSize);
     SetFuncAtt(fitCorrBg, colorBg, styleBg, lineSize);
 
-    gSystem->mkdir(Form("%s/plots/corr/single/",sPath.Data()),1);
+    gSystem->mkdir(Form("%s/fits/corr/single/",sPath.Data()),1);
 
     gCanSingle->cd();
     histCorr->DrawCopy();
     fitCorr->Draw("same");
     fitCorrSig->Draw("same");
     fitCorrBg->Draw("same");
-    gCanSingle->SaveAs(Form("%s/plots/corr/single/histCorr_%s.%s",sPath.Data(),sListName.Data(),gOutFormat.Data()),gOutFormat.Data());
+    gCanSingle->SaveAs(Form("%s/fits/corr/single/histCorr_%s.%s",sPath.Data(),sListName.Data(),gOutFormat.Data()),gOutFormat.Data());
     gCanSingle->Clear();
 
     if(padIndex > 0) {
@@ -173,14 +194,14 @@ Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex)
     SetFuncAtt(fitMass_fracSig, colorSig, kSolid, lineSize);
     SetFuncAtt(fitMass_fracBg, colorBg, kSolid, lineSize);
 
-    gSystem->mkdir(Form("%s/plots/mass/single/",sPath.Data()),1);
+    gSystem->mkdir(Form("%s/fits/mass/single/",sPath.Data()),1);
 
     gCanSingle->cd();
     histMass_fracSig->DrawCopy();
     histMass_fracBg->DrawCopy("same");
     fitMass_fracSig->Draw("same");
     fitMass_fracBg->Draw("same");
-    gCanSingle->SaveAs(Form("%s/plots/mass/single/mass_%s.%s",sPath.Data(),sListName.Data(),gOutFormat.Data()),gOutFormat.Data());
+    gCanSingle->SaveAs(Form("%s/fits/mass/single/mass_%s.%s",sPath.Data(),sListName.Data(),gOutFormat.Data()),gOutFormat.Data());
     gCanSingle->Clear();
 
     if(padIndex > 0) {
@@ -223,6 +244,8 @@ void SetPad()
 
 void SetHistOff(TH1* hist)
 {
+    hist->GetXaxis()->SetNdivisions(505,1);
+
     hist->SetLabelFont(43,"XY");
     hist->SetLabelSize(12,"XY");
 
@@ -230,6 +253,7 @@ void SetHistOff(TH1* hist)
     hist->SetTitleSize(12,"XY");
 
     hist->SetTitleOffset(4.3,"X");
+    // hist->SetTitleOffset(4.3,"t");
     // hist->SetTitleFont(43,"t");
     // hist->SetTitleSize(15,"t");
 
