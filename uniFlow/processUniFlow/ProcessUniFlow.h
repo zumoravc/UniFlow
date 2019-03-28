@@ -18,6 +18,7 @@ class TH3D;
 class TProfile;
 class TProfile2D;
 class TProfile3D;
+class TFitResultPtr;
 
 enum        PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest
 enum        Cumulants {kNon = 0, kTwo = 2, kFour = 4}; // Cumulants order
@@ -62,8 +63,9 @@ class ProcessUniFlow
     Bool_t      Initialize(); // initialization task
     Bool_t      LoadLists(); // loading flow lists from input file
 
-    Bool_t      ProcessMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
+    Bool_t      InitTask(FlowTask* task); // initialize FlowTask
     Bool_t      ProcessTask(FlowTask* task); // process FlowTask according to it setting
+    Bool_t      ProcessMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
     Bool_t      ProcessRefs(FlowTask* task); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
@@ -84,16 +86,17 @@ class ProcessUniFlow
     TH1D*       CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate vn'{2} out of dn{2} & vn{2}
     TH1D*       CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate vn'{4} out of dn{4} and vn{4}
 
+    void        PrintFitFunction(const TF1* func);
+    Bool_t      SetFuncParameters(TF1* func, Double_t* dVec, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh, const std::vector<TString> vecNames = {}); // set func parameters & limits (including fixed paramters)
+    Bool_t      SetFuncParameters(TF1* func, const std::vector<Double_t>& vecVal, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh, const std::vector<TString> vecNames = {}); // set func parameters & limits (including fixed paramters)
+    Bool_t      CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF = kFALSE);
+    TH1*        SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask* task);
+    Bool_t      FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList, TH1* histBg = nullptr);
+    Bool_t      FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg, TList* outList);
 
-    Bool_t      FitInvMass(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg);
-    Bool_t      FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg);
-
-    Bool_t 	    ExtractFlowOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
-    Bool_t 	    ExtractFlowPhiOneGo(FlowTask* task, TH1* hInvMass, TH1* hInvMassBG, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
-    Bool_t 	    ExtractFlowK0sOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for K0s candidates
-    Bool_t 	    ExtractFlowLambdaOneGo(FlowTask* task, TH1* hInvMass, TH1* hFlowMass, Double_t &dFlow, Double_t &dFlowError, TCanvas* canFitInvMass, TList* listFits); // extract flow via flow-mass method for Lambda candidates
-
+    TList*      LoadSamples(TList* list, TString sHistName, Int_t iNumSamples); // find all samples histos in list
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
+    TH1*        Merge(TH1* a, TH1* b); // merge two histogram
     TH1D*       DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling = kFALSE); // Desample list of samples for estimating the uncertanity
     Bool_t      PlotDesamplingQA(TList* list, TH1D* hDesampled, FlowTask* task); // produce QA plots for result of desampling procedure
     TH1D*       TestRebin(TH1D* hOrig = 0x0, FlowTask* task = 0x0); // testing desample - manual rebin

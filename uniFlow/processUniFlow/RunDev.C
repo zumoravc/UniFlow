@@ -19,7 +19,9 @@ void RunDev()
 	// TString sOutputFilePath = sInputPath+"/output_test/"+sEtaGap+"/";
 	// TString sOutputFilePath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/flow-modes/cross-charged-you/15o_hi_pass1/mixed";
 	// TString sOutputFilePath = "./test/";
-	TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test/";
+	// TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test-K0s";
+	// TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test-Lambda";
+	TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test-Phi";
 
 	// Double_t dMultBinning[] = {0,10,20,40,60,100};
 
@@ -33,8 +35,8 @@ void RunDev()
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
 	std::vector<Double_t> dMultBinning = {10,20};
 	// Double_t dPtBins[] = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,5.0};
-	Double_t dPtBins[] = {1.0,2.0,3.0,4.0};
-	std::vector<Double_t> vecPtBins = {1.0,2.0,3.0,4.0};
+	Double_t dPtBins[] = {2.0,2.5};
+	std::vector<Double_t> vecPtBins = {1.5,2.0};
 	// ##### END Parameters setting ######
 
 	ProcessUniFlow* process = new ProcessUniFlow();
@@ -45,6 +47,7 @@ void RunDev()
 	process->SetOutputFileName("Processed.root");
 	process->SetMultiplicityBins(dMultBinning);
 	process->SetDebug(1);
+	process->SetSaveInterSteps(1);
 
 	FlowTask* taskRefs = new FlowTask(kRefs);
 	taskRefs->SetNumSamples(1);
@@ -53,7 +56,7 @@ void RunDev()
 	taskRefs->SetMergePosNeg(1);
 	taskRefs->SetHarmonics(2);
 	taskRefs->DoCumOrderMax(4);
-	process->AddTask(taskRefs);
+	// process->AddTask(taskRefs);
 
 	FlowTask* taskCharged = new FlowTask(kCharged);
 	taskCharged->SetNumSamples(1);
@@ -63,7 +66,7 @@ void RunDev()
 	taskCharged->SetEtaGap(0.0);
 	taskCharged->DoCumOrderMax(kFour);
 	taskCharged->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)");
-	process->AddTask(taskCharged);
+	// process->AddTask(taskCharged);
 
 	FlowTask* taskCharged2 = new FlowTask(kCharged);
 	taskCharged2->SetNumSamples(1);
@@ -72,7 +75,7 @@ void RunDev()
 	taskCharged2->SetHarmonics(2);
 	taskCharged2->SetEtaGap(0.0);
 	taskCharged2->DoCorrMixed("<<3>>(5,-3,-2)_2sub(0)","<<4>>(2,3,-2,-3)_2sub(0)");
-	process->AddTask(taskCharged2);
+	// process->AddTask(taskCharged2);
 
 	FlowTask* taskCharged3 = new FlowTask(kCharged);
 	taskCharged3->SetNumSamples(1);
@@ -81,7 +84,7 @@ void RunDev()
 	taskCharged3->SetHarmonics(2);
 	taskCharged3->SetEtaGap(0.0);
 	taskCharged3->DoCorrMixed("<<3>>(6,-3,-3)_2sub(0)","<<4>>(3,3,-3,-3)_2sub(0)");
-	process->AddTask(taskCharged3);
+	// process->AddTask(taskCharged3);
 
 
 	// FlowTask* taskPion = new FlowTask(kPion);
@@ -99,7 +102,7 @@ void RunDev()
 	taskK0s->SetPtBins(vecPtBins);
 	taskK0s->SetMergePosNeg(1);
 	taskK0s->SetHarmonics(2);
-	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
+	taskK0s->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)",5);
 	// process->AddTask(taskK0s);
 
 	FlowTask* taskLambda = new FlowTask(kLambda);
@@ -108,8 +111,7 @@ void RunDev()
 	taskLambda->SetPtBins(vecPtBins);
 	taskLambda->SetMergePosNeg(1);
 	taskLambda->SetHarmonics(2);
-	taskLambda->DoCumOrderMax(4);
-	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
+	taskLambda->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)",5);
 	// process->AddTask(taskLambda);
 
 	FlowTask* taskPhi = new FlowTask(kPhi);
@@ -118,18 +120,10 @@ void RunDev()
 	taskPhi->SetPtBins(vecPtBins);
 	taskPhi->SetMergePosNeg(1);
 	taskPhi->SetHarmonics(2);
-	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
-	// process->AddTask(taskPhi);
+	taskPhi->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)",5);
+	taskPhi->SetFitPhiSubtLS(1,1,0.99,1.01);
+	process->AddTask(taskPhi);
 
-	FlowTask* taskK0sMix = new FlowTask(kK0s);
-	taskK0sMix->SetNumSamples(1);
-	taskK0sMix->SetEtaGap(0.0);
-	taskK0sMix->SetPtBins(vecPtBins);
-	taskK0sMix->SetMergePosNeg(1);
-	taskK0sMix->SetHarmonics(2);
-	taskK0sMix->DoCorrMixed("<<3>>(4,-2,-2)_2sub(0)","<<4>>(2,2,-2,-2)_2sub(0)");
-	// // taskCharged->SetProcessMixedHarmonics("Cor3p4m2m2","Cor4p2p2m2m2");
-	// process->AddTask(taskK0sMix);
 
 
 	process->Run();
