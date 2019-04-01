@@ -53,9 +53,9 @@ AliAnalysisTaskUniFlow* AddTaskUniFlow(AliAnalysisTaskUniFlow::ColSystem colSys,
     task->SetChargedTrackFilterBit(96);
     task->SetPIDUseAntiProtonOnly(kFALSE);
     task->SetPIDNumSigmasCombinedNoTOFrejection(kTRUE);
-    task->SetPIDNumSigmasPionMax(0.0);
-    task->SetPIDNumSigmasKaonMax(0.0);
-    task->SetPIDNumSigmasProtonMax(0.0);
+    task->SetPIDNumSigmasPionMax(3.0);
+    task->SetPIDNumSigmasKaonMax(3.0);
+    task->SetPIDNumSigmasProtonMax(3.0);
     task->SetPIDNumSigmasTPCRejectElectron(0.0);
     task->SetUseBayesPID(kTRUE);
     task->SetPIDBayesProbPionMin(0.95);
