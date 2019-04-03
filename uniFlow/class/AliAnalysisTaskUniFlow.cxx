@@ -1124,6 +1124,38 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(fProcessSpec[kK0s] || fProcessSpec[kLambda]) { FilterV0s(); }
   if(fProcessSpec[kPhi]) { FilterPhi(); }
 
+  printf("====== Listing Charged ===========\n");
+  for(Size_t i(0); i < fVector[kCharged]->size(); ++i) {
+      AliPicoTrack* track = (AliPicoTrack*) fVector[kCharged]->at(i);
+      if(!track) break;
+      printf("%d : %g\n", (Int_t)i, track->Pt());
+  }
+  // printf("====== Listing Pion ===========\n");
+  // for(Size_t i(0); i < fVector[kPion]->size(); ++i) {
+  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kPion]->at(i);
+  //     if(!track) break;
+  //     printf("%d : %g\n", (Int_t)i, track->Pt());
+  // }
+  //
+  // printf("====== Listing Proton ===========\n");
+  // for(Size_t i(0); i < fVector[kProton]->size(); ++i) {
+  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kProton]->at(i);
+  //     if(!track) break;
+  //     printf("%d : %g\n", (Int_t)i, track->Pt());
+  // }
+  printf("====== Listing K0s ===========\n");
+  for(Size_t i(0); i < fVector[kK0s]->size(); ++i) {
+      AliPicoTrack* track = (AliPicoTrack*) fVector[kK0s]->at(i);
+      if(!track) break;
+      printf("%d : %g\n", (Int_t)i, track->Pt());
+  }
+  printf("====== Listing Phi ===========\n");
+  for(Size_t i(0); i < fVector[kPhi]->size(); ++i) {
+      AliPicoTrack* track = (AliPicoTrack*) fVector[kPhi]->at(i);
+      if(!track) break;
+      printf("%d : %g\n", (Int_t)i, track->Pt());
+  }
+
   DumpTObjTable("UserExec: after filtering");
 
   // processing of selected event
@@ -2696,6 +2728,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
     Int_t iNumPart = fVector[iSpec]->size();
     Int_t iNumFilled = 0;
 
+    Int_t indexStart = 0;
+
     for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass) {
       if(iNumFilled >= iNumPart) { break; }
 
@@ -2717,7 +2751,8 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
         Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
 
         // filling POIs (P,S) flow vectors
-        iNumFilled += FillPOIsVectors(dGap,PartSpecies(iSpec),dPtLow,dPtHigh,dMassLow,dMassHigh);
+        printf("ProcessCorrTask:: Start: %d (%f - %f)\n",indexStart,dPtLow,dPtHigh);
+        iNumFilled += FillPOIsVectors(dGap ,PartSpecies(iSpec), indexStart, dPtLow, dPtHigh, dMassLow, dMassHigh);
         CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
       } // end-for {iPt}
     }  // end-for {iMass}
@@ -3013,7 +3048,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
   return;
 }
 // ============================================================================
-Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
+Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, Int_t& indStart, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
 {
   // Filling p,q and s flow vectors with POIs (given by species) for differential flow calculation
   // *************************************************************
@@ -3036,19 +3071,27 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
 
   Int_t iTracksFilled = 0; // counter of filled tracks
 
-  for(auto part = vector->begin(); part != vector->end(); ++part)
-  {
-    Double_t dPt = (*part)->Pt();
-    Double_t dPhi = (*part)->Phi();
-    Double_t dEta = (*part)->Eta();
+  printf("iStart : %d \n",indStart);
+
+  // for(auto part = vector->begin(); part != vector->end(); ++part)
+  for(Int_t index(indStart); index < (Int_t) vector->size(); ++index) {
+    AliVTrack* part = vector->at(index);
+    if(!part) { AliError("Particle does not exists within given vector"); return -1; }
+
+    Double_t dPhi = part->Phi();
+    Double_t dEta = part->Eta();
+    Double_t dPt = part->Pt();
     Double_t dMass = 0.0;
 
+    printf("pt %f | mass %f \n",dPt,dMass);
+
     // checking if pt is within pt (bin) range
-    if(dPt < dPtLow || dPt >= dPtHigh) { continue; }
+    if(dPt < dPtLow) { continue; }
+    if(dPt >= dPtHigh) { indStart = index; return iTracksFilled; }
 
     // checking if mass is within mass (bin) range
     if(bHasMass) {
-      dMass = (*part)->M();
+      dMass = part->M();
       if(dMass < dMassLow || dMass >= dMassHigh) { continue; }
     }
 
@@ -3059,10 +3102,10 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
 
     // loading weights if needed
     Double_t dWeight = 1.0;
-    if(fFlowUseWeights) { dWeight = GetFlowWeight(*part, species); }
+    if(fFlowUseWeights) { dWeight = GetFlowWeight(part, species); }
 
     // check if POI overlaps with RFPs (not for reconstructed)
-    Bool_t bIsWithinRefs = (!bHasMass && IsWithinRefs(static_cast<const AliAODTrack*>(*part)));
+    Bool_t bIsWithinRefs = (!bHasMass && IsWithinRefs(static_cast<const AliAODTrack*>(part)));
 
     if(!bHasGap) // no eta gap
     {
