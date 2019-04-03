@@ -1066,29 +1066,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fVector[kCharged]->clear();
   FilterCharged();
 
-  {
-    // TEST sorting
-    AliInfo("Testing sort");
-    Int_t  size = fVector[kCharged]->size();
-    printf("Number of selected charged: %d\n", size);
-
-    for(Int_t i(0); i < size; ++i) {
-      AliPicoTrack* track = (AliPicoTrack*) fVector[kCharged]->at(i);
-      if(!track) break;
-      printf("%d : %g\n", i, track->Pt());
-    }
-
-    printf("Sorting ========================== \n");
-    std::sort(fVector[kCharged]->begin(), fVector[kCharged]->end(), [this](const AliVTrack* a, const AliVTrack* b){ return this->sortPt(a, b); });
-
-    for(Int_t i(0); i < size; ++i) {
-      AliPicoTrack* track = (AliPicoTrack*) fVector[kCharged]->at(i);
-      if(!track) break;
-      printf("%d : %g\n", i, track->Pt());
-    }
-  }
-
-
   // checking if there is at least 5 particles: needed to "properly" calculate correlations
   if(fVector[kRefs]->size() < 5) { return; }
   fhEventCounter->Fill("#RPFs OK",1);
@@ -1138,6 +1115,9 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
     fhQAChargedMult[1]->Fill(fVector[kCharged]->size());
     fhRefsMult->Fill(fVector[kRefs]->size());
   }
+
+  // sorting charged hadrons
+  std::sort(fVector[kCharged]->begin(), fVector[kCharged]->end(), [this](const AliVTrack* a, const AliVTrack* b){ return this->sortPt(a, b); });
 
   // Filtering other species
   if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton]) { FilterPID(); }
