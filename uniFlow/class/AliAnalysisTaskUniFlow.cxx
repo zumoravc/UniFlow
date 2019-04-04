@@ -1144,30 +1144,30 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   //     printf("%d : %g\n", (Int_t)i, track->Pt());
   // }
   //
-  // printf("====== Listing Proton ===========\n");
-  // for(Size_t i(0); i < fVector[kProton]->size(); ++i) {
-  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kProton]->at(i);
+  printf("====== Listing Proton ===========\n");
+  for(Size_t i(0); i < fVector[kProton]->size(); ++i) {
+      AliPicoTrack* track = (AliPicoTrack*) fVector[kProton]->at(i);
+      if(!track) break;
+      printf("%d : %g\n", (Int_t)i, track->Pt());
+  }
+  // printf("====== Listing K0s ===========\n");
+  // for(Size_t i(0); i < fVector[kK0s]->size(); ++i) {
+  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kK0s]->at(i);
   //     if(!track) break;
-  //     printf("%d : %g\n", (Int_t)i, track->Pt());
+  //     printf("%d : pt %g | mass %g\n", (Int_t)i, track->Pt(), track->M());
   // }
-  printf("====== Listing K0s ===========\n");
-  for(Size_t i(0); i < fVector[kK0s]->size(); ++i) {
-      AliPicoTrack* track = (AliPicoTrack*) fVector[kK0s]->at(i);
-      if(!track) break;
-      printf("%d : pt %g | mass %g\n", (Int_t)i, track->Pt(), track->M());
-  }
-  printf("====== Listing Lambda ===========\n");
-  for(Size_t i(0); i < fVector[kLambda]->size(); ++i) {
-      AliPicoTrack* track = (AliPicoTrack*) fVector[kLambda]->at(i);
-      if(!track) break;
-      printf("%d : pt %g| mass %g\n", (Int_t)i, track->Pt(), track->M());
-  }
-  printf("====== Listing Phi ===========\n");
-  for(Size_t i(0); i < fVector[kPhi]->size(); ++i) {
-      AliPicoTrack* track = (AliPicoTrack*) fVector[kPhi]->at(i);
-      if(!track) break;
-      printf("%d : pt %g | mass %g\n", (Int_t)i, track->Pt(), track->M());
-  }
+  // printf("====== Listing Lambda ===========\n");
+  // for(Size_t i(0); i < fVector[kLambda]->size(); ++i) {
+  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kLambda]->at(i);
+  //     if(!track) break;
+  //     printf("%d : pt %g| mass %g\n", (Int_t)i, track->Pt(), track->M());
+  // }
+  // printf("====== Listing Phi ===========\n");
+  // for(Size_t i(0); i < fVector[kPhi]->size(); ++i) {
+  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kPhi]->at(i);
+  //     if(!track) break;
+  //     printf("%d : pt %g | mass %g\n", (Int_t)i, track->Pt(), track->M());
+  // }
 
   DumpTObjTable("UserExec: after filtering");
 
@@ -2738,11 +2738,10 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
             iNumMassBins = axisMass->GetNbins();
         }
 
-        Int_t iNumPart = fVector[iSpec]->size();
-        Int_t iNumFilled = 0;
-
         Int_t indexStart = 0;
 
+        Int_t iNumPart = fVector[iSpec]->size();
+        Int_t iNumFilled = 0;
 
         for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt) {
             if(iNumFilled >= iNumPart) { break; }
@@ -2764,10 +2763,17 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
                     dMassHigh = axisMass->GetBinUpEdge(iMass);
                 }
 
+                Int_t contIndexStart = indexStart;
+
                 // filling POIs (P,S) flow vectors
-                if(iSpec == kLambda) printf("ProcessCorrTask:: Start: %d (%f - %f | %f - %f)\n",indexStart,dPtLow,dPtHigh,dMassLow,dMassHigh);
-                iNumFilled += FillPOIsVectors(dGap ,PartSpecies(iSpec), indexStart, dPtLow, dPtHigh, dMassLow, dMassHigh);
+                if(iSpec == kProton) printf("ProcessCorrTask:: Start: %d | filled %d (%f - %f | %f - %f)\n",contIndexStart,iNumFilled,dPtLow,dPtHigh,dMassLow,dMassHigh);
+                iNumFilled += FillPOIsVectors(dGap ,PartSpecies(iSpec), contIndexStart, dPtLow, dPtHigh, dMassLow, dMassHigh);
                 CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
+
+                // switching index when all masses were proccessed in given pt bin (if applicable)
+                // so strating point shifts to first particle in next pt bin
+                if(iMass == iNumMassBins) { indexStart = contIndexStart; }
+                
             }  // end-for {iMass}
         } // end-for {iPt}
     } // end-for {iSpecies}
@@ -3085,7 +3091,7 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
 
   Int_t iTracksFilled = 0; // counter of filled tracks
 
-  if(species == kLambda) printf("iStart : %d \n",indStart);
+  if(species == kProton) printf("iStart : %d \n",indStart);
 
   // for(auto part = vector->begin(); part != vector->end(); ++part)
   for(Int_t index(indStart); index < (Int_t) vector->size(); ++index) {
@@ -3095,18 +3101,21 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
     Double_t dPhi = part->Phi();
     Double_t dEta = part->Eta();
     Double_t dPt = part->Pt();
-    Double_t dMass = 0.0;
+    Double_t dMass = (bHasMass ? part->M() : 0.0);
 
-    if(bHasMass) {
-        dMass = part->M();
-        if(dMass < dMassLow || dMass >= dMassHigh) { continue; }
-    }
-
-    if(species == kLambda) printf("pt %f | mass %f \n",dPt,dMass);
+    if(species == kProton) printf("pt %f | mass %f \n",dPt,dMass);
 
     // checking if pt is within pt (bin) range
     if(dPt < dPtLow) { continue; }
-    if(dPt >= dPtHigh) { indStart = index; return iTracksFilled; }
+    if(dPt >= dPtHigh) {
+        // if(!bHasMass) { indStart = index; }
+        indStart = index;
+        return iTracksFilled;
+    }
+
+    if(bHasMass) {
+        if(dMass < dMassLow || dMass >= dMassHigh) { continue; }
+    }
 
     // checking if mass is within mass (bin) range
 
@@ -3114,6 +3123,7 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
 
     // at this point particles corresponding to this pt (& mass) bin and eta acceptance (gap) survives
     iTracksFilled++;
+    if(species == kProton) printf("filled\n");
 
     // loading weights if needed
     Double_t dWeight = 1.0;
