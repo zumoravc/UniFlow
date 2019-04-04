@@ -1121,15 +1121,22 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   // Filtering other species
   if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton]) { FilterPID(); }
-  if(fProcessSpec[kK0s] || fProcessSpec[kLambda]) { FilterV0s(); }
-  if(fProcessSpec[kPhi]) { FilterPhi(); }
-
-  printf("====== Listing Charged ===========\n");
-  for(Size_t i(0); i < fVector[kCharged]->size(); ++i) {
-      AliPicoTrack* track = (AliPicoTrack*) fVector[kCharged]->at(i);
-      if(!track) break;
-      printf("%d : %g\n", (Int_t)i, track->Pt());
+  if(fProcessSpec[kK0s] || fProcessSpec[kLambda]) {
+      FilterV0s();
+      std::sort(fVector[kK0s]->begin(), fVector[kK0s]->end(), [this](const AliVTrack* a, const AliVTrack* b){ return this->sortPt(a, b); });
+      std::sort(fVector[kLambda]->begin(), fVector[kLambda]->end(), [this](const AliVTrack* a, const AliVTrack* b){ return this->sortPt(a, b); });
   }
+  if(fProcessSpec[kPhi]) {
+      FilterPhi();
+      std::sort(fVector[kPhi]->begin(), fVector[kPhi]->end(), [this](const AliVTrack* a, const AliVTrack* b){ return this->sortPt(a, b); });
+  }
+
+  // printf("====== Listing Charged ===========\n");
+  // for(Size_t i(0); i < fVector[kCharged]->size(); ++i) {
+  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kCharged]->at(i);
+  //     if(!track) break;
+  //     printf("%d : %g\n", (Int_t)i, track->Pt());
+  // }
   // printf("====== Listing Pion ===========\n");
   // for(Size_t i(0); i < fVector[kPion]->size(); ++i) {
   //     AliPicoTrack* track = (AliPicoTrack*) fVector[kPion]->at(i);
@@ -1147,13 +1154,19 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   for(Size_t i(0); i < fVector[kK0s]->size(); ++i) {
       AliPicoTrack* track = (AliPicoTrack*) fVector[kK0s]->at(i);
       if(!track) break;
-      printf("%d : %g\n", (Int_t)i, track->Pt());
+      printf("%d : pt %g | mass %g\n", (Int_t)i, track->Pt(), track->M());
+  }
+  printf("====== Listing Lambda ===========\n");
+  for(Size_t i(0); i < fVector[kLambda]->size(); ++i) {
+      AliPicoTrack* track = (AliPicoTrack*) fVector[kLambda]->at(i);
+      if(!track) break;
+      printf("%d : pt %g| mass %g\n", (Int_t)i, track->Pt(), track->M());
   }
   printf("====== Listing Phi ===========\n");
   for(Size_t i(0); i < fVector[kPhi]->size(); ++i) {
       AliPicoTrack* track = (AliPicoTrack*) fVector[kPhi]->at(i);
       if(!track) break;
-      printf("%d : %g\n", (Int_t)i, track->Pt());
+      printf("%d : pt %g | mass %g\n", (Int_t)i, track->Pt(), track->M());
   }
 
   DumpTObjTable("UserExec: after filtering");
@@ -2751,7 +2764,7 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
         Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
 
         // filling POIs (P,S) flow vectors
-        printf("ProcessCorrTask:: Start: %d (%f - %f)\n",indexStart,dPtLow,dPtHigh);
+                if(iSpec == kLambda) printf("ProcessCorrTask:: Start: %d (%f - %f | %f - %f)\n",indexStart,dPtLow,dPtHigh,dMassLow,dMassHigh);
         iNumFilled += FillPOIsVectors(dGap ,PartSpecies(iSpec), indexStart, dPtLow, dPtHigh, dMassLow, dMassHigh);
         CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
       } // end-for {iPt}
@@ -3071,7 +3084,7 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
 
   Int_t iTracksFilled = 0; // counter of filled tracks
 
-  printf("iStart : %d \n",indStart);
+  if(species == kLambda) printf("iStart : %d \n",indStart);
 
   // for(auto part = vector->begin(); part != vector->end(); ++part)
   for(Int_t index(indStart); index < (Int_t) vector->size(); ++index) {
@@ -3083,17 +3096,18 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
     Double_t dPt = part->Pt();
     Double_t dMass = 0.0;
 
-    printf("pt %f | mass %f \n",dPt,dMass);
+    if(bHasMass) {
+        dMass = part->M();
+        if(dMass < dMassLow || dMass >= dMassHigh) { continue; }
+    }
+
+    if(species == kLambda) printf("pt %f | mass %f \n",dPt,dMass);
 
     // checking if pt is within pt (bin) range
     if(dPt < dPtLow) { continue; }
     if(dPt >= dPtHigh) { indStart = index; return iTracksFilled; }
 
     // checking if mass is within mass (bin) range
-    if(bHasMass) {
-      dMass = part->M();
-      if(dMass < dMassLow || dMass >= dMassHigh) { continue; }
-    }
 
     if(bHasGap && TMath::Abs(dEta) < dEtaLimit) { continue; }
 
