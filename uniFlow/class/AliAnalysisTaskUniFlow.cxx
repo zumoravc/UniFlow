@@ -1144,18 +1144,18 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   //     printf("%d : %g\n", (Int_t)i, track->Pt());
   // }
   //
-  printf("====== Listing Proton ===========\n");
-  for(Size_t i(0); i < fVector[kProton]->size(); ++i) {
-      AliPicoTrack* track = (AliPicoTrack*) fVector[kProton]->at(i);
-      if(!track) break;
-      printf("%d : %g\n", (Int_t)i, track->Pt());
-  }
-  // printf("====== Listing K0s ===========\n");
-  // for(Size_t i(0); i < fVector[kK0s]->size(); ++i) {
-  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kK0s]->at(i);
+  // printf("====== Listing Proton ===========\n");
+  // for(Size_t i(0); i < fVector[kProton]->size(); ++i) {
+  //     AliPicoTrack* track = (AliPicoTrack*) fVector[kProton]->at(i);
   //     if(!track) break;
-  //     printf("%d : pt %g | mass %g\n", (Int_t)i, track->Pt(), track->M());
+  //     printf("%d : %g\n", (Int_t)i, track->Pt());
   // }
+  printf("====== Listing K0s ===========\n");
+  for(Size_t i(0); i < fVector[kK0s]->size(); ++i) {
+      AliPicoTrack* track = (AliPicoTrack*) fVector[kK0s]->at(i);
+      if(!track) break;
+      printf("%d : pt %g | mass %g\n", (Int_t)i, track->Pt(), track->M());
+  }
   // printf("====== Listing Lambda ===========\n");
   // for(Size_t i(0); i < fVector[kLambda]->size(); ++i) {
   //     AliPicoTrack* track = (AliPicoTrack*) fVector[kLambda]->at(i);
@@ -2744,14 +2744,13 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
         Int_t iNumFilled = 0;
 
         for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt) {
-            if(iNumFilled >= iNumPart) { break; }
+            Int_t iNumInPtBin = -10;
 
             Double_t dPt = axisPt->GetBinCenter(iPt);
             Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
             Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
 
             for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass) {
-                if(iNumFilled >= iNumPart) { break; }
 
                 Double_t dMass = 0.0;
                 Double_t dMassLow = 0.0;
@@ -2766,15 +2765,29 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
                 Int_t contIndexStart = indexStart;
 
                 // filling POIs (P,S) flow vectors
-                if(iSpec == kProton) printf("ProcessCorrTask:: Start: %d | filled %d (%f - %f | %f - %f)\n",contIndexStart,iNumFilled,dPtLow,dPtHigh,dMassLow,dMassHigh);
-                iNumFilled += FillPOIsVectors(dGap ,PartSpecies(iSpec), contIndexStart, dPtLow, dPtHigh, dMassLow, dMassHigh);
+                // if(iSpec == kK0s) printf("ProcessCorrTask:: Start: %d | filled %d | in pt bin %d (%f - %f | %f - %f)\n",contIndexStart,iNumFilled,iNumInPtBin, dPtLow,dPtHigh,dMassLow,dMassHigh);
+                if(iSpec == kK0s) printf("ProcessCorrTask:: Start: %d | filled %d (%f - %f | %f - %f)\n",contIndexStart,iNumFilled, dPtLow,dPtHigh,dMassLow,dMassHigh);
+                Int_t iFilledHere = FillPOIsVectors(dGap ,PartSpecies(iSpec), contIndexStart, iNumInPtBin, dPtLow, dPtHigh, dMassLow, dMassHigh);
                 CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
+
+                // updating counters with numbers from this step
+                iNumFilled += iFilledHere;
+                iNumInPtBin -= iFilledHere;
+
+                if(iSpec == kK0s) printf("[remains in pt bin %d]\n",iNumInPtBin);
 
                 // switching index when all masses were proccessed in given pt bin (if applicable)
                 // so strating point shifts to first particle in next pt bin
-                if(iMass == iNumMassBins) { indexStart = contIndexStart; }
-                
+                if(iNumInPtBin < 1 || iNumFilled >= iNumPart || iMass == iNumMassBins) {
+                    indexStart = contIndexStart;
+                    break;
+                }
+
+                // if(iNumFilled >= iNumPart) { break; }
             }  // end-for {iMass}
+
+            if(iNumFilled >= iNumPart) { break; }
+
         } // end-for {iPt}
     } // end-for {iSpecies}
 
@@ -3068,7 +3081,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const Double_t dGap)
   return;
 }
 // ============================================================================
-Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, Int_t& indStart, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
+Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const PartSpecies species, Int_t& indStart, Int_t& tracksInBin, const Double_t dPtLow, const Double_t dPtHigh, const Double_t dMassLow, const Double_t dMassHigh)
 {
   // Filling p,q and s flow vectors with POIs (given by species) for differential flow calculation
   // *************************************************************
@@ -3090,8 +3103,9 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
   }
 
   Int_t iTracksFilled = 0; // counter of filled tracks
+  Int_t iTracksInPtBin = 0; // counter for all tracks in pt bins
 
-  if(species == kProton) printf("iStart : %d \n",indStart);
+  if(species == kK0s) printf("iStart : %d \n",indStart);
 
   // for(auto part = vector->begin(); part != vector->end(); ++part)
   for(Int_t index(indStart); index < (Int_t) vector->size(); ++index) {
@@ -3103,15 +3117,18 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
     Double_t dPt = part->Pt();
     Double_t dMass = (bHasMass ? part->M() : 0.0);
 
-    if(species == kProton) printf("pt %f | mass %f \n",dPt,dMass);
+    if(species == kK0s) printf("pt %f | mass %f \n",dPt,dMass);
 
     // checking if pt is within pt (bin) range
     if(dPt < dPtLow) { continue; }
     if(dPt >= dPtHigh) {
-        // if(!bHasMass) { indStart = index; }
+        // refresh the starting index value for next pt bin
         indStart = index;
-        return iTracksFilled;
+        break;
+        // return iTracksFilled;
     }
+
+    iTracksInPtBin++;
 
     if(bHasMass) {
         if(dMass < dMassLow || dMass >= dMassHigh) { continue; }
@@ -3123,7 +3140,10 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
 
     // at this point particles corresponding to this pt (& mass) bin and eta acceptance (gap) survives
     iTracksFilled++;
-    if(species == kProton) printf("filled\n");
+    if(species == kK0s) printf("filled\n");
+
+    if(species == kK0s) { printf("K0s: pt %f | mass %f (%.2f - %.2f | %.4f - %.4f)\n", dPt,dMass, dPtLow,dPtHigh,dMassLow,dMassHigh); }
+
 
     // loading weights if needed
     Double_t dWeight = 1.0;
@@ -3192,6 +3212,10 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const Double_t dEtaGap, const Part
        }
      } // endif {dEtaGap}
    } // endfor {tracks}
+
+   // refresh the value only if first go (aka initialized to -10); after that it is used as a counter of remaining particles
+   if(tracksInBin < 0) { tracksInBin = iTracksInPtBin; }
+
    return iTracksFilled;
 }
 // ============================================================================
