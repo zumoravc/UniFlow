@@ -2688,90 +2688,91 @@ void AliAnalysisTaskUniFlow::FillQAPID(const QAindex iQAindex, const AliAODTrack
 // ============================================================================
 Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
 {
-  if(!task) { AliError("CorrTask does not exists!"); return kFALSE; }
-  // task->Print();
+    if(!task) { AliError("CorrTask does not exists!"); return kFALSE; }
+    // task->Print();
 
-  Int_t iNumHarm = task->fiNumHarm;
-  Int_t iNumGaps = task->fiNumGaps;
+    Int_t iNumHarm = task->fiNumHarm;
+    Int_t iNumGaps = task->fiNumGaps;
 
-  if(iNumGaps > 1) { AliError("Too many gaps! Not implemented yet!"); return kFALSE; }
-  if(iNumHarm > 4) { AliError("Too many harmonics! Not implemented yet!"); return kFALSE; }
+    if(iNumGaps > 1) { AliError("Too many gaps! Not implemented yet!"); return kFALSE; }
+    if(iNumHarm > 4) { AliError("Too many harmonics! Not implemented yet!"); return kFALSE; }
 
-  Double_t dGap = -1.0;
-  if(iNumGaps > 0) { dGap = task->fdGaps[0]; }
+    Double_t dGap = -1.0;
+    if(iNumGaps > 0) { dGap = task->fdGaps[0]; }
 
-  // Fill anyway -> needed for any correlations
-  FillRefsVectors(dGap); // TODO might check if previous task uses different Gap and if so, not fill it
+    // Fill anyway -> needed for any correlations
+    FillRefsVectors(dGap); // TODO might check if previous task uses different Gap and if so, not fill it
 
-  for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
-    AliDebug(2,Form("Processing species '%s'",GetSpeciesName(PartSpecies(iSpec))));
+    for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
+        AliDebug(2,Form("Processing species '%s'",GetSpeciesName(PartSpecies(iSpec))));
 
-    if(iSpec == kRefs) {
-      if(!task->fbDoRefs) { continue; }
-      CalculateCorrelations(task, kRefs);
-      continue;
-    }
+        if(iSpec == kRefs) {
+            if(!task->fbDoRefs) { continue; }
+            CalculateCorrelations(task, kRefs);
+            continue;
+        }
 
-    // here-after only POIs survive (Refs are dealt with already)
-    if(!task->fbDoPOIs) { continue; }
-    if(!fProcessSpec[iSpec]) { continue; }
+        // here-after only POIs survive (Refs are dealt with already)
+        if(!task->fbDoPOIs) { continue; }
+        if(!fProcessSpec[iSpec]) { continue; }
 
-    // NB: skip flow if Kaons are used only for Phi (flow not needed) not as full PID
-    if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
+        // NB: skip flow if Kaons are used only for Phi (flow not needed) not as full PID
+        if(iSpec == kKaon && (!fProcessSpec[kPion] || !fProcessSpec[kProton])) { continue; }
 
-    // loading (generic) profile to acess axes and bins
-    TH1* genProf = (TH1*) fListFlow[iSpec]->FindObject(Form("%s_Pos_sample0",task->fsName.Data()));
-    if(!genProf) { AliError(Form("Generic Profile '%s' not found", task->fsName.Data())); fListFlow[iSpec]->ls(); return kFALSE; }
+        // loading (generic) profile to acess axes and bins
+        TH1* genProf = (TH1*) fListFlow[iSpec]->FindObject(Form("%s_Pos_sample0",task->fsName.Data()));
+        if(!genProf) { AliError(Form("Generic Profile '%s' not found", task->fsName.Data())); fListFlow[iSpec]->ls(); return kFALSE; }
 
-    TAxis* axisPt = genProf->GetYaxis();
-    if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
-    Int_t iNumPtBins = axisPt->GetNbins();
+        TAxis* axisPt = genProf->GetYaxis();
+        if(!axisPt) { AliError("Pt axis object not found!"); return kFALSE; }
+        Int_t iNumPtBins = axisPt->GetNbins();
 
-    TAxis* axisMass = nullptr;
-    Int_t iNumMassBins = 1;
+        TAxis* axisMass = nullptr;
+        Int_t iNumMassBins = 1;
 
-    // check for 'massive' species
-    Bool_t bHasMass = HasMass(PartSpecies(iSpec));
-    if(bHasMass) {
-      axisMass = genProf->GetZaxis();
-      if(!axisMass) { AliError("Mass axis object not found!"); return kFALSE; }
-      iNumMassBins = axisMass->GetNbins();
-    }
+        // check for 'massive' species
+        Bool_t bHasMass = HasMass(PartSpecies(iSpec));
+        if(bHasMass) {
+            axisMass = genProf->GetZaxis();
+            if(!axisMass) { AliError("Mass axis object not found!"); return kFALSE; }
+            iNumMassBins = axisMass->GetNbins();
+        }
 
-    Int_t iNumPart = fVector[iSpec]->size();
-    Int_t iNumFilled = 0;
+        Int_t iNumPart = fVector[iSpec]->size();
+        Int_t iNumFilled = 0;
 
-    Int_t indexStart = 0;
+        Int_t indexStart = 0;
 
-    for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass) {
-      if(iNumFilled >= iNumPart) { break; }
 
-      Double_t dMass = 0.0;
-      Double_t dMassLow = 0.0;
-      Double_t dMassHigh = 0.0;
+        for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt) {
+            if(iNumFilled >= iNumPart) { break; }
 
-      if(bHasMass) {
-        dMass = axisMass->GetBinCenter(iMass);
-        dMassLow = axisMass->GetBinLowEdge(iMass);
-        dMassHigh = axisMass->GetBinUpEdge(iMass);
-      }
+            Double_t dPt = axisPt->GetBinCenter(iPt);
+            Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
+            Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
 
-      for(Int_t iPt(1); iPt < iNumPtBins+1; ++iPt) {
-        if(iNumFilled >= iNumPart) { break; }
+            for(Int_t iMass(1); iMass < iNumMassBins+1; ++iMass) {
+                if(iNumFilled >= iNumPart) { break; }
 
-        Double_t dPt = axisPt->GetBinCenter(iPt);
-        Double_t dPtLow = axisPt->GetBinLowEdge(iPt);
-        Double_t dPtHigh = axisPt->GetBinUpEdge(iPt);
+                Double_t dMass = 0.0;
+                Double_t dMassLow = 0.0;
+                Double_t dMassHigh = 0.0;
 
-        // filling POIs (P,S) flow vectors
+                if(bHasMass) {
+                    dMass = axisMass->GetBinCenter(iMass);
+                    dMassLow = axisMass->GetBinLowEdge(iMass);
+                    dMassHigh = axisMass->GetBinUpEdge(iMass);
+                }
+
+                // filling POIs (P,S) flow vectors
                 if(iSpec == kLambda) printf("ProcessCorrTask:: Start: %d (%f - %f | %f - %f)\n",indexStart,dPtLow,dPtHigh,dMassLow,dMassHigh);
-        iNumFilled += FillPOIsVectors(dGap ,PartSpecies(iSpec), indexStart, dPtLow, dPtHigh, dMassLow, dMassHigh);
-        CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
-      } // end-for {iPt}
-    }  // end-for {iMass}
-  } // end-for {iSpecies}
+                iNumFilled += FillPOIsVectors(dGap ,PartSpecies(iSpec), indexStart, dPtLow, dPtHigh, dMassLow, dMassHigh);
+                CalculateCorrelations(task, PartSpecies(iSpec),dPt,dMass);
+            }  // end-for {iMass}
+        } // end-for {iPt}
+    } // end-for {iSpecies}
 
-  return kTRUE;
+    return kTRUE;
 }
 // ============================================================================
 void AliAnalysisTaskUniFlow::CalculateCorrelations(const CorrTask* const task, const PartSpecies species, const Double_t dPt, const Double_t dMass) const
