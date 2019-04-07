@@ -68,8 +68,8 @@ void runDev()
       // printf("\n CLING \n\n");
       // gInterpreter->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
       // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"alien:///alice/cern.ch/user/v/vpacik/weights/lhc15o/6519/weights.root\")"));
-      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
-      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
+      // AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb,\"weights.root\")"));
+      AliAnalysisTaskUniFlow *task1 = reinterpret_cast<AliAnalysisTaskUniFlow*>(gInterpreter->ExecuteMacro("AddTaskUniFlow.C(AliAnalysisTaskUniFlow::kPbPb)"));
     #else
       // printf("\n CINT \n\n");
       gROOT->LoadMacro("AliAnalysisTaskUniFlow.cxx++g");
@@ -89,11 +89,11 @@ void runDev()
     task1->SetProcessPhi(1);
     task1->SetProcessV0s(1);
     task1->SetCentrality(AliAnalysisTaskUniFlow::kV0M,0,90,90);
-    task1->SetFlowPOIsPtBins({1.0,4.0}, AliAnalysisTaskUniFlow::kK0s);
-    task1->SetFlowPOIsPtBins({2.0,3.0}, AliAnalysisTaskUniFlow::kLambda);
-    task1->SetFlowPOIsPtBins({0.1,2.0}, AliAnalysisTaskUniFlow::kPhi);
-    task1->SetFlowPOIsPtBins({1.0,3.0,3.2,5.}, AliAnalysisTaskUniFlow::kCharged);
-    // weigths
+    // task1->SetFlowPOIsPtBins({1.0,4.0}, AliAnalysisTaskUniFlow::kK0s);
+    // task1->SetFlowPOIsPtBins({2.0,3.0}, AliAnalysisTaskUniFlow::kLambda);
+    // task1->SetFlowPOIsPtBins({0.1,2.0}, AliAnalysisTaskUniFlow::kPhi);
+    // task1->SetFlowPOIsPtBins({1.0,3.0,3.2,5.}, AliAnalysisTaskUniFlow::kCharged);
+    // // weigths
     task1->SetFlowFillWeights(0);
     task1->SetFlowFillAfterWeights(1);
     task1->SetUseWeigthsRunByRun(0);
@@ -149,12 +149,19 @@ void runDev()
     //mgr->PrintStatus();
     mgr->SetUseProgressBar(1, 500);
 
+    TStopwatch watch = TStopwatch();
+    watch.Stop();
+    watch.Reset();
+
     if(local) {
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
-        chain->Add("~/Codes/Flow/data/2016/LHC16l/000259888/pass1/AOD/001/AliAOD.root");
-        // chain->Add("~/NBI/Flow/data/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
+        // chain->Add("~/Codes/Flow/data/2016/LHC16l/000259888/pass1/AOD/001/AliAOD.root");
+        // chain->Add("~/Codes/Flow/data/2016/LHC16q/000265427/pass1_CENT_wSDD/AOD/001/AliAOD.root");
+        chain->Add("~/Codes/Flow/data/2015/LHC15o/000246153/pass1/AOD194/0002/AliAOD.root");
+        watch.Start();
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
+        watch.Stop();
     } else {
         // if we want to run on grid, we create and configure the plugin
         AliAnalysisAlien *alienHandler = new AliAnalysisAlien();
@@ -208,11 +215,16 @@ void runDev()
             alienHandler->SetNtestFiles(1);
             // and launch the analysis
             alienHandler->SetRunMode("test");
-            mgr->StartAnalysis("grid");
         } else {
             // else launch the full grid analysis
             alienHandler->SetRunMode(sGridMode.Data());
-            mgr->StartAnalysis("grid");
         }
+        watch.Start();
+        mgr->StartAnalysis("grid");
+        watch.Stop();
       }
+
+      printf("============================\n");
+      printf("  Running for: %f (CPU) | %f (real)\n", watch.CpuTime(), watch. RealTime());
+      printf("============================\n");
 }
