@@ -211,7 +211,7 @@ TString ProcessUniFlow::GetSpeciesLabel(PartSpecies species)
     case kCharged : label.Append("h^{#pm}"); break;
     case kPion : label.Append("#pi^{#pm}"); break;
     case kKaon : label.Append("K^{#pm}"); break;
-    case kProton : label.Append("p/{#bar{p}}"); break;
+    case kProton : label.Append("p/#bar{p}"); break;
     case kPhi : label.Append("#phi"); break;
     case kK0s : label.Append("K_{S}^{0}"); break;
     case kLambda : label.Append("#Lambda/#bar{#Lambda}"); break;
