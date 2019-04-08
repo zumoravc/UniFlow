@@ -1328,7 +1328,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 {
-  Info("Processing task","ProcessReconstructed");
+  Debug("Processing task","ProcessReconstructed");
   if(!task) { Error("Task not valid!","ProcessReconstructed"); return kFALSE; }
   if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
@@ -1414,6 +1414,12 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       hInvMass->SetTitle(Form("%s: InvMass dist (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
       hInvMass->SetMarkerStyle(kFullCircle);
 
+      TH1D* hInvMassBg = nullptr;
+      if(task->fSpecies == kPhi) {
+         hInvMassBg = (TH1D*) task->fListHistos->FindObject(Form("hInvMassBg_mult%d_pt%d",binMult,binPt));
+         if(!hInvMassBg) { Error("Loading inv. mass (Bg) slice failed!","ProcessReconstructed"); task->fListHistos->ls(); return kFALSE; }
+      }
+
       TH1D* hFlowMass = (TH1D*) task->fListProfiles->FindObject(Form("%s_Pos_sample0_mult%d_pt%d",sProfTwoName.Data(),binMult,binPt));
       if(!hFlowMass) { Error(Form("hFlowMass histo '%s' not found among slices!",sProfTwoName.Data()),"ProcessReconstructed"); task->fListProfiles->ls(); return kFALSE; }
       hFlowMass->SetTitle(Form("%s: FlowMass (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
@@ -1443,7 +1449,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       TF1 fitOutBg;
       TF1 fitOut;
 
-      Bool_t fitMass = FitInvMass(hInvMass, task, fitOut, fitOutSig, fitOutBg, listFits);
+      Bool_t fitMass = FitInvMass(hInvMass, task, fitOut, fitOutSig, fitOutBg, listFits, hInvMassBg);
       if(!fitMass) { Error("FitMass failed!","ProcessReconstructed"); ffFitsFile->cd(); fitOutSig.Write("fitMassSig"); fitOutBg.Write("fitMassBg"); return kFALSE; }
 
       TF1 fitCor;
@@ -2960,7 +2966,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(!outList) { Error("Output TList outList not found!"); return kFALSE; }
 
   PartSpecies species = task->fSpecies;
-  if(task->fFlowFitPhiSubtLS && species == kPhi && !histBg) { Error("Input histo bg not found!"); return kFALSE; }
+  if(task->fFlowFitPhiSubtLS && species == kPhi && !histBg) { Error("Input histo bg not found!","FitInvMass"); return kFALSE; }
   if(!IsSpeciesReconstructed(species)) { Error("Invalid species!","FitInvMass"); return kFALSE; }
 
   Double_t dMassRangeLow = hist->GetXaxis()->GetXmin();
