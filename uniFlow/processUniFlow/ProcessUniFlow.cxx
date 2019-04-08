@@ -364,7 +364,7 @@ Bool_t ProcessUniFlow::ProcessMixed(FlowTask* task)
       histFlow = histVn;
     } else { // end-if {!bReco}
       // recnstructed
-      gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
+      // gSystem->mkdir(Form("%s/fits/",fsOutputFilePath.Data()));
 
       histFlow = new TH1D(sHistFlowName.Data(),Form("%s: %s; #it{p}_{T} (GeV/#it{c});",GetSpeciesLabel(task->fSpecies).Data(),sHistFlowName.Data()), task->fNumPtBins,task->fPtBinsEdges.data());
       if(!histFlow) { Error("Creation of 'histFlow' failed!","ProcessMixed"); return kFALSE; }
@@ -1377,7 +1377,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   {
     iMultBin = binMult;
 
-
     // List for desampling : later
     TString nameCorTwo = Form("pCor2_%s_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
     TString nameCumTwo = Form("hCum2_%s_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
@@ -1425,72 +1424,92 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       hFlowMass->SetTitle(Form("%s: FlowMass (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
       hFlowMass->SetMarkerStyle(kFullCircle);
 
-      TList* listFits = new TList();
-      listFits->SetOwner(1);
-
-      TList* listFitsFour = nullptr;
-      TF1 fitCorFour;
-      TF1 fitCorSigFour;
-      TF1 fitCorBgFour;
-
       if(task->fCumOrderMax >= 4)
       {
         hFlowMassFour = (TH1D*) task->fListProfiles->FindObject(Form("%s_Pos_sample0_mult%d_pt%d",sProfFourName.Data(),binMult,binPt));
         if(!hFlowMassFour) { Error(Form("hFlowMassFour histo '%s' not found among slices!",sProfFourName.Data()),"ProcessReconstructed"); task->fListProfiles->ls(); return kFALSE; }
         hFlowMassFour->SetTitle(Form("%s: FlowMassFour (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
         hFlowMassFour->SetMarkerStyle(kFullCircle);
-        listFitsFour = new TList();
-        listFitsFour->SetOwner(1);
       }
 
       // ### Fitting the correlations
 
-      TF1 fitOutSig;
-      TF1 fitOutBg;
-      TF1 fitOut;
+      Bool_t bFitMass = kFALSE;
+      Bool_t bFitCor = kFALSE;
+      Bool_t bFitCorFour = kFALSE;
 
-      Bool_t fitMass = FitInvMass(hInvMass, task, fitOut, fitOutSig, fitOutBg, listFits, hInvMassBg);
-      if(!fitMass) { Error("FitMass failed!","ProcessReconstructed"); ffFitsFile->cd(); fitOutSig.Write("fitMassSig"); fitOutBg.Write("fitMassBg"); return kFALSE; }
+      TF1 fitOut, fitOutSig, fitOutBg;
+      TF1 fitCor, fitCorSig, fitCorBg;
+      TF1 fitCorFour, fitCorSigFour, fitCorBgFour;
 
-      TF1 fitCor;
-      TF1 fitCorSig;
-      TF1 fitCorBg;
+      TList* listMass = new TList();
+      listMass->SetOwner(1);
 
-      Bool_t bFitCor = FitCorrelations(hFlowMass, task, fitCor, fitCorSig, fitCorBg, fitOutSig, fitOutBg, listFits);
-      if(!bFitCor) { Error("FitCor failed!","ProcessReconstructed"); ffFitsFile->cd(); fitCorSig.Write("fitCorSig"); fitCorBg.Write("fitCorBg"); return kFALSE; }
+      bFitMass = FitInvMass(hInvMass, task, fitOut, fitOutSig, fitOutBg, listMass, hInvMassBg);
 
-      // storing fits
-      listFits->Add(hInvMass);
-      // listFits->Add(&fitOut);
-      // listFits->Add(&fitOutSig);
-      // listFits->Add(&fitOutBg);
-      listFits->Add(hFlowMass);
-      // listFits->Add(&fitCor);
-      // listFits->Add(&fitCorSig);
-      // listFits->Add(&fitCorBg);
+      TList* listFits = (TList*) listMass->Clone("listFits");
+      listFits->SetOwner(1);
 
-      Int_t iParFlow = fitCorSig.GetNpar() - 1;
-      dFlow = fitCorSig.GetParameter(iParFlow);
-      dFlowError = fitCorSig.GetParError(iParFlow);
+      TList* listFitsFour = (TList*) listMass->Clone("listFitsFour");
+      listFitsFour->SetOwner(1);
 
-      if(task->fCumOrderMax >= 4)
-      {
-        Bool_t bFitCorFour = FitCorrelations(hFlowMassFour, task, fitCorFour, fitCorSigFour, fitCorBgFour, fitOutSig, fitOutBg, listFitsFour);
-        if(!bFitCorFour) { Error("FitCorFour failed!","ProcessReconstructed"); return kFALSE; }
-
-        // storing fits
-        listFitsFour->Add(hInvMass);
-        // listFitsFour->Add(&fitOutSig);
-        // listFitsFour->Add(&fitOutBg);
-        listFitsFour->Add(hFlowMassFour);
-        // listFitsFour->Add(&fitCorFour);
-        // listFitsFour->Add(&fitCorSigFour);
-        // listFitsFour->Add(&fitCorBgFour);
-
-        Int_t iParFlow = fitCorSigFour.GetNpar() - 1;
-        dFlowFour = fitCorSigFour.GetParameter(iParFlow);
-        dFlowFourError = fitCorSigFour.GetParError(iParFlow);
+      if(bFitMass) {
+          bFitCor = FitCorrelations(hFlowMass, task, fitCor, fitCorSig, fitCorBg, fitOutSig, fitOutBg, listFits);
+          if(task->fCumOrderMax >= 4) {
+              bFitCorFour = FitCorrelations(hFlowMassFour, task, fitCorFour, fitCorSigFour, fitCorBgFour, fitOutSig, fitOutBg, listFitsFour);
+        }
       }
+
+
+    // Adding description strings
+    TNamed* corr = new TNamed("corr",Form("%s",sProfTwoName.Data()));
+    listFits->Add(corr);
+    TNamed* spec = new TNamed("spec",Form("%s",sSpeciesLabel.Data()));
+    listFits->Add(spec);
+    TNamed* nCent = new TNamed("cent",Form("%d-%d",(Int_t)fdMultBins[binMult],(Int_t)fdMultBins[binMult+1]));
+    listFits->Add(nCent);
+    TNamed* nPt = new TNamed("pt",Form("%g-%g",task->fPtBinsEdges[binPt],task->fPtBinsEdges[binPt+1]));
+    listFits->Add(nPt);
+
+    if(task->fCumOrderMax >= 4)
+    {
+      TNamed* corrFour = new TNamed("corr",Form("%s",sProfFourName.Data()));
+      listFitsFour->Add(corrFour);
+      listFitsFour->Add(spec);
+      listFitsFour->Add(nCent);
+      listFitsFour->Add(nPt);
+    }
+
+      // Saving fits to output file
+      ffFitsFile->cd();
+      listFits->Write(Form("%s_%s_cent%d_pt%d",sSpeciesName.Data(),sProfTwoName.Data(),iMultBin,binPt),TObject::kSingleKey);
+      if(task->fCumOrderMax >= 4) { listFitsFour->Write(Form("%s_%s_cent%d_pt%d",sSpeciesName.Data(),sProfFourName.Data(),iMultBin,binPt),TObject::kSingleKey); }
+
+      if(!bFitMass) {
+          Error(Form("Fitting inv.mass unsuccesfull (mult %d | pt %d)",binMult,binPt),"ProcessReconstructed");
+          return kFALSE;
+      }
+
+      if(!bFitCor) {
+        Error(Form("Fitting vn-mass unsuccesfull (mult %d | pt %d)",binMult,binPt),"ProcessReconstructed");
+        return kFALSE;
+      }
+
+      if(task->fCumOrderMax >= 4 && !bFitCorFour) {
+        Error(Form("Fitting vn-mass for Four unsuccesfull (mult %d | pt %d)",binMult,binPt),"ProcessReconstructed");
+        return kFALSE;
+      }
+
+
+        Int_t iParFlow = fitCorSig.GetNpar() - 1;
+        dFlow = fitCorSig.GetParameter(iParFlow);
+        dFlowError = fitCorSig.GetParError(iParFlow);
+
+        if(task->fCumOrderMax >= 4) {
+          Int_t iParFlow = fitCorSigFour.GetNpar() - 1;
+          dFlowFour = fitCorSigFour.GetParameter(iParFlow);
+          dFlowFourError = fitCorSigFour.GetParError(iParFlow);
+        }
 
       // setting the flow
       pCorTwoDif->SetBinContent(binPt+1,dFlow);
@@ -1507,11 +1526,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         Double_t dFlowRel = -999.9; if(TMath::Abs(dFlowFour) > 0.0) { dFlowRel = dFlowFourError / dFlowFour; }
         Info(Form("Final vn{4}: (mult %d | pt %d) %g +- %g (rel. %.3f)",iMultBin,binPt,dFlowFour,dFlowFourError,dFlowRel), "ProcessReconstructed");
       }
-
-      // processing / plotting fits
-      ffFitsFile->cd();
-      listFits->Write(Form("fits_%s_cent%d_pt%d",sSpeciesName.Data(),iMultBin,binPt),TObject::kSingleKey);
-      if(task->fCumOrderMax >= 4) { listFitsFour->Write(Form("fitsFour_%s_cent%d_pt%d",sSpeciesName.Data(),iMultBin,binPt),TObject::kSingleKey); }
 
       // HERE THE CORRELATIONS (NOT FLOW) are ready!!!
       // TODO: Rename that stuff!!!
