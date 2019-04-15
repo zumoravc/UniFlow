@@ -3070,7 +3070,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
     sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
-    sParNames.push_back("ampG1");       dParDef.push_back(0.55);         dParLimLow.push_back(0.55);          dParLimHigh.push_back(0.99);
+    sParNames.push_back("ampG1");       dParDef.push_back(0.55);         dParLimLow.push_back(0.55);          dParLimHigh.push_back(0.98);
     sParNames.push_back("meanG1");      dParDef.push_back(0.4976);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.51);
     sParNames.push_back("sigmaG1");     dParDef.push_back(0.005);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.05);
     // sParNames.push_back("ampG2");       dParDef.push_back(0.0);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(0.4);
@@ -3105,7 +3105,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
     sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
-    sParNames.push_back("ampG1");       dParDef.push_back(1.0);         dParLimLow.push_back(0.51);          dParLimHigh.push_back(1.0);
+    sParNames.push_back("ampG1");       dParDef.push_back(1.0);         dParLimLow.push_back(0.6);          dParLimHigh.push_back(1.0);
     sParNames.push_back("meanG1");      dParDef.push_back(1.115);       dParLimLow.push_back(1.11);         dParLimHigh.push_back(1.12);
     sParNames.push_back("sigmaG1");     dParDef.push_back(0.001);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.007);
     // sParNames.push_back("ampG2");       dParDef.push_back(0.2);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.0);
