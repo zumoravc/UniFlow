@@ -378,7 +378,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TList*                  fQAPhi; //! Phi candidates list
       TList*                  fFlowWeights; //! list for flow weights
       TList*                  fListFlow[kUnknown]; //! flow lists
-
+      TList*                  fListMC; //! list for MC
 
       // histograms & profiles
 
@@ -536,7 +536,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH2D*			  		  fhQAV0sArmenterosLambda[QAindex::kNumQA];	//! Armenteros-Podolanski plot for Lambda candidates
       TH2D*			  		  fhQAV0sArmenterosALambda[QAindex::kNumQA];	//! Armenteros-Podolanski plot for ALambda candidates
 
-      ClassDef(AliAnalysisTaskUniFlow, 7);
+      ClassDef(AliAnalysisTaskUniFlow, 8);
 };
 
 #endif

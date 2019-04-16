@@ -224,6 +224,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fQAPhi{nullptr},
   fFlowWeights{nullptr},
   fListFlow{nullptr},
+  fListMC{nullptr},
 
   fhsCandK0s{nullptr},
   fhsCandLambda{nullptr},
@@ -490,6 +491,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fQAPhi{nullptr},
   fFlowWeights{nullptr},
   fListFlow{nullptr},
+  fListMC{nullptr},
 
   fhsCandK0s{nullptr},
   fhsCandLambda{nullptr},
@@ -647,6 +649,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   DefineOutput(12, TList::Class());
   DefineOutput(13, TList::Class());
   DefineOutput(14, TList::Class());
+  DefineOutput(15, TList::Class());
 }
 // ============================================================================
 AliAnalysisTaskUniFlow::~AliAnalysisTaskUniFlow()
@@ -1049,8 +1052,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(!fPIDResponse) { AliFatal("AliPIDResponse not attached!"); return; }
 
   // loading array with MC particles
-  if(fMC)
-  {
+  if(fMC) {
     fArrayMC = (TClonesArray*) fEventAOD->FindListObject("mcparticles");
     if(!fArrayMC) { AliFatal("TClonesArray with MC particle not found!"); return; }
   }
@@ -1181,6 +1183,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   PostData(++i, fQAV0s);
   PostData(++i, fQAPhi);
   PostData(++i, fFlowWeights);
+  if(fMC) { PostData(++i, fListMC); }
 
   return;
 }
@@ -3576,6 +3579,10 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   fQAPhi->SetOwner(kTRUE);
   fQAV0s = new TList();
   fQAV0s->SetOwner(kTRUE);
+  if(fMC) {
+      fListMC = new TList();
+      fListMC->SetOwner(kTRUE);
+  }
 
   // setting number of bins based on set range with fixed width
   const Int_t iFlowRFPsPtBinNum = (Int_t) ((fFlowRFPsPtMax - fFlowRFPsPtMin) / 0.1 + 0.5);
@@ -4183,31 +4190,31 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   if(fMC)
   {
     fhMCRecoAllPionPt = new TH1D("fhMCRecoAllPionPt","fhMCRecoAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoAllPionPt);
+    fListMC->Add(fhMCRecoAllPionPt);
     fhMCRecoSelectedPionPt = new TH1D("fhMCRecoSelectedPionPt","fhMCRecoSelectedPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoSelectedPionPt);
+    fListMC->Add(fhMCRecoSelectedPionPt);
     fhMCRecoSelectedTruePionPt = new TH1D("fhMCRecoSelectedTruePionPt","fhMCRecoSelectedTruePionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoSelectedTruePionPt);
+    fListMC->Add(fhMCRecoSelectedTruePionPt);
     fhMCGenAllPionPt = new TH1D("fhMCGenAllPionPt","fhMCGenAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCGenAllPionPt);
+    fListMC->Add(fhMCGenAllPionPt);
 
     fhMCRecoAllKaonPt = new TH1D("fhMCRecoAllKaonPt","fhMCRecoAllKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoAllKaonPt);
+    fListMC->Add(fhMCRecoAllKaonPt);
     fhMCRecoSelectedKaonPt = new TH1D("fhMCRecoSelectedKaonPt","fhMCRecoSelectedKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoSelectedKaonPt);
+    fListMC->Add(fhMCRecoSelectedKaonPt);
     fhMCRecoSelectedTrueKaonPt = new TH1D("fhMCRecoSelectedTrueKaonPt","fhMCRecoSelectedTrueKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoSelectedTrueKaonPt);
+    fListMC->Add(fhMCRecoSelectedTrueKaonPt);
     fhMCGenAllKaonPt = new TH1D("fhMCGenAllKaonPt","fhMCGenAllKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCGenAllKaonPt);
+    fListMC->Add(fhMCGenAllKaonPt);
 
     fhMCRecoAllProtonPt = new TH1D("fhMCRecoAllProtonPt","fhMCRecoAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoAllProtonPt);
+    fListMC->Add(fhMCRecoAllProtonPt);
     fhMCRecoSelectedProtonPt = new TH1D("fhMCRecoSelectedProtonPt","fhMCRecoSelectedProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoSelectedProtonPt);
+    fListMC->Add(fhMCRecoSelectedProtonPt);
     fhMCRecoSelectedTrueProtonPt = new TH1D("fhMCRecoSelectedTrueProtonPt","fhMCRecoSelectedTrueProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCRecoSelectedTrueProtonPt);
+    fListMC->Add(fhMCRecoSelectedTrueProtonPt);
     fhMCGenAllProtonPt = new TH1D("fhMCGenAllProtonPt","fhMCGenAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fQAPID->Add(fhMCGenAllProtonPt);
+    fListMC->Add(fhMCGenAllProtonPt);
   } // end-if{fMC}
 
   // posting data (mandatory)
@@ -4219,6 +4226,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   PostData(++i, fQAV0s);
   PostData(++i, fQAPhi);
   PostData(++i, fFlowWeights);
+  if(fMC) { PostData(++i, fListMC); }
 
   DumpTObjTable("UserCreateOutputObjects: end");
 
