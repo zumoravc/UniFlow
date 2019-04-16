@@ -182,7 +182,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       static const Int_t      fFlowNumWeightPowersMax = 5; // maximum weight power length of flow vector array
 
       const char*             GetSpeciesName(PartSpecies species) const;
+      const char*             GetSpeciesName(Int_t species) const { return GetSpeciesName(PartSpecies(species)); }
       const char*             GetSpeciesLabel(PartSpecies species) const;
+      const char*             GetSpeciesLabel(Int_t species) const { return GetSpeciesLabel(PartSpecies(species)); }
       const char*             GetEtaGapName(Double_t dEtaGap) const { return Form("%02.2g",10.0*dEtaGap); }
 
       Bool_t                  sortPt(const AliVTrack* t1, const AliVTrack* t2) { return (t1->Pt() < t2->Pt()); } // function for std::sort
