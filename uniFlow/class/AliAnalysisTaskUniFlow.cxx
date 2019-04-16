@@ -281,6 +281,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhMCRecoSelectedTrueProtonPt{nullptr},
   fhMCRecoAllProtonPt{nullptr},
   fhMCGenAllProtonPt{nullptr},
+  fh2MCPtEtaReco{nullptr},
+  fh2MCPtEtaGen{nullptr},
   fhPhiCounter{nullptr},
   fhPhiMult{nullptr},
   fhPhiBGMult{nullptr},
@@ -548,6 +550,8 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fhMCRecoSelectedTrueProtonPt{nullptr},
   fhMCRecoAllProtonPt{nullptr},
   fhMCGenAllProtonPt{nullptr},
+  fh2MCPtEtaReco{nullptr},
+  fh2MCPtEtaGen{nullptr},
   fhPhiCounter{nullptr},
   fhPhiMult{nullptr},
   fhPhiBGMult{nullptr},
@@ -1468,8 +1472,11 @@ void AliAnalysisTaskUniFlow::FilterCharged() const
     // passing reconstruction criteria
     if(!IsChargedSelected(track)) { continue; }
 
-    // Checking if selected track is within Refs pt,eta acceptance
-    if(IsWithinRefs(track)) { fVector[kRefs]->push_back(track); }
+    // Checking if selected track is eligible for Ref. flow
+    if(IsWithinRefs(track)) {
+        fVector[kRefs]->push_back(track);
+        if(fMC) { fh2MCPtEtaReco[kRefs]->Fill(track->Pt(), track->Eta()); }
+    }
 
     // Checking if selected track is within POIs pt,eta acceptance
     if(!IsWithinPOIs(track)) { continue; }
@@ -1477,6 +1484,10 @@ void AliAnalysisTaskUniFlow::FilterCharged() const
     fVector[kCharged]->push_back(track);
 
     if(fMC) {
+      // filling reco
+      fh2MCPtEtaReco[kCharged]->Fill(track->Pt(), track->Eta());
+
+      // filling Reco PID
       AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
       if(trackMC) {
         Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
@@ -1662,11 +1673,13 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
 
     if(fFillQA) { FillQAV0s(kAfter,v0,bIsK0s,iIsLambda); } // QA AFTER selection
 
+
     if(bIsK0s)
     {
       iNumK0sSelected++;
       fhV0sCounter->Fill("K^{0}_{S}",1);
       if(fFillQA) { fhV0sInvMassK0s->Fill(v0->MassK0Short(),v0->MassLambda()); }
+      if(fMC) { fh2MCPtEtaReco[kK0s]->Fill(v0->Pt(), v0->Eta()); }
 
       AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short());
       fVector[kK0s]->push_back(pico);
@@ -1679,6 +1692,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
       iNumLambdaSelected++;
       fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
       if(fFillQA) { fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassLambda()); }
+      if(fMC) { fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta()); }
 
       AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassLambda());
       fVector[kLambda]->push_back(pico);
@@ -1691,6 +1705,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
       iNumALambdaSelected++;
       fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
       if(fFillQA) { fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassAntiLambda()); }
+      if(fMC) { fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta()); }
 
       AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassAntiLambda());
       fVector[kLambda]->push_back(pico);
@@ -2310,6 +2325,7 @@ void AliAnalysisTaskUniFlow::FilterPhi() const
         fhPhiCounter->Fill("BG",1);
         FillSparseCand(fhsCandPhiBg, mother);
         iNumBG++;
+        if(fMC) { fh2MCPtEtaReco[kPhi]->Fill(mother->Pt(), mother->Eta()); }
       }
 
       if(mother->Charge() == 0) {
@@ -2431,6 +2447,9 @@ void AliAnalysisTaskUniFlow::FilterPID() const
     // process MC data
     if(fMC)
     {
+      // fill reco
+      fh2MCPtEtaReco[species]->Fill(track->Pt(), track->Eta());
+
       AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
       if(trackMC)
       {
@@ -4187,8 +4206,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     } // end-for {iQA}
   } // end-if {fFillQA}
 
-  if(fMC)
-  {
+  if(fMC) {
     fhMCRecoAllPionPt = new TH1D("fhMCRecoAllPionPt","fhMCRecoAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
     fListMC->Add(fhMCRecoAllPionPt);
     fhMCRecoSelectedPionPt = new TH1D("fhMCRecoSelectedPionPt","fhMCRecoSelectedPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
@@ -4215,6 +4233,28 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fListMC->Add(fhMCRecoSelectedTrueProtonPt);
     fhMCGenAllProtonPt = new TH1D("fhMCGenAllProtonPt","fhMCGenAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
     fListMC->Add(fhMCGenAllProtonPt);
+
+    // NUE weights
+
+    for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
+        if(!fProcessSpec[iSpec]) { continue; }
+
+        Int_t iNumBinsPt = fFlowPOIsPtBinNum;
+        Double_t dPtLow = fFlowPOIsPtMin;
+        Double_t dPtHigh = fFlowPOIsPtMax;
+
+        if(iSpec == kRefs) {
+            iNumBinsPt = iFlowRFPsPtBinNum;
+            dPtLow = fFlowRFPsPtMin;
+            dPtHigh = fFlowRFPsPtMax;
+        }
+
+        fh2MCPtEtaReco[iSpec] = new TH2D(Form("fh2MCPtEtaReco%s",GetSpeciesName(iSpec)),Form("MC %s (reco); #it{p}_{T} (GeV/#it{c}); #it{#eta}", GetSpeciesLabel(iSpec)), iNumBinsPt,dPtLow,dPtHigh, fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
+        fListMC->Add(fh2MCPtEtaReco[iSpec]);
+        fh2MCPtEtaGen[iSpec] = new TH2D(Form("fh2MCPtEtaGen%s",GetSpeciesName(iSpec)),Form("MC %s (Gen); #it{p}_{T} (GeV/#it{c}); #it{#eta}", GetSpeciesLabel(iSpec)), iNumBinsPt,dPtLow,dPtHigh, fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
+        fListMC->Add(fh2MCPtEtaGen[iSpec]);
+    }
+
   } // end-if{fMC}
 
   // posting data (mandatory)
