@@ -116,7 +116,7 @@ void ProcessUniFlow::Run()
 Bool_t ProcessUniFlow::Initialize()
 {
   // initialization of all necessery prerequisits
-  if(fiNumMultBins < 1) { Error(Form("Not enough mult. bins: %d (at least 1 needed)!",fiNumMultBins),"Initialize"); return kFALSE; }
+  // if(fiNumMultBins < 1) { Warning(Form("Not enough mult. bins: %d (at least 1 needed)! Switching to fRebinning = 0",fiNumMultBins),"Initialize"); return kFALSE; }
 
   Info("Initializating task","Initialize");
 
@@ -230,6 +230,9 @@ Bool_t ProcessUniFlow::InitTask(FlowTask* task)
         Warning(Form("fNumSamplesRefs set to fNumSamples (was %d | now %d)",task->fNumSamplesRefs,task->fNumSamples),"InitTask");
         task->fNumSamplesRefs = task->fNumSamples;
     }
+
+    if(fiNumMultBins < 1) { task->fRebinning = kFALSE; }
+
     return kTRUE;
 }
 //_____________________________________________________________________________
