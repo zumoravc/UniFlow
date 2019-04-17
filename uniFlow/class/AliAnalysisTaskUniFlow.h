@@ -23,6 +23,7 @@ class AliPIDResponse;
 class AliPIDCombined;
 class AliVEvent;
 class AliAODEvent;
+class AliVParticle;
 class AliVTrack;
 class AliAODTrack;
 class AliPicoTrack;
