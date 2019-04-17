@@ -1424,14 +1424,14 @@ void AliAnalysisTaskUniFlow::FilterCharged() const
     AliAODTrack* track = static_cast<AliAODTrack*>(fEventAOD->GetTrack(iTrack));
     if(!track) { continue; }
 
+    // passing reconstruction criteria
     if(!IsChargedSelected(track)) { continue; }
 
-    // Checking if selected track is eligible for Ref. flow
+    // Checking if selected track is within Refs pt,eta acceptance
     if(IsWithinRefs(track)) { fVector[kRefs]->push_back(track); }
 
-    // pt-acceptance check for POIs (NB: due to different cuts for Refs & POIs)
-    if(fFlowPOIsPtMin > 0. && track->Pt() < fFlowPOIsPtMin) { continue; }
-    if(fFlowPOIsPtMax > 0. && track->Pt() > fFlowPOIsPtMax) { continue; }
+    // Checking if selected track is within POIs pt,eta acceptance
+    if(!IsWithinPOIs(track)) { continue; }
 
     fVector[kCharged]->push_back(track);
 
@@ -1458,12 +1458,6 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track) const
   // *************************************************************
   if(!track) { return kFALSE; }
   fhChargedCounter->Fill("Input",1);
-
-  // NB: pt moved out to FilterCharged due to different cuts for potentially overlapping POIs & RFPs
-
-  // pseudorapidity (eta)
-  if(fFlowEtaMax > 0. && TMath::Abs(track->Eta()) > fFlowEtaMax) { return kFALSE; }
-  fhChargedCounter->Fill("Eta",1);
 
   // filter bit
   if( !track->TestFilterBit(fCutChargedTrackFilterBit) ) { return kFALSE; }
@@ -1939,9 +1933,7 @@ Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0) const
   fhV0sCounter->Fill("Daughters OK",1);
 
   // acceptance checks
-  if(fFlowEtaMax > 0. && TMath::Abs(v0->Eta()) > fFlowEtaMax) { return kFALSE; }
-  if(fFlowPOIsPtMin > 0. && v0->Pt() < fFlowPOIsPtMin) { return kFALSE; }
-  if(fFlowPOIsPtMax > 0. && v0->Pt() > fFlowPOIsPtMax) { return kFALSE; }
+  if(!IsWithinPOIs(v0)) { return kFALSE; }
   fhV0sCounter->Fill("Mother acceptance",1);
 
   if(fCutV0sDaughterPtMin > 0. && (daughterPos->Pt() <= fCutV0sDaughterPtMin  || daughterNeg->Pt() <= fCutV0sDaughterPtMin) ) return kFALSE;
@@ -2266,12 +2258,8 @@ void AliAnalysisTaskUniFlow::FilterPhi() const
       if(fCutPhiInvMassMax > 0. && mother->M() > fCutPhiInvMassMax) { delete mother; continue; }
       fhPhiCounter->Fill("InvMass",1);
 
-      if(fFlowPOIsPtMin > 0. && mother->Pt() < fFlowPOIsPtMin) { delete mother; continue; }
-      if(fFlowPOIsPtMax > 0. && mother->Pt() > fFlowPOIsPtMax) { delete mother; continue; }
-      fhPhiCounter->Fill("Pt",1);
-
-      if(fFlowEtaMax > 0. && TMath::Abs(mother->Eta()) > fFlowEtaMax) { delete mother; continue; }
-      fhPhiCounter->Fill("Eta",1);
+      if(!IsWithinPOIs(mother))  { delete mother; continue; }
+      fhPhiCounter->Fill("Acceptance",1);
 
       // mother (phi) candidate passing all criteria (except for charge)
       fhPhiCounter->Fill("Before charge",1);
@@ -3799,7 +3787,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   }
 
   {
-    TString sChargedCounterLabel[] = {"Input","Eta","FB","#TPC-Cls","DCA-z","DCA-xy","Selected","POIs","Refs"};
+    TString sChargedCounterLabel[] = {"Input","FB","#TPC-Cls","DCA-z","DCA-xy","Selected","POIs","Refs"};
     const Int_t iNBinsChargedCounter = sizeof(sChargedCounterLabel)/sizeof(sChargedCounterLabel[0]);
     fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
     for(Int_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
@@ -3817,7 +3805,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
   if(fProcessSpec[kPhi])
   {
-    TString sPhiCounterLabel[] = {"Input","InvMass","Pt","Eta","Before charge","Unlike-sign","BG"};
+    TString sPhiCounterLabel[] = {"Input","InvMass","Acceptance","Before charge","Unlike-sign","BG"};
     const Int_t iNBinsPhiCounter = sizeof(sPhiCounterLabel)/sizeof(sPhiCounterLabel[0]);
     fhPhiCounter = new TH1D("fhPhiCounter","#phi: Counter",iNBinsPhiCounter,0,iNBinsPhiCounter);
     for(Int_t i(0); i < iNBinsPhiCounter; ++i) { fhPhiCounter->GetXaxis()->SetBinLabel(i+1, sPhiCounterLabel[i].Data() ); }
