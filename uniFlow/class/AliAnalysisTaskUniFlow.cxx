@@ -1993,6 +1993,23 @@ AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
   return mcTrack;
 }
 // ============================================================================
+Bool_t AliAnalysisTaskUniFlow::CheckRecoTruth(const AliVParticle* track, const PartSpecies species) const
+{
+    if(!track) { AliError("Input track does not exists!"); return kFALSE; }
+    if(species == kUnknown) { AliError("'Unknown' species specified!"); return kFALSE; }
+
+    AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
+    if(!trackMC) { return kFALSE; }
+
+    // skipping secondary particles
+    // if(!trackMC->IsPhysicalPrimary()) { return kFALSE; }
+
+    Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
+    if(iPDG == 0) { return kFALSE; }
+
+    return (iPDG == fPDGCode[species]);
+}
+// ============================================================================
 Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0) const
 {
   // Topological reconstruction and selection of V0 candidates
