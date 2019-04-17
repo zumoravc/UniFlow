@@ -2450,9 +2450,8 @@ void AliAnalysisTaskUniFlow::FilterPID() const
     if(species != kPion && species != kKaon && species != kProton) { continue; }
 
     // check if only protons should be used
-    if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) { species = kUnknown; }
+    if(fCutPIDUseAntiProtonOnly && species == kProton && track->Charge() == 1) { continue; }
 
-    if(species == kUnknown) { continue; }
     if(!fProcessSpec[species]) { continue; }
 
     fhPIDCounter->Fill("Selected",1);
