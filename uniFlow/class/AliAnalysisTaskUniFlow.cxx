@@ -1999,10 +1999,10 @@ Double_t AliAnalysisTaskUniFlow::GetRapidity(const Double_t mass, const Double_t
 AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
 {
   if(!fArrayMC) { AliError("fArrayMC not found!"); return nullptr; }
-  if(label < 0) { /*AliWarning("MC label negative");*/ return nullptr; }
+  if(label < 0) { /*AliWarning("MC label negative");*/ return nullptr; } // off-shell / virtual particles
 
   AliAODMCParticle* mcTrack = (AliAODMCParticle*) fArrayMC->At(label);
-  if(!mcTrack) { AliError("Corresponding MC track not found!"); return nullptr; }
+  if(!mcTrack) { AliWarning("Corresponding MC track not found!"); return nullptr; }
   return mcTrack;
 }
 // ============================================================================
