@@ -1694,17 +1694,20 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
 
     if(fFillQA) { FillQAV0s(kAfter,v0,bIsK0s,iIsLambda); } // QA AFTER selection
 
-
     if(bIsK0s)
     {
       iNumK0sSelected++;
       fhV0sCounter->Fill("K^{0}_{S}",1);
       if(fFillQA) { fhV0sInvMassK0s->Fill(v0->MassK0Short(),v0->MassLambda()); }
-      if(fMC) { fh2MCPtEtaReco[kK0s]->Fill(v0->Pt(), v0->Eta()); }
-
       AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassK0Short());
       fVector[kK0s]->push_back(pico);
       FillSparseCand(fhsCandK0s, pico);
+
+      if(fMC) {
+          fh2MCPtEtaReco[kK0s]->Fill(v0->Pt(), v0->Eta());
+          if(CheckRecoTruth(v0,kK0s)) { fh2MCPtEtaRecoTrue[kK0s]->Fill(v0->Pt(), v0->Eta()); }
+      }
+
       if(!FillFlowWeight(v0, kK0s)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
@@ -1713,11 +1716,16 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
       iNumLambdaSelected++;
       fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
       if(fFillQA) { fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassLambda()); }
-      if(fMC) { fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta()); }
 
       AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassLambda());
       fVector[kLambda]->push_back(pico);
       FillSparseCand(fhsCandLambda, pico);
+
+      if(fMC) {
+          fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta());
+          if(CheckRecoTruth(v0,kLambda)) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
+      }
+
       if(!FillFlowWeight(v0, kLambda)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
@@ -1726,19 +1734,24 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
       iNumALambdaSelected++;
       fhV0sCounter->Fill("#Lambda/#bar{#Lambda}",1);
       if(fFillQA) { fhV0sInvMassLambda->Fill(v0->MassK0Short(),v0->MassAntiLambda()); }
-      if(fMC) { fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta()); }
 
       AliPicoTrack* pico = new AliPicoTrack(v0->Pt(),v0->Eta(),v0->Phi(),v0->Charge(),0,0,0,0,0,0,v0->MassAntiLambda());
       fVector[kLambda]->push_back(pico);
       FillSparseCand(fhsCandLambda, pico);
 
+      if(fMC) {
+          fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta());
+          if(CheckRecoTruth(v0,kLambda)) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
+      }
+
       if(!FillFlowWeight(v0, kLambda)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
     if(bIsK0s && iIsLambda != 0) { fhV0sCounter->Fill("K^{0}_{S} && #Lambda/#bar{#Lambda}",1); }
-  }
 
-  // fill QA charged multiplicity
+  } // end-for {v0}
+
+  // fill QA multiplicity
   if(fFillQA)
   {
     fhQAV0sMultK0s[0]->Fill(fEventAOD->GetNumberOfV0s());
@@ -2363,7 +2376,10 @@ void AliAnalysisTaskUniFlow::FilterPhi() const
         fhPhiCounter->Fill("BG",1);
         FillSparseCand(fhsCandPhiBg, mother);
         iNumBG++;
-        if(fMC) { fh2MCPtEtaReco[kPhi]->Fill(mother->Pt(), mother->Eta()); }
+        if(fMC) {
+          fh2MCPtEtaReco[kPhi]->Fill(mother->Pt(), mother->Eta());
+          if(CheckRecoTruth(mother,kPhi)) { fh2MCPtEtaRecoTrue[kPhi]->Fill(mother->Pt(), mother->Eta()); }
+        }
       }
 
       if(mother->Charge() == 0) {
@@ -2481,38 +2497,11 @@ void AliAnalysisTaskUniFlow::FilterPID() const
       if(!FillFlowWeight(track, species)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
-    // process MC data
-    if(fMC)
-    {
-      // fill reco
+    if(fMC) {
       fh2MCPtEtaReco[species]->Fill(track->Pt(), track->Eta());
+      if(CheckRecoTruth(track,species)) { fh2MCPtEtaRecoTrue[species]->Fill(track->Pt(), track->Eta()); }
+    }
 
-      // checking if PID is true
-      AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
-      if(trackMC)
-      {
-        Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
-
-        switch(species)
-        {
-          case kPion:
-            fhMCRecoSelectedPionPt->Fill(track->Pt());
-            if(iPDG == 211) { fhMCRecoSelectedTruePionPt->Fill(track->Pt()); }
-          break;
-          case kKaon:
-            fhMCRecoSelectedKaonPt->Fill(track->Pt());
-            if(iPDG == 321) { fhMCRecoSelectedTrueKaonPt->Fill(track->Pt()); }
-          break;
-          case kProton:
-            fhMCRecoSelectedProtonPt->Fill(track->Pt());
-            if(iPDG == 2212) { fhMCRecoSelectedTrueProtonPt->Fill(track->Pt()); }
-          break;
-
-          default :
-            continue;
-        }
-      }
-    } // end-if {fMC}
   } // end-for {part}
 
   if(fFillQA)
