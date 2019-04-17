@@ -1500,15 +1500,29 @@ Bool_t AliAnalysisTaskUniFlow::IsChargedSelected(const AliAODTrack* track) const
   return kTRUE;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliAODTrack* track) const
+Bool_t AliAnalysisTaskUniFlow::IsWithinRefs(const AliVParticle* track) const
 {
-  // Checking if (preselected) track fulfills criteria for RFPs
-  // NOTE: This is not a standalone selection, but complementary check for IsChargedSelected()
+  // Checking if (preselected) track fulfills acceptance criteria for RFPs
+  // NOTE: This is not a standalone selection, but additional check for IsChargedSelected()
   // It is used to selecting RFPs out of selected charged tracks
   // OR for estimating autocorrelations for Charged & PID particles
   // *************************************************************
+
+  if(fFlowEtaMax > 0.0 && TMath::Abs(track->Eta()) > fFlowEtaMax) { return kFALSE; }
   if(fFlowRFPsPtMin > 0.0 && track->Pt() < fFlowRFPsPtMin) { return kFALSE; }
   if(fFlowRFPsPtMax > 0.0 && track->Pt() > fFlowRFPsPtMax) { return kFALSE; }
+
+  return kTRUE;
+}
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::IsWithinPOIs(const AliVParticle* track) const
+{
+  // Checking if (preselected) track fulfills acceptance criteria for POIs
+  // *************************************************************
+
+  if(fFlowEtaMax > 0.0 && TMath::Abs(track->Eta()) > fFlowEtaMax) { return kFALSE; }
+  if(fFlowPOIsPtMin > 0.0 && track->Pt() < fFlowPOIsPtMin) { return kFALSE; }
+  if(fFlowPOIsPtMax > 0.0 && track->Pt() > fFlowPOIsPtMax) { return kFALSE; }
 
   return kTRUE;
 }
