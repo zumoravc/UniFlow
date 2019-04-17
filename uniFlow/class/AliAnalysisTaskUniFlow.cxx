@@ -3235,8 +3235,9 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex() const
   Int_t iCentralityIndex = -1;
 
   // assigning centrality based on number of selected charged tracks
-  if(fCentEstimator == kRFP) { iCentralityIndex = fVector[kRefs]->size(); }
-  else {
+  if(fCentEstimator == kRFP) {
+      iCentralityIndex = fVector[kRefs]->size();
+  } else {
     AliMultSelection* multSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
     if(!multSelection) {
       AliError("AliMultSelection object not found! Returning -1");
@@ -3264,8 +3265,8 @@ const char* AliAnalysisTaskUniFlow::GetCentEstimatorLabel(const CentEst est) con
     case kV0A: return "V0A";
     case kV0C: return "V0C";
     case kV0M: return "V0M";
-    case kCL0: return "CL1";
-    case kCL1: return "CL2";
+    case kCL0: return "CL0";
+    case kCL1: return "CL1";
     case kZNA: return "ZNA";
     case kZNC: return "ZNC";
     default: return "n/a";
