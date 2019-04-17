@@ -180,14 +180,15 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Int_t                   GetCentralityIndex(CentEst est) const; // returns centrality index based centrality estimator or number of selected tracks
       const char*             GetCentEstimatorLabel(CentEst est) const; // returns mult/cent estimator string with label or 'n/a' if not available
 
-      void                    CalculateCorrelations(const AliUniFlowCorrTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0) const; // wrapper for correlations methods
-      Bool_t                  ProcessCorrTask(const AliUniFlowCorrTask* task); // procesisng of AliUniFlowCorrTask
-      Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
-
+      void                    ProcessMC() const; // processing MC generated particles
       void                    FilterCharged() const; // charged tracks filtering
       void                    FilterPID() const; // pi,K,p filtering
       void                    FilterV0s() const; // K0s, Lambda, ALambda filtering
       void                    FilterPhi() const; // reconstruction and filtering of Phi meson candidates
+
+      void                    CalculateCorrelations(const CorrTask* task, PartSpecies species, Double_t dPt = -1.0, Double_t dMass = -1.0) const; // wrapper for correlations methods
+      Bool_t                  ProcessCorrTask(const CorrTask* task); // procesisng of CorrTask
+      Bool_t                  CalculateFlow(); // main (envelope) method for flow calculations in selected events
 
       AliAODMCParticle*       GetMCParticle(Int_t label) const; // find corresponding MC particle from fArrayMC depending of AOD track label
       Double_t                GetRapidity(Double_t mass, Double_t Pt, Double_t Eta) const; // calculate particle / track rapidity

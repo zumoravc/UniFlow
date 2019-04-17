@@ -1171,6 +1171,8 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   // particles (Phi, V0s) because here new AliPicoTracks are created
   ClearVectors();
 
+  if(fMC) { ProcessMC(); }
+
   // extracting run number here to store run number from previous event (for current run number use info in AliAODEvent)
   fRunNumber = fEventAOD->GetRunNumber();
 
@@ -1454,6 +1456,38 @@ void AliAnalysisTaskUniFlow::FillQAEvents(const QAindex iQAindex) const
   fhQAEventsSPDresol[iQAindex]->Fill(zRes);
 
   return;
+}
+// ============================================================================
+void AliAnalysisTaskUniFlow::ProcessMC() const
+{
+    if(!fArrayMC) { AliError("TClonesArray with MC particles not found!"); return; }
+
+    const Int_t iNumTracksMC = fArrayMC->GetEntriesFast();
+    for(Int_t iTrackMC(0); iTrackMC < iNumTracksMC; ++iTrackMC) {
+
+        AliAODMCParticle* trackMC = (AliAODMCParticle*) fArrayMC->At(iTrackMC);
+        if(!trackMC) { continue; }
+
+        // skipping secondary particles
+        if(!trackMC->IsPhysicalPrimary()) { continue; }
+
+        Double_t dEta = trackMC->Eta();
+        Double_t dPt = trackMC->Pt();
+        Bool_t bCharged = (trackMC->Charge() != 0) ? kTRUE : kFALSE;
+
+        // Refs (charged) particles
+        if(bCharged && IsWithinRefs(trackMC)) { fh2MCPtEtaGen[kRefs]->Fill(dPt, dEta); }
+
+        if(!IsWithinPOIs(trackMC)) { continue; }
+        // here only POIs survives
+
+        if(bCharged) { fh2MCPtEtaGen[kCharged]->Fill(dPt,dEta); }
+
+        Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
+        for(Int_t spec(kPion); spec < Int_t(kUnknown); ++spec) {
+            if(iPDG == fPDGCode[spec]) { fh2MCPtEtaGen[spec]->Fill(dPt, dEta); }
+        }
+    }
 }
 // ============================================================================
 void AliAnalysisTaskUniFlow::FilterCharged() const
