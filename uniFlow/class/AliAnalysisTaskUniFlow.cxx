@@ -1515,24 +1515,9 @@ void AliAnalysisTaskUniFlow::FilterCharged() const
     }
 
     // Checking if selected track is within POIs pt,eta acceptance
-    if(!IsWithinPOIs(track)) { continue; }
-
-    fVector[kCharged]->push_back(track);
-
-    if(fMC) {
-      // filling reco
-      fh2MCPtEtaReco[kCharged]->Fill(track->Pt(), track->Eta());
-
-      // filling Reco PID
-      AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
-      if(trackMC) {
-        Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
-
-        // filling info about all (i.e. before selection) reconstructed PID particles
-        if(iPDG == 211) { fhMCRecoAllPionPt->Fill(track->Pt()); }
-        if(iPDG == 321) { fhMCRecoAllKaonPt->Fill(track->Pt()); }
-        if(iPDG == 2212) { fhMCRecoAllProtonPt->Fill(track->Pt()); }
-      }
+    if(IsWithinPOIs(track)) {
+        fVector[kCharged]->push_back(track);
+        if(fMC) { fh2MCPtEtaReco[kCharged]->Fill(track->Pt(), track->Eta()); }
     }
   } // end-for {iTrack}
 
@@ -2486,6 +2471,7 @@ void AliAnalysisTaskUniFlow::FilterPID() const
       // fill reco
       fh2MCPtEtaReco[species]->Fill(track->Pt(), track->Eta());
 
+      // checking if PID is true
       AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
       if(trackMC)
       {
