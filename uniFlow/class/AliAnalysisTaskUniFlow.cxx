@@ -281,8 +281,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhMCRecoSelectedTrueProtonPt{nullptr},
   fhMCRecoAllProtonPt{nullptr},
   fhMCGenAllProtonPt{nullptr},
-  fh2MCPtEtaReco{nullptr},
   fh2MCPtEtaGen{nullptr},
+  fh2MCPtEtaReco{nullptr},
+  fh2MCPtEtaRecoTrue{nullptr},
   fhPhiCounter{nullptr},
   fhPhiMult{nullptr},
   fhPhiBGMult{nullptr},
@@ -550,8 +551,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fhMCRecoSelectedTrueProtonPt{nullptr},
   fhMCRecoAllProtonPt{nullptr},
   fhMCGenAllProtonPt{nullptr},
-  fh2MCPtEtaReco{nullptr},
   fh2MCPtEtaGen{nullptr},
+  fh2MCPtEtaReco{nullptr},
+  fh2MCPtEtaRecoTrue{nullptr},
   fhPhiCounter{nullptr},
   fhPhiMult{nullptr},
   fhPhiBGMult{nullptr},
@@ -4283,10 +4285,12 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
             dPtHigh = fFlowRFPsPtMax;
         }
 
-        fh2MCPtEtaReco[iSpec] = new TH2D(Form("fh2MCPtEtaReco%s",GetSpeciesName(iSpec)),Form("MC %s (reco); #it{p}_{T} (GeV/#it{c}); #it{#eta}", GetSpeciesLabel(iSpec)), iNumBinsPt,dPtLow,dPtHigh, fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
-        fListMC->Add(fh2MCPtEtaReco[iSpec]);
         fh2MCPtEtaGen[iSpec] = new TH2D(Form("fh2MCPtEtaGen%s",GetSpeciesName(iSpec)),Form("MC %s (Gen); #it{p}_{T} (GeV/#it{c}); #it{#eta}", GetSpeciesLabel(iSpec)), iNumBinsPt,dPtLow,dPtHigh, fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
         fListMC->Add(fh2MCPtEtaGen[iSpec]);
+        fh2MCPtEtaReco[iSpec] = new TH2D(Form("fh2MCPtEtaReco%s",GetSpeciesName(iSpec)),Form("MC %s (reco); #it{p}_{T} (GeV/#it{c}); #it{#eta}", GetSpeciesLabel(iSpec)), iNumBinsPt,dPtLow,dPtHigh, fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
+        fListMC->Add(fh2MCPtEtaReco[iSpec]);
+        fh2MCPtEtaRecoTrue[iSpec] = new TH2D(Form("fh2MCPtEtaRecoTrue%s",GetSpeciesName(iSpec)),Form("MC %s (reco + true); #it{p}_{T} (GeV/#it{c}); #it{#eta}", GetSpeciesLabel(iSpec)), iNumBinsPt,dPtLow,dPtHigh, fFlowEtaBinNum,-fFlowEtaMax,fFlowEtaMax);
+        fListMC->Add(fh2MCPtEtaRecoTrue[iSpec]);
     }
 
   } // end-if{fMC}

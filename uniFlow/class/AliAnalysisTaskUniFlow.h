@@ -447,8 +447,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*                   fhMCRecoSelectedTrueProtonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Protons
       TH1D*                   fhMCRecoAllProtonPt; //! pt dist of all (MC reco) Protons (i.e. selected charged tracks that are tagged in MC)
       TH1D*                   fhMCGenAllProtonPt; //! pt dist of all (MC) generated Protons
-      TH2D*                   fh2MCPtEtaReco[kUnknown]; //! (pt,eta) dist for reconstructed particles (NUE)
-      TH2D*                   fh2MCPtEtaGen[kUnknown]; //! (pt,eta) dist for generated particles (NUE)
+      TH2D*                   fh2MCPtEtaGen[kUnknown]; //! (pt,eta) dist for generated particles
+      TH2D*                   fh2MCPtEtaReco[kUnknown]; //! (pt,eta) dist for reconstructed particles
+      TH2D*                   fh2MCPtEtaRecoTrue[kUnknown]; //! (pt,eta) dist for reconstructed particles with matching generating particle (true)
       // Phi
       TH1D*                   fhPhiCounter; //! counter following phi candidate selection
       TH1D*                   fhPhiMult; //! multiplicity distribution of selected phi candidates
