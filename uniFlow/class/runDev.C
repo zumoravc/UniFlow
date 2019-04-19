@@ -169,8 +169,8 @@ void runDev()
         // also specify the include (header) paths on grid
         alienHandler->AddIncludePath("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include");
         // make sure your source files get copied to grid
-        alienHandler->SetAdditionalLibs("AliAnalysisTaskUniFlow.cxx AliAnalysisTaskUniFlow.h libPWGEMCALbase.so");
-        alienHandler->SetAnalysisSource("AliAnalysisTaskUniFlow.cxx");
+        alienHandler->SetAdditionalLibs("AliUniFlowCorrTask.cxx AliUniFlowCorrTask.h AliAnalysisTaskUniFlow.cxx AliAnalysisTaskUniFlow.h  libPWGEMCALbase.so");
+        alienHandler->SetAnalysisSource("AliUniFlowCorrTask.cxx AliAnalysisTaskUniFlow.cxx ");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
         alienHandler->SetAliPhysicsVersion("vAN-20181002_ROOT6-1");
