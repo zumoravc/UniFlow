@@ -3,13 +3,13 @@
 #include "AliAnalysisManager.h"
 #include "AliESDInputHandler.h"
 #include "AliAODInputHandler.h"
-#include "AliAnalysisTaskUniFlow.h"
 #include "AliAnalysisTaskUniFlow.cxx"
+#include "AliUniFlowCorrTask.cxx"
 #endif
 
 void runDev()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -23,10 +23,11 @@ void runDev()
 
     // Pb-Pb Run2 5.02 TeV (Run2) : RunList_LHC15o_pass1_CentralBarrelTracking_hadronPID_20161130_v6.txt [77 runs]
     TString sPeriod = "2015/LHC15o"; TString sPass = "pass1"; Int_t runNumber[] = {
-      246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
-      246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804, 246766,
-      246765 ,246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
-      246488, 246487, 246434, 246431, 246424, 246276, 246275, 246272, 246271, 246225,
+      246994
+      // 246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
+      // 246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804, 246766,
+      // 246765 ,246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
+      // 246488, 246487, 246434, 246431, 246424, 246276, 246275, 246272, 246271, 246225,
       //,
       // 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151,
       // 246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049, 246048, 246042,
