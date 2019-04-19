@@ -1,5 +1,5 @@
 /**************************************************************************
-* Copyright(c) 1998-1999, ALICE Experiment at CERN, All rights reserved. *
+* Copyright(c) 2016, ALICE Experiment at CERN, All rights reserved. *
 *                                                                        *
 * Author: The ALICE Off-line Project.                                    *
 * Contributors are mentioned in the code where appropriate.              *
@@ -63,6 +63,7 @@
 #define ALIANALYSISTASKUNIFLOW_CXX
 
 #include <algorithm>
+#include <vector>
 #include <TDatabasePDG.h>
 #include <TPDGCode.h>
 
@@ -97,6 +98,7 @@
 #include "AliAODMCParticle.h"
 
 #include "AliAnalysisTaskUniFlow.h"
+#include "AliUniFlowCorrTask.h"
 
 ClassImp(AliAnalysisTaskUniFlow);
 
@@ -2655,9 +2657,9 @@ void AliAnalysisTaskUniFlow::FillQAPID(const QAindex iQAindex, const AliAODTrack
   return;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
+Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const AliUniFlowCorrTask* task)
 {
-    if(!task) { AliError("CorrTask does not exists!"); return kFALSE; }
+    if(!task) { AliError("AliUniFlowCorrTask does not exists!"); return kFALSE; }
     // task->Print();
 
     Int_t iNumHarm = task->fiNumHarm;
@@ -2759,9 +2761,9 @@ Bool_t AliAnalysisTaskUniFlow::ProcessCorrTask(const CorrTask* task)
     return kTRUE;
 }
 // ============================================================================
-void AliAnalysisTaskUniFlow::CalculateCorrelations(const CorrTask* const task, const PartSpecies species, const Double_t dPt, const Double_t dMass) const
+void AliAnalysisTaskUniFlow::CalculateCorrelations(const AliUniFlowCorrTask* const task, const PartSpecies species, const Double_t dPt, const Double_t dMass) const
 {
-  if(!task) { AliError("CorrTask does not exists!"); return; }
+  if(!task) { AliError("AliUniFlowCorrTask does not exists!"); return; }
   if(species >= kUnknown) { AliError(Form("Invalid species: %s!", GetSpeciesName(species))); return; }
 
   Bool_t bHasGap = task->HasGap();
@@ -2952,13 +2954,13 @@ Bool_t AliAnalysisTaskUniFlow::CalculateFlow()
   // if running in kSkipFlow mode, skip the remaining part
   if(fRunMode == kSkipFlow) { fEventCounter++; return kTRUE; }
 
-  // >>>> Using CorrTask <<<<<
+  // >>>> Using AliUniFlowCorrTask <<<<<
 
   Int_t iNumTasks = fVecCorrTask.size();
   for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
   {
     Bool_t process = ProcessCorrTask(fVecCorrTask.at(iTask));
-    if(!process) { AliError("CorrTask processing failed!\n"); fVecCorrTask.at(iTask)->Print(); return kFALSE; }
+    if(!process) { AliError("AliUniFlowCorrTask processing failed!\n"); fVecCorrTask.at(iTask)->Print(); return kFALSE; }
   }
 
   fEventCounter++; // counter of processed events
@@ -3292,6 +3294,11 @@ Bool_t AliAnalysisTaskUniFlow::HasTrackPIDTOF(const AliAODTrack* track) const
   return ((pidStatusTOF == AliPIDResponse::kDetPidOk) && (track->GetStatus()& AliVTrack::kTOFout) && (track->GetStatus()& AliVTrack::kTIME));
 }
 // ============================================================================
+void AliAnalysisTaskUniFlow::AddCorr(std::vector<Int_t> harms, std::vector<Double_t> gaps, Bool_t doRFPs, Bool_t doPOIs)
+{
+    fVecCorrTask.push_back(new AliUniFlowCorrTask(doRFPs, doPOIs, harms, gaps));
+}
+// ============================================================================
 void AliAnalysisTaskUniFlow::Terminate(Option_t* option)
 {
   // called on end of task, after all events are processed
@@ -3543,8 +3550,8 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   {
     for(Int_t iTask(0); iTask < iNumTasks; ++iTask)
     {
-      CorrTask* task = fVecCorrTask.at(iTask);
-      if(!task) { fInit = kFALSE; AliError(Form("CorrTask %d does not exists\n",iTask)); return; }
+      AliUniFlowCorrTask* task = fVecCorrTask.at(iTask);
+      if(!task) { fInit = kFALSE; AliError(Form("AliUniFlowCorrTask %d does not exists\n",iTask)); return; }
 
       Bool_t bHasGap = task->HasGap();
       const char* corName = task->fsName.Data();
@@ -3552,7 +3559,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
       for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec)
       {
-        // check if CorrTask should be done for all flow particles (RFP/POI/Both)
+        // check if AliUniFlowCorrTask should be done for all flow particles (RFP/POI/Both)
         if(!task->fbDoRefs && iSpec == kRefs) { continue; }
         if(!task->fbDoPOIs && iSpec != kRefs) { continue; }
 
@@ -3634,7 +3641,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
           // check if same profile does not exists already
           if(fListFlow[iSpec]->FindObject(profile->GetName())) {
-            AliError(Form("CorrTask %d : Profile '%s' already exists! Please check run macro for CorrTask duplicates!",iTask,profile->GetName()));
+            AliError(Form("AliUniFlowCorrTask %d : Profile '%s' already exists! Please check run macro for AliUniFlowCorrTask duplicates!",iTask,profile->GetName()));
             fInit = kFALSE;
             task->Print();
             delete profile;
@@ -3650,7 +3657,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
 
             // same for Neg
             if(fListFlow[iSpec]->FindObject(profileNeg->GetName())) {
-              AliError(Form("CorrTask %d : Profile '%s' already exists! Please check run macro for CorrTask duplicates!",iTask,profile->GetName()));
+              AliError(Form("AliUniFlowCorrTask %d : Profile '%s' already exists! Please check run macro for AliUniFlowCorrTask duplicates!",iTask,profile->GetName()));
               fInit = kFALSE;
               task->Print();
               delete profileNeg;
@@ -4180,74 +4187,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   DumpTObjTable("UserCreateOutputObjects: end");
 
   return;
-}
-// ============================================================================
-AliAnalysisTaskUniFlow::CorrTask::CorrTask() :
-  fbDoRefs{0},
-  fbDoPOIs{0},
-  fiNumHarm{0},
-  fiNumGaps{0},
-  fiHarm{},
-  fdGaps{},
-  fsName{},
-  fsLabel{}
-{}
-// ============================================================================
-AliAnalysisTaskUniFlow::CorrTask::CorrTask(Bool_t doRFPs, Bool_t doPOIs, std::vector<Int_t> harms, std::vector<Double_t> gaps) :
-  fbDoRefs{doRFPs},
-  fbDoPOIs{doPOIs},
-  fiNumHarm{0},
-  fiNumGaps{0},
-  fiHarm{harms},
-  fdGaps{gaps},
-  fsName{},
-  fsLabel{}
-{
-  // constructor of CorrTask
-
-  fiNumHarm = harms.size();
-  fiNumGaps = gaps.size();
-
-  if(fiNumHarm < 2) { return; }
-
-  // generating name
-  TString sName = Form("<<%d>>(%d",fiNumHarm,fiHarm[0]);
-  for(Int_t i(1); i < fiNumHarm; ++i) { sName += Form(",%d",fiHarm[i]); }
-  sName += ")";
-
-  if(fiNumGaps > 0) {
-    sName += Form("_%dsub(%.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sName += Form(",%.2g",fdGaps[i]); }
-    sName += ")";
-  }
-
-  // generating label
-  TString sLabel = Form("<<%d>>_{%d",fiNumHarm,fiHarm[0]);
-  for(Int_t i(1); i < fiNumHarm; ++i) { sLabel += Form(",%d",fiHarm[i]); }
-  sLabel += "}";
-
-  if(fiNumGaps > 0) {
-    sLabel += Form(" %dsub(|#Delta#eta| > %.2g",fiNumGaps+1,fdGaps[0]);
-    for(Int_t i(1); i < fiNumGaps; ++i) { sLabel += Form(", |#Delta#eta| > %.2g",fdGaps[i]); }
-    sLabel += ")";
-  }
-
-  fsName = sName;
-  fsLabel = sLabel;
-}
-// ============================================================================
-void AliAnalysisTaskUniFlow::CorrTask::Print() const
-{
-  printf("CorrTask::Print():\n");
-  printf("# fsName:\t %s\n", fsName.Data());
-  printf("# fsLabel:\t %s\n", fsLabel.Data());
-  printf("# fbDoRefs:\t %d\n", fbDoRefs);
-  printf("# fbDoPOIs:\t %d\n", fbDoPOIs);
-  printf("# fiNumHarm:\t %d\n", fiNumHarm);
-  printf("# fiHarm:\t { "); for(Int_t i(0); i < fiNumHarm; ++i) { printf("%d ",fiHarm[i]); }  printf("}\n");
-  printf("# fiNumGaps:\t %d\n", fiNumGaps);
-  printf("# fdGaps:\t { "); for(Int_t i(0); i < fiNumGaps; ++i) { printf("%f ",fdGaps[i]); } printf("}\n");
-  printf("############################################\n");
 }
 
 #endif

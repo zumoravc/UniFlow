@@ -3,8 +3,8 @@
 #include "AliAnalysisManager.h"
 #include "AliESDInputHandler.h"
 #include "AliAODInputHandler.h"
-#include "AliAnalysisTaskUniFlow.h"
 #include "AliAnalysisTaskUniFlow.cxx"
+#include "AliUniFlowCorrTask.cxx"
 #endif
 
 
