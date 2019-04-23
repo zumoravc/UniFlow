@@ -92,7 +92,7 @@ class ProcessUniFlow
     Bool_t      CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF = kFALSE);
     TH1*        SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask* task);
     Bool_t      FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList, TH1* histBg = nullptr);
-    Bool_t      FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg, TList* outList);
+    Bool_t      FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg, TList* outList,  Bool_t bIsFour = kFALSE);
 
     TList*      LoadSamples(TList* list, TString sHistName, Int_t iNumSamples); // find all samples histos in list
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile

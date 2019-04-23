@@ -1457,9 +1457,9 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       listFitsFour->SetOwner(1);
 
       if(bFitMass) {
-          bFitCor = FitCorrelations(hFlowMass, task, fitCor, fitCorSig, fitCorBg, fitOutSig, fitOutBg, listFits);
+          bFitCor = FitCorrelations(hFlowMass, task, fitCor, fitCorSig, fitCorBg, fitOutSig, fitOutBg, listFits, kFALSE);
           if(task->fCumOrderMax >= 4) {
-              bFitCorFour = FitCorrelations(hFlowMassFour, task, fitCorFour, fitCorSigFour, fitCorBgFour, fitOutSig, fitOutBg, listFitsFour);
+              bFitCorFour = FitCorrelations(hFlowMassFour, task, fitCorFour, fitCorSigFour, fitCorBgFour, fitOutSig, fitOutBg, listFitsFour, kTRUE);
         }
       }
 
@@ -3375,7 +3375,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg, TList* outList)
+Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg, TList* outList, Bool_t bIsFour)
 {
   if(!hist) { Error("Input histo not found!","FitCorrelations"); return kFALSE; }
   if(!task) { Error("FlowTask not found!","FitCorrelations"); return kFALSE; }
@@ -3408,9 +3408,16 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   // Species (independent) flow shape
   sFlowBG = Form("[%d]*x+[%d]", iNumParMass,iNumParMass+1); iNumParsFlowBG = 2;
 
-  dParDef = {0.0,1.0};
-  dParLimLow = {-1,-1};
-  dParLimHigh = {-1,-1};
+  if(bIsFour) {
+      dParDef = {1e-2,1e-3,1e-3};
+      dParLimLow = {-1,-1,-0.5};
+      dParLimHigh = {-1,-1,1.0};
+
+  } else {
+      dParDef = {0.0,1.0,0.5};
+      dParLimLow = {-1,-1,-0.5};
+      dParLimHigh = {-1,-1,1.0};
+  }
 
   // ========== END :: SET FITTING FUNCTIONS ===========
 
@@ -3483,7 +3490,7 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
       fitCorr->FixParameter(par, fitInSig.GetParameter(par));
   }
 
-  for(Int_t par(iNumParMass); par < iParFlow; ++par) {
+  for(Int_t par(iNumParMass); par < iParFlow+1; ++par) {
     // Here par-iNumParMass is to account for a fact that dParDef takes only flow part (vector index != parameter index)
     fitCorr->SetParameter(par, dParDef.at(par-iNumParMass));
     Debug(Form("Parameter %d : %f",par,dParDef.at(par-iNumParMass) ),"FitCorrelations");
@@ -3494,8 +3501,8 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
     else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Flow-mass: Only one of the parameter limits is set (par %d). Fix this!",par),"FitCorrelations"); return kFALSE; }
   }
 
-  fitCorr->SetParameter(iParFlow, 0.5);
-  fitCorr->SetParLimits(iParFlow, -0.5,1.0);
+  // fitCorr->SetParameter(iParFlow, 0.5);
+  // fitCorr->SetParLimits(iParFlow, -0.5,1.0);
 
   // fitting
 
