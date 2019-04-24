@@ -3480,7 +3480,8 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
 
   // Fitting only BG first (only for Phi)
   TF1* fitBgOnly = nullptr;
-  if(species == kPhi) {
+  // if(species == kPhi) {
+  if(1) {
     fitBgOnly = new TF1("fitFlowBg",sFlowBG.Data(),hist->GetXaxis()->GetXmin(),hist->GetXaxis()->GetXmax());
     for(Int_t p(0); p < iNumParMass; ++p) {
         fitBgOnly->FixParameter(p, 0.0);
@@ -3490,8 +3491,23 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
         fitBgOnly->SetParameter(p, 0.0);
     }
 
-    Double_t dPeakLow = 1.007;
-    Double_t dPeakHigh = 1.03;
+    Double_t dPeakLow = 0.0;
+    Double_t dPeakHigh = 0.0;
+
+    if(species == kK0s) {
+        dPeakLow = 0.44;
+        dPeakHigh = 0.55;
+    }
+
+    if(species == kLambda) {
+        dPeakLow = 1.106;
+        dPeakHigh = 1.134;
+    }
+
+    if(species == kPhi) {
+        dPeakLow = 1.007;
+        dPeakHigh = 1.03;
+    }
 
     TProfile* prof_temp = (TProfile*) hist->Clone("prof_temp");
     TH1D* hist_Bg = (TH1D*) prof_temp->ProjectionX("hist_Bg");
@@ -3534,7 +3550,8 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   }
 
   for(Int_t par(iNumParMass); par < iParFlow+1; ++par) {
-    if(species == kPhi && fitBgOnly && par < iParFlow) {
+    // if(species == kPhi && fitBgOnly && par < iParFlow) {
+    if(fitBgOnly && par < iParFlow) {
         fitCorr->FixParameter(par, fitBgOnly->GetParameter(par));
     } else {
         // Here par-iNumParMass is to account for a fact that dParDef takes only flow part (vector index != parameter index)
