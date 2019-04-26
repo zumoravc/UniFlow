@@ -22,10 +22,10 @@ Bool_t fbDebug = kFALSE;
 Bool_t fbUse3Dweights = kFALSE;
 TString sTaskName = "UniFlow";
 // TString sTag = "TPCcls90";
-TString sTag = "FB768";
-TString sPath = "/mnt/CodesALICE/";
+// TString sTag = "FB768";
+TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/runs_trains/CF_PbPb/6744/";
 // TString sOutputPath = "./" + sTag + "/";
-TString sOutputPath = "./weights/";
+TString sOutputPath = sPath + "/weights/";
 
 TString sOutFileName = "weights.root";
 // TString sOutputPath = sPath+"/weights"+sTag+"/";
@@ -33,8 +33,23 @@ TString sOutFileName = "weights.root";
 // const Short_t iNumPart = 1; const TString species[iNumPart] = {"Refs"};
 // const Short_t iNumPart = 5; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda","Phi"};
 // const Short_t iNumPart = 5; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton"};
-const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
+// const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
 // const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+
+TString sTag = "gap00"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+
+// TString sTag = "CL1"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+// TString sTag = "FB768"; const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
+// TString sTag = "PID3sigma"; const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
+// TString sTag = "PVz8"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+// TString sTag = "TPCcls90"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+// TString sTag = "V0sCPA099"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sCrossFind1"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sDaugDCA3"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sDaugPt02"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sDecRad1"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sFinderOn"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sPVDCA3"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 
 const Bool_t bRunByRun = kFALSE;
 // Run Lists
