@@ -163,6 +163,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCentMin{0},
   fCentMax{0},
   fCentBinNum{0},
+  fCentEstimatorAdd{kRFP},
+  fCentMinAdd{0},
+  fCentMaxAdd{0},
   fPVtxCutZ{10.0},
   fEventRejectAddPileUp{kFALSE},
   fCutChargedTrackFilterBit{96},
@@ -426,6 +429,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fCentMin{0},
   fCentMax{0},
   fCentBinNum{0},
+  fCentEstimatorAdd{kRFP},
+  fCentMinAdd{0},
+  fCentMaxAdd{0},
   fPVtxCutZ{10.0},
   fEventRejectAddPileUp{kFALSE},
   fCutChargedTrackFilterBit{96},
@@ -754,6 +760,9 @@ void AliAnalysisTaskUniFlow::ListParameters() const
   printf("      fCentMin: (Int_t) %d\n",    fCentMin);
   printf("      fCentMax: (Int_t) %d\n",    fCentMax);
   printf("      fCentBinNum: (Int_t) %d\n",    fCentBinNum);
+  printf("      fCentEstimatorAdd: (CentEst) '%s' (%d)\n",    GetCentEstimatorLabel(fCentEstimatorAdd), fCentEstimatorAdd);
+  printf("      fCentMinAdd: (Int_t) %d\n",    fCentMinAdd);
+  printf("      fCentMaxAdd: (Int_t) %d\n",    fCentMaxAdd);
   printf("      fPVtxCutZ: (Double_t) %g (cm)\n",    fPVtxCutZ);
   printf("   -------- Charged tracks --------------------------------------\n");
   printf("      fCutChargedTrackFilterBit: (UInt) %d\n",    fCutChargedTrackFilterBit);
@@ -1080,6 +1089,16 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   if(fIndexCentrality < 0) { return; }
   if(fCentMin > 0 && fIndexCentrality < fCentMin) { return; }
   if(fCentMax > 0 && fIndexCentrality > fCentMax) { return; }
+
+  // additional centrality cut for "double differential" cut
+  if(fCentMax > -1 && fCentMin > -1) {
+    Double_t addCent = GetCentralityIndex(fCentEstimatorAdd);
+    if(addCent < fCentMinAdd) { return; }
+    if(addCent > fCentMaxAdd) { return; }
+
+    printf("Cent: %d | Additional %f\n",fIndexCentrality, addCent);
+  }
+
   fhEventCounter->Fill("Cent/Mult OK",1);
 
   // here events are selected

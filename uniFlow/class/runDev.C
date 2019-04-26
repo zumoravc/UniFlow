@@ -9,7 +9,7 @@
 
 void runDev()
 {
-    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -89,7 +89,8 @@ void runDev()
     task1->SetProcessPID(1);
     task1->SetProcessPhi(1);
     task1->SetProcessV0s(1);
-    task1->SetCentrality(AliAnalysisTaskUniFlow::kV0M,0,90,90);
+    task1->SetCentrality(AliAnalysisTaskUniFlow::kRFP,0,3000,90);
+    // task1->SetAddCentCut(AliAnalysisTaskUniFlow::kV0M,0,10);
     // task1->SetFlowPOIsPtBins({1.0,4.0}, AliAnalysisTaskUniFlow::kK0s);
     // task1->SetFlowPOIsPtBins({2.0,3.0}, AliAnalysisTaskUniFlow::kLambda);
     // task1->SetFlowPOIsPtBins({0.1,2.0}, AliAnalysisTaskUniFlow::kPhi);
