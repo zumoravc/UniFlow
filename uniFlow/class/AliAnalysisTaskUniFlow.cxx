@@ -1082,24 +1082,23 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   // checking if there is at least 5 particles: needed to "properly" calculate correlations
   if(fVector[kRefs]->size() < 5) { return; }
-  fhEventCounter->Fill("#RPFs OK",1);
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
-  fIndexCentrality = GetCentralityIndex(fCentEstimator);
-  if(fIndexCentrality < 0) { return; }
-  if(fCentMin > 0 && fIndexCentrality < fCentMin) { return; }
-  if(fCentMax > 0 && fIndexCentrality > fCentMax) { return; }
+  if(fCentEstimator == kRFP) {
+      fIndexCentrality = GetCentralityIndex(fCentEstimator);
+      if(fIndexCentrality < 0) { return; }
 
-  // additional centrality cut for "double differential" cut
-  if(fCentMax > -1 && fCentMin > -1) {
-    Double_t addCent = GetCentralityIndex(fCentEstimatorAdd);
-    if(addCent < fCentMinAdd) { return; }
-    if(addCent > fCentMaxAdd) { return; }
-
-    printf("Cent: %d | Additional %f\n",fIndexCentrality, addCent);
+      if(fCentMin > 0 && fIndexCentrality < fCentMin) { return; }
+      if(fCentMax > 0 && fIndexCentrality > fCentMax) { return; }
   }
 
-  fhEventCounter->Fill("Cent/Mult OK",1);
+  if(fCentMaxAdd > 0 && fCentMinAdd > 0 && fCentEstimatorAdd == kRFP) {
+    Int_t addCent = GetCentralityIndex(fCentEstimatorAdd);
+    if(addCent < fCentMinAdd) { return; }
+    if(addCent > fCentMaxAdd) { return; }
+  }
+
+  fhEventCounter->Fill("#RPFs OK",1);
 
   // here events are selected
   fhEventCounter->Fill("Selected",1);
@@ -1207,6 +1206,24 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected()
 
   // Additional pile-up rejection cuts for LHC15o dataset
   if(fColSystem == kPbPb && fEventRejectAddPileUp && IsEventRejectedAddPileUp()) { return kFALSE; }
+
+  // estimate centrality & assign indexes (only if AliMultEstimator is requested)
+  if(fCentEstimator != kRFP) {
+      fIndexCentrality = GetCentralityIndex(fCentEstimator);
+
+      if(fIndexCentrality < 0) { return kFALSE; }
+      if(fCentMin > 0 && fIndexCentrality < fCentMin) { return kFALSE; }
+      if(fCentMax > 0 && fIndexCentrality > fCentMax) { return kFALSE; }
+  }
+
+  // additional centrality cut for "double differential" cut
+  if(fCentEstimatorAdd != kRFP && fCentMaxAdd > 0) {
+    Int_t addCentIndex = GetCentralityIndex(fCentEstimatorAdd);
+    if(addCentIndex < fCentMinAdd) { return kFALSE; }
+    if(addCentIndex > fCentMaxAdd) { return kFALSE; }
+  }
+
+  fhEventCounter->Fill("Cent/Mult OK",1);
 
   return kTRUE;
 }
