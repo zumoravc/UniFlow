@@ -1076,7 +1076,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fhEventCounter->Fill("#RPFs OK",1);
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
-  fIndexCentrality = GetCentralityIndex();
+  fIndexCentrality = GetCentralityIndex(fCentEstimator);
   if(fIndexCentrality < 0) { return; }
   if(fCentMin > 0 && fIndexCentrality < fCentMin) { return; }
   if(fCentMax > 0 && fIndexCentrality > fCentMax) { return; }
@@ -3227,7 +3227,7 @@ Int_t AliAnalysisTaskUniFlow::GetSamplingIndex() const
   return index;
 }
 // ============================================================================
-Int_t AliAnalysisTaskUniFlow::GetCentralityIndex() const
+Int_t AliAnalysisTaskUniFlow::GetCentralityIndex(CentEst est) const
 {
   // Estimating centrality percentile based on selected estimator.
   // (Default) If no multiplicity estimator is specified, percentile is estimated as number of selected / filtered charged tracks (NRFP).
@@ -3237,7 +3237,7 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex() const
   Int_t iCentralityIndex = -1;
 
   // assigning centrality based on number of selected charged tracks
-  if(fCentEstimator == kRFP) {
+  if(est == kRFP) {
       iCentralityIndex = fVector[kRefs]->size();
   } else {
     AliMultSelection* multSelection = (AliMultSelection*) fEventAOD->FindListObject("MultSelection");
@@ -3246,7 +3246,7 @@ Int_t AliAnalysisTaskUniFlow::GetCentralityIndex() const
       return -1;
     }
 
-    Float_t dPercentile = multSelection->GetMultiplicityPercentile(GetCentEstimatorLabel(fCentEstimator));
+    Float_t dPercentile = multSelection->GetMultiplicityPercentile(GetCentEstimatorLabel(est));
     if(dPercentile > 100 || dPercentile < 0) {
       AliWarning("Centrality percentile estimated not within 0-100 range. Returning -1");
       return -1;
