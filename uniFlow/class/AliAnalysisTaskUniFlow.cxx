@@ -1706,7 +1706,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
 
       if(fMC) {
           fh2MCPtEtaReco[kK0s]->Fill(v0->Pt(), v0->Eta());
-          if(CheckRecoTruth(v0,kK0s)) { fh2MCPtEtaRecoTrue[kK0s]->Fill(v0->Pt(), v0->Eta()); }
+          if(CheckMCRecoTruth(v0,kK0s)) { fh2MCPtEtaRecoTrue[kK0s]->Fill(v0->Pt(), v0->Eta()); }
       }
 
       if(!FillFlowWeight(v0, kK0s)) { AliFatal("Flow weight filling failed!"); return; }
@@ -1724,7 +1724,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
 
       if(fMC) {
           fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta());
-          if(CheckRecoTruth(v0,kLambda)) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
+          if(CheckMCRecoTruth(v0,kLambda)) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
       }
 
       if(!FillFlowWeight(v0, kLambda)) { AliFatal("Flow weight filling failed!"); return; }
@@ -1742,7 +1742,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
 
       if(fMC) {
           fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta());
-          if(CheckRecoTruth(v0,kLambda)) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
+          if(CheckMCRecoTruth(v0,kLambda)) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
       }
 
       if(!FillFlowWeight(v0, kLambda)) { AliFatal("Flow weight filling failed!"); return; }
@@ -2007,7 +2007,7 @@ AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
   return mcTrack;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::CheckRecoTruth(const AliVParticle* track, const PartSpecies species) const
+Bool_t AliAnalysisTaskUniFlow::CheckMCRecoTruth(const AliVParticle* track, const PartSpecies species) const
 {
     if(!track) { AliError("Input track does not exists!"); return kFALSE; }
     if(species == kUnknown) { AliError("'Unknown' species specified!"); return kFALSE; }
@@ -2379,7 +2379,7 @@ void AliAnalysisTaskUniFlow::FilterPhi() const
         iNumBG++;
         if(fMC) {
           fh2MCPtEtaReco[kPhi]->Fill(mother->Pt(), mother->Eta());
-          if(CheckRecoTruth(mother,kPhi)) { fh2MCPtEtaRecoTrue[kPhi]->Fill(mother->Pt(), mother->Eta()); }
+          if(CheckMCRecoTruth(mother,kPhi)) { fh2MCPtEtaRecoTrue[kPhi]->Fill(mother->Pt(), mother->Eta()); }
         }
       }
 
@@ -2500,7 +2500,7 @@ void AliAnalysisTaskUniFlow::FilterPID() const
 
     if(fMC) {
       fh2MCPtEtaReco[species]->Fill(track->Pt(), track->Eta());
-      if(CheckRecoTruth(track,species)) { fh2MCPtEtaRecoTrue[species]->Fill(track->Pt(), track->Eta()); }
+      if(CheckMCRecoTruth(track,species)) { fh2MCPtEtaRecoTrue[species]->Fill(track->Pt(), track->Eta()); }
     }
 
   } // end-for {part}
