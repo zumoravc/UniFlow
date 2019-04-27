@@ -1706,7 +1706,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
 
       if(fMC) {
           fh2MCPtEtaReco[kK0s]->Fill(v0->Pt(), v0->Eta());
-          if(CheckMCRecoTruth(v0,kK0s)) { fh2MCPtEtaRecoTrue[kK0s]->Fill(v0->Pt(), v0->Eta()); }
+          if(CheckMCTruthReco(kK0s,v0,(AliAODTrack*)v0->GetDaughter(0),(AliAODTrack*)v0->GetDaughter(1))) { fh2MCPtEtaRecoTrue[kK0s]->Fill(v0->Pt(), v0->Eta()); }
       }
 
       if(!FillFlowWeight(v0, kK0s)) { AliFatal("Flow weight filling failed!"); return; }
@@ -1724,7 +1724,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
 
       if(fMC) {
           fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta());
-          if(CheckMCRecoTruth(v0,kLambda)) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
+          if(CheckMCTruthReco(kLambda,v0,(AliAODTrack*)v0->GetDaughter(0),(AliAODTrack*)v0->GetDaughter(1))) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
       }
 
       if(!FillFlowWeight(v0, kLambda)) { AliFatal("Flow weight filling failed!"); return; }
@@ -1742,7 +1742,7 @@ void AliAnalysisTaskUniFlow::FilterV0s() const
 
       if(fMC) {
           fh2MCPtEtaReco[kLambda]->Fill(v0->Pt(), v0->Eta());
-          if(CheckMCRecoTruth(v0,kLambda)) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
+          if(CheckMCTruthReco(kLambda,v0,(AliAODTrack*)v0->GetDaughter(0),(AliAODTrack*)v0->GetDaughter(1))) { fh2MCPtEtaRecoTrue[kLambda]->Fill(v0->Pt(), v0->Eta()); }
       }
 
       if(!FillFlowWeight(v0, kLambda)) { AliFatal("Flow weight filling failed!"); return; }
@@ -2007,21 +2007,79 @@ AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
   return mcTrack;
 }
 // ============================================================================
-Bool_t AliAnalysisTaskUniFlow::CheckMCRecoTruth(const AliVParticle* track, const PartSpecies species) const
+Bool_t AliAnalysisTaskUniFlow::CheckMCPDG(const AliVParticle* track, const Int_t iPDGCode) const
 {
     if(!track) { AliError("Input track does not exists!"); return kFALSE; }
-    if(species == kUnknown) { AliError("'Unknown' species specified!"); return kFALSE; }
 
     AliAODMCParticle* trackMC = GetMCParticle(track->GetLabel());
     if(!trackMC) { return kFALSE; }
 
-    // skipping secondary particles
-    // if(!trackMC->IsPhysicalPrimary()) { return kFALSE; }
-
     Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
-    if(iPDG == 0) { return kFALSE; }
+    return (iPDG == iPDGCode);
+}
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::CheckMCPDG(const AliVParticle* track, const PartSpecies species) const
+{
+    if(!track) { AliError("Input track does not exists!"); return kFALSE; }
+    if(species == kUnknown) { AliError("Cannot get PDG code for 'Unknown' species!"); return kFALSE; }
+    if(species == kRefs || species == kCharged) { AliError("Cannot get charged hadron code for 'Unknown' species!"); return kFALSE; }
 
-    return (iPDG == fPDGCode[species]);
+    return CheckMCPDG(track, fPDGCode[species]);
+}
+// ============================================================================
+Bool_t AliAnalysisTaskUniFlow::CheckMCTruthReco(const PartSpecies species, const AliVParticle* track, const AliVParticle* daughterPos, const AliVParticle* daughterNeg) const
+{
+    if(!track) { AliError("Input track does not exists!"); return kFALSE; }
+    if(!HasMass(species)) {
+        // pi,K,p
+        return CheckMCPDG(track,species);
+    } else {
+        // reconstructed
+        if(!daughterPos || !daughterNeg) { AliError("Input daughter track does not exists!"); return kFALSE; }
+
+        AliAODMCParticle* daughterMCPos = GetMCParticle(daughterPos->GetLabel());
+        AliAODMCParticle* daughterMCNeg = GetMCParticle(daughterNeg->GetLabel());
+        if(!daughterMCPos || !daughterMCNeg) { return kFALSE; }
+
+        // checking if daughter tracks are secondary
+        // if(daughterMCPos->IsPhysicalPrimary() || daughterMCNeg->IsPhysicalPrimary()) { return kFALSE; }
+
+        // Checking mother label
+        Int_t iLabelPosMother = daughterMCPos->GetMother();
+        Int_t iLabelNegMother = daughterMCNeg->GetMother();
+        if(iLabelPosMother != iLabelNegMother) { return kFALSE; }
+
+        AliAODMCParticle* motherMC = GetMCParticle(iLabelPosMother);
+        if(!motherMC) { return kFALSE; }
+
+        // checking PDG mother
+        Int_t iPDGMother = TMath::Abs(motherMC->GetPdgCode());
+        if(iPDGMother != fPDGCode[species]) { return kFALSE; }
+
+        // checking PDG daughters
+        Int_t iPDGPos = TMath::Abs(daughterMCPos->GetPdgCode());
+        Int_t iPDGNeg = TMath::Abs(daughterMCNeg->GetPdgCode());
+
+        if(species == kK0s) {
+            // K0s -> pi+ + pi-
+            return (iPDGPos == fPDGCode[kPion] && iPDGNeg == fPDGCode[kPion]);
+        }
+
+        if(species == kLambda) {
+            // Lambda -> p + pi-
+            if(iPDGPos == fPDGCode[kProton] && iPDGNeg == fPDGCode[kPion]) { return kTRUE; }
+            // bar{Lambda} -> bar{p} + pi+
+            if(iPDGPos == fPDGCode[kPion] && iPDGNeg == fPDGCode[kProton]) { return kTRUE; }
+
+            return kFALSE;
+        }
+
+        if(species == kPhi) {
+            return (iPDGPos == fPDGCode[kKaon] && iPDGNeg == fPDGCode[kKaon]);
+        }
+    }
+
+    return kFALSE;
 }
 // ============================================================================
 Bool_t AliAnalysisTaskUniFlow::IsV0Selected(const AliAODv0* v0) const
@@ -2377,10 +2435,6 @@ void AliAnalysisTaskUniFlow::FilterPhi() const
         fhPhiCounter->Fill("BG",1);
         FillSparseCand(fhsCandPhiBg, mother);
         iNumBG++;
-        if(fMC) {
-          fh2MCPtEtaReco[kPhi]->Fill(mother->Pt(), mother->Eta());
-          if(CheckMCRecoTruth(mother,kPhi)) { fh2MCPtEtaRecoTrue[kPhi]->Fill(mother->Pt(), mother->Eta()); }
-        }
       }
 
       if(mother->Charge() == 0) {
@@ -2388,6 +2442,12 @@ void AliAnalysisTaskUniFlow::FilterPhi() const
         fhPhiCounter->Fill("Unlike-sign",1);
         FillSparseCand(fhsCandPhi, mother);
         fVector[kPhi]->push_back(mother);
+
+        if(fMC) {
+          fh2MCPtEtaReco[kPhi]->Fill(mother->Pt(), mother->Eta());
+          if(CheckMCTruthReco(kPhi,mother,kaon1,kaon2)) { fh2MCPtEtaRecoTrue[kPhi]->Fill(mother->Pt(), mother->Eta()); }
+        }
+
         if(!FillFlowWeight(mother, kPhi)) { AliFatal("Flow weight filling failed!"); return; }
       }
 
@@ -2500,7 +2560,7 @@ void AliAnalysisTaskUniFlow::FilterPID() const
 
     if(fMC) {
       fh2MCPtEtaReco[species]->Fill(track->Pt(), track->Eta());
-      if(CheckMCRecoTruth(track,species)) { fh2MCPtEtaRecoTrue[species]->Fill(track->Pt(), track->Eta()); }
+      if(CheckMCTruthReco(species,track)) { fh2MCPtEtaRecoTrue[species]->Fill(track->Pt(), track->Eta()); }
     }
 
   } // end-for {part}
