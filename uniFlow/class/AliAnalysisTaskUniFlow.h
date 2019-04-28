@@ -439,18 +439,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH2D*                   fh2PIDTPCnSigmaProton[3]; //! TPC nSigma vs pT for selected pions (proton hypothesis)
       TH2D*                   fh2PIDTOFnSigmaProton[3]; //! TOF nSigma vs pT for selected pions (proton hypothesis)
       // MC
-      TH1D*                   fhMCRecoSelectedPionPt; //! pt dist of selected (MC reco) pions
-      TH1D*                   fhMCRecoSelectedTruePionPt; //! pt dist of selected (MC reco) true (tagged in MC gen) pions
-      TH1D*                   fhMCRecoAllPionPt; //! pt dist of all (MC reco) pions (i.e. selected charged tracks that are tagged in MC)
-      TH1D*                   fhMCGenAllPionPt; //! pt dist of all (MC) generated pions
-      TH1D*                   fhMCRecoSelectedKaonPt; //! pt dist of selected (MC reco) Kaons
-      TH1D*                   fhMCRecoSelectedTrueKaonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Kaons
-      TH1D*                   fhMCRecoAllKaonPt; //! pt dist of all (MC reco) Kaons (i.e. selected charged tracks that are tagged in MC)
-      TH1D*                   fhMCGenAllKaonPt; //! pt dist of all (MC) generated Kaons
-      TH1D*                   fhMCRecoSelectedProtonPt; //! pt dist of selected (MC reco) Protons
-      TH1D*                   fhMCRecoSelectedTrueProtonPt; //! pt dist of selected (MC reco) true (tagged in MC gen) Protons
-      TH1D*                   fhMCRecoAllProtonPt; //! pt dist of all (MC reco) Protons (i.e. selected charged tracks that are tagged in MC)
-      TH1D*                   fhMCGenAllProtonPt; //! pt dist of all (MC) generated Protons
       TH2D*                   fh2MCPtEtaGen[kUnknown]; //! (pt,eta) dist for generated particles
       TH2D*                   fh2MCPtEtaReco[kUnknown]; //! (pt,eta) dist for reconstructed particles
       TH2D*                   fh2MCPtEtaRecoTrue[kUnknown]; //! (pt,eta) dist for reconstructed particles with matching generating particle (true)

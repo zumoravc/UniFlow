@@ -270,18 +270,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fh2PIDTOFnSigmaKaon{nullptr},
   fh2PIDTPCnSigmaProton{nullptr},
   fh2PIDTOFnSigmaProton{nullptr},
-  fhMCRecoSelectedPionPt{nullptr},
-  fhMCRecoSelectedTruePionPt{nullptr},
-  fhMCRecoAllPionPt{nullptr},
-  fhMCGenAllPionPt{nullptr},
-  fhMCRecoSelectedKaonPt{nullptr},
-  fhMCRecoSelectedTrueKaonPt{nullptr},
-  fhMCRecoAllKaonPt{nullptr},
-  fhMCGenAllKaonPt{nullptr},
-  fhMCRecoSelectedProtonPt{nullptr},
-  fhMCRecoSelectedTrueProtonPt{nullptr},
-  fhMCRecoAllProtonPt{nullptr},
-  fhMCGenAllProtonPt{nullptr},
   fh2MCPtEtaGen{nullptr},
   fh2MCPtEtaReco{nullptr},
   fh2MCPtEtaRecoTrue{nullptr},
@@ -540,18 +528,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fh2PIDTOFnSigmaKaon{nullptr},
   fh2PIDTPCnSigmaProton{nullptr},
   fh2PIDTOFnSigmaProton{nullptr},
-  fhMCRecoSelectedPionPt{nullptr},
-  fhMCRecoSelectedTruePionPt{nullptr},
-  fhMCRecoAllPionPt{nullptr},
-  fhMCGenAllPionPt{nullptr},
-  fhMCRecoSelectedKaonPt{nullptr},
-  fhMCRecoSelectedTrueKaonPt{nullptr},
-  fhMCRecoAllKaonPt{nullptr},
-  fhMCGenAllKaonPt{nullptr},
-  fhMCRecoSelectedProtonPt{nullptr},
-  fhMCRecoSelectedTrueProtonPt{nullptr},
-  fhMCRecoAllProtonPt{nullptr},
-  fhMCGenAllProtonPt{nullptr},
   fh2MCPtEtaGen{nullptr},
   fh2MCPtEtaReco{nullptr},
   fh2MCPtEtaRecoTrue{nullptr},
@@ -4295,35 +4271,7 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
   } // end-if {fFillQA}
 
   if(fMC) {
-    fhMCRecoAllPionPt = new TH1D("fhMCRecoAllPionPt","fhMCRecoAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoAllPionPt);
-    fhMCRecoSelectedPionPt = new TH1D("fhMCRecoSelectedPionPt","fhMCRecoSelectedPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoSelectedPionPt);
-    fhMCRecoSelectedTruePionPt = new TH1D("fhMCRecoSelectedTruePionPt","fhMCRecoSelectedTruePionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoSelectedTruePionPt);
-    fhMCGenAllPionPt = new TH1D("fhMCGenAllPionPt","fhMCGenAllPionPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCGenAllPionPt);
-
-    fhMCRecoAllKaonPt = new TH1D("fhMCRecoAllKaonPt","fhMCRecoAllKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoAllKaonPt);
-    fhMCRecoSelectedKaonPt = new TH1D("fhMCRecoSelectedKaonPt","fhMCRecoSelectedKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoSelectedKaonPt);
-    fhMCRecoSelectedTrueKaonPt = new TH1D("fhMCRecoSelectedTrueKaonPt","fhMCRecoSelectedTrueKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoSelectedTrueKaonPt);
-    fhMCGenAllKaonPt = new TH1D("fhMCGenAllKaonPt","fhMCGenAllKaonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCGenAllKaonPt);
-
-    fhMCRecoAllProtonPt = new TH1D("fhMCRecoAllProtonPt","fhMCRecoAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoAllProtonPt);
-    fhMCRecoSelectedProtonPt = new TH1D("fhMCRecoSelectedProtonPt","fhMCRecoSelectedProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoSelectedProtonPt);
-    fhMCRecoSelectedTrueProtonPt = new TH1D("fhMCRecoSelectedTrueProtonPt","fhMCRecoSelectedTrueProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCRecoSelectedTrueProtonPt);
-    fhMCGenAllProtonPt = new TH1D("fhMCGenAllProtonPt","fhMCGenAllProtonPt; p_{T} (GeV/c); Counts", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax);
-    fListMC->Add(fhMCGenAllProtonPt);
-
     // NUE weights
-
     for(Int_t iSpec(0); iSpec < kUnknown; ++iSpec) {
         if(!fProcessSpec[iSpec]) { continue; }
 
