@@ -78,7 +78,6 @@
 #include "TProfile2D.h"
 #include "TProfile3D.h"
 #include "TList.h"
-#include "TClonesArray.h"
 #include "TComplex.h"
 #include "TRandom3.h"
 
@@ -90,7 +89,7 @@
 #include "AliPIDCombined.h"
 #include "AliLog.h"
 #include "AliAODEvent.h"
-#include "AliESDEvent.h"
+#include "AliMCEvent.h"
 #include "AliVParticle.h"
 #include "AliVTrack.h"
 #include "AliPicoTrack.h"
@@ -111,12 +110,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fPDGMassPhi{1.019455},
   fPDGMassK0s{0.497614},
   fPDGMassLambda{1.11568},
-  fEventAOD{},
+  fEventAOD{nullptr},
+  fEventMC{nullptr},
   fPVz{},
-  fPIDResponse{},
-  fPIDCombined{},
+  fPIDResponse{nullptr},
+  fPIDCombined{nullptr},
   fFlowWeightsList{nullptr},
-  fArrayMC{nullptr},
   fMC{kFALSE},
   fInit{kFALSE},
   fIndexSampling{0},
@@ -369,12 +368,12 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fPDGMassPhi{1.019455},
   fPDGMassK0s{0.497614},
   fPDGMassLambda{1.11568},
-  fEventAOD{},
+  fEventAOD{nullptr},
+  fEventMC{nullptr},
   fPVz{},
-  fPIDResponse{},
-  fPIDCombined{},
+  fPIDResponse{nullptr},
+  fPIDCombined{nullptr},
   fFlowWeightsList{nullptr},
-  fArrayMC{nullptr},
   fMC{bIsMC},
   fInit{kFALSE},
   fIndexSampling{0},
@@ -1036,8 +1035,8 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
   // loading array with MC particles
   if(fMC) {
-    fArrayMC = (TClonesArray*) fEventAOD->FindListObject("mcparticles");
-    if(!fArrayMC) { AliFatal("TClonesArray with MC particle not found!"); return; }
+    fEventMC = inputHandler->MCEvent();
+    if(!fEventMC) { AliFatal("fEventMC with MC particle not found!"); return; }
   }
 
   // "valid" events before selection
@@ -1439,12 +1438,12 @@ void AliAnalysisTaskUniFlow::FillQAEvents(const QAindex iQAindex) const
 // ============================================================================
 void AliAnalysisTaskUniFlow::ProcessMC() const
 {
-    if(!fArrayMC) { AliError("TClonesArray with MC particles not found!"); return; }
+    if(!fEventMC) { AliError("fEventMC with MC particles not found!"); return; }
 
-    const Int_t iNumTracksMC = fArrayMC->GetEntriesFast();
+    const Int_t iNumTracksMC = fEventMC->GetNumberOfTracks();
     for(Int_t iTrackMC(0); iTrackMC < iNumTracksMC; ++iTrackMC) {
 
-        AliAODMCParticle* trackMC = (AliAODMCParticle*) fArrayMC->At(iTrackMC);
+        AliAODMCParticle* trackMC = (AliAODMCParticle*) fEventMC->GetTrack(iTrackMC);
         if(!trackMC) { continue; }
 
         // skipping secondary particles
@@ -1975,10 +1974,10 @@ Double_t AliAnalysisTaskUniFlow::GetRapidity(const Double_t mass, const Double_t
 // ============================================================================
 AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
 {
-  if(!fArrayMC) { AliError("fArrayMC not found!"); return nullptr; }
-  if(label < 0) { /*AliWarning("MC label negative");*/ return nullptr; } // off-shell / virtual particles
+  if(!fEventMC) { AliError("fEventMC not found!"); return nullptr; }
 
-  AliAODMCParticle* mcTrack = (AliAODMCParticle*) fArrayMC->At(label);
+
+  AliAODMCParticle* mcTrack = (AliAODMCParticle*) fEventMC->GetTrack(labelAbs);
   if(!mcTrack) { AliWarning("Corresponding MC track not found!"); return nullptr; }
   return mcTrack;
 }

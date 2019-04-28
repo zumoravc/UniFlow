@@ -13,7 +13,6 @@ class TString;
 class TComplex;
 class TFile;
 class TList;
-class TClonesArray;
 class TProfile;
 class TH1D;
 class TH2D;
@@ -23,6 +22,7 @@ class AliPIDResponse;
 class AliPIDCombined;
 class AliVEvent;
 class AliAODEvent;
+class AliMCEvent;
 class AliVParticle;
 class AliVTrack;
 class AliAODTrack;
@@ -260,11 +260,11 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const Int_t             fPDGCode[kUnknown] = {0,0,211,321,2212,310,3122,333}; //
 
       AliAODEvent*            fEventAOD; //! AOD event countainer
+      AliMCEvent*             fEventMC; //! MC event countainer
       Double_t                fPVz; // PV z-coordinate used for weights
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
       AliPIDCombined*         fPIDCombined; //! AliPIDCombined container
       TList*                  fFlowWeightsList; //! list of weights from input file
-      TClonesArray*           fArrayMC; //! input list of MC particles
       Bool_t                  fMC; // is running on mc?
       Bool_t                  fInit; // initialization check
       Int_t                   fIndexSampling; // sampling index (randomly generated)
