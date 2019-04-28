@@ -1446,24 +1446,30 @@ void AliAnalysisTaskUniFlow::ProcessMC() const
         AliAODMCParticle* trackMC = (AliAODMCParticle*) fEventMC->GetTrack(iTrackMC);
         if(!trackMC) { continue; }
 
-        // skipping secondary particles
-        if(!trackMC->IsPhysicalPrimary()) { continue; }
 
         Double_t dEta = trackMC->Eta();
         Double_t dPt = trackMC->Pt();
-        Bool_t bCharged = (trackMC->Charge() != 0) ? kTRUE : kFALSE;
+        Bool_t bCharged = (trackMC->Charge() != 0);
+        Bool_t bIsPhysPrimary = trackMC->IsPhysicalPrimary();
+        Bool_t bIsWithinPOIs = IsWithinPOIs(trackMC);
 
-        // Refs (charged) particles
-        if(bCharged && IsWithinRefs(trackMC)) { fh2MCPtEtaGen[kRefs]->Fill(dPt, dEta); }
+        if(bCharged && bIsPhysPrimary) {
+            if(IsWithinRefs(trackMC)) { fh2MCPtEtaGen[kRefs]->Fill(dPt, dEta); }
+            if(bIsWithinPOIs) { fh2MCPtEtaGen[kCharged]->Fill(dPt,dEta); }
+        }
 
-        if(!IsWithinPOIs(trackMC)) { continue; }
-        // here only POIs survives
+        if(!bIsWithinPOIs) { continue; }
 
-        if(bCharged) { fh2MCPtEtaGen[kCharged]->Fill(dPt,dEta); }
-
+        PartSpecies species = kUnknown;
         Int_t iPDG = TMath::Abs(trackMC->GetPdgCode());
         for(Int_t spec(kPion); spec < Int_t(kUnknown); ++spec) {
-            if(iPDG == fPDGCode[spec]) { fh2MCPtEtaGen[spec]->Fill(dPt, dEta); }
+            if(iPDG == fPDGCode[spec]) { species = PartSpecies(spec); }
+        }
+
+        if(species == kPhi && (trackMC->GetMother() == -1)) {
+            fh2MCPtEtaGen[species]->Fill(dPt, dEta);
+        } else {
+            if(bIsPhysPrimary) { fh2MCPtEtaGen[species]->Fill(dPt, dEta); }
         }
     }
 }
@@ -1976,6 +1982,10 @@ AliAODMCParticle* AliAnalysisTaskUniFlow::GetMCParticle(const Int_t label) const
 {
   if(!fEventMC) { AliError("fEventMC not found!"); return nullptr; }
 
+  const Int_t labelAbs = TMath::Abs(label);
+  // Negative label just indicate track with shared clustes, but otherwise should be used
+  // absolute value has to be used
+  // if(label < 0) { /*AliWarning("MC label negative");*/ return nullptr; }
 
   AliAODMCParticle* mcTrack = (AliAODMCParticle*) fEventMC->GetTrack(labelAbs);
   if(!mcTrack) { AliWarning("Corresponding MC track not found!"); return nullptr; }
@@ -2016,7 +2026,11 @@ Bool_t AliAnalysisTaskUniFlow::CheckMCTruthReco(const PartSpecies species, const
         AliAODMCParticle* daughterMCNeg = GetMCParticle(daughterNeg->GetLabel());
         if(!daughterMCPos || !daughterMCNeg) { return kFALSE; }
 
+        // checking charges (should be opposite)
+        if(daughterMCPos->Charge() == daughterMCNeg->Charge()) { return kFALSE; }
+
         // checking if daughter tracks are secondary
+        // NB: Kaons from Phi are considered PhysPrimary !!!
         // if(daughterMCPos->IsPhysicalPrimary() || daughterMCNeg->IsPhysicalPrimary()) { return kFALSE; }
 
         // Checking mother label
