@@ -102,14 +102,13 @@
 
 ClassImp(AliAnalysisTaskUniFlow);
 
+namespace {
+    const Int_t fPDGCode[] = {0,0,211,321,2212,310,3122,333};
+    const Double_t fPDGMass[] = {0,0,0.13957,0.493677,0.938272,0.497614,1.11568,1.019455};
+}
+
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fEventCuts{},
-  fPDGMassPion{0.13957},
-  fPDGMassKaon{0.493677},
-  fPDGMassProton{0.938272},
-  fPDGMassPhi{1.019455},
-  fPDGMassK0s{0.497614},
-  fPDGMassLambda{1.11568},
   fEventAOD{nullptr},
   fEventMC{nullptr},
   fPVz{},
@@ -362,12 +361,6 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
 // ============================================================================
 AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSys, Bool_t bUseWeights, Bool_t bIsMC) : AliAnalysisTaskSE(name),
   fEventCuts{},
-  fPDGMassPion{0.13957},
-  fPDGMassKaon{0.493677},
-  fPDGMassProton{0.938272},
-  fPDGMassPhi{1.019455},
-  fPDGMassK0s{0.497614},
-  fPDGMassLambda{1.11568},
   fEventAOD{nullptr},
   fEventMC{nullptr},
   fPVz{},
@@ -1795,8 +1788,8 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0) const
     for(Int_t i(0); i < 3; i++) { dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i]; }
 
     // implementation in xy plane
-    // Double_t dPropLife = ( (fPDGMassK0s / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
-    Double_t dPropLife = ( (fPDGMassK0s / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]) );
+    // Double_t dPropLife = ( (fPDGMass[kK0s] / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    Double_t dPropLife = ( (fPDGMass[kK0s] / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]) );
     if(dPropLife > (fCutV0sNumTauK0sMax * 2.68)) { return kFALSE; }
   }
   fhV0sCounterK0s->Fill("c#tau",1);
@@ -1823,14 +1816,14 @@ Bool_t AliAnalysisTaskUniFlow::IsV0aK0s(const AliAODv0* v0) const
     Double_t dMassALambda = v0->MassAntiLambda();
 
     // K0s candidate is within 10 MeV of (Anti)Lambda InvMass physSelTask
-    if(TMath::Abs(dMassLambda - fPDGMassLambda) < fCutV0sCrossMassCutK0s)
+    if(TMath::Abs(dMassLambda - fPDGMass[kLambda]) < fCutV0sCrossMassCutK0s)
     {
       // in Lambda peak
       if(fFillQA) { fhV0sCompetingInvMassK0s->Fill(dMass,dMassLambda); }
       return kFALSE;
     }
 
-    if(TMath::Abs(dMassALambda - fPDGMassLambda) < fCutV0sCrossMassCutK0s)
+    if(TMath::Abs(dMassALambda - fPDGMass[kLambda]) < fCutV0sCrossMassCutK0s)
     {
       // in Anti-Lambda peak
       if(fFillQA) { fhV0sCompetingInvMassK0s->Fill(dMass,dMassALambda); }
@@ -1910,8 +1903,8 @@ Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0) const
     for(Int_t i(0); i < 3; i++) { dDecayCoor[i] = dSecVtxCoor[i] - dPrimVtxCoor[i]; }
 
     // implementation in xy plane
-    // Double_t dPropLife = ( (fPDGMassLambda / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
-    Double_t dPropLife = ((fPDGMassLambda / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]));
+    // Double_t dPropLife = ( (fPDGMass[kLambda] / v0->Pt()) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
+    Double_t dPropLife = ((fPDGMass[kLambda] / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]));
     if(dPropLife > (fCutV0sNumTauLambdaMax * 7.89) ) { return 0; }
   }
   fhV0sCounterLambda->Fill("c#tau",1);
@@ -1954,7 +1947,7 @@ Int_t AliAnalysisTaskUniFlow::IsV0aLambda(const AliAODv0* v0) const
   if(fCutV0sCrossMassRejection)
   {
     Double_t dMassK0s = v0->MassK0Short();
-    if(TMath::Abs(dMassK0s - fPDGMassK0s) < fCutV0sCrossMassCutLambda)
+    if(TMath::Abs(dMassK0s - fPDGMass[kK0s]) < fCutV0sCrossMassCutLambda)
     {
       if(fFillQA && bIsLambda) { fhV0sCompetingInvMassLambda->Fill(dMassK0s,dMassLambda); }
       if(fFillQA && bIsALambda) { fhV0sCompetingInvMassLambda->Fill(dMassK0s,dMassALambda); }
@@ -2268,7 +2261,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const QAindex iQAindex, const AliAODv0* v
     fhQAV0sArmenterosK0s[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0());
 
     // proper lifetime
-    Double_t dMassPDGK0s = fPDGMassK0s;
+    Double_t dMassPDGK0s = fPDGMass[kK0s];
     // Double_t dPropLifeK0s = ( (dMassPDGK0s / v0->Pt() + 1e-10) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     Double_t dPropLifeK0s = ( (dMassPDGK0s / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]) );
     fhQAV0sNumTauK0s[iQAindex]->Fill(dPropLifeK0s);
@@ -2290,7 +2283,7 @@ void AliAnalysisTaskUniFlow::FillQAV0s(const QAindex iQAindex, const AliAODv0* v
     if(bCandAntiLambda) { fhQAV0sArmenterosALambda[iQAindex]->Fill(v0->AlphaV0(), v0->PtArmV0()); }
 
     // proper lifetime
-    Double_t dMassPDGLambda = fPDGMassLambda;
+    Double_t dMassPDGLambda = fPDGMass[kLambda];
     // Double_t dPropLifeLambda = ( (dMassPDGLambda / v0->Pt() + 1e-10) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1]) );
     Double_t dPropLifeLambda = ( (dMassPDGLambda / (v0->P() + 1e-10) ) * TMath::Sqrt(dDecayCoor[0]*dDecayCoor[0] + dDecayCoor[1]*dDecayCoor[1] + dDecayCoor[2]*dDecayCoor[2]) );
     fhQAV0sNumTauLambda[iQAindex]->Fill(dPropLifeLambda);
@@ -2472,8 +2465,8 @@ AliPicoTrack* AliAnalysisTaskUniFlow::MakeMother(const AliAODTrack* part1, const
 
   // calculating inv. mass
   Double_t dMass = -999.;
-  Double_t dE1 = TMath::Sqrt( mom1.Mag2() + TMath::Power(fPDGMassKaon,2) );
-  Double_t dE2 = TMath::Sqrt( mom2.Mag2() + TMath::Power(fPDGMassKaon,2) );
+  Double_t dE1 = TMath::Sqrt( mom1.Mag2() + TMath::Power(fPDGMass[kKaon],2) );
+  Double_t dE2 = TMath::Sqrt( mom2.Mag2() + TMath::Power(fPDGMass[kKaon],2) );
 
   Double_t dMassSq = TMath::Power((dE1+dE2),2) - mom.Mag2();
   if(dMassSq >= 0.) dMass = TMath::Sqrt(dMassSq);

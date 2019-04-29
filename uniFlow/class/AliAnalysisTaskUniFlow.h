@@ -250,15 +250,6 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                FourDiffGapNeg(Int_t n1, Int_t n2, Int_t n3, Int_t n4) const; // Four particle reference correlation calculations (with eta gap)
 
       // array lenghts & constants
-      const Double_t          fPDGMassPion; // [DPGMass] DPG mass of charged pion
-      const Double_t          fPDGMassKaon; // [DPGMass] DPG mass of charged kaon
-      const Double_t          fPDGMassProton; // [DPGMass] DPG mass of proton
-      const Double_t          fPDGMassPhi; // [DPGMass] DPG mass of phi (333) meson
-      const Double_t          fPDGMassK0s; // [DPGMass] DPG mass of K0s
-      const Double_t          fPDGMassLambda; // [DPGMass] DPG mass of (Anti)Lambda
-
-      const Int_t             fPDGCode[kUnknown] = {0,0,211,321,2212,310,3122,333}; //
-
       AliAODEvent*            fEventAOD; //! AOD event countainer
       AliMCEvent*             fEventMC; //! MC event countainer
       Double_t                fPVz; // PV z-coordinate used for weights
