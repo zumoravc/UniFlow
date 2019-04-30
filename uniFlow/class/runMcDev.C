@@ -9,7 +9,7 @@
 
 void runMcDev()
 {
-    Bool_t local = 1; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
+    Bool_t local = 0; // set if you want to run the analysis locally (kTRUE), or on grid (kFALSE)
     Bool_t gridTest = 1; // if you run on grid, specify test mode (kTRUE) or full grid model (kFALSE)
 
     TString sGridMode = "full";
@@ -18,26 +18,30 @@ void runMcDev()
     Bool_t bMergeViaJDL = kTRUE;
     // Bool_t bMergeViaJDL = kFALSE;
 
-    TString sWorkDir = "15o-hi-pass1-qa";
+    TString sWorkDir = "lhc18e1";
     TString sOutDir = "output";
 
     // // Pb-Pb Run2 5.02 TeV (Run2) : RunList_LHC15o_pass1_CentralBarrelTracking_hadronPID_20161130_v6.txt [77 runs]
-    // TString sPeriod = "2015/LHC15o"; TString sPass = "pass1"; Int_t runNumber[] = {
-    //   246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
-    //   246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804, 246766,
-    //   246765 ,246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
-    //   246488, 246487, 246434, 246431, 246424, 246276, 246275, 246272, 246271, 246225,
-    //   //,
-    //   // 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151,
-    //   // 246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049, 246048, 246042,
-    //   // 246037, 246036, 246012, 246003, 246001, 245963, 245954, 245952, 245949, 245923,
-    //   // 245833, 245831, 245829, 245705, 245702, 245692, 245683
-    // };
+    // TString sPeriod = "2015/LHC15o"; TString sPass = "pass1";
+
+     Int_t runNumber[] = {
+      246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
+      246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804, 246766,
+      246765 ,246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
+      246488, 246487, 246434, 246431, 246424, 246276, 246275, 246272, 246271, 246225
+      // ,
+      // 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151,
+      // 246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049, 246048, 246042,
+      // 246037, 246036, 246012, 246003, 246001, 245963, 245954, 245952, 245949, 245923,
+      // 245833, 245831, 245829, 245705, 245702, 245692, 245683
+    };
 
     // Pb-Pb Run2 5.02 TeV (Run2) : RunList_LHC15o_pass1_CentralBarrelTracking_hadronPID_20161130_v6.txt [77 runs]
-    TString sPeriod = "2017/LHC17c5a"; TString sPass = "pass1"; Int_t runNumber[] = {
-      246390
-    };
+    TString sPeriod = "2018/LHC18e1"; TString sPass = "pass1";
+
+    // Int_t runNumber[] = {
+      // 246390
+    //};
 
 
 
@@ -184,7 +188,7 @@ void runMcDev()
         alienHandler->SetAnalysisSource("AliUniFlowCorrTask.cxx AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20190416_ROOT6-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20190401_ROOT6-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
         alienHandler->SetGridDataDir(Form("/alice/sim/%s",sPeriod.Data()));
