@@ -12,6 +12,7 @@ stdout
 *_validation.sh
 *.pcm
 *_ACLiC_dict.cxx*
+*.par
 
 ### OTHERS ###
 *.xml
@@ -27,5 +28,8 @@ stdout
 *.gif
 
 ### Directories ###
-results/*
-macros_bk
+misc/*
+FlowPID.sh
+myAnalysis.C
+tempChecksum_*
+outputs_valid
