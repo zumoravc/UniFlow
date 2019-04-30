@@ -23,9 +23,10 @@ Bool_t fbUse3Dweights = kFALSE;
 TString sTaskName = "UniFlow";
 // TString sTag = "TPCcls90";
 // TString sTag = "FB768";
+// TString sPath = "~/Codes/Flow/uniFlow/results/runs_trains/CF_PbPb/6744/";
 TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/runs_trains/CF_PbPb/6744/";
 // TString sOutputPath = "./" + sTag + "/";
-TString sOutputPath = sPath + "/weights/";
+TString sOutputPath = sPath + "/weights_fixed/";
 
 TString sOutFileName = "weights.root";
 // TString sOutputPath = sPath+"/weights"+sTag+"/";
@@ -36,7 +37,7 @@ TString sOutFileName = "weights.root";
 // const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
 // const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 
-TString sTag = "gap00"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+// TString sTag = "gap00"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 
 // TString sTag = "CL1"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 // TString sTag = "FB768"; const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
@@ -48,6 +49,7 @@ TString sTag = "gap00"; const Short_t iNumPart = 8; const TString species[iNumPa
 // TString sTag = "V0sDaugDCA3"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 // TString sTag = "V0sDaugPt02"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 // TString sTag = "V0sDecRad1"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+TString sTag = "V0sDecRad10"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 // TString sTag = "V0sFinderOn"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 // TString sTag = "V0sPVDCA3"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 
@@ -246,16 +248,16 @@ TH2D* Process2DWeights(const TH2* dist)
     TH2D* weights_2d = (TH2D*) dist->Clone();
     weights_2d->Reset();
 
-    for(Int_t binEta(1); binEta < dist_2d->GetNbinsX()+1; ++binEta) {
+    for(Int_t binEta(1); binEta < dist_2d->GetNbinsY()+1; ++binEta) {
         // projection onto phi (in eta bin)
-        TH1D* proj = (TH1D*) dist_2d->ProjectionY(Form("y_%d",binEta), binEta,binEta);
+        TH1D* proj = (TH1D*) dist_2d->ProjectionX(Form("x_%d",binEta), binEta,binEta);
         if(!proj) { printf("No projection! Something went wrong!\n"); return 0x0; }
 
         TH1D* hWeight = CalculateWeight(proj);
 
-        for(Int_t binPhi(1); binPhi < weights_2d->GetNbinsY()+1; ++binPhi) {
-            weights_2d->SetBinContent(binEta,binPhi, hWeight->GetBinContent(binPhi));
-            weights_2d->SetBinError(binEta,binPhi, 0.0);
+        for(Int_t binPhi(1); binPhi < weights_2d->GetNbinsX()+1; ++binPhi) {
+            weights_2d->SetBinContent(binPhi,binEta, hWeight->GetBinContent(binPhi));
+            weights_2d->SetBinError(binPhi,binEta, 0.0);
         }
     }
 
