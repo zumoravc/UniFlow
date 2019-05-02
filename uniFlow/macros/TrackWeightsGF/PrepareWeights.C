@@ -38,22 +38,30 @@ TString sOutFileName = "weights.root";
 // const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 
 // TString sTag = "gap00"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+// TString sTag = "def"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 
 // TString sTag = "CL1"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 // TString sTag = "FB768"; const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
-// TString sTag = "PID3sigma"; const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
+// TString sTag = "PID3sigma"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+TString sTag = "PID3sigma"; const Short_t iNumPart = 2; const TString species[iNumPart] = {"K0s","Lambda"};
 // TString sTag = "PVz8"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 // TString sTag = "TPCcls90"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
-// TString sTag = "V0sCPA099"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sCPA"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 // TString sTag = "V0sCrossFind1"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
-// TString sTag = "V0sDaugDCA3"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sDaugDCA"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 // TString sTag = "V0sDaugPt02"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 // TString sTag = "V0sDecRad1"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
-TString sTag = "V0sDecRad10"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sDecRad100"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 // TString sTag = "V0sFinderOn"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
-// TString sTag = "V0sPVDCA3"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
+// TString sTag = "V0sPVDCA"; const Short_t iNumPart = 4; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda"};
 
+// TString sTag = "_1020"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+
+
+const Bool_t bUpdate = 0; // if True overrides already existing tagged list (for fixes, etc)
 const Bool_t bRunByRun = kFALSE;
+
+
 // Run Lists
 
 // pPb 5.02 TeV
@@ -133,15 +141,19 @@ void PrepareWeights()
         TString sListName = "averaged";
         if(!sTag.IsNull()) { sListName = sTag; }
 
-        if(outList->FindObject(sListName.Data())) {
-            Error(Form("This listRun '%s' already exits within output file. Terminating!",sListName.Data()));
-            outList->ls();
-            return;
-        }
+        TList* listRun = (TList*) outList->FindObject(sListName.Data());
 
-        TList* listRun = new TList();
-        listRun->SetOwner(kTRUE);
-        listRun->SetName(sListName.Data());
+        if(listRun) {
+            if(!bUpdate) {
+                Error(Form("This listRun '%s' already exits within output file. Terminating!",sListName.Data()));
+                listRun->ls();
+                return;
+            }
+        } else {
+            listRun = new TList();
+            listRun->SetOwner(kTRUE);
+            listRun->SetName(sListName.Data());
+        }
 
         for(Int_t part = 0; part < iNumPart; ++part) {
             Info(Form(" -part %d (out of %d)",part+1,iNumPart));
