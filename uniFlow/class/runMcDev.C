@@ -21,29 +21,30 @@ void runMcDev()
     TString sWorkDir = "lhc18e1";
     TString sOutDir = "output";
 
-    // // Pb-Pb Run2 5.02 TeV (Run2) : RunList_LHC15o_pass1_CentralBarrelTracking_hadronPID_20161130_v6.txt [77 runs]
-    // TString sPeriod = "2015/LHC15o"; TString sPass = "pass1";
-
-     Int_t runNumber[] = {
-      246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
-      246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804, 246766,
-      246765 ,246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
-      246488, 246487, 246434, 246431, 246424, 246276, 246275, 246272, 246271, 246225
-      // ,
-      // 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151,
-      // 246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049, 246048, 246042,
-      // 246037, 246036, 246012, 246003, 246001, 245963, 245954, 245952, 245949, 245923,
-      // 245833, 245831, 245829, 245705, 245702, 245692, 245683
-    };
-
     // Pb-Pb Run2 5.02 TeV (Run2) : RunList_LHC15o_pass1_CentralBarrelTracking_hadronPID_20161130_v6.txt [77 runs]
     TString sPeriod = "2018/LHC18e1"; TString sPass = "pass1";
 
-    // Int_t runNumber[] = {
-      // 246390
-    //};
+    Int_t runNumber[] = {
+        246994, 246991, 246989, 246984, 246982, 246948, 246945, 246928, 246851, 246847,
+        246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804, 246766,
+        246765 ,246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495, 246493,
+        246488, 246487, 246434, 246431, 246424, 246276, 246275, 246272, 246271, 246225
+        // ,
+        // 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151,
+        // 246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049, 246048, 246042,
+        // 246037, 246036, 246012, 246003, 246001, 245963, 245954, 245952, 245949, 245923,
+        // 245833, 245831, 245829, 245705, 245702, 245692, 245683
+    };
 
-
+    // p-Pb Run2 5.02 TeV (Run2)
+    // // TString sPeriod = "2017/LHC17f2a_cent_fix"; TString sPass = "pass1"; Int_t runNumber[] = {
+    // // TString sPeriod = "2017/LHC17f2a_cent_woSDD_fix"; TString sPass = "pass1"; Int_t runNumber[] = {
+    // TString sPeriod = "2017/LHC17f2a_fast_fix"; TString sPass = "pass1"; Int_t runNumber[] = {
+    //     267166, 267165, 267164, 267163, 265525, 265521, 265501, 265500, 265499, 265435, 265427,
+    //     265426, 265425, 265424, 265422, 265421, 265420, 265419, 265388, 265387, 265385, 265384,
+    //     265383, 265381, 265378, 265377, 265344, 265343, 265342, 265339, 265338, 265336, 265334,
+    //     265332, 265309
+    // };
 
     #if !defined (__CINT__) || defined (__CLING__)
       gInterpreter->ProcessLine(".include $ROOTSYS/include");
@@ -182,13 +183,14 @@ void runMcDev()
         // if we want to run on grid, we create and configure the plugin
         AliAnalysisAlien *alienHandler = new AliAnalysisAlien();
         // also specify the include (header) paths on grid
-        alienHandler->AddIncludePath("-I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include");
+        alienHandler->AddIncludePath("-I. -I$ROOTSYS/include -I$ALICE_ROOT/include -I$ALICE_PHYSICS/include");
         // make sure your source files get copied to grid
-        alienHandler->SetAdditionalLibs("AliAnalysisTaskUniFlow.cxx AliAnalysisTaskUniFlow.h libPWGEMCALbase.so");
-        alienHandler->SetAnalysisSource("AliUniFlowCorrTask.cxx AliAnalysisTaskUniFlow.cxx");
+        alienHandler->SetAdditionalLibs("PWGCFFLOWGF.par libPWGEMCALbase.so");
+        // alienHandler->SetAnalysisSource("AliUniFlowCorrTask_cxx.so AliAnalysisTaskUniFlow_cxx.so");
+        // alienHandler->SetAnalysisSource("AliUniFlowCorrTask.cxx  AliAnalysisTaskUniFlow.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20190401_ROOT6-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20190501_ROOT6-1");
         //alienHandler->SetAliPhysicsVersion("vAN-20160131-1");
         // select the input data
         alienHandler->SetGridDataDir(Form("/alice/sim/%s",sPeriod.Data()));
@@ -223,6 +225,8 @@ void runMcDev()
         // define the output folders
         alienHandler->SetGridWorkingDir(sWorkDir.Data());
         alienHandler->SetGridOutputDir(sOutDir.Data());
+
+        alienHandler->SetDropToShell(false);  // do not open a shell
 
         // connect the alien plugin to the manager
         mgr->SetGridHandler(alienHandler);
