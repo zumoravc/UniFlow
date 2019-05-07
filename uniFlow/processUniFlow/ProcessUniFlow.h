@@ -42,6 +42,7 @@ class ProcessUniFlow
     void        SetSaveInterSteps(Bool_t save = kTRUE) { fSaveInterSteps = save; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
 
+    static TString     GetSpeciesString(PartSpecies species); // system species string  (kCharged, kK0s, ...)
     static TString     GetSpeciesName(PartSpecies species); // system species name (Charged, K0s, ...)
     static TString     GetSpeciesLabel(PartSpecies species); // readable species name (h^{#pm}, K^{0}_{S}, ...)
     static Bool_t      IsSpeciesDirect(PartSpecies sp) { return (sp == kCharged || sp == kPion || sp == kKaon || sp == kProton); } //

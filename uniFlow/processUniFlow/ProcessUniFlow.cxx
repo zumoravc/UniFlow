@@ -183,6 +183,13 @@ Bool_t ProcessUniFlow::LoadLists()
   return kTRUE;
 }
 //_____________________________________________________________________________
+TString ProcessUniFlow::GetSpeciesString(PartSpecies species)
+{
+    TString name = TString("k");
+    name.Append(GetSpeciesName(species));
+    return name;
+}
+//_____________________________________________________________________________
 TString ProcessUniFlow::GetSpeciesName(PartSpecies species)
 {
   TString name = TString();
