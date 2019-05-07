@@ -49,7 +49,7 @@ class ProcessUniFlow
     static Bool_t      IsSpeciesReconstructed(PartSpecies sp) { return (sp == kK0s || sp == kLambda || sp == kPhi); } //
 
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
-    void        Run(); // running the task (main body of the class)
+    Bool_t        Run(); // running the task (main body of the class)
     void        Clear(); // clearing (removing tasks, etc.) after running
 
     // printing output methods

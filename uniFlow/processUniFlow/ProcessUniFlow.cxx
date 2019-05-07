@@ -91,12 +91,12 @@ void ProcessUniFlow::Clear()
   Info("Cleaning done!","Clear");
 }
 //_____________________________________________________________________________
-void ProcessUniFlow::Run()
+Bool_t ProcessUniFlow::Run()
 {
   gStyle->SetOptFit(1100);
 
   // main body of the class
-  if(!Initialize()) { Fatal("Task not initialized","Run"); return; }
+  if(!Initialize()) { Fatal("Task not initialized","Run"); return kFALSE; }
 
   const Int_t iNumTasks = fvTasks.size();
 
@@ -106,11 +106,11 @@ void ProcessUniFlow::Run()
   {
     FlowTask* currentTask = fvTasks.at(iTask);
     if(!currentTask) { continue; }
-    if(!InitTask(currentTask)) { return; }
-    if(!ProcessTask(currentTask)) { return; }
+    if(!InitTask(currentTask)) { return kFALSE; }
+    if(!ProcessTask(currentTask)) { return kFALSE; }
   }
 
-  return;
+  return kTRUE;
 }
 //_____________________________________________________________________________
 Bool_t ProcessUniFlow::Initialize()
