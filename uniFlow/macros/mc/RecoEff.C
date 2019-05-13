@@ -1,16 +1,23 @@
 enum eMC {kGen = 0, kReco, kRecoTrue, kNum};
+
 TString sHistName[eMC::kNum] = {
     "fh2MCPtEtaGen",
     "fh2MCPtEtaReco",
     "fh2MCPtEtaRecoTrue"
 };
 
-void RecoEff(
-    TString sPath = "~/Codes/ALICE/Flow/uniFlow/macros/mc/",
+void AllRecoEff(
+    Bool_t bOver = kFALSE,
     TString sTag = "UniFlow",
+    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/runs_grid/PbPb_MC/LHC18e1/purity_eff/"
+);
+
+void RecoEff(
     TString sSpecies = "Charged",
     Bool_t bOverwrite = kFALSE,
-    std::vector<Double_t> dPtBins = {}
+    std::vector<Double_t> dPtBins = {},
+    TString sTag = "UniFlow",
+    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/runs_grid/PbPb_MC/LHC18e1/purity_eff/"
 )
 {
     // Openning files
@@ -117,4 +124,18 @@ void RecoEff(
     fileIn->Close();
 
     return;
+}
+
+void AllRecoEff(Bool_t bOver, TString sTag, TString sPath)
+{
+    std::vector<Double_t> bins = {
+        0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,
+        2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0};
+    RecoEff("Charged", bOver, bins, sTag, sPath);
+    RecoEff("Pion", bOver, bins, sTag, sPath);
+    RecoEff("Kaon", bOver, bins, sTag, sPath);
+    RecoEff("Proton", bOver, bins, sTag, sPath);
+    RecoEff("K0s", bOver, bins, sTag, sPath);
+    RecoEff("Lambda", bOver, bins, sTag, sPath);
+    RecoEff("Phi", bOver, bins, sTag, sPath);
 }
