@@ -12,7 +12,8 @@ class TH1D;
 class FlowTask
 {
   public:
-                FlowTask(PartSpecies species = kUnknown, const char* name = "");
+                FlowTask(PartSpecies species, const char* name = "");
+                FlowTask(PartSpecies species, Int_t iHarm, Int_t iCumMax, Double_t dGap, Int_t iNumSamples = 1, std::vector<Double_t> array = std::vector<Double_t>(), const char* name = "");
                 ~FlowTask(); // default destructor
 
     void        PrintTask(); // listing values of internal properties

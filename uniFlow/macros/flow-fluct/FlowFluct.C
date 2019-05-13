@@ -1,0 +1,91 @@
+void FlowFluctAll();
+
+void FlowFluct(TString sSpecies = "Charged", Int_t iCent = 0)
+{
+    printf("%s | %d\n", sSpecies.Data(), iCent);
+
+    TString sPath = "~/Codes/ALICE/Flow/uniFlow/results/cums/PbPb/6815/V0M/gap_all/";
+    TFile* fileIn = TFile::Open(Form("%s/Processed.root",sPath.Data()),"READ");
+
+    TFile* fileOut = TFile::Open(Form("%s/FlowFluct.root",sPath.Data()),"UPDATE");
+
+    TString sNameTwo = Form("%s_hFlow2_harm2_gap08_cent%d",sSpecies.Data(), iCent);
+    TString sNameFour = Form("%s_hFlow4_harm2_gap-10_cent%d",sSpecies.Data(), iCent);
+
+    TH1D* hist2 = (TH1D*) fileIn->Get(sNameTwo.Data());
+    if(!hist2) { printf("Hist2 not found!\n"); fileIn->ls(); return; }
+
+    TH1D* hist4 = (TH1D*) fileIn->Get(sNameFour.Data());
+    if(!hist4) { printf("Hist4 not found!\n"); fileIn->ls(); return; }
+
+    // make mean
+    TH1D* histMean = (TH1D*) hist2->Clone(Form("%s_Mean_cent%d",sSpecies.Data(),iCent));
+    if(!histMean) { printf("Mean not created!\n"); return; }
+
+    // make std
+    TH1D* histSTD = (TH1D*) hist2->Clone(Form("%s_Std_cent%d",sSpecies.Data(),iCent));
+    if(!histSTD) { printf("STD not created!\n"); return; }
+
+    // make relative
+    TH1D* histRel = (TH1D*) hist2->Clone(Form("%s_Rel_cent%d",sSpecies.Data(),iCent));
+    if(!histRel) { printf("Rel not created!\n"); return; }
+
+    Int_t iNumBins = hist2->GetNbinsX();
+    for(Int_t iBin(1); iBin < iNumBins+1; ++iBin) {
+        Double_t c2 = hist2->GetBinContent(iBin);
+        Double_t e2 = hist2->GetBinError(iBin);
+        Double_t c4 = hist4->GetBinContent(iBin);
+        Double_t e4 = hist4->GetBinError(iBin);
+
+        Double_t mean = (c2*c2 + c4*c4) * 0.5;
+        Double_t err_mean = (c2*c2*e2*e2+c4*c4*e4*e4)*0.25/(c2*c2+c4*c4);
+
+        Double_t std = (c2*c2 - c4*c4) * 0.5;
+        Double_t err_std = err_mean;
+
+
+        histMean->SetBinContent(iBin, TMath::Sqrt(mean));
+        histMean->SetBinError(iBin, TMath::Sqrt(err_mean));
+        histSTD->SetBinContent(iBin, TMath::Sqrt(std));
+        histSTD->SetBinError(iBin, TMath::Sqrt(err_std));
+        // Double_t rel = std / mean;
+        // histRel->SetBinContent(iBin, TMath::Sqrt(rel));
+
+        histRel->Divide(histSTD,histMean);
+    }
+
+    fileOut->cd();
+    histMean->Write(Form("%s_mean_cent%d",sSpecies.Data(),iCent));
+    histSTD->Write(Form("%s_std_cent%d",sSpecies.Data(),iCent));
+    histRel->Write(Form("%s_rel_cent%d",sSpecies.Data(),iCent));
+    fileOut->Close();
+
+    // TCanvas* can = new TCanvas();
+    // can->Divide(3,1);
+    // can->cd(1);
+    // histMean->Draw();
+    // can->cd(2);
+    // histSTD->Draw();
+    // can->cd(3);
+    // histRel->Draw();
+
+
+    return;
+}
+
+void FlowFluctAll()
+{
+    std::vector<TString> sSpecies = {"Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+
+    Int_t iNumSpec = sSpecies.size();
+    Int_t iNumCent = 6;
+
+    for(Int_t iS(0); iS < iNumSpec; ++iS) {
+        TString sSpe = sSpecies.at(iS);
+
+        for(Int_t iCent(0); iCent < iNumCent; ++iCent) {
+
+            FlowFluct(sSpe,iCent);
+        }
+    }
+}
