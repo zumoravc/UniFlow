@@ -3038,7 +3038,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     dPeakHigh = 1.03;
 
     dFracLimLow = 0.05;
-    dFracLimHigh = 0.10;
+    dFracLimHigh = 0.05;
 
     sMassBG = "[0] + [1]*x + [2]*x*x + [3]*x*x*x"; iNumParsMassBG = 4;
     sMassSig = "[4]*(TMath::BreitWigner(x,[5],[6]))"; iNumParsMassSig = 3;
@@ -3054,7 +3054,7 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     sParNames.push_back("ampTot");      dParDef.push_back(1.2*dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
     // sParNames.push_back("ampBW");       dParDef.push_back(1.0);         dParLimLow.push_back(1.0);          dParLimHigh.push_back(1.0);
     sParNames.push_back("mean");        dParDef.push_back(1.019445);    dParLimLow.push_back(1.0185);       dParLimHigh.push_back(1.021);
-    sParNames.push_back("width");       dParDef.push_back(0.004);       dParLimLow.push_back(0.004);        dParLimHigh.push_back(0.008);
+    sParNames.push_back("width");       dParDef.push_back(0.004);       dParLimLow.push_back(0.004);        dParLimHigh.push_back(0.009);
   }
 
   if(species == kK0s) {
@@ -3082,10 +3082,10 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
     sParNames.push_back("bg2");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
     sParNames.push_back("bg3");         dParDef.push_back(0.0);         dParLimLow.push_back(-1);           dParLimHigh.push_back(-1);
 
-    sParNames.push_back("ampTot");      dParDef.push_back(dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
+    sParNames.push_back("ampTot");      dParDef.push_back(1.2*dMaximum);    dParLimLow.push_back(0.0);          dParLimHigh.push_back(1.2*dMaximum);
     sParNames.push_back("ampG1");       dParDef.push_back(0.55);         dParLimLow.push_back(0.55);          dParLimHigh.push_back(0.99);
     sParNames.push_back("meanG1");      dParDef.push_back(0.4976);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.51);
-    sParNames.push_back("sigmaG1");     dParDef.push_back(0.005);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.05);
+    sParNames.push_back("sigmaG1");     dParDef.push_back(0.001);       dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.05);
     // sParNames.push_back("ampG2");       dParDef.push_back(0.0);         dParLimLow.push_back(0.0);          dParLimHigh.push_back(0.4);
     sParNames.push_back("meanG2");      dParDef.push_back(0.48);      dParLimLow.push_back(0.48);         dParLimHigh.push_back(0.52);
     sParNames.push_back("sigmaG2");     dParDef.push_back(0.2);        dParLimLow.push_back(0.001);        dParLimHigh.push_back(0.2);
@@ -3348,12 +3348,12 @@ Bool_t ProcessUniFlow::FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& f
   if(!SetFuncParameters(fitMass_fracSig, fitMass_sig->GetParameters(),dParLimLow, dParLimHigh, sParNames)) { Error("Setting fitMass_fracSig parameters failed!","FitInvMass"); return kFALSE; }
   if(bFitOK) { for(Int_t iPar(iNumParsMassBG); iPar < iNumParTot; ++iPar) { fitMass_fracSig->SetParameters(iPar, fitMass_fracSigHard->GetParameter(iPar)); } }
   for(Int_t iPar(0); iPar < iNumParsMassBG; ++iPar) { fitMass_fracSig->FixParameter(iPar,0.0); }
-  if(fbDebug) { Debug("Fitting: post", "FitInvMass"); PrintFitFunction(fitMass_fracSig); }
-
   Double_t dFracMax = histMass_fracSig->GetBinContent(histMass_fracSig->GetMaximumBin());
-  fitMass_fracSig->SetParameter(iNumParsMassBG, dFracMax - dFracLimLow); // contribution from sMassSig == 0
-  fitMass_fracSig->SetParLimits(iNumParsMassBG, ((dFracMax - dFracLimLow) > 0.0 ? (dFracMax - dFracLimLow) : 0.0) , ((dFracMax + dFracLimHigh) < 1.0 ? (dFracMax + dFracLimHigh) : 1.0)); // contribution from sMassSig == 0
-  // fitMass_fracSig->SetParLimits(iNumParsMassBG, 0.0,1.0); // contribution from sMassSig == 0
+  // fitMass_fracSig->SetParameter(iNumParsMassBG, dFracMax - dFracLimLow); // contribution from sMassSig == 0
+  // fitMass_fracSig->SetParLimits(iNumParsMassBG, ((dFracMax - dFracLimLow) > 0.0 ? (dFracMax - dFracLimLow) : 0.0) , ((dFracMax + dFracLimHigh) < 1.0 ? (dFracMax + dFracLimHigh) : 1.0)); // contribution from sMassSig == 0
+  fitMass_fracSig->SetParameter(iNumParsMassBG, dFracMax); // contribution from sMassSig == 0
+  fitMass_fracSig->SetParLimits(iNumParsMassBG, 0.0,1.0); // contribution from sMassSig == 0
+  if(fbDebug) { Debug("Fitting: post", "FitInvMass"); PrintFitFunction(fitMass_fracSig); }
 
   outList->Add(fitMass_fracSig);
   // if(!CheckFitResult(histMass_fracSig->Fit(fitMass_fracSig, sFitOptMass.Data()), kTRUE)) { Error("fitMass_fracSig failed!","FitInvMass"); PrintFitFunction(fitMass_fracSig); return kFALSE; }
