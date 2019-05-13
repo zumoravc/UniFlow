@@ -3478,6 +3478,53 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
     for(Int_t par(0); par < iNumParDefs; ++par) { printf("  par %d: %g (%g<%g)\n",par, dParDef.at(par), dParLimLow.at(par), dParLimHigh.at(par)); }
   }
 
+  // Fitting only BG first (only for Phi)
+  TF1* fitBgOnly = nullptr;
+  // if(species == kPhi) {
+  if(1) {
+    fitBgOnly = new TF1("fitFlowBg",sFlowBG.Data(),hist->GetXaxis()->GetXmin(),hist->GetXaxis()->GetXmax());
+    for(Int_t p(0); p < iNumParMass; ++p) {
+        fitBgOnly->FixParameter(p, 0.0);
+    }
+
+    for(Int_t p(iNumParMass); p < iNumParMass+2; ++p) {
+        fitBgOnly->SetParameter(p, 0.0);
+    }
+
+    Double_t dPeakLow = 0.0;
+    Double_t dPeakHigh = 0.0;
+
+    if(species == kK0s) {
+        dPeakLow = 0.44;
+        dPeakHigh = 0.55;
+    }
+
+    if(species == kLambda) {
+        dPeakLow = 1.106;
+        dPeakHigh = 1.134;
+    }
+
+    if(species == kPhi) {
+        dPeakLow = 1.007;
+        dPeakHigh = 1.03;
+    }
+
+    TProfile* prof_temp = (TProfile*) hist->Clone("prof_temp");
+    TH1D* hist_Bg = (TH1D*) prof_temp->ProjectionX("hist_Bg");
+    Double_t dMaximum = hist_Bg->GetMaximum();
+
+    for(Int_t iBin(0); iBin < hist_Bg->GetNbinsX()+2; ++iBin) {
+
+        Double_t x = hist_Bg->GetBinCenter(iBin);
+        if(x > dPeakLow && x < dPeakHigh) { hist_Bg->SetBinError(iBin,10*dMaximum); }
+    }
+
+    outList->Add(hist_Bg);
+    outList->Add(fitBgOnly);
+
+    if(!CheckFitResult( hist_Bg->Fit(fitBgOnly,sFitOptFlow.Data()) )) { Error(Form("Flow-mass BG only fit does not converged within iterations limit (%d)!",1), "FitCorrelations"); PrintFitFunction(fitBgOnly); return kFALSE; }
+  }
+
   // === Initialision ===
   Int_t iParFlow = iNumParMass +iNumParsFlowBG; // index of Flow (vn/dn) parameter
 
@@ -3503,14 +3550,20 @@ Bool_t ProcessUniFlow::FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, T
   }
 
   for(Int_t par(iNumParMass); par < iParFlow+1; ++par) {
-    // Here par-iNumParMass is to account for a fact that dParDef takes only flow part (vector index != parameter index)
-    fitCorr->SetParameter(par, dParDef.at(par-iNumParMass));
-    Debug(Form("Parameter %d : %f",par,dParDef.at(par-iNumParMass) ),"FitCorrelations");
-    Double_t dLimLow = dParLimLow.at(par-iNumParMass);
-    Double_t dLimHigh = dParLimHigh.at(par-iNumParMass);
+    // if(species == kPhi && fitBgOnly && par < iParFlow) {
+    if(fitBgOnly && par < iParFlow) {
+        fitCorr->FixParameter(par, fitBgOnly->GetParameter(par));
+    } else {
+        // Here par-iNumParMass is to account for a fact that dParDef takes only flow part (vector index != parameter index)
+        fitCorr->SetParameter(par, dParDef.at(par-iNumParMass));
+        Debug(Form("Parameter %d : %f",par,dParDef.at(par-iNumParMass) ),"FitCorrelations");
+        Double_t dLimLow = dParLimLow.at(par-iNumParMass);
+        Double_t dLimHigh = dParLimHigh.at(par-iNumParMass);
 
-    if(dLimLow > -1.0 && dLimHigh > -1.0) { fitCorr->SetParLimits(par, dLimLow,dLimHigh); }
-    else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Flow-mass: Only one of the parameter limits is set (par %d). Fix this!",par),"FitCorrelations"); return kFALSE; }
+        if(dLimLow > -1.0 && dLimHigh > -1.0) { fitCorr->SetParLimits(par, dLimLow,dLimHigh); }
+        else if(dLimLow > -1.0 || dLimHigh > -1.0) { Error(Form("Flow-mass: Only one of the parameter limits is set (par %d). Fix this!",par),"FitCorrelations"); return kFALSE; }
+    }
+
   }
 
   // fitCorr->SetParameter(iParFlow, 0.5);
