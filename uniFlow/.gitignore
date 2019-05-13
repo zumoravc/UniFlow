@@ -12,6 +12,7 @@ stdout
 *_validation.sh
 *.pcm
 *_ACLiC_dict.cxx*
+*.par
 
 ### OTHERS ###
 *.xml
