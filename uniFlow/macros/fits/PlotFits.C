@@ -37,7 +37,7 @@ void SetFuncAtt(TF1* func, Color_t color, Style_t style, Int_t width = 2.0);
 void SetHistAtt(TH1* hist, Color_t color, Style_t markStyle, Double_t markSize = 1.0);
 Bool_t ProcessList(TFile* file, TString sPath, TString sListName, Int_t padIndex = -1);
 
-void PlotFits(TString sPath = "../results/nlf/output/K0s/", TString corrName = "<<2>>(2,-2)", TString sSpecies = "K0s", Int_t iNumPt = 8, Int_t iNumCent = 5)
+void PlotFits(TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/PbPb/syst_6815/K0s/CL1", TString corrName = "<<2>>(2,-2)", TString sSpecies = "K0s", Int_t iNumPt = 8, Int_t iNumCent = 5)
 {
 
     PrepareCanvas(iNumPt);
@@ -47,6 +47,10 @@ void PlotFits(TString sPath = "../results/nlf/output/K0s/", TString corrName = "
     if(!fInput) { printf("ERROR: File not open!\n"); return; }
 
     gSystem->mkdir(Form("%s/fits/",sPath.Data()),1);
+    // gSystem->mkdir(Form("%s/fits/mass/",sPath.Data()),1);
+    // gSystem->mkdir(Form("%s/fits/corr",sPath.Data()),1);
+    // gSystem->mkdir(Form("%s/fits/mass/single",sPath.Data()),1);
+    // gSystem->mkdir(Form("%s/fits/corr/single",sPath.Data()),1);
 
     TString sCorrName = corrName;
 
