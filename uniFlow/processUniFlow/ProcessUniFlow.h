@@ -42,13 +42,14 @@ class ProcessUniFlow
     void        SetSaveInterSteps(Bool_t save = kTRUE) { fSaveInterSteps = save; }
     void        SetDebug(Bool_t debug = kTRUE) { fbDebug = debug; }
 
+    static TString     GetSpeciesString(PartSpecies species); // system species string  (kCharged, kK0s, ...)
     static TString     GetSpeciesName(PartSpecies species); // system species name (Charged, K0s, ...)
     static TString     GetSpeciesLabel(PartSpecies species); // readable species name (h^{#pm}, K^{0}_{S}, ...)
     static Bool_t      IsSpeciesDirect(PartSpecies sp) { return (sp == kCharged || sp == kPion || sp == kKaon || sp == kProton); } //
     static Bool_t      IsSpeciesReconstructed(PartSpecies sp) { return (sp == kK0s || sp == kLambda || sp == kPhi); } //
 
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
-    void        Run(); // running the task (main body of the class)
+    Bool_t        Run(); // running the task (main body of the class)
     void        Clear(); // clearing (removing tasks, etc.) after running
 
     // printing output methods
@@ -92,7 +93,7 @@ class ProcessUniFlow
     Bool_t      CheckFitResult(TFitResultPtr result, Bool_t bIgnorePOSDEF = kFALSE);
     TH1*        SubtractInvMassBg(TH1* hInvMass, TH1* hInvMassBg, FlowTask* task);
     Bool_t      FitInvMass(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TList* outList, TH1* histBg = nullptr);
-    Bool_t      FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg, TList* outList);
+    Bool_t      FitCorrelations(TH1* hist, FlowTask* task, TF1& fitOut, TF1& fitOutSig, TF1& fitOutBg, TF1& fitInSig, TF1& fitInBg, TList* outList,  Bool_t bIsFour = kFALSE);
 
     TList*      LoadSamples(TList* list, TString sHistName, Int_t iNumSamples); // find all samples histos in list
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile

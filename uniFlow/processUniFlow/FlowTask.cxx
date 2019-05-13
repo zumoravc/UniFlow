@@ -23,7 +23,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fDesampleUseRMS{kFALSE},
   fCumOrderMax{kNon},
   fDoCorrMixed{kFALSE},
-  fMergePosNeg{kFALSE},
+  fMergePosNeg{kTRUE},
   fFlowFitPhiSubtLS{kTRUE},
   fbNormLS{kTRUE},
   fdNormLSLow{1.05},
@@ -58,6 +58,15 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
 
   fTaskTag = ProcessUniFlow::GetSpeciesName(species);
   if(!fName.EqualTo("")) fTaskTag.Append(Form("_%s",fName.Data()));
+}
+//_____________________________________________________________________________
+FlowTask::FlowTask(PartSpecies species, Int_t iHarm, Int_t iCumMax, Double_t dGap, Int_t iNumSamples, std::vector<Double_t> array, const char* name) : FlowTask(species,name)
+{
+    fHarmonics = iHarm;
+    fCumOrderMax = Cumulants(iCumMax);
+    fEtaGap = dGap;
+    fNumSamples = iNumSamples;
+    if(array.size()) { SetPtBins(array); }
 }
 //_____________________________________________________________________________
 FlowTask::~FlowTask()

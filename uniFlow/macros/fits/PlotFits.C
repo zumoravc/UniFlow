@@ -9,7 +9,6 @@
 #include "TF1.h"
 #include "TFile.h"
 
-
 TCanvas* gCanSingle = nullptr;
 TCanvas* gCanOverMass = nullptr;
 TCanvas* gCanOverCorr = nullptr;
@@ -25,67 +24,51 @@ Style_t styleTot = kSolid;
 Style_t styleSig = kDashed;
 Style_t styleBg = kDashed;
 
-std::vector<TString> vecCorr = {};
-
 TString sFileName = "fits.root";
 TString gOutFormat = "pdf";
-TString sPath;
-
-// TString sSpecies = "K0s"; Int_t iNumPt = 8; Int_t iNumCent = 7;
-
-// TString sSpecies = "Lambda"; Int_t iNumPt = 9; Int_t iNumCent = 7;
-// TString sSpecies = "Lambda"; Int_t iNumPt = 4; Int_t iNumCent = 3;
-
-TString sSpecies = "Phi"; Int_t iNumPt = 5; Int_t iNumCent = 7;
 
 // Double_t dMax = 1e-4;
 // Double_t dMin = -1.0*1e-4;
 
-void PrepareCanvas();
+void PrepareCanvas(Int_t iNumPt);
 void SetPad();
 void SetHistOff(TH1* hist);
 void SetFuncAtt(TF1* func, Color_t color, Style_t style, Int_t width = 2.0);
 void SetHistAtt(TH1* hist, Color_t color, Style_t markStyle, Double_t markSize = 1.0);
-Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex = -1);
+Bool_t ProcessList(TFile* file, TString sPath, TString sListName, Int_t padIndex = -1);
 
-void PlotFits(TString path = "../results/nlf/output/Phi/")
+void PlotFits(TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/PbPb/syst_6815/K0s/CL1", TString corrName = "<<2>>(2,-2)", TString sSpecies = "K0s", Int_t iNumPt = 8, Int_t iNumCent = 5)
 {
-    sPath = path;
-    //sPath = "../results/nlf/systematics/Lambda/";
 
-    PrepareCanvas();
-
-    vecCorr.push_back("<<3>>(4,-2,-2)_2sub(0)");
-    // vecCorr.push_back("<<3>>(5,-3,-2)_2sub(0)");
-    // vecCorr.push_back("<<3>>(6,-3,-3)_2sub(0)");
-
+    PrepareCanvas(iNumPt);
 
 
     TFile* fInput = TFile::Open(Form("%s/%s",sPath.Data(),sFileName.Data()),"READ");
     if(!fInput) { printf("ERROR: File not open!\n"); return; }
 
     gSystem->mkdir(Form("%s/fits/",sPath.Data()),1);
+    // gSystem->mkdir(Form("%s/fits/mass/",sPath.Data()),1);
+    // gSystem->mkdir(Form("%s/fits/corr",sPath.Data()),1);
+    // gSystem->mkdir(Form("%s/fits/mass/single",sPath.Data()),1);
+    // gSystem->mkdir(Form("%s/fits/corr/single",sPath.Data()),1);
 
-    for(Int_t iCor(0); iCor < (Int_t) vecCorr.size(); ++iCor) {
+    TString sCorrName = corrName;
 
-        TString sCorrName = vecCorr.at(iCor);
+    for(Int_t iCent(0); iCent < iNumCent; ++iCent) {
 
-        for(Int_t iCent(0); iCent < iNumCent; ++iCent) {
+        for(Int_t iPt(0); iPt < iNumPt; ++iPt) {
 
-            for(Int_t iPt(0); iPt < iNumPt; ++iPt) {
-
-                TString name = Form("%s_%s_cent%d_pt%d",sSpecies.Data(),sCorrName.Data(),iCent,iPt);
-                if(!ProcessList(fInput, name, iPt+1)) { printf("ERROR: ProcessList '%s' failed!\n", name.Data()); return; }
-            }
-
-            gCanOverMass->cd(0);
-            gCanOverMass->SaveAs(Form("%s/fits/mass/mass_%s_cent%d.%s",sPath.Data(),sCorrName.Data(),iCent,gOutFormat.Data()),gOutFormat.Data());
-            gCanOverMass->Clear("D");
-            gCanOverCorr->cd(0);
-            gCanOverCorr->SaveAs(Form("%s/fits/corr/corr_%s_cent%d.%s",sPath.Data(),sCorrName.Data(),iCent,gOutFormat.Data()),gOutFormat.Data());
-            gCanOverCorr->Clear("D");
-
+            TString name = Form("%s_%s_cent%d_pt%d",sSpecies.Data(),sCorrName.Data(),iCent,iPt);
+            if(!ProcessList(fInput, sPath, name, iPt+1)) { printf("ERROR: ProcessList '%s' failed!\n", name.Data()); return; }
         }
+
+        gCanOverMass->cd(0);
+        gCanOverMass->SaveAs(Form("%s/fits/mass/mass_%s_%s_cent%d.%s",sPath.Data(),sSpecies.Data(),sCorrName.Data(),iCent,gOutFormat.Data()),gOutFormat.Data());
+        gCanOverMass->Clear("D");
+        gCanOverCorr->cd(0);
+        gCanOverCorr->SaveAs(Form("%s/fits/corr/corr_%s_%s_cent%d.%s",sPath.Data(),sSpecies.Data(),sCorrName.Data(),iCent,gOutFormat.Data()),gOutFormat.Data());
+        gCanOverCorr->Clear("D");
+
     }
 
     // if(!ProcessList(fInput, listName)) { printf("ERROR: ProcessList '%s' failed!\n", listName.Data()); return; }
@@ -93,7 +76,7 @@ void PlotFits(TString path = "../results/nlf/output/Phi/")
 }
 
 
-Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex)
+Bool_t ProcessList(TFile* file, TString sPath, TString sListName, Int_t padIndex)
 {
     if(!file) { printf("ERROR: Input file not found!\n"); return kFALSE; }
 
@@ -220,7 +203,7 @@ Bool_t ProcessList(TFile* file, TString sListName, Int_t padIndex)
     return kTRUE;
 }
 
-void PrepareCanvas()
+void PrepareCanvas(Int_t iNumPt = 8)
 {
     gCanSingle = new TCanvas("gCanSingle","gCanSingle", 400,400);
     // gCanSingle->cd(1);
