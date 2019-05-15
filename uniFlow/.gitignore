@@ -36,4 +36,5 @@ class/FlowPID.sh
 class/myAnalysis.C
 class/tempChecksum_*
 results/*
+running/*
 macros_bk
