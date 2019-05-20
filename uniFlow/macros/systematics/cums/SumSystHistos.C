@@ -11,19 +11,24 @@
 #include "TH1D.h"
 #include "TF1.h"
 
+#include </Users/vpacik/Codes/ALICE/Flow/uniFlow/utils/Utils.cxx>
+
 std::vector<Double_t> vecPID = {};
 std::vector<Double_t> vecDec = {};
 
-Double_t dMax = 0.3;
+Double_t dMax = 0.2;
 Bool_t AddHistos(std::vector<TH1D*>& vec, TH1D* total);
 TH1D* MakeValues(Double_t dval, TH1D* temp);
+void  FitToHist(TH1* hist, TF1* fit);
 void SetCustomPalette();
 
 Bool_t ProcessSingle(
     const char* histNameC,
     const char* path,
     std::vector<TString>& vec,
-    Int_t iCent = 0
+    Int_t iCent,
+    TString sSystHistoName = "Diff",
+    TString sSystFitName = ""
 );
 
 void ProcessAll();
@@ -31,10 +36,15 @@ void ProcessAll();
 // ==================================================================================================================
 // ==================================================================================================================
 
-void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/PbPb/syst_6815/", Int_t iNumCent = 6)
+void SumSystHistos(
+    TString species = "Lambda",
+    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst_6815/",
+    Int_t iNumCent = 6,
+    TString sSystHistoName = "Diff",
+    TString sSystFitName = "fitDiff"
+)
 {
     TString path = Form("%s/%s/",sPath.Data(),species.Data());
-
 
     std::vector<TString> vecHist = {"hFlow4_harm2_gap-10"};
     // vecHist.push_back("<<3>>(4,-2,-2)_2sub(0)");
@@ -45,7 +55,6 @@ void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Co
     if(species.EqualTo("Charged")) {
         vecSyst.push_back("CL1");
         vecSyst.push_back("FB768");
-        // vecSyst.push_back("PID3sigma");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
 
@@ -55,7 +64,7 @@ void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Co
         vecSyst.push_back("PID3sigma");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
-        vecPID = {0.01,0.02,0.013,0.03,0.03,0.03};
+        vecPID = {0.01,0.02,0.02,0.04,0.03,0.04};
 
     } else if(species.EqualTo("Kaon")) {
         vecSyst.push_back("CL1");
@@ -63,7 +72,7 @@ void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Co
         vecSyst.push_back("PID3sigma");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
-        vecPID = {0.04,0.017,0.01,0.0,0.01,0.01};
+        vecPID = {0.04,0.02,0.01,0.01,0.01,0.01};
 
     } else if(species.EqualTo("Proton")) {
         vecSyst.push_back("CL1");
@@ -71,7 +80,7 @@ void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Co
         vecSyst.push_back("PID3sigma");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
-        vecPID = {0.03,0.02,0.02,0.03,0.03,0.04};
+        vecPID = {0.02,0.03,0.03,0.03,0.03,0.03};
 
     } else if(species.EqualTo("K0s")) {
         vecSyst.push_back("CL1");
@@ -85,7 +94,7 @@ void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Co
         vecSyst.push_back("V0sDecRad10");
         vecSyst.push_back("V0sFinderOn");
         vecSyst.push_back("V0sPVDCA3");
-        vecDec = {0.02,0.024,0.02,0.012,0.021,0.036};
+        // vecDec = {0.02,0.024,0.02,0.012,0.021,0.036};
 
     } else if(species.EqualTo("Lambda")) {
         vecSyst.push_back("CL1");
@@ -102,10 +111,10 @@ void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Co
 
     } else if(species.EqualTo("Phi")) {
         vecSyst.push_back("CL1");
-        vecSyst.push_back("FB768");
-        vecSyst.push_back("PID3sigma");
+        // vecSyst.push_back("FB768");
+        // vecSyst.push_back("PID3sigma");
         vecSyst.push_back("PVz8");
-        vecSyst.push_back("TPCcls90");
+        // vecSyst.push_back("TPCcls90");
         vecPID = {0.0,0.0,0.0,0.0,0.0,0.0};
 
         // iNumCent = 6;
@@ -121,7 +130,7 @@ void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Co
 
             TString histoName = vecHist.at(iHist);
 
-            if(!ProcessSingle(Form("%s_%s_cent%d",species.Data(),histoName.Data(),iCent),path.Data(),vecSyst,iCent)) { return; }
+            if(!ProcessSingle(Form("%s_%s_cent%d",species.Data(),histoName.Data(),iCent),path.Data(),vecSyst,iCent,sSystHistoName,sSystFitName)) { return; }
         }
     }
 
@@ -132,63 +141,73 @@ void SumSystHistos(TString species = "Lambda", TString sPath = "/Users/vpacik/Co
 // ==================================================================================================================
 // ==================================================================================================================
 
-Bool_t ProcessSingle(const char* histNameC, const char* path, std::vector<TString>& vec, Int_t iCent)
+Bool_t ProcessSingle(
+    const char* histNameC,
+    const char* path,
+    std::vector<TString>& vec,
+    Int_t iCent,
+    TString sSystHistoName,
+    TString sSystFitName
+)
 {
-    printf("iCent inside %d\n",iCent);
+    Bool_t bUseSystFit = sSystFitName.Length();
+
     TString histName = histNameC;
 
     Int_t iNumSyst = vec.size();
-    if(iNumSyst == 0) { printf("E: Input vector is empty!\n"); return kFALSE; }
+    if(iNumSyst == 0) { Utils::Debug("Input vector is empty!"); return kFALSE; }
 
-    TString sOutDir = "final_diff";
+    TString sOutDir = "final_combined";
 
     std::vector<TH1D*> vecObj;
     std::vector<TFile*> vecFiles;
 
     // template (ranges) histo
     TH1D* hist = nullptr;
+    TF1* fit = nullptr;
 
     for(Int_t iSyst(0); iSyst < iNumSyst; ++iSyst) {
 
         TString sSyst = vec.at(iSyst);
-        TString sObjectName = "Diff";
-        // TString sObjectName = "AfterBarlow";
+        Utils::Debug(Form("Adding Syst Source %s",sSyst.Data()));
 
         TFile* fileIn = TFile::Open(Form("%s/%s/syst_root/%s.root",path,sSyst.Data(),histName.Data()),"READ");
-        if(!fileIn) { printf("E: Input file '%s' not found!\n", histName.Data()); return kFALSE; }
+        if(!fileIn) { Utils::Error(Form("Input file '%s' not found!", histName.Data())); return kFALSE; }
         vecFiles.push_back(fileIn);
 
         TList* list = (TList*) fileIn->Get("list");
-        if(!list) { printf("E: Input list not found!\n"); fileIn->ls(); return kFALSE; }
+        if(!list) { Utils::Error("Input list 'list' not found!"); fileIn->ls(); return kFALSE; }
 
-        hist = (TH1D*) list->FindObject(sObjectName.Data());
+        hist = (TH1D*) list->FindObject(sSystHistoName.Data());
 
-        if(sSyst.EqualTo("PID3sigma")) {
+        if(sSyst.EqualTo("PID3sigma") && vecPID.size() > 0) {
             hist = MakeValues(vecPID.at(iCent),hist);
+            bUseSystFit = kFALSE;
         }
 
         if(sSyst.EqualTo("V0sDecRad10") && vecDec.size() > 0) {
             hist = MakeValues(vecDec.at(iCent),hist);
+            bUseSystFit = kFALSE;
         }
 
         if(!hist) {
-            printf("E: Template input histo not found!\n");
+            Utils::Error("Syst histo not found!");
             list->ls();
             return kFALSE;
         }
 
-
         vecObj.push_back(hist);
 
-        // TF1* fit = (TF1*) list->FindObject(sObjectName.Data());
-        // if(!fit) { printf("E: Input object '%s' not found!\n",sObjectName.Data()); list->ls(); return kFALSE; }
-        // vecObj.push_back(fit);
-        // fileIn->Close();
+        if(bUseSystFit) {
+            fit = (TF1*) list->FindObject(sSystFitName.Data());
+            if(!fit) { Utils::Error(Form("Syst fit '%s' not found!",sSystFitName.Data())); list->ls(); return kFALSE; }
+            FitToHist(hist,fit);
+        }
     }
 
     Int_t iNumObj = vecObj.size();
-    printf("Found %d objects!\n", iNumObj);
-    if(iNumObj != iNumSyst) { printf("E: Unexpected number of objects!\n"); return kFALSE; }
+    Utils::Info(Form("Found %d objects!", iNumObj));
+    if(iNumObj != iNumSyst) { Utils::Error("Unexpected number of objects!"); return kFALSE; }
 
     // plotting stuff
 
@@ -197,8 +216,6 @@ Bool_t ProcessSingle(const char* histNameC, const char* path, std::vector<TStrin
     leg->SetTextSize(18);
     leg->SetBorderSize(0);
     leg->SetFillColorAlpha(0,0);
-    // leg->AddEntry(histBase,"Baseline","pel");
-    // leg->AddEntry(histSyst,syst,"pel");
 
     TLine* lineUnity = new TLine();
     lineUnity->SetLineStyle(2);
@@ -273,25 +290,28 @@ Bool_t ProcessSingle(const char* histNameC, const char* path, std::vector<TStrin
 // ==================================================================================================================
 Bool_t AddHistos(std::vector<TH1D*>& vec, TH1D* total)
 {
-    if(!total) { printf("E-AddHistos: total not found!\n"); return kFALSE; }
+    if(!total) { Utils::Error("hist total not found!","AddHistos"); return kFALSE; }
 
     Int_t iNumBins = total->GetNbinsX();
     Int_t iNumHist = vec.size();
 
-    printf("Add: %d\n", iNumHist);
+    Utils::Debug(Form("Adding %d",iNumHist),1,"AddHistos");
 
     for(Int_t i(1); i < iNumBins+1; ++i) {
         Double_t dValue = 0.0;
 
         for(Int_t h(0); h < iNumHist; ++h) {
             TH1D* hist = (TH1D*) vec.at(h);
-            if(!hist) { printf("E-AddHistos: hist %d not found!\n",h); return kFALSE; }
+            if(!hist) { Utils::Error(Form("Hist %d not found!",h)); return kFALSE; }
             Double_t d = hist->GetBinContent(i);
+            Utils::Debug(Form("Syst source %d | bin %d | Value %g",h,i,d),1,"AddHistos");
 
             dValue += d*d;
         }
 
-        total->SetBinContent(i, TMath::Sqrt(dValue));
+        dValue = TMath::Sqrt(dValue);
+        total->SetBinContent(i, dValue);
+        Utils::Debug(Form("SystTotal | bin %d | Value %g",i,dValue),1,"AddHistos");
     }
 
     return kTRUE;
@@ -310,6 +330,38 @@ TH1D* MakeValues(Double_t val, TH1D* temp)
     }
 
     return hist;
+}
+// ==================================================================================================================
+void  FitToHist(TH1* hist, TF1* fit)
+{
+    if(!hist) { Utils::Error("Input histo not found!","FitToHist"); return; }
+    if(!fit) { Utils::Error("Input fit not found!"); return; }
+
+    Double_t dFitXmin = fit->GetXmin();
+    Double_t dHistXmin = hist->GetXaxis()->GetXmin();
+
+    Double_t dFitValue = fit->GetParameter(0);
+
+    Int_t iBins = hist->GetNbinsX();
+
+    Bool_t bIsAboveCut = kFALSE;
+    for(Int_t iB(1); iB < iBins+1; ++iB) {
+        if(!bIsAboveCut) {
+            Double_t dEdgeLow = hist->GetBinLowEdge(iB);
+            Double_t dEdgeHigh = hist->GetBinLowEdge(iB+1);
+
+            if(dEdgeHigh > dFitXmin) {
+                bIsAboveCut = kTRUE;
+                Utils::Debug(Form("First bin above cut %g (bin %g-%g)",dFitXmin,dEdgeLow,dEdgeHigh),1,"FitToHist");
+            }
+        }
+
+        if(bIsAboveCut) {
+            hist->SetBinContent(iB, dFitValue);
+        }
+    }
+
+    return;
 }
 // ==================================================================================================================
 void ProcessAll()

@@ -9,7 +9,7 @@
 #include "TH1D.h"
 #include "TF1.h"
 
-Bool_t bCorrelated = kTRUE;
+Bool_t bCorrelated = 1;
 
 Double_t dRatioToler = 0.2;
 // Double_t dRatioYmin = 0.7;
@@ -33,6 +33,7 @@ Int_t markSystAfterBarlow = kFullSquare;
 TH1D* DivideHistos(TH1* nom, TH1* denom, Bool_t bCor = kFALSE);
 TH1D* BarlowTest(TH1* nom, TH1* denom, Bool_t bCor = kFALSE);
 TH1D* ApplyBarlow(TH1* diff, TH1* barlow, Double_t dCut = 1.0);
+// TF1* FitAverageBarlow(TH1* hist,
 TH1D* Diff(TH1* ratio);
 void StyleHist(TH1* hist, Color_t color = kRed, Style_t markerStyle = kOpenCircle, Bool_t showStats = kFALSE);
 TCanvas* PrepareCanvas(TString name);
@@ -40,9 +41,11 @@ TList* PrepareCanvasRatioSub(TCanvas* can);
 
 Bool_t ProcessSingle(
     TString hist = "Charged_hFlow4_harm2_gap-10_cent0",
-    TString path = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/PbPb/syst_6815/Charged/",
+    TString path = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst_6815/Charged/",
     TString syst = "CL1",
-    TString baseline = "gap00")
+    TString baseline = "gap00",
+    Double_t dFitPtLow = 3.0
+)
 {
     TFile* fileBase = TFile::Open(Form("%s/%s/Processed.root",path.Data(),baseline.Data()),"READ");
     if(!fileBase) { printf("E: Baseline file '%s/%s/Processed.root' not found!",path.Data(),baseline.Data()); return kFALSE; }
@@ -80,8 +83,9 @@ Bool_t ProcessSingle(
     //     fitDiff = new TF1("fitDiff","[0]",xmin,xmax);
     // }
 
-    fitDiff = new TF1("fitDiff","[0]",xmin,xmax);
-
+    fitDiff = new TF1("fitDiff","[0]", (dFitPtLow > xmin ? dFitPtLow : xmin), xmax);
+    fitDiff->SetParameter(0,0);
+    fitDiff->SetParLimits(0,0,2.0);
     fitDiff->SetLineColor(kRed-4);
     fitDiff->SetLineStyle(9);
     histDiff->Fit(fitDiff,"RN");
@@ -142,7 +146,7 @@ Bool_t ProcessSingle(
 
     can->cd(4);
     TH1* frame3 = (TH1*) gPad->DrawFrame(xmin,0.0,xmax,dRatioToler);
-    // histAfterBarlow->DrawCopy("same hist p");
+    // histAfterBarlow->DrawCopy("same e1");
     histDiff->DrawCopy("same e1");
     fitDiff->DrawCopy("same");
     // fitAfterBarlow->DrawCopy("same");
@@ -264,8 +268,17 @@ TH1D* Diff(TH1* ratio)
     Double_t dCont = ratio->GetBinContent(bin);
     Double_t dErr = ratio->GetBinError(bin);
 
-    hDiff->SetBinContent(bin, TMath::Abs(dCont-1.0));
-    hDiff->SetBinError(bin,dErr);
+    Double_t dVal = TMath::Abs(1.0 - dCont);
+    // printf("dVal %g\n",dVal);
+
+    if(dVal < 1e-5) {
+        hDiff->SetBinContent(bin,0.0);
+        hDiff->SetBinContent(bin,0.0);
+    } else {
+        hDiff->SetBinContent(bin, dVal);
+        hDiff->SetBinError(bin,dErr);
+    }
+
   }
 
   return hDiff;
@@ -283,11 +296,13 @@ TH1D* BarlowTest(TH1* nom, TH1* denom, Bool_t bCor)
   // TH1D* hBarlow = (TH1D*) nom->Clone(Form("Barlow_%s_%s",nom->GetName(),denom->GetName()));
   TH1D* hBarlow = (TH1D*) nom->Clone("Barlow");
   hBarlow->Reset();
+
   if(bCor) {
-      hBarlow->SetTitle("Barlow: |x-y| / |#sigma^{2}_{x} - #sigma^{2}_{y}|");
+      hBarlow->SetTitle("Barlow: |x-y| / #sqrt{|#sigma^{2}_{x} - #sigma^{2}_{y}|}");
   } else {
-      hBarlow->SetTitle("Barlow: |x-y| / |#sigma^{2}_{x} + #sigma^{2}_{y}|");
+      hBarlow->SetTitle("Barlow: |x-y| / #sqrt{|#sigma^{2}_{x} + #sigma^{2}_{y}|}");
   }
+
   StyleHist(hBarlow, Color_t(colSyst+1), markSyst);
   hBarlow->SetFillColorAlpha(colSyst,1.0);
 
@@ -336,12 +351,14 @@ TH1D* ApplyBarlow(TH1* diff, TH1* barlow, Double_t dCut)
       Double_t dBarlow = barlow->GetBinContent(iBin);
       Double_t dContent = diff->GetBinContent(iBin);
       Double_t dWeight = diff->GetBinError(iBin);
+      // if(dBarlow > 0.0) { dWeight = TMath::Power(dBarlow, -2.0); }
       // if(dBarlow > 0.0) { dWeight = 1.0 / dBarlow; }
+      if(dBarlow > 0.0) { dWeight = dBarlow; }
 
-    if(dBarlow < dCut) {
-        dContent = 0.0;
-        dWeight = 99.9;
-    }
+    // if(dBarlow < dCut) {
+    //     dContent = 0.0;
+    //     dWeight = 99.9;
+    // }
 
     // dWeight = dBarlow;
 
