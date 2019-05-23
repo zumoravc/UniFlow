@@ -1,5 +1,5 @@
 // Macro for transfering TH1* to TGraphErrors object
-#include </Users/vpacik/Codes/ALICE/Flow/uniFlow/macros/utils/Utils.cxx>
+#include </Users/vpacik/Codes/ALICE/Flow/uniFlow/utils/Utils.cxx>
 #include "TH1.h"
 #include "TGraphErrors.h"
 

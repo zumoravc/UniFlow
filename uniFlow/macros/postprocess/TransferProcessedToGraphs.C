@@ -1,7 +1,7 @@
 // Macro for transfering TH1* to TGraphErrors object
 
 #include </Users/vpacik/Codes/ALICE/Flow/uniFlow/macros/postprocess/HistoToGraph.C>
-#include </Users/vpacik/Codes/ALICE/Flow/uniFlow/macros/utils/Utils.cxx>
+#include </Users/vpacik/Codes/ALICE/Flow/uniFlow/utils/Utils.cxx>
 
 #include <vector>
 #include "TFile.h"
@@ -75,9 +75,9 @@ void TransferProcessedToGraphsWithSyst(
     const std::vector<TString> vecHistos = {"hFlow2_harm2_gap-10", "hFlow2_harm2_gap08", "hFlow4_harm2_gap-10"},
     const std::vector<TString> vecSpecies = {"Charged","Pion","Kaon","K0s","Proton","Lambda", "Phi"},
     const Int_t iNumCent = 6,
-    const TString sInputFile = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/pPb/2464/V0A_020/gap_all/Processed.root",
-    const TString sInputFileSyst = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/pPb/syst_2517/"
-    const TString sOutputFile = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/pPb/2464/V0A_020/gap_all/Cums_pPb.root",
+    const TString sInputFile = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/6815/V0M/gap_all/Processed.root",
+    const TString sInputFileSyst = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst_6815/",
+    const TString sOutputFile = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/6815/V0M/gap_all/PbPb_v2{4}.root"
 )
 {
     TransferProcessedToGraphs(vecHistos, vecSpecies, iNumCent, sInputFile, sOutputFile, "RECREATE",0);
