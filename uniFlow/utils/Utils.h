@@ -9,6 +9,8 @@ class Utils
     public:
         enum PosLegend {kLegTopLeft = 1, kLegTopRight, kLegBotLeft, kLegBotRight};
 
+        static TH1D* DivideHistos(TH1D* nom, TH1D* denom, Bool_t bCor = kFALSE);
+
         static void SetDebugLevel(Int_t iLvl = 1) { fgDebugLvl = iLvl; }
 
         static void Debug(TString sMsg, Int_t iLvl = 0, TString sMethod = "") { if(fgDebugLvl >= iLvl) Message(EMsg(kDebug), Form("%s (lvl %d)", sMsg.Data(), iLvl), sMethod); }

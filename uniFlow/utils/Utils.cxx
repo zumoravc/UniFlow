@@ -17,6 +17,7 @@ void Utils::Message(EMsg type, TString sMsg, TString sMethod)
     printf("\033[%s%s : %s\033[0m\n", Msg_Color[type].Data(), sHeader.Data(), sMsg.Data());
 };
 
+// ===========================================================================
 TLegend* Utils::MakeLegend(PosLegend pos)
 {
     TLegend* leg = nullptr;
@@ -34,6 +35,43 @@ TLegend* Utils::MakeLegend(PosLegend pos)
 
     return leg;
 }
+// ===========================================================================
+TH1D* Utils::DivideHistos(TH1D* nom, TH1D* denom, Bool_t bCor)
+{
+  if(!nom || !denom) { printf("ERR: either of the histos does not exists\n"); return 0x0; }
 
+  Int_t binsNom = nom->GetNbinsX();
+  Int_t binsDenom = denom->GetNbinsX();
+
+  // if(binsNom != binsDenom) { printf("ERR: Different # of bins\n"); return 0x0; }
+
+  TH1D* ratio = (TH1D*) nom->Clone(Form("Ratio_%s_%s",nom->GetName(),denom->GetName()));
+  ratio->Reset();
+
+  Double_t dContNom = 0, dErrNom = 0;
+  Double_t dContDenom = 0, dErrDenom = 0;
+  Double_t dContRatio = 0, dErrRatio = 0;
+  for(Short_t iBin(1); iBin < binsDenom+1; iBin++)
+  {
+    if(iBin > binsNom) break;
+
+    dContNom = nom->GetBinContent(iBin);
+    dErrNom = nom->GetBinError(iBin);
+    dContDenom = denom->GetBinContent(iBin);
+    dErrDenom = denom->GetBinError(iBin);
+
+    dContRatio =  dContNom / dContDenom;
+    dErrRatio = TMath::Power(dErrNom/dContDenom, 2) + TMath::Power( dErrDenom*dContNom/(dContDenom*dContDenom), 2);
+    // printf("Err (before) : %g | ", TMath::Sqrt(dErrRatio));
+
+    if(bCor) dErrRatio -= (2*dContNom*dErrDenom*dErrNom/TMath::Power(dContDenom,3));
+    // printf("(after) : %g\n", TMath::Sqrt(dErrRatio));
+
+    ratio->SetBinContent(iBin,dContRatio);
+    ratio->SetBinError(iBin,TMath::Sqrt(dErrRatio));
+  }
+
+  return ratio;
+}
 
 #endif
