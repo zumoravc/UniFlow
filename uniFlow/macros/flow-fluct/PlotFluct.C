@@ -3,16 +3,16 @@ TLegend* MakeLegend(PosLegend pos);
 
 void PlotFluct()
 {
-    TString sInDir = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/PbPb/6815/V0M/gap_all/";
-    TString sOutDir = sInDir + "/plots_Fluct";
+    TString sInDir = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/6815/V0M/gap_all/";
+    TString sOutDir = sInDir + "/plots_Fluct_v3";
 
     Double_t xMin = 0.0; Double_t xMax = 10.0;
     Double_t yMin = 0.0; Double_t yMax = 1.0;
     PosLegend pos = kLegTopLeft;
 
-    // TString sLabel = "<v2>"; TString sHistName = "mean"; yMin = 0.0; yMax = 0.3;  pos = kLegTopLeft;
-    // TString sLabel = "#sigma_v2"; TString sHistName = "std"; yMin = 0.0; yMax = 0.3;  pos = kLegTopLeft;
-    TString sLabel = "F(v_{2})"; TString sHistName = "rel"; yMin = 0.0; yMax = 1.0;  pos = kLegTopRight;
+    // TString sLabel = "<v_{2}>"; TString sHistName = "mean"; yMin = 0.0; yMax = 0.3;  pos = kLegTopRight;
+    // TString sLabel = "#sigma(v_{2})"; TString sHistName = "std"; yMin = 0.0; yMax = 0.15;  pos = kLegTopRight;
+    TString sLabel = "F(v_{2})"; TString sHistName = "rel"; yMin = 0.2; yMax = 0.650;  pos = kLegTopRight;
 
 
     // TString sLabel = "v_{2}{2}"; TString sHistName = "hFlow2_harm2_gap-10";
@@ -57,7 +57,7 @@ void PlotFluct()
     sSpecies.push_back("K0s"); sSpesLabels.push_back("K^{0}_{S}"); colors.push_back(kGreen+1); markers.push_back(kFullTriangleUp); markerSizes.push_back(1.1);
     sSpecies.push_back("Proton"); sSpesLabels.push_back( "p(#bar{p})"); colors.push_back(kBlue); markers.push_back(kFullSquare); markerSizes.push_back(0.8);
     sSpecies.push_back("Lambda"); sSpesLabels.push_back("#Lambda(#bar{#Lambda})"); colors.push_back(kOrange+1); markers.push_back(kFullDiamond); markerSizes.push_back(1.4);
-    sSpecies.push_back("Phi"); sSpesLabels.push_back("#phi"); colors.push_back(kMagenta); markers.push_back(kFullCross); markerSizes.push_back(1.2);
+    // sSpecies.push_back("Phi"); sSpesLabels.push_back("#phi"); colors.push_back(kMagenta); markers.push_back(kFullCross); markerSizes.push_back(1.2);
 
 
     TFile* fileIn = TFile::Open(Form("%s/FlowFluct.root",sInDir.Data()),"READ");
@@ -105,7 +105,7 @@ void PlotFluct()
             TH1D* hist = (TH1D*) fileIn->Get(sName.Data());
 
             if(bPhi) {
-                if(iMult == 0 || iMult == iNumMult-1) continue;
+                // if(iMult == 0 || iMult == iNumMult-1) continue;
                 // hist = (TH1D*) fileInPhi->Get(sName.Data());
             }
 
@@ -121,12 +121,13 @@ void PlotFluct()
 
             if(sSpecies[i].Contains("Charged")) {
                 canCent->cd();
-                hist->SetLineColor(colors[iMult]);
-                hist->SetMarkerColor(colors[iMult]);
-                hist->SetMarkerStyle(markers[iMult]);
-                hist->SetMarkerSize(markerSizes[iMult]);
-                hist->DrawCopy("hist ape1x0 same");
-                legCent->AddEntry(hist,sCent[iMult].Data(),"p");
+                TH1D* histCL = (TH1D*) hist->Clone("histCL");
+                histCL->SetLineColor(colors[iMult]);
+                histCL->SetMarkerColor(colors[iMult]);
+                histCL->SetMarkerStyle(markers[iMult]);
+                histCL->SetMarkerSize(markerSizes[iMult]);
+                histCL->DrawCopy("hist ape1x0 same");
+                legCent->AddEntry(histCL,sCent[iMult].Data(),"p");
             }
         }
 

@@ -6,8 +6,8 @@ Color_t colors[] = {kRed, kGreen+2, kBlue};
 void PlotMC(
     TString sHeader = "Pb-Pb (LHC18e1)",
     std::vector<TString> vecSpecies = {"Pion","Kaon","Proton"},
-    TString sPathIn = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/runs_grid/PbPb_MC/LHC18e1/purity_eff/",
-    TString sPathOut = "./plots/"
+    TString sPathIn = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/running/grid/PbPb_MC/LHC18e1/purity_eff_v2/",
+    TString sPathOut = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/running/grid/PbPb_MC/LHC18e1/purity_eff_v2/plots/"
 )
 {
     TFile* fileMC = TFile::Open(Form("%s/McEffPurity.root",sPathIn.Data()),"READ");
@@ -95,9 +95,9 @@ void PlotMC(
 TLegend* MakeLegend(PosLegend pos)
 {
     switch(pos) {
-        case kLegTopLeft: return new TLegend(0.14,0.6,0.5,0.88); break;
+        case kLegTopLeft: return new TLegend(0.26,0.6,0.5,0.88); break;
         case kLegTopRight: return new TLegend(0.62,0.6,0.88,0.88); break;
-        case kLegBotLeft: return new TLegend(0.14,0.12,0.4,0.4); break;
+        case kLegBotLeft: return new TLegend(0.26,0.12,0.5,0.4); break;
         case kLegBotRight: return new TLegend(0.62,0.12,0.88,0.4); break;
         default: return nullptr;
     }

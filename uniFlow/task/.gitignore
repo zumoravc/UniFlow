@@ -18,7 +18,6 @@ stdout
 *.xml
 *.tmp
 *.zip
-*.tar
 .DS_Store 			# Mac specific
 
 ### Images/Pictures ###
@@ -26,10 +25,12 @@ stdout
 *.png
 *.jpg
 *.jpeg
-*.eps
 *.gif
 
 ### Directories ###
-results/*
-running/*
-macros_bk
+misc/*
+PWGCFFLOWGF/*
+FlowPID.sh
+myAnalysis.C
+tempChecksum_*
+outputs_valid
