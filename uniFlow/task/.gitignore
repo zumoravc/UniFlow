@@ -29,6 +29,7 @@ stdout
 
 ### Directories ###
 misc/*
+PWGCFFLOWGF/*
 FlowPID.sh
 myAnalysis.C
 tempChecksum_*
