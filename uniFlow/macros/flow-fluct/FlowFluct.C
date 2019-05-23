@@ -1,10 +1,12 @@
 void FlowFluctAll();
 
+#include </Users/vpacik/Codes/ALICE/Flow/uniFlow/utils/Utils.cxx>
+
 void FlowFluct(TString sSpecies = "Charged", Int_t iCent = 0)
 {
     printf("%s | %d\n", sSpecies.Data(), iCent);
 
-    TString sPath = "~/Codes/ALICE/Flow/uniFlow/results/cums/PbPb/6815/V0M/gap_all/";
+    TString sPath = "~/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/6815/V0M/gap_all/";
     TFile* fileIn = TFile::Open(Form("%s/Processed.root",sPath.Data()),"READ");
 
     TFile* fileOut = TFile::Open(Form("%s/FlowFluct.root",sPath.Data()),"UPDATE");
@@ -51,7 +53,8 @@ void FlowFluct(TString sSpecies = "Charged", Int_t iCent = 0)
         // Double_t rel = std / mean;
         // histRel->SetBinContent(iBin, TMath::Sqrt(rel));
 
-        histRel->Divide(histSTD,histMean);
+        // histRel->Divide(histSTD,histMean);
+        histRel = Utils::DivideHistos(histSTD,histMean,0);
     }
 
     fileOut->cd();
