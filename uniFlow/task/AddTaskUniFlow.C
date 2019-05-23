@@ -8,7 +8,12 @@
 class AliAnalysisDataContainer;
 class AliAnalysisTaskUniFlow;
 
-AliAnalysisTaskUniFlow* AddTaskUniFlow(AliAnalysisTaskUniFlow::ColSystem colSys, TString sWeigthsFile = "", Bool_t bIsMC = kFALSE, const char* suffix = "")
+AliAnalysisTaskUniFlow* AddTaskUniFlow(
+    AliAnalysisTaskUniFlow::ColSystem colSys,
+    TString sWeigthsFile = "",
+    Bool_t bIsMC = kFALSE,
+    const char* suffix = ""
+)
 {
   AliAnalysisManager *mgr = AliAnalysisManager::GetAnalysisManager();
   if (!mgr) { return NULL; }

@@ -61,9 +61,9 @@ void runMcDev()
     AliAODInputHandler *aodH = new AliAODInputHandler();
     mgr->SetInputEventHandler(aodH);
 
-    AliPhysicsSelectionTask* physSelTask = reinterpret_cast<AliPhysicsSelectionTask*>(gInterpreter->ProcessLine(Form(".x %s(kTRUE,kTRUE)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"))));
+    AliPhysicsSelectionTask* physSelTask = reinterpret_cast<AliPhysicsSelectionTask*>(gInterpreter->ProcessLine(Form(".x %s(kTRUE,kFALSE)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"))));
 
-    AliMultSelectionTask* taskMultSelection = reinterpret_cast<AliMultSelectionTask*>(gInterpreter->ProcessLine(Form(".x %s(kTRUE)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"))));
+    AliMultSelectionTask* taskMultSelection = reinterpret_cast<AliMultSelectionTask*>(gInterpreter->ProcessLine(Form(".x %s(kFALSE)", gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"))));
     taskMultSelection->SetSelectedTriggerClass(AliVEvent::kINT7);
 
     AliAnalysisTaskPIDResponse* taskPIDResponse = reinterpret_cast<AliAnalysisTaskPIDResponse*>(gInterpreter->ProcessLine(Form(".x %s(kTRUE)", gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"))));
@@ -174,7 +174,7 @@ void runMcDev()
         //chain->Add("~/Codes/Flow/data/2015/LHC15o/000246153/pass1/AOD194/0002/AliAOD.root");
 
         // // MC
-        chain->Add("~/Codes/Flow/data/2017/LHC17c5a/246390/AOD/001/AliAOD.root");
+        chain->Add("~/Codes/ALICE/Flow/data/2017/LHC17c5a/246390/AOD/001/AliAOD.root");
 
         watch.Start();
         mgr->StartAnalysis("local", chain); // start the analysis locally, reading the events from the TChain
