@@ -65,10 +65,10 @@ void ProcessSpecies(
             single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"V0sPVDCA3",sBaseline.Data(),-1.0));
         } else if(sSpecies.EqualTo("Phi")) {
             single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"CL1",sBaseline.Data(),-1.0));
-            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"FB768",sBaseline.Data(),-1.0.q));
-            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"PVz8",sBaseline.Data(),-1.0.q));
-            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"TPCcls90",sBaseline.Data(),-1.0.q));
-            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"PID3sigma",sBaseline.Data(),-1.0.q));
+            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"FB768",sBaseline.Data(),-1.0));
+            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"PVz8",sBaseline.Data(),-1.0));
+            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"TPCcls90",sBaseline.Data(),-1.0));
+            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",%f",hist.Data(),path.Data(),"PID3sigma",sBaseline.Data(),-1.0));
         } else {
             return kFALSE;
         }
