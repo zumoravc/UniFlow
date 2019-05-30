@@ -2,6 +2,9 @@
 #define UTILS_CXX
 
 #include "Utils.h"
+#include <TMath.h>
+#include <TH1.h>
+#include "TH1D.h"
 #include <TString.h>
 #include <TLegend.h>
 

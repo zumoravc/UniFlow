@@ -2,7 +2,8 @@
 #define UTILS_H
 
 #include "TString.h"
-#include "TLegend.h"
+class TH1D;
+class TLegend;
 
 class Utils
 {
