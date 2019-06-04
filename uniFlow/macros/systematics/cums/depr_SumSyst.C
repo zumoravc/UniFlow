@@ -30,7 +30,8 @@ Bool_t ProcessSingle(
 void SumSyst(TString species = "Lambda")
 {
     Int_t iNumCent = 6;
-    TString path = Form("/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/cums/PbPb/syst_6815/%s/",species.Data());
+    TString sUniFlowPath = gSystem->Getenv("UNIFLOW");
+    TString path = sUniFlowPath + "/results/PbPb/cums/syst/" + species;
 
     std::vector<TString> vecHist = {};
     vecHist.push_back("hFlow4_harm2_gap-10");
@@ -49,21 +50,23 @@ void SumSyst(TString species = "Lambda")
     } else if(species.EqualTo("Pion")) {
         vecSyst.push_back("CL1");
         vecSyst.push_back("FB768");
-        vecSyst.push_back("PID3sigma");
+        vecSyst.push_back("PID2sigma");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
 
     } else if(species.EqualTo("Kaon")) {
         vecSyst.push_back("CL1");
         vecSyst.push_back("FB768");
-        vecSyst.push_back("PID3sigma");
+        vecSyst.push_back("PID2sigma");
+        vecSyst.push_back("Bayes90");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
 
     } else if(species.EqualTo("Proton")) {
         vecSyst.push_back("CL1");
         vecSyst.push_back("FB768");
-        vecSyst.push_back("PID3sigma");
+        vecSyst.push_back("PID2sigma_anti");
+        vecSyst.push_back("Bayes90");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
 

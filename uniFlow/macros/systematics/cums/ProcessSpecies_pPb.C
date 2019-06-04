@@ -35,6 +35,7 @@ void ProcessSpecies_pPb(
     }
 
     TString path = sPath + sSpecies + "/";
+    TString pathOut = sPath + sSpecies + "/";
 
     Int_t iNumSyst = vecSyst.size();
 
@@ -47,7 +48,7 @@ void ProcessSpecies_pPb(
             TString hist = Form("%s_hFlow4_harm2_gap-10_cent%d",sSpecies.Data(),iC);
 
             TMacro single = TMacro(gSystem->ExpandPathName("~/Codes/ALICE/Flow/uniFlow/macros/syst_cums/ProcessSingle.C"));
-            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\"",hist.Data(),path.Data(),syst.Data(),sBaseline.Data()));
+            single.Exec(Form("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"",hist.Data(),path.Data(),pathOut.Data(),syst.Data(),sBaseline.Data()));
         }
     }
 }

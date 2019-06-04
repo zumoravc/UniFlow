@@ -9,8 +9,6 @@
 #include "TH1D.h"
 #include "TF1.h"
 
-Bool_t bCorrelated = 1;
-
 Double_t dRatioToler = 0.2;
 // Double_t dRatioYmin = 0.7;
 // Double_t dRatioYmax = 1.3;
@@ -49,11 +47,11 @@ Bool_t ProcessSingle(
     Bool_t bCorrelated = 1
 )
 {
-    TFile* fileBase = TFile::Open(Form("%s/%s/Processed.root",path.Data(),baseline.Data()),"READ");
-    if(!fileBase) { printf("E: Baseline file '%s/%s/Processed.root' not found!",path.Data(),baseline.Data()); return kFALSE; }
+    TFile* fileBase = TFile::Open(Form("%s/%s/FlowFluctCor.root",path.Data(),baseline.Data()),"READ");
+    if(!fileBase) { printf("E: Baseline file '%s/%s/FlowFluctCor.root' not found!",path.Data(),baseline.Data()); return kFALSE; }
 
-    TFile* fileSyst = TFile::Open(Form("%s/%s/Processed.root",path.Data(),syst.Data()),"READ");
-    if(!fileSyst) { printf("E: Systematic file '%s/%s/Processed.root' not found!",path.Data(),syst.Data()); return kFALSE; }
+    TFile* fileSyst = TFile::Open(Form("%s/%s/FlowFluctCor.root",path.Data(),syst.Data()),"READ");
+    if(!fileSyst) { printf("E: Systematic file '%s/%s/FlowFluctCor.root' not found!",path.Data(),syst.Data()); return kFALSE; }
 
     TH1D* histBase = (TH1D*) fileBase->Get(hist.Data());
     if(!histBase) { printf("E: Baseline histo '%s' not found!",hist.Data()); fileBase->ls(); return kFALSE; }
@@ -86,7 +84,12 @@ Bool_t ProcessSingle(
     //     fitDiff = new TF1("fitDiff","[0]",xmin,xmax);
     // }
 
-    fitDiff = new TF1("fitDiff","[0]", (dFitPtLow > xmin ? dFitPtLow : xmin), xmax);
+    Double_t dFitLow = xmin;
+    Double_t dFitHigh = xmax;
+    if(dFitPtLow > xmin) { dFitLow = dFitPtLow; }
+    if(dFitPtLow < 0.0) { dFitLow = xmax; }
+
+    fitDiff = new TF1("fitDiff","[0]", dFitLow, dFitHigh);
     fitDiff->SetParameter(0,0);
     fitDiff->SetParLimits(0,0,2.0);
     fitDiff->SetLineColor(kRed-4);
@@ -161,9 +164,9 @@ Bool_t ProcessSingle(
 
 
     // saving output
-    gSystem->mkdir(Form("%s/%s/syst_root/",pathOut.Data(),syst.Data()),kTRUE);
-    gSystem->mkdir(Form("%s/%s/syst_pdf/",pathOut.Data(),syst.Data()),kTRUE);
-    gSystem->mkdir(Form("%s/%s/syst_eps/",pathOut.Data(),syst.Data()),kTRUE);
+    gSystem->Exec(Form("mkdir -p %s/%s/syst_root/",pathOut.Data(),syst.Data()));
+    gSystem->Exec(Form("mkdir -p %s/%s/syst_pdf/",pathOut.Data(),syst.Data()));
+    gSystem->Exec(Form("mkdir -p %s/%s/syst_eps/",pathOut.Data(),syst.Data()));
 
     TFile* fileOut = TFile::Open(Form("%s/%s/syst_root/%s.root",pathOut.Data(),syst.Data(),hist.Data()),"RECREATE");
     if(!fileOut) { printf("E: Output file not created!"); return kFALSE; }

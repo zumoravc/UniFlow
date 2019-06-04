@@ -2,6 +2,9 @@
 #define UTILS_CXX
 
 #include "Utils.h"
+#include <TMath.h>
+#include <TH1.h>
+#include "TH1D.h"
 #include <TString.h>
 #include <TLegend.h>
 
@@ -38,40 +41,44 @@ TLegend* Utils::MakeLegend(PosLegend pos)
 // ===========================================================================
 TH1D* Utils::DivideHistos(TH1D* nom, TH1D* denom, Bool_t bCor)
 {
-  if(!nom || !denom) { printf("ERR: either of the histos does not exists\n"); return 0x0; }
+    if(!nom || !denom) { printf("ERR: either of the histos does not exists\n"); return 0x0; }
 
-  Int_t binsNom = nom->GetNbinsX();
-  Int_t binsDenom = denom->GetNbinsX();
+    Int_t binsNom = nom->GetNbinsX();
+    Int_t binsDenom = denom->GetNbinsX();
 
-  // if(binsNom != binsDenom) { printf("ERR: Different # of bins\n"); return 0x0; }
+    if(binsNom != binsDenom) { Utils::Warning("Different # of bins\n"); }
+    Int_t binsMin = (binsNom < binsDenom ? binsNom : binsDenom);
 
-  TH1D* ratio = (TH1D*) nom->Clone(Form("Ratio_%s_%s",nom->GetName(),denom->GetName()));
-  ratio->Reset();
+    TH1D* ratio = (TH1D*) nom->Clone(Form("Ratio_%s_%s",nom->GetName(),denom->GetName()));
+    ratio->Reset();
 
-  Double_t dContNom = 0, dErrNom = 0;
-  Double_t dContDenom = 0, dErrDenom = 0;
-  Double_t dContRatio = 0, dErrRatio = 0;
-  for(Short_t iBin(1); iBin < binsDenom+1; iBin++)
-  {
-    if(iBin > binsNom) break;
+    for(Int_t iBin(1); iBin < binsDenom+1; ++iBin) {
+        if(iBin > binsMin) break;
 
-    dContNom = nom->GetBinContent(iBin);
-    dErrNom = nom->GetBinError(iBin);
-    dContDenom = denom->GetBinContent(iBin);
-    dErrDenom = denom->GetBinError(iBin);
+        Double_t dContNom = nom->GetBinContent(iBin);
+        Double_t dErrNom = nom->GetBinError(iBin);
+        Double_t dContDenom = denom->GetBinContent(iBin);
+        Double_t dErrDenom = denom->GetBinError(iBin);
 
-    dContRatio =  dContNom / dContDenom;
-    dErrRatio = TMath::Power(dErrNom/dContDenom, 2) + TMath::Power( dErrDenom*dContNom/(dContDenom*dContDenom), 2);
-    // printf("Err (before) : %g | ", TMath::Sqrt(dErrRatio));
+        if(dContDenom == 0.0) { continue; }
 
-    if(bCor) dErrRatio -= (2*dContNom*dErrDenom*dErrNom/TMath::Power(dContDenom,3));
-    // printf("(after) : %g\n", TMath::Sqrt(dErrRatio));
+        Double_t dContRatio = dContNom / dContDenom;
 
-    ratio->SetBinContent(iBin,dContRatio);
-    ratio->SetBinError(iBin,TMath::Sqrt(dErrRatio));
-  }
+        Double_t dContribNom = dErrNom / dContDenom;
+        Double_t dContribDenom = -1.0 * dContNom * dErrDenom * TMath::Power(dContDenom,-2.0);
 
-  return ratio;
+        Double_t dErrRatioSq = 0.0;
+        if(bCor) {
+            dErrRatioSq = TMath::Power(dContribNom + dContribDenom,2.0);
+        } else {
+            dErrRatioSq = TMath::Power(dContribNom,2.0) + TMath::Power(dContribDenom,2.0);
+        }
+
+        ratio->SetBinContent(iBin,dContRatio);
+        ratio->SetBinError(iBin,TMath::Sqrt(dErrRatioSq));
+    }
+
+    return ratio;
 }
 
 #endif

@@ -38,15 +38,15 @@ void ProcessAll();
 
 void SumSystHistos(
     TString species = "Lambda",
-    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst/",
-    Int_t iNumCent = 6,
+    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst_fluct/",
+    Int_t iNumCent = 4,
     TString sSystHistoName = "Diff",
     TString sSystFitName = "fitDiff"
 )
 {
     TString path = Form("%s/%s/",sPath.Data(),species.Data());
 
-    std::vector<TString> vecHist = {"hFlow4_harm2_gap-10"};
+    std::vector<TString> vecHist = {"rel"};
     // vecHist.push_back("<<3>>(4,-2,-2)_2sub(0)");
     // vecHist.push_back("<<3>>(5,-3,-2)_2sub(0)");
     // vecHist.push_back("<<3>>(6,-3,-3)_2sub(0)");
@@ -55,64 +55,64 @@ void SumSystHistos(
     if(species.EqualTo("Charged")) {
         vecSyst.push_back("CL1");
         vecSyst.push_back("FB768");
-        vecSyst.push_back("PVz8");
-        vecSyst.push_back("TPCcls90");
+        // vecSyst.push_back("PVz8");
+        // vecSyst.push_back("TPCcls90");
 
     } else if(species.EqualTo("Pion")) {
-        vecSyst.push_back("CL1");
-        vecSyst.push_back("FB768");
+        // vecSyst.push_back("CL1");
+        // vecSyst.push_back("FB768");
         vecSyst.push_back("PID2sigma");
-        vecSyst.push_back("PVz8");
-        vecSyst.push_back("TPCcls90");
+        // vecSyst.push_back("PVz8");
+        // vecSyst.push_back("TPCcls90");
         // vecPID = {0.01,0.02,0.02,0.04,0.03,0.04};
 
     } else if(species.EqualTo("Kaon")) {
-        vecSyst.push_back("CL1");
-        vecSyst.push_back("FB768");
+        // vecSyst.push_back("CL1");
+        // vecSyst.push_back("FB768");
         vecSyst.push_back("PID2sigma");
         vecSyst.push_back("Bayes90");
-        vecSyst.push_back("PVz8");
-        vecSyst.push_back("TPCcls90");
+        // vecSyst.push_back("PVz8");
+        // vecSyst.push_back("TPCcls90");
         // vecPID = {0.04,0.02,0.01,0.01,0.01,0.01};
 
     } else if(species.EqualTo("Proton")) {
-        vecSyst.push_back("CL1");
-        vecSyst.push_back("FB768");
+        // vecSyst.push_back("CL1");
+        // vecSyst.push_back("FB768");
         vecSyst.push_back("PID2sigma_anti");
         vecSyst.push_back("Bayes90");
-        vecSyst.push_back("PVz8");
-        vecSyst.push_back("TPCcls90");
+        // vecSyst.push_back("PVz8");
+        // vecSyst.push_back("TPCcls90");
         // vecPID = {0.02,0.03,0.03,0.03,0.03,0.03};
 
     } else if(species.EqualTo("K0s")) {
-        vecSyst.push_back("CL1");
-        vecSyst.push_back("PVz8");
+        // vecSyst.push_back("CL1");
+        // vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
-        // vecSyst.push_back("V0sCPA099");
+        vecSyst.push_back("V0sCPA099");
         vecSyst.push_back("V0sCrossFind1");
         vecSyst.push_back("V0sDaugDCA3");
         vecSyst.push_back("V0sDaugPt02");
         vecSyst.push_back("V0sDecRad1");
         vecSyst.push_back("V0sDecRad10");
-        vecSyst.push_back("V0sFinderOn");
-        vecSyst.push_back("V0sPVDCA3");
+        // vecSyst.push_back("V0sFinderOn");
+        // vecSyst.push_back("V0sPVDCA3");
         // vecDec = {0.02,0.024,0.02,0.012,0.021,0.036};
 
     } else if(species.EqualTo("Lambda")) {
-        vecSyst.push_back("CL1");
-        vecSyst.push_back("PVz8");
+        // vecSyst.push_back("CL1");
+        // vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
-        // vecSyst.push_back("V0sCPA099");
+        vecSyst.push_back("V0sCPA099");
         vecSyst.push_back("V0sCrossFind1");
         vecSyst.push_back("V0sDaugDCA3");
         vecSyst.push_back("V0sDaugPt02");
         vecSyst.push_back("V0sDecRad1");
         vecSyst.push_back("V0sDecRad10");
-        vecSyst.push_back("V0sFinderOn");
-        vecSyst.push_back("V0sPVDCA3");
+        // vecSyst.push_back("V0sFinderOn");
+        // vecSyst.push_back("V0sPVDCA3");
 
-    } else if(species.EqualTo("Phi")) {
-        vecSyst.push_back("CL1");
+    // } else if(species.EqualTo("Phi")) {
+        // vecSyst.push_back("CL1");
         // vecSyst.push_back("FB768");
         // vecSyst.push_back("PID2sigma");
         // vecSyst.push_back("Bayes90");
@@ -375,7 +375,7 @@ void ProcessAll()
     SumSystHistos("Proton");
     SumSystHistos("K0s");
     SumSystHistos("Lambda");
-    SumSystHistos("Phi");
+    // SumSystHistos("Phi");
 }
 // ==================================================================================================================
 void SetCustomPalette()
@@ -428,3 +428,4 @@ void SetCustomPalette()
 
   gStyle->SetPalette(nCol,colors);
 }
+//
