@@ -1,10 +1,14 @@
 enum PosLegend {kLegTopLeft = 1, kLegTopRight, kLegBotLeft, kLegBotRight};
 TLegend* MakeLegend(PosLegend pos);
 
-void PlotFluctPubl()
+void PlotFluctPubl(
+    TString sInDir = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/6815/V0M/gap_all/",
+    TString sFileName = "FlowFluctCor",
+    TString sOutDir = ""
+)
 {
-    TString sInDir = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/6815/V0M/gap_all/";
-    TString sOutDir = sInDir + "/plots_Fluct_publ_v2";
+
+    if(sOutDir.Length() < 1) { sOutDir = Form("%s/plots_%s/",sInDir.Data(),sFileName.Data()); }
 
     // published
     Bool_t bPubl = 1;
@@ -15,8 +19,8 @@ void PlotFluctPubl()
     Double_t yMin = 0.0; Double_t yMax = 0.75;
     PosLegend pos = kLegBotLeft;
 
-    TString sLabel = "<v_{2}>"; TString sHistName = "mean"; yMin = 0.0; yMax = 0.25;  pos = kLegTopRight; bPubl = 0;
-    // TString sLabel = "#sigma(v_{2})"; TString sHistName = "std"; yMin = 0.0; yMax = 0.12;  pos = kLegTopRight; bPubl = 0;
+    // TString sLabel = "<v_{2}>"; TString sHistName = "mean"; yMin = 0.0; yMax = 0.25;  pos = kLegTopRight; bPubl = 0;
+    TString sLabel = "#sigma(v_{2})"; TString sHistName = "std"; yMin = 0.0; yMax = 0.12;  pos = kLegTopRight; bPubl = 0;
     // TString sLabel = "F(v_{2})"; TString sHistName = "rel"; yMin = 0.2; yMax = 0.65;  pos = kLegTopLeft; bPubl = 1;
 
     std::vector<TString> sSpecies = {};
@@ -25,13 +29,13 @@ void PlotFluctPubl()
     std::vector<Int_t> markers = {};
     std::vector<Double_t> markerSizes = {};
 
-    sSpecies.push_back("Charged"); sSpesLabels.push_back("h^{#pm}"); // colors.push_back(kGray+2); markers.push_back(kFullCircle); markerSizes.push_back(1.0);
-    // sSpecies.push_back("Pion"); sSpesLabels.push_back("#pi^{#pm}"); colors.push_back(kRed+1); markers.push_back(kFullCircle); markerSizes.push_back(1.0);
-    // sSpecies.push_back("Kaon"); sSpesLabels.push_back("K^{#pm}"); colors.push_back(kGreen+3); markers.push_back(kFullTriangleDown); markerSizes.push_back(1.1);
-    // sSpecies.push_back("K0s"); sSpesLabels.push_back("K^{0}_{S}"); colors.push_back(kGreen+1); markers.push_back(kFullTriangleUp); markerSizes.push_back(1.1);
-    // sSpecies.push_back("Proton"); sSpesLabels.push_back( "p(#bar{p})"); colors.push_back(kBlue); markers.push_back(kFullSquare); markerSizes.push_back(0.8);
-    // sSpecies.push_back("Lambda"); sSpesLabels.push_back("#Lambda(#bar{#Lambda})"); colors.push_back(kOrange+1); markers.push_back(kFullDiamond); markerSizes.push_back(1.4);
-    // sSpecies.push_back("Phi"); sSpesLabels.push_back("#phi"); colors.push_back(kMagenta); markers.push_back(kFullCross); markerSizes.push_back(1.2);
+    sSpecies.push_back("Charged"); sSpesLabels.push_back("h^{#pm}");
+    // sSpecies.push_back("Pion"); sSpesLabels.push_back("#pi^{#pm}"); bPubl = 0;
+    // sSpecies.push_back("Kaon"); sSpesLabels.push_back("K^{#pm}"); bPubl = 0; pos = kLegTopRight;
+    // sSpecies.push_back("K0s"); sSpesLabels.push_back("K^{0}_{S}");bPubl = 0;
+    // sSpecies.push_back("Proton"); sSpesLabels.push_back( "p(#bar{p})");bPubl = 0; pos = kLegTopRight;
+    // sSpecies.push_back("Lambda"); sSpesLabels.push_back("#Lambda(#bar{#Lambda})"); bPubl = 0;
+    // sSpecies.push_back("Phi"); sSpesLabels.push_back("#phi"); bPubl = 0;
 
     colors.push_back(kBlack);
     colors.push_back(kRed+1);
@@ -73,11 +77,11 @@ void PlotFluctPubl()
     };
 
 
-    TFile* fileIn = TFile::Open(Form("%s/FlowFluct.root",sInDir.Data()),"READ");
+    TFile* fileIn = TFile::Open(Form("%s/%s.root",sInDir.Data(),sFileName.Data()),"READ");
 
     TFile* filePubl = TFile::Open(Form("%s",sInFilePubl.Data()),"READ");
 
-    gSystem->mkdir(sOutDir,1);
+    gSystem->Exec(Form("mkdir -p %s", sOutDir.Data()));
 
     TCanvas* canCent = new TCanvas("canCent","canCent",900,600);
     canCent->cd();
@@ -129,7 +133,13 @@ void PlotFluctPubl()
     canCent->cd();
     legCent->SetHeader(Form("%s %s",sSpesLabels[0].Data(),sLabel.Data()));
     legCent->Draw();
-    canCent->SaveAs(Form("%s/can_%s_charged.pdf",sOutDir.Data(),sLabel.Data()),"pdf");
+
+    if(bPubl) {
+        canCent->SaveAs(Form("%s/Publ_%s_%s.pdf",sOutDir.Data(),sSpecies[0].Data(),sLabel.Data()),"pdf");
+    } else {
+        canCent->SaveAs(Form("%s/%s_%s.pdf",sOutDir.Data(),sSpecies[0].Data(),sLabel.Data()),"pdf");
+    }
+
 
     return;
 }
