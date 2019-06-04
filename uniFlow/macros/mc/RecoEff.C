@@ -9,7 +9,7 @@ TString sHistName[eMC::kNum] = {
 void AllRecoEff(
     Bool_t bOver = kFALSE,
     TString sTag = "UniFlow",
-    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/runs_grid/PbPb_MC/LHC18e1/purity_eff/"
+    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/running/grid/PbPb_MC/LHC18e1/purity_eff_v2/"
 );
 
 void RecoEff(
@@ -17,7 +17,7 @@ void RecoEff(
     Bool_t bOverwrite = kFALSE,
     std::vector<Double_t> dPtBins = {},
     TString sTag = "UniFlow",
-    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/runs_grid/PbPb_MC/LHC18e1/purity_eff/"
+    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/running/grid/PbPb_MC/LHC18e1/purity_eff/"
 )
 {
     // Openning files
@@ -95,8 +95,8 @@ void RecoEff(
         printf("Purity_PtEta '%s' already exists in the file and overwrite is turn off!\n",sName_Purity_PtEta.Data());
         // fileOut->ls();
     } else {
-        h2Purity_PtEta = (TH2D*) h2[kReco]->Clone(sName_Purity_PtEta.Data());
-        h2Purity_PtEta->Divide(h2[kGen]);
+        h2Purity_PtEta = (TH2D*) h2[kRecoTrue]->Clone(sName_Purity_PtEta.Data());
+        h2Purity_PtEta->Divide(h2[kReco]);
         if(!h2Purity_PtEta) { printf("h2Purity_PtEta division failed!\n"); return; }
     }
 
@@ -129,8 +129,7 @@ void RecoEff(
 void AllRecoEff(Bool_t bOver, TString sTag, TString sPath)
 {
     std::vector<Double_t> bins = {
-        0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,
-        2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.0,4.5,5.0,6.0,7.0,8.0,9.0,10.0};
+        0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.5,4.0,5.0,6.0,8.0,10.0};
     RecoEff("Charged", bOver, bins, sTag, sPath);
     RecoEff("Pion", bOver, bins, sTag, sPath);
     RecoEff("Kaon", bOver, bins, sTag, sPath);
