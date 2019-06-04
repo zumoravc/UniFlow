@@ -38,7 +38,7 @@ void ProcessAll();
 
 void SumSystHistos(
     TString species = "Lambda",
-    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst_6815/",
+    TString sPath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst/",
     Int_t iNumCent = 6,
     TString sSystHistoName = "Diff",
     TString sSystFitName = "fitDiff"
@@ -61,26 +61,28 @@ void SumSystHistos(
     } else if(species.EqualTo("Pion")) {
         vecSyst.push_back("CL1");
         vecSyst.push_back("FB768");
-        vecSyst.push_back("PID3sigma");
+        vecSyst.push_back("PID2sigma");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
-        vecPID = {0.01,0.02,0.02,0.04,0.03,0.04};
+        // vecPID = {0.01,0.02,0.02,0.04,0.03,0.04};
 
     } else if(species.EqualTo("Kaon")) {
         vecSyst.push_back("CL1");
         vecSyst.push_back("FB768");
-        vecSyst.push_back("PID3sigma");
+        vecSyst.push_back("PID2sigma");
+        vecSyst.push_back("Bayes90");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
-        vecPID = {0.04,0.02,0.01,0.01,0.01,0.01};
+        // vecPID = {0.04,0.02,0.01,0.01,0.01,0.01};
 
     } else if(species.EqualTo("Proton")) {
         vecSyst.push_back("CL1");
         vecSyst.push_back("FB768");
-        vecSyst.push_back("PID3sigma");
+        vecSyst.push_back("PID2sigma_anti");
+        vecSyst.push_back("Bayes90");
         vecSyst.push_back("PVz8");
         vecSyst.push_back("TPCcls90");
-        vecPID = {0.02,0.03,0.03,0.03,0.03,0.03};
+        // vecPID = {0.02,0.03,0.03,0.03,0.03,0.03};
 
     } else if(species.EqualTo("K0s")) {
         vecSyst.push_back("CL1");
@@ -112,10 +114,11 @@ void SumSystHistos(
     } else if(species.EqualTo("Phi")) {
         vecSyst.push_back("CL1");
         // vecSyst.push_back("FB768");
-        // vecSyst.push_back("PID3sigma");
-        vecSyst.push_back("PVz8");
+        // vecSyst.push_back("PID2sigma");
+        // vecSyst.push_back("Bayes90");
+        // vecSyst.push_back("PVz8");
         // vecSyst.push_back("TPCcls90");
-        vecPID = {0.0,0.0,0.0,0.0,0.0,0.0};
+        // vecPID = {0.04,0.02,0.01,0.01,0.01,0.01};
 
         // iNumCent = 6;
     } else {
@@ -265,7 +268,7 @@ Bool_t ProcessSingle(
 
 
     fitTotal->Draw("same");
-    lineUnity->DrawLine(hist->GetXaxis()->GetXmin(), 0.0, hist->GetXaxis()->GetXmax(), 0.0);
+    // lineUnity->DrawLine(hist->GetXaxis()->GetXmin(), 0.0, hist->GetXaxis()->GetXmax(), 0.0);
     leg->Draw();
 
     gSystem->mkdir(Form("%s/%s/syst_pdf/",path,sOutDir.Data()),kTRUE);

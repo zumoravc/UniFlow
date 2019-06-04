@@ -42,9 +42,11 @@ TList* PrepareCanvasRatioSub(TCanvas* can);
 Bool_t ProcessSingle(
     TString hist = "Charged_hFlow4_harm2_gap-10_cent0",
     TString path = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst_6815/Charged/",
+    TString pathOut = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/PbPb/cums/syst",
     TString syst = "CL1",
     TString baseline = "gap00",
-    Double_t dFitPtLow = 3.0
+    Double_t dFitPtLow = 3.0,
+    Bool_t bCorrelated = 1
 )
 {
     TFile* fileBase = TFile::Open(Form("%s/%s/Processed.root",path.Data(),baseline.Data()),"READ");
@@ -63,7 +65,8 @@ Bool_t ProcessSingle(
     StyleHist(histSyst,colSyst,markSyst);
     histBase->SetName("Syst");
 
-    TH1D* histRatio = DivideHistos(histSyst,histBase,bCorrelated);
+    TH1D* histRatio = DivideHistos(histSyst,histBase,0);
+    // TH1D* histRatio = DivideHistos(histSyst,histBase,bCorrelated);
     if(!histRatio) { printf("ERROR: Ratio failed\n"); return kFALSE; }
 
     TH1D* histBarlow = BarlowTest(histBase,histSyst,bCorrelated);
@@ -158,11 +161,11 @@ Bool_t ProcessSingle(
 
 
     // saving output
-    gSystem->mkdir(Form("%s/%s/syst_root/",path.Data(),syst.Data()),kTRUE);
-    gSystem->mkdir(Form("%s/%s/syst_pdf/",path.Data(),syst.Data()),kTRUE);
-    gSystem->mkdir(Form("%s/%s/syst_eps/",path.Data(),syst.Data()),kTRUE);
+    gSystem->mkdir(Form("%s/%s/syst_root/",pathOut.Data(),syst.Data()),kTRUE);
+    gSystem->mkdir(Form("%s/%s/syst_pdf/",pathOut.Data(),syst.Data()),kTRUE);
+    gSystem->mkdir(Form("%s/%s/syst_eps/",pathOut.Data(),syst.Data()),kTRUE);
 
-    TFile* fileOut = TFile::Open(Form("%s/%s/syst_root/%s.root",path.Data(),syst.Data(),hist.Data()),"RECREATE");
+    TFile* fileOut = TFile::Open(Form("%s/%s/syst_root/%s.root",pathOut.Data(),syst.Data(),hist.Data()),"RECREATE");
     if(!fileOut) { printf("E: Output file not created!"); return kFALSE; }
 
     TList* outList = new TList();
@@ -178,8 +181,8 @@ Bool_t ProcessSingle(
     fileOut->cd();
     outList->Write("list",TObject::kSingleKey);
 
-    can->SaveAs(Form("%s/%s/syst_pdf/%s.pdf",path.Data(),syst.Data(),hist.Data()),"pdf");
-    can->SaveAs(Form("%s/%s/syst_eps/%s.eps",path.Data(),syst.Data(),hist.Data()),"eps");
+    can->SaveAs(Form("%s/%s/syst_pdf/%s.pdf",pathOut.Data(),syst.Data(),hist.Data()),"pdf");
+    can->SaveAs(Form("%s/%s/syst_eps/%s.eps",pathOut.Data(),syst.Data(),hist.Data()),"eps");
 
     fileOut->Close();
     fileSyst->Close();
