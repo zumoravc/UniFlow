@@ -16,13 +16,13 @@ void RunDev()
 
 	// TString sInputPath = "~/Codes/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow_sampled_20runs/";
 	// TString sInputPath = "/home/alidock/ana/UniFlow/uniFlow/task";
-	TString sInputPath = "/home/alidock/ana/output/LHC15o/train_7346";
+	TString sInputPath = "/home/alidock/UniFlow/task";
 	// TString sOutputFilePath = sInputPath+"/output_test/"+sEtaGap+"/";
 	// TString sOutputFilePath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/flow-modes/cross-charged-you/15o_hi_pass1/mixed";
 	// TString sOutputFilePath = "./test/";
 	// TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test-K0s";
 	// TString sOutputFilePath = "/mnt/CodesALICE/Flow/uniFlow/processUniFlow/test-Lambda";
-	TString sOutputFilePath = sInputPath + "/processUniFlow";
+	TString sOutputFilePath = sInputPath + "/processUniFlowPILEUP";
 
 	// Double_t dMultBinning[] = {0,10,20,40,60,100};
 

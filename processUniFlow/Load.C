@@ -12,7 +12,7 @@ Bool_t LoadOne(const char* clsname, const char* opt = "", const char* suf = "cxx
 
 void Load(const char* opt = "g")
 {
-  TString sPath = "/home/alidock/ana/UniFlow/uniFlow/processUniFlow/";
+  TString sPath = "/home/alidock/UniFlow/processUniFlow/";
   LoadOne(Form("%sFlowTask",sPath.Data()), opt);
   LoadOne(Form("%sProcessUniFlow",sPath.Data()), opt);
 }
