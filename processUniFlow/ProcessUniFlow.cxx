@@ -275,7 +275,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     if(!ProcessMixed(task)) { Error(Form("ProcessMixed '%s' failed!",task->fMixedDiff.Data()),"ProcessTask"); return kFALSE; }
   }
 
-  if(task->fDoSix || task->fDoEight)
+  if(task->fDoFour || task->fDoSix || task->fDoEight)
   {
     if(spec == kRefs && !ProcessFMC(task)) {
       Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(), GetSpeciesName(spec).Data()),"ProcessTask");
@@ -358,6 +358,55 @@ Bool_t ProcessUniFlow::ProcessFMC(FlowTask* task)
   TList* listFmcFour = new TList();
   TString nameFmcFour = Form("Refs_FMC4_harm%d%d",task->fHarm[0],task->fHarm[2]);
 
+  if(bDoFour)
+  {
+      if( task->fHarm[0] != -(task->fHarm[2]) || task->fHarm[1] != -(task->fHarm[3]) ) return kFALSE;
+      if( task->fHarm[0] >= task->fHarm[1] ) { Error("Implemented only for different moments. Terminating!","ProcessFMC - 4pc"); return kFALSE; }
+
+      nameFmcFour = Form("Refs_FMC4_harm%d%d",task->fHarm[0],task->fHarm[1]);
+      for(Short_t iSample(0); iSample < task->fNumSamplesRefs; ++iSample)
+      {
+        TProfile* pCorFour_12 = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfFourName_12.Data(),iSample));
+        if(!pCorFour_12) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",sProfFourName_12.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+        if(task->fRebinning) pCorFour_12 = (TProfile*) pCorFour_12->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorFour_12.Data(), iSample),fdMultBins.data());
+        TProfile* pCorTwo_1 = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfTwoName_1.Data(), iSample));
+        TProfile* pCorTwo_2 = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfTwoName_2.Data(), iSample));
+        if(!pCorTwo_1 || !pCorTwo_2) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",sProfTwoName_1.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+        TProfile* pCorTwo_1_gap = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfTwoName_1_gap.Data(), iSample));
+        TProfile* pCorTwo_2_gap = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfTwoName_2_gap.Data(), iSample));
+        if(!pCorTwo_1_gap || !pCorTwo_2_gap) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",nameCorTwo_1_gap.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+        if(task->fRebinning) pCorTwo_1 = (TProfile*) pCorTwo_1->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo_1.Data(), iSample),fdMultBins.data());
+        if(task->fRebinning) pCorTwo_2 = (TProfile*) pCorTwo_2->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo_2.Data(), iSample),fdMultBins.data());
+        if(task->fRebinning) pCorTwo_1_gap = (TProfile*) pCorTwo_1_gap->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo_1_gap.Data(), iSample),fdMultBins.data());
+        if(task->fRebinning) pCorTwo_2_gap = (TProfile*) pCorTwo_2_gap->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo_2_gap.Data(), iSample),fdMultBins.data());
+        listCorFour_12->Add(pCorFour_12);
+        listCorTwo_1->Add(pCorTwo_1);
+        listCorTwo_2->Add(pCorTwo_2);
+        listCorTwo_1_gap->Add(pCorTwo_1_gap);
+        listCorTwo_2_gap->Add(pCorTwo_2_gap);
+        fourFmc = CalcFourFMC(pCorFour_12, pCorTwo_1, pCorTwo_2, pCorTwo_1_gap, pCorTwo_2_gap, task);
+        fourFmc->SetName(Form("%s_sample%d", nameFmcFour.Data(), iSample));
+        listFmcFour->Add(fourFmc);
+      }
+      TProfile* pCorFour_12Merged = (TProfile*) MergeListProfiles(listCorFour_12);
+      TProfile* pCorTwo_1Merged = (TProfile*) MergeListProfiles(listCorTwo_1);
+      TProfile* pCorTwo_2Merged = (TProfile*) MergeListProfiles(listCorTwo_2);
+      TProfile* pCorTwo_1_gapMerged = (TProfile*) MergeListProfiles(listCorTwo_1_gap);
+      TProfile* pCorTwo_2_gapMerged = (TProfile*) MergeListProfiles(listCorTwo_2_gap);
+      if(!pCorFour_12Merged || !pCorTwo_1Merged || !pCorTwo_2Merged || !pCorTwo_1_gapMerged || !pCorTwo_2_gapMerged) { Error("Merging of 'pCorFourMerged' failed!","ProcessFMC"); return kFALSE; }
+      pCorFour_12Merged->SetName(Form("%s_merged", nameCorFour_12.Data()));
+      pCorTwo_1Merged->SetName(Form("%s_merged", nameCorTwo_1.Data()));
+      pCorTwo_2Merged->SetName(Form("%s_merged", nameCorTwo_2.Data()));
+      pCorTwo_1_gapMerged->SetName(Form("%s_merged", nameCorTwo_1.Data()));
+      pCorTwo_2_gapMerged->SetName(Form("%s_merged", nameCorTwo_2.Data()));
+      TH1D* hFourFmcMerged = CalcFourFMC(pCorFour_12Merged, pCorTwo_1Merged, pCorTwo_2Merged, pCorTwo_1_gapMerged, pCorTwo_2_gapMerged, task);
+      TH1D* hCorFourDesampled = DesampleList(listFmcFour, hFourFmcMerged, task, nameFmcFour, kFALSE);
+      if(!hCorFourDesampled) { Error("Desampling 'hCorFourDesampled' failed","ProcessRefs"); return kFALSE; }
+      hCorFourDesampled->SetName(nameFmcFour.Data());
+      ffOutputFile->cd();
+      hCorFourDesampled->Write();
+      return kTRUE;
+  }
 
   if(bDoSix)
   {
@@ -1207,6 +1256,7 @@ TH1D* ProcessUniFlow::CalcSixTwoDif(TProfile* hSix, TProfile* hFour_12, TProfile
 
     Double_t dContOut = dContSix - 4.0 * dContFour_13 * dContTwo_1 - dContFour_12 * dContTwo_3 + 4.0 * dContTwo_1 * dContTwo_1 * dContTwo_3;
     Double_t norm = dContFour_12 * dContTwo_3_gap;
+    if(task->fIsHijing) norm = 1.0;
     hSixCor->SetBinContent(iBin, dContOut/norm);
 
     Double_t dErrOut = TMath::Power(dErrSix, 2.0);
@@ -1219,9 +1269,10 @@ TH1D* ProcessUniFlow::CalcSixTwoDif(TProfile* hSix, TProfile* hFour_12, TProfile
     dErrHelp = dErrTwo_1 * ( 4.0 *  dContFour_13 + 8.0 * dContTwo_1 * dContTwo_3);
     dErrOut += TMath::Power(dErrHelp, 2.0);
 
-    // Double_t dErNorm = TMath::Sqrt( TMath::Power(2.0 * dErrTwo_1_gap * dContTwo_1_gap * dContTwo_3_gap, 2.0)
-    //                   + TMath::Power(dErrTwo_3_gap * dContTwo_1_gap * dContTwo_1_gap, 2.0) );
-    // dErrOut = TMath::Power((dErrOut / norm), 2.0) + TMath::Power(dErNorm * dContOut / (norm * norm), 2.0);
+    Double_t dErNorm = TMath::Sqrt( TMath::Power( dErrFour_12 * dContTwo_3_gap, 2.0)
+                      + TMath::Power(dErrTwo_3_gap * dContFour_12, 2.0) );
+    if(task->fIsHijing) dErNorm = 0.0;
+    dErrOut = TMath::Power((dErrOut / norm), 2.0) + TMath::Power(dErNorm * dContOut / (norm * norm), 2.0);
 
     hSixCor->SetBinError(iBin, TMath::Sqrt(dErrOut));
   }
@@ -1280,6 +1331,7 @@ TH1D* ProcessUniFlow::CalcSixThreeDif(TProfile* hSix, TProfile* hFour_12, TProfi
 
     Double_t dContOut = dContSix - dContFour_13 * dContTwo_2 - dContFour_12 * dContTwo_3 - dContFour_23 * dContTwo_1 + dContTwo_1 * dContTwo_2 * dContTwo_3;
     Double_t norm = dContTwo_1_gap * dContTwo_2_gap * dContTwo_3_gap;
+    if(task->fIsHijing) norm = 1.0;
     hSixCor->SetBinContent(iBin, dContOut/norm);
 
     Double_t dErrOut = TMath::Power(dErrSix, 2.0);
@@ -1299,6 +1351,7 @@ TH1D* ProcessUniFlow::CalcSixThreeDif(TProfile* hSix, TProfile* hFour_12, TProfi
     Double_t dErNorm = TMath::Sqrt( TMath::Power(dErrTwo_1_gap * dContTwo_2_gap * dContTwo_3_gap, 2.0)
                       + TMath::Power(dErrTwo_2_gap * dContTwo_1_gap * dContTwo_3_gap, 2.0)
                       + TMath::Power(dErrTwo_3_gap * dContTwo_1_gap * dContTwo_2_gap, 2.0) );
+    if(task->fIsHijing) dErNorm = 0.0;
     dErrOut = TMath::Power((dErrOut / norm), 2.0) + TMath::Power(dErNorm * dContOut / (norm * norm), 2.0);
     hSixCor->SetBinError(iBin, TMath::Sqrt(dErrOut));
   }
@@ -1337,7 +1390,8 @@ TH1D* ProcessUniFlow::CalcFourFMC(TProfile* hFour, TProfile* hTwo_1, TProfile* h
     Double_t dErrTwo_2_gap = hTwo_2_gap->GetBinError(iBin);
 
     Double_t dContOut = dContFour - dContTwo_1 * dContTwo_2;
-    Double_t norm = dContTwo_1_gap * dContTwo_2_gap ;
+    Double_t norm = dContTwo_1_gap * dContTwo_2_gap;
+    if(task->fIsHijing) norm = 1.0;
     hFourCor->SetBinContent(iBin, dContOut/norm);
 
     Double_t dErrOut = TMath::Power(dErrFour, 2.0);
@@ -1348,6 +1402,7 @@ TH1D* ProcessUniFlow::CalcFourFMC(TProfile* hFour, TProfile* hTwo_1, TProfile* h
     //normalisation
     Double_t dErNorm = TMath::Sqrt( TMath::Power(dErrTwo_1_gap * dContTwo_2_gap, 2.0)
                       + TMath::Power(dErrTwo_2_gap * dContTwo_1_gap, 2.0) );
+    if(task->fIsHijing) dErNorm = 0.0;
     dErrOut = TMath::Power((dErrOut / norm), 2.0) + TMath::Power(dErNorm * dContOut / (norm * norm), 2.0);
     hFourCor->SetBinError(iBin, TMath::Sqrt(dErrOut));
   }
@@ -1405,6 +1460,7 @@ TH1D* ProcessUniFlow::CalcEight_ThreeOne(TProfile* hEight, TProfile* hSix_123, T
                         + 18.0 * dContTwo_1 * dContTwo_4 * dContFour_12
                         + 36.0 * dContTwo_1 * dContTwo_1 * dContFour_14;
     Double_t norm = dContSix_123 * dContTwo_4_gap;
+    if(task->fIsHijing) norm = 1.0;
     // Double_t dContOut = dContEight;
     if(!(TMath::Abs(norm) > 0.0)) norm = 1.0;
     // Double_t norm = 1.0;
@@ -1472,6 +1528,7 @@ TH1D* ProcessUniFlow::CalcEight_TwoTwo(TProfile* hEight, TProfile* hSix_123, TPr
                         + 4.0 * dContTwo_4 * dContTwo_4 * dContFour_12
                         + 32.0 * dContTwo_1 * dContTwo_4 * dContFour_13;
     Double_t norm = dContFour_12 * dContFour_34;
+    if(task->fIsHijing) norm = 1.0;
     if(!(TMath::Abs(norm) > 0.0)) norm = 1.0;
     // Double_t norm = 1;
     hEightCor->SetBinContent(iBin, dContOut/norm);

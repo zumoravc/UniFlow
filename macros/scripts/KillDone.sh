@@ -1,9 +1,9 @@
 #!/bin/bash
 
-name="vpacik"
+name="zumoravc"
 
 
-# vojtech.pacik@cern.ch
+# zuzana.moravcova@cern.ch
 
 tmpfile="myjobs.tmp"
 cat /dev/null > $tmpfile

@@ -26,6 +26,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fDoFour{kFALSE},
   fDoSix{kFALSE},
   fDoEight{kFALSE},
+  fIsHijing{kFALSE},
   fMergePosNeg{kTRUE},
   fFlowFitPhiSubtLS{kTRUE},
   fbNormLS{kTRUE},
@@ -92,6 +93,15 @@ void FlowTask::SetFitParDefaults(Double_t* array, Int_t size)
   for(Int_t i(0); i < size; ++i) { fFitParDefaults[i] = array[i]; }
 
   return;
+}
+//_____________________________________________________________________________
+void FlowTask::DoFourFMC(std::vector<Int_t> harms, Int_t numSamplRefs)
+{
+  fDoFour = kTRUE;
+  fHarm = harms;
+  fNumHarm = harms.size();
+  if(fNumHarm != 4) { ProcessUniFlow::Error("Wrong initialization.","DoFourFMC"); return; }
+  fNumSamplesRefs = numSamplRefs;
 }
 //_____________________________________________________________________________
 void FlowTask::DoSixFMC(std::vector<Int_t> harms, Int_t numSamplRefs)

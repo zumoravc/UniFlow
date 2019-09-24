@@ -34,9 +34,11 @@ class FlowTask
     void        DoCumOrderMax(Cumulants cum) { fCumOrderMax = cum; }
     void        DoCumOrderMax(Int_t cum) { fCumOrderMax = Cumulants(cum); }
 
+    void        DoFourFMC(std::vector<Int_t> harms, Int_t numSamplRefs = 10);
     void        DoSixFMC(std::vector<Int_t> harms, Int_t numSamplRefs = 10);
     void        DoEightFMC(std::vector<Int_t> harms, Int_t numSamplRefs = 10);
-    void        DoFourFMC(Bool_t four, Int_t numSamplRefs = 10) {fDoFour = four; fNumSamplesRefs = numSamplRefs; }
+    void        DoFourFMCwithSix(Bool_t four, Int_t numSamplRefs = 10) {fDoFour = four; fNumSamplesRefs = numSamplRefs; }
+    void        IsHijing(Bool_t isHijing) {fIsHijing = isHijing; }
 
     // fitting
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -77,6 +79,7 @@ class FlowTask
     Bool_t      fDoFour; //  [kFALSE] flag for 4-particle correlations FMC
     Bool_t      fDoSix; //  [kFALSE] flag for 6-particle correlations FMC
     Bool_t      fDoEight; //  [kFALSE] flag for 8-particle correlations FMC
+    Bool_t      fIsHijing; // [kFALSE] flag whether is MC - Hijing
     std::vector<Int_t> fHarm; // FMC harmonics
     Int_t       fNumHarm; //size of fNumHarm
 

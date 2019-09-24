@@ -11,7 +11,7 @@ void nFMC8()
 {
   TMultiGraph *mg = new TMultiGraph();
 
-  TFile* fileIn = TFile::Open("/home/alidock/ana/output/LHC15o/train_7346/processUniFlow/Processed.root","READ");
+  TFile* fileIn = TFile::Open("/home/alidock/ana/output/LHC15o/grid_fullSt/processUniFlow/Processed.root","READ");
   if(!fileIn) {printf("File not opened! \n"); return;}
 
   TFile* fileYZ = TFile::Open("/home/alidock/ana/output/YZ_results/Output_all.root","READ");
@@ -72,7 +72,7 @@ void nFMC8()
   TLegend* leg = new TLegend(0.32,0.72,0.72,0.88);
   leg->SetBorderSize(0);
   leg->SetFillColorAlpha(0.0,0.0);
-  leg->SetHeader("ALICE experiment, LHC15o (full dataset), RFPs, 0.2 < p_{T}(RFPs) < 5 GeV/c, |#eta| < 0.8");
+  leg->SetHeader("ALICE experiment, LHC15o (sample), additional pile up rejection, RFPs, 0.2 < p_{T}(RFPs) < 5 GeV/c, |#eta| < 0.8");
   leg->SetNColumns(2);
   leg->AddEntry(fMC8_harm2223_YZ,"nFMC (v_{2}^{6},v_{3}^{2}) - YZ","p");
   leg->AddEntry(fMC8_harm2223,"nFMC (v_{2}^{6},v_{3}^{2})","p");
@@ -82,7 +82,7 @@ void nFMC8()
   leg->AddEntry(fMC8_harm2333,"nFMC (v_{2}^{2},v_{3}^{6})","p");
   leg->Draw("same");
 
-  can->SaveAs("FMC8_comp.pdf");
+  can->SaveAs("FMC8_comp+new.pdf");
 
   TCanvas* can2 = new TCanvas("can2", "can2", 600, 400);
   gStyle->SetOptStat(kFALSE);
