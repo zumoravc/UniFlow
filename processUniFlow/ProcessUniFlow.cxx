@@ -1329,7 +1329,7 @@ TH1D* ProcessUniFlow::CalcSixThreeDif(TProfile* hSix, TProfile* hFour_12, TProfi
     Double_t dContTwo_3_gap = hTwo_3_gap->GetBinContent(iBin);
     Double_t dErrTwo_3_gap = hTwo_3_gap->GetBinError(iBin);
 
-    Double_t dContOut = dContSix - dContFour_13 * dContTwo_2 - dContFour_12 * dContTwo_3 - dContFour_23 * dContTwo_1 + dContTwo_1 * dContTwo_2 * dContTwo_3;
+    Double_t dContOut = dContSix - dContFour_13 * dContTwo_2 - dContFour_12 * dContTwo_3 - dContFour_23 * dContTwo_1 + 2.0 * dContTwo_1 * dContTwo_2 * dContTwo_3;
     Double_t norm = dContTwo_1_gap * dContTwo_2_gap * dContTwo_3_gap;
     if(task->fIsHijing) norm = 1.0;
     hSixCor->SetBinContent(iBin, dContOut/norm);
