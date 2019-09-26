@@ -11,7 +11,7 @@ void FMC_HIJING()
 {
   TMultiGraph *mg = new TMultiGraph();
 
-  TFile* fileIn = TFile::Open("/home/alidock/ana/output/MC/AMPT_train2380/processUniFlow/Processed.root","READ");
+  TFile* fileIn = TFile::Open("/home/alidock/ana/output/MC/HIJING_grid_full_RBR/processUniFlow/Processed.root","READ");
   if(!fileIn) {printf("File not opened! \n"); return;}
 
   TFile* fileYZ = TFile::Open("/home/alidock/ana/output/YZ_results/Output_all.root","READ");
@@ -102,19 +102,19 @@ void FMC_HIJING()
 
   TCanvas* can = new TCanvas("can", "can", 600, 400);
   mg->Draw("ap");
-  mg->SetMinimum(-3E-6);
-  mg->SetMaximum(5E-6);
+  mg->SetMinimum(-1.8E-6);
+  mg->SetMaximum(3E-6);
 
   TLegend* leg = new TLegend(0.12,0.72,0.52,0.88);
   leg->SetBorderSize(0);
   leg->SetFillColorAlpha(0.0,0.0);
   leg->SetHeader("ALICE experiment, RFPs, 0.2 < p_{T}(RFPs) < 5 GeV/c, |#eta| < 0.8");
   leg->SetNColumns(2);
-  leg->AddEntry(FMC4_harm23,"SC (2,3) - AMPT","p");
+  leg->AddEntry(FMC4_harm23,"SC (2,3) - HIJING","p");
   leg->AddEntry(FMC4_harm23_YZ,"SC (2,3) - YZ","p");
-  leg->AddEntry(FMC4_harm24,"SC (2,4) - AMPT","p");
+  leg->AddEntry(FMC4_harm24,"SC (2,4) - HIJING","p");
   leg->AddEntry(FMC4_harm24_YZ,"SC (2,4) - YZ","p");
-  leg->AddEntry(FMC4_harm34,"SC (3,4) - AMPT","p");
+  leg->AddEntry(FMC4_harm34,"SC (3,4) - HIJING","p");
   leg->AddEntry(FMC4_harm34_YZ,"SC (3,4) - YZ","p");
   // leg->AddEntry(fMC6_harm223,"FMC (v_{2}^{4},v_{3}^{2})","p");
   // leg->AddEntry(fMC6_harm233,"FMC (v_{2}^{2},v_{3}^{4})","p");
@@ -124,7 +124,7 @@ void FMC_HIJING()
 
   leg->Draw("same");
 
-  can->SaveAs("SC_AMPT.pdf");
+  can->SaveAs("SC_HIJING.pdf");
 
 
 
