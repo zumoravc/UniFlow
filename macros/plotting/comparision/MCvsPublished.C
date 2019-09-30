@@ -7,7 +7,7 @@
 // ZM
 // 29/08/2019
 
-void plotting()
+void MCvsPublished()
 {
   TMultiGraph *mg = new TMultiGraph();
 
@@ -60,9 +60,11 @@ void plotting()
   mg->Add(graphv42Gap10);
   //ShiftAlongXaxis(graphv42Gap10,1.5);
 
-  // TFile* fileIn = TFile::Open("/home/alidock/ana/output/LHC15o/train_7302/processUniFlow/Processed.root","READ");
-  TFile* fileIn = TFile::Open("/home/alidock/ana/output/LHC15o/train_7302/processUniFlow/Processed.root","READ");
+  TFile* fileIn = TFile::Open("/home/alidock/ana/output/MC/AMPT_train2380/processUniFlow/Processed.root","READ");
   if(!fileIn) {printf("File not opened! \n"); return;}
+
+  TFile* fileInH = TFile::Open("/home/alidock/ana/output/MC/HIJING_train_2381/processUniFlow/Processed.root","READ");
+  if(!fileInH) {printf("File not opened! \n"); return;}
 
   TGraphErrors *data_v22Gap10 = new TGraphErrors((TH1D*) fileIn->Get("Refs_hFlow2_harm2_gap10"));
   data_v22Gap10->SetMarkerStyle(kOpenSquare);
@@ -85,6 +87,13 @@ void plotting()
   data_v42Gap10->SetLineColor(kGreen+2);
   mg->Add(data_v42Gap10);
 
+  TGraphErrors *HIJING_v22Gap10 = new TGraphErrors((TH1D*) fileInH->Get("Refs_hFlow2_harm2_gap10"));
+  HIJING_v22Gap10->SetMarkerStyle(kOpenStar);
+  HIJING_v22Gap10->SetMarkerColor(kBlack);
+  HIJING_v22Gap10->SetMarkerSize(1.);
+  HIJING_v22Gap10->SetLineColor(kBlack);
+  mg->Add(HIJING_v22Gap10);
+
   mg->GetXaxis()->SetTitle("Centrality class (V0M)");
   mg->GetYaxis()->SetTitle("v_{n}{2}");
 
@@ -96,17 +105,18 @@ void plotting()
   TLegend* leg = new TLegend(0.12,0.65,0.62,0.88);
   leg->SetBorderSize(0);
   leg->SetFillColorAlpha(0.0,0.0);
-  leg->SetHeader("ALICE experiment, LHC15o (full dataset), RFPs flow, 0.2 < p_{T}(RFPs) < 5 GeV/c, |#eta| < 0.8");
+  leg->SetHeader("RFPs flow, 0.2 < p_{T}(RFPs) < 5 GeV/c, |#eta| < 0.8");
   leg->SetNColumns(2);
   leg->AddEntry(graphv22Gap10,"v_{2}{2},|#Delta#eta| > 1.0} PUBLISHED","p");
-  leg->AddEntry(data_v22Gap10,"v_{2}{2},|#Delta#eta| > 1.0}","p");
+  leg->AddEntry(data_v22Gap10,"v_{2}{2},|#Delta#eta| > 1.0} AMPT","p");
   leg->AddEntry(graphv32Gap10,"v_{3}{2},|#Delta#eta| > 1.0} PUBLISHED","p");
-  leg->AddEntry(data_v32Gap10,"v_{3}{2},|#Delta#eta| > 1.0}","p");
+  leg->AddEntry(data_v32Gap10,"v_{3}{2},|#Delta#eta| > 1.0} AMPT","p");
   leg->AddEntry(graphv42Gap10,"v_{4}{2},|#Delta#eta| > 1.0} PUBLISHED","p");
-  leg->AddEntry(data_v42Gap10,"v_{4}{2},|#Delta#eta| > 1.0}","p");
+  leg->AddEntry(data_v42Gap10,"v_{4}{2},|#Delta#eta| > 1.0} AMPT","p");
+  leg->AddEntry(HIJING_v22Gap10,"v_{2}{2},|#Delta#eta| > 1.0} HIJING","p");
   leg->Draw("same");
 
-  can->SaveAs("vn2_comp.pdf");
+  can->SaveAs("vn2_models.pdf");
 
   // TCanvas* can2 = new TCanvas("can2", "can2", 600, 400);
   // gStyle->SetOptStat(kFALSE);
