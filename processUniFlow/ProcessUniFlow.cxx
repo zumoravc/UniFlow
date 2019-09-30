@@ -321,26 +321,44 @@ Bool_t ProcessUniFlow::ProcessFMC(FlowTask* task)
   TList* listCorFour_12 = new TList();
   TString nameCorFour_12 = Form("Refs_pCor4_harm%d%d",task->fHarm[0],task->fHarm[1]);
   TString sProfFourName_12 = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarm[0],task->fHarm[1],task->fHarm[0],task->fHarm[1]);
+  if(task->HasGap()) {
+    sProfFourName_12 += Form("_2sub(%.2g)",task->fEtaGap);
+  }
 
   TList* listCorFour_13 = new TList();
   TString nameCorFour_13 = Form("Refs_pCor4_harm%d%d",task->fHarm[0],task->fHarm[2]);
   TString sProfFourName_13 = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarm[0],task->fHarm[2],task->fHarm[0],task->fHarm[2]);
+  if(task->HasGap()) {
+    sProfFourName_13 += Form("_2sub(%.2g)",task->fEtaGap);
+  }
 
   TList* listCorFour_23 = new TList();
   TString nameCorFour_23 = Form("Refs_pCor4_harm%d%d",task->fHarm[1],task->fHarm[2]);
   TString sProfFourName_23 = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarm[1],task->fHarm[2],task->fHarm[1],task->fHarm[2]);
+  if(task->HasGap()) {
+    sProfFourName_23 += Form("_2sub(%.2g)",task->fEtaGap);
+  }
 
   TList* listCorTwo_1 = new TList();
   TString nameCorTwo_1 = Form("Refs_pCor2_harm%d",task->fHarm[0]);
   TString sProfTwoName_1 = Form("<<2>>(%d,-%d)",task->fHarm[0],task->fHarm[0]);
+  if(task->HasGap()) {
+    sProfTwoName_1 += Form("_2sub(%.2g)",task->fEtaGap);
+  }
 
   TList* listCorTwo_2 = new TList();
   TString nameCorTwo_2 = Form("Refs_pCor2_harm%d",task->fHarm[1]);
   TString sProfTwoName_2 = Form("<<2>>(%d,-%d)",task->fHarm[1],task->fHarm[1]);
+  if(task->HasGap()) {
+    sProfTwoName_2 += Form("_2sub(%.2g)",task->fEtaGap);
+  }
 
   TList* listCorTwo_3 = new TList();
   TString nameCorTwo_3 = Form("Refs_pCor2_harm%d",task->fHarm[2]);
   TString sProfTwoName_3 = Form("<<2>>(%d,-%d)",task->fHarm[2],task->fHarm[2]);
+  if(task->HasGap()) {
+    sProfTwoName_3 += Form("_2sub(%.2g)",task->fEtaGap);
+  }
 
   TList* listCorTwo_1_gap = new TList();
   TString nameCorTwo_1_gap = Form("Refs_pCor2_harm%d_gap",task->fHarm[0]);
@@ -364,6 +382,9 @@ Bool_t ProcessUniFlow::ProcessFMC(FlowTask* task)
       if( task->fHarm[0] >= task->fHarm[1] ) { Error("Implemented only for different moments. Terminating!","ProcessFMC - 4pc"); return kFALSE; }
 
       nameFmcFour = Form("Refs_FMC4_harm%d%d",task->fHarm[0],task->fHarm[1]);
+      if(task->HasGap()) {
+        nameFmcFour += Form("_2sub(%.2g)",task->fEtaGap);
+      }
       for(Short_t iSample(0); iSample < task->fNumSamplesRefs; ++iSample)
       {
         TProfile* pCorFour_12 = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfFourName_12.Data(),iSample));
@@ -421,7 +442,13 @@ Bool_t ProcessUniFlow::ProcessFMC(FlowTask* task)
     TString nameCorSix = Form("Refs_pCor6_harm%d%d%d",task->fHarm[0],task->fHarm[1],task->fHarm[2]);
     TList* listFmcSix = new TList();
     TString nameFmcSix = Form("Refs_fMC6_harm%d%d%d",task->fHarm[0],task->fHarm[1],task->fHarm[2]);
+    if(task->HasGap()) {
+      nameFmcSix += Form("_2sub(%.2g)",task->fEtaGap);
+    }
     TString sProfSixName = Form("<<6>>(%d,%d,%d,-%d,-%d,-%d)",task->fHarm[0],task->fHarm[1],task->fHarm[2],task->fHarm[0],task->fHarm[1],task->fHarm[2]);
+    if(task->HasGap()) {
+      sProfSixName += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     for(Short_t iSample(0); iSample < task->fNumSamplesRefs; ++iSample)
     {
@@ -577,45 +604,78 @@ Bool_t ProcessUniFlow::ProcessFMC(FlowTask* task)
     TList* listCorEight = new TList();
     TString nameCorEight = Form("Refs_pCor8_harm%d%d%d%d",task->fHarm[0],task->fHarm[1],task->fHarm[2],task->fHarm[3]);
     TString sProfEightName = Form("<<8>>(%d,%d,%d,%d,-%d,-%d,-%d,-%d)",task->fHarm[0],task->fHarm[1],task->fHarm[2],task->fHarm[3],task->fHarm[0],task->fHarm[1],task->fHarm[2],task->fHarm[3]);
+    if(task->HasGap()) {
+      sProfEightName += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listFmcEight = new TList();
     TString nameFmcEight = Form("Refs_fMC8_harm%d%d%d%d",task->fHarm[0],task->fHarm[1],task->fHarm[2],task->fHarm[3]);
+    if(task->HasGap()) {
+      nameFmcEight += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorSix_123 = new TList();
     TString nameCorSix_123 = Form("Refs_pCor6_harm%d%d%d",task->fHarm[0],task->fHarm[1],task->fHarm[2]);
     TString sProfSixName_123 = Form("<<6>>(%d,%d,%d,-%d,-%d,-%d)",task->fHarm[0],task->fHarm[1],task->fHarm[2],task->fHarm[0],task->fHarm[1],task->fHarm[2]);
+    if(task->HasGap()) {
+      sProfSixName_123 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorSix_124 = new TList();
     TString nameCorSix_124 = Form("Refs_pCor6_harm%d%d%d",task->fHarm[0],task->fHarm[1],task->fHarm[3]);
     TString sProfSixName_124 = Form("<<6>>(%d,%d,%d,-%d,-%d,-%d)",task->fHarm[0],task->fHarm[1],task->fHarm[3],task->fHarm[0],task->fHarm[1],task->fHarm[3]);
+    if(task->HasGap()) {
+      sProfSixName_124 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorSix_234 = new TList();
     TString nameCorSix_234 = Form("Refs_pCor6_harm%d%d%d",task->fHarm[1],task->fHarm[2],task->fHarm[3]);
     TString sProfSixName_234 = Form("<<6>>(%d,%d,%d,-%d,-%d,-%d)",task->fHarm[1],task->fHarm[2],task->fHarm[3],task->fHarm[1],task->fHarm[2],task->fHarm[3]);
+    if(task->HasGap()) {
+      sProfSixName_234 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorSix_134 = new TList();
     TString nameCorSix_134 = Form("Refs_pCor6_harm%d%d%d",task->fHarm[0],task->fHarm[2],task->fHarm[3]);
     TString sProfSixName_134 = Form("<<6>>(%d,%d,%d,-%d,-%d,-%d)",task->fHarm[0],task->fHarm[2],task->fHarm[3],task->fHarm[0],task->fHarm[2],task->fHarm[3]);
+    if(task->HasGap()) {
+      sProfSixName_134 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorFour_14 = new TList();
     TString nameCorFour_14 = Form("Refs_pCor4_harm%d%d",task->fHarm[0],task->fHarm[3]);
     TString sProfFourName_14 = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarm[0],task->fHarm[3],task->fHarm[0],task->fHarm[3]);
+    if(task->HasGap()) {
+      sProfFourName_14 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorFour_13 = new TList();
     TString nameCorFour_13 = Form("Refs_pCor4_harm%d%d",task->fHarm[0],task->fHarm[2]);
     TString sProfFourName_13 = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarm[0],task->fHarm[2],task->fHarm[0],task->fHarm[2]);
+    if(task->HasGap()) {
+      sProfFourName_13 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorFour_34 = new TList();
     TString nameCorFour_34 = Form("Refs_pCor4_harm%d%d",task->fHarm[2],task->fHarm[3]);
     TString sProfFourName_34 = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarm[2],task->fHarm[3],task->fHarm[2],task->fHarm[3]);
+    if(task->HasGap()) {
+      sProfFourName_34 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorFour_23 = new TList();
     TString nameCorFour_23 = Form("Refs_pCor4_harm%d%d",task->fHarm[1],task->fHarm[2]);
     TString sProfFourName_23 = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarm[1],task->fHarm[1],task->fHarm[1],task->fHarm[2]);
+    if(task->HasGap()) {
+      sProfFourName_23 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorTwo_4 = new TList();
     TString nameCorTwo_4 = Form("Refs_pCor2_harm%d",task->fHarm[3]);
     TString sProfTwoName_4 = Form("<<2>>(%d,-%d)",task->fHarm[3],task->fHarm[3]);
+    if(task->HasGap()) {
+      sProfTwoName_4 += Form("_2sub(%.2g)",task->fEtaGap);
+    }
 
     TList* listCorTwo_4_gap = new TList();
     TString nameCorTwo_4_gap = Form("Refs_pCor2_harm%d_gap",task->fHarm[3]);
@@ -637,7 +697,11 @@ Bool_t ProcessUniFlow::ProcessFMC(FlowTask* task)
       TProfile* pCorTwo_1_gap = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfTwoName_1_gap.Data(), iSample));
       TProfile* pCorTwo_4 = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfTwoName_4.Data(), iSample));
       TProfile* pCorTwo_4_gap = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfTwoName_4_gap.Data(), iSample));
-      if(!pCorFour_12 || !pCorTwo_1 || !pCorTwo_1_gap || !pCorTwo_4 || !pCorTwo_4_gap) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",sProfFourName_12.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+      if(!pCorFour_12) { Warning(Form("Profile '%s' not valid! 8FMC",Form("%s_Pos_sample%d",sProfFourName_12.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+      if(!pCorTwo_1) { Warning(Form("Profile '%s' not valid! 8FMC",Form("%s_Pos_sample%d",sProfTwoName_1.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+      if(!pCorTwo_1_gap) { Warning(Form("Profile '%s' not valid! 8FMC",Form("%s_Pos_sample%d",sProfTwoName_1_gap.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+      if(!pCorTwo_4) { Warning(Form("Profile '%s' not valid! 8FMC",Form("%s_Pos_sample%d",sProfTwoName_4.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+      if(!pCorTwo_4_gap) { Warning(Form("Profile '%s' not valid! 8FMC",Form("%s_Pos_sample%d",sProfTwoName_4_gap.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
       if(task->fRebinning) pCorFour_12 = (TProfile*) pCorFour_12->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorFour_12.Data(), iSample),fdMultBins.data());
       if(task->fRebinning) pCorTwo_1 = (TProfile*) pCorTwo_1->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo_1.Data(), iSample),fdMultBins.data());
       if(task->fRebinning) pCorTwo_1_gap = (TProfile*) pCorTwo_1_gap->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo_1_gap.Data(), iSample),fdMultBins.data());
@@ -659,7 +723,7 @@ Bool_t ProcessUniFlow::ProcessFMC(FlowTask* task)
         if(task->fRebinning) pCorSix_124 = (TProfile*) pCorSix_124->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorSix_124.Data(), iSample),fdMultBins.data());
 
         TProfile* pCorFour_14 = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfFourName_14.Data(),iSample));
-        if(!pCorFour_14) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",sProfFourName_14.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
+        if(!pCorFour_14) { Warning(Form("Profile '%s' not valid! 8FMC",Form("%s_Pos_sample%d",sProfFourName_14.Data(),iSample)),"ProcessFMC"); flFlow[kRefs]->ls(); return kFALSE; }
         if(task->fRebinning) pCorFour_14 = (TProfile*) pCorFour_14->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorFour_14.Data(), iSample),fdMultBins.data());
 
         listCorSix_124->Add(pCorSix_124);
@@ -1368,8 +1432,8 @@ TH1D* ProcessUniFlow::CalcFourFMC(TProfile* hFour, TProfile* hTwo_1, TProfile* h
   if(hFour->GetNbinsX() != hTwo_1->GetNbinsX() || hFour->GetNbinsX() != hFour->GetNbinsX()) { Error("Different number of bins! 2-par corr.","CalcSixThreeDif"); return nullptr; }
   if(hFour->GetNbinsX() != hTwo_1_gap->GetNbinsX() || hFour->GetNbinsX() != hTwo_2_gap->GetNbinsX() ) { Error("Different number of bins! 2-par corr. with gap.","CalcSixThreeDif"); return nullptr; }
 
-  TH1D* hFourCor = (TH1D*) hFour->ProjectionX(Form("hCor4_Refs_harm%d%d",task->fHarm[0],task->fHarm[2]));
-  hFourCor->SetTitle(Form("%s: FMC4_{%d,%d}",GetSpeciesName(task->fSpecies).Data(), task->fHarm[0],task->fHarm[2]));
+  TH1D* hFourCor = (TH1D*) hFour->ProjectionX(Form("hCor4_Refs_harm%d%d",task->fHarm[0],task->fHarm[1]));
+  hFourCor->SetTitle(Form("%s: FMC4_{%d,%d}",GetSpeciesName(task->fSpecies).Data(), task->fHarm[0],task->fHarm[1]));
   hFourCor->Reset();
 
   for(Int_t iBin(0); iBin < hFourCor->GetNbinsX()+2; ++iBin)

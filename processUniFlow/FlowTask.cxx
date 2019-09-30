@@ -149,7 +149,25 @@ void FlowTask::PrintTask()
   printf("   fTaskTag: \"%s\"\n",fTaskTag.Data());
   printf("   fInputTag: \"%s\"\n",fInputTag.Data());
   printf("   fSpecies: %s (%d)\n",ProcessUniFlow::GetSpeciesName(fSpecies).Data(),fSpecies);
-  printf("   fHarmonics: %d\n",fHarmonics);
+  if(fDoFour)
+  {
+      printf("   FMC4: %s\n", fDoFour ? "true" : "false");
+      printf("   fHarmonics: %d,%d,%d,%d\n",fHarm[0],fHarm[1],fHarm[2],fHarm[3]);
+      printf("   fIsHijing: %s\n", fIsHijing ? "true" : "false");
+  }
+  else if(fDoSix)
+  {
+      printf("   FMC6: %s\n", fDoSix ? "true" : "false");
+      printf("   fHarmonics: %d,%d,%d,%d,%d,%d\n",fHarm[0],fHarm[1],fHarm[2],fHarm[3],fHarm[4],fHarm[5]);
+      printf("   fIsHijing: %s\n", fIsHijing ? "true" : "false");
+  }
+  else if(fDoEight)
+  {
+      printf("   FMC8: %s\n", fDoEight ? "true" : "false");
+      printf("   fHarmonics: %d,%d,%d,%d,%d,%d,%d,%d\n",fHarm[0],fHarm[1],fHarm[2],fHarm[3],fHarm[4],fHarm[5],fHarm[6],fHarm[7]);
+      printf("   fIsHijing: %s\n", fIsHijing ? "true" : "false");
+  }
+  else printf("   fHarmonics: %d\n",fHarmonics);
   printf("   fEtaGap: %g\n",fEtaGap);
   printf("   fNumPtBins: %d\n",fNumPtBins);
   if(fNumPtBins > 1) { printf("   fPtBinsEdges: "); for(Int_t i(0); i < (Int_t) fPtBinsEdges.size() ; ++i) printf("%g ",fPtBinsEdges[i]); printf("\n"); }
