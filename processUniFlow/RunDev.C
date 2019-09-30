@@ -16,7 +16,7 @@ void RunDev()
 
 	// TString sInputPath = "~/Codes/Flow/uniFlow/results/PbPb/lhc15o/pass1_AOD194/afterMemLeak/flow_sampled_20runs/";
 	// TString sInputPath = "/home/alidock/ana/UniFlow/uniFlow/task";
-	TString sInputPath = "/home/alidock/ana/output/LHC15o/grid_fullSt/";
+	TString sInputPath = "/home/alidock/ana/output/LHC15o/train_7387";
 	// TString sOutputFilePath = sInputPath+"/output_test/"+sEtaGap+"/";
 	// TString sOutputFilePath = "/Users/vpacik/Codes/ALICE/Flow/uniFlow/results/flow-modes/cross-charged-you/15o_hi_pass1/mixed";
 	// TString sOutputFilePath = "./test/";
@@ -42,193 +42,149 @@ void RunDev()
 
 	ProcessUniFlow* process = new ProcessUniFlow();
 	process->SetInputFilePath(sInputPath.Data());
-	process->SetInputFileName("Minus.root");
+	process->SetInputFileName("AnalysisResults.root");
 	process->SetTaskName("UniFlow");
 	process->SetOutputFilePath(sOutputFilePath.Data());
-	process->SetOutputFileName("Minus.root");
+	process->SetOutputFileName("Processed.root");
 	process->SetMultiplicityBins(dMultBinning);
 	process->SetDebug(1);
 	process->SetSaveInterSteps(1);
 
 	FlowTask* taskRefs = new FlowTask(kRefs, "");
 	taskRefs->SetNumSamples(10);
-	//taskRefs->SetEtaGap(1.0);
+	taskRefs->SetEtaGap(1.0);
 	//taskRefs->SetPtBins(vecPtBins);
-	taskRefs->SetMergePosNeg(1);
-	taskRefs->DoSixFMC({2,3,3,-2,-3,-3});
-	// taskRefs->IsHijing(kTRUE);
-	//taskRefs->SetHarmonics(2);
-	// taskRefs->DoCumOrderMax(kTwo);
-	//taskRefs->SetRebinning(kFALSE);
+	taskRefs->SetHarmonics(2);
+	taskRefs->DoCumOrderMax(kTwo);
+	taskRefs->SetRebinning(kFALSE);
 	process->AddTask(taskRefs);
 
-	FlowTask* taskRefs2F = new FlowTask(kRefs, "");
-	taskRefs2F->SetNumSamples(10);
-	taskRefs2F->SetMergePosNeg(1);
-	taskRefs2F->DoFourFMC({2,3,-2,-3});
-	// taskRefs2->DoFourFMCwithSix(kTRUE);
-	// taskRefs2->IsHijing(kTRUE);
-	process->AddTask(taskRefs2F);
+	// FlowTask* taskRefsV2 = new FlowTask(kRefs, "");
+	// taskRefsV2->SetNumSamples(10);
+	// taskRefsV2->SetHarmonics(2);
+	// taskRefsV2->DoCumOrderMax(kTwo);
+	// process->AddTask(taskRefsV2);
+	//
+	// FlowTask* taskRefsV3 = new FlowTask(kRefs, "");
+	// taskRefsV3->SetNumSamples(10);
+	// taskRefsV3->SetMergePosNeg(1);
+	// taskRefsV3->SetHarmonics(3);
+	// taskRefsV3->DoCumOrderMax(kTwo);
+	// process->AddTask(taskRefsV3);
 
-	FlowTask* taskRefs2 = new FlowTask(kRefs, "eightFMC");
-	taskRefs2->SetNumSamples(10);
-	taskRefs2->SetMergePosNeg(1);
-	taskRefs2->DoSixFMC({2,2,3,-2,-2,-3});
-	// taskRefs2->DoFourFMCwithSix(kTRUE);
-	// taskRefs2->IsHijing(kTRUE);
-	process->AddTask(taskRefs2);
+	// FlowTask* taskRefsV2g = new FlowTask(kRefs, "");
+	// taskRefsV2g->SetNumSamples(10);
+	// taskRefsV2g->SetEtaGap(1.0);
+	// taskRefsV2g->SetHarmonics(2);
+	// taskRefsV2g->DoCumOrderMax(kTwo);
+	// process->AddTask(taskRefsV2g);
 
-	FlowTask* taskRefs3 = new FlowTask(kRefs, "eightFMC1");
-	taskRefs3->SetNumSamples(10);
-	taskRefs3->SetMergePosNeg(1);
-	taskRefs3->DoEightFMC({2,2,3,3,-2,-2,-3,-3});
-	// taskRefs3->IsHijing(kTRUE);
-	process->AddTask(taskRefs3);
+	// FlowTask* taskRefsV3g = new FlowTask(kRefs, "");
+	// taskRefsV3g->SetNumSamples(10);
+	// taskRefsV3g->SetEtaGap(1.0);
+	// taskRefsV3g->SetHarmonics(3);
+	// taskRefsV3g->DoCumOrderMax(kTwo);
+	// process->AddTask(taskRefsV3g);
 
-	FlowTask* taskRefs4 = new FlowTask(kRefs, "eightFMC2");
-	taskRefs4->SetNumSamples(10);
-	taskRefs4->SetMergePosNeg(1);
-	taskRefs4->DoEightFMC({2,2,2,3,-2,-2,-2,-3});
-	// taskRefs4->IsHijing(kTRUE);
-	process->AddTask(taskRefs4);
-
-	FlowTask* taskRefs5 = new FlowTask(kRefs, "eightFMC3");
-	taskRefs5->SetNumSamples(10);
-	taskRefs5->SetMergePosNeg(1);
-	taskRefs5->DoEightFMC({2,3,3,3,-2,-3,-3,-3});
-	// taskRefs5->IsHijing(kTRUE);
-	process->AddTask(taskRefs5);
-
-	FlowTask* taskRefsV2 = new FlowTask(kRefs, "");
-	taskRefsV2->SetNumSamples(10);
-	taskRefsV2->SetMergePosNeg(1);
-	taskRefsV2->SetHarmonics(2);
-	taskRefsV2->DoCumOrderMax(kTwo);
-	process->AddTask(taskRefsV2);
-
-	FlowTask* taskRefsV3 = new FlowTask(kRefs, "");
-	taskRefsV3->SetNumSamples(10);
-	taskRefsV3->SetMergePosNeg(1);
-	taskRefsV3->SetHarmonics(3);
-	taskRefsV3->DoCumOrderMax(kTwo);
-	process->AddTask(taskRefsV3);
-
-	FlowTask* taskRefsV2g = new FlowTask(kRefs, "");
-	taskRefsV2g->SetNumSamples(10);
-	taskRefsV2g->SetEtaGap(1.0);
-	taskRefsV2g->SetMergePosNeg(1);
-	taskRefsV2g->SetHarmonics(2);
-	taskRefsV2g->DoCumOrderMax(kTwo);
-	process->AddTask(taskRefsV2g);
-
-	FlowTask* taskRefsV3g = new FlowTask(kRefs, "");
-	taskRefsV3g->SetNumSamples(10);
-	taskRefsV3g->SetEtaGap(1.0);
-	taskRefsV3g->SetMergePosNeg(1);
-	taskRefsV3g->SetHarmonics(3);
-	taskRefsV3g->DoCumOrderMax(kTwo);
-	process->AddTask(taskRefsV3g);
-
-	FlowTask* taskRefsV4 = new FlowTask(kRefs, "");
-	taskRefsV4->SetNumSamples(10);
-	taskRefsV4->SetMergePosNeg(1);
-	taskRefsV4->SetHarmonics(4);
-	taskRefsV4->DoCumOrderMax(kTwo);
-	process->AddTask(taskRefsV4);
-
-	FlowTask* taskRefsV4g = new FlowTask(kRefs, "");
-	taskRefsV4g->SetNumSamples(10);
-	taskRefsV4g->SetEtaGap(1.0);
-	taskRefsV4g->SetMergePosNeg(1);
-	taskRefsV4g->SetHarmonics(4);
-	taskRefsV4g->DoCumOrderMax(kTwo);
-	process->AddTask(taskRefsV4g);
+	// FlowTask* taskRefsV4 = new FlowTask(kRefs, "");
+	// taskRefsV4->SetNumSamples(10);
+	// taskRefsV4->SetMergePosNeg(1);
+	// taskRefsV4->SetHarmonics(4);
+	// taskRefsV4->DoCumOrderMax(kTwo);
+	// process->AddTask(taskRefsV4);
+	//
+	// FlowTask* taskRefsV4g = new FlowTask(kRefs, "");
+	// taskRefsV4g->SetNumSamples(10);
+	// taskRefsV4g->SetEtaGap(1.0);
+	// taskRefsV4g->SetHarmonics(4);
+	// taskRefsV4g->DoCumOrderMax(kTwo);
+	// process->AddTask(taskRefsV4g);
 
 
 
-	FlowTask* taskCharged = new FlowTask(kCharged);
-	taskCharged->SetNumSamples(10);
-	taskCharged->SetPtBins(vecPtBins);
-	taskCharged->SetMergePosNeg(1);
-	taskCharged->SetHarmonics(2);
-	taskCharged->SetEtaGap(1.0);
-	taskCharged->DoCumOrderMax(kTwo);
-	process->AddTask(taskCharged);
-
-	FlowTask* taskCharged2 = new FlowTask(kCharged);
-	taskCharged2->SetNumSamples(10);
-	taskCharged2->SetPtBins(vecPtBins);
-	taskCharged2->SetMergePosNeg(1);
-	taskCharged2->SetHarmonics(2);
-	// taskCharged2->SetEtaGap(0.0);
-	taskCharged2->DoCumOrderMax(kTwo);
-	process->AddTask(taskCharged2);
-
-	FlowTask* taskCharged3 = new FlowTask(kCharged);
-	taskCharged3->SetNumSamples(10);
-	taskCharged3->SetPtBins(vecPtBins);
-	taskCharged3->SetMergePosNeg(1);
-	taskCharged3->SetHarmonics(3);
-	// taskCharged3->SetEtaGap(0.0);
-	taskCharged3->DoCumOrderMax(kTwo);
-	process->AddTask(taskCharged3);
-
-	FlowTask* taskCharged4 = new FlowTask(kCharged);
-	taskCharged4->SetNumSamples(10);
-	taskCharged4->SetPtBins(vecPtBins);
-	taskCharged4->SetMergePosNeg(1);
-	taskCharged4->SetHarmonics(3);
-	taskCharged4->SetEtaGap(1.0);
-	taskCharged4->DoCumOrderMax(kTwo);
-	process->AddTask(taskCharged4);
-
-	FlowTask* taskCharged5 = new FlowTask(kCharged);
-	taskCharged5->SetNumSamples(10);
-	taskCharged5->SetPtBins(vecPtBins);
-	taskCharged5->SetMergePosNeg(1);
-	taskCharged5->SetHarmonics(4);
-	// taskCharged5->SetEtaGap(0.0);
-	taskCharged5->DoCumOrderMax(kTwo);
-	process->AddTask(taskCharged5);
-
-	FlowTask* taskCharged6 = new FlowTask(kCharged);
-	taskCharged6->SetNumSamples(10);
-	taskCharged6->SetPtBins(vecPtBins);
-	taskCharged6->SetMergePosNeg(1);
-	taskCharged6->SetHarmonics(4);
-	taskCharged6->SetEtaGap(1.0);
-	taskCharged6->DoCumOrderMax(kTwo);
-	process->AddTask(taskCharged6);
-
-	FlowTask* taskRefsF2 = new FlowTask(kRefs, "");
-	taskRefsF2->SetNumSamples(10);
-	taskRefsF2->SetMergePosNeg(1);
-	taskRefsF2->SetHarmonics(2);
-	taskRefsF2->DoCumOrderMax(kFour);
-	process->AddTask(taskRefsF2);
-
-	FlowTask* taskRefsF3 = new FlowTask(kRefs, "");
-	taskRefsF3->SetNumSamples(10);
-	taskRefsF3->SetMergePosNeg(1);
-	taskRefsF3->SetHarmonics(3);
-	taskRefsF3->DoCumOrderMax(kFour);
-	process->AddTask(taskRefsF3);
-
-	FlowTask* taskCharged7 = new FlowTask(kCharged);
-	taskCharged7->SetNumSamples(10);
-	taskCharged7->SetPtBins(vecPtBins);
-	taskCharged7->SetMergePosNeg(1);
-	taskCharged7->SetHarmonics(2);
-	taskCharged7->DoCumOrderMax(kFour);
-	process->AddTask(taskCharged7);
-
-	FlowTask* taskCharged8 = new FlowTask(kCharged);
-	taskCharged8->SetNumSamples(10);
-	taskCharged8->SetPtBins(vecPtBins);
-	taskCharged8->SetMergePosNeg(1);
-	taskCharged8->SetHarmonics(3);
-	taskCharged8->DoCumOrderMax(kFour);
-	process->AddTask(taskCharged8);
+	// FlowTask* taskCharged = new FlowTask(kCharged);
+	// taskCharged->SetNumSamples(10);
+	// taskCharged->SetPtBins(vecPtBins);
+	// taskCharged->SetMergePosNeg(1);
+	// taskCharged->SetHarmonics(2);
+	// taskCharged->SetEtaGap(1.0);
+	// taskCharged->DoCumOrderMax(kTwo);
+	// process->AddTask(taskCharged);
+	//
+	// FlowTask* taskCharged2 = new FlowTask(kCharged);
+	// taskCharged2->SetNumSamples(10);
+	// taskCharged2->SetPtBins(vecPtBins);
+	// taskCharged2->SetMergePosNeg(1);
+	// taskCharged2->SetHarmonics(2);
+	// // taskCharged2->SetEtaGap(0.0);
+	// taskCharged2->DoCumOrderMax(kTwo);
+	// process->AddTask(taskCharged2);
+	//
+	// FlowTask* taskCharged3 = new FlowTask(kCharged);
+	// taskCharged3->SetNumSamples(10);
+	// taskCharged3->SetPtBins(vecPtBins);
+	// taskCharged3->SetMergePosNeg(1);
+	// taskCharged3->SetHarmonics(3);
+	// // taskCharged3->SetEtaGap(0.0);
+	// taskCharged3->DoCumOrderMax(kTwo);
+	// process->AddTask(taskCharged3);
+	//
+	// FlowTask* taskCharged4 = new FlowTask(kCharged);
+	// taskCharged4->SetNumSamples(10);
+	// taskCharged4->SetPtBins(vecPtBins);
+	// taskCharged4->SetMergePosNeg(1);
+	// taskCharged4->SetHarmonics(3);
+	// taskCharged4->SetEtaGap(1.0);
+	// taskCharged4->DoCumOrderMax(kTwo);
+	// process->AddTask(taskCharged4);
+	//
+	// FlowTask* taskCharged5 = new FlowTask(kCharged);
+	// taskCharged5->SetNumSamples(10);
+	// taskCharged5->SetPtBins(vecPtBins);
+	// taskCharged5->SetMergePosNeg(1);
+	// taskCharged5->SetHarmonics(4);
+	// // taskCharged5->SetEtaGap(0.0);
+	// taskCharged5->DoCumOrderMax(kTwo);
+	// process->AddTask(taskCharged5);
+	//
+	// FlowTask* taskCharged6 = new FlowTask(kCharged);
+	// taskCharged6->SetNumSamples(10);
+	// taskCharged6->SetPtBins(vecPtBins);
+	// taskCharged6->SetMergePosNeg(1);
+	// taskCharged6->SetHarmonics(4);
+	// taskCharged6->SetEtaGap(1.0);
+	// taskCharged6->DoCumOrderMax(kTwo);
+	// process->AddTask(taskCharged6);
+	//
+	// FlowTask* taskRefsF2 = new FlowTask(kRefs, "");
+	// taskRefsF2->SetNumSamples(10);
+	// taskRefsF2->SetMergePosNeg(1);
+	// taskRefsF2->SetHarmonics(2);
+	// taskRefsF2->DoCumOrderMax(kFour);
+	// process->AddTask(taskRefsF2);
+	//
+	// FlowTask* taskRefsF3 = new FlowTask(kRefs, "");
+	// taskRefsF3->SetNumSamples(10);
+	// taskRefsF3->SetMergePosNeg(1);
+	// taskRefsF3->SetHarmonics(3);
+	// taskRefsF3->DoCumOrderMax(kFour);
+	// process->AddTask(taskRefsF3);
+	//
+	// FlowTask* taskCharged7 = new FlowTask(kCharged);
+	// taskCharged7->SetNumSamples(10);
+	// taskCharged7->SetPtBins(vecPtBins);
+	// taskCharged7->SetMergePosNeg(1);
+	// taskCharged7->SetHarmonics(2);
+	// taskCharged7->DoCumOrderMax(kFour);
+	// process->AddTask(taskCharged7);
+	//
+	// FlowTask* taskCharged8 = new FlowTask(kCharged);
+	// taskCharged8->SetNumSamples(10);
+	// taskCharged8->SetPtBins(vecPtBins);
+	// taskCharged8->SetMergePosNeg(1);
+	// taskCharged8->SetHarmonics(3);
+	// taskCharged8->DoCumOrderMax(kFour);
+	// process->AddTask(taskCharged8);
 
 
 
