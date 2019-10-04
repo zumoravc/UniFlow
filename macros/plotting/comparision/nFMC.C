@@ -11,98 +11,107 @@ void nFMC()
 {
   TMultiGraph *mg = new TMultiGraph();
 
-  TFile* fileIn = TFile::Open("/home/alidock/ana/output/LHC15o/grid_fullSt/processUniFlow/Processed.root","READ");
+  TFile* fileIn = TFile::Open("/home/alidock/ana/output/LHC15o/train_7387/processUniFlow/Processed_NoNorm.root","READ");
   if(!fileIn) {printf("File not opened! \n"); return;}
 
-  TFile* fileYZ = TFile::Open("/home/alidock/ana/output/YZ_results/Output_all.root","READ");
+  TFile* fileYZ = TFile::Open("/home/alidock/ana/output/YZ_results/Output_HighOrder.root","READ");
   if(!fileYZ) {printf("File YZ not opened! \n"); return;}
 
-  TGraphErrors *FMC4_harm23 = new TGraphErrors((TH1D*) fileIn->Get("Refs_FMC4_harm23"));
-  FMC4_harm23->SetMarkerStyle(kOpenSquare);
-  FMC4_harm23->SetMarkerColor(kRed);
-  FMC4_harm23->SetMarkerSize(1.);
-  FMC4_harm23->SetLineColor(kRed);
-  mg->Add(FMC4_harm23);
+  TGraphErrors *FMC4_harm34 = new TGraphErrors((TH1D*) fileIn->Get("Refs_FMC4_harm34"));
+  FMC4_harm34->SetMarkerStyle(kOpenSquare);
+  FMC4_harm34->SetMarkerColor(kRed);
+  FMC4_harm34->SetMarkerSize(1.);
+  FMC4_harm34->SetLineColor(kRed);
+  mg->Add(FMC4_harm34);
 
-  TGraphErrors *FMC4_harm23_YZ = new TGraphErrors((TH1D*) fileYZ->Get("his_nFMC3232"));
-  FMC4_harm23_YZ->SetMarkerStyle(kFullSquare);
-  FMC4_harm23_YZ->SetMarkerColor(kRed);
-  FMC4_harm23_YZ->SetMarkerSize(1.);
-  FMC4_harm23_YZ->SetLineColor(kRed);
-  mg->Add(FMC4_harm23_YZ);
+  TGraphErrors *FMC4_harm34_YZ = new TGraphErrors((TH1D*) fileYZ->Get("his_FMC4343"));
+  FMC4_harm34_YZ->SetMarkerStyle(kFullSquare);
+  FMC4_harm34_YZ->SetMarkerColor(kRed);
+  FMC4_harm34_YZ->SetMarkerSize(1.);
+  FMC4_harm34_YZ->SetLineColor(kRed);
+  mg->Add(FMC4_harm34_YZ);
 
-  TGraphErrors *fMC6_harm223 = new TGraphErrors((TH1D*) fileIn->Get("Refs_fMC6_harm223"));
-  fMC6_harm223->SetMarkerStyle(kOpenCircle);
-  fMC6_harm223->SetMarkerColor(kBlue);
-  fMC6_harm223->SetMarkerSize(1.1);
-  fMC6_harm223->SetMarkerColor(kBlue);
-  mg->Add(fMC6_harm223);
+  TGraphErrors *FMC4_harm35 = new TGraphErrors((TH1D*) fileIn->Get("Refs_FMC4_harm35"));
+  FMC4_harm35->SetMarkerStyle(kOpenCircle);
+  FMC4_harm35->SetMarkerColor(kBlue);
+  FMC4_harm35->SetMarkerSize(1.1);
+  FMC4_harm35->SetMarkerColor(kBlue);
+  mg->Add(FMC4_harm35);
 
-  TGraphErrors *fMC6_harm223_YZ = new TGraphErrors((TH1D*) fileYZ->Get("his_nFMC322322"));
-  fMC6_harm223_YZ->SetMarkerStyle(kFullCircle);
-  fMC6_harm223_YZ->SetMarkerColor(kBlue);
-  fMC6_harm223_YZ->SetMarkerSize(1.1);
-  fMC6_harm223_YZ->SetMarkerColor(kBlue);
-  mg->Add(fMC6_harm223_YZ);
+  TGraphErrors *FMC4_harm35_YZ = new TGraphErrors((TH1D*) fileYZ->Get("his_FMC5353"));
+  FMC4_harm35_YZ->SetMarkerStyle(kFullCircle);
+  FMC4_harm35_YZ->SetMarkerColor(kBlue);
+  FMC4_harm35_YZ->SetMarkerSize(1.1);
+  FMC4_harm35_YZ->SetMarkerColor(kBlue);
+  mg->Add(FMC4_harm35_YZ);
 
-  TGraphErrors *fMC6_harm233 = new TGraphErrors((TH1D*) fileIn->Get("Refs_fMC6_harm233"));
-  fMC6_harm233->SetMarkerStyle(kOpenDiamond);
-  fMC6_harm233->SetMarkerColor(kGreen+2);
-  fMC6_harm233->SetMarkerSize(1.6);
-  fMC6_harm233->SetLineColor(kGreen+2);
-  mg->Add(fMC6_harm233);
+  TGraphErrors *FMC4_harm45 = new TGraphErrors((TH1D*) fileIn->Get("Refs_FMC4_harm45"));
+  FMC4_harm45->SetMarkerStyle(kOpenDiamond);
+  FMC4_harm45->SetMarkerColor(kGreen+2);
+  FMC4_harm45->SetMarkerSize(1.6);
+  FMC4_harm45->SetLineColor(kGreen+2);
+  mg->Add(FMC4_harm45);
 
-  TGraphErrors *fMC6_harm233_YZ = new TGraphErrors((TH1D*) fileYZ->Get("his_nFMC332332"));
-  fMC6_harm233_YZ->SetMarkerStyle(kFullDiamond);
-  fMC6_harm233_YZ->SetMarkerColor(kGreen+2);
-  fMC6_harm233_YZ->SetMarkerSize(1.6);
-  fMC6_harm233_YZ->SetLineColor(kGreen+2);
-  mg->Add(fMC6_harm233_YZ);
+  TGraphErrors *FMC4_harm45_YZ = new TGraphErrors((TH1D*) fileYZ->Get("his_FMC5454"));
+  FMC4_harm45_YZ->SetMarkerStyle(kFullDiamond);
+  FMC4_harm45_YZ->SetMarkerColor(kGreen+2);
+  FMC4_harm45_YZ->SetMarkerSize(1.6);
+  FMC4_harm45_YZ->SetLineColor(kGreen+2);
+  mg->Add(FMC4_harm45_YZ);
 
   mg->GetXaxis()->SetTitle("Centrality class (V0M)");
-  mg->GetYaxis()->SetTitle("nFMC (v_{2}^{k},v_{3}^{l})");
+  mg->GetYaxis()->SetTitle("SC(m,n)");
   mg->GetXaxis()->SetRangeUser(0, 60);
 
 
   TCanvas* can = new TCanvas("can", "can", 600, 400);
   mg->Draw("ap");
-  mg->SetMinimum(-0.25);
-  mg->SetMaximum(0.3);
+  mg->SetMinimum(-6.5E-8);
+  mg->SetMaximum(8.5E-8);
 
-  TLegend* leg = new TLegend(0.32,0.72,0.72,0.88);
+  TLegend* leg = new TLegend(0.12,0.72,0.52,0.88);
   leg->SetBorderSize(0);
   leg->SetFillColorAlpha(0.0,0.0);
-  leg->SetHeader("ALICE experiment, LHC15o (sample), additional pile up rejection, RFPs, 0.2 < p_{T}(RFPs) < 5 GeV/c, |#eta| < 0.8");
+  leg->SetHeader("ALICE experiment, RFPs, 0.2 < p_{T}(RFPs) < 5 GeV/c, |#eta| < 0.8");
   leg->SetNColumns(2);
-  leg->AddEntry(FMC4_harm23_YZ,"nFMC (v_{2}^{2},v_{3}^{2}) - YZ","p");
-  leg->AddEntry(FMC4_harm23,"nFMC (v_{2}^{2},v_{3}^{2})","p");
-  leg->AddEntry(fMC6_harm223_YZ,"nFMC (v_{2}^{4},v_{3}^{2}) - YZ","p");
-  leg->AddEntry(fMC6_harm223,"nFMC (v_{2}^{4},v_{3}^{2})","p");
-  leg->AddEntry(fMC6_harm233_YZ,"nFMC (v_{2}^{2},v_{3}^{4}) - YZ","p");
-  leg->AddEntry(fMC6_harm233,"nFMC (v_{2}^{2},v_{3}^{4})","p");
+  leg->AddEntry(FMC4_harm34,"SC(3,4) ","p");
+  leg->AddEntry(FMC4_harm34_YZ,"SC(3,4) - YZ","p");
+  leg->AddEntry(FMC4_harm35,"SC(3,5)","p");
+  leg->AddEntry(FMC4_harm35_YZ,"SC(3,5) - YZ","p");
+  leg->AddEntry(FMC4_harm45_YZ,"SC(4,5)","p");
+  leg->AddEntry(FMC4_harm45,"SC(4,5) - YZ","p");
   leg->Draw("same");
 
-  can->SaveAs("FMC_comp_new.pdf");
+  can->SaveAs("SC_for345.pdf");
 
-  // TCanvas* can2 = new TCanvas("can2", "can2", 600, 400);
-  // gStyle->SetOptStat(kFALSE);
-  // TH1D *data_histov22 = (TH1D*) fileIn->Get("Refs_hFlow4_harm2_gap00");
-  // TH1D *published_v22 = (TH1D*)data_histov22->Clone("published_v22");
-  // for(int i = 1; i < 10; i++)
-  // {
-  //   published_v22->SetBinContent(i,v24Run2[i-1]);
-  //   published_v22->SetBinError(i,v24Run2CombErr[i-1]);
-  // }
-  // published_v22->Divide(data_histov22);
-  // published_v22->SetMarkerStyle(kFullSquare);
-  // published_v22->SetMarkerColor(kBlack);
-  // published_v22->SetLineColor(kBlack);
-  // published_v22->SetTitle(";Centrality; v_{2}{4} published / v_{2}{4} reconstructed");
-  // published_v22->Draw("h");
-  // TF1 *fu1 = new TF1("fu1", "1", 0, 100);
-  // fu1->SetLineColor(kRed);
-  // fu1->Draw("same");
-  // can2->SaveAs("ratio_v24.pdf");
+  TCanvas* can2[3];
+  TH1D* ratio;
+  TH1D* denom;
+  TString namesZM[3] = {"Refs_FMC4_harm34", "Refs_FMC4_harm35", "Refs_FMC4_harm45"};
+  TString namesYZ[3] = {"his_FMC4343", "his_FMC5353", "his_FMC5454"};
+  TString names[3] = {"FMC4343", "FMC5353", "FMC5454"};
+  for(int i = 0; i < 3; i++)
+  {
+    can2[i] = new TCanvas(Form("can2_%d",i), "can2", 600, 400);
+    gStyle->SetOptStat(kFALSE);
+    gStyle->SetOptFit(1);
+    ratio = (TH1D*) fileIn->Get(namesZM[i]);
+    denom = (TH1D*) fileYZ->Get(namesYZ[i]);
+    ratio->Divide(denom);
+    ratio->SetMarkerStyle(kFullSquare);
+    ratio->SetMarkerColor(kBlack);
+    ratio->SetLineColor(kBlack);
+    ratio->SetTitle(";Centrality; nSC: ZM / YZ");
+    ratio->SetTitle(names[i]);
+    // ratio->GetYaxis()->SetRangeUser(0.,2.);
+    ratio->GetXaxis()->SetRangeUser(0.,60.);
+    ratio->Draw("h");
+    TF1 *fu1 = new TF1("fu1", "pol0", 5, 60);
+    ratio->Fit(fu1,"R");
+    fu1->SetLineColor(kRed);
+    fu1->Draw("same");
+    can2[i]->SaveAs("ratio_" + names[i]+ ".pdf");
+  }
 
 
 }

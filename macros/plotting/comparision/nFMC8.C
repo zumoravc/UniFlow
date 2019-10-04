@@ -84,20 +84,20 @@ void nFMC8()
 
   can->SaveAs("FMC8_comp+new.pdf");
 
-  TCanvas* can2 = new TCanvas("can2", "can2", 600, 400);
-  gStyle->SetOptStat(kFALSE);
-  TH1D *ratio = (TH1D*) fileIn->Get("Refs_fMC8_harm2223");
-  TH1D *denom = (TH1D*) fileYZ->Get("his_nFMC32223222");
-  ratio->Divide(denom);
-  ratio->SetMarkerStyle(kFullSquare);
-  ratio->SetMarkerColor(kBlack);
-  ratio->SetLineColor(kBlack);
-  ratio->SetTitle(";Centrality; nFMC (v_{2}^{6},v_{3}^{2}) YZ / nFMC (v_{2}^{6},v_{3}^{2})");
-  ratio->Draw("h");
-  TF1 *fu1 = new TF1("fu1", "1", 0, 100);
-  fu1->SetLineColor(kRed);
-  fu1->Draw("same");
-  can2->SaveAs("ratio_nFMC2223.pdf");
+  // TCanvas* can2 = new TCanvas("can2", "can2", 600, 400);
+  // gStyle->SetOptStat(kFALSE);
+  // TH1D *ratio = (TH1D*) fileIn->Get("Refs_fMC8_harm2223");
+  // TH1D *denom = (TH1D*) fileYZ->Get("his_nFMC32223222");
+  // ratio->Divide(denom);
+  // ratio->SetMarkerStyle(kFullSquare);
+  // ratio->SetMarkerColor(kBlack);
+  // ratio->SetLineColor(kBlack);
+  // ratio->SetTitle(";Centrality; nFMC (v_{2}^{6},v_{3}^{2}) YZ / nFMC (v_{2}^{6},v_{3}^{2})");
+  // ratio->Draw("h");
+  // TF1 *fu1 = new TF1("fu1", "1", 0, 100);
+  // fu1->SetLineColor(kRed);
+  // fu1->Draw("same");
+  // can2->SaveAs("ratio_nFMC2223.pdf");
 
 
 }

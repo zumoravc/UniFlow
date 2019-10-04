@@ -43,62 +43,70 @@ void RunDev()
 	ProcessUniFlow* process = new ProcessUniFlow();
 	process->SetInputFilePath(sInputPath.Data());
 	process->SetInputFileName("AnalysisResults.root");
-	process->SetTaskName("UniFlow");
+	process->SetTaskName("UniFlownogap");
 	process->SetOutputFilePath(sOutputFilePath.Data());
-	process->SetOutputFileName("Processed.root");
+	process->SetOutputFileName("ProcessedV.root");
 	process->SetMultiplicityBins(dMultBinning);
 	process->SetDebug(1);
 	process->SetSaveInterSteps(1);
 
-	FlowTask* taskRefs = new FlowTask(kRefs, "");
-	taskRefs->SetNumSamples(10);
-	taskRefs->SetEtaGap(1.0);
 	//taskRefs->SetPtBins(vecPtBins);
-	taskRefs->SetHarmonics(2);
-	taskRefs->DoCumOrderMax(kTwo);
-	taskRefs->SetRebinning(kFALSE);
-	process->AddTask(taskRefs);
 
-	// FlowTask* taskRefsV2 = new FlowTask(kRefs, "");
-	// taskRefsV2->SetNumSamples(10);
-	// taskRefsV2->SetHarmonics(2);
-	// taskRefsV2->DoCumOrderMax(kTwo);
-	// process->AddTask(taskRefsV2);
-	//
-	// FlowTask* taskRefsV3 = new FlowTask(kRefs, "");
-	// taskRefsV3->SetNumSamples(10);
-	// taskRefsV3->SetMergePosNeg(1);
-	// taskRefsV3->SetHarmonics(3);
-	// taskRefsV3->DoCumOrderMax(kTwo);
-	// process->AddTask(taskRefsV3);
+	FlowTask* taskRefsV2 = new FlowTask(kRefs, "");
+	taskRefsV2->SetNumSamples(10);
+	taskRefsV2->SetHarmonics(2);
+	taskRefsV2->SetEtaGap(0.0);
+	taskRefsV2->DoCumOrderMax(kTwo);
+	process->AddTask(taskRefsV2);
 
-	// FlowTask* taskRefsV2g = new FlowTask(kRefs, "");
-	// taskRefsV2g->SetNumSamples(10);
-	// taskRefsV2g->SetEtaGap(1.0);
-	// taskRefsV2g->SetHarmonics(2);
-	// taskRefsV2g->DoCumOrderMax(kTwo);
-	// process->AddTask(taskRefsV2g);
+	FlowTask* taskRefsV3 = new FlowTask(kRefs, "");
+	taskRefsV3->SetNumSamples(10);
+	taskRefsV3->SetMergePosNeg(1);
+	taskRefsV3->SetHarmonics(3);
+	taskRefsV3->SetEtaGap(1.0);
+	taskRefsV3->DoCumOrderMax(kTwo);
+	process->AddTask(taskRefsV3);
 
-	// FlowTask* taskRefsV3g = new FlowTask(kRefs, "");
-	// taskRefsV3g->SetNumSamples(10);
-	// taskRefsV3g->SetEtaGap(1.0);
-	// taskRefsV3g->SetHarmonics(3);
-	// taskRefsV3g->DoCumOrderMax(kTwo);
-	// process->AddTask(taskRefsV3g);
+	FlowTask* taskRefsV2ng = new FlowTask(kRefs, "");
+	taskRefsV2ng->SetNumSamples(10);
+	taskRefsV2ng->SetHarmonics(2);
+	taskRefsV2ng->DoCumOrderMax(kTwo);
+	process->AddTask(taskRefsV2ng);
 
-	// FlowTask* taskRefsV4 = new FlowTask(kRefs, "");
-	// taskRefsV4->SetNumSamples(10);
-	// taskRefsV4->SetMergePosNeg(1);
-	// taskRefsV4->SetHarmonics(4);
-	// taskRefsV4->DoCumOrderMax(kTwo);
-	// process->AddTask(taskRefsV4);
-	//
-	// FlowTask* taskRefsV4g = new FlowTask(kRefs, "");
-	// taskRefsV4g->SetNumSamples(10);
-	// taskRefsV4g->SetEtaGap(1.0);
-	// taskRefsV4g->SetHarmonics(4);
-	// taskRefsV4g->DoCumOrderMax(kTwo);
-	// process->AddTask(taskRefsV4g);
+	FlowTask* taskRefsV3ng = new FlowTask(kRefs, "");
+	taskRefsV3ng->SetNumSamples(10);
+	taskRefsV3ng->SetMergePosNeg(1);
+	taskRefsV3ng->SetHarmonics(3);
+	taskRefsV3ng->DoCumOrderMax(kTwo);
+	process->AddTask(taskRefsV3ng);
+
+	FlowTask* taskRefsV2g = new FlowTask(kRefs, "");
+	taskRefsV2g->SetNumSamples(10);
+	taskRefsV2g->SetEtaGap(1.0);
+	taskRefsV2g->SetHarmonics(2);
+	taskRefsV2g->DoCumOrderMax(kTwo);
+	process->AddTask(taskRefsV2g);
+
+	FlowTask* taskRefsV3g = new FlowTask(kRefs, "");
+	taskRefsV3g->SetNumSamples(10);
+	taskRefsV3g->SetEtaGap(1.0);
+	taskRefsV3g->SetHarmonics(3);
+	taskRefsV3g->DoCumOrderMax(kTwo);
+	process->AddTask(taskRefsV3g);
+
+	FlowTask* taskRefsV4 = new FlowTask(kRefs, "");
+	taskRefsV4->SetNumSamples(10);
+	taskRefsV4->SetMergePosNeg(1);
+	taskRefsV4->SetHarmonics(4);
+	taskRefsV4->DoCumOrderMax(kTwo);
+	process->AddTask(taskRefsV4);
+
+	FlowTask* taskRefsV4g = new FlowTask(kRefs, "");
+	taskRefsV4g->SetNumSamples(10);
+	taskRefsV4g->SetEtaGap(1.0);
+	taskRefsV4g->SetHarmonics(4);
+	taskRefsV4g->DoCumOrderMax(kTwo);
+	process->AddTask(taskRefsV4g);
 
 
 
@@ -155,7 +163,7 @@ void RunDev()
 	// taskCharged6->SetEtaGap(1.0);
 	// taskCharged6->DoCumOrderMax(kTwo);
 	// process->AddTask(taskCharged6);
-	//
+
 	// FlowTask* taskRefsF2 = new FlowTask(kRefs, "");
 	// taskRefsF2->SetNumSamples(10);
 	// taskRefsF2->SetMergePosNeg(1);

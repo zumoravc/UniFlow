@@ -1,20 +1,20 @@
 TString namesZM[9] = {"Refs_FMC4_harm23", "Refs_FMC4_harm24", "Refs_FMC4_harm34", "Refs_fMC6_harm223", "Refs_fMC6_harm233", "Refs_fMC6_harm234", "Refs_fMC8_harm2223", "Refs_fMC8_harm2233", "Refs_fMC8_harm2333"};
-TString namesYZ[9] = {"his_FMC3232", "his_FMC4242", "his_FMC4343", "his_FMC322322", "his_FMC332332", "his_FMC432432", "his_FMC32223222", "his_FMC33223322", "his_FMC33323332"};
+TString namesYZ[9] = {"his_nFMC3232", "his_nFMC4242", "his_nFMC4343", "his_nFMC322322", "his_nFMC332332", "his_nFMC432432", "his_nFMC32223222", "his_nFMC33223322", "his_nFMC33323332"};
 TString names[9] = {"FMC3232", "FMC4242", "FMC4343", "FMC322322", "FMC332332", "FMC432432", "FMC32223222", "FMC33223322", "FMC33323332"};
 
 void FMC_AMPT()
 {
   TMultiGraph *mg = new TMultiGraph();
 
-  TFile* fileIn = TFile::Open("/home/alidock/ana/output/MC/AMPT_train2380/processUniFlow/Processed.root","READ");
+  TFile* fileIn = TFile::Open("/home/alidock/ana/output/MC/AMPT_train2388/processUniFlow/Processed_NOGAP.root","READ");
   if(!fileIn) {printf("File not opened! \n"); return;}
 
   TFile* fileYZ = TFile::Open("/home/alidock/ana/output/YZ_results/Output_all.root","READ");
   if(!fileYZ) {printf("File YZ not opened! \n"); return;}
 
-  int id = 0; //FMC4
+  // int id = 0; //FMC4
   // int id = 3; //FMC6
-  // int id = 6; //FMC8
+  int id = 6; //FMC8
 
 
   TGraphErrors *FMC4_harm23 = new TGraphErrors((TH1D*) fileIn->Get(namesZM[id]));
@@ -61,43 +61,60 @@ void FMC_AMPT()
 
 
   mg->GetXaxis()->SetTitle("Centrality class (V0M)");
-  mg->GetYaxis()->SetTitle("FMC (v_{2}^{k},v_{3}^{l})");
+  mg->GetYaxis()->SetTitle("nFMC (v_{2}^{k},v_{3}^{l})");
   mg->GetXaxis()->SetRangeUser(0, 60);
 
 
   TCanvas* can = new TCanvas("can", "can", 600, 400);
+  TLegend* leg;
   mg->Draw("ap");
-  mg->SetMinimum(-4E-9);
-  mg->SetMaximum(3E-9);
+  double min = 0;
+  double max = 0;
+  if(id == 0){
+    min = -0.3;
+    max = 1.1;
+    leg = new TLegend(0.12,0.72,0.52,0.88);
+  }
+  else if(id == 3){
+    min = -0.9;
+    max = 0.2;
+    leg = new TLegend(0.12,0.22,0.52,0.38);
+  }
+  else{
+    min = -0.35;
+    max = 0.2;
+    leg = new TLegend(0.12,0.72,0.52,0.88);
+  }
+  mg->SetMinimum(min);
+  mg->SetMaximum(max);
 
-  TLegend* leg = new TLegend(0.12,0.72,0.52,0.88);
   leg->SetBorderSize(0);
   leg->SetFillColorAlpha(0.0,0.0);
   leg->SetHeader("ALICE experiment, RFPs, 0.2 < p_{T}(RFPs) < 5 GeV/c, |#eta| < 0.8");
   leg->SetNColumns(2);
   if(id == 0) {
-    leg->AddEntry(FMC4_harm23,"SC (2,3) - AMPT","p");
-    leg->AddEntry(FMC4_harm23_YZ,"SC (2,3) - YZ","p");
-    leg->AddEntry(FMC4_harm24,"SC (2,4) - AMPT","p");
-    leg->AddEntry(FMC4_harm24_YZ,"SC (2,4) - YZ","p");
-    leg->AddEntry(FMC4_harm34,"SC (3,4) - AMPT","p");
-    leg->AddEntry(FMC4_harm34_YZ,"SC (3,4) - YZ","p");
+    leg->AddEntry(FMC4_harm23,"nSC (2,3) - AMPT","p");
+    leg->AddEntry(FMC4_harm23_YZ,"nSC (2,3) - YZ","p");
+    leg->AddEntry(FMC4_harm24,"nSC (2,4) - AMPT","p");
+    leg->AddEntry(FMC4_harm24_YZ,"nSC (2,4) - YZ","p");
+    leg->AddEntry(FMC4_harm34,"nSC (3,4) - AMPT","p");
+    leg->AddEntry(FMC4_harm34_YZ,"nSC (3,4) - YZ","p");
   }
   else if(id == 3) {
-    leg->AddEntry(FMC4_harm23,"FMC(v_{2}^{4},v_{3}^{2}) - AMPT","p");
-    leg->AddEntry(FMC4_harm23_YZ,"FMC(v_{2}^{4},v_{3}^{2}) - YZ","p");
-    leg->AddEntry(FMC4_harm24,"FMC(v_{2}^{2},v_{3}^{4}) - AMPT","p");
-    leg->AddEntry(FMC4_harm24_YZ,"FMC(v_{2}^{2},v_{3}^{4}) - YZ","p");
-    leg->AddEntry(FMC4_harm34,"FMC(v_{2}^{2},v_{3}^{2},v_{4}^{2}) - AMPT","p");
-    leg->AddEntry(FMC4_harm34_YZ,"FMC(v_{2}^{2},v_{3}^{2},v_{4}^{2}) - YZ","p");
+    leg->AddEntry(FMC4_harm23,"nFMC(v_{2}^{4},v_{3}^{2}) - AMPT","p");
+    leg->AddEntry(FMC4_harm23_YZ,"nFMC(v_{2}^{4},v_{3}^{2}) - YZ","p");
+    leg->AddEntry(FMC4_harm24,"nFMC(v_{2}^{2},v_{3}^{4}) - AMPT","p");
+    leg->AddEntry(FMC4_harm24_YZ,"nFMC(v_{2}^{2},v_{3}^{4}) - YZ","p");
+    leg->AddEntry(FMC4_harm34,"nFMC(v_{2}^{2},v_{3}^{2},v_{4}^{2}) - AMPT","p");
+    leg->AddEntry(FMC4_harm34_YZ,"nFMC(v_{2}^{2},v_{3}^{2},v_{4}^{2}) - YZ","p");
   }
   else {
-    leg->AddEntry(FMC4_harm23,"FMC(v_{2}^{6},v_{3}^{2}) - AMPT","p");
-    leg->AddEntry(FMC4_harm23_YZ,"FMC(v_{2}^{6},v_{3}^{2}) - YZ","p");
-    leg->AddEntry(FMC4_harm24,"FMC(v_{2}^{4},v_{3}^{4}) - AMPT","p");
-    leg->AddEntry(FMC4_harm24_YZ,"FMC(v_{2}^{4},v_{3}^{4}) - YZ","p");
-    leg->AddEntry(FMC4_harm34,"FMC(v_{2}^{2},v_{3}^{6}) - AMPT","p");
-    leg->AddEntry(FMC4_harm34_YZ,"FMC(v_{2}^{2},v_{3}^{6}) - YZ","p");
+    leg->AddEntry(FMC4_harm23,"nFMC(v_{2}^{6},v_{3}^{2}) - AMPT","p");
+    leg->AddEntry(FMC4_harm23_YZ,"nFMC(v_{2}^{6},v_{3}^{2}) - YZ","p");
+    leg->AddEntry(FMC4_harm24,"nFMC(v_{2}^{4},v_{3}^{4}) - AMPT","p");
+    leg->AddEntry(FMC4_harm24_YZ,"nFMC(v_{2}^{4},v_{3}^{4}) - YZ","p");
+    leg->AddEntry(FMC4_harm34,"nFMC(v_{2}^{2},v_{3}^{6}) - AMPT","p");
+    leg->AddEntry(FMC4_harm34_YZ,"nFMC(v_{2}^{2},v_{3}^{6}) - YZ","p");
   }
   leg->Draw("same");
 
@@ -119,7 +136,7 @@ void FMC_AMPT()
     ratio->SetMarkerStyle(kFullSquare);
     ratio->SetMarkerColor(kBlack);
     ratio->SetLineColor(kBlack);
-    ratio->SetTitle(";Centrality; AMPT / data");
+    ratio->SetTitle(";Centrality; nFMC: AMPT / data");
     ratio->SetTitle(names[id+i]);
     // ratio->GetYaxis()->SetRangeUser(0.,2.);
     ratio->GetXaxis()->SetRangeUser(0.,60.);

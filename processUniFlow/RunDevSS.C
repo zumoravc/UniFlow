@@ -15,13 +15,13 @@ void RunDevSS()
 	Double_t dEtaGap = 0.0	;
 	TString sEtaGap = "gap00";
 
-	TString sInputPath = "/home/alidock/ana/output/pp_LHC16/train_3308/";
+	TString sInputPath = "/home/alidock/ana/output/pPb_LHC16q/HADD/";
 	TString sOutputFilePath = sInputPath + "processUniFlow";
 	std::vector<Double_t> dMultBinning = {0,1};
-	Double_t dPtBins[] = {2.0,2.5};
+	// Double_t dPtBins[] = {2.0,2.5};
 	// std::vector<Double_t> vecPtBins = {0.0,0.5,1.0,1.5,2.0,2.5,3.0};
 	// std::vector<Double_t> vecPtBins = {0.2,0.4,0.6,0.8,1.0,1.25,1.5,1.75,2.0,2.5,3.0,3.5,4.0,4.5,5.0};
-	std::vector<Double_t> vecPtBins = {0.2,0.3,0.4,0.5,0.6,0,7,0.8,0.9,1.0,1.25,1.5,1.75,2.0,2.5,3.0,4.0,5.0};
+	std::vector<Double_t> vecPtBins = {0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.25,1.5,1.75,2.0,2.5,3.0,4.0,5.0};
 	// ##### END Parameters setting ######
 
 	ProcessUniFlow* process = new ProcessUniFlow();
@@ -65,6 +65,8 @@ void RunDevSS()
 	taskRefs4->SetEtaGap(1.0);
 	process->AddTask(taskRefs4);
 
+	//charged
+
 	FlowTask* taskCharged = new FlowTask(kCharged);
 	taskCharged->SetNumSamples(1);
 	taskCharged->SetPtBins(vecPtBins);
@@ -102,16 +104,117 @@ void RunDevSS()
 	taskCharged4->DoCumOrderMax(kTwo);
 	process->AddTask(taskCharged4);
 
+	//pions
 
-	// FlowTask* taskPion = new FlowTask(kPion);
-	// taskPion->SetNumSamples(1);
-	// taskPion->SetEtaGap(0.0);
-	// taskPion->SetPtBins(dPtBins,sizeof(dPtBins)/sizeof(dPtBins[0]));
-	// taskPion->SetMergePosNeg(1);
-	// taskPion->SetHarmonics(2);
-	// // taskCharged->DoCorrMixed("Cor3p4m2m2","Cor4p2p2m2m2");
-	// process->AddTask(taskPion);
-	//
+	FlowTask* taskPion = new FlowTask(kPion);
+	taskPion->SetNumSamples(1);
+	taskPion->SetPtBins(vecPtBins);
+	taskPion->SetMergePosNeg(1);
+	taskPion->SetHarmonics(2);
+	taskPion->DoCumOrderMax(kTwo);
+	process->AddTask(taskPion);
+
+	FlowTask* taskPion2 = new FlowTask(kPion);
+	taskPion2->SetNumSamples(1);
+	taskPion2->SetEtaGap(0.0);
+	taskPion2->SetPtBins(vecPtBins);
+	taskPion2->SetMergePosNeg(1);
+	taskPion2->SetHarmonics(2);
+	taskPion2->DoCumOrderMax(kTwo);
+	process->AddTask(taskPion2);
+
+	FlowTask* taskPion3 = new FlowTask(kPion);
+	taskPion3->SetNumSamples(1);
+	taskPion3->SetEtaGap(0.8);
+	taskPion3->SetPtBins(vecPtBins);
+	taskPion3->SetMergePosNeg(1);
+	taskPion3->SetHarmonics(2);
+	taskPion3->DoCumOrderMax(kTwo);
+	process->AddTask(taskPion3);
+
+	FlowTask* taskPion4 = new FlowTask(kPion);
+	taskPion4->SetNumSamples(1);
+	taskPion4->SetEtaGap(1.0);
+	taskPion4->SetPtBins(vecPtBins);
+	taskPion4->SetMergePosNeg(1);
+	taskPion4->SetHarmonics(2);
+	taskPion4->DoCumOrderMax(kTwo);
+	process->AddTask(taskPion4);
+
+	//kaons
+
+	FlowTask* taskKaon = new FlowTask(kKaon);
+	taskKaon->SetNumSamples(1);
+	taskKaon->SetPtBins(vecPtBins);
+	taskKaon->SetMergePosNeg(1);
+	taskKaon->SetHarmonics(2);
+	taskKaon->DoCumOrderMax(kTwo);
+	process->AddTask(taskKaon);
+
+	FlowTask* taskKaon2 = new FlowTask(kKaon);
+	taskKaon2->SetNumSamples(1);
+	taskKaon2->SetEtaGap(0.0);
+	taskKaon2->SetPtBins(vecPtBins);
+	taskKaon2->SetMergePosNeg(1);
+	taskKaon2->SetHarmonics(2);
+	taskKaon2->DoCumOrderMax(kTwo);
+	process->AddTask(taskKaon2);
+
+	FlowTask* taskKaon3 = new FlowTask(kKaon);
+	taskKaon3->SetNumSamples(1);
+	taskKaon3->SetEtaGap(0.8);
+	taskKaon3->SetPtBins(vecPtBins);
+	taskKaon3->SetMergePosNeg(1);
+	taskKaon3->SetHarmonics(2);
+	taskKaon3->DoCumOrderMax(kTwo);
+	process->AddTask(taskKaon3);
+
+	FlowTask* taskKaon4 = new FlowTask(kKaon);
+	taskKaon4->SetNumSamples(1);
+	taskKaon4->SetEtaGap(1.0);
+	taskKaon4->SetPtBins(vecPtBins);
+	taskKaon4->SetMergePosNeg(1);
+	taskKaon4->SetHarmonics(2);
+	taskKaon4->DoCumOrderMax(kTwo);
+	process->AddTask(taskKaon4);
+
+	//protons
+
+	FlowTask* taskProton = new FlowTask(kProton);
+	taskProton->SetNumSamples(1);
+	taskProton->SetPtBins(vecPtBins);
+	taskProton->SetMergePosNeg(1);
+	taskProton->SetHarmonics(2);
+	taskProton->DoCumOrderMax(kTwo);
+	process->AddTask(taskProton);
+
+	FlowTask* taskProton2 = new FlowTask(kProton);
+	taskProton2->SetNumSamples(1);
+	taskProton2->SetEtaGap(0.0);
+	taskProton2->SetPtBins(vecPtBins);
+	taskProton2->SetMergePosNeg(1);
+	taskProton2->SetHarmonics(2);
+	taskProton2->DoCumOrderMax(kTwo);
+	process->AddTask(taskProton2);
+
+	FlowTask* taskProton3 = new FlowTask(kProton);
+	taskProton3->SetNumSamples(1);
+	taskProton3->SetEtaGap(0.8);
+	taskProton3->SetPtBins(vecPtBins);
+	taskProton3->SetMergePosNeg(1);
+	taskProton3->SetHarmonics(2);
+	taskProton3->DoCumOrderMax(kTwo);
+	process->AddTask(taskProton3);
+
+	FlowTask* taskProton4 = new FlowTask(kProton);
+	taskProton4->SetNumSamples(1);
+	taskProton4->SetEtaGap(1.0);
+	taskProton4->SetPtBins(vecPtBins);
+	taskProton4->SetMergePosNeg(1);
+	taskProton4->SetHarmonics(2);
+	taskProton4->DoCumOrderMax(kTwo);
+	process->AddTask(taskProton4);
+
 	// FlowTask* taskK0s = new FlowTask(kK0s);
 	// taskK0s->SetNumSamples(1);
 	// taskK0s->SetEtaGap(0.0);

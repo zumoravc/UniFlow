@@ -12,9 +12,10 @@ void RunDevFMC()
 {
 	Int_t iNumSamples = 1;
 	Double_t dEtaGap = 0.0	;
-	Bool_t hijingData = kFALSE;
+	Bool_t hijingData = kTRUE;
 
 	TString sInputPath = "/home/alidock/ana/output/LHC15o/train_7387";
+	// TString sInputPath = "/home/alidock/ana/output/MC/AMPT_train2388";
 	TString sOutputFilePath = sInputPath + "/processUniFlow";
 
 	std::vector<Double_t> dMultBinning = {0,5,10,20,30,40,50,60,70,80};
@@ -25,7 +26,7 @@ void RunDevFMC()
 	process->SetInputFileName("AnalysisResults.root");
 	process->SetTaskName("UniFlownogap");
 	process->SetOutputFilePath(sOutputFilePath.Data());
-	process->SetOutputFileName("Processed_NOGAP.root");
+	process->SetOutputFileName("Processed_NoNorm.root");
 	process->SetMultiplicityBins(dMultBinning);
 	process->SetDebug(1);
 	process->SetSaveInterSteps(1);
@@ -62,6 +63,20 @@ void RunDevFMC()
 	// taskSC34->SetEtaGap(0.0);
 	taskSC34->IsHijing(hijingData);
 	process->AddTask(taskSC34);
+
+	FlowTask* taskSC35 = new FlowTask(kRefs, "");
+	taskSC35->SetNumSamples(10);
+	taskSC35->DoFourFMC({3,5,-3,-5});
+	// taskSC34->SetEtaGap(0.0);
+	taskSC35->IsHijing(hijingData);
+	process->AddTask(taskSC35);
+
+	FlowTask* taskSC45 = new FlowTask(kRefs, "");
+	taskSC45->SetNumSamples(10);
+	taskSC45->DoFourFMC({4,5,-4,-5});
+	// taskSC34->SetEtaGap(0.0);
+	taskSC45->IsHijing(hijingData);
+	process->AddTask(taskSC45);
 
 	FlowTask* taskRefs2 = new FlowTask(kRefs, "");
 	taskRefs2->SetNumSamples(10);
