@@ -229,14 +229,17 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                P(Int_t n, Int_t p) const;
       TComplex                PGapPos(Int_t n, Int_t p) const;
       TComplex                PGapNeg(Int_t n, Int_t p) const;
+      TComplex                PGapMid(Int_t n, Int_t p) const;
       TComplex                S(Int_t n, Int_t p) const;
       TComplex                SGapPos(Int_t n, Int_t p) const;
       TComplex                SGapNeg(Int_t n, Int_t p) const;
+      TComplex                SGapMid(Int_t n, Int_t p) const;
 
       TComplex                Two(Int_t n1, Int_t n2) const; // Two particle reference correlation calculations (no eta gap)
       TComplex                TwoGap(Int_t n1, Int_t n2) const; // Two particle reference correlation calculations (with eta gap)
       TComplex                TwoPos(Int_t n1, Int_t n2) const; /// Two particle reference correlation calculations (just from the positive eta)
       TComplex                TwoNeg(Int_t n1, Int_t n2) const; /// Two particle reference correlation calculations (just from the negative eta)
+      TComplex                TwoMid(Int_t n1, Int_t n2) const; /// Two particle reference correlation calculations (just from the mid eta)
       TComplex                Three(Int_t n1, Int_t n2, Int_t n3) const; // Three particle reference correlation calculations (no eta gap)
       TComplex                ThreePos(Int_t n1, Int_t n2, Int_t n3) const; // Three particle reference correlation calculations (just from the positive eta)
       TComplex                ThreeNeg(Int_t n1, Int_t n2, Int_t n3) const; // Three particle reference correlation calculations (just from the negative eta)
@@ -264,7 +267,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                TwoDiffGapPos(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (with eta gap)
       TComplex                TwoDiffGapNeg(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (with eta gap)
       TComplex                TwoDiffPos(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (just from the positive eta)
-      TComplex                TwoDiffNeg(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (just from the positive eta)
+      TComplex                TwoDiffNeg(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (just from the negative eta)
+      TComplex                TwoDiffMid(Int_t n1, Int_t n2) const; // Two particle diff. correlation calculations (just from the mid eta)
       TComplex                ThreeDiff(Int_t n1, Int_t n2, Int_t n3) const; // Three particle diff. correlation calculations (no eta gap)
       TComplex                ThreeDiffGapPos(Int_t n1, Int_t n2, Int_t n3) const; // Three particle diff. correlation calculations (with eta gap)
       TComplex                ThreeDiffGapNeg(Int_t n1, Int_t n2, Int_t n3) const; // Three particle diff. correlation calculations (with eta gap)
@@ -300,8 +304,10 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecQmid[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecPpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecPneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+      TComplex                fFlowVecPmid[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecSpos[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
       TComplex                fFlowVecSneg[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
+      TComplex                fFlowVecSmid[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
 
       std::vector<AliUniFlowCorrTask*>  fVecCorrTask; //
       std::vector<AliVTrack*>* fVector[kUnknown]; //! container for selected Refs charged particles
@@ -428,7 +434,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH1D*                   fhEventCentrality; //! distribution of event centrality
       TH2D*                   fh2EventCentralityNumRefs; //! distribution of event centrality vs number of selected charged tracks
       TH1D*                   fhEventCounter; //! counter following event selection
-      TH1D*                   fhMeanMultRFP; //! counter following RFP multiplicity 
+      TH2D*                   fh2MeanMultRFP[10]; //! counter following RFP multiplicity (pT vs. mult.)
       // Charged
       TH1D*                   fhRefsMult; //!multiplicity distribution of selected RFPs
       TH1D*                   fhRefsPt; //! pt distribution of selected RFPs
@@ -558,7 +564,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH2D*			  		  fhQAV0sArmenterosLambda[QAindex::kNumQA];	//! Armenteros-Podolanski plot for Lambda candidates
       TH2D*			  		  fhQAV0sArmenterosALambda[QAindex::kNumQA];	//! Armenteros-Podolanski plot for ALambda candidates
 
-      ClassDef(AliAnalysisTaskUniFlow, 11);
+      ClassDef(AliAnalysisTaskUniFlow, 12);
 };
 
 #endif

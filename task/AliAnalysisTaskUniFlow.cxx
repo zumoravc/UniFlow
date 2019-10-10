@@ -128,8 +128,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fFlowVecQmid{},
   fFlowVecPpos{},
   fFlowVecPneg{},
+  fFlowVecPmid{},
   fFlowVecSpos{},
   fFlowVecSneg{},
+  fFlowVecSmid{},
   fVecCorrTask{},
   fVector{},
   fRunMode{kFull},
@@ -239,6 +241,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fhEventCentrality{nullptr},
   fh2EventCentralityNumRefs{nullptr},
   fhEventCounter{nullptr},
+  fh2MeanMultRFP{nullptr},
   fhRefsMult{nullptr},
   fhRefsPt{nullptr},
   fhRefsEta{nullptr},
@@ -381,8 +384,10 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fFlowVecQmid{},
   fFlowVecPpos{},
   fFlowVecPneg{},
+  fFlowVecPmid{},
   fFlowVecSpos{},
   fFlowVecSneg{},
+  fFlowVecSmid{},
   fVecCorrTask{},
   fVector{},
   fRunMode{kFull},
@@ -492,6 +497,7 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fhEventCentrality{nullptr},
   fh2EventCentralityNumRefs{nullptr},
   fhEventCounter{nullptr},
+  fh2MeanMultRFP{nullptr},
   fhRefsMult{nullptr},
   fhRefsPt{nullptr},
   fhRefsEta{nullptr},
@@ -1061,8 +1067,10 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fVector[kCharged]->clear();
   FilterCharged();
 
-  // checking if there is at least 9 particles: needed to "properly" calculate correlations
-  if(fVector[kRefs]->size() < 9) { return; }
+  // checking if there is at least 4/6/8 particles: needed to "properly" calculate correlations
+  UInt_t minNOfPar = 4;
+  if(fColSystem == kPbPb) minNOfPar = 8;
+  if(fVector[kRefs]->size() <= minNOfPar) { return; }
 
   // estimate centrality & assign indexes (centrality/percentile, sampling, ...)
   if(fCentEstimator == kRFP) {
@@ -1080,8 +1088,6 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   }
 
   fhEventCounter->Fill("#RPFs OK",1);
-
-  fhMeanMultRFP->Fill(fVector[kRefs]->size());
 
   // here events are selected
   fhEventCounter->Fill("Selected",1);
@@ -2528,6 +2534,11 @@ void AliAnalysisTaskUniFlow::FilterPID() const
     AliAODTrack* track = static_cast<AliAODTrack*>(*part);
     if(!track) { continue; }
 
+    if(fColSystem == kPP || fColSystem == kPPb) {
+      Int_t counter = fIndexCentrality/10;
+      fh2MeanMultRFP[counter]->Fill(track->Pt(), fVector[kCharged]->size());
+    }
+
     fhPIDCounter->Fill("Input",1);
 
     if(fFillQA) { FillQAPID(kBefore,track,kUnknown); } // filling QA for tracks before selection (but after charged criteria applied)
@@ -3251,6 +3262,7 @@ void AliAnalysisTaskUniFlow::FillRefsVectors(const AliUniFlowCorrTask* task, con
   Bool_t bHasGap = kFALSE;
   Bool_t bHas3sub = kFALSE;
   if(dEtaGap > -1.0) { bHasGap = kTRUE; }
+  if(task->fiNumGaps > 1) {bHas3sub = kTRUE; }
 
   Int_t maxHarm = task->fMaxHarm;
   Int_t maxWeightPower = task->fMaxWeightPower;
@@ -3333,6 +3345,7 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const AliUniFlowCorrTask* task, co
 
   Double_t dEtaLimit = dEtaGap / 2.0;
   Bool_t bHasGap = kFALSE; if(dEtaGap > -1.0) { bHasGap = kTRUE; }
+  Bool_t bHas3sub = kFALSE; if(task->fiNumGaps > 1) { bHas3sub = kTRUE; }
   Bool_t bHasMass = HasMass(species);
   if(bHasMass && dMassLow == 0.0 && dMassHigh == 0.0) { AliError("Particle mass low && high limits not specified!"); return 0; }
 
@@ -3346,6 +3359,11 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const AliUniFlowCorrTask* task, co
   if(bHasGap) {
     ResetFlowVector(fFlowVecPneg, maxHarm, maxWeightPower);
     ResetFlowVector(fFlowVecSneg, maxHarm, maxWeightPower);
+  }
+
+  if(bHas3sub) {
+    ResetFlowVector(fFlowVecPmid, maxHarm, maxWeightPower);
+    ResetFlowVector(fFlowVecSmid, maxHarm, maxWeightPower);
   }
 
   Int_t iTracksFilled = 0; // counter of filled tracks
@@ -3445,6 +3463,21 @@ Int_t AliAnalysisTaskUniFlow::FillPOIsVectors(const AliUniFlowCorrTask* task, co
                Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
                Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
                fFlowVecSneg[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+             }
+           }
+       }
+       if(bHas3sub && (TMath::Abs(dEta) < dEtaLimit) ) //particle in mid acceptance
+       {
+         for(Int_t iHarm(0); iHarm <= maxHarm; iHarm++)
+           for(Int_t iPower(0); iPower <= maxWeightPower; iPower++)
+           {
+             Double_t dCos = TMath::Power(dWeight,iPower) * TMath::Cos(iHarm * dPhi);
+             Double_t dSin = TMath::Power(dWeight,iPower) * TMath::Sin(iHarm * dPhi);
+             fFlowVecPmid[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
+
+             if(bIsWithinRefs)
+             {
+               fFlowVecSmid[iHarm][iPower] += TComplex(dCos,dSin,kFALSE);
              }
            }
        }
@@ -3634,6 +3667,12 @@ TComplex AliAnalysisTaskUniFlow::PGapNeg(const Int_t n, const Int_t p) const
   else return fFlowVecPneg[n][p];
 }
 // ============================================================================
+TComplex AliAnalysisTaskUniFlow::PGapMid(const Int_t n, const Int_t p) const
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecPmid[-n][p]);
+  else return fFlowVecPmid[n][p];
+}
+// ============================================================================
 TComplex AliAnalysisTaskUniFlow::S(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecSpos[-n][p]);
@@ -3650,6 +3689,12 @@ TComplex AliAnalysisTaskUniFlow::SGapNeg(const Int_t n, const Int_t p) const
 {
   if(n < 0) return TComplex::Conjugate(fFlowVecSneg[-n][p]);
   else return fFlowVecSneg[n][p];
+}
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::SGapMid(const Int_t n, const Int_t p) const
+{
+  if(n < 0) return TComplex::Conjugate(fFlowVecSmid[-n][p]);
+  else return fFlowVecSmid[n][p];
 }
 // ============================================================================
 
@@ -3698,6 +3743,12 @@ TComplex AliAnalysisTaskUniFlow::TwoNeg(const Int_t n1, const Int_t n2) const
   return formula;
 }
 // ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoMid(const Int_t n1, const Int_t n2) const
+{
+  TComplex formula = QGapMid(n1,1)*QGapMid(n2,1) - QGapMid(n1+n2,2);
+  return formula;
+}
+// ============================================================================
 TComplex AliAnalysisTaskUniFlow::TwoDiffPos(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = PGapPos(n1,1)*QGapPos(n2,1) - SGapPos(n1+n2,2);
@@ -3707,6 +3758,12 @@ TComplex AliAnalysisTaskUniFlow::TwoDiffPos(const Int_t n1, const Int_t n2) cons
 TComplex AliAnalysisTaskUniFlow::TwoDiffNeg(const Int_t n1, const Int_t n2) const
 {
   TComplex formula = PGapNeg(n1,1)*QGapNeg(n2,1) - SGapNeg(n1+n2,2);
+  return formula;
+}
+// ============================================================================
+TComplex AliAnalysisTaskUniFlow::TwoDiffMid(const Int_t n1, const Int_t n2) const
+{
+  TComplex formula = PGapMid(n1,1)*QGapMid(n2,1) - SGapMid(n1+n2,2);
   return formula;
 }
 // ============================================================================
@@ -5242,9 +5299,6 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fhEventCounter = new TH1D("fhEventCounter","Event Counter",iEventCounterBins,0,iEventCounterBins);
     for(Int_t i(0); i < iEventCounterBins; ++i) { fhEventCounter->GetXaxis()->SetBinLabel(i+1, sEventCounterLabel[i].Data() ); }
     fQAEvents->Add(fhEventCounter);
-    //omni-present RFP multiplicity after all cuts
-    fhMeanMultRFP = new TH1D("fhMeanMultRFP","RFPs: Multiplicity; multiplicity", 4500,0,9000);
-    fQAEvents->Add(fhMeanMultRFP);
   }
 
   {
@@ -5253,6 +5307,15 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     fhChargedCounter = new TH1D("fhChargedCounter","Charged tracks: Counter",iNBinsChargedCounter,0,iNBinsChargedCounter);
     for(Int_t i(0); i < iNBinsChargedCounter; i++) fhChargedCounter->GetXaxis()->SetBinLabel(i+1, sChargedCounterLabel[i].Data() );
     fQACharged->Add(fhChargedCounter);
+    if(fColSystem == kPP || fColSystem == kPPb){
+      Int_t counter = fCentBinNum/10;
+      for(Int_t iCen(0); iCen < counter; ++iCen)
+      {
+        if(iCen > 9) { AliWarning("Incorrect number of centrality bins for pT vs. multiplicity histograms for small systems."); break; }
+        fh2MeanMultRFP[iCen] = new TH2D(Form("fh2MeanMultCharged_Cent%d",iCen), "RFPs: pT vs. multiplicity; #it{p}_{T}; multiplicity", fFlowPOIsPtBinNum,fFlowPOIsPtMin,fFlowPOIsPtMax,200,0,200);
+        fQACharged->Add(fh2MeanMultRFP[iCen]);
+      }
+    }
   }
 
   if(fProcessSpec[kPion] || fProcessSpec[kKaon] || fProcessSpec[kProton])
