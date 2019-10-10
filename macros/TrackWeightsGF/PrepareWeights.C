@@ -25,7 +25,7 @@ TString sTag = "";
 // TString sTag = "TPCcls90";
 // TString sTag = "FB768";
 // TString sPath = "~/Codes/Flow/uniFlow/results/runs_trains/CF_PbPb/6744/";
-TString sPath = "/home/alidock/ana/output/MC/HIJING_train_2379";
+TString sPath = "/home/alidock/ana/output/pPb_LHC16q/CENT_woSSD/QA_grid";
 // TString sOutputPath = "./" + sTag + "/";
 //TString sOutputPath = sPath + "/weights_fixed/";
 
@@ -34,9 +34,9 @@ TString sOutputPath = sPath+"/weights";
 
 // const Short_t iNumPart = 1; const TString species[iNumPart] = {"Refs"};
 // const Short_t iNumPart = 5; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda","Phi"};
-// const Short_t iNumPart = 5; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton"};
+const Short_t iNumPart = 5; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton"};
 // const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
-const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+// const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 
 // TString sTag = "gap00"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 // TString sTag = "def"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
@@ -79,15 +79,21 @@ const Bool_t bRunByRun = kTRUE;
 // 246424, 246276, 246275, 246272, 246271, 246225,
 // 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153, 246152, 246151};
 
-Int_t iNumRuns = 80; Int_t iRunList[] = {
-  246994, 246991, 246989, 246984, 246982, 246980, 246948, 246945, 246928, 246851,
-  246847, 246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804,
-  246766, 246765, 246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495,
-  246493, 246488, 246487, 246434, 246431, 246428, 246424, 246276, 246275, 246272,
-  246271, 246225, 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153,
-  246152, 246151, 246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049,
-  246048, 246042, 246037, 246036, 246012, 246003, 246001, 245963, 245954, 245952,
-  245949, 245923, 245833, 245831, 245829, 245705, 245702, 245700, 245692, 245683
+// Int_t iNumRuns = 80; Int_t iRunList[] = {
+//   246994, 246991, 246989, 246984, 246982, 246980, 246948, 246945, 246928, 246851,
+//   246847, 246846, 246845, 246844, 246810, 246809, 246808, 246807, 246805, 246804,
+//   246766, 246765, 246763, 246760, 246759, 246758, 246757, 246751, 246750, 246495,
+//   246493, 246488, 246487, 246434, 246431, 246428, 246424, 246276, 246275, 246272,
+//   246271, 246225, 246222, 246217, 246185, 246182, 246181, 246180, 246178, 246153,
+//   246152, 246151, 246148, 246115, 246113, 246089, 246087, 246053, 246052, 246049,
+//   246048, 246042, 246037, 246036, 246012, 246003, 246001, 245963, 245954, 245952,
+//   245949, 245923, 245833, 245831, 245829, 245705, 245702, 245700, 245692, 245683
+// };
+
+Int_t iNumRuns = 17; Int_t iRunList[] = {
+  265525, 265501, 265500, 265499, 265435,
+  265427, 265426, 265425, 265424, 265422, 265421,
+  265420, 265419, 265388, 265387, 265385, 265384
 };
 
 
