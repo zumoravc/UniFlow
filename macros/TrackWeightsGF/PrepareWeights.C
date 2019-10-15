@@ -25,7 +25,7 @@ TString sTag = "";
 // TString sTag = "TPCcls90";
 // TString sTag = "FB768";
 // TString sPath = "~/Codes/Flow/uniFlow/results/runs_trains/CF_PbPb/6744/";
-TString sPath = "/home/alidock/ana/output/pPb_LHC16q/CENT_woSSD/QA_grid";
+TString sPath = "/home/alidock/ana/output/pPb_LHC16q/CENT_woSSD/train_2867";
 // TString sOutputPath = "./" + sTag + "/";
 //TString sOutputPath = sPath + "/weights_fixed/";
 
@@ -34,9 +34,9 @@ TString sOutputPath = sPath+"/weights";
 
 // const Short_t iNumPart = 1; const TString species[iNumPart] = {"Refs"};
 // const Short_t iNumPart = 5; const TString species[iNumPart] = {"Refs","Charged","K0s","Lambda","Phi"};
-const Short_t iNumPart = 5; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton"};
+// const Short_t iNumPart = 5; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton"};
 // const Short_t iNumPart = 6; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","Phi"};
-// const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
+const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 
 // TString sTag = "gap00"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
 // TString sTag = "def"; const Short_t iNumPart = 8; const TString species[iNumPart] = {"Refs","Charged","Pion","Kaon","Proton","K0s","Lambda","Phi"};
@@ -90,12 +90,13 @@ const Bool_t bRunByRun = kTRUE;
 //   245949, 245923, 245833, 245831, 245829, 245705, 245702, 245700, 245692, 245683
 // };
 
-Int_t iNumRuns = 17; Int_t iRunList[] = {
-  265525, 265501, 265500, 265499, 265435,
+Int_t iNumRuns = 32; Int_t iRunList[] = {
+  265525, 265521, 265501, 265500, 265499, 265435,
   265427, 265426, 265425, 265424, 265422, 265421,
-  265420, 265419, 265388, 265387, 265385, 265384
+  265420, 265419, 265388, 265387, 265385, 265384,
+  265383, 265381, 265378, 265377, 265344, 265343,
+  265342, 265339, 265338, 265336, 265335, 265334, 265332, 265309
 };
-
 
 // pp 13 TeV
 // RunList_LHC16l_pass1_CentralBarrelTracking_hadronPID_20170509_v2.txt [70]
