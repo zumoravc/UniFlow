@@ -70,6 +70,7 @@ class ProcessUniFlow
     Bool_t      ProcessRefs(FlowTask* task); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
     Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
+    Bool_t      ProcessSubtraction(FlowTask* task);
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
     Bool_t      ProcessFMC(FlowTask* task); // process FMC multiparticle correlations
     Bool_t      PrepareSlicesNew(FlowTask* task, TString histName, Bool_t bDoCand = kTRUE); // wrapper for making/preparing per-task slices

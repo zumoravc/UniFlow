@@ -305,6 +305,8 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     }
   }
 
+  // here subtraction if(task->fBaseCentBin > -1.0)
+
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -1491,6 +1493,48 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(listCumFour) delete listCumFour;
   if(listFlowFour) delete listFlowFour;
 
+  return kTRUE;
+}
+//_____________________________________________________________________________
+Bool_t ProcessUniFlow::ProcessSubtraction(FlowTask* task)
+{
+  // for small systems
+  // subtraction of non-flow
+  Info("Processing subtraction task","ProcessSubtraction");
+  if(!task) { Error("FlowTask not found!","ProcessSubtraction"); return kFALSE; }
+  if(fiNumMultBins > 9 ) { Error("Not implemented for more mult bin than 10!","ProcessSubtraction"); return kFALSE; }
+  if(task->fCumOrderMax != 2) { Error("Not implemented for differemt cumulant order!","ProcessSubtraction"); return kFALSE; }
+
+  TList* inputMult = flQACharged;
+  if(!inputMult) { Error("Input list not loaded!","ProcessSubtraction"); return kFALSE; }
+
+  TList* listRefTwo = (TList*) ffDesampleFile->Get(Form("Refs_hFlow2_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
+  if(!listRefTwo) { Error("List 'listRefTwo' not found!","ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+
+  TH2D* mult[10] = {nullptr};
+  TList* listFlowTwo[10] = {nullptr};
+  for(Int_t binMult(0); binMult < fiNumMultBins; ++binMult){
+    listFlowTwo[binMult] = (TList*) ffDesampleFile->Get(Form("%s_hFlow2_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics,task->GetEtaGapString().Data(),binMult));
+    if(!listFlowTwo[binMult]) { Error("List 'listRefTwo' not found!","ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+
+    mult[binMult] = (TH2D*) listFlowTwo[binMult]->FindObject(Form("fh2MeanMultCharged_Cent%d",binMult));
+    if(!mult[binMult]) { Error(Form("Histogram 'MeanMultCharged_Cent%d' not found!",binMult),"ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+  }
+
+  Debug("All set!","ProcessSubtraction");
+  Debug("Base: 60-80% based on V0A. Hard coded. Sorry.","ProcessSubtraction");
+
+
+  TH2D* base = (TH2D*) mult[5]->Clone("base");
+  base->Add(mult[6]);
+
+  
+
+
+  if(listRefTwo) delete listRefTwo;
+  for(Int_t binMult(0); binMult < fiNumMultBins; ++binMult){
+    if(listFlowTwo[binMult]) delete listFlowTwo[binMult];
+  }
   return kTRUE;
 }
 //_____________________________________________________________________________

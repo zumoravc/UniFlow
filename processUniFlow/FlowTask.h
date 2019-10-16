@@ -23,6 +23,7 @@ class FlowTask
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
     void        SetEtaGapSecond(Float_t eta) { fEtaGapSecond = eta; }
+    void        SetBaseCentBin(Int_t centBin) { fBaseCentBin = centBin; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetInputTag(const char* name) { fInputTag = name; }
     void        SetPtBins(std::vector<Double_t> array) { fPtBinsEdges = array; fNumPtBins = (Int_t) array.size() - 1; } // setup the pt binning for this task using std::vectors. NB: possible with {}
@@ -65,6 +66,7 @@ class FlowTask
     Int_t       fHarmonics; // harmonics
     Double_t    fEtaGap; // eta gap
     Double_t    fEtaGapSecond; // eta gap
+    Int_t       fBaseCentBin; //base for subtraction of non-flow in small sys
     Bool_t      fConsCorr; // consider correlations in cumulant / flow calculations
     Int_t       fNumSamples; // [10] number of samples
     Int_t       fNumSamplesRefs; // [1] number of samples for refs only

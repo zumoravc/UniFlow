@@ -13,6 +13,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fHarmonics{0},
   fEtaGap{-1.0},
   fEtaGapSecond{-1.0},
+  fBaseCentBin{-1},
   fNumPtBins{-1},
   fPtBinsEdges{},
   fNumSamples{10},
