@@ -38,7 +38,8 @@ class FlowTask
     void        DoSixFMC(std::vector<Int_t> harms, Int_t numSamplRefs = 10);
     void        DoEightFMC(std::vector<Int_t> harms, Int_t numSamplRefs = 10);
     void        DoFourFMCwithSix(Bool_t four, Int_t numSamplRefs = 10) {fDoFour = four; fNumSamplesRefs = numSamplRefs; }
-    void        IsHijing(Bool_t isHijing) {fIsHijing = isHijing; }
+    void        IsHijing(Bool_t isHijing) { fIsHijing = isHijing; }
+    void        Has3sub(Bool_t flag3sub) { fHas3sub = flag3sub; }
 
     // fitting
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -61,6 +62,7 @@ class FlowTask
     TString     fInputTag; // alterinative tag appended to name of input histos & profiles
     Int_t       fHarmonics; // harmonics
     Double_t    fEtaGap; // eta gap
+    Double_t    fEtaGapSecond; // eta gap
     Bool_t      fConsCorr; // consider correlations in cumulant / flow calculations
     Int_t       fNumSamples; // [10] number of samples
     Int_t       fNumSamplesRefs; // [1] number of samples for refs only
@@ -71,6 +73,7 @@ class FlowTask
     Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
     Bool_t      fDesampleUseRMS; // [kFALSE] flag for using RMS as uncertainty during desampling
     Bool_t      fMergePosNeg; // [kFALSE] flag for merging results corresponding to positive and negative POIs
+    Bool_t      fHas3sub; // [kFALSE] flag for merging results corresponding to positive and negative POIs
     Cumulants   fCumOrderMax; // [kTwo] maximal cumulant order to be processed
     Bool_t      fDoCorrMixed; // [kFALSE] flag for processing mixed harmonics (non-linear flow modes)
     TString     fMixedDiff; // name (tag) for diff. profile for mixed harmonics
