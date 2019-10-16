@@ -35,6 +35,7 @@ ProcessUniFlow::ProcessUniFlow() :
   fbSaveMult{kFALSE},
   fFlowFitCumulants{kFALSE},
   fSaveInterSteps{kFALSE},
+  sides{"LMR"},
   fdMultBins{},
   fiNumMultBins{0},
   ffInputFile{nullptr},
@@ -1073,13 +1074,67 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TList* listCorTwo = new TList(); TString nameCorTwo = Form("Refs_pCor2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
   TList* listCorFour = new TList(); TString nameCorFour = Form("Refs_pCor4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
 
+  // 3 subevents
+  TList* listCorTwo3sub[3][3] = {nullptr};
+  TString nameCorTwo3sub = Form("Refs_pCor2_harm%d_gap%s_3sub",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listCorFour3sub[3] = {nullptr};
+  TString nameCorFour3sub = Form("Refs_pCor4_harm%d_gap%s_3sub",task->fHarmonics, task->GetEtaGapString().Data());
+  if(task->Has3sub()){
+    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+      if(rf1Pos > 1) break;
+      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+        if(rf1Pos >= rf2Pos) continue;
+        listCorTwo3sub[rf1Pos][rf2Pos] = new TList();
+      }
+    }
+    for(Int_t twoPos(0); twoPos < 3; twoPos++){
+      listCorFour3sub[twoPos] = new TList();
+    }
+  }
+
   // for cumulants (applicable for diff. flow)
   TList* listCumTwo = new TList(); TString nameCumTwo = Form("Refs_hCum2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
   TList* listCumFour = new TList(); TString nameCumFour = Form("Refs_hCum4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
 
+  // 3 subevents
+  TList* listCumTwo3sub[3][3] = {nullptr};
+  TString nameCumTwo3sub = Form("Refs_hCum2_harm%d_gap%s_3sub",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listCumFour3sub[3] = {nullptr};
+  TString nameCumFour3sub = Form("Refs_hCum4_harm%d_gap%s_3sub",task->fHarmonics, task->GetEtaGapString().Data());
+  if(task->Has3sub()){
+    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+      if(rf1Pos > 1) break;
+      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+        if(rf1Pos >= rf2Pos) continue;
+        listCumTwo3sub[rf1Pos][rf2Pos] = new TList();
+      }
+    }
+    for(Int_t twoPos(0); twoPos < 3; twoPos++){
+      listCumFour3sub[twoPos] = new TList();
+    }
+  }
+
   // for vns desampling
   TList* listFlowTwo = new TList(); TString nameFlowTwo = Form("Refs_hFlow2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
   TList* listFlowFour = new TList(); TString nameFlowFour = Form("Refs_hFlow4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+
+  // 3 subevents
+  TList* listFlowTwo3sub[3][3] = {nullptr};
+  TString nameFlowTwo3sub = Form("Refs_hFlow2_harm%d_gap%s_3sub",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listFlowFour3sub[3] = {nullptr};
+  TString nameFlowFour3sub = Form("Refs_hFlow4_harm%d_gap%s_3sub",task->fHarmonics, task->GetEtaGapString().Data());
+  if(task->Has3sub()){
+    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+      if(rf1Pos > 1) break;
+      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+        if(rf1Pos >= rf2Pos) continue;
+        listFlowTwo3sub[rf1Pos][rf2Pos] = new TList();
+      }
+    }
+    for(Int_t twoPos(0); twoPos < 3; twoPos++){
+      listFlowFour3sub[twoPos] = new TList();
+    }
+  }
 
   // estimating <multiplicity>
   if(fbSaveMult)
@@ -1096,8 +1151,14 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
   TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
   if(task->HasGap()) {
-    sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
-    sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
+    if(!task->Has3sub()){
+      sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
+      sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
+    }
+    else {
+      sProfTwoName += Form("_3sub(%.2g,%.2g)",task->fEtaGap,task->fEtaGapSecond);
+      sProfFourName += Form("_3sub(%.2g,%.2g)",task->fEtaGap,task->fEtaGapSecond);
+    }
   }
 
   Debug("Processing samples","ProcessRefs");
@@ -1109,14 +1170,36 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     // TProfile* pCorTwo = (TProfile*) flFlow[kRefs]->FindObject(Form("fpRefs_%s<2>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
     // if(!pCorTwo) { Warning(Form("Profile 'pCorTwo' (sample %d) not valid",iSample),"ProcesRefs"); flFlow[kRefs]->ls(); return kFALSE; }
 
+    // 3 subevents
+    TProfile* pCorTwo3sub[3][3] = {nullptr};
+    if(task->Has3sub()){
+      for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+        if(rf1Pos > 1) break;
+        for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+          if(rf1Pos >= rf2Pos) continue;
+          pCorTwo3sub[rf1Pos][rf2Pos] = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d_rf1_%c_rf2_%c",sProfTwoName.Data(), iSample,sides[rf1Pos],sides[rf2Pos]));
+          if(!pCorTwo3sub[rf1Pos][rf2Pos]) { Warning(Form("Profile '%s' not valid",Form("%s_Pos_sample%d_rf1_%c_rf2_%c",sProfTwoName.Data(), iSample,sides[rf1Pos],sides[rf2Pos])),"ProcesRefs"); flFlow[kRefs]->ls(); return kFALSE; }
+        }
+      }
+    }
+
     // Process 4-particle correlations
     TProfile* pCorFour = nullptr;
+    TProfile* pCorFour3sub[3] = {nullptr};
     if(bDoFour)
     {
       pCorFour = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfFourName.Data(),iSample));
       if(!pCorFour) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",sProfFourName.Data(),iSample)),"ProcesRefs"); flFlow[kRefs]->ls(); return kFALSE; }
       // pCorFour = (TProfile*) flFlow[kRefs]->FindObject(Form("fpRefs_%s<4>_harm%d_gap%s_sample%d",fsGlobalProfNameLabel.Data(),task->fHarmonics,task->GetEtaGapString().Data(),iSample));
       // if(!pCorFour) { Warning(Form("Profile 'pCorFour' (sample %d) not valid!",iSample),"ProcesRefs"); flFlow[kRefs]->ls(); return kFALSE; }
+
+      //3 subevents
+      if(task->Has3sub()){
+        for(Int_t twoPos(0); twoPos < 3; twoPos++){
+          pCorFour3sub[twoPos] = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d_two_%c",sProfFourName.Data(),iSample,sides[twoPos]));
+          if(!pCorFour3sub[twoPos]) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d_two_%c",sProfFourName.Data(),iSample,sides[twoPos])),"ProcesRefs"); flFlow[kRefs]->ls(); return kFALSE; }
+        }
+      }
     }
 
     // rebinning the profiles
@@ -1124,16 +1207,52 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     {
       pCorTwo = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo.Data(), iSample),fdMultBins.data());
       if(bDoFour) { pCorFour = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorFour.Data(), iSample),fdMultBins.data()); }
+      if(task->Has3sub()){
+        for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+          if(rf1Pos > 1) break;
+          for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+            if(rf1Pos >= rf2Pos) continue;
+            pCorTwo3sub[rf1Pos][rf2Pos] = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_Pos_sample%d_rf1_%c_rf2_%c_rebin",nameCorTwo3sub.Data(), iSample,sides[rf1Pos],sides[rf2Pos]),fdMultBins.data());
+          }
+        }
+        if(bDoFour){
+          for(Int_t twoPos(0); twoPos < 3; twoPos++){
+            pCorFour3sub[twoPos] = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_Pos_sample%d_two_%c",nameCorFour3sub.Data(),iSample,sides[twoPos]),fdMultBins.data());
+          }
+        }
+      }
     }
 
     // naming <<X>>
-    TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
+    TString sGap = TString();
+    if(task->HasGap() && !task->Has3sub()) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
     pCorTwo->SetTitle(Form("%s: <<2>>_{%d} %s",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
     listCorTwo->Add(pCorTwo);
+
+
     if(bDoFour)
     {
       pCorFour->SetTitle(Form("%s: <<4>>_{%d} %s",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
       listCorFour->Add(pCorFour);
+    }
+
+    //3 subevents
+    if(task->Has3sub()){
+      sGap.Append(Form(" 3 subevents (#eta mid: -%g,%g)",task->fEtaGap/2,task->fEtaGapSecond/2));
+      for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+        if(rf1Pos > 1) break;
+        for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+          if(rf1Pos >= rf2Pos) continue;
+          pCorTwo3sub[rf1Pos][rf2Pos]->SetTitle(Form("%s: <<2>>_{%d} %s",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+          listCorTwo3sub[rf1Pos][rf2Pos]->Add(pCorTwo3sub[rf1Pos][rf2Pos]);
+        }
+      }
+      if(bDoFour){
+        for(Int_t twoPos(0); twoPos < 3; twoPos++){
+          pCorFour3sub[twoPos]->SetTitle(Form("%s: <<4>>_{%d} %s",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+          listCorFour3sub[twoPos]->Add(pCorFour3sub[twoPos]);
+        }
+      }
     }
 
     // Making cumulants out of correlations : <<N>>_n -> c_n{N} -> v_n{N}
@@ -1143,11 +1262,41 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     hCumTwo->SetName(Form("%s_sample%d", nameCumTwo.Data(), iSample));
     listCumTwo->Add(hCumTwo);
 
+    //3 subevents
+    TH1D* hCumTwo3sub[3][3] = {nullptr};
+    if(task->Has3sub()){
+      for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+        if(rf1Pos > 1) break;
+        for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+          if(rf1Pos >= rf2Pos) continue;
+          hCumTwo3sub[rf1Pos][rf2Pos] = CalcRefCumTwo(pCorTwo3sub[rf1Pos][rf2Pos],task,rf1Pos,rf2Pos);
+          if(!hCumTwo3sub[rf1Pos][rf2Pos]) { Error(Form("cn{2} rf1_%c_rf2_%c (sample %d) not processed correctly!",sides[rf1Pos],sides[rf2Pos],iSample),"ProcessRefs"); return kFALSE; }
+          hCumTwo3sub[rf1Pos][rf2Pos]->SetName(Form("%s_sample%d_rf1_%c_rf2_%c", nameCumTwo3sub.Data(), iSample,sides[rf1Pos],sides[rf2Pos]));
+          listCumTwo3sub[rf1Pos][rf2Pos]->Add(hCumTwo3sub[rf1Pos][rf2Pos]);
+        }
+      }
+    }
+
     // vn{2}
     TH1D* hFlowTwo = CalcRefFlowTwo(hCumTwo,task);
     if(!hFlowTwo) { Error(Form("vn{2} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
     hFlowTwo->SetName(Form("%s_sample%d", nameFlowTwo.Data(), iSample));
     listFlowTwo->Add(hFlowTwo);
+
+    //3 subevents
+    TH1D* hFlowTwo3sub[3][3] = {nullptr};
+    if(task->Has3sub()){
+      for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+        if(rf1Pos > 1) break;
+        for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+          if(rf1Pos >= rf2Pos) continue;
+          hFlowTwo3sub[rf1Pos][rf2Pos] = CalcRefFlowTwo(hCumTwo3sub[rf1Pos][rf2Pos],task,rf1Pos,rf2Pos);
+          if(!hFlowTwo3sub[rf1Pos][rf2Pos]) { Error(Form("vn{2} rf1_%c_rf2_%c (sample %d) not processed correctly!",sides[rf1Pos],sides[rf2Pos],iSample),"ProcessRefs"); return kFALSE; }
+          hFlowTwo3sub[rf1Pos][rf2Pos]->SetName(Form("%s_sample%d_rf1_%c_rf2_%c", nameFlowTwo3sub.Data(), iSample,sides[rf1Pos],sides[rf2Pos]));
+          listFlowTwo3sub[rf1Pos][rf2Pos]->Add(hFlowTwo3sub[rf1Pos][rf2Pos]);
+        }
+      }
+    }
 
     if(task->fCumOrderMax >= 4)
     {
@@ -1172,13 +1321,55 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(!pCorTwoMerged) { Error("Merging of 'pCorTwoMerged' failed!","ProcessRefs"); return kFALSE; }
   pCorTwoMerged->SetName(Form("%s_merged", nameCorTwo.Data()));
 
+  //3 subevents
+  TProfile* pCorTwoMerged3sub[3][3] = {nullptr};
+  if(task->Has3sub()){
+    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+      if(rf1Pos > 1) break;
+      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+        if(rf1Pos >= rf2Pos) continue;
+        pCorTwoMerged3sub[rf1Pos][rf2Pos] = (TProfile*) MergeListProfiles(listCorTwo3sub[rf1Pos][rf2Pos]);
+        if(!pCorTwoMerged3sub[rf1Pos][rf2Pos]) { Error("Merging of 'pCorTwoMerged' failed!","ProcessRefs"); return kFALSE; }
+        pCorTwoMerged3sub[rf1Pos][rf2Pos]->SetName( Form("%s_merged_rf1_%c_rf2_%c", nameCorTwo3sub.Data(), sides[rf1Pos],sides[rf2Pos]) );
+      }
+    }
+  }
+
   TH1D* hCumTwoMerged = CalcRefCumTwo(pCorTwoMerged, task);
   if(!hCumTwoMerged) { Error(Form("cn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
   hCumTwoMerged->SetName(Form("%s_merged", nameCumTwo.Data()));
 
+  //3 subevents
+  TH1D* hCumTwoMerged3sub[3][3] = {nullptr};
+  if(task->Has3sub()){
+    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+      if(rf1Pos > 1) break;
+      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+        if(rf1Pos >= rf2Pos) continue;
+        hCumTwoMerged3sub[rf1Pos][rf2Pos] = CalcRefCumTwo(pCorTwoMerged3sub[rf1Pos][rf2Pos],task,rf1Pos,rf2Pos);
+        if(!hCumTwoMerged3sub[rf1Pos][rf2Pos]) { Error(Form("cn{2} rf1_%c_rf2_%c (merged) not processed correctly!", sides[rf1Pos],sides[rf2Pos]),"ProcessRefs"); return kFALSE; }
+        hCumTwoMerged3sub[rf1Pos][rf2Pos]->SetName(Form("%s_merged_rf1_%c_rf2_%c", nameCumTwo3sub.Data(),sides[rf1Pos],sides[rf2Pos]));
+      }
+    }
+  }
+
   TH1D* hFlowTwoMerged = CalcRefFlowTwo(hCumTwoMerged, task);
   if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
   hFlowTwoMerged->SetName(Form("%s_merged", nameFlowTwo.Data()));
+
+  //3 subevents
+  TH1D* hFlowTwoMerged3sub[3][3] = {nullptr};
+  if(task->Has3sub()){
+    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+      if(rf1Pos > 1) break;
+      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+        if(rf1Pos >= rf2Pos) continue;
+        hFlowTwoMerged3sub[rf1Pos][rf2Pos] = CalcRefFlowTwo(hCumTwoMerged3sub[rf1Pos][rf2Pos],task,rf1Pos,rf2Pos);
+        if(!hFlowTwoMerged3sub[rf1Pos][rf2Pos]) { Error(Form("vn{2} rf1_%c_rf2_%c (merged) not processed correctly!", sides[rf1Pos],sides[rf2Pos]),"ProcessRefs"); return kFALSE; }
+        hFlowTwoMerged3sub[rf1Pos][rf2Pos]->SetName(Form("%s_merged_rf1_%c_rf2_%c", nameFlowTwo3sub.Data(),sides[rf1Pos],sides[rf2Pos]));
+      }
+    }
+  }
 
   TProfile* pCorFourMerged = nullptr;
   TH1D* hCumFourMerged = nullptr;
@@ -1213,10 +1404,48 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(!hFlowTwoDesampled) { Error("Desampling 'hFlowTwoDesampled' failed","ProcessRefs"); return kFALSE; }
   hFlowTwoDesampled->SetName(nameFlowTwo.Data());
 
+  //3 subevents
+  TH1D* hCorTwoDesampled3sub[3][3] = {nullptr};
+  TH1D* hCumTwoDesampled3sub[3][3] = {nullptr};
+  TH1D* hFlowTwoDesampled3sub[3][3] = {nullptr};
+  if(task->Has3sub()){
+    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+      if(rf1Pos > 1) break;
+      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+        if(rf1Pos >= rf2Pos) continue;
+        TString name3sub = Form("%s_rf1_%c_rf2_%c",nameCorTwo3sub.Data(),sides[rf1Pos],sides[rf2Pos]);
+        hCorTwoDesampled3sub[rf1Pos][rf2Pos] = DesampleList(listCorTwo3sub[rf1Pos][rf2Pos], pCorTwoMerged3sub[rf1Pos][rf2Pos]->ProjectionX(), task, name3sub, kTRUE );
+        if(!hCorTwoDesampled3sub[rf1Pos][rf2Pos]) { Error("Desampling 'hCorTwoDesampled' failed","ProcessRefs"); return kFALSE; }
+        hCorTwoDesampled3sub[rf1Pos][rf2Pos]->SetName(name3sub.Data());
+
+        name3sub = Form("%s_rf1_%c_rf2_%c",nameCumTwo3sub.Data(),sides[rf1Pos],sides[rf2Pos]);
+        hCumTwoDesampled3sub[rf1Pos][rf2Pos] = DesampleList(listCumTwo3sub[rf1Pos][rf2Pos], hCumTwoMerged3sub[rf1Pos][rf2Pos],task, name3sub, kTRUE);
+        if(!hCumTwoDesampled3sub[rf1Pos][rf2Pos]) { Error("Desampling 'hCumTwoDesampled' failed","ProcessRefs"); return kFALSE; }
+        hCumTwoDesampled3sub[rf1Pos][rf2Pos]->SetName(name3sub.Data());
+
+        name3sub = Form("%s_rf1_%c_rf2_%c",nameFlowTwo3sub.Data(),sides[rf1Pos],sides[rf2Pos]);
+        hFlowTwoDesampled3sub[rf1Pos][rf2Pos] = DesampleList(listFlowTwo3sub[rf1Pos][rf2Pos], hFlowTwoMerged3sub[rf1Pos][rf2Pos], task, name3sub, kTRUE);
+        if(!hFlowTwoDesampled3sub[rf1Pos][rf2Pos]) { Error("Desampling 'hFlowTwoDesampled' failed","ProcessRefs"); return kFALSE; }
+        hFlowTwoDesampled3sub[rf1Pos][rf2Pos]->SetName(name3sub.Data());
+      }
+    }
+  }
+
   ffOutputFile->cd();
   hCorTwoDesampled->Write();
   hCumTwoDesampled->Write();
   hFlowTwoDesampled->Write();
+  if(task->Has3sub()){
+    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
+      if(rf1Pos > 1) break;
+      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
+        if(rf1Pos >= rf2Pos) continue;
+        hCorTwoDesampled3sub[rf1Pos][rf2Pos]->Write();
+        hCumTwoDesampled3sub[rf1Pos][rf2Pos]->Write();
+        hFlowTwoDesampled3sub[rf1Pos][rf2Pos]->Write();
+      }
+    }
+  }
 
   if(bDoFour)
   {
@@ -1265,7 +1494,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   return kTRUE;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task)
+TH1D* ProcessUniFlow::CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task, Int_t rf1Pos, Int_t rf2Pos)
 {
   // Calculate reference c_n{2} out of correlations
   // NOTE: it is just a fancier Clone(): for consistency
@@ -1274,9 +1503,15 @@ TH1D* ProcessUniFlow::CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task)
   if(!hTwoRef) { Error("Profile 'hTwoRef' not valid!","CalcRefCumTwo"); return nullptr; }
   if(!task) { Error("FlowTask not found!","CalcRefCumTwo"); return nullptr; }
 
-  TH1D* histCum = (TH1D*) hTwoRef->ProjectionX(Form("hCum2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+  TH1D* histCum = nullptr;
+  if(rf1Pos == rf2Pos)
+    histCum = (TH1D*) hTwoRef->ProjectionX(Form("hCum2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+  else
+    histCum = (TH1D*) hTwoRef->ProjectionX(Form("hCum2_Refs_harm%d_gap%s_rf1_%c_rf2_%c",task->fHarmonics,task->GetEtaGapString().Data(),sides[rf1Pos],sides[rf2Pos]));
 
-  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString();
+  if(task->HasGap() && !task->Has3sub()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  if(task->Has3sub()) { sGap.Append(Form(" 3 subevents (#eta mid: -%g,%g)",task->fEtaGap/2,task->fEtaGapSecond/2)); }
   histCum->SetTitle(Form("%s: c_{%d}{2%s}",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
 
   return histCum;
@@ -1726,7 +1961,7 @@ TH1D* ProcessUniFlow::CalcDifCumFour(TH1D* hFourDif, TH1* hTwoDif, TH1* hTwoRef,
   return histCum;
 }
 //_____________________________________________________________________________
-TH1D* ProcessUniFlow::CalcRefFlowTwo(TH1D* hTwoRef, FlowTask* task)
+TH1D* ProcessUniFlow::CalcRefFlowTwo(TH1D* hTwoRef, FlowTask* task, Int_t rf1Pos, Int_t rf2Pos)
 {
   // Calculate reference v_n{2} out of c_n{2}
   // vn{2} = cn{2}^(1/2)
@@ -1734,9 +1969,15 @@ TH1D* ProcessUniFlow::CalcRefFlowTwo(TH1D* hTwoRef, FlowTask* task)
   if(!hTwoRef) { Error("Histo 'hTwoRef' not valid!","CalcRefFlowTwo"); return nullptr; }
   if(!task) { Error("FlowTask not found!","CalcRefFlowTwo"); return nullptr; }
 
-  TH1D* histFlow = (TH1D*) hTwoRef->Clone(Form("hFlow2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+  TH1D* histFlow = nullptr;
+  if(rf1Pos == rf2Pos)
+    histFlow = (TH1D*) hTwoRef->Clone(Form("hFlow2_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+  else
+    histFlow = (TH1D*) hTwoRef->Clone(Form("hFlow2_Refs_harm%d_gap%s_rf1_%c_rf2_%c",task->fHarmonics,task->GetEtaGapString().Data(),sides[rf1Pos],sides[rf2Pos]));
 
-  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  TString sGap = TString();
+  if(task->HasGap() && !task->Has3sub()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  if(task->Has3sub()) { sGap.Append(Form(" 3 subevents (#eta mid: -%g,%g)",task->fEtaGap/2,task->fEtaGapSecond/2)); }
   histFlow->SetTitle(Form("%s: v_{%d}{2%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
   histFlow->Reset();
 

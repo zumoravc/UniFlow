@@ -22,6 +22,7 @@ class FlowTask
 
     void        SetHarmonics(Int_t harm) { fHarmonics = harm; }
     void        SetEtaGap(Float_t eta) { fEtaGap = eta; }
+    void        SetEtaGapSecond(Float_t eta) { fEtaGapSecond = eta; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
     void        SetInputTag(const char* name) { fInputTag = name; }
     void        SetPtBins(std::vector<Double_t> array) { fPtBinsEdges = array; fNumPtBins = (Int_t) array.size() - 1; } // setup the pt binning for this task using std::vectors. NB: possible with {}
@@ -39,7 +40,6 @@ class FlowTask
     void        DoEightFMC(std::vector<Int_t> harms, Int_t numSamplRefs = 10);
     void        DoFourFMCwithSix(Bool_t four, Int_t numSamplRefs = 10) {fDoFour = four; fNumSamplesRefs = numSamplRefs; }
     void        IsHijing(Bool_t isHijing) { fIsHijing = isHijing; }
-    void        Has3sub(Bool_t flag3sub) { fHas3sub = flag3sub; }
 
     // fitting
     void        SetInvMassRebin(Short_t rebin = 2) { fRebinInvMass = rebin; }
@@ -54,7 +54,9 @@ class FlowTask
     void        SetFitParLimitsLow(Double_t* array, Int_t size);
     void        SetFitParLimitsHigh(Double_t* array, Int_t size);
 
-    Bool_t      HasGap() const { return (fEtaGap > -1.0); }; //
+    Bool_t      HasGap() const { return (fEtaGap > -1.0); };
+    Bool_t      Has3sub() const { return (fEtaGapSecond > -1.0); }
+
 
     TString     fTaskTag; // "unique" tag used primarily for storing output
     TString     fName; // task name
@@ -73,7 +75,7 @@ class FlowTask
     Bool_t      fRebinning; // [kTRUE] flag for rebinning prior to desampling
     Bool_t      fDesampleUseRMS; // [kFALSE] flag for using RMS as uncertainty during desampling
     Bool_t      fMergePosNeg; // [kFALSE] flag for merging results corresponding to positive and negative POIs
-    Bool_t      fHas3sub; // [kFALSE] flag for merging results corresponding to positive and negative POIs
+
     Cumulants   fCumOrderMax; // [kTwo] maximal cumulant order to be processed
     Bool_t      fDoCorrMixed; // [kFALSE] flag for processing mixed harmonics (non-linear flow modes)
     TString     fMixedDiff; // name (tag) for diff. profile for mixed harmonics
