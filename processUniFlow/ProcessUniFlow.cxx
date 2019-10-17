@@ -305,7 +305,9 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     }
   }
 
-  // here subtraction if(task->fBaseCentBin > -1.0)
+  if(task->fBaseCentBin > -1.0 && !ProcessSubtraction(task)){
+    Error(Form("Subtraction in task '%s' (%s) not processed correctly!",task->fName.Data(),GetSpeciesName(spec).Data()),"ProcessTask");
+  }
 
   return kTRUE;
 }
@@ -1505,37 +1507,150 @@ Bool_t ProcessUniFlow::ProcessSubtraction(FlowTask* task)
   if(fiNumMultBins > 9 ) { Error("Not implemented for more mult bin than 10!","ProcessSubtraction"); return kFALSE; }
   if(task->fCumOrderMax != 2) { Error("Not implemented for differemt cumulant order!","ProcessSubtraction"); return kFALSE; }
 
+  Debug("Checks done!","ProcessSubtraction");
+
+  //loading inputs
   TList* inputMult = flQACharged;
   if(!inputMult) { Error("Input list not loaded!","ProcessSubtraction"); return kFALSE; }
 
-  TList* listRefTwo = (TList*) ffDesampleFile->Get(Form("Refs_hFlow2_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
+  TList* listRefTwo = (TList*) ffDesampleFile->Get(Form("Refs_hCum2_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
   if(!listRefTwo) { Error("List 'listRefTwo' not found!","ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
 
-  TH2D* mult[10] = {nullptr};
-  TList* listFlowTwo[10] = {nullptr};
-  for(Int_t binMult(0); binMult < fiNumMultBins; ++binMult){
-    listFlowTwo[binMult] = (TList*) ffDesampleFile->Get(Form("%s_hFlow2_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics,task->GetEtaGapString().Data(),binMult));
-    if(!listFlowTwo[binMult]) { Error("List 'listRefTwo' not found!","ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+  Debug("Refs and multiplicity histograms loaded!","ProcessSubtraction");
 
-    mult[binMult] = (TH2D*) listFlowTwo[binMult]->FindObject(Form("fh2MeanMultCharged_Cent%d",binMult));
-    if(!mult[binMult]) { Error(Form("Histogram 'MeanMultCharged_Cent%d' not found!",binMult),"ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+  TH2D* mult[10] = {nullptr};
+  TList* listCumTwo[10] = {nullptr};
+
+  for(Int_t binMult(0); binMult < fiNumMultBins; ++binMult){
+    listCumTwo[binMult] = (TList*) ffDesampleFile->Get(Form("%s_hCum2_harm%d_gap%s_cent%d_list", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics,task->GetEtaGapString().Data(),binMult));
+    if(!listCumTwo[binMult]) { Error(Form("List 'listCumTwo' bin %d not found!",binMult),"ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+  }
+  Debug(Form("Loaded lists : %s _ gap%s for all centralities.",GetSpeciesName(task->fSpecies).Data(),task->GetEtaGapString().Data()),"ProcessSubtraction");
+  //different binning for mult histogram (fixed per 10)
+  for(Int_t binMult(0); binMult < 10; ++binMult)
+  {
+    Debug(Form("WHY AM I GETTING SEGMENTATION VIOLATION????? \n\n Spec: %s  gap: %s mult: %d .",GetSpeciesName(task->fSpecies).Data(),task->GetEtaGapString().Data(),binMult),"ProcessSubtraction");
+    mult[binMult] = (TH2D*) flQACharged->FindObject(Form("fh2MeanMultCharged_Cent%d",binMult));
+    if(!mult[binMult]) { Error(Form("Histogram 'MeanMultCharged_Cent%d' not found!",binMult),"ProcessSubtraction"); ffDesampleFile->ls(); return kFALSE; }
   }
 
   Debug("All set!","ProcessSubtraction");
-  Debug("Base: 60-80% based on V0A. Hard coded. Sorry.","ProcessSubtraction");
+  Debug("Base: 60-80% based on V0A. Some parts hard coded. Sorry.","ProcessSubtraction");
+  Int_t lastBin = 5; //peripheral collisions
 
+  if(fdMultBins[5] != 60 || fdMultBins[6] != 80) { Error("Problem with multiplicity bins!","ProcessSubtraction"); return kFALSE; }
 
-  TH2D* base = (TH2D*) mult[5]->Clone("base");
-  base->Add(mult[6]);
+  TH2D* base = (TH2D*) mult[6]->Clone("base");
+  base->Add(mult[7]);
 
-  
+  for(Int_t iMultBin(0); iMultBin < lastBin; iMultBin++){
+    Debug(Form("Working on mult. bin %d.",iMultBin),"ProcessSubtraction");
 
+    //List for desampling
+    TList* listFlowTwo = new TList();
+    TString nameFlowTwo = Form("%s_hFlow2_harm%d_gap%s_cent%d_subtracted", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
+
+    TH2D* raw = (TH2D*) mult[iMultBin]->Clone("raw");
+
+    for(Short_t iSample(0); iSample < task->fNumSamples; iSample++){
+
+      Debug(Form("Working on sample %d.",iSample),"ProcessSubtraction");
+
+      TH1D* refCum = (TH1D*) listRefTwo->FindObject(Form("Refs_hCum2_harm%d_gap%s_sample%d",task->fHarmonics,task->GetEtaGapString().Data(), iSample));
+      if(!refCum) { Error("Reference cn{2} not loaded!","ProcessSubtraction"); listRefTwo->ls(); return kFALSE; }
+
+      TH1D* hDiffBase = (TH1D*) listCumTwo[lastBin]->FindObject(Form("%s_hCum2_harm%d_gap%s_cent%d_sample%d",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics,task->GetEtaGapString().Data(), lastBin, iSample));
+      if(!hDiffBase) { Error("Base dn{2} not loaded!","ProcessSubtraction"); listRefTwo->ls(); return kFALSE; }
+
+      TH1D* hDiffRaw = (TH1D*) listCumTwo[iMultBin]->FindObject(Form("%s_hCum2_harm%d_gap%s_cent%d_sample%d",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics,task->GetEtaGapString().Data(), iMultBin, iSample));
+      if(!hDiffRaw) { Error(Form("Raw dn{2} (mult %d) not loaded!",iMultBin),"ProcessSubtraction"); listRefTwo->ls(); return kFALSE; }
+
+      TH1D* hFlowTwoDif = CalcSubtracted(task,iMultBin,base,raw,refCum,hDiffBase,hDiffRaw);
+      listFlowTwo->Add(hFlowTwoDif);
+    }// end for samples
+
+    Debug("Merging correlations for central values", "ProcessSubtraction");
+
+    TH1D* refCumMerged = (TH1D*) ffDesampleFile->Get(Form("Refs_hCum2_harm%d_gap%s_merged",task->fHarmonics,task->GetEtaGapString().Data()));
+    if(!refCumMerged) { Error(Form("Reference cn{2} (merged) not loaded!"),"ProcessSubtraction"); return kFALSE; }
+
+    TH1D* hDiffBaseMerged = (TH1D*) ffDesampleFile->Get(Form("%s_hCum2_harm%d_gap%s_cent%d_merged",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics,task->GetEtaGapString().Data(),lastBin));
+    if(!hDiffBaseMerged) { Error(Form("Base dn{2} (merged) not loaded!"),"ProcessSubtraction"); return kFALSE; }
+
+    TH1D* hDiffRawMerged = (TH1D*) ffDesampleFile->Get(Form("%s_hCum2_harm%d_gap%s_cent%d_merged",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics,task->GetEtaGapString().Data(),iMultBin));
+    if(!hDiffRawMerged) { Error(Form("Raw dn{2} (merged) not loaded!"),"ProcessSubtraction"); return kFALSE; }
+
+    TH1D* hFlowTwoDifMerged = CalcSubtracted(task,iMultBin,base,raw,refCumMerged,hDiffBaseMerged,hDiffRawMerged);
+
+    Debug("Desampling","ProcessSubtraction");
+
+    TH1D* hDesampledTwo = DesampleList(listFlowTwo, hFlowTwoDifMerged, task, nameFlowTwo);
+    if(!hDesampledTwo) { Error("Desampling vn{2} failed","ProcessSubtraction"); return kFALSE; }
+    hDesampledTwo->SetName(nameFlowTwo.Data());
+
+    ffOutputFile->cd();
+    hDesampledTwo->Write();
+
+    if(listFlowTwo) delete listFlowTwo;
+  } // end multiplicity bins
 
   if(listRefTwo) delete listRefTwo;
-  for(Int_t binMult(0); binMult < fiNumMultBins; ++binMult){
-    if(listFlowTwo[binMult]) delete listFlowTwo[binMult];
+  for(Int_t binMult(0); binMult < 10; ++binMult){
+    if(mult[binMult]) delete mult[binMult];
+    if(listCumTwo[binMult]) delete listCumTwo[binMult];
   }
   return kTRUE;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcSubtracted(FlowTask* task, Int_t iMultBin, TH2D* base, TH2D* raw, TH1D* refCum, TH1D* hDiffBase, TH1D* hDiffRaw)
+{
+  //calculate subtraction using pt dependent mean values of charged particles
+
+  if(!task) { Error("FlowTask not found!","CalcSubtracted"); return nullptr; }
+  if(!base) { Error("Base multiplcity histogram not found!","CalcSubtracted"); return nullptr; }
+  if(!raw) { Error("Raw multiplcity histogram not found!","CalcSubtracted"); return nullptr; }
+  if(!refCum) { Error("RFP cumulant not found!","CalcSubtracted"); return nullptr; }
+  if(!hDiffBase) { Error("POI base cumulant not found!","CalcSubtracted"); return nullptr; }
+  if(!hDiffRaw) { Error("POI raw cumulant not found!","CalcSubtracted"); return nullptr; }
+  if(hDiffBase->GetNbinsX() != hDiffRaw->GetNbinsX()) { Error("Different number of bins!","CalcSubtracted"); return nullptr; }
+
+  TH1D* hFlowTwoDif = (TH1D*) hDiffBase->Clone("hFlowTwoDif");
+  hFlowTwoDif->Reset();
+
+  Short_t iNumPtBins = task->fNumPtBins;
+  Short_t binPtLow = 0;
+  Short_t binPtHigh = 0;
+
+  Double_t cumBase = refCum->GetBinContent(6);
+  Double_t cumRaw = refCum->GetBinContent(iMultBin + 1);
+
+  for(Short_t binPt(0); binPt < iNumPtBins; binPt++){
+    binPtLow = base->GetXaxis()->FindFixBin(task->fPtBinsEdges[binPt]);
+    binPtHigh = base->GetXaxis()->FindFixBin(task->fPtBinsEdges[binPt+1]) - 1;
+    TH1D* multBase = (TH1D*) base->ProjectionY("multBase",binPtLow,binPtHigh);
+    Double_t meanBase = multBase->GetMean();
+
+    TH1D* multThisBin = (TH1D*) raw->ProjectionY("multThisBin",binPtLow,binPtHigh);
+    Double_t meanRaw = multThisBin->GetMean();
+
+    Double_t ratio = -9.0;
+    if(meanRaw > 0) ratio = meanBase / meanRaw;
+    Double_t denom = cumRaw - ratio * cumBase;
+    if(denom > 0) denom = TMath::Sqrt(denom);
+    else denom = -9.0;
+
+    Double_t dContBase = hDiffBase->GetBinContent(binPt);
+    Double_t dContRaw = hDiffRaw->GetBinContent(binPt);
+
+    Double_t dContOut = dContRaw - ratio * dContRaw;
+    if(denom > 0) dContOut = dContOut/denom;
+    // printf("ptbin %d: %f - %f , dContBase : %f dContRaw: %f \n", binPt, task->fPtBinsEdges[binPt], task->fPtBinsEdges[binPt+1], dContBase, dContRaw);
+    // printf("Multiplicty: base : %f raw: %f \n", meanBase, meanRaw);
+    // printf("ratio : %f denom: %f \n\n\n", ratio, denom);
+    hFlowTwoDif->SetBinContent(binPt, dContOut);
+  }
+
+  return hFlowTwoDif;
 }
 //_____________________________________________________________________________
 TH1D* ProcessUniFlow::CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task, Int_t rf1Pos, Int_t rf2Pos)

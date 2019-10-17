@@ -96,6 +96,8 @@ class ProcessUniFlow
     TH1D*       CalcEight_ThreeOne(TProfile* hEight, TProfile* hSix_123, TProfile* hSix_124, TProfile* hFour_12, TProfile* hFour_14, TProfile* hTwo_1, TProfile* hTwo_4, TProfile* hTwo_4_gap, FlowTask* task); // calculate FMC from 8 particle correlations with two different harmonics -- 3 same, 1 different
     TH1D*       CalcEight_TwoTwo(TProfile* hEight, TProfile* hSix_123, TProfile* hSix_134, TProfile* hFour_12, TProfile* hFour_13, TProfile* hFour_34, TProfile* hTwo_1, TProfile* hTwo_4, FlowTask* task); // calculate FMC from 8 particle correlations with two different harmonics -- 2 & 2 same
 
+    //subtracted
+    TH1D*       CalcSubtracted(FlowTask* task, Int_t iMultBin, TH2D* base, TH2D* raw, TH1D* refCum, TH1D* profDiffBase, TH1D* profDiffRaw); // calculate non-flow subtraction of pt diff with peripheral collisions
 
     void        PrintFitFunction(const TF1* func);
     Bool_t      SetFuncParameters(TF1* func, Double_t* dVec, const std::vector<Double_t>& vecLow, const std::vector<Double_t>& vecHigh, const std::vector<TString> vecNames = {}); // set func parameters & limits (including fixed paramters)
