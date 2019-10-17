@@ -1506,12 +1506,9 @@ Bool_t ProcessUniFlow::ProcessSubtraction(FlowTask* task)
   if(!task) { Error("FlowTask not found!","ProcessSubtraction"); return kFALSE; }
   if(fiNumMultBins > 9 ) { Error("Not implemented for more mult bin than 10!","ProcessSubtraction"); return kFALSE; }
   if(task->fCumOrderMax != 2) { Error("Not implemented for differemt cumulant order!","ProcessSubtraction"); return kFALSE; }
+  if(!flQACharged) { Error("List 'flQACharged' not found!","ProcessSubtraction"); return kFALSE; }
 
   Debug("Checks done!","ProcessSubtraction");
-
-  //loading inputs
-  TList* inputMult = flQACharged;
-  if(!inputMult) { Error("Input list not loaded!","ProcessSubtraction"); return kFALSE; }
 
   TList* listRefTwo = (TList*) ffDesampleFile->Get(Form("Refs_hCum2_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
   if(!listRefTwo) { Error("List 'listRefTwo' not found!","ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
@@ -1529,7 +1526,6 @@ Bool_t ProcessUniFlow::ProcessSubtraction(FlowTask* task)
   //different binning for mult histogram (fixed per 10)
   for(Int_t binMult(0); binMult < 10; ++binMult)
   {
-    Debug(Form("WHY AM I GETTING SEGMENTATION VIOLATION????? \n\n Spec: %s  gap: %s mult: %d .",GetSpeciesName(task->fSpecies).Data(),task->GetEtaGapString().Data(),binMult),"ProcessSubtraction");
     mult[binMult] = (TH2D*) flQACharged->FindObject(Form("fh2MeanMultCharged_Cent%d",binMult));
     if(!mult[binMult]) { Error(Form("Histogram 'MeanMultCharged_Cent%d' not found!",binMult),"ProcessSubtraction"); ffDesampleFile->ls(); return kFALSE; }
   }
@@ -1591,13 +1587,15 @@ Bool_t ProcessUniFlow::ProcessSubtraction(FlowTask* task)
     ffOutputFile->cd();
     hDesampledTwo->Write();
 
-    if(listFlowTwo) delete listFlowTwo;
+    delete hDesampledTwo;
+
+    delete listFlowTwo;
   } // end multiplicity bins
 
-  if(listRefTwo) delete listRefTwo;
+  delete listRefTwo;
   for(Int_t binMult(0); binMult < 10; ++binMult){
-    if(mult[binMult]) delete mult[binMult];
-    if(listCumTwo[binMult]) delete listCumTwo[binMult];
+    delete mult[binMult];
+    delete listCumTwo[binMult];
   }
   return kTRUE;
 }
