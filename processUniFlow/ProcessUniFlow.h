@@ -76,13 +76,18 @@ class ProcessUniFlow
     Bool_t      PrepareSlicesNew(FlowTask* task, TString histName, Bool_t bDoCand = kTRUE); // wrapper for making/preparing per-task slices
     Bool_t      MakeProfileSlices(FlowTask* task, TH1* inputProf, TList* outList); // prepare slices out of inputHist
     Bool_t      MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, TList* outList, const char* outName = "hInvMass"); // prepare slices out of 'inputSparse'
+    Int_t       ReturnThird(const Int_t first, const Int_t second); //needed for <<4'>> (permutations)
+    Int_t       ReturnIndex3sub(const Int_t first); //needed for <<4'>> (permutations)
 
     TH1D*       CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task, Int_t rf1Pos = 0, Int_t rf2Pos = 0); // calculate cn{2} out of correlation
     TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
+    TH1D*       CalcRefCumFour3sub(TProfile* hFourRef, TProfile* hTwoRef_sub1, TProfile* hTwoRef_sub2, FlowTask* task, Int_t side); // calculate cn{4} out of correlation
     TH1D*       CalcDifCumTwo(TH1D* hTwoDif, FlowTask* task); // calculate dn{2} out of correlation
     TH1D*       CalcDifCumTwo(TProfile* hTwoDif, FlowTask* task); // calculate dn{2} out of correlation
     TH1D*       CalcDifCumFour(TH1D* hFourDif, TH1* hTwoDif, TH1* hTwoRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate dn{4} out of correlation
     TH1D*       CalcDifCumFour(TProfile* hFourDif, TH1* hTwoDif, TH1* hTwoRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate dn{4} out of correlation
+    TH1D*       CalcDifCumFour3sub(TH1D* hFourDif, TH1* hTwoDif1, TH1* hTwoDif2, TH1* hTwoRef1, TH1* hTwoRef2, Int_t iRefBin, FlowTask* task); // calculate dn{4} out of correlation
+    TH1D*       CalcDifCumFour3sub(TProfile* hFourDif, TH1* hTwoDif1, TH1* hTwoDif2, TH1* hTwoRef1, TH1* hTwoRef2, Int_t iRefBin, FlowTask* task); // calculate dn{4} out of correlation
 
     TH1D*       CalcRefFlowTwo(TH1D* hTwoRef, FlowTask* task, Int_t rf1Pos = 0, Int_t rf2Pos = 0); // calculate vn{2} out of cn{2}
     TH1D*       CalcRefFlowFour(TH1D* hFourRef, FlowTask* task); // calculate vn{4} out of cn{4}
