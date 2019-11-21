@@ -1074,6 +1074,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   Bool_t bDoFour = (task->fCumOrderMax >= 4); // check if cn{4} should be processed
   Bool_t bCorrelated = task->fConsCorr; // check if correlated uncrt. are considered
   Bool_t bDo3sub = task->Has3sub();
+  Int_t nOfSamples = task->fNumSamplesRefs;
+
 
   // for saving profiles into TList for merging (into single one) -> estimation for central values
   TList* listCorTwo = new TList(); TString nameCorTwo = Form("Refs_pCor2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
@@ -1123,6 +1125,9 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     }
   }
 
+  TH1D* desAllCombi[10] = {nullptr};
+  if(nOfSamples > 10 && bDoFour && bDo3sub) { Error(Form("Number of samples: %d is more than 10! Mixing of combinations when working with v24 3 sub implemented just for 10 samples! \n !!Change here!!",nOfSamples),"ProcessRefs"); return kFALSE; }
+
   // for vns desampling
   TList* listFlowTwo = new TList(); TString nameFlowTwo = Form("Refs_hFlow2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
   TList* listFlowFour = new TList(); TString nameFlowFour = Form("Refs_hFlow4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
@@ -1132,6 +1137,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TString nameFlowTwo3sub[3][3] = {""};
   TList* listFlowFour3sub[3] = {nullptr};
   TString nameFlowFour3sub[3] = {""};
+  TList* listMergedAllCombinations = new TList();
+  TString nameFlowAllCombi = Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub",task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data());
   if(bDo3sub){
     for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
       if(rf1Pos > 1) break;
@@ -1174,7 +1181,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   Debug("Processing samples","ProcessRefs");
   //for(Short_t iSample(0); iSample < task->fNumSamples; ++iSample)
-  for(Short_t iSample(0); iSample < task->fNumSamplesRefs; ++iSample)
+  for(Short_t iSample(0); iSample < nOfSamples; ++iSample)
   {
     TProfile* pCorTwo = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfTwoName.Data(), iSample));
     if(!pCorTwo) { Warning(Form("Profile '%s' not valid",Form("%s_Pos_sample%d",sProfTwoName.Data(), iSample)),"ProcesRefs"); flFlow[kRefs]->ls(); return kFALSE; }
@@ -1325,6 +1332,9 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
       TH1D* hCumFour3sub[3] = {nullptr};
       TH1D* hFlowFour3sub[3] = {nullptr};
+      TH1D* mergedAllCombi = nullptr;
+      TList* listAllCombi = new TList();
+
       if(bDo3sub){
         for(Int_t twoPos(0); twoPos < 3; twoPos++){
           //find correct histograms for subtraction
@@ -1349,7 +1359,24 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
           if(!hFlowFour3sub[twoPos]) { Error(Form("vn{4} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
           hFlowFour3sub[twoPos] ->SetName(Form("%s_sample%d", nameFlowFour3sub[twoPos].Data(), iSample));
           listFlowFour3sub[twoPos]->Add(hFlowFour3sub[twoPos]);
-        }
+
+          //making "merge" of all combinations
+          listAllCombi->Add(hFlowFour3sub[twoPos]);
+          if(!mergedAllCombi) {mergedAllCombi = (TH1D*) hFlowFour3sub[twoPos]->Clone(Form("%s_allC_sample%d",nameFlowAllCombi.Data(),iSample)); mergedAllCombi->Reset(); }
+          mergedAllCombi->Add(hFlowFour3sub[twoPos]);
+        } // end twoPos
+        if(!mergedAllCombi) { Error("Merging of 'hFlowFourDif3sub' failed!","ProcessDirect"); return kFALSE; }
+
+        mergedAllCombi->Scale((Double_t) 1./3);
+        mergedAllCombi->SetName(Form("%s_merged_sample%d",nameFlowAllCombi.Data(),iSample));
+
+        TString desName = Form("%s_sample%d", nameFlowAllCombi.Data(),iSample);
+        desAllCombi[iSample] = DesampleList(listAllCombi, mergedAllCombi, task, desName);
+        if(!desAllCombi[iSample]) { Error("Desampling vn{2} failed","ProcessDirect"); return kFALSE; }
+        desAllCombi[iSample]->SetName(Form("%s_des_sample%d",nameFlowAllCombi.Data(),iSample));
+
+        listMergedAllCombinations->Add(desAllCombi[iSample]);
+        delete listAllCombi;
       }
     }
   } // end-for {iSample}: samples
@@ -1550,10 +1577,23 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       if(!hFlowFourDesampled3sub) { Error("Desampling 'hFlowFourDesampled3sub' failed","ProcessRefs"); return kFALSE; }
       hFlowFourDesampled3sub->SetName(nameFlowFour3sub[twoPos].Data());
 
+      TH1D* mergedAllCombiAllSamples = nullptr;
+      for(Int_t iSample(0); iSample < nOfSamples; iSample++){
+        if(!mergedAllCombiAllSamples) {mergedAllCombiAllSamples = (TH1D*) desAllCombi[iSample]->Clone(Form("%s_allC",nameFlowAllCombi.Data())); mergedAllCombiAllSamples->Reset(); }
+        mergedAllCombiAllSamples->Add(desAllCombi[iSample]);
+      }
+      mergedAllCombiAllSamples->Scale((Double_t) 1./nOfSamples);
+      mergedAllCombiAllSamples->SetName(Form("%s_merged",nameFlowAllCombi.Data()));
+
+      TH1D* hDesampledAllC = DesampleList(listMergedAllCombinations, mergedAllCombiAllSamples, task, nameFlowAllCombi);
+      if(!hDesampledAllC) { Error("Desampling vn{4} failed","ProcessDirect"); return kFALSE; }
+      hDesampledAllC->SetName(nameFlowAllCombi.Data());
+
       ffOutputFile->cd();
       hCorFourDesampled3sub->Write();
       hCumFourDesampled3sub->Write();
       hFlowFourDesampled3sub->Write();
+      hDesampledAllC->Write();
     }
   }
 
