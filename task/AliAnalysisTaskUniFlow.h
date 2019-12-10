@@ -39,7 +39,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
     public:
       enum    RunMode {kFull = 0, kTest, kSkipFlow}; // task running mode (NOT GRID MODE)
       enum    ColSystem {kPP = 0, kPPb, kPbPb}; // tag for collisional system
-      enum    AnalType {kAOD = 0, kESD}; // tag for analysis type
+      enum    AnalType {kAOD = 0, kESD, kMC}; // tag for analysis type
       enum    CentEst {kRFP = 0, kV0A, kV0C, kV0M, kCL0, kCL1, kZNA, kZNC}; // multiplicity/centrality estimator as AliMultSelection
       enum    PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest; NB: kUknown last as counter
       enum    SparseCand {kInvMass = 0, kCent, kPt, kEta, kSample, kDim}; // reconstructed candidates dist. dimensions
@@ -167,18 +167,19 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       const char*             GetSpeciesLabel(Int_t species) const { return GetSpeciesLabel(PartSpecies(species)); }
       const char*             GetEtaGapName(Double_t dEtaGap) const { return Form("%02.2g",10.0*dEtaGap); }
 
-      Bool_t                  sortPt(const AliVTrack* t1, const AliVTrack* t2) { return (t1->Pt() < t2->Pt()); } // function for std::sort
+      Bool_t                  sortPt(const AliVParticle* t1, const AliVParticle* t2) { return (t1->Pt() < t2->Pt()); } // function for std::sort
 
       Bool_t                  InitializeTask(); // called once on beginning of task (within CreateUserObjects method)
       Bool_t                  LoadWeights(); // load weights histograms
-      Bool_t                  FillFlowWeight(const AliVTrack* track, PartSpecies species) const; // fill distribution for per-particle flow weight
-      Double_t                GetFlowWeight(const AliVTrack* track, PartSpecies species) const; // extract per-particle flow weight from input file
+      Bool_t                  FillFlowWeight(const AliVParticle* track, PartSpecies species) const; // fill distribution for per-particle flow weight
+      Double_t                GetFlowWeight(const AliVParticle* track, PartSpecies species) const; // extract per-particle flow weight from input file
       void                    ListParameters() const; // list all task parameters
       void                    ClearVectors(); // properly clear all particle vectors
       void                    DumpTObjTable(const char* note, Option_t* opt = "") const; // add a printf statmenet given by note followed by gObjTable->Print() dump
       std::vector<Double_t>   MakeBinsVector(Int_t num, Double_t min, Double_t max); // transform fixed sized bins into an array of Double_t
 
       Bool_t                  IsEventSelected(); // event selection for Run 2 using AliEventCuts
+      Bool_t                  IsMCEventSelected(); // event selection for simulated events
       Bool_t                  IsEventRejectedAddPileUp() const; // additional pile-up rejection for Run2 Pb-Pb
       Int_t                   GetSamplingIndex() const; // returns sampling index based on sampling selection (number of samples)
       Int_t                   GetCentralityIndex(CentEst est) const; // returns centrality index based centrality estimator or number of selected tracks
@@ -317,8 +318,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TComplex                fFlowVecSmid[fFlowNumHarmonicsMax][fFlowNumWeightPowersMax]; // flow vector array for flow calculation
 
       std::vector<AliUniFlowCorrTask*>  fVecCorrTask; //
-      std::vector<AliVTrack*>* fVector[kUnknown]; //! container for selected Refs charged particles
-      std::vector<AliVParticle*>* fVectorMC[kUnknown]; //! container for selected Refs charged particles
+      std::vector<AliVParticle*>* fVector[kUnknown]; //! container for selected Refs charged particles
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
