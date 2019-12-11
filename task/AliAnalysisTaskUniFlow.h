@@ -214,9 +214,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       AliPicoTrack*           MakeMother(const AliAODTrack* part1, const AliAODTrack* part2) const; // Combine two prongs into a mother particle stored in AliPicoTrack object
       void                    FillSparseCand(THnSparse* sparse, const AliVTrack* track) const; // Fill sparse histogram for inv. mass distribution of candidates (V0s,Phi)
       void                    FillQAEvents(QAindex iQAindex) const; // filling QA plots related to event selection
-      void                    FillQARefs(QAindex iQAindex, const AliAODTrack* track) const; // filling QA plots for RFPs selection
-      void                    FillQACharged(QAindex iQAindex, const AliAODTrack* track) const; // filling QA plots for charged track selection
-      void                    FillQAPID(QAindex iQAindex, const AliAODTrack* track, PartSpecies species) const; // filling pi,K,p QA histograms
+      void                    FillQARefs(QAindex iQAindex, const AliVParticle* track) const; // filling QA plots for RFPs selection
+      void                    FillQACharged(QAindex iQAindex, AliVParticle* track) const; // filling QA plots for charged track selection
+      void                    FillQAPID(QAindex iQAindex, AliVParticle* track, PartSpecies species) const; // filling pi,K,p QA histograms
       void                    FillQAV0s(QAindex iQAindex, const AliAODv0* v0, Bool_t bIsK0s = kTRUE, Int_t bIsLambda = 2) const; // filling QA plots for V0s candidates
       void                    FillQAPhi(QAindex iQAindex, const AliPicoTrack* part) const; // filling QA plots for V0s candidates
 
@@ -293,7 +293,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       // array lenghts & constants
       AliAODEvent*            fEventAOD; //! AOD event countainer
-      AliMCEvent*             fEventMC; //! MC event countainer
+      // AliMCEvent*             fEventMC; //! MC event countainer
       AliVEvent*              fEvent; //! V event countainer
       Double_t                fPVz; // PV z-coordinate used for weights
       AliPIDResponse*         fPIDResponse; //! AliPIDResponse container
