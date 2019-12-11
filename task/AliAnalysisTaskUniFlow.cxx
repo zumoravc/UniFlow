@@ -1116,7 +1116,7 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
   fIndexSampling = GetSamplingIndex();
 
   // extract PV-z for weights
-  if(fAnalType == kAOD) fPVz = fEventAOD->GetPrimaryVertex()->GetZ();
+  fPVz = fEvent->GetPrimaryVertex()->GetZ();
 
   // Fill QA AFTER cuts (i.e. only in selected events)
   if(fFillQA) { FillQAEvents(kAfter); }
@@ -1137,42 +1137,12 @@ void AliAnalysisTaskUniFlow::UserExec(Option_t *)
 
 
   if(fFillQA) {
-    Int_t nOfPions = 0;
-    Int_t nOfPionsCh = 0;
-    Int_t nOfKaons = 0;
-    Int_t nOfKaonsCh = 0;
-    Int_t nOfProtons = 0;
-    Int_t nOfNeutrons = 0;
-    Int_t nOfElectrons = 0;
-    Int_t nOfDeuterons = 0;
-    Int_t nOfSigma = 0;
-    Int_t nOfGamma = 0;
-    Int_t nOfMuons = 0;
-    Int_t nOfCherenkov = 0;
     // Charged QA before selection
     for(Int_t iTrack(0); iTrack < fEvent->GetNumberOfTracks(); iTrack++) {
       AliVParticle* track = static_cast<AliVParticle*>(fEvent->GetTrack(iTrack));
       if(!track) { continue; }
       FillQACharged(kBefore,track);
-      Int_t id = track->PdgCode();
-      if(TMath::Abs(id) == 11) nOfElectrons++;
-      else if(TMath::Abs(id) == 13) nOfMuons++;
-      else if(TMath::Abs(id) == 211) nOfPionsCh++;
-      else if(id == 111) nOfPions++;
-      else if(TMath::Abs(id) == 321) nOfKaonsCh++;
-      else if(id == 311) nOfKaons++;
-      else if(TMath::Abs(id) == 2212) nOfProtons++;
-      else if(TMath::Abs(id) == 3222) nOfSigma++;
-      else if(id == 1000010020) nOfDeuterons++;
-      else if(id == 50000050) nOfCherenkov++;
-      else if(id == 22) nOfGamma++;
-      else if(id == 2112) nOfNeutrons++;
-      else printf("ID: %d \n", id);
     }
-    printf("N of tracks total: %d \n n primaries: %d \n after selection (charged only) %d", fEvent->GetNumberOfTracks(), fEvent->GetNumberOfPrimaries(), fVector[kCharged]->size());
-    printf("electrons %d \n pions: ch %d not ch %d \n kaons: ch %d not ch %d \n", nOfElectrons, nOfPionsCh, nOfPions, nOfKaonsCh, nOfKaons);
-    printf("protons %d \n deuterons %d \n sigma %d \n neutrones %d \n photons %d \n muons %d \n cherenkov %d \n", nOfProtons, nOfDeuterons, nOfSigma, nOfNeutrons, nOfGamma, nOfMuons, nOfCherenkov);
-
     fhQAChargedMult[0]->Fill(fEvent->GetNumberOfTracks());
     fhQAChargedMult[1]->Fill(fVector[kCharged]->size());
     fhRefsMult->Fill(fVector[kRefs]->size());
@@ -1604,6 +1574,7 @@ void AliAnalysisTaskUniFlow::FilterChargedMC() const
     AliMCParticle* track = dynamic_cast<AliMCParticle*>(ev->GetTrack(iTrack));
     if(!track) { continue; }
 
+    //excluding non stable particles
     if(!(ev->IsPhysicalPrimary(iTrack))) continue;
     if(track->Charge() == 0) continue;
 
@@ -2637,7 +2608,7 @@ void AliAnalysisTaskUniFlow::FilterPID() const
 
   for(auto part = fVector[kCharged]->begin(); part != fVector[kCharged]->end(); ++part)
   {
-    AliAODTrack* track = static_cast<AliAODTrack*>(*part);
+    AliVParticle* track = static_cast<AliVParticle*>(*part);
     if(!track) { continue; }
 
     if((fCentEstimator != kRFP) && (fColSystem == kPP || fColSystem == kPPb)) {
@@ -2650,7 +2621,9 @@ void AliAnalysisTaskUniFlow::FilterPID() const
     if(fFillQA) { FillQAPID(kBefore,track,kUnknown); } // filling QA for tracks before selection (but after charged criteria applied)
 
     // PID track selection (return most favourable species)
-    PartSpecies species = IsPIDSelected(track);
+    PartSpecies species = kUnknown;
+    if(fAnalType != kMC) species = IsPIDSelected(track);
+    else species = IsPIDSelectedMC(track);
     if(species != kPion && species != kKaon && species != kProton) { continue; }
 
     // check if only protons should be used
@@ -2665,12 +2638,12 @@ void AliAnalysisTaskUniFlow::FilterPID() const
     if(fFillQA) { FillQAPID(kAfter,track,species); } // filling QA for tracks AFTER selection }
 
     if(fProcessSpec[kPion] && fProcessSpec[kKaon] && fProcessSpec[kProton]) { // NB: aka process PID (not just Kaons for Phi)
-      if(!FillFlowWeight(track, species)) { AliFatal("Flow weight filling failed!"); return; }
+      if(fAnalType != kMC && !FillFlowWeight(track, species)) { AliFatal("Flow weight filling failed!"); return; }
     }
 
     if(fMC) {
       fh2MCPtEtaReco[species]->Fill(track->Pt(), track->Eta());
-      if(CheckMCTruthReco(species,track)) { fh2MCPtEtaRecoTrue[species]->Fill(track->Pt(), track->Eta()); }
+      if(fAnalType != kMC && CheckMCTruthReco(species,track)) { fh2MCPtEtaRecoTrue[species]->Fill(track->Pt(), track->Eta()); }
     }
 
   } // end-for {part}
@@ -2685,12 +2658,14 @@ void AliAnalysisTaskUniFlow::FilterPID() const
   return;
 }
 // ============================================================================
-AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const AliAODTrack* track) const
+AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(AliVParticle* tr) const
 {
   // Selection of PID tracks (pi,K,p) - track identification
   // Based on fCutUseBayesPID flag, either Bayes PID or nSigma cutting is used
   // returns AliAnalysisTaskUniFlow::PartSpecies enum : kPion, kKaon, kProton if any of this passed kUnknown otherwise
   // *************************************************************
+  AliAODTrack* track = dynamic_cast<AliAODTrack*>(tr);
+  if(!track) {AliError("AOD track not found!"); return kUnknown; }
 
   // checking detector statuses
   Bool_t bIsTPCok = HasTrackPIDTPC(track);
@@ -2792,17 +2767,45 @@ AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelected(const 
   return kUnknown;
 }
 // ============================================================================
+AliAnalysisTaskUniFlow::PartSpecies AliAnalysisTaskUniFlow::IsPIDSelectedMC(AliVParticle* tr) const
+{
+  // Selection of PID tracks (pi,K,p) - track identification
+  // returns AliAnalysisTaskUniFlow::PartSpecies enum : kPion, kKaon, kProton if any of this passed kUnknown otherwise
+  // *************************************************************
+  if(!tr) {AliError("AliMCParticle not found!"); return kUnknown; }
+
+  Int_t id = TMath::Abs(tr->PdgCode());
+
+  if(id == 211) { return kPion; }
+  else if(id == 321) { return kKaon; }
+  else if(id == 2212) { return kProton; }
+  else { return kUnknown; }
+}
+// ============================================================================
 void AliAnalysisTaskUniFlow::FillQAPID(const QAindex iQAindex, AliVParticle* track, const PartSpecies species) const
 {
   // Filling various QA plots related to PID (pi,K,p) track selection
   // *************************************************************
   if(!track) { return; }
-  if(fAnalType == kMC) { return; }
+
+  Int_t iPID = species - 2; // NB: translation from PartSpecies to PID QA index
+
+  if(fAnalType == kMC) {
+    AliMCParticle* tr = dynamic_cast<AliMCParticle*>(track);
+    if(!tr) { AliError("AliMCParticle not found!"); return; }
+
+    fhPIDPt[iPID]->Fill(tr->Pt());
+    fhPIDPhi[iPID]->Fill(tr->Phi());
+    fhPIDEta[iPID]->Fill(tr->Eta());
+    fhPIDCharge[iPID]->Fill(tr->Charge()/3.);
+
+    return;
+  }
 
   if(!fPIDResponse || !fPIDCombined) { AliError("AliPIDResponse or AliPIDCombined object not found!"); return; }
 
   AliAODTrack* tr = dynamic_cast<AliAODTrack*>(track);
-  if(!tr) { AliError("AliVTrack not found!"); return; }
+  if(!tr) { AliError("AliAODTrack not found!"); return; }
 
   // TPC & TOF statuses & measures
   AliPIDResponse::EDetPidStatus pidStatusTPC = fPIDResponse->CheckPIDStatus(AliPIDResponse::kTPC, tr);
@@ -2878,8 +2881,6 @@ void AliAnalysisTaskUniFlow::FillQAPID(const QAindex iQAindex, AliVParticle* tra
   if(species == kUnknown) { return; }
 
   // Here only selected particles (and iQAindex == 1 by construction)
-
-  Int_t iPID = species - 2; // NB: translation from PartSpecies to PID QA index
 
   fhPIDPt[iPID]->Fill(tr->Pt());
   fhPIDPhi[iPID]->Fill(tr->Phi());

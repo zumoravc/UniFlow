@@ -207,7 +207,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Bool_t                  IsWithinRefs(const AliVParticle* track) const; // check if track is in (pt,eta) acceptance for Refs (used for refs selection & autocorelations)
       Bool_t                  IsWithinPOIs(const AliVParticle* track) const; // check if track is in (pt,eta) acceptance for POIs
       Bool_t                  IsChargedSelected(const AliAODTrack* track) const; // charged track selection
-      PartSpecies             IsPIDSelected(const AliAODTrack* track) const; // PID tracks selections
+      PartSpecies             IsPIDSelected(AliVParticle* track) const; // PID tracks selections
+      PartSpecies             IsPIDSelectedMC(AliVParticle* track) const; // PID tracks selections
       Bool_t                  IsV0Selected(const AliAODv0* v0) const; // general (common) V0 selection
       Bool_t                  IsV0aK0s(const AliAODv0* v0) const; // V0 selection: K0s specific
       Int_t                   IsV0aLambda(const AliAODv0* v0) const; // V0 selection: (A)Lambda specific
@@ -322,7 +323,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
 
       //cuts & selection: analysis
       RunMode                 fRunMode; // running mode (not grid related)
-      AnalType                fAnalType; // analysis type: AOD / ESD
+      AnalType                fAnalType; // analysis type: AOD / ESD / MC
       Bool_t                  fDumpTObjectTable; // [kFALSE] flag for dumping TObjectTable to the output stream
       Bool_t                  fSampling; // [kFALSE] Do random sampling ? (estimation of vn stat. uncertanity)
       Bool_t                  fFillQA; //[kTRUE] flag for filling the QA plots
