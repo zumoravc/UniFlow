@@ -1,12 +1,17 @@
+char sides[4] = "LMR";
+Color_t color[] = {kRed, kBlue, kGreen+3};
+Marker_t marker[] = {kOpenCircle, kOpenSquare, kOpenDiamond};
+
 void v24_RFP(){
 
-  TFile* fileIn = TFile::Open("/home/alidock/output/LHC15o/train_7456/processUniFlow/Processed.root","READ");
+  TFile* fileIn = TFile::Open("/home/alidock/output/LHC15o/train_7456/processUniFlow/Processed_binningVP.root","READ");
   if(!fileIn) {printf("File not opened! \n"); return;}
 
   TFile* fileV = TFile::Open("/home/alidock/output/published/Vojta/Processed.root","READ");
   if(!fileV) {printf("File VP not opened! \n"); return;}
 
   TMultiGraph *mg = new TMultiGraph();
+  TLegend* leg = new TLegend(0.12,0.75,0.72,0.88);
 
   TGraphErrors *zm = new TGraphErrors((TH1D*) fileIn->Get("Refs_hFlow4_harm2_gap(08,08)_3sub"));
   zm->SetMarkerStyle(kOpenSquare);
@@ -14,6 +19,16 @@ void v24_RFP(){
   zm->SetMarkerSize(1.);
   zm->SetLineColor(kRed);
   mg->Add(zm);
+
+  TGraphErrors *combi[3] = {nullptr};
+  for(Int_t i(0); i < 3; i++){
+    combi[i] = new TGraphErrors((TH1D*) fileIn->Get(Form("Refs_hFlow4_harm2_gap(08,08)_3sub_two_%c",sides[i])));
+    combi[i]->SetMarkerStyle(marker[i]);
+    combi[i]->SetMarkerColor(color[i]);
+    combi[i]->SetLineColor(color[i]);
+    // mg->Add(combi[i]);
+    // leg->AddEntry(combi[i], Form("v_{2}{4}_{3 sub}, 2p. in %c",sides[i]), "p");
+  }
 
   TGraphErrors *vp = new TGraphErrors((TH1D*) fileV->Get("Refs_hFlow4_harm2_gap00"));
   vp->SetMarkerStyle(kOpenCircle);
@@ -31,7 +46,6 @@ void v24_RFP(){
   mg->SetMinimum(0.03);
   mg->SetMaximum(0.11);
 
-  TLegend* leg = new TLegend(0.12,0.75,0.72,0.88);
   leg->SetBorderSize(0);
   leg->SetFillColorAlpha(0.0,0.0);
   TString legString = "ALICE experiment, PbPb @ 5.02TeV, LHC15o";
@@ -39,12 +53,12 @@ void v24_RFP(){
   leg->SetHeader(legString.Data());
   gStyle->SetLegendTextSize(0.025);
   leg->SetFillStyle(0);
-  leg->SetNColumns(2);
+  leg->SetNColumns(3);
   leg->AddEntry(zm,"v_{2}{4}_{3sub} - ZM","p");
   leg->AddEntry(vp,"v_{2}{4, |#Delta#eta|>0.0} - VP","p");
   leg->Draw("same");
 
-  can->SaveAs("v24_RFP.pdf");
+  can->SaveAs("v24_RFP_comp.pdf");
 
   TCanvas* cRat = new TCanvas("cRat", "cRat", 600, 400);
   TH1D* hisZ = (TH1D*) fileIn->Get("Refs_hFlow4_harm2_gap(08,08)_3sub");

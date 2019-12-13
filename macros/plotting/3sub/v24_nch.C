@@ -17,22 +17,36 @@ void v24_nch(Int_t part, Int_t centClass){
 
   TCanvas* can = new TCanvas("can", "can", 600, 400);
   TMultiGraph* mg = new TMultiGraph();
-  TLegend* leg = new TLegend(0.12,0.7,0.75,0.88);
+  TLegend* leg = new TLegend(0.12,0.8,0.75,0.88);
 
-  TGraphErrors* v22gap08 = new TGraphErrors((TH1D*) fileIn->Get(Form("%s_hFlow2_harm2_gap08_cent%d",specLong.Data(),centClass)));
-  v22gap08->SetMarkerStyle(kOpenCircle);
-  v22gap08->SetMarkerColor(kGreen+2);
-  v22gap08->SetLineColor(kGreen+2);
-  mg->Add(v22gap08);
-  leg->AddEntry(v22gap08, "v_{2}{2,|#Delta#eta| > 0.8}", "p");
+  // TGraphErrors* v24nogap = new TGraphErrors((TH1D*) fileIn->Get(Form("%s_hFlow4_harm2_gap-10_cent%d",specLong.Data(),centClass)));
+  // v24nogap->SetMarkerStyle(kOpenCircle);
+  // v24nogap->SetMarkerColor(kGreen+2);
+  // v24nogap->SetLineColor(kGreen+2);
+  // mg->Add(v24nogap);
+  // leg->AddEntry(v24nogap, "v_{2}{4}", "p");
+  //
+  // TGraphErrors* v24gap10 = new TGraphErrors((TH1D*) fileIn->Get(Form("%s_hFlow4_harm2_gap10_cent%d",specLong.Data(),centClass)));
+  // v24gap10->SetMarkerStyle(kOpenDiamond);
+  // v24gap10->SetMarkerColor(kBlue);
+  // v24gap10->SetLineColor(kBlue);
+  // mg->Add(v24gap10);
+  // leg->AddEntry(v24gap10, "v_{2}{4,|#Delta#eta| > 1.0}", "p");
+  //
+  // TGraphErrors* v24gap00 = new TGraphErrors((TH1D*) fileIn->Get(Form("%s_hFlow4_harm2_gap00_cent%d",specLong.Data(),centClass)));
+  // v24gap00->SetMarkerStyle(kOpenSquare);
+  // v24gap00->SetMarkerColor(kRed);
+  // v24gap00->SetLineColor(kRed);
+  // mg->Add(v24gap00);
+  // leg->AddEntry(v24gap00, "v_{2}{4,|#Delta#eta| > 0.0}", "p");
 
-  TGraphErrors* gap08 = new TGraphErrors((TH1D*) fileIn->Get(Form("%s_hFlow4_harm2_gap08_cent%d",specLong.Data(),centClass)));
-  gap08->SetMarkerStyle(kOpenDiamond);
-  gap08->SetMarkerColor(kBlue);
-  gap08->SetLineColor(kBlue);
-  mg->Add(gap08);
-  leg->AddEntry(gap08, "v_{2}{4,|#Delta#eta| > 0.8}", "p");
-
+  // TGraphErrors* gap08 = new TGraphErrors((TH1D*) fileIn->Get(Form("%s_hFlow4_harm2_gap08_cent%d",specLong.Data(),centClass)));
+  // gap08->SetMarkerStyle(kOpenDiamond);
+  // gap08->SetMarkerColor(kBlue);
+  // gap08->SetLineColor(kBlue);
+  // // mg->Add(gap08);
+  // // leg->AddEntry(gap08, "v_{2}{4,|#Delta#eta| > 0.8}", "p");
+  //
   TGraphErrors* allCombi = new TGraphErrors((TH1D*) fileIn->Get(Form("%s_hFlow4_harm2_gap(08,08)_cent%d_3sub",specLong.Data(),centClass)));
   allCombi->SetMarkerStyle(kOpenSquare);
   allCombi->SetMarkerColor(kRed);
@@ -42,12 +56,12 @@ void v24_nch(Int_t part, Int_t centClass){
 
 
   mg->GetXaxis()->SetTitle("p_{#it{T}} [GeV/#it{c}]");
-  mg->GetYaxis()->SetTitle("v_{2}{4}");
-  mg->GetXaxis()->SetRangeUser(0, 10);
+  mg->GetYaxis()->SetTitle("v_{2}{4}_{3 sub}");
+  mg->GetXaxis()->SetRangeUser(0, 5);
 
   mg->Draw("ap");
   mg->SetMinimum(0.0);
-  mg->SetMaximum(0.3);
+  mg->SetMaximum(0.4);
 
   leg->SetBorderSize(0);
   leg->SetFillColorAlpha(0.0,0.0);
@@ -59,6 +73,14 @@ void v24_nch(Int_t part, Int_t centClass){
     case 3: legString += "p/#bar{p}, |#eta| < 0.8, N_{ch}: "; break;
   }
 
+  // switch(centClass){
+  //   case 0: legString += "0-25"; break;
+  //   case 1: legString += "25-50"; break;
+  //   case 2: legString += "50-75"; break;
+  //   case 3: legString += "75-100"; break;
+  //   case 4: legString += "100-200"; break;
+  // }
+
   switch(centClass){
     case 0: legString += "50-100"; break;
     case 1: legString += "100-150"; break;
@@ -66,11 +88,11 @@ void v24_nch(Int_t part, Int_t centClass){
 
   leg->SetHeader(legString.Data());
   gStyle->SetLegendTextSize(0.025);
-  // leg->SetFillStyle(0);
+  leg->SetFillStyle(0);
   leg->SetNColumns(2);
   leg->Draw("same");
 
-  can->SaveAs(Form("ptdif/v24_PbPb_%s_cent%d_Nch.pdf",spec.Data(),centClass));
+  can->SaveAs(Form("ptdif/v24_PbPb_%s_cent%d_Nch1.pdf",spec.Data(),centClass));
 
   // TCanvas* cRat = new TCanvas("cRat", "cRat", 600, 400);
   //
