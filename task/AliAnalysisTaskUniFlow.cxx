@@ -175,6 +175,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow() : AliAnalysisTaskSE(),
   fCentMinAdd{0},
   fCentMaxAdd{0},
   fPVtxCutZ{10.0},
+  fVxMax{3.},
+  fVyMax{3.},
+  fVzMax{10.},
   fEventRejectAddPileUp{kFALSE},
   fCutChargedTrackFilterBit{96},
   fCutChargedNumTPCclsMin{70},
@@ -432,6 +435,9 @@ AliAnalysisTaskUniFlow::AliAnalysisTaskUniFlow(const char* name, ColSystem colSy
   fCentMinAdd{0},
   fCentMaxAdd{0},
   fPVtxCutZ{10.0},
+  fVxMax{3.},
+  fVyMax{3.},
+  fVzMax{10.},
   fEventRejectAddPileUp{kFALSE},
   fCutChargedTrackFilterBit{96},
   fCutChargedNumTPCclsMin{70},
@@ -1215,7 +1221,7 @@ Bool_t AliAnalysisTaskUniFlow::IsEventSelected()
   fhEventCounter->Fill("Physics selection OK",1);
 
   // events passing AliEventCuts selection
-  if(!fEventCuts.AcceptEvent(fEventAOD)) { return kFALSE; }
+  if(!fEventCuts.AcceptEvent(fEventAOD))  { return kFALSE; }
   fhEventCounter->Fill("EventCuts OK",1);
 
   // Additional pile-up rejection cuts for LHC15o dataset
@@ -1256,7 +1262,17 @@ Bool_t AliAnalysisTaskUniFlow::IsMCEventSelected()
   AliGenEventHeader *header = dynamic_cast<AliGenEventHeader*>(ev->GenEventHeader());
   if(!header) { AliFatal("MC event not generated!"); return kFALSE; }
 
-  //vertex check?
+  fhEventCounter->Fill("Physics selection OK",1);
+
+  const AliVVertex *vertex = ev->GetPrimaryVertex();
+  if(!ev) { AliError("Vertex of MC not found!"); }
+
+  if(TMath::Abs(vertex->GetX()) > fVxMax) return kFALSE;
+  if(TMath::Abs(vertex->GetY()) > fVyMax) return kFALSE;
+  if(TMath::Abs(vertex->GetZ()) > fVzMax) return kFALSE;
+
+  fhEventCounter->Fill("EventCuts OK",1);
+
 
   return kTRUE;
 }
@@ -1444,8 +1460,6 @@ void AliAnalysisTaskUniFlow::FillQAEvents(const QAindex iQAindex) const
 
   if(iQAindex == 1)
   {
-    fhEventCentrality->Fill(fIndexCentrality);
-    fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVector[kRefs]->size());
     fpRefsMult->Fill(fIndexCentrality,fVector[kRefs]->size(),1.0);
     fhEventSampling->Fill(fIndexCentrality,fIndexSampling);
   }
@@ -1457,19 +1471,25 @@ void AliAnalysisTaskUniFlow::FillQAEvents(const QAindex iQAindex) const
   fhQAEventsPVz[iQAindex]->Fill(dVtxZ);
   fhQAEventsNumContrPV[iQAindex]->Fill(iNumContr);
 
-  if(fAnalType != kMC) {
-    const AliAODVertex* spdVtx = fEventAOD->GetPrimaryVertexSPD();
-    const Int_t iNumContrSPD = spdVtx->GetNContributors();
-    const Double_t spdVtxZ = spdVtx->GetZ();
-    fhQAEventsNumSPDContrPV[iQAindex]->Fill(iNumContrSPD);
-    fhQAEventsDistPVSPD[iQAindex]->Fill(TMath::Abs(dVtxZ - spdVtxZ));
+  if(fAnalType == kMC) { return; }
 
-    // SPD vertexer resolution
-    Double_t cov[6] = {0};
-    spdVtx->GetCovarianceMatrix(cov);
-    Double_t zRes = TMath::Sqrt(cov[5]);
-    fhQAEventsSPDresol[iQAindex]->Fill(zRes);
+  if(iQAindex == 1)
+  {
+    fhEventCentrality->Fill(fIndexCentrality);
+    fh2EventCentralityNumRefs->Fill(fIndexCentrality,fVector[kRefs]->size());
   }
+
+  const AliAODVertex* spdVtx = fEventAOD->GetPrimaryVertexSPD();
+  const Int_t iNumContrSPD = spdVtx->GetNContributors();
+  const Double_t spdVtxZ = spdVtx->GetZ();
+  fhQAEventsNumSPDContrPV[iQAindex]->Fill(iNumContrSPD);
+  fhQAEventsDistPVSPD[iQAindex]->Fill(TMath::Abs(dVtxZ - spdVtxZ));
+
+  // SPD vertexer resolution
+  Double_t cov[6] = {0};
+  spdVtx->GetCovarianceMatrix(cov);
+  Double_t zRes = TMath::Sqrt(cov[5]);
+  fhQAEventsSPDresol[iQAindex]->Fill(zRes);
 
   // // event / physics selection criteria
   // AliAnalysisManager* mgr = AliAnalysisManager::GetAnalysisManager();
@@ -1487,7 +1507,7 @@ void AliAnalysisTaskUniFlow::FillQAEvents(const QAindex iQAindex) const
 void AliAnalysisTaskUniFlow::ProcessMC() const
 {
     AliMCEvent* ev = dynamic_cast<AliMCEvent*>(fEvent);
-    if(!ev) { AliFatal("MC event not found!"); return kFALSE; }
+    if(!ev) { AliFatal("MC event not found!"); return; }
 
     const Int_t iNumTracksMC = ev->GetNumberOfTracks();
     for(Int_t iTrackMC(0); iTrackMC < iNumTracksMC; ++iTrackMC) {
@@ -1701,7 +1721,7 @@ void AliAnalysisTaskUniFlow::FillQACharged(const QAindex iQAindex, AliVParticle*
 
   if(fAnalType != kMC){
     AliAODTrack* tr =  dynamic_cast<AliAODTrack*>(track);
-    if(!tr) { AliFatal("AOD track not found!"); return kFALSE; }
+    if(!tr) { AliFatal("AOD track not found!"); return; }
 
     // number of TPC clusters
     fhQAChargedNumTPCcls[iQAindex]->Fill(tr->GetTPCNcls());
@@ -5903,35 +5923,39 @@ void AliAnalysisTaskUniFlow::UserCreateOutputObjects()
     const Int_t iNBinsPIDstatus = 4;
     TString sPIDstatus[iNBinsPIDstatus] = {"kDetNoSignal","kDetPidOk","kDetMismatch","kDetNoParams"};
 
-    // event histogram
-    fEventCuts.AddQAplotsToList(fQAEvents);
-
     fhEventSampling = new TH2D("fhEventSampling",Form("Event sampling; %s; sample index", GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, fNumSamples,0,fNumSamples);
     fQAEvents->Add(fhEventSampling);
-    fhEventCentrality = new TH1D("fhEventCentrality",Form("Event centrality (%s); %s", GetCentEstimatorLabel(fCentEstimator), GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax);
-    fQAEvents->Add(fhEventCentrality);
 
-    Int_t iMinRFPs = 0;
-    Int_t iMaxRFPs = 150;
-    Int_t iBinsRPFs = 150;
-    if(fColSystem == kPbPb) {
-        iMinRFPs = 0;
-        iMaxRFPs = 5000;
-        iBinsRPFs = 100;
-    }
-    fh2EventCentralityNumRefs = new TH2D("fh2EventCentralityNumRefs",Form("Event centrality (%s) vs. N_{RFP}; %s; N_{RFP}",GetCentEstimatorLabel(fCentEstimator), GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, iBinsRPFs,iMinRFPs,iMaxRFPs);
-    fQAEvents->Add(fh2EventCentralityNumRefs);
 
-    if(fEventRejectAddPileUp)
-    {
-      fhQAEventsfMult32vsCentr = new TH2D("fhQAEventsfMult32vsCentr", "; centrality V0M; TPC multiplicity (FB32)", 100, 0, 100, 100, 0, 3000);
-      fQAEvents->Add(fhQAEventsfMult32vsCentr);
-      fhQAEventsMult128vsCentr = new TH2D("fhQAEventsfMult128vsCentr", "; centrality V0M; TPC multiplicity (FB128)", 100, 0, 100, 100, 0, 5000);
-      fQAEvents->Add(fhQAEventsMult128vsCentr);
-      fhQAEventsfMultTPCvsTOF = new TH2D("fhQAEventsfMultTPCvsTOF", "; TPC FB32 multiplicity; TOF multiplicity", 200, 0, 4000, 200, 0, 2000);
-      fQAEvents->Add(fhQAEventsfMultTPCvsTOF);
-      fhQAEventsfMultTPCvsESD = new TH2D("fhQAEventsfMultTPCvsESD", "; TPC FB128 multiplicity; ESD multiplicity", 200, 0, 7000, 300, -1000, 35000);
-      fQAEvents->Add(fhQAEventsfMultTPCvsESD);
+    if(fAnalType != kMC){
+      fhEventCentrality = new TH1D("fhEventCentrality",Form("Event centrality (%s); %s", GetCentEstimatorLabel(fCentEstimator), GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax);
+      fQAEvents->Add(fhEventCentrality);
+
+      // event histogram
+      fEventCuts.AddQAplotsToList(fQAEvents);
+
+      Int_t iMinRFPs = 0;
+      Int_t iMaxRFPs = 150;
+      Int_t iBinsRPFs = 150;
+      if(fColSystem == kPbPb) {
+          iMinRFPs = 0;
+          iMaxRFPs = 5000;
+          iBinsRPFs = 100;
+      }
+      fh2EventCentralityNumRefs = new TH2D("fh2EventCentralityNumRefs",Form("Event centrality (%s) vs. N_{RFP}; %s; N_{RFP}",GetCentEstimatorLabel(fCentEstimator), GetCentEstimatorLabel(fCentEstimator)), fCentBinNum,fCentMin,fCentMax, iBinsRPFs,iMinRFPs,iMaxRFPs);
+      fQAEvents->Add(fh2EventCentralityNumRefs);
+
+      if(fEventRejectAddPileUp)
+      {
+        fhQAEventsfMult32vsCentr = new TH2D("fhQAEventsfMult32vsCentr", "; centrality V0M; TPC multiplicity (FB32)", 100, 0, 100, 100, 0, 3000);
+        fQAEvents->Add(fhQAEventsfMult32vsCentr);
+        fhQAEventsMult128vsCentr = new TH2D("fhQAEventsfMult128vsCentr", "; centrality V0M; TPC multiplicity (FB128)", 100, 0, 100, 100, 0, 5000);
+        fQAEvents->Add(fhQAEventsMult128vsCentr);
+        fhQAEventsfMultTPCvsTOF = new TH2D("fhQAEventsfMultTPCvsTOF", "; TPC FB32 multiplicity; TOF multiplicity", 200, 0, 4000, 200, 0, 2000);
+        fQAEvents->Add(fhQAEventsfMultTPCvsTOF);
+        fhQAEventsfMultTPCvsESD = new TH2D("fhQAEventsfMultTPCvsESD", "; TPC FB128 multiplicity; ESD multiplicity", 200, 0, 7000, 300, -1000, 35000);
+        fQAEvents->Add(fhQAEventsfMultTPCvsESD);
+      }
     }
 
     // charged (tracks) histograms

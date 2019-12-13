@@ -95,7 +95,8 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       void                    SetCentrality(CentEst est, Int_t min = 0, Int_t max = 0, Int_t bins = 0) { fCentEstimator = est; fCentMin = min; fCentMax = max; fCentBinNum = bins; }
       void                    SetAddCentCut(CentEst est, Int_t min, Int_t max) { fCentEstimatorAdd = est; fCentMinAdd = min; fCentMaxAdd = max; }
       void                    SetTrigger(AliVEvent::EOfflineTriggerTypes trigger) { fTrigger = trigger; }
-      void					  SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
+      void					          SetPVtxZMax(Double_t z) { fPVtxCutZ = z; }
+      void                    SetVertexDiamond(Double_t vx, Double_t vy, Double_t vz) { fVxMax = vx; fVyMax = vy; fVzMax = vz; }
       void                    SetRejectAddPileUp(Bool_t use = kTRUE) { fEventRejectAddPileUp = use; }
       // track setters
       void                    SetChargedDCAzMax(Double_t dcaz) {  fCutChargedDCAzMax = dcaz; }
@@ -361,6 +362,9 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       Int_t                   fCentMinAdd; // [0] min range for centrality/multiplicity histos
       Int_t                   fCentMaxAdd; // [0] max range for centrality/multiplicity histos
       Double_t                fPVtxCutZ; // (cm) PV z cut
+      Double_t                fVxMax; // vx max - MC
+      Double_t                fVyMax; // vy max - MC
+      Double_t                fVzMax; // vz max - MC
       Bool_t                  fEventRejectAddPileUp; // additional pile-up rejection for Pb-Pb collisions in Run2 (17n, 15o)
       //cuts & selection: tracks
       UInt_t                  fCutChargedTrackFilterBit; // (-) tracks filter bit
@@ -573,7 +577,7 @@ class AliAnalysisTaskUniFlow : public AliAnalysisTaskSE
       TH2D*			  		  fhQAV0sArmenterosLambda[QAindex::kNumQA];	//! Armenteros-Podolanski plot for Lambda candidates
       TH2D*			  		  fhQAV0sArmenterosALambda[QAindex::kNumQA];	//! Armenteros-Podolanski plot for ALambda candidates
 
-      ClassDef(AliAnalysisTaskUniFlow, 12);
+      ClassDef(AliAnalysisTaskUniFlow, 13);
 };
 
 #endif
