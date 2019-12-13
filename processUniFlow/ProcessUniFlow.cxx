@@ -42,6 +42,7 @@ ProcessUniFlow::ProcessUniFlow() :
   ffOutputFile{nullptr},
   ffFitsFile{nullptr},
   ffDesampleFile{nullptr},
+  ffJackFile{nullptr},
   fsInputFilePath{},
   fsInputFileName{"AnalysisResults.root"},
   fsOutputFilePathRoot{},
@@ -146,6 +147,10 @@ Bool_t ProcessUniFlow::Initialize()
   // creating output file for Desampling
   ffDesampleFile = TFile::Open(Form("%s/desampling.root",fsOutputFilePath.Data()),fsOutputFileMode.Data());
   if(!ffDesampleFile) { Fatal(Form("Output desampling file '%s/desampling.root' not open!","Initialize")); return kFALSE; }
+
+  // creating output file for Jackknife
+  ffJackFile = TFile::Open(Form("%s/jackknife.root",fsOutputFilePath.Data()),fsOutputFileMode.Data());
+  if(!ffJackFile) { Fatal(Form("Output desampling file '%s/jackknife.root' not open!","Initialize")); return kFALSE; }
 
   // creating output file for fits
   ffFitsFile = TFile::Open(Form("%s/fits.root",fsOutputFilePath.Data()),fsOutputFileMode.Data());
@@ -305,7 +310,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
     }
   }
 
-  if(task->fBaseCentBin > -1.0 && !ProcessSubtraction(task)){
+  if(task->fBaseCentBin > -1.0 &&  IsSpeciesDirect(spec) && !ProcessSubtraction(task)){
     Error(Form("Subtraction in task '%s' (%s) not processed correctly!",task->fName.Data(),GetSpeciesName(spec).Data()),"ProcessTask");
   }
 
@@ -1081,11 +1086,27 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TList* listCorTwo = new TList(); TString nameCorTwo = Form("Refs_pCor2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
   TList* listCorFour = new TList(); TString nameCorFour = Form("Refs_pCor4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
 
+  // for cumulants (applicable for diff. flow)
+  TList* listCumTwo = new TList(); TString nameCumTwo = Form("Refs_hCum2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listCumFour = new TList(); TString nameCumFour = Form("Refs_hCum4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+
+  // for vns desampling
+  TList* listFlowTwo = new TList(); TString nameFlowTwo = Form("Refs_hFlow2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listFlowFour = new TList(); TString nameFlowFour = Form("Refs_hFlow4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+
   // 3 subevents
   TList* listCorTwo3sub[3][3] = {nullptr};
   TString nameCorTwo3sub[3][3] = {""};
   TList* listCorFour3sub[3] = {nullptr};
   TString nameCorFour3sub[3] = {""};
+  TList* listCumTwo3sub[3][3] = {nullptr};
+  TString nameCumTwo3sub[3][3] = {""};
+  TList* listCumFour3sub[3] = {nullptr};
+  TString nameCumFour3sub[3] = {""};
+  TList* listFlowTwo3sub[3][3] = {nullptr};
+  TString nameFlowTwo3sub[3][3] = {""};
+  TList* listFlowFour3sub[3] = {nullptr};
+  TString nameFlowFour3sub[3] = {""};
   if(bDo3sub){
     for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
       if(rf1Pos > 1) break;
@@ -1093,66 +1114,41 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
         if(rf1Pos >= rf2Pos) continue;
         nameCorTwo3sub[rf1Pos][rf2Pos] = Form("Refs_pCor2_harm%d_gap(%s,%s)_3sub_rf1_%c_rf2_%c",task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),sides[rf1Pos],sides[rf2Pos]);
         listCorTwo3sub[rf1Pos][rf2Pos] = new TList();
-      }
-    }
-    for(Int_t twoPos(0); twoPos < 3; twoPos++){
-      nameCorFour3sub[twoPos] = Form("Refs_pCor4_harm%d_gap(%s,%s)_3sub_two_%c",task->fHarmonics, task->GetEtaGapString().Data(), task->GetEtaGapString().Data(), sides[twoPos]);
-      listCorFour3sub[twoPos] = new TList();
-    }
-  }
 
-  // for cumulants (applicable for diff. flow)
-  TList* listCumTwo = new TList(); TString nameCumTwo = Form("Refs_hCum2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
-  TList* listCumFour = new TList(); TString nameCumFour = Form("Refs_hCum4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
-
-  // 3 subevents
-  TList* listCumTwo3sub[3][3] = {nullptr};
-  TString nameCumTwo3sub[3][3] = {""};
-  TList* listCumFour3sub[3] = {nullptr};
-  TString nameCumFour3sub[3] = {""};
-  if(bDo3sub){
-    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
-      if(rf1Pos > 1) break;
-      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
-        if(rf1Pos >= rf2Pos) continue;
         nameCumTwo3sub[rf1Pos][rf2Pos] = Form("Refs_hCum2_harm%d_gap(%s,%s)_3sub_rf1_%c_rf2_%c",task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),sides[rf1Pos],sides[rf2Pos]);
         listCumTwo3sub[rf1Pos][rf2Pos] = new TList();
-      }
-    }
-    for(Int_t twoPos(0); twoPos < 3; twoPos++){
-      nameCumFour3sub[twoPos] = Form("Refs_hCum4_harm%d_gap(%s,%s)_3sub_two_%c",task->fHarmonics, task->GetEtaGapString().Data(), task->GetEtaGapString().Data(), sides[twoPos]);
-      listCumFour3sub[twoPos] = new TList();
-    }
-  }
 
-  TH1D* desAllCombi[10] = {nullptr};
-  if(nOfSamples > 10 && bDoFour && bDo3sub) { Error(Form("Number of samples: %d is more than 10! Mixing of combinations when working with v24 3 sub implemented just for 10 samples! \n !!Change here!!",nOfSamples),"ProcessRefs"); return kFALSE; }
-
-  // for vns desampling
-  TList* listFlowTwo = new TList(); TString nameFlowTwo = Form("Refs_hFlow2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
-  TList* listFlowFour = new TList(); TString nameFlowFour = Form("Refs_hFlow4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
-
-  // 3 subevents
-  TList* listFlowTwo3sub[3][3] = {nullptr};
-  TString nameFlowTwo3sub[3][3] = {""};
-  TList* listFlowFour3sub[3] = {nullptr};
-  TString nameFlowFour3sub[3] = {""};
-  TList* listMergedAllCombinations = new TList();
-  TString nameFlowAllCombi = Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub",task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data());
-  if(bDo3sub){
-    for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
-      if(rf1Pos > 1) break;
-      for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
-        if(rf1Pos >= rf2Pos) continue;
         nameFlowTwo3sub[rf1Pos][rf2Pos] = Form("Refs_hFlow2_harm%d_gap(%s,%s)_3sub_rf1_%c_rf2_%c",task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),sides[rf1Pos],sides[rf2Pos]);
         listFlowTwo3sub[rf1Pos][rf2Pos] = new TList();
       }
     }
-    for(Int_t twoPos(0); twoPos < 3; twoPos++){
-      nameFlowFour3sub[twoPos] =  Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub_two_%c",task->fHarmonics, task->GetEtaGapString().Data(), task->GetEtaGapString().Data(), sides[twoPos]);
-      listFlowFour3sub[twoPos] = new TList();
+    if(bDoFour){
+      for(Int_t twoPos(0); twoPos < 3; twoPos++){
+        nameCorFour3sub[twoPos] = Form("Refs_pCor4_harm%d_gap(%s,%s)_3sub_two_%c",task->fHarmonics, task->GetEtaGapString().Data(), task->GetEtaGapString().Data(), sides[twoPos]);
+        listCorFour3sub[twoPos] = new TList();
+
+        nameCumFour3sub[twoPos] = Form("Refs_hCum4_harm%d_gap(%s,%s)_3sub_two_%c",task->fHarmonics, task->GetEtaGapString().Data(), task->GetEtaGapString().Data(), sides[twoPos]);
+        listCumFour3sub[twoPos] = new TList();
+
+        nameFlowFour3sub[twoPos] =  Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub_two_%c",task->fHarmonics, task->GetEtaGapString().Data(), task->GetEtaGapString().Data(), sides[twoPos]);
+        listFlowFour3sub[twoPos] = new TList();
+      }
     }
-  }
+
+  } //end 3 sub
+
+  //3 sub only no loops, for all geometrical combinations
+  TList* listCumFour3subAllGeomC = new TList();
+  TString nameCumFour3subAllGeomC = Form("Refs_hCum4_harm%d_gap(%s,%s)_3sub",task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data());
+
+  TList* listFlowFour3subAllGeomC = new TList();
+  TString nameFlowFour3subAllGeomC = Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub",task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data());
+
+  //TO DO: this might be removed?
+  TH1D* desCumAllCombi[10] = {nullptr};
+  TH1D* desAllCombi[10] = {nullptr};
+  if(nOfSamples > 10 && bDoFour && bDo3sub) { Error(Form("Number of samples: %d is more than 10! Mixing of combinations when working with v24 3 sub implemented just for 10 samples! \n !!Change here!!",nOfSamples),"ProcessRefs"); return kFALSE; }
+
 
   // estimating <multiplicity>
   if(fbSaveMult)
@@ -1225,7 +1221,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     {
       pCorTwo = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo.Data(), iSample),fdMultBins.data());
       if(bDoFour) { pCorFour = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorFour.Data(), iSample),fdMultBins.data()); }
-      if(task->Has3sub()){
+      if(bDo3sub){
         for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
           if(rf1Pos > 1) break;
           for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
@@ -1238,7 +1234,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
             pCorFour3sub[twoPos] = (TProfile*) pCorFour3sub[twoPos]->Rebin(fiNumMultBins,Form("%s_Pos_sample%d_two_%c",nameCorFour3sub[twoPos].Data(),iSample,sides[twoPos]),fdMultBins.data());
           }
         }
-      }
+      } //end 3 sub
     }
 
     // naming <<X>>
@@ -1280,8 +1276,15 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     hCumTwo->SetName(Form("%s_sample%d", nameCumTwo.Data(), iSample));
     listCumTwo->Add(hCumTwo);
 
+    // vn{2}
+    TH1D* hFlowTwo = CalcRefFlowTwo(hCumTwo,task);
+    if(!hFlowTwo) { Error(Form("vn{2} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+    hFlowTwo->SetName(Form("%s_sample%d", nameFlowTwo.Data(), iSample));
+    listFlowTwo->Add(hFlowTwo);
+
     //3 subevents
     TH1D* hCumTwo3sub[3][3] = {nullptr};
+    TH1D* hFlowTwo3sub[3][3] = {nullptr};
     if(bDo3sub){
       for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
         if(rf1Pos > 1) break;
@@ -1291,23 +1294,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
           if(!hCumTwo3sub[rf1Pos][rf2Pos]) { Error(Form("cn{2} rf1_%c_rf2_%c (sample %d) not processed correctly!",sides[rf1Pos],sides[rf2Pos],iSample),"ProcessRefs"); return kFALSE; }
           hCumTwo3sub[rf1Pos][rf2Pos]->SetName(Form("%s_sample%d", nameCumTwo3sub[rf1Pos][rf2Pos].Data(), iSample));
           listCumTwo3sub[rf1Pos][rf2Pos]->Add(hCumTwo3sub[rf1Pos][rf2Pos]);
-        }
-      }
-    }
 
-    // vn{2}
-    TH1D* hFlowTwo = CalcRefFlowTwo(hCumTwo,task);
-    if(!hFlowTwo) { Error(Form("vn{2} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
-    hFlowTwo->SetName(Form("%s_sample%d", nameFlowTwo.Data(), iSample));
-    listFlowTwo->Add(hFlowTwo);
-
-    //3 subevents
-    TH1D* hFlowTwo3sub[3][3] = {nullptr};
-    if(bDo3sub){
-      for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
-        if(rf1Pos > 1) break;
-        for(Int_t rf2Pos(0); rf2Pos < 3; rf2Pos++ ){
-          if(rf1Pos >= rf2Pos) continue;
           hFlowTwo3sub[rf1Pos][rf2Pos] = CalcRefFlowTwo(hCumTwo3sub[rf1Pos][rf2Pos],task,rf1Pos,rf2Pos);
           if(!hFlowTwo3sub[rf1Pos][rf2Pos]) { Error(Form("vn{2} rf1_%c_rf2_%c (sample %d) not processed correctly!",sides[rf1Pos],sides[rf2Pos],iSample),"ProcessRefs"); return kFALSE; }
           hFlowTwo3sub[rf1Pos][rf2Pos]->SetName(Form("%s_sample%d", nameFlowTwo3sub[rf1Pos][rf2Pos].Data(), iSample));
@@ -1332,8 +1319,10 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
       TH1D* hCumFour3sub[3] = {nullptr};
       TH1D* hFlowFour3sub[3] = {nullptr};
-      TH1D* mergedAllCombi = nullptr;
-      TList* listAllCombi = new TList();
+
+      //lists for getting mean of all geometrical combinations
+      TList* listCumCombi = new TList();
+      TList* listFlowCombi = new TList();
 
       if(bDo3sub){
         for(Int_t twoPos(0); twoPos < 3; twoPos++){
@@ -1346,7 +1335,6 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
               if(rf1Pos == twoPos || rf2Pos == twoPos){
                 if(!profTwoSubtracting[0]) profTwoSubtracting[0] = pCorTwo3sub[rf1Pos][rf2Pos];
                 else profTwoSubtracting[1] = pCorTwo3sub[rf1Pos][rf2Pos];
-
               }
             }
           }
@@ -1354,29 +1342,31 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
           if(!hCumFour3sub[twoPos]) { Error(Form("cn{4} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
           hCumFour3sub[twoPos]->SetName(Form("%s_sample%d", nameCumFour3sub[twoPos].Data(), iSample));
           listCumFour3sub[twoPos]->Add(hCumFour3sub[twoPos]);
+          listCumCombi->Add(hCumFour3sub[twoPos]);
 
           hFlowFour3sub[twoPos] = CalcRefFlowFour(hCumFour3sub[twoPos], task);
           if(!hFlowFour3sub[twoPos]) { Error(Form("vn{4} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
           hFlowFour3sub[twoPos] ->SetName(Form("%s_sample%d", nameFlowFour3sub[twoPos].Data(), iSample));
           listFlowFour3sub[twoPos]->Add(hFlowFour3sub[twoPos]);
-
-          //making "merge" of all combinations
-          listAllCombi->Add(hFlowFour3sub[twoPos]);
-          if(!mergedAllCombi) {mergedAllCombi = (TH1D*) hFlowFour3sub[twoPos]->Clone(Form("%s_allC_sample%d",nameFlowAllCombi.Data(),iSample)); mergedAllCombi->Reset(); }
-          mergedAllCombi->Add(hFlowFour3sub[twoPos]);
+          listFlowCombi->Add(hFlowFour3sub[twoPos]);
         } // end twoPos
-        if(!mergedAllCombi) { Error("Merging of 'hFlowFourDif3sub' failed!","ProcessDirect"); return kFALSE; }
 
-        mergedAllCombi->Scale((Double_t) 1./3);
-        mergedAllCombi->SetName(Form("%s_merged_sample%d",nameFlowAllCombi.Data(),iSample));
+        TString desName = Form("%s_sample%d", nameCumFour3subAllGeomC.Data(),iSample);
+        TH1D* meanCumFour3sub = GetMean(hCumFour3sub, desName,3);
+        if(!meanCumFour3sub) { Error("Getting mean of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+        TH1D* meanCumFour3subError = DesampleList(listCumCombi, meanCumFour3sub, task, desName, kFALSE);
+        if(!meanCumFour3subError) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+        listCumFour3subAllGeomC->Add(meanCumFour3subError);
 
-        TString desName = Form("%s_sample%d", nameFlowAllCombi.Data(),iSample);
-        desAllCombi[iSample] = DesampleList(listAllCombi, mergedAllCombi, task, desName);
-        if(!desAllCombi[iSample]) { Error("Desampling vn{2} failed","ProcessDirect"); return kFALSE; }
-        desAllCombi[iSample]->SetName(Form("%s_des_sample%d",nameFlowAllCombi.Data(),iSample));
+        desName = Form("%s_sample%d", nameFlowFour3subAllGeomC.Data(),iSample);
+        TH1D* meanFlowFour3sub = CalcRefFlowFour(meanCumFour3sub, task);
+        if(!meanFlowFour3sub) { Error(Form("vn{4} 3 sub (sample %d) for all geometrical combinations has not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+        TH1D* meanFlowFour3subError = DesampleList(listFlowCombi, meanFlowFour3sub, task, desName, kFALSE);
+        if(!meanFlowFour3subError) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+        listFlowFour3subAllGeomC->Add(meanFlowFour3subError);
 
-        listMergedAllCombinations->Add(desAllCombi[iSample]);
-        delete listAllCombi;
+        delete listCumCombi;
+        delete listFlowCombi;
       }
     }
   } // end-for {iSample}: samples
@@ -1424,6 +1414,7 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(!hFlowTwoMerged) { Error(Form("vn{2} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
   hFlowTwoMerged->SetName(Form("%s_merged", nameFlowTwo.Data()));
 
+
   //3 subevents
   TH1D* hFlowTwoMerged3sub[3][3] = {nullptr};
   if(bDo3sub){
@@ -1459,7 +1450,13 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TProfile* pCorFour3subMerged[3] = {nullptr};
   TH1D* hCumFour3subMerged[3] = {nullptr};
   TH1D* hFlowFour3subMerged[3] = {nullptr};
+  TH1D* hCumFour3subMergedAll = nullptr;
+  TH1D* hFlowFour3subMergedAll = nullptr;
   if(bDoFour && bDo3sub){
+    //lists for getting mean of all geometrical combinations
+    TList* listCumCombi = new TList();
+    TList* listFlowCombi = new TList();
+
     for(Int_t twoPos(0); twoPos < 3; twoPos++){
       pCorFour3subMerged[twoPos] = (TProfile*) MergeListProfiles(listCorFour3sub[twoPos]);
       if(!pCorFour3subMerged[twoPos]) { Error("Merging of 'pCorFourMerged' failed!","ProcessRefs"); return kFALSE; }
@@ -1480,11 +1477,28 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       hCumFour3subMerged[twoPos] = CalcRefCumFour3sub(pCorFour3subMerged[twoPos], profTwoSubtracting[0], profTwoSubtracting[1], task, twoPos);
       if(!hCumFour3subMerged[twoPos]) { Error(Form("cn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
       hCumFour3subMerged[twoPos]->SetName(Form("%s_merged", nameCumFour3sub[twoPos].Data()));
+      listCumCombi->Add(hCumFour3subMerged[twoPos]);
 
       hFlowFour3subMerged[twoPos] = CalcRefFlowFour(hCumFour3subMerged[twoPos], task);
       if(!hFlowFour3subMerged[twoPos]) { Error(Form("vn{4} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
       hFlowFour3subMerged[twoPos]->SetName(Form("%s_merged", nameFlowFour3sub[twoPos].Data()));
+      listFlowCombi->Add(hFlowFour3subMerged[twoPos]);
     }
+
+    TString desName = Form("%s_mergedAllGeomC", nameCumFour3subAllGeomC.Data());
+    TH1D* meanCumFour3sub = GetMean(hCumFour3subMerged, desName,3);
+    if(!meanCumFour3sub) { Error("Getting mean of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+    hCumFour3subMergedAll = DesampleList(listCumCombi, meanCumFour3sub, task, desName, kFALSE);
+    if(!hCumFour3subMergedAll) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+
+    desName = Form("%s_mergedAllGeomC", nameFlowFour3subAllGeomC.Data());
+    TH1D* meanFlowFour3sub = CalcRefFlowFour(hCumFour3subMergedAll, task);
+    if(!meanFlowFour3sub) { Error("vn{4} 3 sub for all geometrical combinations has not processed correctly!","ProcessRefs"); return kFALSE; }
+    hFlowFour3subMergedAll = DesampleList(listFlowCombi, meanFlowFour3sub, task, desName, kFALSE);
+    if(!hFlowFour3subMergedAll) { Error("vn{4} (merged samples + geometrical cases) not processed correctly!","ProcessRefs"); return kFALSE; }
+
+    delete listCumCombi;
+    delete listFlowCombi;
   }
 
   // desampling
@@ -1501,6 +1515,10 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   TH1D* hFlowTwoDesampled = DesampleList(listFlowTwo, hFlowTwoMerged, task, nameFlowTwo, kTRUE); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
   if(!hFlowTwoDesampled) { Error("Desampling 'hFlowTwoDesampled' failed","ProcessRefs"); return kFALSE; }
   hFlowTwoDesampled->SetName(nameFlowTwo.Data());
+
+  Debug("Trying Jackknife two pc", "ProcessRefs");
+  TH1D* jack = DoJackknife(listFlowTwo, hFlowTwoMerged, task, nameFlowTwo);
+  if(!jack) { Error("Problem in jack!","ProcessRefs"); return kFALSE; }
 
   //3 subevents
   TH1D* hCorTwoDesampled3sub[3][3] = {nullptr};
@@ -1564,7 +1582,11 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   }
 
   if(bDoFour && bDo3sub){
+    TH1D* mergedAllCombiAllSamples = nullptr;
+
     for(Int_t twoPos(0); twoPos < 3; twoPos++){
+      Debug(Form("4pc, 3 sub: twoPos  %d",twoPos), "ProcessRefs");
+
       TH1D* hCorFourDesampled3sub = DesampleList(listCorFour3sub[twoPos], pCorFour3subMerged[twoPos]->ProjectionX(), task, nameCorFour3sub[twoPos]);
       if(!hCorFourDesampled3sub) { Error("Desampling 'hCorFourDesampled3sub' failed","ProcessRefs"); return kFALSE; }
       hCorFourDesampled3sub->SetName(nameCorFour3sub[twoPos].Data());
@@ -1577,24 +1599,41 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       if(!hFlowFourDesampled3sub) { Error("Desampling 'hFlowFourDesampled3sub' failed","ProcessRefs"); return kFALSE; }
       hFlowFourDesampled3sub->SetName(nameFlowFour3sub[twoPos].Data());
 
-      TH1D* mergedAllCombiAllSamples = nullptr;
-      for(Int_t iSample(0); iSample < nOfSamples; iSample++){
-        if(!mergedAllCombiAllSamples) {mergedAllCombiAllSamples = (TH1D*) desAllCombi[iSample]->Clone(Form("%s_allC",nameFlowAllCombi.Data())); mergedAllCombiAllSamples->Reset(); }
-        mergedAllCombiAllSamples->Add(desAllCombi[iSample]);
-      }
-      mergedAllCombiAllSamples->Scale((Double_t) 1./nOfSamples);
-      mergedAllCombiAllSamples->SetName(Form("%s_merged",nameFlowAllCombi.Data()));
-
-      TH1D* hDesampledAllC = DesampleList(listMergedAllCombinations, mergedAllCombiAllSamples, task, nameFlowAllCombi);
-      if(!hDesampledAllC) { Error("Desampling vn{4} failed","ProcessDirect"); return kFALSE; }
-      hDesampledAllC->SetName(nameFlowAllCombi.Data());
-
+    //   for(Int_t iSample(0); iSample < nOfSamples; iSample++){
+    //     if(!mergedAllCombiAllSamples) {mergedAllCombiAllSamples = (TH1D*) desAllCombi[iSample]->Clone(Form("%s_allC",nameFlowAllCombi.Data())); mergedAllCombiAllSamples->Reset(); }
+    //     mergedAllCombiAllSamples->Add(desAllCombi[iSample]);
+    //   }
+    //   mergedAllCombiAllSamples->Scale((Double_t) 1./nOfSamples);
+    //   mergedAllCombiAllSamples->SetName(Form("%s_merged",nameFlowAllCombi.Data()));
+    //
       ffOutputFile->cd();
       hCorFourDesampled3sub->Write();
       hCumFourDesampled3sub->Write();
       hFlowFourDesampled3sub->Write();
-      hDesampledAllC->Write();
     }
+
+    TH1D* hCumDesampledAllC = DesampleList(listCumFour3subAllGeomC, hCumFour3subMergedAll, task, nameCumFour3subAllGeomC);
+    if(!hCumDesampledAllC) { Error("Desampling cn{4} 3 sub failed","ProcessRefs"); return kFALSE; }
+    hCumDesampledAllC->SetName(nameCumFour3subAllGeomC.Data());
+
+    TH1D* hDesampledAllC = DesampleList(listFlowFour3subAllGeomC, hFlowFour3subMergedAll, task, nameFlowFour3subAllGeomC);
+    if(!hDesampledAllC) { Error("Desampling vn{4} 3 sub failed","ProcessRefs"); return kFALSE; }
+    hDesampledAllC->SetName(nameFlowFour3subAllGeomC.Data());
+
+    Debug("Trying Jackknife", "ProcessRefs");
+
+    TH1D* jackCum3sub = DoJackknife(listCumFour3subAllGeomC, hCumFour3subMergedAll, task, nameCumFour3subAllGeomC);
+    if(!jackCum3sub) { Error("Problem in jack - cn{4}!","ProcessRefs"); return kFALSE; }
+    jackCum3sub->SetName(nameCumFour3subAllGeomC.Data());
+
+    TH1D* jackFlow3sub = DoJackknife(listFlowFour3subAllGeomC, hFlowFour3subMergedAll, task, nameFlowFour3subAllGeomC);
+    if(!jackFlow3sub) { Error("Problem in jack - vn{4}!","ProcessRefs"); return kFALSE; }
+    jackFlow3sub->SetName(nameFlowFour3subAllGeomC.Data());
+
+
+    ffOutputFile->cd();
+    hCumDesampledAllC->Write();
+    hDesampledAllC->Write();
   }
 
   // Comment :: Not sure what this is about =====>
@@ -1650,7 +1689,7 @@ Bool_t ProcessUniFlow::ProcessSubtraction(FlowTask* task)
   }
   Debug(Form("Loaded lists : %s _ gap%s for all centralities.",GetSpeciesName(task->fSpecies).Data(),task->GetEtaGapString().Data()),"ProcessSubtraction");
   //different binning for mult histogram (fixed per 10)
-  for(Int_t binMult(0); binMult < 10; ++binMult)
+  for(Int_t binMult(0); binMult < 10; binMult++)
   {
     mult[binMult] = (TH2D*) flQACharged->FindObject(Form("fh2MeanMultCharged_Cent%d",binMult));
     if(!mult[binMult]) { Error(Form("Histogram 'MeanMultCharged_Cent%d' not found!",binMult),"ProcessSubtraction"); ffDesampleFile->ls(); return kFALSE; }
@@ -2200,16 +2239,17 @@ TH1D* ProcessUniFlow::CalcRefCumFour3sub(TProfile* hFourRef, TProfile* hTwoRef_s
     Double_t dErrInTwo1 = hTwoRef_sub1->GetBinError(iBin);
 
     Double_t dContInTwo2 = hTwoRef_sub2->GetBinContent(iBin);
-    Double_t dErrInTwo3 = hTwoRef_sub2->GetBinError(iBin);
+    Double_t dErrInTwo2 = hTwoRef_sub2->GetBinError(iBin);
 
     Double_t dContOut = dContInFour - 2.0 * dContInTwo1 * dContInTwo2;
     histCum->SetBinContent(iBin, dContOut);
 
     //not changed, errors from desampling!
     Double_t dErrOutFour = dErrInFour; // wrt. <4>
-    // Double_t dErrOutTwo = -4.0 * dContInTwo * dErrInTwo; // wrt. <2>
+    Double_t dErrOutTwo1 = -4.0 * dContInTwo1 * dErrInTwo2; // wrt. <2>
+    Double_t dErrOutTwo2 = -4.0 * dContInTwo2 * dErrInTwo1; // wrt. <2>
 
-    Double_t dErrOut = TMath::Power(dErrOutFour, 2.0);
+    Double_t dErrOut = TMath::Power(dErrOutFour, 2.0) + TMath::Power(dErrOutTwo1, 2.0) + TMath::Power(dErrOutTwo2, 2.0);
     histCum->SetBinError(iBin, TMath::Sqrt(dErrOut));
   }
 
@@ -2496,6 +2536,7 @@ TH1D* ProcessUniFlow::CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin
   return histFlow;
 }
 //_____________________________________________________________________________
+
 TH1D* ProcessUniFlow::CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel)
 {
   // Calculate differential v_n{4} out of d_n{4} & v_n{4} (!)
@@ -2617,6 +2658,10 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   TList* listCumTwo = new TList(); TString nameCumTwo = Form("%s_hCum2_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
   TList* listFlowTwo = new TList(); TString nameFlowTwo = Form("%s_hFlow2_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
 
+  TList* listCorFour = new TList(); TString nameCorFour = Form("%s_pCor4_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
+  TList* listCumFour = new TList(); TString nameCumFour = Form("%s_hCum4_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
+  TList* listFlowFour = new TList(); TString nameFlowFour = Form("%s_hFlow4_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
+
   //3 sub-events
   TList* listCorTwo3sub[3][3] = {nullptr};
   TList* listCumTwo3sub[3][3] = {nullptr};
@@ -2624,9 +2669,23 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   TString nameCorTwo3sub[3][3] = {""};
   TString nameCumTwo3sub[3][3] = {""};
   TString nameFlowTwo3sub[3][3] = {""};
+  TList* listCorFour3sub[3][3] = {nullptr};
+  TList* listCumFour3sub[3][3] = {nullptr};
+  TList* listFlowFour3sub[3][3] = {nullptr};
+  TString nameCorFour3sub[3][3] = {""};
+  TString nameCumFour3sub[3][3] = {""};
+  TString nameFlowFour3sub[3][3] = {""};
   if(bDo3sub){
     for(Int_t poiPos(0); poiPos < 3; poiPos++){
       for(Int_t rfPos(0); rfPos < 3; rfPos++){
+        Int_t twoPos = rfPos;
+        nameCorFour3sub[poiPos][twoPos] =  Form("%s_pCor4_harm%d_gap(%s,%s)_cent%d_3sub_poi_%c_two_%c", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iMultBin,sides[poiPos],sides[twoPos]);
+        nameCumFour3sub[poiPos][twoPos] =  Form("%s_hCum4_harm%d_gap(%s,%s)_cent%d_3sub_poi_%c_two_%c", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iMultBin,sides[poiPos],sides[twoPos]);
+        nameFlowFour3sub[poiPos][twoPos] =  Form("%s_hFlow4_harm%d_gap(%s,%s)_cent%d_3sub_poi_%c_two_%c", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iMultBin,sides[poiPos],sides[twoPos]);
+        listCorFour3sub[poiPos][twoPos] = new TList();
+        listCumFour3sub[poiPos][twoPos] = new TList();
+        listFlowFour3sub[poiPos][twoPos] = new TList();
+
         if(poiPos == rfPos) continue;
         nameCorTwo3sub[poiPos][rfPos] =  Form("%s_pCor2_harm%d_gap(%s,%s)_cent%d_3sub_poi_%c_rf_%c", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iMultBin,sides[poiPos],sides[rfPos]);
         nameCumTwo3sub[poiPos][rfPos] =  Form("%s_hCum2_harm%d_gap(%s,%s)_cent%d_3sub_poi_%c_rf_%c", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iMultBin,sides[poiPos],sides[rfPos]);
@@ -2638,31 +2697,11 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     }
   }
 
-  TList* listCorFour = new TList(); TString nameCorFour = Form("%s_pCor4_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
-  TList* listCumFour = new TList(); TString nameCumFour = Form("%s_hCum4_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
-  TList* listFlowFour = new TList(); TString nameFlowFour = Form("%s_hFlow4_harm%d_gap%s_cent%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),iMultBin);
+  TList* listCumFour3subAllGeomC = new TList();
+  TString nameCumFour3subAllGeomC = Form("%s_hCum4_harm%d_gap(%s,%s)_cent%d_3sub",GetSpeciesName(task->fSpecies).Data(),task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(), iMultBin);
 
-  //3 sub-events
-  TList* listCorFour3sub[3][3] = {nullptr};
-  TList* listCumFour3sub[3][3] = {nullptr};
-  TList* listFlowFour3sub[3][3] = {nullptr};
-  TList* listMergedAllCombinations = new TList();
-  TString nameCorFour3sub[3][3] = {""};
-  TString nameCumFour3sub[3][3] = {""};
-  TString nameFlowFour3sub[3][3] = {""};
-  TString nameFlowAllCombi = Form("%s_hFlow4_harm%d_gap(%s,%s)_cent%d_3sub", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(), task->GetEtaGapString().Data(), iMultBin);
-  if(bDoFour && bDo3sub){
-    for(Int_t poiPos(0); poiPos < 3; poiPos++){
-      for(Int_t twoPos(0); twoPos < 3; twoPos++){
-        nameCorFour3sub[poiPos][twoPos] =  Form("%s_pCor4_harm%d_gap(%s,%s)_cent%d_3sub_poi_%c_two_%c", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iMultBin,sides[poiPos],sides[twoPos]);
-        nameCumFour3sub[poiPos][twoPos] =  Form("%s_hCum4_harm%d_gap(%s,%s)_cent%d_3sub_poi_%c_two_%c", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iMultBin,sides[poiPos],sides[twoPos]);
-        nameFlowFour3sub[poiPos][twoPos] =  Form("%s_hFlow4_harm%d_gap(%s,%s)_cent%d_3sub_poi_%c_two_%c", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iMultBin,sides[poiPos],sides[twoPos]);
-        listCorFour3sub[poiPos][twoPos] = new TList();
-        listCumFour3sub[poiPos][twoPos] = new TList();
-        listFlowFour3sub[poiPos][twoPos] = new TList();
-      }
-    }
-  }
+  TList* listFlowFour3subAllGeomC = new TList();
+  TString nameFlowFour3subAllGeomC = Form("%s_hFlow4_harm%d_gap(%s,%s)_cent%d_3sub", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(), task->GetEtaGapString().Data(), iMultBin);
 
   Debug("Processing samples","ProcessDirect");
 
@@ -2689,6 +2728,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   TProfile2D* p2CorFourDif3sub[3][3] = {nullptr};
   TProfile* pCorFourDif3sub[3][3] = {nullptr};
 
+  // TO DO: can be removed?
   TH1D* desAllCombi[10] = {nullptr};
   if(nOfSamples > 10 && bDoFour && bDo3sub) { Error(Form("Number of samples: %d is more than 10! Mixing of combinations when working with v24 3 sub implemented just for 10 samples! \n !!Change here!!",nOfSamples),"ProcessDirect"); return kFALSE; }
 
@@ -2930,17 +2970,22 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     }
 
     if(bDoFour && bDo3sub){
-      TH1D* mergedAllCombi = nullptr;
-      TList* listAllCombi = new TList();
+      TList* listCumCombiAll = new TList();
+      TList* listFlowCombiAll = new TList();
+      TH1D* hCumFour3subAll[3] = {nullptr};
 
       Debug("Processing bDoFour && bDo3sub", "ProcessDirect");
-      for(Int_t poiPos(0); poiPos < 3; poiPos++){
-        for(Int_t twoPos(0); twoPos < 3; twoPos++){
-          // loading reference vn{4}
-          TH1D* hFlowRefFour3sub = (TH1D*) listRefFour3sub[twoPos]->FindObject(Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub_two_%c_sample%d",task->fHarmonics,task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),sides[twoPos],iSample));
-          if(!hFlowRefFour3sub) { Error(Form("Histo 'hFlowRefFour' (sample %d) does not exists for two %c",iSample,sides[twoPos]),"ProcessDirect"); listRefFour3sub[twoPos]->ls(); return kFALSE; }
+      for(Int_t twoPos(0); twoPos < 3; twoPos++){
+        TList* listCumCombi = new TList();
+        TList* listFlowCombi = new TList();
+        TH1D* hCumFour3sub[3] = {nullptr};
+        TH1D* hFlowFour3subAll[3] = {nullptr};
+        TH1D* hFlowRefFour3sub[3] = {nullptr};
 
-          TH1D* hCumFourDif3sub = nullptr;
+        for(Int_t poiPos(0); poiPos < 3; poiPos++){
+          // loading reference vn{4}
+          hFlowRefFour3sub[twoPos] = (TH1D*) listRefFour3sub[twoPos]->FindObject(Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub_two_%c_sample%d",task->fHarmonics,task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),sides[twoPos],iSample));
+          if(!hFlowRefFour3sub[twoPos]) { Error(Form("Histo 'hFlowRefFour' (sample %d) does not exists for two %c",iSample,sides[twoPos]),"ProcessDirect"); listRefFour3sub[twoPos]->ls(); return kFALSE; }
 
           if(poiPos != twoPos){
             Debug("Processing poiPos != twoPos", "ProcessDirect");
@@ -2953,10 +2998,11 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
             if(!pCorTwoRef3sub) { Error(Form("Profile 'pCorTwoRef' (sample %d, poi %c, two %c) does not exists",iSample, sides[twoPos],sides[third]),"ProcessDirect");  listRefCorTwo3sub[poiPos][twoPos]->ls(); return kFALSE; }
 
             // dn{4}
-            hCumFourDif3sub = CalcDifCumFour(pCorFourDif3sub[poiPos][twoPos], pCorTwoDif3sub[poiPos][twoPos], pCorTwoRef3sub, iMultBin+1, task, bCorrelated);
-            if(!hCumFourDif3sub) { Error(Form("dn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
-            hCumFourDif3sub->SetName(Form("%s_sample%d", nameCumFour3sub[poiPos][twoPos].Data(), iSample));
-            listCumFour3sub[poiPos][twoPos]->Add(hCumFourDif3sub);
+            hCumFour3sub[poiPos] = CalcDifCumFour(pCorFourDif3sub[poiPos][twoPos], pCorTwoDif3sub[poiPos][twoPos], pCorTwoRef3sub, iMultBin+1, task, bCorrelated);
+            if(!hCumFour3sub[poiPos]) { Error(Form("dn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+            hCumFour3sub[poiPos]->SetName(Form("%s_sample%d", nameCumFour3sub[poiPos][twoPos].Data(), iSample));
+            listCumFour3sub[poiPos][twoPos]->Add(hCumFour3sub[poiPos]);
+            listCumCombi->Add(hCumFour3sub[poiPos]);
           } // end poiPos != twoPos
           else {
             Debug("Processing poiPos == twoPos", "ProcessDirect");
@@ -2977,37 +3023,60 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
             Debug("Loaded ref", "ProcessDirect");
 
             // dn{4}
-            hCumFourDif3sub = CalcDifCumFour3sub(pCorFourDif3sub[poiPos][twoPos], pCorTwoDif3sub[poiPos][indexUp], pCorTwoDif3sub[poiPos][third], pCorTwoRef2, pCorTwoRef1, iMultBin+1, task);
-            if(!hCumFourDif3sub) { Error(Form("dn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
-            hCumFourDif3sub->SetName(Form("%s_sample%d", nameCumFour3sub[poiPos][twoPos].Data(), iSample));
-            listCumFour3sub[poiPos][twoPos]->Add(hCumFourDif3sub);
+            hCumFour3sub[poiPos] = CalcDifCumFour3sub(pCorFourDif3sub[poiPos][twoPos], pCorTwoDif3sub[poiPos][indexUp], pCorTwoDif3sub[poiPos][third], pCorTwoRef2, pCorTwoRef1, iMultBin+1, task);
+            if(!hCumFour3sub[poiPos]) { Error(Form("dn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+            hCumFour3sub[poiPos]->SetName(Form("%s_sample%d", nameCumFour3sub[poiPos][twoPos].Data(), iSample));
+            listCumFour3sub[poiPos][twoPos]->Add(hCumFour3sub[poiPos]);
+            listCumCombi->Add(hCumFour3sub[poiPos]);
 
             Debug("4p 3 sub: cumulant calculated", "ProcessDirect");
           } // end poiPos == twoPos
 
           // v'n{4}
-          TH1D* hFlowFourDif3sub = CalcDifFlowFour(hCumFourDif3sub, hFlowRefFour3sub, iMultBin+1, task, bCorrelated);
-          if(!hFlowRefFour3sub) { Error(Form("vn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
-          hFlowFourDif3sub->SetName(Form("%s_sample%d", nameFlowFour3sub[poiPos][twoPos].Data(), iSample));
-          listFlowFour3sub[poiPos][twoPos]->Add(hFlowFourDif3sub);
+          TH1D* hFlowFour3sub = CalcDifFlowFour(hCumFour3sub[poiPos], hFlowRefFour3sub[twoPos], iMultBin+1, task, bCorrelated);
+          if(!hFlowFour3sub) { Error(Form("vn{4} (sample %d) not processed correctly!",iSample),"ProcessDirect"); return kFALSE; }
+          hFlowFour3sub->SetName(Form("%s_sample%d", nameFlowFour3sub[poiPos][twoPos].Data(), iSample));
+          listFlowFour3sub[poiPos][twoPos]->Add(hFlowFour3sub);
+          listFlowCombi->Add(hFlowFour3sub);
 
-          //combination of all positions of poi & 2pc
-          listAllCombi->Add(hFlowFourDif3sub);
-          if(!mergedAllCombi) {mergedAllCombi = (TH1D*) hFlowFourDif3sub->Clone(Form("%s_allC_sample%d",nameFlowAllCombi.Data(),iSample)); mergedAllCombi->Reset(); }
-          mergedAllCombi->Add(hFlowFourDif3sub);
-        }
-      }
-      if(!mergedAllCombi) { Error("Merging of 'hFlowFourDif3sub' failed!","ProcessDirect"); return kFALSE; }
+        } //end poiPos
+        TString desName = Form("%s_sample%d_twoPos_%c", nameCumFour3subAllGeomC.Data(),iSample,sides[twoPos]);
+        TH1D* meanCumFour3sub = GetMean(hCumFour3sub, desName,3);
+        if(!meanCumFour3sub) { Error("Getting mean of geometrical combinations dn{4} with 3 sub failed","ProcessDirect"); return kFALSE; }
+        hCumFour3subAll[twoPos] = DesampleList(listCumCombi, meanCumFour3sub, task, desName, kFALSE);
+        if(!hCumFour3subAll[twoPos]) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessDirect"); return kFALSE; }
+        listCumCombiAll->Add(hCumFour3subAll[twoPos]);
 
-      mergedAllCombi->Scale((Double_t) 1./9);
-      mergedAllCombi->SetName(Form("%s_merged_sample%d",nameFlowAllCombi.Data(),iSample));
-      TString desName = Form("%s_sample%d", nameFlowAllCombi.Data(),iSample);
-      desAllCombi[iSample] = DesampleList(listAllCombi, mergedAllCombi, task, desName);
-      if(!desAllCombi[iSample]) { Error("Desampling vn{2} failed","ProcessDirect"); return kFALSE; }
-      desAllCombi[iSample]->SetName(Form("%s_des_sample%d",nameFlowAllCombi.Data(),iSample));
+        desName = Form("%s_sample%d_twoPos_%c", nameFlowFour3subAllGeomC.Data(),iSample,sides[twoPos]);
+        TH1D* meanFlowFour3sub = CalcDifFlowFour(meanCumFour3sub, hFlowRefFour3sub[twoPos], iMultBin+1, task, bCorrelated);
+        if(!meanFlowFour3sub) { Error(Form("vn{4} 3 sub (sample %d) for all geometrical combinations has not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+        hFlowFour3subAll[twoPos] = DesampleList(listFlowCombi, meanFlowFour3sub, task, desName, kFALSE);
+        if(!hFlowFour3subAll[twoPos]) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+        listFlowCombiAll->Add(hFlowFour3subAll[twoPos]);
 
-      listMergedAllCombinations->Add(desAllCombi[iSample]);
-      delete listAllCombi;
+        delete listCumCombi;
+        delete listFlowCombi;
+      } //end twoPos
+
+      TString desName = Form("%s_sample%d", nameCumFour3subAllGeomC.Data(),iSample);
+      TH1D* meanCumFour3sub = GetMean(hCumFour3subAll, desName,3);
+      if(!meanCumFour3sub) { Error("Getting mean of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+      TH1D* meanCumFour3subError = DesampleList(listCumCombiAll, meanCumFour3sub, task, desName, kFALSE);
+      if(!meanCumFour3subError) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+      listCumFour3subAllGeomC->Add(meanCumFour3subError);
+
+      TH1D* hFlowRefFour3subMean = (TH1D*) ffDesampleFile->Get(Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub_sample%d_desampled",task->fHarmonics,task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),iSample));
+      if(!hFlowRefFour3subMean) { Error(Form("Histo 'hFlowRefFour' (sample %d) does not exists",iSample),"ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+
+      desName = Form("%s_sample%d", nameFlowFour3subAllGeomC.Data(),iSample);
+      TH1D* meanFlowFour3sub = CalcDifFlowFour(meanCumFour3sub, hFlowRefFour3subMean, iMultBin+1, task, bCorrelated);
+      if(!meanFlowFour3sub) { Error(Form("vn{4} 3 sub (sample %d) for all geometrical combinations has not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+      TH1D* meanFlowFour3subError = DesampleList(listFlowCombiAll, meanFlowFour3sub, task, desName, kFALSE);
+      if(!meanFlowFour3subError) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+      listFlowFour3subAllGeomC->Add(meanFlowFour3subError);
+
+      delete listCumCombiAll;
+      delete listFlowCombiAll;
     } //end v'n{4} with 3 sub-events
   } // end-for {iSample} : loop over samples
 
@@ -3094,13 +3163,28 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   TProfile* pCorFourMerged3sub[3][3] = {nullptr};
   TH1D* hCumFourMerged3sub[3][3] = {nullptr};
   TH1D* hFlowFourMerged3sub[3][3] = {nullptr};
-  if(bDoFour && bDo3sub){
-    for(Int_t poiPos(0); poiPos < 3; poiPos++){
-      for(Int_t twoPos(0); twoPos < 3; twoPos++){
-        // loading reference vn{4} merged
-        TH1D* hFlowRefFourMerged3sub = (TH1D*) ffOutputFile->Get(Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub_two_%c",task->fHarmonics,task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),sides[twoPos]));
-        if(!hFlowRefFourMerged3sub) { Error(Form("Histo 'hFlowRefFour' (merged) does not exists for two %c",sides[twoPos]),"ProcessDirect"); ffOutputFile->ls(); return kFALSE; }
+  TH1D* hCumFour3subAll[3] = {nullptr};
+  TH1D* hFlowFour3subAll[3] = {nullptr};
 
+  TH1D* hCumFour3subMergedAll = nullptr;
+  TH1D* hFlowFour3subMergedAll = nullptr;
+  TH1D* hFlowRefFour3subMergedAll = nullptr;
+
+  if(bDoFour && bDo3sub){
+    TList* listCumCombiAll = new TList();
+    TList* listFlowCombiAll = new TList();
+
+    Debug("Processing bDoFour && bDo3sub: MERGING", "ProcessDirect");
+    for(Int_t twoPos(0); twoPos < 3; twoPos++){
+      TList* listCumCombi = new TList();
+      TList* listFlowCombi = new TList();
+      TH1D* hCumFour3sub[3] = {nullptr};
+
+      // loading reference vn{4} merged
+      TH1D* hFlowRefFourMerged3sub = (TH1D*) ffOutputFile->Get(Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub_two_%c",task->fHarmonics,task->GetEtaGapString().Data(),task->GetEtaGapString().Data(),sides[twoPos]));
+      if(!hFlowRefFourMerged3sub) { Error(Form("Histo 'hFlowRefFour' (merged) does not exists for two %c",sides[twoPos]),"ProcessDirect"); ffOutputFile->ls(); return kFALSE; }
+
+      for(Int_t poiPos(0); poiPos < 3; poiPos++){
         // merging <<4>>
         pCorFourMerged3sub[poiPos][twoPos] = (TProfile*) MergeListProfiles(listCorFour3sub[poiPos][twoPos]);
         if(!pCorFourMerged3sub[poiPos][twoPos]) { Error("Merging of 'pCorFourMerged' failed!","ProcessDirect"); return kFALSE; }
@@ -3156,8 +3240,50 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
         // v'n{4}
         hFlowFourMerged3sub[poiPos][twoPos] = CalcDifFlowFour(hCumFourMerged3sub[poiPos][twoPos], hFlowRefFourMerged3sub, iMultBin+1, task, bCorrelated);            if(!hFlowFourMerged3sub[poiPos][twoPos]) { Error("vn{4} (merged) not processed correctly!","ProcessDirect"); return kFALSE; }
         hFlowFourMerged3sub[poiPos][twoPos]->SetName(Form("%s_merged", nameFlowFour3sub[poiPos][twoPos].Data()));
-      }
-    }
+        listFlowCombi->Add(hFlowFourMerged3sub[poiPos][twoPos]);
+
+        //copy for merging geometrical combinations
+        hCumFour3sub[poiPos] =  (TH1D*) hCumFourMerged3sub[poiPos][twoPos]->Clone(Form("%s_merging_%d_%d",nameCumFour3sub[poiPos][twoPos].Data(),poiPos,twoPos));
+        listCumCombi->Add(hCumFour3sub[poiPos]);
+      } // end poiPos
+
+      TString desName = Form("%s_twoPos_%c", nameCumFour3subAllGeomC.Data(),sides[twoPos]);
+      TH1D* meanCumFour3sub = GetMean(hCumFour3sub, desName,3);
+      if(!meanCumFour3sub) { Error("Getting mean of geometrical combinations dn{4} with 3 sub failed","ProcessDirect"); return kFALSE; }
+      hCumFour3subAll[twoPos] = DesampleList(listCumCombi, meanCumFour3sub, task, desName, kFALSE);
+      if(!hCumFour3subAll[twoPos]) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessDirect"); return kFALSE; }
+      listCumCombiAll->Add(hCumFour3subAll[twoPos]);
+
+      desName = Form("%s_twoPos_%c", nameFlowFour3subAllGeomC.Data(),sides[twoPos]);
+      TH1D* meanFlowFour3sub = CalcDifFlowFour(meanCumFour3sub, hFlowRefFourMerged3sub, iMultBin+1, task, bCorrelated);
+      if(!meanFlowFour3sub) { Error(Form("vn{4} 3 sub for all geometrical combinations has not processed correctly!"),"ProcessRefs"); return kFALSE; }
+      hFlowFour3subAll[twoPos] = DesampleList(listFlowCombi, meanFlowFour3sub, task, desName, kFALSE);
+      if(!hFlowFour3subAll[twoPos]) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+      listFlowCombiAll->Add(hFlowFour3subAll[twoPos]);
+
+      delete listCumCombi;
+      delete listFlowCombi;
+    } // end two Pos
+
+    hFlowRefFour3subMergedAll = (TH1D*) ffOutputFile->Get(Form("Refs_hFlow4_harm%d_gap(%s,%s)_3sub",task->fHarmonics,task->GetEtaGapString().Data(),task->GetEtaGapString().Data()));
+    if(!hFlowRefFour3subMergedAll) { Error(Form("Histo 'hFlowRefFour' (merged) does not exists"),"ProcessDirect"); ffOutputFile->ls(); return kFALSE; }
+
+    TString desName = Form("%s_mean", nameCumFour3subAllGeomC.Data());
+    TH1D* meanCumFour3sub = GetMean(hCumFour3subAll, desName,3);
+    if(!meanCumFour3sub) { Error("Getting mean of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+    hCumFour3subMergedAll = DesampleList(listCumCombiAll, meanCumFour3sub, task, desName, kFALSE);
+    if(!hCumFour3subMergedAll) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+    listCumFour3subAllGeomC->Add(hCumFour3subMergedAll);
+
+    desName = Form("%s_mean", nameFlowFour3subAllGeomC.Data());
+    TH1D* meanFlowFour3sub = CalcDifFlowFour(hCumFour3subMergedAll, hFlowRefFour3subMergedAll, iMultBin+1, task, bCorrelated);
+    if(!meanFlowFour3sub) { Error(Form("vn{4} 3 sub  for all geometrical combinations has not processed correctly!"),"ProcessRefs"); return kFALSE; }
+    hFlowRefFour3subMergedAll = DesampleList(listFlowCombiAll, meanFlowFour3sub, task, desName, kFALSE);
+    if(!hFlowRefFour3subMergedAll) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+    listFlowFour3subAllGeomC->Add(hFlowRefFour3subMergedAll);
+
+    delete listCumCombiAll;
+    delete listFlowCombiAll;
   }
 
   Debug("Desampling","ProcessDirect");
@@ -3191,7 +3317,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   if(bDoFour)
   {
     Debug(Form("<<4'>>: Number of samples in list pre-merging: %d",listCorFour->GetEntries()),"ProcessDirect");
-    TH1D* hDesampledFour_Cor = DesampleList(listCorFour, pCorFourMerged->ProjectionX(), task, nameCorFour, kTRUE); // skipping desampling for structure
+    TH1D* hDesampledFour_Cor = DesampleList(listCorFour, pCorFourMerged->ProjectionX(), task, nameCorFour); // skipping desampling for structure
     if(!hDesampledFour_Cor) { Error("Desampling dn{4} failed","ProcessDirect"); return kFALSE; }
     hDesampledFour_Cor->SetName(nameCorFour.Data());
 
@@ -3204,6 +3330,9 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     TH1D* hDesampledFour = DesampleList(listFlowFour, hFlowFourMerged, task, nameFlowFour);
     if(!hDesampledFour) { Error("Desampling vn{4} failed","ProcessDirect"); return kFALSE; }
     hDesampledFour->SetName(nameFlowFour.Data());
+
+    TH1D* jack = DoJackknife(listFlowFour, hFlowFourMerged, task, nameFlowFour);
+    if(!jack) { Error("Jackknife method vn{4} failed","ProcessDirect"); return kFALSE; }
 
     // saving to output file & cleaning
     ffOutputFile->cd();
@@ -3250,8 +3379,9 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   }
 
   if(bDoFour && bDo3sub){
-    for(Int_t poiPos(0); poiPos < 3 ; poiPos++){
-      for(Int_t twoPos(0); twoPos < 3; twoPos++){
+    TH1D* mergedAllCombiAllSamples = nullptr;
+    for(Int_t twoPos(0); twoPos < 3 ; twoPos++){
+      for(Int_t poiPos(0); poiPos < 3; poiPos++){
         Debug(Form("<<4'>> 3 sub (poi: %c, two: %c): Number of samples in list pre-merging: %d",sides[poiPos],sides[twoPos],listCorFour3sub[poiPos][twoPos]->GetEntries()),"ProcessDirect");
 
         TH1D* hDesampledFour_Cor3sub = DesampleList(listCorFour3sub[poiPos][twoPos], pCorFourMerged3sub[poiPos][twoPos]->ProjectionX(), task, nameCorFour3sub[poiPos][twoPos]);
@@ -3272,38 +3402,35 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
         Debug("Desampling flow 4 done","ProcessDirect");
         Debug("Merging & desampling flow for all combinations","ProcessDirect");
 
-        TH1D* mergedAllCombiAllSamples = nullptr;
-        for(Int_t iSample(0); iSample < nOfSamples; iSample++){
-          if(!mergedAllCombiAllSamples) {mergedAllCombiAllSamples = (TH1D*) desAllCombi[iSample]->Clone(Form("%s_allC",nameFlowAllCombi.Data())); mergedAllCombiAllSamples->Reset(); }
-          mergedAllCombiAllSamples->Add(desAllCombi[iSample]);
-        }
-        mergedAllCombiAllSamples->Scale((Double_t) 1./nOfSamples);
-        mergedAllCombiAllSamples->SetName(Form("%s_merged",nameFlowAllCombi.Data()));
-
-        TH1D* hDesampledAllC = DesampleList(listMergedAllCombinations, mergedAllCombiAllSamples, task, nameFlowAllCombi);
-        if(!hDesampledAllC) { Error("Desampling vn{4} failed","ProcessDirect"); return kFALSE; }
-        hDesampledAllC->SetName(nameFlowAllCombi.Data());
-
         ffOutputFile->cd();
         if(fSaveInterSteps) {
           hDesampledFour_Cor3sub->Write();
           hDesampledFour_Cum3sub->Write();
         }
         hDesampledFour3sub->Write();
-        hDesampledAllC->Write();
-
-        // ffOutputFile->cd();
-        // if(fSaveInterSteps) {
-        //   hDesampledFour_Cor3sub->Write();
-        //   hDesampledFour_Cum3sub->Write();
-        // }
-        // hDesampledFour3sub->Write();
 
         delete hDesampledFour_Cor3sub;
         delete hDesampledFour_Cum3sub;
         delete hDesampledFour3sub;
       }
+    } // end poiPos & twoPos
+
+    TH1D* hDesampledFourCum3sub = DesampleList(listCumFour3subAllGeomC, hCumFour3subMergedAll, task, nameCumFour3subAllGeomC, kFALSE);
+    if(!hDesampledFourCum3sub) { Error("Desampling dn{4} failed","ProcessDirect"); return kFALSE; }
+    hDesampledFourCum3sub->SetName(nameCumFour3subAllGeomC.Data());
+
+    TH1D* hDesampledFourFlow3sub = DesampleList(listFlowFour3subAllGeomC, hFlowRefFour3subMergedAll, task, nameFlowFour3subAllGeomC, kFALSE);
+    if(!hDesampledFourFlow3sub) { Error("Desampling dn{4} failed","ProcessDirect"); return kFALSE; }
+    hDesampledFourFlow3sub->SetName(nameFlowFour3subAllGeomC.Data());
+
+    ffOutputFile->cd();
+    if(fSaveInterSteps) {
+      hDesampledFourCum3sub->Write();
     }
+    hDesampledFourFlow3sub->Write();
+
+    delete hDesampledFourCum3sub;
+    delete hDesampledFourFlow3sub;
   }
 
   delete listCorTwo;
@@ -3313,6 +3440,9 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   delete listCorFour;
   delete listCumFour;
   delete listFlowFour;
+
+  delete listCumFour3subAllGeomC;
+  delete listFlowFour3subAllGeomC;
 
   for(Int_t poiPos(0); poiPos < 3; poiPos++){
     for(Int_t rfPos(0); rfPos < 3; rfPos++){
@@ -3334,12 +3464,22 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
   if(fFlowFitCumulants) { fFlowFitCumulants = kFALSE; Warning("Fitting cumulants currently not available! WIP! switching flag off"); }
 
+  Bool_t bDo3sub = task->Has3sub();
+  Bool_t bCorrelated = 0; // task->fConsCorr correlation of uncertainty check
+
   // new naming convention for input histos (from FlowTask)
   TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
   TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
-  if(task->HasGap()) {
-    sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
-    sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
+
+  if(task->HasGap()){
+    if(!bDo3sub){
+      sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
+      sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
+    }
+    else {
+      sProfTwoName += Form("_3sub(%.2g,%.2g)",task->fEtaGap,task->fEtaGapSecond);
+      sProfFourName += Form("_3sub(%.2g,%.2g)",task->fEtaGap,task->fEtaGapSecond);
+    }
   }
 
   TString sSpeciesName = GetSpeciesName(task->fSpecies);
@@ -3350,11 +3490,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
   if(!PrepareSlicesNew(task,sProfTwoName,kTRUE)) { Error(Form("PrepareSlicesNew '%s' failed!",sProfTwoName.Data()),"ProcessReconstructed"); return kFALSE; }
   if(task->fCumOrderMax >= 4 && !PrepareSlicesNew(task,sProfFourName,kFALSE)) { Error(Form("PrepareSlicesNew for '%s' failed!",sProfFourName.Data()),"ProcessReconstructed"); return kFALSE; }
-
-
-  // things for later
-
-  Bool_t bCorrelated = 0;
 
   // Loading list where reference flow samples are stored
   TList* listRefCorTwo = (TList*) ffDesampleFile->Get(Form("Refs_pCor2_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
@@ -3691,6 +3826,79 @@ TH1* ProcessUniFlow::Merge(TH1* a, TH1* b)
     TH1* merged = MergeListProfiles(list);
     delete list;
     return merged;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::DoJackknife(TList* list, TH1D* merged, FlowTask* task, TString name)
+{
+  //jackknife process
+  //test
+
+  if(!list) { Error("List does not valid","DoJackknife"); return nullptr; }
+  if(!merged) { Error("Merged histogram not valid","DoJackknife"); return nullptr; }
+  if(!task) { Error("FlowTask does not exists","DoJackknife"); return nullptr; }
+  if(list->GetEntries() < 1) { Error("List is empty","DoJackknife"); return nullptr; }
+  if(list->GetEntries() != task->fNumSamples) { Warning("Number of list entries is different from task number of samples","DoJackknife"); }
+
+  Debug(Form("Number of samples in list pre-jackknife: %d",list->GetEntries()),"DoJackknife");
+  Debug(Form("Name: %s",name.Data()),"DoJackknife");
+
+  ffJackFile->cd();
+  list->SetName(Form("%s_list",name.Data()));
+  list->Write(0,TObject::kSingleKey);
+  merged->SetName(Form("%s_merged",name.Data()));
+  merged->Write();
+
+  if(task->fNumSamples == 1) { Warning("Returning merged directly!", "DoJackknife"); return merged;}
+  if(task->fNumSamples != 10) { Error("Code for Jackknife ready only for 10 samples! Terminating!", "DoJackknife"); return nullptr; }
+
+  TH1D* temp[10] = {nullptr};
+
+  for(Int_t iSample(0); iSample < task->fNumSamples; iSample++){
+    temp[iSample] = (TH1D*) list->At(iSample);
+    if(!temp[iSample]) { Error(Form("Histo 'temp' (sample %d) not found in list",iSample),"DoJackknife"); return nullptr; }
+  }
+
+  TH1D* final = (TH1D*) merged->Clone(Form("%s_final",name.Data()));
+  final->Sumw2();
+
+  //skipping underflow & overflow
+  for(Int_t iBin(1); iBin < merged->GetNbinsX()+1; iBin++){
+    Double_t iCount = 0.0;
+    Double_t dValue = 0.0;
+    Double_t centralValue = merged->GetBinContent(iBin);
+
+    for(Int_t i(0); i < task->fNumSamples; i++){
+      for(Int_t j(i+1); j < task->fNumSamples; j++){
+
+        //obtaining one of 45 combinations
+        Double_t dSum = 0.0;
+        Double_t dSumWeights = 0.0;
+        for(Int_t merge(0); merge < task->fNumSamples; merge++){
+          if(merge == i || merge == j) continue;
+          Double_t dContent = temp[merge]->GetBinContent(iBin);
+          Double_t dError = temp[merge]->GetBinError(iBin);
+          Double_t dWeight = 0;
+          if(dError > 0) dWeight = TMath::Power(1./dError,2.0);
+          if(dWeight > 0) {
+            dSum += dContent*dWeight;
+            dSumWeights += dWeight;
+          }
+        } // end one of combinations
+        Double_t help = 0;
+        if(dSumWeights > 0) help = dSum/dSumWeights - centralValue;
+        else Error(Form("Problem in bin %d, merging without histograms %d & %d. dSum: %f, dSumWeights: %f. Central value: %f", iBin, i, j, dSum, dSumWeights, centralValue), "DoJackknife");
+        dValue += TMath::Power(help, 2.0);
+        iCount += 1.0;
+      }
+    }
+    Double_t finalValue = 9999999999.9;
+    if(iCount > 0) finalValue = (iCount - 1)*dValue/iCount;
+    final->SetBinError(iBin, TMath::Sqrt(finalValue));
+  }
+  ffJackFile->cd();
+  final->Write();
+
+  return final;
 }
 //_____________________________________________________________________________
 TH1D* ProcessUniFlow::DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling)
@@ -4059,9 +4267,17 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TString histName, Bool_t
   // preparing flow slices
   TH1* prof = nullptr;
 
+  /*
+  Z comment:
+  this is not necessary as in AliAnalysisTaskUniFlow
+  reconstructed particles are not sampled
+  -> can just load sample0
+  */
+  if(task->fNumSamples > 1) Warning(Form("Number of samples %d, expected 1.", task->fNumSamples),"PrepareSlicesNew");
+
   TList* listPos = LoadSamples(inputList, Form("%s_Pos",histName.Data()), task->fNumSamples);
   TH1* profPos = (TH1*) MergeListProfiles(listPos);
-  if(!profPos) { Error(Form("Positive profile '%s_Neg' not found!",histName.Data()),"PrepareSlicesNew"); return kFALSE; }
+  if(!profPos) { Error(Form("Positive profile '%s_Pos' not found!",histName.Data()),"PrepareSlicesNew"); return kFALSE; }
   prof = profPos;
 
   if(task->fMergePosNeg) {
@@ -4200,12 +4416,14 @@ Bool_t ProcessUniFlow::MakeSparseSlices(FlowTask* task, THnSparse* inputSparse, 
     axisEta->SetRangeUser(dEtaGap/2.0,axisEta->GetXmax());
     TH3D* histEntriesPos = (TH3D*) inputSparse->Projection(1,2,0);
     if(!histEntriesPos) { Error("Projection 'histEntriesPos' failed!","MakeSparseSlices"); return kFALSE; }
+    printf("histEntriesPos # of entries: %f \n", histEntriesPos->GetEntries());
     trashCol.Add(histEntriesPos);
 
     // negative POIs
     axisEta->SetRangeUser(axisEta->GetXmin(),-dEtaGap/2.0);
     TH3D* histEntriesNeg = (TH3D*) inputSparse->Projection(1,2,0);
     if(!histEntriesNeg) { Error("Projection 'histEntriesNeg' failed!","MakeSparseSlices"); return kFALSE; }
+    printf("histEntriesNeg # of entries: %f \n", histEntriesNeg->GetEntries());
     trashCol.Add(histEntriesNeg);
 
     if(task->fMergePosNeg) {
@@ -5657,6 +5875,71 @@ Int_t ProcessUniFlow::ReturnIndex3sub(Int_t index)
     return returnValue = index + 1;
   else
     return 0;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::GetMean(TH1D** flow, TString name, Int_t max){
+
+for(Int_t i(0); i < max; i++){
+    if(!flow[i]) { Error(Form("Histogram %d not valid",i),"GetMean"); return nullptr; }
+  }
+
+  TH1D* hMerged = (TH1D*) flow[0]->Clone(Form("%s_merged",name.Data()));
+  if(!hMerged) { Error("Histo 'hMerged' cloning failed","GetMean"); return nullptr; }
+  hMerged->Reset();
+
+  for(Int_t iBin(0); iBin < hMerged->GetNbinsX()+2; ++iBin){
+    Double_t sum = 0;
+    Double_t weightSum = 0;
+    Double_t errorInverseSum = 0;
+    for(Int_t i(0); i < max; i++){
+      Double_t content = flow[i]->GetBinContent(iBin);
+      Double_t error = flow[i]->GetBinError(iBin);
+      Double_t sigma = 0;
+      if(error > 0) {
+        sigma = TMath::Power(1./error,2);
+        errorInverseSum += sigma;
+      }
+      sum += content*sigma;
+      weightSum += sigma;
+    }
+    Double_t errorOut = TMath::Sqrt(errorInverseSum);
+    if(weightSum > 0) {
+      hMerged->SetBinContent(iBin, sum/weightSum);
+      hMerged->SetBinError(iBin, errorOut/weightSum);
+    }
+    else { Warning(Form("Sum of weights <= 0! Name: %s, bin: %d", name.Data(), iBin),"GetMean"); }
+
+  }
+  return hMerged;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::GetMeanPOI(TH1D** flow, TString name){
+
+  for(Int_t i(0); i < 9; i++){
+    if(!flow[i]) { Error(Form("Histogram %d not valid",i),"GetMeanPOI"); return nullptr; }
+  }
+
+  TH1D* hMerged = (TH1D*) flow[0]->Clone(Form("%s_merged",name.Data()));
+  if(!hMerged) { Error("Histo 'hMerged' cloning failed","GetMeanPOI"); return nullptr; }
+  hMerged->Reset();
+
+  for(Int_t iBin(0); iBin < hMerged->GetNbinsX()+2; ++iBin){
+    Double_t sum = 0;
+    Double_t weightSum = 0;
+    for(Int_t i(0); i < 9; i++){
+      Double_t content = flow[i]->GetBinContent(iBin);
+      Double_t error = flow[i]->GetBinError(iBin);
+      Double_t sigma = 0;
+      if(error > 0) sigma = TMath::Power(1./error,2);
+      else Warning(Form("Negative error for bin %d and histo %d",iBin, i), "GetMeanPOI");
+      sum += content*sigma;
+      weightSum += sigma;
+    }
+
+    if(weightSum > 0) hMerged->SetBinContent(iBin, sum/weightSum);
+    else { Error("Negative sum of weights!","GetMeanPOI"); }
+  }
+  return hMerged;
 }
 //_____________________________________________________________________________
 void ProcessUniFlow::Fatal(TString sMsg, TString sMethod)

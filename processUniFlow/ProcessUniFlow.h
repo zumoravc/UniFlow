@@ -116,8 +116,11 @@ class ProcessUniFlow
     TH1*        MergeListProfiles(TList* list); // merge list of TProfiles into single TProfile
     TH1*        Merge(TH1* a, TH1* b); // merge two histogram
     TH1D*       DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling = kFALSE); // Desample list of samples for estimating the uncertanity
+    TH1D*       DoJackknife(TList* list, TH1D* merged, FlowTask* task, TString name); // Jackknife procedure
     Bool_t      PlotDesamplingQA(TList* list, TH1D* hDesampled, FlowTask* task); // produce QA plots for result of desampling procedure
     TH1D*       TestRebin(TH1D* hOrig = 0x0, FlowTask* task = 0x0); // testing desample - manual rebin
+    TH1D*       GetMeanPOI(TH1D** flow, TString name); //get mean value of geometrical combinations
+    TH1D*       GetMean(TH1D** flow, TString name, const Int_t max); //get mean value of geometrical combinations
 
     void        TestProjections(); // testing projection of reconstructed particles
     TProfile2D* Project3DProfile(const TProfile3D* prof3dorig = 0x0); // making projection out of TProfile3D
@@ -147,6 +150,7 @@ class ProcessUniFlow
     TFile*      ffInputFile; //! input file container
     TFile*      ffOutputFile; //! output file container
     TFile*      ffDesampleFile; //! output file for results of desampling
+    TFile*      ffJackFile; //! output file for results of jackknife
     TFile*      ffFitsFile; //! output file for fitting procedure
     TList*      flFlow[kUnknown]; //! TList array for input flow profiles
     TList*      flQACharged; //! TList from input file with Charged QA plots / profiles
