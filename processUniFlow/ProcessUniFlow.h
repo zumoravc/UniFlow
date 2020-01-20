@@ -21,7 +21,7 @@ class TProfile3D;
 class TFitResultPtr;
 
 enum        PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest
-enum        Cumulants {kNon = 0, kTwo = 2, kFour = 4}; // Cumulants order
+enum        Cumulants {kNon = 0, kTwo = 2, kFour = 4, kSix = 6, kEight = 8}; // Cumulants order
 
 class ProcessUniFlow
 {
@@ -82,6 +82,9 @@ class ProcessUniFlow
     TH1D*       CalcRefCumTwo(TProfile* hTwoRef, FlowTask* task, Int_t rf1Pos = 0, Int_t rf2Pos = 0); // calculate cn{2} out of correlation
     TH1D*       CalcRefCumFour(TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate cn{4} out of correlation
     TH1D*       CalcRefCumFour3sub(TProfile* hFourRef, TProfile* hTwoRef_sub1, TProfile* hTwoRef_sub2, FlowTask* task, Int_t side); // calculate cn{4} out of correlation
+    TH1D*       CalcRefCumSix(TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task); // calculate cn{6} out of correlation
+    TH1D*       CalcRefCumEight(TProfile* hEightRef, TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task); // calculate cn{8} out of correlation
+
     TH1D*       CalcDifCumTwo(TH1D* hTwoDif, FlowTask* task); // calculate dn{2} out of correlation
     TH1D*       CalcDifCumTwo(TProfile* hTwoDif, FlowTask* task); // calculate dn{2} out of correlation
     TH1D*       CalcDifCumFour(TH1D* hFourDif, TH1* hTwoDif, TH1* hTwoRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate dn{4} out of correlation
@@ -91,6 +94,9 @@ class ProcessUniFlow
 
     TH1D*       CalcRefFlowTwo(TH1D* hTwoRef, FlowTask* task, Int_t rf1Pos = 0, Int_t rf2Pos = 0); // calculate vn{2} out of cn{2}
     TH1D*       CalcRefFlowFour(TH1D* hFourRef, FlowTask* task); // calculate vn{4} out of cn{4}
+    TH1D*       CalcRefFlowSix(TH1D* hSixRef, FlowTask* task); // calculate vn{6} out of cn{6}
+    TH1D*       CalcRefFlowEight(TH1D* hEightRef, FlowTask* task); // calculate vn{8} out of cn{8}
+
     TH1D*       CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate vn'{2} out of dn{2} & vn{2}
     TH1D*       CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate vn'{4} out of dn{4} and vn{4}
 
@@ -117,6 +123,7 @@ class ProcessUniFlow
     TH1*        Merge(TH1* a, TH1* b); // merge two histogram
     TH1D*       DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling = kFALSE); // Desample list of samples for estimating the uncertanity
     TH1D*       DoJackknife(TList* list, TH1D* merged, FlowTask* task, TString name); // Jackknife procedure
+    TH1D*       DoBootstrapping(TList* list, TH1D* merged, FlowTask* task, TString name); // Jackknife procedure
     Bool_t      PlotDesamplingQA(TList* list, TH1D* hDesampled, FlowTask* task); // produce QA plots for result of desampling procedure
     TH1D*       TestRebin(TH1D* hOrig = 0x0, FlowTask* task = 0x0); // testing desample - manual rebin
     TH1D*       GetMeanPOI(TH1D** flow, TString name); //get mean value of geometrical combinations
@@ -151,6 +158,7 @@ class ProcessUniFlow
     TFile*      ffOutputFile; //! output file container
     TFile*      ffDesampleFile; //! output file for results of desampling
     TFile*      ffJackFile; //! output file for results of jackknife
+    TFile*      ffBSFile; //! output file for results of bootstrap
     TFile*      ffFitsFile; //! output file for fitting procedure
     TList*      flFlow[kUnknown]; //! TList array for input flow profiles
     TList*      flQACharged; //! TList from input file with Charged QA plots / profiles

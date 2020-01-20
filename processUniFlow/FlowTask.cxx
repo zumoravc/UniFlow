@@ -15,6 +15,7 @@ FlowTask::FlowTask(PartSpecies species, const char* name) :
   fEtaGapSecond{-1.0},
   fBaseCentBin{-1},
   fNumPtBins{-1},
+  fNumBootstrap{100},
   fPtBinsEdges{},
   fNumSamples{10},
   fNumSamplesRefs{1},

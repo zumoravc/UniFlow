@@ -8,6 +8,7 @@
 #include "TVirtualFitter.h"
 #include "TFitResult.h"
 #include "TMath.h"
+#include "TRandom.h"
 #include "TStyle.h"
 #include "TString.h"
 #include "TLatex.h"
@@ -43,6 +44,7 @@ ProcessUniFlow::ProcessUniFlow() :
   ffFitsFile{nullptr},
   ffDesampleFile{nullptr},
   ffJackFile{nullptr},
+  ffBSFile{nullptr},
   fsInputFilePath{},
   fsInputFileName{"AnalysisResults.root"},
   fsOutputFilePathRoot{},
@@ -151,6 +153,10 @@ Bool_t ProcessUniFlow::Initialize()
   // creating output file for Jackknife
   ffJackFile = TFile::Open(Form("%s/jackknife.root",fsOutputFilePath.Data()),fsOutputFileMode.Data());
   if(!ffJackFile) { Fatal(Form("Output desampling file '%s/jackknife.root' not open!","Initialize")); return kFALSE; }
+
+  // creating output file for bootstrap
+  ffBSFile = TFile::Open(Form("%s/bootstrap.root",fsOutputFilePath.Data()),fsOutputFileMode.Data());
+  if(!ffBSFile) { Fatal(Form("Output desampling file '%s/bootstrap.root' not open!","Initialize")); return kFALSE; }
 
   // creating output file for fits
   ffFitsFile = TFile::Open(Form("%s/fits.root",fsOutputFilePath.Data()),fsOutputFileMode.Data());
@@ -1077,6 +1083,8 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(task->fSpecies != kRefs) { Error("Task species not kRefs!","ProcessRefs"); return kFALSE; }
 
   Bool_t bDoFour = (task->fCumOrderMax >= 4); // check if cn{4} should be processed
+  Bool_t bDoSix = (task->fCumOrderMax >= 6); // check if cn{6} should be processed
+  Bool_t bDoEight = (task->fCumOrderMax >= 8); // check if cn{8} should be processed
   Bool_t bCorrelated = task->fConsCorr; // check if correlated uncrt. are considered
   Bool_t bDo3sub = task->Has3sub();
   Int_t nOfSamples = task->fNumSamplesRefs;
@@ -1085,14 +1093,20 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // for saving profiles into TList for merging (into single one) -> estimation for central values
   TList* listCorTwo = new TList(); TString nameCorTwo = Form("Refs_pCor2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
   TList* listCorFour = new TList(); TString nameCorFour = Form("Refs_pCor4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listCorSix = new TList(); TString nameCorSix = Form("Refs_pCor6_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listCorEight = new TList(); TString nameCorEight = Form("Refs_pCor8_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
 
   // for cumulants (applicable for diff. flow)
   TList* listCumTwo = new TList(); TString nameCumTwo = Form("Refs_hCum2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
   TList* listCumFour = new TList(); TString nameCumFour = Form("Refs_hCum4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listCumSix = new TList(); TString nameCumSix = Form("Refs_hCum6_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listCumEight = new TList(); TString nameCumEight = Form("Refs_hCum8_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
 
   // for vns desampling
   TList* listFlowTwo = new TList(); TString nameFlowTwo = Form("Refs_hFlow2_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
   TList* listFlowFour = new TList(); TString nameFlowFour = Form("Refs_hFlow4_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listFlowSix = new TList(); TString nameFlowSix = Form("Refs_hFlow6_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
+  TList* listFlowEight = new TList(); TString nameFlowEight = Form("Refs_hFlow8_harm%d_gap%s",task->fHarmonics, task->GetEtaGapString().Data());
 
   // 3 subevents
   TList* listCorTwo3sub[3][3] = {nullptr};
@@ -1164,10 +1178,14 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // new naming convention for input histos (from FlowTask)
   TString sProfTwoName = Form("<<2>>(%d,-%d)",task->fHarmonics, task->fHarmonics);
   TString sProfFourName = Form("<<4>>(%d,%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
+  TString sProfSixName = Form("<<6>>(%d,%d,%d,-%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
+  TString sProfEightName = Form("<<8>>(%d,%d,%d,%d,-%d,-%d,-%d,-%d)",task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics, task->fHarmonics);
   if(task->HasGap()) {
     if(!task->Has3sub()){
       sProfTwoName += Form("_2sub(%.2g)",task->fEtaGap);
       sProfFourName += Form("_2sub(%.2g)",task->fEtaGap);
+      sProfSixName += Form("_2sub(%.2g)",task->fEtaGap);
+      sProfEightName += Form("_2sub(%.2g)",task->fEtaGap);
     }
     else {
       sProfTwoName += Form("_3sub(%.2g,%.2g)",task->fEtaGap,task->fEtaGapSecond);
@@ -1216,11 +1234,31 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       }
     }
 
+    // Process 6-particle correlations
+    TProfile* pCorSix = nullptr;
+    if(bDoSix)
+    {
+      pCorSix = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfSixName.Data(),iSample));
+      if(!pCorSix) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",sProfSixName.Data(),iSample)),"ProcesRefs"); flFlow[kRefs]->ls(); return kFALSE; }
+    }
+
+    // Process 8-particle correlations
+    TProfile* pCorEight = nullptr;
+    if(bDoEight)
+    {
+      pCorEight = (TProfile*) flFlow[kRefs]->FindObject(Form("%s_Pos_sample%d",sProfEightName.Data(),iSample));
+      if(!pCorEight) { Warning(Form("Profile '%s' not valid!",Form("%s_Pos_sample%d",sProfEightName.Data(),iSample)),"ProcesRefs"); flFlow[kRefs]->ls(); return kFALSE; }
+    }
+
+
     // rebinning the profiles
     if(task->fRebinning)
     {
       pCorTwo = (TProfile*) pCorTwo->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorTwo.Data(), iSample),fdMultBins.data());
       if(bDoFour) { pCorFour = (TProfile*) pCorFour->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorFour.Data(), iSample),fdMultBins.data()); }
+      if(bDoSix) { pCorSix = (TProfile*) pCorSix->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorSix.Data(), iSample),fdMultBins.data()); }
+      if(bDoEight) { pCorEight = (TProfile*) pCorEight->Rebin(fiNumMultBins,Form("%s_sample%d_rebin", nameCorEight.Data(), iSample),fdMultBins.data()); }
+
       if(bDo3sub){
         for(Int_t rf1Pos(0); rf1Pos < 3; rf1Pos++){
           if(rf1Pos > 1) break;
@@ -1249,6 +1287,20 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
       pCorFour->SetTitle(Form("%s: <<4>>_{%d} %s",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
       listCorFour->Add(pCorFour);
     }
+
+    if(bDoSix)
+    {
+      pCorSix->SetTitle(Form("%s: <<6>>_{%d} %s",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+      listCorSix->Add(pCorSix);
+    }
+
+
+    if(bDoEight)
+    {
+      pCorEight->SetTitle(Form("%s: <<8>>_{%d} %s",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+      listCorEight->Add(pCorEight);
+    }
+
 
     //3 subevents
     if(bDo3sub){
@@ -1368,7 +1420,36 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
         delete listCumCombi;
         delete listFlowCombi;
       }
-    }
+    } //end bDoFour
+
+    if(bDoSix){
+      //cn{6}
+      TH1D* hCumSix = CalcRefCumSix(pCorSix, pCorFour, pCorTwo, task);
+      if(!hCumSix) { Error(Form("cn{6} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+      hCumSix->SetName(Form("%s_sample%d", nameCumSix.Data(), iSample));
+      listCumSix->Add(hCumSix);
+
+      //vn{6}
+      TH1D* hFlowSix = CalcRefFlowSix(hCumSix, task);
+      if(!hFlowSix) { Error(Form("vn{6} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+      hFlowSix->SetName(Form("%s_sample%d", nameFlowSix.Data(), iSample));
+      listFlowSix->Add(hFlowSix);
+    } //end bDoSix
+
+    if(bDoEight){
+      //cn{6}
+      TH1D* hCumEight = CalcRefCumEight(pCorEight, pCorSix, pCorFour, pCorTwo, task);
+      if(!hCumEight) { Error(Form("cn{8} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+      hCumEight->SetName(Form("%s_sample%d", nameCumEight.Data(), iSample));
+      listCumEight->Add(hCumEight);
+
+      //vn{6}
+      TH1D* hFlowEight = CalcRefFlowEight(hCumEight, task);
+      if(!hFlowEight) { Error(Form("vn{8} (sample %d) not processed correctly!",iSample),"ProcessRefs"); return kFALSE; }
+      hFlowEight->SetName(Form("%s_sample%d", nameFlowEight.Data(), iSample));
+      listFlowEight->Add(hFlowEight);
+    } //end bDoEight
+
   } // end-for {iSample}: samples
   Debug("Samples processing done!","ProcessRefs");
 
@@ -1501,6 +1582,45 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
     delete listFlowCombi;
   }
 
+  // 6
+  TProfile* pCorSixMerged = nullptr;
+  TH1D* hCumSixMerged = nullptr;
+  TH1D* hFlowSixMerged = nullptr;
+  if(bDoSix)
+  {
+    pCorSixMerged = (TProfile*) MergeListProfiles(listCorSix);
+    if(!pCorSixMerged) { Error("Merging of 'pCorSixMerged' failed!","ProcessRefs"); return kFALSE; }
+    pCorSixMerged->SetName(Form("%s_merged", nameCorSix.Data()));
+
+    hCumSixMerged = CalcRefCumSix(pCorSixMerged, pCorFourMerged, pCorTwoMerged, task);
+    if(!hCumSixMerged) { Error(Form("cn{6} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+    hCumSixMerged->SetName(Form("%s_merged", nameCumSix.Data()));
+
+    hFlowSixMerged = CalcRefFlowSix(hCumSixMerged, task);
+    if(!hFlowSixMerged) { Error(Form("vn{6} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+    hFlowSixMerged->SetName(Form("%s_merged", nameFlowSix.Data()));
+  }
+
+  // 8
+  TProfile* pCorEightMerged = nullptr;
+  TH1D* hCumEightMerged = nullptr;
+  TH1D* hFlowEightMerged = nullptr;
+  if(bDoEight)
+  {
+    pCorEightMerged = (TProfile*) MergeListProfiles(listCorEight);
+    if(!pCorEightMerged) { Error("Merging of 'pCorEightMerged' failed!","ProcessRefs"); return kFALSE; }
+    pCorEightMerged->SetName(Form("%s_merged", nameCorEight.Data()));
+
+    hCumEightMerged = CalcRefCumEight(pCorEightMerged, pCorSixMerged, pCorFourMerged, pCorTwoMerged, task);
+    if(!hCumEightMerged) { Error(Form("cn{8} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+    hCumEightMerged->SetName(Form("%s_merged", nameCumEight.Data()));
+
+    hFlowEightMerged = CalcRefFlowEight(hCumEightMerged, task);
+    if(!hFlowEightMerged) { Error(Form("vn{8} (merged) not processed correctly!"),"ProcessRefs"); return kFALSE; }
+    hFlowEightMerged->SetName(Form("%s_merged", nameFlowEight.Data()));
+  }
+
+
   // desampling
   Debug("Desampling","ProcessRefs");
 
@@ -1563,21 +1683,26 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
   if(bDoFour)
   {
-    TH1D* hCorFourDesampled = DesampleList(listCorFour, pCorFourMerged->ProjectionX(), task, nameCorFour); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
+    TH1D* hCorFourDesampled = DoBootstrapping(listCorFour, pCorFourMerged->ProjectionX(), task, nameCorFour); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
     if(!hCorFourDesampled) { Error("Desampling 'hCorFourDesampled' failed","ProcessRefs"); return kFALSE; }
     hCorFourDesampled->SetName(nameCorFour.Data());
 
-    TH1D* hCumFourDesampled = DesampleList(listCumFour, hCumFourMerged, task, nameCumFour);
+    TH1D* hCumFourDes = DesampleList(listCumFour, hCumFourMerged, task, nameCumFour);
+    if(!hCumFourDes) { Error("Desampling 'hCumFourDesampled' failed","ProcessRefs"); return kFALSE; }
+    hCumFourDes->SetName(Form("%s_des",nameCumFour.Data()));
+
+    TH1D* hCumFourDesampled = DoBootstrapping(listCumFour, hCumFourMerged, task, nameCumFour);
     if(!hCumFourDesampled) { Error("Desampling 'hCumFourDesampled' failed","ProcessRefs"); return kFALSE; }
     hCumFourDesampled->SetName(nameCumFour.Data());
 
-    TH1D* hFlowFourDesampled = DesampleList(listFlowFour, hFlowFourMerged, task, nameFlowFour);
+    TH1D* hFlowFourDesampled = DoBootstrapping(listFlowFour, hFlowFourMerged, task, nameFlowFour);
     if(!hFlowFourDesampled) { Error("Desampling 'hFlowFourDesampled' failed","ProcessRefs"); return kFALSE; }
     hFlowFourDesampled->SetName(nameFlowFour.Data());
 
     ffOutputFile->cd();
     hCorFourDesampled->Write();
     hCumFourDesampled->Write();
+    hCumFourDes->Write();
     hFlowFourDesampled->Write();
   }
 
@@ -1624,16 +1749,71 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
 
     TH1D* jackCum3sub = DoJackknife(listCumFour3subAllGeomC, hCumFour3subMergedAll, task, nameCumFour3subAllGeomC);
     if(!jackCum3sub) { Error("Problem in jack - cn{4}!","ProcessRefs"); return kFALSE; }
-    jackCum3sub->SetName(nameCumFour3subAllGeomC.Data());
+    jackCum3sub->SetName(Form("%s_jack",nameCumFour3subAllGeomC.Data()));
 
     TH1D* jackFlow3sub = DoJackknife(listFlowFour3subAllGeomC, hFlowFour3subMergedAll, task, nameFlowFour3subAllGeomC);
     if(!jackFlow3sub) { Error("Problem in jack - vn{4}!","ProcessRefs"); return kFALSE; }
-    jackFlow3sub->SetName(nameFlowFour3subAllGeomC.Data());
+    jackFlow3sub->SetName(Form("%s_jack",nameFlowFour3subAllGeomC.Data()));
+
+    Debug("Trying Bootstrapping", "ProcessRefs");
+
+
+    TH1D* bootCum3sub = DoBootstrapping(listCumFour3subAllGeomC, hCumFour3subMergedAll, task, nameCumFour3subAllGeomC);
+    if(!bootCum3sub) { Error("Problem in bootstrap - cn{4}!","ProcessRefs"); return kFALSE; }
+    bootCum3sub->SetName(Form("%s_bootstrap",nameCumFour3subAllGeomC.Data()));
+
+    TH1D* bootFlow3sub = DoBootstrapping(listFlowFour3subAllGeomC, hFlowFour3subMergedAll, task, nameFlowFour3subAllGeomC);
+    if(!bootFlow3sub) { Error("Problem in bootstrap - vn{4}!","ProcessRefs"); return kFALSE; }
+    bootFlow3sub->SetName(Form("%s_bootstrap",nameFlowFour3subAllGeomC.Data()));
 
 
     ffOutputFile->cd();
     hCumDesampledAllC->Write();
     hDesampledAllC->Write();
+    jackCum3sub->Write();
+    jackFlow3sub->Write();
+    bootCum3sub->Write();
+    bootFlow3sub->Write();
+  }
+
+  if(bDoSix)
+  {
+    TH1D* hCorSixDesampled = DoBootstrapping(listCorSix, pCorSixMerged->ProjectionX(), task, nameCorSix);
+    if(!hCorSixDesampled) { Error("Desampling 'hCorSixDesampled' failed","ProcessRefs"); return kFALSE; }
+    hCorSixDesampled->SetName(nameCorSix.Data());
+
+    TH1D* hCumSixDesampled = DoBootstrapping(listCumSix, hCumSixMerged, task, nameCumSix);
+    if(!hCumSixDesampled) { Error("Desampling 'hCumSixDesampled' failed","ProcessRefs"); return kFALSE; }
+    hCumSixDesampled->SetName(nameCumSix.Data());
+
+    TH1D* hFlowSixDesampled = DoBootstrapping(listFlowSix, hFlowSixMerged, task, nameFlowSix);
+    if(!hFlowSixDesampled) { Error("Desampling 'hFlowSixDesampled' failed","ProcessRefs"); return kFALSE; }
+    hFlowSixDesampled->SetName(nameFlowSix.Data());
+
+    ffOutputFile->cd();
+    hCorSixDesampled->Write();
+    hCumSixDesampled->Write();
+    hFlowSixDesampled->Write();
+  }
+
+  if(bDoEight)
+  {
+    TH1D* hCorEightDesampled = DoBootstrapping(listCorEight, pCorEightMerged->ProjectionX(), task, nameCorEight);
+    if(!hCorEightDesampled) { Error("Desampling 'hCorEightDesampled' failed","ProcessRefs"); return kFALSE; }
+    hCorEightDesampled->SetName(nameCorEight.Data());
+
+    TH1D* hCumEightDesampled = DoBootstrapping(listCumEight, hCumEightMerged, task, nameCumEight);
+    if(!hCumEightDesampled) { Error("Desampling 'hCumEightDesampled' failed","ProcessRefs"); return kFALSE; }
+    hCumEightDesampled->SetName(nameCumEight.Data());
+
+    TH1D* hFlowEightDesampled = DoBootstrapping(listFlowEight, hFlowEightMerged, task, nameFlowEight);
+    if(!hFlowEightDesampled) { Error("Desampling 'hFlowEightDesampled' failed","ProcessRefs"); return kFALSE; }
+    hFlowEightDesampled->SetName(nameFlowEight.Data());
+
+    ffOutputFile->cd();
+    hCorEightDesampled->Write();
+    hCumEightDesampled->Write();
+    hFlowEightDesampled->Write();
   }
 
   // Comment :: Not sure what this is about =====>
@@ -1659,6 +1839,12 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   if(listCorFour) delete listCorFour;
   if(listCumFour) delete listCumFour;
   if(listFlowFour) delete listFlowFour;
+  if(listCorSix) delete listCorSix;
+  if(listCumSix) delete listCumSix;
+  if(listFlowSix) delete listFlowSix;
+  if(listCorEight) delete listCorEight;
+  if(listCumEight) delete listCumEight;
+  if(listFlowEight) delete listFlowEight;
 
   return kTRUE;
 }
@@ -2257,6 +2443,93 @@ TH1D* ProcessUniFlow::CalcRefCumFour3sub(TProfile* hFourRef, TProfile* hTwoRef_s
 
 }
 //_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcRefCumSix(TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task){
+  // Calculate reference c_n{4} out of correlations
+  // cn{6} = <<6>> - 9*<<4>>*<<2>> + 12*<<2>>^3
+
+  if(!task) { Error("FlowTask not found!","CalcRefCumSix"); return nullptr; }
+  if(!hSixRef) { Error("Profile 'hSixRef' not valid!","CalcRefCumSix"); return nullptr; }
+  if(!hFourRef) { Error("Profile 'hFourRef' not valid!","CalcRefCumSix"); return nullptr; }
+  if(!hTwoRef) { Error("Profile 'hTwoRef' not valid!","CalcRefCumSix"); return nullptr; }
+  if(hSixRef->GetNbinsX() != hFourRef->GetNbinsX() || hSixRef->GetNbinsX() != hTwoRef->GetNbinsX()) { Error("Different number of bins!","CalcRefCumSix"); return nullptr; }
+
+  TH1D* histCum = (TH1D*) hSixRef->ProjectionX(Form("hCum6_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  histCum->SetTitle(Form("%s: c_{%d}{6%s}",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+  histCum->Reset();
+
+  for(Int_t iBin(0); iBin < hSixRef->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContInSix = hSixRef->GetBinContent(iBin);
+    Double_t dErrInSix = hSixRef->GetBinError(iBin);
+
+    Double_t dContInFour = hFourRef->GetBinContent(iBin);
+    Double_t dErrInFour = hFourRef->GetBinError(iBin);
+
+    Double_t dContInTwo = hTwoRef->GetBinContent(iBin);
+    Double_t dErrInTwo = hTwoRef->GetBinError(iBin);
+
+    Double_t dContOut = dContInSix - 9.0 * dContInFour * dContInTwo + 12.0 * TMath::Power(dContInTwo,3);
+    histCum->SetBinContent(iBin, dContOut);
+
+    Double_t dErrOutSix = dErrInSix; // wrt. <6>
+    Double_t dErrOutFour = 9.0 * dContInTwo * dErrInFour; // wrt. <4>
+    Double_t dErrOutTwo = dErrInTwo * (36.0 * dContInTwo * dContInTwo - 9.0 * dContInFour); // wrt. <2>
+
+    Double_t dErrOut = TMath::Power(dErrOutSix, 2.0) + TMath::Power(dErrOutFour, 2.0)  + TMath::Power(dErrOutTwo, 2.0);
+    histCum->SetBinError(iBin, TMath::Sqrt(dErrOut));
+  }
+
+  return histCum;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcRefCumEight(TProfile* hEightRef, TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task){
+  // Calculate reference c_n{4} out of correlations
+  // cn{8} = <<8>> - 16*<<6>>*<<2>> - 18*<<4>>^2 + 144*<<4>>*<<2>>^2 - 144*<<2>>^4
+
+  if(!task) { Error("FlowTask not found!","CalcRefCumEight"); return nullptr; }
+  if(!hEightRef) { Error("Profile 'hEightRef' not valid!","CalcRefCumEight"); return nullptr; }
+  if(!hSixRef) { Error("Profile 'hSixRef' not valid!","CalcRefCumEight"); return nullptr; }
+  if(!hFourRef) { Error("Profile 'hFourRef' not valid!","CalcRefCumEight"); return nullptr; }
+  if(!hTwoRef) { Error("Profile 'hTwoRef' not valid!","CalcRefCumEight"); return nullptr; }
+  if(hEightRef->GetNbinsX() != hSixRef->GetNbinsX() || hEightRef->GetNbinsX() != hFourRef->GetNbinsX() || hEightRef->GetNbinsX() != hTwoRef->GetNbinsX()) { Error("Different number of bins!","CalcRefCumEight"); return nullptr; }
+
+  TH1D* histCum = (TH1D*) hEightRef->ProjectionX(Form("hCum8_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  histCum->SetTitle(Form("%s: c_{%d}{8%s}",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+  histCum->Reset();
+
+  for(Int_t iBin(0); iBin < hEightRef->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContInEight = hEightRef->GetBinContent(iBin);
+    Double_t dErrInEight = hEightRef->GetBinError(iBin);
+
+    Double_t dContInSix = hSixRef->GetBinContent(iBin);
+    Double_t dErrInSix = hSixRef->GetBinError(iBin);
+
+    Double_t dContInFour = hFourRef->GetBinContent(iBin);
+    Double_t dErrInFour = hFourRef->GetBinError(iBin);
+
+    Double_t dContInTwo = hTwoRef->GetBinContent(iBin);
+    Double_t dErrInTwo = hTwoRef->GetBinError(iBin);
+
+    Double_t dContOut = dContInEight - 16.0 * dContInSix * dContInTwo - 18.0 * TMath::Power(dContInFour,2) + 144.0 * dContInFour * TMath::Power(dContInTwo,2) - 144.0 * TMath::Power(dContInTwo,4);
+    histCum->SetBinContent(iBin, dContOut);
+
+    Double_t dErrOutEight = dErrInEight; // wrt. <6>
+    Double_t dErrOutSix = 16.0 * dContInTwo* dErrInSix; // wrt. <6>
+    Double_t dErrOutFour = dErrInFour * (144.0 * dContInTwo * dContInTwo - 36.0 * dContInFour); // wrt. <4>
+    Double_t dErrOutTwo = dErrInTwo * ( 288.0 * dContInTwo * dContInFour - 16.0 * dContInSix - 576.0 * TMath::Power(dContInTwo,3)); // wrt. <2>
+
+    Double_t dErrOut = TMath::Power(dErrOutEight, 2.0) + TMath::Power(dErrOutSix, 2.0) +  TMath::Power(dErrOutFour, 2.0) + TMath::Power(dErrOutTwo, 2.0);
+    histCum->SetBinError(iBin, TMath::Sqrt(dErrOut));
+  }
+
+  return histCum;
+}
+//_____________________________________________________________________________
 TH1D* ProcessUniFlow::CalcDifCumTwo(TProfile* hTwoDif, FlowTask* task)
 {
   // Same as with TH1D argument.
@@ -2473,6 +2746,78 @@ TH1D* ProcessUniFlow::CalcRefFlowFour(TH1D* hFourRef, FlowTask* task)
       Double_t dContOut = TMath::Power(-1.0 * dContIn, 0.25);
       histFlow->SetBinContent(iBin, dContOut);
       Double_t dErrOutSq = TMath::Power(0.25 * dErrIn * TMath::Power(-dContIn, -0.75), 2.0);
+      histFlow->SetBinError(iBin, TMath::Sqrt(dErrOutSq));
+    }
+    else
+    {
+      histFlow->SetBinContent(iBin, -9.9);
+      histFlow->SetBinError(iBin, 99999.9);
+    }
+  }
+
+  return histFlow;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcRefFlowSix(TH1D* hSixRef, FlowTask* task)
+{
+  // Calculate reference v_n{6} out of c_n{6}
+  // vn{6} = (1/4*cn{6})^(1/6)
+
+  if(!hSixRef) { Error("Histo 'hSixRef' not valid!","CalcRefFlowSix"); return nullptr; }
+  if(!task) { Error("FlowTask not found!","CalcRefFlowSix"); return nullptr; }
+
+  TH1D* histFlow = (TH1D*) hSixRef->Clone(Form("hFlow6_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  histFlow->SetTitle(Form("%s: v_{%d}{6%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+  histFlow->Reset();
+
+  for(Short_t iBin(0); iBin < hSixRef->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContIn = hSixRef->GetBinContent(iBin);
+    Double_t dErrIn = hSixRef->GetBinError(iBin);
+
+    if(dContIn > 0.0 && dErrIn >= 0.0)
+    {
+      Double_t dContOut = TMath::Power(0.25 * dContIn, 1./6);
+      histFlow->SetBinContent(iBin, dContOut);
+      Double_t dErrOutSq = TMath::Power(1./24 * dErrIn * TMath::Power(0.25 * dContIn, -5./6), 2.0);
+      histFlow->SetBinError(iBin, TMath::Sqrt(dErrOutSq));
+    }
+    else
+    {
+      histFlow->SetBinContent(iBin, -9.9);
+      histFlow->SetBinError(iBin, 99999.9);
+    }
+  }
+
+  return histFlow;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::CalcRefFlowEight(TH1D* hEightRef, FlowTask* task)
+{
+  // Calculate reference v_n{6} out of c_n{6}
+  // vn{8} = (-1/33*cn{8})^(1/8)
+
+  if(!hEightRef) { Error("Histo 'hEightRef' not valid!","CalcRefFlowEight"); return nullptr; }
+  if(!task) { Error("FlowTask not found!","CalcRefFlowEight"); return nullptr; }
+
+  TH1D* histFlow = (TH1D*) hEightRef->Clone(Form("hFlow8_Refs_harm%d_gap%s",task->fHarmonics,task->GetEtaGapString().Data()));
+
+  TString sGap = TString(); if(task->HasGap()) { sGap.Append(Form(",|#Delta#eta| > %g",task->fEtaGap)); }
+  histFlow->SetTitle(Form("%s: v_{%d}{8%s}",GetSpeciesLabel(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+  histFlow->Reset();
+
+  for(Short_t iBin(0); iBin < hEightRef->GetNbinsX()+2; ++iBin)
+  {
+    Double_t dContIn = hEightRef->GetBinContent(iBin);
+    Double_t dErrIn = hEightRef->GetBinError(iBin);
+
+    if(dContIn < 0.0 && dErrIn >= 0.0)
+    {
+      Double_t dContOut = TMath::Power(- 1./33 * dContIn, 1./8);
+      histFlow->SetBinContent(iBin, dContOut);
+      Double_t dErrOutSq = TMath::Power(- 1./264 * dErrIn * TMath::Power(- 1./33 * dContIn, -7./8), 2.0);
       histFlow->SetBinError(iBin, TMath::Sqrt(dErrOutSq));
     }
     else
@@ -3278,9 +3623,9 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     desName = Form("%s_mean", nameFlowFour3subAllGeomC.Data());
     TH1D* meanFlowFour3sub = CalcDifFlowFour(hCumFour3subMergedAll, hFlowRefFour3subMergedAll, iMultBin+1, task, bCorrelated);
     if(!meanFlowFour3sub) { Error(Form("vn{4} 3 sub  for all geometrical combinations has not processed correctly!"),"ProcessRefs"); return kFALSE; }
-    hFlowRefFour3subMergedAll = DesampleList(listFlowCombiAll, meanFlowFour3sub, task, desName, kFALSE);
-    if(!hFlowRefFour3subMergedAll) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
-    listFlowFour3subAllGeomC->Add(hFlowRefFour3subMergedAll);
+    hFlowFour3subMergedAll = DesampleList(listFlowCombiAll, meanFlowFour3sub, task, desName, kFALSE);
+    if(!hFlowFour3subMergedAll) { Error("Desampling of geometrical combinations cn{4} with 3 sub failed","ProcessRefs"); return kFALSE; }
+    listFlowFour3subAllGeomC->Add(hFlowFour3subMergedAll);
 
     delete listCumCombiAll;
     delete listFlowCombiAll;
@@ -3419,15 +3764,25 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
     if(!hDesampledFourCum3sub) { Error("Desampling dn{4} failed","ProcessDirect"); return kFALSE; }
     hDesampledFourCum3sub->SetName(nameCumFour3subAllGeomC.Data());
 
-    TH1D* hDesampledFourFlow3sub = DesampleList(listFlowFour3subAllGeomC, hFlowRefFour3subMergedAll, task, nameFlowFour3subAllGeomC, kFALSE);
+    TH1D* hDesampledFourFlow3sub = DesampleList(listFlowFour3subAllGeomC, hFlowFour3subMergedAll, task, nameFlowFour3subAllGeomC, kFALSE);
     if(!hDesampledFourFlow3sub) { Error("Desampling dn{4} failed","ProcessDirect"); return kFALSE; }
     hDesampledFourFlow3sub->SetName(nameFlowFour3subAllGeomC.Data());
+
+    TH1D* jackCum3sub = DoBootstrapping(listCumFour3subAllGeomC, hCumFour3subMergedAll, task, nameCumFour3subAllGeomC);
+    if(!jackCum3sub) { Error("Problem in bootstrap - cn{4} 3 sub!","ProcessDirect"); return kFALSE; }
+    jackCum3sub->SetName(Form("%s_bootstrap",nameCumFour3subAllGeomC.Data()));
+
+    TH1D* jackFlow3sub = DoBootstrapping(listFlowFour3subAllGeomC, hFlowFour3subMergedAll, task, nameFlowFour3subAllGeomC);
+    if(!jackFlow3sub) { Error("Problem in bootstrap - vn{4} 3 sub!","ProcessDirect"); return kFALSE; }
+    jackFlow3sub->SetName(Form("%s_bootstrap",nameFlowFour3subAllGeomC.Data()));
 
     ffOutputFile->cd();
     if(fSaveInterSteps) {
       hDesampledFourCum3sub->Write();
+      jackCum3sub->Write();
     }
     hDesampledFourFlow3sub->Write();
+    jackFlow3sub->Write();
 
     delete hDesampledFourCum3sub;
     delete hDesampledFourFlow3sub;
@@ -3490,6 +3845,8 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
   if(!PrepareSlicesNew(task,sProfTwoName,kTRUE)) { Error(Form("PrepareSlicesNew '%s' failed!",sProfTwoName.Data()),"ProcessReconstructed"); return kFALSE; }
   if(task->fCumOrderMax >= 4 && !PrepareSlicesNew(task,sProfFourName,kFALSE)) { Error(Form("PrepareSlicesNew for '%s' failed!",sProfFourName.Data()),"ProcessReconstructed"); return kFALSE; }
+
+  Debug("Slices prepared","ProcessReconstructed");
 
   // Loading list where reference flow samples are stored
   TList* listRefCorTwo = (TList*) ffDesampleFile->Get(Form("Refs_pCor2_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
@@ -3566,6 +3923,8 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         hFlowMassFour->SetTitle(Form("%s: FlowMassFour (|#Delta#eta| > %02.2g, cent %d, pt %d)",sSpeciesLabel.Data(),task->fEtaGap,iMultBin,binPt));
         hFlowMassFour->SetMarkerStyle(kFullCircle);
       }
+
+      Debug(Form("Pt bin: %d , mult bin: %d", binPt, binMult),"ProcessReconstructed");
 
       // ### Fitting the correlations
 
@@ -3833,11 +4192,13 @@ TH1D* ProcessUniFlow::DoJackknife(TList* list, TH1D* merged, FlowTask* task, TSt
   //jackknife process
   //test
 
+  Int_t nOfSamples = task->fNumSamples;
+
   if(!list) { Error("List does not valid","DoJackknife"); return nullptr; }
   if(!merged) { Error("Merged histogram not valid","DoJackknife"); return nullptr; }
   if(!task) { Error("FlowTask does not exists","DoJackknife"); return nullptr; }
   if(list->GetEntries() < 1) { Error("List is empty","DoJackknife"); return nullptr; }
-  if(list->GetEntries() != task->fNumSamples) { Warning("Number of list entries is different from task number of samples","DoJackknife"); }
+  if(list->GetEntries() != nOfSamples) { Warning("Number of list entries is different from task number of samples","DoJackknife"); }
 
   Debug(Form("Number of samples in list pre-jackknife: %d",list->GetEntries()),"DoJackknife");
   Debug(Form("Name: %s",name.Data()),"DoJackknife");
@@ -3848,12 +4209,12 @@ TH1D* ProcessUniFlow::DoJackknife(TList* list, TH1D* merged, FlowTask* task, TSt
   merged->SetName(Form("%s_merged",name.Data()));
   merged->Write();
 
-  if(task->fNumSamples == 1) { Warning("Returning merged directly!", "DoJackknife"); return merged;}
-  if(task->fNumSamples != 10) { Error("Code for Jackknife ready only for 10 samples! Terminating!", "DoJackknife"); return nullptr; }
+  if(nOfSamples == 1) { Warning("Returning merged directly!", "DoJackknife"); return merged;}
+  if(nOfSamples != 10) { Error("Code for Jackknife ready only for 10 samples! Terminating!", "DoJackknife"); return nullptr; }
 
   TH1D* temp[10] = {nullptr};
 
-  for(Int_t iSample(0); iSample < task->fNumSamples; iSample++){
+  for(Int_t iSample(0); iSample < nOfSamples; iSample++){
     temp[iSample] = (TH1D*) list->At(iSample);
     if(!temp[iSample]) { Error(Form("Histo 'temp' (sample %d) not found in list",iSample),"DoJackknife"); return nullptr; }
   }
@@ -3861,19 +4222,28 @@ TH1D* ProcessUniFlow::DoJackknife(TList* list, TH1D* merged, FlowTask* task, TSt
   TH1D* final = (TH1D*) merged->Clone(Form("%s_final",name.Data()));
   final->Sumw2();
 
+  TH1D* bootstrap = (TH1D*) merged->Clone(Form("%s_bootstrap",name.Data()));
+  bootstrap->Sumw2();
+
   //skipping underflow & overflow
   for(Int_t iBin(1); iBin < merged->GetNbinsX()+1; iBin++){
     Double_t iCount = 0.0;
     Double_t dValue = 0.0;
     Double_t centralValue = merged->GetBinContent(iBin);
 
-    for(Int_t i(0); i < task->fNumSamples; i++){
-      for(Int_t j(i+1); j < task->fNumSamples; j++){
+    Double_t dMeanJack = 0.0;
+    Double_t dVarJack = 0.0;
+    Double_t dCount = 0.0;
+
+    std::vector<Double_t> jackVector;
+
+    for(Int_t i(0); i < nOfSamples; i++){
+      for(Int_t j(i+1); j < nOfSamples; j++){
 
         //obtaining one of 45 combinations
         Double_t dSum = 0.0;
         Double_t dSumWeights = 0.0;
-        for(Int_t merge(0); merge < task->fNumSamples; merge++){
+        for(Int_t merge(0); merge < nOfSamples; merge++){
           if(merge == i || merge == j) continue;
           Double_t dContent = temp[merge]->GetBinContent(iBin);
           Double_t dError = temp[merge]->GetBinError(iBin);
@@ -3885,20 +4255,134 @@ TH1D* ProcessUniFlow::DoJackknife(TList* list, TH1D* merged, FlowTask* task, TSt
           }
         } // end one of combinations
         Double_t help = 0;
-        if(dSumWeights > 0) help = dSum/dSumWeights - centralValue;
+        if(dSumWeights > 0) {
+          help = dSum/dSumWeights;
+          dValue += TMath::Power(help - centralValue, 2.0);
+          iCount += 1.0;
+          jackVector.push_back(help);
+          dMeanJack += help;
+          dCount++;
+        }
         else Error(Form("Problem in bin %d, merging without histograms %d & %d. dSum: %f, dSumWeights: %f. Central value: %f", iBin, i, j, dSum, dSumWeights, centralValue), "DoJackknife");
-        dValue += TMath::Power(help, 2.0);
-        iCount += 1.0;
-      }
-    }
+      } //end j
+    } //end i
+
+    if(dCount > 0) dMeanJack = dMeanJack/dCount;
     Double_t finalValue = 9999999999.9;
-    if(iCount > 0) finalValue = (iCount - 1)*dValue/iCount;
-    final->SetBinError(iBin, TMath::Sqrt(finalValue));
+    // if(iCount > 0) finalValue = ((iCount - 1)*dValue)/(iCount);
+    // final->SetBinError(iBin, TMath::Sqrt(finalValue));
+
+    // estimator mean
+    Int_t jackSize = jackVector.size()-1;
+    for(Int_t jackSample(0); jackSample < jackSize; jackSample++){
+      Double_t help = jackVector[jackSample] - dMeanJack;
+      dVarJack += TMath::Power(help,2);
+    } //end jackSample
+    if(jackSize > 0) {
+      dVarJack = (dVarJack*(jackSize-1))/(jackSize);
+      final->SetBinError(iBin, TMath::Sqrt(dVarJack));
+      jackVector.clear();
+    }
+    else
+    final->SetBinError(iBin, 999.9);
+
   }
   ffJackFile->cd();
   final->Write();
 
   return final;
+}
+//_____________________________________________________________________________
+TH1D* ProcessUniFlow::DoBootstrapping(TList* list, TH1D* merged, FlowTask* task, TString name)
+{
+  Int_t nOfSamples = task->fNumSamples;
+
+  if(!list) { Error("List does not valid","DoBootstrapping"); return nullptr; }
+  if(!merged) { Error("Merged histogram not valid","DoBootstrapping"); return nullptr; }
+  if(!task) { Error("FlowTask does not exists","DoBootstrapping"); return nullptr; }
+  if(list->GetEntries() < 1) { Error("List is empty","DoBootstrapping"); return nullptr; }
+  if(list->GetEntries() != nOfSamples) { Warning("Number of list entries is different from task number of samples","DoBootstrapping"); }
+
+  Debug(Form("Number of samples in list pre-bootstrap: %d",list->GetEntries()),"DoBootstrapping");
+  Debug(Form("Name: %s",name.Data()),"DoBootstrapping");
+
+  ffBSFile->cd();
+  list->SetName(Form("%s_list",name.Data()));
+  list->Write(0,TObject::kSingleKey);
+  merged->SetName(Form("%s_merged",name.Data()));
+  merged->Write();
+
+  if(nOfSamples == 1) { Warning("Returning merged directly!", "DoJackknife"); return merged;}
+  if(nOfSamples != 10) { Error("Code for Bootstrapping ready only for 10 samples! Terminating!", "DoBootstrapping"); return nullptr; }
+
+  TH1D* temp[10] = {nullptr};
+
+  for(Int_t iSample(0); iSample < nOfSamples; iSample++){
+    temp[iSample] = (TH1D*) list->At(iSample);
+    if(!temp[iSample]) { Error(Form("Histo 'temp' (sample %d) not found in list",iSample),"DoBootstrapping"); return nullptr; }
+  }
+
+  TH1D* bootstrap = (TH1D*) merged->Clone(Form("%s_bootstrap",name.Data()));
+  bootstrap->Sumw2();
+
+  TRandom *rand = new TRandom();
+  std::vector<Double_t> bootstrapVector;
+  for(Int_t iBin(0); iBin < merged->GetNbinsX()+2; iBin++){
+    Int_t iCount = 0;
+    Double_t dValue = 0.0;
+    Double_t centralValue = merged->GetBinContent(iBin);
+
+    Double_t dMeanBootStrap = 0.0;
+    Double_t dVarBootStrap = 0.0;
+    Double_t dCount = 0.0;
+
+    for(Int_t bootSample(0); bootSample < task->fNumBootstrap; bootSample++){
+      Double_t dSum = 0.0;
+      Double_t dSumWeights = 0.0;
+
+      //creating random dataset
+      for(Int_t combi(0); combi < nOfSamples; combi++){
+        Int_t index = (Int_t) rand->Uniform(0,10);
+
+        Double_t dContent = temp[index]->GetBinContent(iBin);
+        Double_t dError = temp[index]->GetBinError(iBin);
+        Double_t dWeight = 0;
+        if(dError > 0) dWeight = TMath::Power(1./dError,2.0);
+        if(dWeight > 0) {
+          dSum += dContent*dWeight;
+          dSumWeights += dWeight;
+        }
+      } // end combi
+
+      if(dSumWeights > 0) {
+        Double_t help = dSum/dSumWeights;
+        bootstrapVector.push_back(help);
+        dMeanBootStrap += help;
+        dCount++;
+      }
+    } //end bootSample
+
+    if(dCount > 0) dMeanBootStrap = dMeanBootStrap/dCount;
+    Int_t bootSize = bootstrapVector.size();
+    for(Int_t bootSample(0); bootSample < bootSize; bootSample++){
+      Double_t help = bootstrapVector[bootSample] - dMeanBootStrap;
+      dVarBootStrap += TMath::Power(help,2);
+    } //end bootSample
+
+    dVarBootStrap = dVarBootStrap/(bootSize-1);
+    bootstrap->SetBinError(iBin, TMath::Sqrt(dVarBootStrap));
+    bootstrapVector.clear();
+  } // end bins
+
+  ffBSFile->cd();
+  bootstrap->Write();
+
+  ffDesampleFile->cd();
+  list->SetName(Form("%s_list",name.Data()));
+  list->Write(0,TObject::kSingleKey);
+  bootstrap->Write();
+
+  return bootstrap;
 }
 //_____________________________________________________________________________
 TH1D* ProcessUniFlow::DesampleList(TList* list, TH1D* merged, FlowTask* task, TString name, Bool_t bSkipDesampling)
