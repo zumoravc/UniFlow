@@ -25,6 +25,7 @@ class FlowTask
     void        SetEtaGapSecond(Float_t eta) { fEtaGapSecond = eta; }
     void        SetBaseCentBin(Int_t centBin) { fBaseCentBin = centBin; }
     void        SetNumSamples(Short_t num) { fNumSamples = num; }
+    void        SetNumOfBootstrap(Short_t num) { fNumBootstrap = num; }
     void        SetInputTag(const char* name) { fInputTag = name; }
     void        SetPtBins(std::vector<Double_t> array) { fPtBinsEdges = array; fNumPtBins = (Int_t) array.size() - 1; } // setup the pt binning for this task using std::vectors. NB: possible with {}
     void        SetShowMultDist(Bool_t show) { fShowMult = show; }
@@ -71,6 +72,7 @@ class FlowTask
     Int_t       fNumSamples; // [10] number of samples
     Int_t       fNumSamplesRefs; // [1] number of samples for refs only
     Int_t       fNumPtBins; // actual number of pT bins (not size of array) for rebinning
+    Int_t       fNumBootstrap; // [100] number of repetition when doing Bootstrapping
     std::vector<Double_t>   fPtBinsEdges; // pt binning
     Bool_t      fShowMult; // show multiplicity distribution
     Bool_t      fSampleMerging; // [kFALSE] flag for merging TProfiles (good for refs)
