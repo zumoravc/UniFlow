@@ -3817,6 +3817,22 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   if(!task) { Error("Task not valid!","ProcessReconstructed"); return kFALSE; }
   if(task->fNumPtBins < 1) { Error("Num of pt bins too low!","ProcessReconstructed"); return kFALSE; }
 
+  PartSpecies spec = task->fSpecies;
+  if(!IsSpeciesReconstructed(spec)) {
+    Error("Task species not reconstructed!","ProcessReconstructed");
+    return kFALSE;
+  }
+
+  TList* listInput = flFlow[spec];
+  if(!listInput) { Error("Input list not loaded!","ProcessReconstructed"); return kFALSE; }
+
+  // Loading list where reference flow samples are stored
+  TList* listRefCorTwo = (TList*) ffDesampleFile->Get(Form("Refs_pCor2_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
+  if(!listRefCorTwo) { Error("List 'listRefCorTwo' not found!","ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+
+  TList* listRefTwo = (TList*) ffDesampleFile->Get(Form("Refs_hFlow2_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
+  if(!listRefTwo) { Error("List 'listRefTwo' not found!","ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
+
   if(fFlowFitCumulants) { fFlowFitCumulants = kFALSE; Warning("Fitting cumulants currently not available! WIP! switching flag off"); }
 
   Bool_t bDo3sub = task->Has3sub();
@@ -3840,9 +3856,106 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   TString sSpeciesName = GetSpeciesName(task->fSpecies);
   TString sSpeciesLabel = GetSpeciesLabel(task->fSpecies);
 
+  Int_t nOfSamples = task->fNumSamples;
+
+
+  TProfile3D* p3CorTwoDif = nullptr;
+
+  for(Short_t iSample(0); iSample < nOfSamples; iSample++)
+  {
+    Debug(Form("Processing sample %d",iSample), "ProcessReconstructed");
+
+    if(task->fMergePosNeg)
+    {
+      TProfile3D* prof3pos = (TProfile3D*) listInput->FindObject(Form("%s_Pos_sample%d",sProfTwoName.Data(),iSample));
+      TProfile3D* prof3neg = (TProfile3D*) listInput->FindObject(Form("%s_Neg_sample%d",sProfTwoName.Data(),iSample));
+      if(!prof3pos || !prof3neg) { Error("<2>: Pos & Neg profile merging: 'prof3pos' OR 'prof3neg' not found!","ProcessReconstructed"); return kFALSE; }
+
+      TList* listMerge = new TList();
+      listMerge->Add(prof3pos);
+      listMerge->Add(prof3neg);
+      p3CorTwoDif = (TProfile3D*) MergeListProfiles(listMerge);
+      delete listMerge;
+      if(!p3CorTwoDif) { Error("<2>: Pos & Neg profile merging failed!","ProcessReconstructed"); return kFALSE; }
+    }
+    else {
+      Error("Not implemented yet without merging pos & neg!", "ProcessReconstructed");
+      return kFALSE;
+    }
+
+    // loading reference vn{2}
+    TH1D* hFlowRefTwo = (TH1D*) listRefTwo->FindObject(Form("Refs_hFlow2_harm%d_gap%s_sample%d",task->fHarmonics,task->GetEtaGapString().Data(),iSample));
+    if(!hFlowRefTwo) { Error(Form("Histo 'hFlowRefTwo' (sample %d) does not exists",iSample),"ProcessReconstructed"); listRefTwo->ls(); ffDesampleFile->ls(); return kFALSE; }
+
+    TAxis* axisMult = p3CorTwoDif->GetXaxis();
+    TAxis* axisPt = p3CorTwoDif->GetYaxis();
+
+    for(Int_t binMult(0); binMult < fiNumMultBins; binMult++)
+    {
+      Debug(Form("Processing mult. bin %d",binMult), "ProcessReconstructed");
+
+      // rebinning according in mult bin
+      Short_t binMultLow = p3CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[binMult]);
+      Short_t binMultHigh = p3CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1;
+
+      axisMult->SetRange(binMultLow,binMultHigh);
+      TProfile2D* prof2D = (TProfile2D*)p3CorTwoDif->Project3DProfile("yz");
+      if(!prof2D) { Error("Mult projection failed!","MakeProfileSlices"); return kFALSE; }
+
+      for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
+      {
+        // List for desampling : later
+        // TList* listCorTwo = new TList();
+        TString nameCorTwo = Form("%s_pCor2_harm%d_gap%s_cent%d_pt%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),binMult,binPt);
+        TString nameCumTwo = Form("%s_hCum2_harm%d_gap%s_cent%d_pt%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),binMult,binPt);
+        TList* listCumTwo = new TList();
+        TString nameFlowTwo = Form("%s_hFlow2_harm%d_gap%s_cent%d_pt%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),binMult,binPt);
+        TList* listFlowTwo = new TList();
+
+        const Double_t dEdgePtLow = task->fPtBinsEdges[binPt];
+        const Double_t dEdgePtHigh = task->fPtBinsEdges[binPt+1];
+
+        const Int_t iBinPtLow = axisPt->FindFixBin(dEdgePtLow);
+        const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
+
+        TProfile* prof1D = prof2D->ProfileX(nameCorTwo,iBinPtLow,iBinPtHigh);
+        if(!prof1D) { Error("Profile 'prof1D' failed!","ProcessReconstructed"); return kFALSE; }
+        prof1D->GetXaxis()->SetTitle(p3CorTwoDif->GetZaxis()->GetTitle());
+
+        TString sGap = TString(); if(task->HasGap()  && !bDo3sub) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
+        prof1D->SetTitle(Form("%s: <<2'>>_{%d} %s; #it{p}_{T} (GeV/#it{c});",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
+
+        listCorTwo->Add(prof1D);
+
+        Debug("Calculating flow","ProcessReconstructed");
+
+        // dn{2}
+        TH1D* hCumTwoDif = CalcDifCumTwo(prof1D, task);
+        if(!hCumTwoDif) { Error(Form("dn{2} (sample %d) not processed correctly!",iSample),"ProcessReconstructed"); return kFALSE; }
+        hCumTwoDif->SetName(Form("%s_sample%d", nameCumTwo.Data(), iSample));
+        listCumTwo->Add(hCumTwoDif);
+
+        // v'n{2}
+        TH1D* hFlowTwoDif = CalcDifFlowTwo(hCumTwoDif, hFlowRefTwo, iMultBin+1, task, bCorrelated);
+        if(!hFlowTwoDif) { Error(Form("vn{2} (sample %d) not processed correctly!",iSample),"ProcessReconstructed"); return kFALSE; }
+        hFlowTwoDif->SetName(Form("%s_sample%d", nameFlowTwo.Data(), iSample));
+        listFlowTwo->Add(hFlowTwoDif);
+
+        new TCanvas();
+        hFlowTwoDif->Draw();
+
+      } // end binPt
+
+      delete prof2D;
+      break;
+    } // end binMult
+    break;
+  } // end samples
+
+
   // ### Preparing slices of pt
   // if(!PrepareSlices(iMultBin,task,profFlow,histEntries,histEntriesBg,profFlowFour)) { return kFALSE; }
-
+/*
   if(!PrepareSlicesNew(task,sProfTwoName,kTRUE)) { Error(Form("PrepareSlicesNew '%s' failed!",sProfTwoName.Data()),"ProcessReconstructed"); return kFALSE; }
   if(task->fCumOrderMax >= 4 && !PrepareSlicesNew(task,sProfFourName,kFALSE)) { Error(Form("PrepareSlicesNew for '%s' failed!",sProfFourName.Data()),"ProcessReconstructed"); return kFALSE; }
 
@@ -3861,6 +3974,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     listRefFour = (TList*) ffDesampleFile->Get(Form("Refs_hFlow4_harm%d_gap%s_list",task->fHarmonics,task->GetEtaGapString().Data()));
     if(!listRefFour) { Error("List 'listRefFour' not found!","ProcessDirect"); ffDesampleFile->ls(); return kFALSE; }
   }
+
 
 
   Int_t iSample = 0;
@@ -4120,7 +4234,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
     }
   }
 
-
+*/
   return kTRUE;
 }
 //_____________________________________________________________________________
@@ -4751,12 +4865,7 @@ Bool_t ProcessUniFlow::PrepareSlicesNew(FlowTask* task, TString histName, Bool_t
   // preparing flow slices
   TH1* prof = nullptr;
 
-  /*
-  Z comment:
-  this is not necessary as in AliAnalysisTaskUniFlow
-  reconstructed particles are not sampled
-  -> can just load sample0
-  */
+
   if(task->fNumSamples > 1) Warning(Form("Number of samples %d, expected 1.", task->fNumSamples),"PrepareSlicesNew");
 
   TList* listPos = LoadSamples(inputList, Form("%s_Pos",histName.Data()), task->fNumSamples);
