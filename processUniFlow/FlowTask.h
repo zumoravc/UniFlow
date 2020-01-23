@@ -72,6 +72,7 @@ class FlowTask
     Int_t       fNumSamples; // [10] number of samples
     Int_t       fNumSamplesRefs; // [1] number of samples for refs only
     Int_t       fNumPtBins; // actual number of pT bins (not size of array) for rebinning
+    Int_t       fNumMultBins; // actual number of pT bins (not size of array) for rebinning
     Int_t       fNumBootstrap; // [100] number of repetition when doing Bootstrapping
     std::vector<Double_t>   fPtBinsEdges; // pt binning
     Bool_t      fShowMult; // show multiplicity distribution

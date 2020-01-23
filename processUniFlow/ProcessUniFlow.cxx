@@ -310,7 +310,7 @@ Bool_t ProcessUniFlow::ProcessTask(FlowTask* task)
       }
     }
 
-    if(IsSpeciesReconstructed(spec) && !ProcessReconstructed(task,0)) {
+    if(IsSpeciesReconstructed(spec) && !ProcessReconstructed(task)) {
       Error(Form("Task '%s' (%s) not processed correctly!",task->fName.Data(),GetSpeciesName(spec).Data()),"ProcessTask");
       return kFALSE;
     }
@@ -3811,7 +3811,7 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   return kTRUE;
 }
 //_____________________________________________________________________________
-Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
+Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task)
 {
   Debug("Processing task","ProcessReconstructed");
   if(!task) { Error("Task not valid!","ProcessReconstructed"); return kFALSE; }
@@ -3857,14 +3857,17 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
   TString sSpeciesLabel = GetSpeciesLabel(task->fSpecies);
 
   Int_t nOfSamples = task->fNumSamples;
+  const Int_t numPtBins = task->fNumPtBins;
 
-
-  TProfile3D* p3CorTwoDif = nullptr;
+  std::vector<std::vector<TList*> > listCorTwo(fiNumMultBins, std::vector<TList*>(numPtBins));
+  std::vector<std::vector<TList*> > listCumTwo(fiNumMultBins, std::vector<TList*>(numPtBins));
+  std::vector<std::vector<TList*> > listFlowTwo(fiNumMultBins, std::vector<TList*>(numPtBins));
 
   for(Short_t iSample(0); iSample < nOfSamples; iSample++)
   {
     Debug(Form("Processing sample %d",iSample), "ProcessReconstructed");
 
+    TProfile3D* p3CorTwoDif = nullptr;
     if(task->fMergePosNeg)
     {
       TProfile3D* prof3pos = (TProfile3D*) listInput->FindObject(Form("%s_Pos_sample%d",sProfTwoName.Data(),iSample));
@@ -3892,8 +3895,6 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
 
     for(Int_t binMult(0); binMult < fiNumMultBins; binMult++)
     {
-      Debug(Form("Processing mult. bin %d",binMult), "ProcessReconstructed");
-
       // rebinning according in mult bin
       Short_t binMultLow = p3CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[binMult]);
       Short_t binMultHigh = p3CorTwoDif->GetXaxis()->FindFixBin(fdMultBins[binMult+1]) - 1;
@@ -3905,18 +3906,20 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
       for(Short_t binPt(0); binPt < task->fNumPtBins; binPt++)
       {
         // List for desampling : later
-        // TList* listCorTwo = new TList();
         TString nameCorTwo = Form("%s_pCor2_harm%d_gap%s_cent%d_pt%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),binMult,binPt);
         TString nameCumTwo = Form("%s_hCum2_harm%d_gap%s_cent%d_pt%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),binMult,binPt);
-        TList* listCumTwo = new TList();
         TString nameFlowTwo = Form("%s_hFlow2_harm%d_gap%s_cent%d_pt%d", GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, task->GetEtaGapString().Data(),binMult,binPt);
-        TList* listFlowTwo = new TList();
+        listCorTwo[binMult][binPt] = new TList();
+        listCumTwo[binMult][binPt] = new TList();
+        listFlowTwo[binMult][binPt] = new TList();
 
         const Double_t dEdgePtLow = task->fPtBinsEdges[binPt];
         const Double_t dEdgePtHigh = task->fPtBinsEdges[binPt+1];
 
         const Int_t iBinPtLow = axisPt->FindFixBin(dEdgePtLow);
         const Int_t iBinPtHigh = axisPt->FindFixBin(dEdgePtHigh) - 1;
+
+        Debug(Form("Processing sample %d, mult. bin %d (%d - %d), pt bin %d (%f - %f)",iSample, binMult, binMultLow, binMultHigh, binPt, dEdgePtLow, dEdgePtHigh), "ProcessReconstructed");
 
         TProfile* prof1D = prof2D->ProfileX(nameCorTwo,iBinPtLow,iBinPtHigh);
         if(!prof1D) { Error("Profile 'prof1D' failed!","ProcessReconstructed"); return kFALSE; }
@@ -3925,7 +3928,7 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         TString sGap = TString(); if(task->HasGap()  && !bDo3sub) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
         prof1D->SetTitle(Form("%s: <<2'>>_{%d} %s; #it{p}_{T} (GeV/#it{c});",GetSpeciesName(task->fSpecies).Data(), task->fHarmonics, sGap.Data()));
 
-        listCorTwo->Add(prof1D);
+        listCorTwo[binMult][binPt]->Add(prof1D);
 
         Debug("Calculating flow","ProcessReconstructed");
 
@@ -3933,16 +3936,13 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task,Short_t iMultBin)
         TH1D* hCumTwoDif = CalcDifCumTwo(prof1D, task);
         if(!hCumTwoDif) { Error(Form("dn{2} (sample %d) not processed correctly!",iSample),"ProcessReconstructed"); return kFALSE; }
         hCumTwoDif->SetName(Form("%s_sample%d", nameCumTwo.Data(), iSample));
-        listCumTwo->Add(hCumTwoDif);
+        listCumTwo[binMult][binPt]->Add(hCumTwoDif);
 
         // v'n{2}
         TH1D* hFlowTwoDif = CalcDifFlowTwo(hCumTwoDif, hFlowRefTwo, iMultBin+1, task, bCorrelated);
         if(!hFlowTwoDif) { Error(Form("vn{2} (sample %d) not processed correctly!",iSample),"ProcessReconstructed"); return kFALSE; }
         hFlowTwoDif->SetName(Form("%s_sample%d", nameFlowTwo.Data(), iSample));
-        listFlowTwo->Add(hFlowTwoDif);
-
-        new TCanvas();
-        hFlowTwoDif->Draw();
+        listFlowTwo[binMult][binPt]->Add(hFlowTwoDif);
 
       } // end binPt
 

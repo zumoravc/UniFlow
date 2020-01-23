@@ -69,7 +69,7 @@ class ProcessUniFlow
     Bool_t      ProcessMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
     Bool_t      ProcessRefs(FlowTask* task); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
-    Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
+    Bool_t      ProcessReconstructed(FlowTask* task); // process  V0s flow
     Bool_t      ProcessSubtraction(FlowTask* task);
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
     Bool_t      ProcessFMC(FlowTask* task); // process FMC multiparticle correlations
