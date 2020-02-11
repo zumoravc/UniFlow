@@ -1624,15 +1624,15 @@ Bool_t ProcessUniFlow::ProcessRefs(FlowTask* task)
   // desampling
   Debug("Desampling","ProcessRefs");
 
-  TH1D* hCorTwoDesampled = DesampleList(listCorTwo, pCorTwoMerged->ProjectionX(), task, nameCorTwo, kTRUE); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
+  TH1D* hCorTwoDesampled = DoBootstrapping(listCorTwo, pCorTwoMerged->ProjectionX(), task, nameCorTwo); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
   if(!hCorTwoDesampled) { Error("Desampling 'hCorTwoDesampled' failed","ProcessRefs"); return kFALSE; }
   hCorTwoDesampled->SetName(nameCorTwo.Data());
 
-  TH1D* hCumTwoDesampled = DesampleList(listCumTwo, hCumTwoMerged, task, nameCumTwo, kTRUE); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
+  TH1D* hCumTwoDesampled = DoBootstrapping(listCumTwo, hCumTwoMerged, task, nameCumTwo); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
   if(!hCumTwoDesampled) { Error("Desampling 'hCumTwoDesampled' failed","ProcessRefs"); return kFALSE; }
   hCumTwoDesampled->SetName(nameCumTwo.Data());
 
-  TH1D* hFlowTwoDesampled = DesampleList(listFlowTwo, hFlowTwoMerged, task, nameFlowTwo, kTRUE); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
+  TH1D* hFlowTwoDesampled = DoBootstrapping(listFlowTwo, hFlowTwoMerged, task, nameFlowTwo); // NOTE skipping desampling (last argument kTRUE) for vn{2} -> nothing to de-correlate
   if(!hFlowTwoDesampled) { Error("Desampling 'hFlowTwoDesampled' failed","ProcessRefs"); return kFALSE; }
   hFlowTwoDesampled->SetName(nameFlowTwo.Data());
 
@@ -3634,17 +3634,17 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   Debug("Desampling","ProcessDirect");
 
   Debug(Form("<<2'>>: Number of samples in list pre-merging: %d",listCorTwo->GetEntries()),"ProcessDirect");
-  TH1D* hDesampledTwo_Cor = DesampleList(listCorTwo, pCorTwoMerged->ProjectionX(), task, nameCorTwo, kTRUE); // skipping desampling for output structure
+  TH1D* hDesampledTwo_Cor = DoBootstrapping(listCorTwo, pCorTwoMerged->ProjectionX(), task, nameCorTwo); // skipping desampling for output structure
   if(!hDesampledTwo_Cor) { Error("Desampling <<2'>> failed","ProcessDirect"); return kFALSE; }
   hDesampledTwo_Cor->SetName(nameCorTwo.Data());
 
   Debug(Form("dn{2}: Number of samples in list pre-merging: %d",listCumTwo->GetEntries()),"ProcessDirect");
-  TH1D* hDesampledTwo_Cum = DesampleList(listCumTwo, hCumTwoMerged, task, nameCumTwo);
+  TH1D* hDesampledTwo_Cum = DoBootstrapping(listCumTwo, hCumTwoMerged, task, nameCumTwo);
   if(!hDesampledTwo_Cum) { Error("Desampling dn{2} failed","ProcessDirect"); return kFALSE; }
   hDesampledTwo_Cum->SetName(nameCumTwo.Data());
 
   Debug(Form("vn{2}: Number of samples in list pre-merging: %d",listFlowTwo->GetEntries()),"ProcessDirect");
-  TH1D* hDesampledTwo = DesampleList(listFlowTwo, hFlowTwoMerged, task, nameFlowTwo);
+  TH1D* hDesampledTwo = DoBootstrapping(listFlowTwo, hFlowTwoMerged, task, nameFlowTwo);
   if(!hDesampledTwo) { Error("Desampling vn{2} failed","ProcessDirect"); return kFALSE; }
   hDesampledTwo->SetName(nameFlowTwo.Data());
 
@@ -3662,17 +3662,17 @@ Bool_t ProcessUniFlow::ProcessDirect(FlowTask* task, Short_t iMultBin)
   if(bDoFour)
   {
     Debug(Form("<<4'>>: Number of samples in list pre-merging: %d",listCorFour->GetEntries()),"ProcessDirect");
-    TH1D* hDesampledFour_Cor = DesampleList(listCorFour, pCorFourMerged->ProjectionX(), task, nameCorFour); // skipping desampling for structure
+    TH1D* hDesampledFour_Cor = DoBootstrapping(listCorFour, pCorFourMerged->ProjectionX(), task, nameCorFour); // skipping desampling for structure
     if(!hDesampledFour_Cor) { Error("Desampling dn{4} failed","ProcessDirect"); return kFALSE; }
     hDesampledFour_Cor->SetName(nameCorFour.Data());
 
     Debug(Form("dn{4}: Number of samples in list pre-merging: %d",listCumFour->GetEntries()),"ProcessDirect");
-    TH1D* hDesampledFour_Cum = DesampleList(listCumFour, hCumFourMerged, task, nameCumFour);
+    TH1D* hDesampledFour_Cum = DoBootstrapping(listCumFour, hCumFourMerged, task, nameCumFour);
     if(!hDesampledFour_Cum) { Error("Desampling dn{4} failed","ProcessDirect"); return kFALSE; }
     hDesampledFour_Cum->SetName(nameCumFour.Data());
 
     Debug(Form("vn{4}: Number of samples in list pre-merging: %d",listFlowFour->GetEntries()),"ProcessDirect");
-    TH1D* hDesampledFour = DesampleList(listFlowFour, hFlowFourMerged, task, nameFlowFour);
+    TH1D* hDesampledFour = DoBootstrapping(listFlowFour, hFlowFourMerged, task, nameFlowFour);
     if(!hDesampledFour) { Error("Desampling vn{4} failed","ProcessDirect"); return kFALSE; }
     hDesampledFour->SetName(nameFlowFour.Data());
 
@@ -4067,13 +4067,19 @@ Bool_t ProcessUniFlow::ProcessReconstructed(FlowTask* task)
         if(!pCorTwoDif) { Error("Profile 'prof1D' failed!","ProcessReconstructed"); return kFALSE; }
         pCorTwoDif->SetName(Form("%s_sample%d", nameCorTwo[binMult][binPt].Data(), iSample));
         pCorTwoDif->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
+        if(task->fRebinFlowMass > 1) {
+          pCorTwoDif->Rebin(task->fRebinFlowMass);
+        }
 
         TProfile* pCorFourDif = nullptr;
         if(bDoFour){
-          pCorFourDif = prof2DFour->ProfileX(Form("%s_sample%d",nameCorTwo[binMult][binPt].Data(),iSample),iBinPtLow,iBinPtHigh);
+          pCorFourDif = prof2DFour->ProfileX(Form("%s_sample%d",nameCorFour[binMult][binPt].Data(),iSample),iBinPtLow,iBinPtHigh);
           if(!pCorFourDif) { Error("Profile 'prof1D' failed!","ProcessReconstructed"); return kFALSE; }
           pCorFourDif->SetName(Form("%s_sample%d", nameCorFour[binMult][binPt].Data(), iSample));
           pCorFourDif->GetXaxis()->SetTitle("#it{m}_{inv} (GeV/#it{c}^{2})");
+          if(task->fRebinFlowMass > 1) {
+            pCorFourDif->Rebin(task->fRebinFlowMass);
+          }
         }
 
         TString sGap = TString(); if(task->HasGap()  && !bDo3sub) { sGap.Append(Form("{|#Delta#eta| > %g}",task->fEtaGap)); }
@@ -4861,6 +4867,7 @@ TH1D* ProcessUniFlow::DoBootstrapping(TList* list, TH1D* merged, FlowTask* task,
 
   Debug(Form("Number of samples in list pre-bootstrap: %d",list->GetEntries()),"DoBootstrapping");
   Debug(Form("Name: %s",name.Data()),"DoBootstrapping");
+  Debug(Form("Number of bootstrap: %d",task->fNumBootstrap),"DoBootstrapping");
 
   ffBSFile->cd();
   list->SetName(Form("%s_list",name.Data()));
