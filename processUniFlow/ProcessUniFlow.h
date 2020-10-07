@@ -20,8 +20,8 @@ class TProfile2D;
 class TProfile3D;
 class TFitResultPtr;
 
-enum        PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kProton, kK0s, kLambda, kPhi, kUnknown}; // list of all particle species of interest
-enum        Cumulants {kNon = 0, kTwo = 2, kFour = 4, kSix = 6, kEight = 8}; // Cumulants order
+enum        PartSpecies {kRefs = 0, kCharged, kPion, kKaon, kMyProton, kK0s, kLambda, kPhi, kMyUnknown}; // list of all particle species of interest
+enum        Cumulants {kNon = 0, kTwo = 2, kFour = 4, kSix = 6, kEight = 8, kTen = 10, kTwelve = 12, kFourteen = 14}; // Cumulants order
 
 class ProcessUniFlow
 {
@@ -45,7 +45,7 @@ class ProcessUniFlow
     static TString     GetSpeciesString(PartSpecies species); // system species string  (kCharged, kK0s, ...)
     static TString     GetSpeciesName(PartSpecies species); // system species name (Charged, K0s, ...)
     static TString     GetSpeciesLabel(PartSpecies species); // readable species name (h^{#pm}, K^{0}_{S}, ...)
-    static Bool_t      IsSpeciesDirect(PartSpecies sp) { return (sp == kCharged || sp == kPion || sp == kKaon || sp == kProton); } //
+    static Bool_t      IsSpeciesDirect(PartSpecies sp) { return (sp == kCharged || sp == kPion || sp == kKaon || sp == kMyProton); } //
     static Bool_t      IsSpeciesReconstructed(PartSpecies sp) { return (sp == kK0s || sp == kLambda || sp == kPhi); } //
 
     void        AddTask(FlowTask* task = 0x0); // add task to internal lists of all tasks
@@ -69,7 +69,7 @@ class ProcessUniFlow
     Bool_t      ProcessMixed(FlowTask* task); // prepare FlowTask input for mixed harmonics
     Bool_t      ProcessRefs(FlowTask* task); // process reference flow task
     Bool_t      ProcessDirect(FlowTask* task, Short_t iMultBin = 0); // process PID (pion,kaon,proton) flow task
-    Bool_t      ProcessReconstructed(FlowTask* task, Short_t iMultBin = 0); // process  V0s flow
+    Bool_t      ProcessReconstructed(FlowTask* task); // process  V0s flow
     Bool_t      ProcessSubtraction(FlowTask* task);
     Bool_t      PrepareSlices(const Short_t multBin, FlowTask* task, TProfile3D* p3Cor = 0x0, TH3D* h3Entries = 0x0, TH3D* h3EntriesBG = 0x0, TProfile3D* p3CorFour = 0x0); // prepare
     Bool_t      ProcessFMC(FlowTask* task); // process FMC multiparticle correlations
@@ -84,6 +84,9 @@ class ProcessUniFlow
     TH1D*       CalcRefCumFour3sub(TProfile* hFourRef, TProfile* hTwoRef_sub1, TProfile* hTwoRef_sub2, FlowTask* task, Int_t side); // calculate cn{4} out of correlation
     TH1D*       CalcRefCumSix(TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task); // calculate cn{6} out of correlation
     TH1D*       CalcRefCumEight(TProfile* hEightRef, TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task); // calculate cn{8} out of correlation
+    TH1D*       CalcRefCumTen(TProfile* hTenRef, TProfile* hEightRef, TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task); // calculate cn{10} out of correlation
+    TH1D*       CalcRefCumTwelve(TProfile* hTwelveRef, TProfile* hTenRef, TProfile* hEightRef, TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task); // calculate cn{12} out of correlation
+    TH1D*       CalcRefCumFourteen(TProfile* hFourteenRef, TProfile* hTwelveRef, TProfile* hTenRef, TProfile* hEightRef, TProfile* hSixRef, TProfile* hFourRef, TProfile* hTwoRef, FlowTask* task); // calculate cn{14} out of correlation
 
     TH1D*       CalcDifCumTwo(TH1D* hTwoDif, FlowTask* task); // calculate dn{2} out of correlation
     TH1D*       CalcDifCumTwo(TProfile* hTwoDif, FlowTask* task); // calculate dn{2} out of correlation
@@ -96,6 +99,9 @@ class ProcessUniFlow
     TH1D*       CalcRefFlowFour(TH1D* hFourRef, FlowTask* task); // calculate vn{4} out of cn{4}
     TH1D*       CalcRefFlowSix(TH1D* hSixRef, FlowTask* task); // calculate vn{6} out of cn{6}
     TH1D*       CalcRefFlowEight(TH1D* hEightRef, FlowTask* task); // calculate vn{8} out of cn{8}
+    TH1D*       CalcRefFlowTen(TH1D* hTenRef, FlowTask* task); // calculate vn{10} out of cn{10}
+    TH1D*       CalcRefFlowTwelve(TH1D* hTwelveRef, FlowTask* task); // calculate vn{12} out of cn{12}
+    TH1D*       CalcRefFlowFourteen(TH1D* hFourteenRef, FlowTask* task); // calculate vn{14} out of cn{12}
 
     TH1D*       CalcDifFlowTwo(TH1D* hTwoDif, TH1D* hTwoRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate vn'{2} out of dn{2} & vn{2}
     TH1D*       CalcDifFlowFour(TH1D* hFourDif, TH1D* hFourRef, Int_t iRefBin, FlowTask* task, Bool_t bCorrel = kFALSE); // calculate vn'{4} out of dn{4} and vn{4}
@@ -103,9 +109,15 @@ class ProcessUniFlow
     //FMCs
     TH1D*       CalcFourFMC(TProfile* hFour, TProfile* hTwo_1, TProfile* hTwo_2, TProfile* hTwo_1_gap, TProfile* hTwo_2_gap, FlowTask* task); // calculate FMC from 4 particle correlations with two different harmonics
     TH1D*       CalcSixTwoDif(TProfile* hSix, TProfile* hFour_12, TProfile* hFour_13, TProfile* hTwo_1, TProfile* hTwo_3, TProfile* hTwo_3_gap, FlowTask* task); // calculate FMC from 6 particle correlations with two different harmonics
-    TH1D*       CalcSixThreeDif(TProfile* hSix, TProfile* hFour_12, TProfile* hFour_13, TProfile* hFour_23, TProfile* hTwo_1, TProfile* hTwo_2, TProfile* hTwo_3, TProfile* hTwo_1_gap, TProfile* hTwo_2_gap, TProfile* hTwo_3_gap, FlowTask* task); // calculate FMC from 6 particle correlations with three different harmonics
+    TH1D*       CalcSixThreeDif(TProfile* hSix, TProfile* hFour_12, TProfile* hFour_13, TProfile* hFour_23, TProfile* hTwo_1, TProfile* hTwo_2, TProfile* hTwo_3, TProfile* hTwo_1_gap, TProfile* hTwo_2_gap, TProfile* hTwo_3_gap, FlowTask* task, TProfile* hThree = nullptr); // calculate FMC from 6 particle correlations with three different harmonics
     TH1D*       CalcEight_ThreeOne(TProfile* hEight, TProfile* hSix_123, TProfile* hSix_124, TProfile* hFour_12, TProfile* hFour_14, TProfile* hTwo_1, TProfile* hTwo_4, TProfile* hTwo_4_gap, FlowTask* task); // calculate FMC from 8 particle correlations with two different harmonics -- 3 same, 1 different
     TH1D*       CalcEight_TwoTwo(TProfile* hEight, TProfile* hSix_123, TProfile* hSix_134, TProfile* hFour_12, TProfile* hFour_13, TProfile* hFour_34, TProfile* hTwo_1, TProfile* hTwo_4, FlowTask* task); // calculate FMC from 8 particle correlations with two different harmonics -- 2 & 2 same
+
+    //fluctuations
+    TH1D*       CalcMeanFromV(TH1D* hTwo, TH1D* hFour, FlowTask* task); // calculating mean value from vn{2} and vn{4}
+    TH1D*       CalcSigmaFromV(TH1D* hTwo, TH1D* hFour, FlowTask* task); // calculating variance value from vn{2} and vn{4}
+    TH1D*       CalcRatioV(TH1D* hTwo, TH1D* hFour, FlowTask* task); // calculating variance value from vn{2} and vn{4}
+    TH1D*       CalcFlowFluctations(TH1D* hMean, TH1D* hSigma, FlowTask* task); // calculating flow fluctiatons out of mean and sigma
 
     //subtracted
     TH1D*       CalcSubtracted(FlowTask* task, Int_t iMultBin, TH2D* base, TH2D* raw, TH1D* refCum, TH1D* profDiffBase, TH1D* profDiffRaw); // calculate non-flow subtraction of pt diff with peripheral collisions
@@ -160,7 +172,7 @@ class ProcessUniFlow
     TFile*      ffJackFile; //! output file for results of jackknife
     TFile*      ffBSFile; //! output file for results of bootstrap
     TFile*      ffFitsFile; //! output file for fitting procedure
-    TList*      flFlow[kUnknown]; //! TList array for input flow profiles
+    TList*      flFlow[kMyUnknown]; //! TList array for input flow profiles
     TList*      flQACharged; //! TList from input file with Charged QA plots / profiles
     TList*      flQAPID; //! TList from input file with PID (pi,K,p) QA plots / profiles
     TList*      flQAPhi; //! TList from input file with Phi QA plots / profiles
